@@ -14,7 +14,7 @@
 #     'var DIFF_DELETE = -1;'
 #     'var DIFF_INSERT = 1;'
 #     'var DIFF_EQUAL = 0;'
-# Should become: 
+# Should become:
 #     'export const DIFF_DELETE = -1;'
 #     'export const DIFF_INSERT = 1;'
 #     'export const DIFF_EQUAL = 0;'
@@ -25,7 +25,7 @@
 
 
 
-SOURCE=../../../diff-match-patch/javascript/diff_match_patch_uncompressed.js;
+SOURCE=../vendor/diff-match-patch/javascript/diff_match_patch_uncompressed.js;
 TARGET=diff_match_patch.mjs;
 
 cat $SOURCE | \

@@ -1,12 +1,12 @@
 [submodule "opentype.js"]
-	path = opentype.js
+	path = lib/js/vendor/opentype.js
 	url = https://github.com/graphicore/opentype.js.git
 [submodule "intro.js"]
-	path = intro.js
+	path = lib/js/vendor/intro.js
 	url = https://github.com/usablica/intro.js
 [submodule "diff-match-patch"]
-	path = diff-match-patch
+	path = lib/js/vendor/diff-match-patch
 	url = https://github.com/google/diff-match-patch.git
 [submodule "lib/js/wawoff2"]
-	path = lib/js/wawoff2
+	path = lib/js/vendor/wawoff2
 	url = https://github.com/graphicore/wawoff2.git
