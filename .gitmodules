@@ -10,3 +10,7 @@
 [submodule "lib/js/wawoff2"]
 	path = lib/js/vendor/wawoff2
 	url = https://github.com/graphicore/wawoff2.git
+[submodule "lib/js/vendor/fbdemo"]
+	path = lib/js/vendor/fbdemo
+	url = git@github.com:graphicore/fbdemo.git
+	branch = typeroof-lasse
