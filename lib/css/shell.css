@@ -66,3 +66,17 @@ body > .wrapper > footer{
     stroke-width: 2px;
     fill: hsl(calc(1turn * var(--t)), 30%, 70%);
 }
+
+.ui_time_control_circle-key_moments > * {
+    fill: black;
+}
+.ui_time_control_circle-key_moments > .active {
+    fill: red;
+}
+.ui_time_control_circle-key_moments :hover {
+  stroke: black;
+  stroke-width: 7;
+  stroke-opacity: .3;
+  /* paint the stroke under the fill*/
+  paint-order: stroke;
+}
