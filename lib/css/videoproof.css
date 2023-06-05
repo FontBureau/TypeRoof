@@ -780,6 +780,21 @@ div.temp-selection {
     text-align: var(--alignment);
 }
 
+#the-proof.typespec .typespec-element--active.typespec-element_heading [contenteditable] {
+    /* Otherwise can't insert spaces at the end of line. Could however
+     * maybe remove line breaks from input in javascript event handling.
+     *
+     * This white-space mode is only set for the active element, when not
+     * editing, it returns to "normal". This is to keep the editing
+     * experience as expected, e.g. pressing spaces creates spaces, but also
+     * to keep the html behavior close to the default. If that's anoying
+     * to the users, this mode could be applied to the non-editing markup
+     * as well, however, breaking potentially expectations when porting
+     * the content to another setting, where white-space is set to "normal".
+     */
+    white-space: break-spaces;
+}
+
 #the-proof.typespec div[contenteditable] {
     /* Required to be able place a cursor when element is empty. */
     min-height: var(--line-height);
