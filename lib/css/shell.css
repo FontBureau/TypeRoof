@@ -39,6 +39,9 @@ body > .wrapper > footer{
     grid-row: 3;
 }
 
+.ui_layout_select {
+    display: block;
+}
 
 .key_moments_timeline-items {
     list-style: none;
