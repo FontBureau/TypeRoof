@@ -83,3 +83,22 @@ body > .wrapper > footer{
   /* paint the stroke under the fill*/
   paint-order: stroke;
 }
+
+.stage_and_actors {
+  background-size: 15px 15px;
+  --dark: #666;
+  --light: #ccc;
+  background-image: conic-gradient(
+        var(--light) 90deg,
+        var(--dark) 90deg 180deg,
+        var(--light) 180deg 270deg,
+        var(--dark) 270deg 0deg
+  );
+  position: relative;
+  overflow: visible;
+}
+
+.stage_and_actors-layer > svg circle {
+    fill: lime;
+}
+
