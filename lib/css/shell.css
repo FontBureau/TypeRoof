@@ -102,3 +102,7 @@ body > .wrapper > footer{
     fill: lime;
 }
 
+.stage-manager_actors li.active > button span {
+    font-weight: 700;
+}
+
