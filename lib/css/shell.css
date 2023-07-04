@@ -106,3 +106,19 @@ body > .wrapper > footer{
     font-weight: 700;
 }
 
+.ui_toggle_key_moment_button.active {
+    font-weight: 700;
+}
+
+ol.ui_zone-key_moments_main {
+    padding: 0;
+    list-style:inside square;
+    background: white;
+}
+li.ui_key_moment_controller.active {
+    background: lightyellow;
+    border-bottom: 1px solid black;
+    margin-bottom: 1em;
+    padding-bottom: 1em;
+}
+
