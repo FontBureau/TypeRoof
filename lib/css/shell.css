@@ -95,7 +95,12 @@ body > .wrapper > footer{
         var(--dark) 270deg 0deg
   );
   position: relative;
-  overflow: visible;
+  overflow: hidden;
+}
+
+.stage_and_actors-sub_layer {
+    position: absolute;
+    overflow: visible;
 }
 
 .stage_and_actors-layer > svg circle {
