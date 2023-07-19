@@ -103,6 +103,11 @@ body > .wrapper > footer{
     overflow: visible;
 }
 
+.actor_renderer-line-of-text{
+    display: block;
+    white-space: pre;
+}
+
 .stage_and_actors-layer > svg circle {
     fill: lime;
 }
