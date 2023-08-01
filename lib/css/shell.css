@@ -132,3 +132,21 @@ li.ui_key_moment_controller.active {
     padding-bottom: 1em;
 }
 
+.stage-manager_actors{
+    border-bottom: 1px solid black;
+    margin-bottom: 1em;
+}
+.stage-manager_actors ol {
+    list-style: none;
+    padding-inline-start: 1em;
+}
+.stage-manager_actors > ol {
+    padding-inline-start: 0;
+}
+
+.ui_font-select{
+    display: block;
+}
+.ui_font-select_select {
+  max-width: 15em;
+}
