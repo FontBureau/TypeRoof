@@ -54,6 +54,8 @@ body > .wrapper > footer{
 
 .ui_time_control_circle{
   touch-action: none;
+  width: 200px;
+  height: 200px;
 }
 
 .ui_time_control_circle-track {
@@ -149,4 +151,16 @@ li.ui_key_moment_controller.active {
 }
 .ui_font-select_select {
   max-width: 15em;
+}
+
+.ui_actor_time_control_circle {
+    width: 75px;
+    height: 75px;
+}
+
+.ui_actor_time_control_circle :is(
+    .ui_time_control_circle-track
+  , .ui_time_control_circle-hand
+) {
+    stroke-width: 5px;
 }
