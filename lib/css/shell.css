@@ -164,3 +164,81 @@ li.ui_key_moment_controller.active {
 ) {
     stroke-width: 5;
 }
+
+.stage-manager_actors li {
+    --indicator-padding: .2em;
+    --bg-a: #eee;
+    --bg-b: #fff;
+    --drop-indicator-color: #333;
+}
+
+.stage-manager_actors li,
+.stage-manager_actors li:nth-child(2n) > ol {
+    --even-bg: var(--bg-a);
+    --odd-bg: var(--bg-b);
+}
+
+.stage-manager_actors li:nth-child(2n+1) > ol {
+    --even-bg: var(--bg-b);
+    --odd-bg: var(--bg-a);
+}
+
+.stage-manager_actors li {
+    background: var(--background-base-color, var(--even-bg));
+}
+
+.stage-manager_actors li:last-child > ol {
+    /* Only for layer (container) items
+     * This way there's a drop zone to insert the drop after the li.
+     */
+    padding-bottom: .5em;
+    border-bottom: .1em solid #555;
+}
+
+.stage-manager_actors :where(li) {
+  --background-base-color: var(--odd-bg);
+}
+
+.stage-manager_actors :where(ol > li:nth-child(2n)) {
+    --background-base-color: var(--even-bg);
+}
+
+.stage-manager_actors li {
+    padding: calc(var( --indicator-padding) * 0.5) 0 calc(var(--indicator-padding) * 0.5) 0;
+}
+
+.stage-manager_actors .drop_target_indicator-before {
+    padding: var( --indicator-padding) 0 0 0;
+    background: linear-gradient(
+        to bottom,
+        var(--drop-indicator-color) var(--indicator-padding),
+        var(--background-base-color) var(--indicator-padding)
+    );
+}
+
+.stage-manager_actors .drop_target_indicator-after {
+    padding: 0 0  var( --indicator-padding) 0;
+    background: linear-gradient(
+        to top,
+        var(--drop-indicator-color) var(--indicator-padding),
+        var(--background-base-color) var(--indicator-padding)
+    );
+}
+.stage-manager_actors .drop_target_indicator-after:last-child  {
+    padding: calc(var( --indicator-padding) * 0.5) 0 var(--indicator-padding) 0;
+}
+
+
+.stage-manager_actors li > * {
+    vertical-align: middle;
+}
+
+.drag-handle{
+    display: inline-block;
+    background: #aaa;
+    padding: 0 .3em;
+    border: 1px outset lightgrey;
+}
+
+
+
