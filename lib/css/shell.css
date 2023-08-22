@@ -228,6 +228,17 @@ li.ui_key_moment_controller.active {
     padding: calc(var( --indicator-padding) * 0.5) 0 var(--indicator-padding) 0;
 }
 
+.stage-manager_actors .drop_target_indicator-insert::after {
+    display: block;
+    content: "";
+    margin-left: 1em;
+    padding: 0 0  var( --indicator-padding);
+    background: linear-gradient(
+        to top,
+        var(--drop-indicator-color) var(--indicator-padding),
+        var(--background-base-color) var(--indicator-padding)
+    );
+}
 
 .stage-manager_actors li > * {
     vertical-align: middle;
