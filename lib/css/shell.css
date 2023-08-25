@@ -244,7 +244,7 @@ li.ui_key_moment_controller.active {
     vertical-align: middle;
 }
 
-.drag-handle{
+.drag_handle{
     display: inline-block;
     background: #aaa;
     padding: 0 .3em;
