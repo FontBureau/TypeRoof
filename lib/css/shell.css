@@ -251,5 +251,20 @@ li.ui_key_moment_controller.active {
     border: 1px outset lightgrey;
 }
 
+.waste_basket_drop_target {
+    diplay: block;
+}
 
+.waste_basket_drop_target-receptive::after {
+    background: lightyellow;
+    outline: .2rem solid grey;
+}
 
+.waste_basket_drop_target::before {
+    content: "Drop onto bin to remove:";
+}
+
+.waste_basket_drop_target::after {
+    content: "🗑️";
+    font-size: 3em;
+}
