@@ -165,26 +165,23 @@ li.ui_key_moment_controller.active {
     stroke-width: 5;
 }
 
-.stage-manager_actors li {
+.stage-manager_actors * {
     --indicator-padding: .2em;
-    --bg-a: #eee;
-    --bg-b: #fff;
+    --odd-bg: #eee;
+    --even-bg: #fff;
     --drop-indicator-color: #333;
 }
 
-.stage-manager_actors li,
-.stage-manager_actors li:nth-child(2n) > ol {
-    --even-bg: var(--bg-a);
-    --odd-bg: var(--bg-b);
+
+.stage-manager_actors li.odd-row {
+    --background-base-color: var(--even-bg);
+    background: var(--even-bg);
 }
 
-.stage-manager_actors li:nth-child(2n+1) > ol {
-    --even-bg: var(--bg-b);
-    --odd-bg: var(--bg-a);
-}
-
-.stage-manager_actors li {
-    background: var(--background-base-color, var(--even-bg));
+.stage-manager_actors > ol,
+.stage-manager_actors li.even-row {
+    --background-base-color: var(--odd-bg);
+    background: var(--odd-bg);
 }
 
 .stage-manager_actors li:last-child > ol {
@@ -195,19 +192,11 @@ li.ui_key_moment_controller.active {
     border-bottom: .1em solid #555;
 }
 
-.stage-manager_actors :where(li) {
-  --background-base-color: var(--odd-bg);
-}
-
-.stage-manager_actors :where(ol > li:nth-child(2n)) {
-    --background-base-color: var(--even-bg);
-}
-
 .stage-manager_actors li {
     padding: calc(var( --indicator-padding) * 0.5) 0 calc(var(--indicator-padding) * 0.5) 0;
 }
 
-.stage-manager_actors .drop_target_indicator-before {
+.stage-manager_actors li.drop_target_indicator-before {
     padding: var( --indicator-padding) 0 0 0;
     background: linear-gradient(
         to bottom,
@@ -216,7 +205,7 @@ li.ui_key_moment_controller.active {
     );
 }
 
-.stage-manager_actors .drop_target_indicator-after {
+.stage-manager_actors li.drop_target_indicator-after {
     padding: 0 0  var( --indicator-padding) 0;
     background: linear-gradient(
         to top,
@@ -224,20 +213,24 @@ li.ui_key_moment_controller.active {
         var(--background-base-color) var(--indicator-padding)
     );
 }
+
 .stage-manager_actors .drop_target_indicator-after:last-child  {
     padding: calc(var( --indicator-padding) * 0.5) 0 var(--indicator-padding) 0;
 }
 
+.stage-manager_actors ol:empty::after,
 .stage-manager_actors .drop_target_indicator-insert::after {
     display: block;
     content: "";
     margin-left: 1em;
-    padding: 0 0  var( --indicator-padding);
-    background: linear-gradient(
-        to top,
-        var(--drop-indicator-color) var(--indicator-padding),
-        var(--background-base-color) var(--indicator-padding)
-    );
+    padding: var(--indicator-padding) 0;
+}
+
+.stage-manager_actors ol:not(.drop_target_indicator-insert):empty::after {
+    background: var(--background-base-color);
+}
+.stage-manager_actors .drop_target_indicator-insert::after {
+    background: var(--drop-indicator-color);
 }
 
 .stage-manager_actors li > * {
@@ -252,7 +245,7 @@ li.ui_key_moment_controller.active {
 }
 
 .waste_basket_drop_target {
-    diplay: block;
+    display: block;
 }
 
 .waste_basket_drop_target-receptive::after {
