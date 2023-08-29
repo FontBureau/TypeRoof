@@ -54,19 +54,21 @@ body > .wrapper > footer{
 
 .ui_time_control_circle{
   touch-action: none;
+  width: 200px;
+  height: 200px;
 }
 
 .ui_time_control_circle-track {
     fill: hsla(calc(1turn * var(--t)), 30%, 70%, calc(1 - var(--t)));
     stroke: black;
-    stroke-width: 2px;
+    stroke-width: 2;
 }
 .ui_time_control_circle-track_back{
     fill: #FFF;
 }
 .ui_time_control_circle-hand {
     stroke: black;
-    stroke-width: 2px;
+    stroke-width: 2;
     fill: hsl(calc(1turn * var(--t)), 30%, 70%);
 }
 
@@ -82,4 +84,181 @@ body > .wrapper > footer{
   stroke-opacity: .3;
   /* paint the stroke under the fill*/
   paint-order: stroke;
+}
+
+.stage_and_actors {
+  background-size: 15px 15px;
+  --dark: #666;
+  --light: #ccc;
+  background-image: conic-gradient(
+        var(--light) 90deg,
+        var(--dark) 90deg 180deg,
+        var(--light) 180deg 270deg,
+        var(--dark) 270deg 0deg
+  );
+  position: relative;
+  overflow: hidden;
+}
+
+.stage_and_actors-sub_layer {
+    position: absolute;
+    overflow: visible;
+}
+
+.actor_renderer-line-of-text{
+    display: block;
+    white-space: pre;
+}
+
+.stage_and_actors-layer > svg circle {
+    fill: lime;
+}
+
+.stage-manager_actors li.active > button span {
+    font-weight: 700;
+}
+
+.ui_toggle_key_moment_button.active {
+    font-weight: 700;
+}
+
+ol.ui_zone-key_moments_main {
+    padding: 0;
+    list-style:inside square;
+    background: white;
+}
+li.ui_key_moment_controller.active {
+    background: lightyellow;
+    border-bottom: 1px solid black;
+    margin-bottom: 1em;
+    padding-bottom: 1em;
+}
+
+.stage-manager_actors{
+    margin-bottom: 1em;
+}
+.stage-manager_actors ol {
+    list-style: none;
+    padding-inline-start: 0;
+}
+
+.stage-manager_actors > ol {
+    padding-inline-start: 0;
+}
+
+.ui_font-select{
+    display: block;
+}
+.ui_font-select_select {
+  max-width: 15em;
+}
+
+.ui_actor_time_control_circle {
+    width: 75px;
+    height: 75px;
+}
+
+.ui_actor_time_control_circle :is(
+    .ui_time_control_circle-track
+  , .ui_time_control_circle-hand
+) {
+    stroke-width: 5;
+}
+
+.stage-manager_actors * {
+    --indicator-padding: .2em;
+    --odd-bg: #eee;
+    --even-bg: #fff;
+    --drop-indicator-color: #333;
+}
+
+
+.stage-manager_actors li.odd-row {
+    --background-base-color: var(--even-bg);
+    background: var(--even-bg);
+}
+
+.stage-manager_actors > ol,
+.stage-manager_actors li.even-row {
+    --background-base-color: var(--odd-bg);
+    background: var(--odd-bg);
+}
+
+.stage-manager_actors li:last-child > ol {
+    /* Only for layer (container) items
+     * This way there's a drop zone to insert the drop after the li.
+     */
+    padding-bottom: .1em;
+}
+
+.stage-manager_actors li {
+    padding: calc(var( --indicator-padding) * 0.5) 0 calc(var(--indicator-padding) * 0.5) 0;
+}
+
+.stage-manager_actors li > :first-child {
+    margin-inline-start: calc(.7em * var(--structural-depth, 0));
+}
+
+.stage-manager_actors li.drop_target_indicator-before {
+    padding: var( --indicator-padding) 0 0 0;
+    background: linear-gradient(
+        to bottom,
+        var(--drop-indicator-color) var(--indicator-padding),
+        var(--background-base-color) var(--indicator-padding)
+    );
+}
+
+.stage-manager_actors li.drop_target_indicator-after {
+    padding: 0 0  var( --indicator-padding) 0;
+    background: linear-gradient(
+        to top,
+        var(--drop-indicator-color) var(--indicator-padding),
+        var(--background-base-color) var(--indicator-padding)
+    );
+}
+
+.stage-manager_actors .drop_target_indicator-after:last-child  {
+    padding: calc(var( --indicator-padding) * 0.5) 0 var(--indicator-padding) 0;
+}
+
+.stage-manager_actors ol:empty::after,
+.stage-manager_actors .drop_target_indicator-insert::after {
+    display: block;
+    content: "";
+    margin-left: 1em;
+    padding: var(--indicator-padding) 0;
+}
+
+.stage-manager_actors ol:not(.drop_target_indicator-insert):empty::after {
+    background: var(--background-base-color);
+}
+.stage-manager_actors .drop_target_indicator-insert::after {
+    background: var(--drop-indicator-color);
+}
+
+.stage-manager_actors li > * {
+    vertical-align: middle;
+}
+
+.drag_handle{
+    display: inline-block;
+    background: #aaa;
+    padding: 0 .3em;
+    border: 1px outset lightgrey;
+}
+
+.waste_basket_drop_target {
+    display: block;
+}
+
+.waste_basket_drop_target-main_drop_zone{
+    display: inline-block;
+}
+.waste_basket_drop_target-main_drop_zone::after {
+    content: "🗑️";
+    font-size: 2em;
+}
+.waste_basket_drop_target-receptive .waste_basket_drop_target-main_drop_zone{
+    background: lightyellow;
+    outline: .2em solid grey;
 }
