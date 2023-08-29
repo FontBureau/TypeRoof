@@ -135,13 +135,13 @@ li.ui_key_moment_controller.active {
 }
 
 .stage-manager_actors{
-    border-bottom: 1px solid black;
     margin-bottom: 1em;
 }
 .stage-manager_actors ol {
     list-style: none;
-    padding-inline-start: 1em;
+    padding-inline-start: 0;
 }
+
 .stage-manager_actors > ol {
     padding-inline-start: 0;
 }
@@ -188,12 +188,15 @@ li.ui_key_moment_controller.active {
     /* Only for layer (container) items
      * This way there's a drop zone to insert the drop after the li.
      */
-    padding-bottom: .5em;
-    border-bottom: .1em solid #555;
+    padding-bottom: .1em;
 }
 
 .stage-manager_actors li {
     padding: calc(var( --indicator-padding) * 0.5) 0 calc(var(--indicator-padding) * 0.5) 0;
+}
+
+.stage-manager_actors li > :first-child {
+    margin-inline-start: calc(.7em * var(--structural-depth, 0));
 }
 
 .stage-manager_actors li.drop_target_indicator-before {
@@ -248,16 +251,14 @@ li.ui_key_moment_controller.active {
     display: block;
 }
 
-.waste_basket_drop_target-receptive::after {
-    background: lightyellow;
-    outline: .2rem solid grey;
+.waste_basket_drop_target-main_drop_zone{
+    display: inline-block;
 }
-
-.waste_basket_drop_target::before {
-    content: "Drop onto bin to remove:";
-}
-
-.waste_basket_drop_target::after {
+.waste_basket_drop_target-main_drop_zone::after {
     content: "🗑️";
-    font-size: 3em;
+    font-size: 2em;
+}
+.waste_basket_drop_target-receptive .waste_basket_drop_target-main_drop_zone{
+    background: lightyellow;
+    outline: .2em solid grey;
 }
