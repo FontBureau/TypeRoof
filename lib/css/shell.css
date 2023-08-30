@@ -170,6 +170,7 @@ li.ui_key_moment_controller.active {
     --odd-bg: #eee;
     --even-bg: #fff;
     --drop-indicator-color: #333;
+    --indentation-width: .7em;
 }
 
 
@@ -196,12 +197,18 @@ li.ui_key_moment_controller.active {
 }
 
 .stage-manager_actors li > :first-child {
-    margin-inline-start: calc(.7em * var(--structural-depth, 0));
+    margin-inline-start: calc(var(--indentation-width, 1em) * var(--structural-depth, 0));
 }
 
+.stage-manager_actors li.drop_target_indicator-before,
+.stage-manager_actors li.drop_target_indicator-after {
+    background-position: calc(var(--indentation-width, 1em) * var(--structural-depth, 0)) 0;
+    background-size: 10em auto;
+    background-repeat: no-repeat;
+}
 .stage-manager_actors li.drop_target_indicator-before {
     padding: var( --indicator-padding) 0 0 0;
-    background: linear-gradient(
+    background-image: linear-gradient(
         to bottom,
         var(--drop-indicator-color) var(--indicator-padding),
         var(--background-base-color) var(--indicator-padding)
@@ -209,8 +216,8 @@ li.ui_key_moment_controller.active {
 }
 
 .stage-manager_actors li.drop_target_indicator-after {
-    padding: 0 0  var( --indicator-padding) 0;
-    background: linear-gradient(
+    padding: 0 0 var( --indicator-padding) 0;
+    background-image: linear-gradient(
         to top,
         var(--drop-indicator-color) var(--indicator-padding),
         var(--background-base-color) var(--indicator-padding)
@@ -225,7 +232,7 @@ li.ui_key_moment_controller.active {
 .stage-manager_actors .drop_target_indicator-insert::after {
     display: block;
     content: "";
-    margin-left: 1em;
+    margin-left: calc(var(--indentation-width, 1em) * (1 + var(--structural-depth, 0)));
     padding: var(--indicator-padding) 0;
 }
 
@@ -233,7 +240,13 @@ li.ui_key_moment_controller.active {
     background: var(--background-base-color);
 }
 .stage-manager_actors .drop_target_indicator-insert::after {
-    background: var(--drop-indicator-color);
+    background-image: linear-gradient(
+        to top,
+        var(--drop-indicator-color) var(--indicator-padding),
+        var(--background-base-color) var(--indicator-padding)
+    );
+    background-size: 10em auto;
+    background-repeat: no-repeat;
 }
 
 .stage-manager_actors li > * {
