@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>TypeRoof - Experiments - Color Transitions</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+<style>
+
+.sample {
+    width: 100%;
+    height: 2em;
+    background-color: grey;
+}
+
+.test-color_mix {
+    position: relative;
+}
+
+.test-color_mix > div {
+    width: calc(100% / var(--patch-count));
+    display: inline-block;
+    height: 100%;
+}
+
+.test-color_mix .label {
+    position: absolute;
+    width: fit-content;
+}
+
+.test-canvas {
+    position: relative;
+    background: none;
+}
+.test-canvas > canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: -1;
+}
+
+</style>
+<script type="module">
+import { parse, interpolate, formatCss,
+    fixupHueShorter, fixupHueLonger, fixupHueDecreasing, fixupHueIncreasing
+} from '../../lib/js/vendor/culori/bundled/culori.mjs';
+
+function drawStepsColorMix(element, colors, stepsBetweenColors) {
+    const colorInterpolation = getColorInterpolationMode(element)
+      , colorSteps = stepsBetweenColors + 2
+      ;
+    if(!element.querySelector('.label')) {
+        const label = globalThis.document.createElement('span');
+        label.textContent = element.textContent
+        label.classList.add('label');
+        element.textContent = '';
+        element.appendChild(label);
+    }
+    for(const divChild of [...element.getElementsByTagName('div')])
+        divChild.remove();
+    const drawPatch = color=>{
+            const patch = globalThis.document.createElement('div');
+            patch.style.setProperty('background-color', color);
+            patches.push(patch);
+        }
+      , patches = []
+      ;
+
+
+    if(colors.length === 1)
+        drawPatch(colors[0]);
+    // else for:
+    let fromColor = null;
+    for(const [i, color] of colors.entries()) {
+        if(i === 0) {
+            fromColor = color;
+            continue;
+        }
+        for(let step=(i===1 ? 0 : 1);step<colorSteps;step++) {
+            const percentage = step / (colorSteps-1) * 100
+            drawPatch(`color-mix(${colorInterpolation}, ${fromColor}, ${color} ${percentage}%)`);
+        }
+        fromColor = color;
+    }
+    element.append(...patches);
+    element.style.setProperty('--patch-count', `${patches.length}`);
+}
+
+function drawCanvasColorMix(element, colors) {
+    for(const canvasChild of [...element.getElementsByTagName('canvas')])
+        canvasChild.remove();
+    const width = element.scrollWidth
+      , height = element.scrollHeight
+      , canvas = globalThis.document.createElement('canvas')
+      , ctx = canvas.getContext('2d', {colorSpace: 'display-p3'})
+        // Create a linear gradient
+        // The start gradient point is at x=0, y=0
+        // The end gradient point is at x=width, y=height
+      , gradient = ctx.createLinearGradient(0, 0, width, 0)
+      ;
+
+    canvas.width = width;
+    canvas.height = height;
+    if(colors.length === 1) {
+        ctx.fillStyle = colors[0];
+        ctx.fillRect(0, 0, width, height);
+    }
+    else {
+        const colorInterpolation = getColorInterpolationMode(element);
+        for(let x=0;x<width;x++) {
+            const stepSize = width / (colors.length-1)
+             , globalPos = x/stepSize
+             , fromColorIndex = Math.trunc(globalPos)
+             , pos = globalPos % 1
+             , percentage = 100 * pos
+             , toColorIndex = fromColorIndex + 1
+             , fromColor = colors[fromColorIndex]
+             , toColor = colors[toColorIndex]
+               // color-mix as ctx.fillStyle seems to work in FireFox but not in Chrome!
+             , color = `color-mix(${colorInterpolation}, ${fromColor}, ${toColor} ${percentage}%)`
+               // however using e.g. okchl colors works, so we could mix them ourself.
+             // , color = pos < 0.5 ? fromColor : toColor
+             ;
+            ctx.fillStyle = color;
+            ctx.fillRect(x, 0, 1, height);
+        }
+    }
+    element.append(canvas);
+}
+
+function drawCanvasCulori(element, colors, interpolationMode) {
+    for(const canvasChild of [...element.getElementsByTagName('canvas')])
+        canvasChild.remove();
+    const culoriColors = colors.map(parse)
+      , width = element.scrollWidth
+      , height = element.scrollHeight
+      , canvas = globalThis.document.createElement('canvas')
+      , ctx = canvas.getContext('2d', {colorSpace: 'display-p3'})
+        // Create a linear gradient
+        // The start gradient point is at x=0, y=0
+        // The end gradient point is at x=width, y=height
+      , gradient = ctx.createLinearGradient(0, 0, width, 0)
+      ;
+
+    canvas.width = width;
+    canvas.height = height;
+    if(colors.length === 1) {
+        ctx.fillStyle = colors[0];
+        ctx.fillRect(0, 0, width, height);
+    }
+    else {
+        const [colorSpace, hueInterpolationMethod=false] = getColorInterpolationModeRaw(element)
+          , HUE_INTERPOLATION_METHODS = {
+                'shorter hue': fixupHueShorter
+              , 'longer hue': fixupHueLonger
+              , 'increasing hue': fixupHueDecreasing
+              , 'decreasing hue': fixupHueIncreasing
+            }
+          , interpolateArgs = [culoriColors, colorSpace]
+          ;
+        if(hueInterpolationMethod) {
+            if(!Object.hasOwn(HUE_INTERPOLATION_METHODS, hueInterpolationMethod))
+                console.error(`KEY ERROR unkown hueInterpolationMethod "${hueInterpolationMethod}".`);
+            interpolateArgs.push({h: {fixup: HUE_INTERPOLATION_METHODS[hueInterpolationMethod]}});
+            console.log('interpolateArgs:', ...interpolateArgs)
+        }
+
+
+        const interpolator = interpolate(...interpolateArgs);
+        for(let x=0;x<width;x++) {
+            const t = x/(width-1);
+            ctx.fillStyle = formatCss( interpolator(t));
+            ctx.fillRect(x, 0, 1, height);
+        }
+    }
+    element.append(canvas);
+}
+
+const _NOTDEF = Symbol('_NOTDEF')
+function getColorInterpolationModeRaw(element, defaultVal=_NOTDEF) {
+    const interpolationMode = globalThis.getComputedStyle(element).getPropertyValue('--color-interpolation').trim();
+    if(interpolationMode === '' || interpolationMode === 'default') {
+        if(defaultVal === _NOTDEF)
+            throw new Error('Value ERROR --color-interpolation is empty.')
+       return Array.isArray(defaultVal) ? defaultVal : [defaultVal];
+    }
+    else {
+        const [colorSpace, ...hueInterpolationMethodParts] = interpolationMode.split(' ')
+          , hueInterpolationMethod = hueInterpolationMethodParts.map(part=>part.trim()).filter(part=>part.length > 0).join(' ')
+          ;
+        return [colorSpace, hueInterpolationMethod];
+    }
+}
+
+function getColorInterpolationMode(element, defaultVal=_NOTDEF) {
+    const interpolationMode = getColorInterpolationModeRaw(element, defaultVal).join(' ');
+
+    return interpolationMode !== '' ? `in ${interpolationMode} ` : interpolationMode;
+}
+
+function drawNativeLinearGradient(element, colorNames) {
+    // background-image: linear-gradient(in oklch to right, var(--color-0), var(--color-1), var(--color-2));
+    const interpolationMode = getColorInterpolationMode(element, '')
+      , colors = colorNames.map(name=>`var(${name})`).join(', ')
+      ;
+    element.style.setProperty('background-image',
+                `linear-gradient(${interpolationMode}to right, ${colors})`);
+}
+
+function main() {
+    const colors = [
+          // It's interesting, Chrome decides the interpolation method
+          // of "native linear gradient default" by the color model of
+          // the first (or last or both?) color, if it's oklch that is used if
+          // its srgb (or a named color like "red", that is used.
+          // FireFox doesn't have color interpolation method in linear gradient
+          // and uses something just like srgb, but its only close to the
+          // version in Chrome. That difference however seems to come from
+          // different color management.
+          'oklch(0.627966 0.257704 29.2346)'/* red */
+        , 'oklch(0.627966 0.176823 142.489)'//'green' //'oklch(0.519709 0.176823 142.489)' /* green */
+        , 'oklch(0.627966 0.31321 264.051)'/* blue */
+          // This is very interesting!
+          // using 'white' as a name will screw up the transition in
+          // the native implementations, not so in culori. However,
+          // using the same hue and an explicit white in an explicit
+          // oklch color improves the situation a lot.
+          // In FireFox color-mix (steps and canvas) produces now the
+          // same results as culori. In Chrome color-mix steps still has
+          // issues, producing a deep into blue kink before getting to the
+          // actual blue stop, but it is otherwise pretty stable. Chrome
+          // color-mix canvas doesn't work at all, however, "native
+          // linear gradient oklch" works, but it has a similar kink before
+          // and additionally after the blue stop.
+          //
+          // This annoys me: oklch(100% 0.31321 264.051), the same
+          // Chroma and Hue as the blue above but still a Lightness of 100%
+          // Is not turning out white in the browser. But the definition
+          // of L=1 is "white" in the docs. One needs to take C down to
+          // 0 receive actual white. Further the fallback calculation
+          // between Chrome and FireFox is different, though FF does the
+          // same as Culori at least:
+          //    Measured with color picker: #56f2ff
+          //    Transformed in oklch.com: oklch(88.53% 0.129 203.07)
+          // So, by definition L=1 creating a fallback that is not white
+          // can't be right. My guess is that the math uses the shortest
+          // distance back into the gammut, treating all components equally,
+          // however oklab.com suggests the "Closest fallback (by chroma)
+          // in sRGB" is #FFFFFF. This seems to be an interesting problem,
+          // however, maybe the description of lightness going from white
+          // to black is too simplistic. oklch.com color picker has a
+          // much better fallback calculation, it creates a resonable
+          // transition in the fallback colors when travelling from the
+          // original blue, with the L slider towards 100%. Seems like
+          // it uses the edge of the displayable color space, by changing
+          // the Chroma, but not the Hue. I.e. the same we're doing explicitly
+          // when setting C to 0 in the target white as well.
+        , 'oklch(100% 0 264.051)' //'white' but keeping the hue of blue
+        ]
+      , colorNames = []
+      , root = globalThis.document.querySelector(':root')
+      ;
+
+    colors.forEach((color, i)=>{
+        const colorName = `--color-${i}`;
+        root.style.setProperty(colorName, color);
+        colorNames.push(colorName)
+    });
+
+    for(const element of document.querySelectorAll('.test-color_mix'))
+        drawStepsColorMix(element, colors, 30);
+
+    for(const element of document.querySelectorAll('.test-canvas_color_mix'))
+        drawCanvasColorMix(element, colors);
+
+    for(const element of document.querySelectorAll('.test-canvas_culori'))
+        drawCanvasCulori(element, colors);
+
+    for(const element of document.querySelectorAll('.test-gradient-native'))
+        drawNativeLinearGradient(element, colorNames);
+}
+
+if(document.readyState === 'loading')
+    window.addEventListener('DOMContentLoaded', main);
+else
+    main();
+</script>
+    </head>
+    <body>
+    <div class="sample test-gradient-native" style="--color-interpolation: default">native linear gradient default</div>
+    <div class="sample test-canvas test-canvas_culori" style="--color-interpolation: oklch">canvas culori oklch</div>
+    <div class="sample test-gradient-native" style="--color-interpolation: oklch">native linear gradient oklch</div>
+    <div class="sample test-gradient-native" style="--color-interpolation: lch">native linear gradient lch</div>
+    <div class="sample test-gradient-native" style="--color-interpolation: oklab">native linear gradient oklab</div>
+    <div class="sample test-gradient-native" style="--color-interpolation: lab">native linear gradient lab</div>
+    <div class="sample test-gradient-native" style="--color-interpolation: srgb">native linear gradient srgb</div>
+    <div class="sample test-canvas test-canvas_culori" style="--color-interpolation: oklch">canvas culori oklch</div>
+    <div class="sample test-canvas test-canvas_culori" style="--color-interpolation: lch">canvas culori lch</div>
+    <div class="sample test-canvas test-canvas_culori" style="--color-interpolation: oklch">canvas culori oklab</div>
+    <div class="sample test-canvas test-canvas_culori" style="--color-interpolation: lch">canvas culori lab</div>
+    <div class="sample test-canvas test-canvas_color_mix" style="--color-interpolation: oklch">canvas color-mix oklch</div>
+    <div class="sample test-canvas test-canvas_culori" style="--color-interpolation: oklch">canvas culori oklch</div>
+    <div class="sample test-color_mix" style="--color-interpolation: oklch">native steps color-mix oklch</div>
+    <div class="sample test-color_mix" style="--color-interpolation: lch ">native steps color-mix lch</div>
+    <div class="sample test-color_mix" style="--color-interpolation: oklab">native steps color-mix oklab</div>
+    <div class="sample test-color_mix" style="--color-interpolation: lab">native steps color-mix lab</div>
+    <div class="sample test-color_mix" style="--color-interpolation: srgb">native steps color-mix srgb</div>
+    <div class="sample test-canvas test-canvas_culori" style="--color-interpolation: oklch">canvas culori oklch</div>
+    <div class="sample test-gradient-native" style="--color-interpolation: default">default linear gradient</div>
+    </body>
+</html>

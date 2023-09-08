@@ -14,3 +14,7 @@
 	path = lib/js/vendor/fbdemo
 	url = git@github.com:graphicore/fbdemo.git
 	branch = typeroof-lasse
+[submodule "lib/js/vendor/culori"]
+	path = lib/js/vendor/culori
+	url = https://github.com/graphicore/culori
+	branch = bundle-v-3-2-0
