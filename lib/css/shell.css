@@ -1,6 +1,6 @@
 
 :root {
-    --gap-color: #efefef;
+    --gap-color: #dfdfdf;
     --gap-size: .3rem;
     margin: 0;
 }
@@ -95,6 +95,24 @@ header h1 {
 }
 
 .stage_and_actors {
+    border: var(--gap-size) solid var(--gap-color, black);
+    border-inline-start-width: 0;
+}
+.stage_and_actors-wrapper {
+    position: relative;
+    overflow: hidden;
+}
+
+.stage_and_actors-wrapper:before {
+  content: "";
+  display: block;
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
   background-size: 15px 15px;
   --dark: #666;
   --light: #ccc;
@@ -104,8 +122,14 @@ header h1 {
         var(--light) 180deg 270deg,
         var(--dark) 270deg 0deg
   );
-  position: relative;
-  overflow: hidden;
+}
+.stage_and_actors-wrapper > .stage_and_actors-layer-top {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
 }
 
 .stage_and_actors-sub_layer {
