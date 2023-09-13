@@ -1,42 +1,49 @@
 
+:root {
+    --gap-color: #efefef;
+    --gap-size: .3rem;
+    margin: 0;
+}
+
+
+body {
+    background: var(--gap-color);
+    margin: var(--gap-size);
+}
 body > .wrapper{
     display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      grid-auto-rows: minmax(100px, auto);
+    grid-template-columns: minmax(25em, 35em) 1fr;
+    gap: var(--gap-size);
+    grid-auto-rows: 100vh auto;
+    --background: white;
 }
 
 
-
-.two {
-  grid-column: 2 / 4;
-  grid-row: 1 / 3;
-}
-.three {
-  grid-column: 1;
-  grid-row: 2 / 5;
-}
-
-body > .wrapper > header{
-    background: lightyellow;
-    grid-column: 1 / -1;
-    grid-row: 1;
-}
-body > .wrapper > .typeroof-ui_main {
-    background: mintcream;
+body > .wrapper > .typeroof-ui_sidebar {
+    background: var(--background, red);
     grid-column: 1 ;
-    grid-row: 2 / 4 ;
-
+    grid-row: 1 / 2;
+    height: 100vh;
+    min-width: 25em;
+    max-width: 35em;
+    overflow-y: scroll;
 }
-body > .wrapper > .typeroof-main{
-    background: salmon;
-    grid-column: 2 / -1 ;
-    grid-row: 2;
+
+body > .wrapper > .typeroof-main {
+    background: var(--background, magenta);
+    grid-column: 2 ;
+    grid-row: 1;
+    height: 100vh;
+    overflow-y: scroll;
 }
 body > .wrapper > footer{
-    background: lightblue;
-    grid-column: 2 / -1 ;
-    grid-row: 3;
+    background: var(--background, green);
+    grid-column: 1/-1 ;
+    grid-row: 2;
+}
+
+header h1 {
+    font-size: 1.3em;
 }
 
 .ui_layout_select {
@@ -56,6 +63,7 @@ body > .wrapper > footer{
   touch-action: none;
   width: 200px;
   height: 200px;
+  background: var(--gap-color);
 }
 
 .ui_time_control_circle-track {
