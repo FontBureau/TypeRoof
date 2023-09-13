@@ -283,3 +283,47 @@ li.ui_key_moment_controller.active {
     background: lightyellow;
     outline: .2em solid grey;
 }
+
+.ui_color_component {
+  /*
+   * width: 1em;
+   * height: 1em;
+   */
+}
+.ui_color_patch {
+    position: relative;
+    --width: 1.5em;
+    --height: 1.5em;
+    width: var(--width);
+    height: var(--height);
+}
+
+.ui_color_patch-has_color:after,
+.ui_color_patch-has_color:before {
+    display:block;
+    content: '';
+    width: var(--width);
+    height: var(--height);
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.ui_color_patch-has_color:after {
+    z-index: 1;
+    background-color: var(--color);
+}
+
+.ui_color_patch-has_color:before{
+    z-index: 0;
+    /* transparency indicator checker board */
+    background-size: 15px 15px;
+    --dark: #666;
+    --light: #ccc;
+    background-image: conic-gradient( var(--light) 90deg, var(--dark) 90deg 180deg, var(--light) 180deg 270deg, var(--dark) 270deg 0deg );
+}
+
+
+.ui_color_patch-no_color:before{
+    content: '❌';
+}
