@@ -90,12 +90,12 @@
   z-index: 0;
 }
 
-.stage_and_actors-sub_layer {
+.stage_and_actors-layer-sub {
     position: absolute;
     overflow: visible;
 }
 
-.actor_renderer-line-of-text{
+.actor_renderer-line_of_text {
     display: block;
     white-space: pre;
 }
@@ -341,5 +341,25 @@ li.ui_key_moment_controller.active:not(:last-child) {
 
 .common_actor_properties-value-color_patch {
     display: inline-block;
+}
+
+.common_actor_properties-value-text {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 100%;
+    width: -moz-available;          /* WebKit-based browsers will ignore this. */
+    width: -webkit-fill-available;  /* Mozilla-based browsers will ignore this. */
+    width: fill-available;
+
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: bottom;
+}
+
+.common_actor_properties-value-text:hover {
+    text-overflow: ellipsis;
+    overflow: initial;
+    white-space: initial;
+    display: initial;
 }
 
