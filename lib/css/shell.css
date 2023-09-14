@@ -1,50 +1,5 @@
-
-:root {
-    --gap-color: #dfdfdf;
-    --gap-size: .3rem;
-    margin: 0;
-}
-
-
-body {
-    background: var(--gap-color);
-    margin: var(--gap-size);
-}
-body > .wrapper{
-    display: grid;
-    grid-template-columns: minmax(25em, 35em) 1fr;
-    gap: var(--gap-size);
-    grid-auto-rows: 100vh auto;
-    --background: white;
-}
-
-
-body > .wrapper > .typeroof-ui_sidebar {
-    background: var(--background, red);
-    grid-column: 1 ;
-    grid-row: 1 / 2;
-    height: 100vh;
-    min-width: 25em;
-    max-width: 35em;
-    overflow-y: scroll;
-}
-
-body > .wrapper > .typeroof-main {
-    background: var(--background, magenta);
-    grid-column: 2 ;
-    grid-row: 1;
-    height: 100vh;
-    overflow-y: scroll;
-}
-body > .wrapper > footer{
-    background: var(--background, green);
-    grid-column: 1/-1 ;
-    grid-row: 2;
-}
-
-header h1 {
-    font-size: 1.3em;
-}
+@import url(./fonts.css);
+@import url(./shell-general-layout.css);
 
 .ui_layout_select {
     display: block;
@@ -63,21 +18,20 @@ header h1 {
   touch-action: none;
   width: 200px;
   height: 200px;
-  background: var(--gap-color);
 }
 
 .ui_time_control_circle-track {
-    fill: hsla(calc(1turn * var(--t)), 30%, 70%, calc(1 - var(--t)));
+    fill: oklch(95% 5% calc(1turn * var(--t)));
     stroke: black;
     stroke-width: 2;
 }
 .ui_time_control_circle-track_back{
-    fill: #FFF;
+    fill: var(--gap-color);
 }
 .ui_time_control_circle-hand {
     stroke: black;
     stroke-width: 2;
-    fill: hsl(calc(1turn * var(--t)), 30%, 70%);
+    fill: oklch(90% 20% calc(1turn * var(--t)));
 }
 
 .ui_time_control_circle-key_moments > * {
@@ -95,6 +49,10 @@ header h1 {
 }
 
 .stage_and_actors {
+    /* It's important, that the inner size of the stage has
+     * the exact width/height dimensions.
+     */
+    box-sizing: content-box;
     border: var(--gap-size) solid var(--gap-color, black);
     border-inline-start-width: 0;
 }
@@ -157,11 +115,17 @@ header h1 {
 ol.ui_zone-key_moments_main {
     padding: 0;
     list-style:inside square;
-    background: white;
 }
-li.ui_key_moment_controller.active {
-    background: lightyellow;
-    border-bottom: 1px solid black;
+
+.ui_zone-key_moments_main .ui_key_moment_controller:nth-child(odd){
+    background: var(--list-item-odd-bg);
+}
+.ui_zone-key_moments_main .ui_key_moment_controller:nth-child(even){
+    background: var(--list-item-even-bg);
+}
+
+li.ui_key_moment_controller.active:not(:last-child) {
+    border-bottom: var(--gap-size) solid var(--gap-color);
     margin-bottom: 1em;
     padding-bottom: 1em;
 }
@@ -199,22 +163,20 @@ li.ui_key_moment_controller.active {
 
 .stage-manager_actors * {
     --indicator-padding: .2em;
-    --odd-bg: #eee;
-    --even-bg: #fff;
     --drop-indicator-color: #333;
     --indentation-width: .7em;
 }
 
 
 .stage-manager_actors li.odd-row {
-    --background-base-color: var(--even-bg);
-    background: var(--even-bg);
+    --background-base-color: var(--list-item-odd-bg);
+    background: var(--list-item-odd-bg);
 }
 
 .stage-manager_actors > ol,
 .stage-manager_actors li.even-row {
-    --background-base-color: var(--odd-bg);
-    background: var(--odd-bg);
+    --background-base-color: var(--list-item-even-bg);
+    background: var(--list-item-even-bg);
 }
 
 .stage-manager_actors li:last-child > ol {
@@ -317,9 +279,10 @@ li.ui_key_moment_controller.active {
 .ui_color_patch {
     position: relative;
     --width: 1.5em;
-    --height: 1.5em;
+    --height: 1.3em;
     width: var(--width);
     height: var(--height);
+    overflow: visible
 }
 
 .ui_color_patch-has_color:after,
@@ -331,6 +294,14 @@ li.ui_key_moment_controller.active {
     position: absolute;
     left: 0;
     top: 0;
+}
+
+.ui_color_patch-has_color:hover:after {
+    --hover-size: 7rem;
+    min-width: var(--hover-size);
+    height: var(--hover-size);
+    left: calc((-1 * var(--hover-size) / 2) + (var(--width) / 2));
+    top: calc((-1 * var(--hover-size) / 2) + (var(--height) / 2));
 }
 
 .ui_color_patch-has_color:after {
@@ -351,3 +322,24 @@ li.ui_key_moment_controller.active {
 .ui_color_patch-no_color:before{
     content: '❌';
 }
+
+.common_actor_properties-list {
+    padding: 0;
+    list-style: inside none;
+}
+
+.common_actor_properties-item:nth-child(even) {
+    background: var(--list-item-even-bg);
+}
+.common_actor_properties-item:nth-child(odd) {
+    background: var(--list-item-odd-bg);
+}
+
+.common_actor_properties-value {
+    font-weight: bold;
+}
+
+.common_actor_properties-value-color_patch {
+    display: inline-block;
+}
+
