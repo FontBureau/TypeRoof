@@ -21,7 +21,7 @@
 }
 
 .ui_time_control_circle-track {
-    fill: oklch(95% 5% calc(1turn * var(--t)));
+    fill: oklch(.95 .05 calc(1turn * var(--t)));
     stroke: black;
     stroke-width: 2;
 }
@@ -31,7 +31,7 @@
 .ui_time_control_circle-hand {
     stroke: black;
     stroke-width: 2;
-    fill: oklch(90% 20% calc(1turn * var(--t)));
+    fill: oklch(.9 .2 calc(1turn * var(--t)));
 }
 
 .ui_time_control_circle-key_moments > * {
@@ -348,7 +348,8 @@ li.ui_key_moment_controller.active:not(:last-child) {
     overflow: hidden;
     max-width: 100%;
     width: -moz-available;          /* WebKit-based browsers will ignore this. */
-    width: -webkit-fill-available;  /* Mozilla-based browsers will ignore this. */
+    /* looks like this works better without the webkit rle in chrome */
+    /*width: -webkit-fill-available;*/  /* Mozilla-based browsers will ignore this. */
     width: fill-available;
 
     white-space: nowrap;
