@@ -70,17 +70,10 @@
   left: 0;
   width: 100%;
   height: 100%;
-
-  background-size: 15px 15px;
-  --dark: #666;
-  --light: #ccc;
-  background-image: conic-gradient(
-        var(--light) 90deg,
-        var(--dark) 90deg 180deg,
-        var(--light) 180deg 270deg,
-        var(--dark) 270deg 0deg
-  );
+  background-size: var(--transparency-indicator-bg-size);
+  background-image: var(--transparency-indicator-bg-image);
 }
+
 .stage_and_actors-wrapper > .stage_and_actors-layer-top {
   width: 100%;
   height: 100%;
@@ -309,13 +302,10 @@ li.ui_key_moment_controller.active:not(:last-child) {
     background-color: var(--color);
 }
 
-.ui_color_patch-has_color:before{
+.ui_color_patch-has_color:before {
     z-index: 0;
-    /* transparency indicator checker board */
-    background-size: 15px 15px;
-    --dark: #666;
-    --light: #ccc;
-    background-image: conic-gradient( var(--light) 90deg, var(--dark) 90deg 180deg, var(--light) 180deg 270deg, var(--dark) 270deg 0deg );
+    background-size: var(--transparency-indicator-bg-size);
+    background-image: var(--transparency-indicator-bg-image);
 }
 
 
@@ -364,3 +354,68 @@ li.ui_key_moment_controller.active:not(:last-child) {
     display: initial;
 }
 
+.ui_color_component {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto;
+    grid-template-areas:  "value-box toggle"
+                          "color-bar color-bar";
+}
+
+
+.ui_color_component > .ui_toggle_button {
+    grid-area: toggle;
+    justify-self: end;
+}
+
+.ui_color_component >.number-and-range-input_value-box {
+    grid-area: value-box;
+}
+
+.ui_color_component > .number-and-range-input_color-bar {
+    grid-area: color-bar;
+}
+
+.number-and-range-input_color-bar:before {
+  content: "";
+  display: block;
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: var(--transparency-indicator-bg-size);
+  background-image: var(--transparency-indicator-bg-image);
+}
+
+.number-and-range-input_color-bar {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    height: 3rem;
+}
+.number-and-range-input_color-bar input{
+    width: 100%;
+    width: -moz-available;          /* WebKit-based browsers will ignore this. */
+    width: -webkit-fill-available; /* Mozilla-based browsers will ignore this. */
+    width: fill-available;
+    position: relative;
+    z-index: 1;
+}
+.number-and-range-input_color-bar canvas {
+    width: var(--width, 0);
+    height: var(--height, 0);
+    /*
+     * important, canvas in this element must not change the container height
+     * width and height will be set in javascript to cover all of the container.
+     */
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    left: 0;
+}
+
+.number_and_range_input input[type=number]{
+    max-width: 10ex;
+}

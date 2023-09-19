@@ -7,6 +7,16 @@
     --list-item-odd-bg: #eee;
     --list-item-even-bg: #fff;
     --background-color: #fff;
+
+    --transparency-indicator-bg-dark: #666;
+    --transparency-indicator-bg-light: #ccc;
+    --transparency-indicator-bg-image: conic-gradient(
+            var(--transparency-indicator-bg-light) 90deg,
+            var(--transparency-indicator-bg-dark) 90deg 180deg,
+            var(--transparency-indicator-bg-light) 180deg 270deg,
+            var(--transparency-indicator-bg-dark) 270deg 0deg
+    );
+    --transparency-indicator-bg-size: 15px 15px;
 }
 
 body {
