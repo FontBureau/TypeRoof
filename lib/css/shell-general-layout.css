@@ -22,7 +22,7 @@
 body {
     background: var(--gap-color);
     margin: var(--gap-size);
-    font-variation-settings: initial
+    font-variation-settings: initial;
     color: #121212;
     font-family: RobotoFlex, sans-serif;
     font-variation-settings: "opsz" 12;

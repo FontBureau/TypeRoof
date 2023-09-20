@@ -275,7 +275,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
     --height: 1.3em;
     width: var(--width);
     height: var(--height);
-    overflow: visible
+    overflow: visible;
 }
 
 .ui_color_patch-has_color:after,
@@ -287,6 +287,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
     position: absolute;
     left: 0;
     top: 0;
+
 }
 
 .ui_color_patch-has_color:hover:after {
@@ -295,6 +296,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
     height: var(--hover-size);
     left: calc((-1 * var(--hover-size) / 2) + (var(--width) / 2));
     top: calc((-1 * var(--hover-size) / 2) + (var(--height) / 2));
+    border-radius: calc(var(--hover-size)/2);
 }
 
 .ui_color_patch-has_color:after {
@@ -337,11 +339,6 @@ li.ui_key_moment_controller.active:not(:last-child) {
     text-overflow: ellipsis;
     overflow: hidden;
     max-width: 100%;
-    width: -moz-available;          /* WebKit-based browsers will ignore this. */
-    /* looks like this works better without the webkit rle in chrome */
-    /*width: -webkit-fill-available;*/  /* Mozilla-based browsers will ignore this. */
-    width: fill-available;
-
     white-space: nowrap;
     display: inline-block;
     vertical-align: bottom;
@@ -353,6 +350,24 @@ li.ui_key_moment_controller.active:not(:last-child) {
     white-space: initial;
     display: initial;
 }
+
+.ui_color_chooser-label_toggle {
+    display: list-item;
+    list-style-type: disclosure-closed;
+}
+
+.ui_color_chooser.settings_visible .ui_color_chooser-label_toggle {
+    list-style-type: disclosure-open;
+}
+
+
+
+.ui_color_chooser .ui_color_patch {
+    display: inline-block;
+    margin-left: .5em;
+    vertical-align: baseline;
+}
+
 
 .ui_color_component {
     display: grid;
