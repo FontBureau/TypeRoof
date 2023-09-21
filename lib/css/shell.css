@@ -94,7 +94,6 @@
 }
 
 .stage_and_actors-layer > svg circle {
-    fill: lime;
 }
 
 .stage-manager_actors li.active > button span {
