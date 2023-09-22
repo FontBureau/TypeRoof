@@ -1,43 +1,5 @@
-
-body > .wrapper{
-    display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      grid-auto-rows: minmax(100px, auto);
-}
-
-
-
-.two {
-  grid-column: 2 / 4;
-  grid-row: 1 / 3;
-}
-.three {
-  grid-column: 1;
-  grid-row: 2 / 5;
-}
-
-body > .wrapper > header{
-    background: lightyellow;
-    grid-column: 1 / -1;
-    grid-row: 1;
-}
-body > .wrapper > .typeroof-ui_main {
-    background: mintcream;
-    grid-column: 1 ;
-    grid-row: 2 / 4 ;
-
-}
-body > .wrapper > .typeroof-main{
-    background: salmon;
-    grid-column: 2 / -1 ;
-    grid-row: 2;
-}
-body > .wrapper > footer{
-    background: lightblue;
-    grid-column: 2 / -1 ;
-    grid-row: 3;
-}
+@import url(./fonts.css);
+@import url(./shell-general-layout.css);
 
 .ui_layout_select {
     display: block;
@@ -59,17 +21,17 @@ body > .wrapper > footer{
 }
 
 .ui_time_control_circle-track {
-    fill: hsla(calc(1turn * var(--t)), 30%, 70%, calc(1 - var(--t)));
+    fill: oklch(.95 .05 calc(1turn * var(--t)));
     stroke: black;
     stroke-width: 2;
 }
 .ui_time_control_circle-track_back{
-    fill: #FFF;
+    fill: var(--gap-color);
 }
 .ui_time_control_circle-hand {
     stroke: black;
     stroke-width: 2;
-    fill: hsl(calc(1turn * var(--t)), 30%, 70%);
+    fill: oklch(.9 .2 calc(1turn * var(--t)));
 }
 
 .ui_time_control_circle-key_moments > * {
@@ -87,31 +49,51 @@ body > .wrapper > footer{
 }
 
 .stage_and_actors {
-  background-size: 15px 15px;
-  --dark: #666;
-  --light: #ccc;
-  background-image: conic-gradient(
-        var(--light) 90deg,
-        var(--dark) 90deg 180deg,
-        var(--light) 180deg 270deg,
-        var(--dark) 270deg 0deg
-  );
-  position: relative;
-  overflow: hidden;
+    /* It's important, that the inner size of the stage has
+     * the exact width/height dimensions.
+     */
+    box-sizing: content-box;
+    border: var(--gap-size) solid var(--gap-color, black);
+    border-inline-start-width: 0;
+}
+.stage_and_actors-wrapper {
+    position: relative;
+    overflow: hidden;
 }
 
-.stage_and_actors-sub_layer {
+.stage_and_actors-wrapper:before {
+  content: "";
+  display: block;
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: var(--transparency-indicator-bg-size);
+  background-image: var(--transparency-indicator-bg-image);
+}
+
+.stage_and_actors-wrapper > .stage_and_actors-layer-top {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+}
+
+.stage_and_actors-layer-sub {
     position: absolute;
     overflow: visible;
 }
 
-.actor_renderer-line-of-text{
+.actor_renderer-line_of_text {
     display: block;
     white-space: pre;
 }
 
 .stage_and_actors-layer > svg circle {
-    fill: lime;
 }
 
 .stage-manager_actors li.active > button span {
@@ -125,11 +107,17 @@ body > .wrapper > footer{
 ol.ui_zone-key_moments_main {
     padding: 0;
     list-style:inside square;
-    background: white;
 }
-li.ui_key_moment_controller.active {
-    background: lightyellow;
-    border-bottom: 1px solid black;
+
+.ui_zone-key_moments_main .ui_key_moment_controller:nth-child(odd){
+    background: var(--list-item-odd-bg);
+}
+.ui_zone-key_moments_main .ui_key_moment_controller:nth-child(even){
+    background: var(--list-item-even-bg);
+}
+
+li.ui_key_moment_controller.active:not(:last-child) {
+    border-bottom: var(--gap-size) solid var(--gap-color);
     margin-bottom: 1em;
     padding-bottom: 1em;
 }
@@ -167,22 +155,20 @@ li.ui_key_moment_controller.active {
 
 .stage-manager_actors * {
     --indicator-padding: .2em;
-    --odd-bg: #eee;
-    --even-bg: #fff;
     --drop-indicator-color: #333;
     --indentation-width: .7em;
 }
 
 
 .stage-manager_actors li.odd-row {
-    --background-base-color: var(--even-bg);
-    background: var(--even-bg);
+    --background-base-color: var(--list-item-odd-bg);
+    background: var(--list-item-odd-bg);
 }
 
 .stage-manager_actors > ol,
 .stage-manager_actors li.even-row {
-    --background-base-color: var(--odd-bg);
-    background: var(--odd-bg);
+    --background-base-color: var(--list-item-even-bg);
+    background: var(--list-item-even-bg);
 }
 
 .stage-manager_actors li:last-child > ol {
@@ -274,4 +260,176 @@ li.ui_key_moment_controller.active {
 .waste_basket_drop_target-receptive .waste_basket_drop_target-main_drop_zone{
     background: lightyellow;
     outline: .2em solid grey;
+}
+
+.ui_color_component {
+  /*
+   * width: 1em;
+   * height: 1em;
+   */
+}
+.ui_color_patch {
+    position: relative;
+    --width: 1.5em;
+    --height: 1.3em;
+    width: var(--width);
+    height: var(--height);
+    overflow: visible;
+}
+
+.ui_color_patch-has_color:after,
+.ui_color_patch-has_color:before {
+    display:block;
+    content: '';
+    width: var(--width);
+    height: var(--height);
+    position: absolute;
+    left: 0;
+    top: 0;
+
+}
+
+.ui_color_patch-has_color:hover:after {
+    --hover-size: 7rem;
+    min-width: var(--hover-size);
+    height: var(--hover-size);
+    left: calc((-1 * var(--hover-size) / 2) + (var(--width) / 2));
+    top: calc((-1 * var(--hover-size) / 2) + (var(--height) / 2));
+    border-radius: calc(var(--hover-size)/2);
+}
+
+.ui_color_patch-has_color:after {
+    z-index: 1;
+    background-color: var(--color);
+}
+
+.ui_color_patch-has_color:before {
+    z-index: 0;
+    background-size: var(--transparency-indicator-bg-size);
+    background-image: var(--transparency-indicator-bg-image);
+}
+
+
+.ui_color_patch-no_color:before{
+    content: '❌';
+}
+
+.common_actor_properties-list {
+    padding: 0;
+    list-style: inside none;
+}
+
+.common_actor_properties-item:nth-child(even) {
+    background: var(--list-item-even-bg);
+}
+.common_actor_properties-item:nth-child(odd) {
+    background: var(--list-item-odd-bg);
+}
+
+.common_actor_properties-value {
+    font-weight: bold;
+}
+
+.common_actor_properties-value-color_patch {
+    display: inline-block;
+}
+
+.common_actor_properties-value-text {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 100%;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: bottom;
+}
+
+.common_actor_properties-value-text:hover {
+    text-overflow: ellipsis;
+    overflow: initial;
+    white-space: initial;
+    display: initial;
+}
+
+.ui_color_chooser-label_toggle {
+    display: list-item;
+    list-style-type: disclosure-closed;
+}
+
+.ui_color_chooser.settings_visible .ui_color_chooser-label_toggle {
+    list-style-type: disclosure-open;
+}
+
+
+
+.ui_color_chooser .ui_color_patch {
+    display: inline-block;
+    margin-left: .5em;
+    vertical-align: baseline;
+}
+
+
+.ui_color_component {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto;
+    grid-template-areas:  "value-box toggle"
+                          "color-bar color-bar";
+}
+
+
+.ui_color_component > .ui_toggle_button {
+    grid-area: toggle;
+    justify-self: end;
+}
+
+.ui_color_component >.number-and-range-input_value-box {
+    grid-area: value-box;
+}
+
+.ui_color_component > .number-and-range-input_color-bar {
+    grid-area: color-bar;
+}
+
+.number-and-range-input_color-bar:before {
+  content: "";
+  display: block;
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: var(--transparency-indicator-bg-size);
+  background-image: var(--transparency-indicator-bg-image);
+}
+
+.number-and-range-input_color-bar {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    height: 3rem;
+}
+.number-and-range-input_color-bar input{
+    width: 100%;
+    width: -moz-available;          /* WebKit-based browsers will ignore this. */
+    width: -webkit-fill-available; /* Mozilla-based browsers will ignore this. */
+    width: fill-available;
+    position: relative;
+    z-index: 1;
+}
+.number-and-range-input_color-bar canvas {
+    width: var(--width, 0);
+    height: var(--height, 0);
+    /*
+     * important, canvas in this element must not change the container height
+     * width and height will be set in javascript to cover all of the container.
+     */
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    left: 0;
+}
+
+.number_and_range_input input[type=number]{
+    max-width: 10ex;
 }
