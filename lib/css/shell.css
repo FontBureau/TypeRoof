@@ -433,3 +433,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
 .number_and_range_input input[type=number]{
     max-width: 10ex;
 }
+
+.ui_select_task_automation .ui_plain_select-label {
+    display: block;
+}
