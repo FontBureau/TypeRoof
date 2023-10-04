@@ -1,3 +1,29 @@
+# TypeRoof
+
+Successor of Video Proof (original README below).
+
+## Legacy
+
+The latest (and final) version that has evolved from Video Proof and Variable Type Tools:
+
+https://fontbureau.github.io/TypeRoof/
+
+## Minimal Shell
+
+The work in progress *minimal shell* version. It has a data driven and state
+managed approach. It's minimal in so far as that the shell itself only provides
+infrastructure like boot strapping, loading of shared assets, serialization.
+The applications ("Layouts") are loaded as separate modules. This includes
+an animation editor as a proof of concept:
+
+Go to https://fontbureau.github.io/TypeRoof/shell then select *Layout: Stage and Actors*
+
+Screen recordings of animations made with the *Stage and Actors* editor: https://fontbureau.github.io/TypeRoof/docs/animation-screenrecordings.html
+
+
+---
+*original README*
+
 # Video Proof
 
 Experimental tools for creating animated proofs for variable fonts.

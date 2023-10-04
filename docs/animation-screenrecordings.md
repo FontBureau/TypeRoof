@@ -1,5 +1,5 @@
-# TypeRoof -- Stage and Actors -- Screenrecordings
+# TypeRoof -- Stage and Actors -- Screen Recordings
 
-Some screen recordings to document and share progress of the animation editor are in a shared
+Screen recordings to document and share progress of the animation editor are in a
 
-[public Google Drive folder](https://drive.google.com/drive/folders/1lMYFHhyYxIAp3te7NZIH6AH0TijNZh5g).
+[publicly shared Google Drive folder](https://drive.google.com/drive/folders/1lMYFHhyYxIAp3te7NZIH6AH0TijNZh5g).
