@@ -437,3 +437,18 @@ li.ui_key_moment_controller.active:not(:last-child) {
 .ui_select_task_automation .ui_plain_select-label {
     display: block;
 }
+
+.measure_box {
+    position: absolute;
+    top: -100px; /* hide off-screen*/
+    /* rather use 1px, so there is no shortcut optimization that
+     * prevents measuring the content.
+     */
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+.measure_box-sample {
+    white-space: nowrap;
+
+}
