@@ -91,6 +91,9 @@
 .actor_renderer-line_of_text {
     display: block;
     white-space: pre;
+
+    height: inherit;
+    width: inherit;
 }
 
 .stage_and_actors-layer > svg circle {
