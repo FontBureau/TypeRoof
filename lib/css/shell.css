@@ -5,6 +5,25 @@
     display: block;
 }
 
+/**
+ * Using .typeroof-ui as the class for containers within which the
+ * elements will be treated as typeroof ui components. Especially
+ * for the styling general html-elements (h1, h2, ...).
+ */
+.typeroof-ui :is(h1, h2, h3, h4, h5, h6){
+    margin-block-start: var(--gap-size);
+    margin-block-end: var(--gap-size);
+}
+.typeroof-ui :is(ol, ul) {
+    margin-block-start: var(--gap-size);
+    margin-block-end: var(--gap-size);
+}
+/* No margin for nested lists. */
+.typeroof-ui :is(ol, ul) :is(ul, ol) {
+    margin-block-start: 0;
+    margin-block-end: 0;
+}
+
 .key_moments_timeline-items {
     list-style: none;
     padding: 0;
@@ -162,6 +181,11 @@ li.ui_key_moment_controller.active:not(:last-child) {
     --indentation-width: .7em;
 }
 
+.stage-manager_actors > ol:empty::before {
+  display: block;
+  content: "(empty: drop actor here)";
+  background-color: var(--list-item-odd-bg);
+}
 
 .stage-manager_actors li.odd-row {
     --background-base-color: var(--list-item-odd-bg);
