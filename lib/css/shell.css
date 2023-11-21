@@ -479,3 +479,43 @@ li.ui_key_moment_controller.active:not(:last-child) {
     white-space: nowrap;
 
 }
+
+/** =>> START from Videoproof Array **/
+.fixed-line-breaks {
+    word-break: break-all;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-size: 36pt;
+    line-height: 1.5;
+    text-align: left;
+}
+
+/* where is this rule used? */
+.end-of-line:after {
+    display: block;
+    content: '';
+}
+
+.fixed-line-breaks div, .fixed-line-breaks span {
+    display: block;
+    white-space: nowrap;
+    word-break: normal;
+    word-wrap: normal;
+    overflow-wrap: normal;
+}
+
+.fixed-line-breaks span {
+    display: inline-block;
+    min-width: .1em;
+/* 	font: inherit; */
+    text-align: left;
+    margin-right: 0.3em;
+}
+
+/* used in contextual/kerning mode */
+.fixed-lines span {
+    display: inline;
+    margin-right: 0;
+    white-space: nowrap;
+}
+/** <<= END from Videoproof Array **/
