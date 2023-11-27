@@ -518,4 +518,20 @@ li.ui_key_moment_controller.active:not(:last-child) {
     margin-right: 0;
     white-space: nowrap;
 }
+
+.actor_renderer-videoproof_array {
+    /**
+     * This way it scrolls vertically within the stage.
+     * FIXME:CAUTION: May be too simplistic and require rethinking but
+     * looks good so far. In a stand-alone layout, as opposed to in the
+     * stage-and-actors layout, we might need a different handling.
+     * I.e. in the case of usage within an movie/film-like
+     * non-interactive animation, it is wrong to add manual scrolling to
+     * this! However, so far there's no distinction made between
+     * interactive and non-interactive usage. Overflow setup could be
+     * another property.
+     */
+    height: 100%;
+    overflow-y: auto;
+}
 /** <<= END from Videoproof Array **/
