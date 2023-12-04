@@ -535,3 +535,8 @@ li.ui_key_moment_controller.active:not(:last-child) {
     overflow-y: auto;
 }
 /** <<= END from Videoproof Array **/
+
+
+.ui_checkbox-extended.not-available {
+    color: var(--text-color-disabled);
+}
