@@ -540,3 +540,18 @@ li.ui_key_moment_controller.active:not(:last-child) {
 .ui_checkbox-extended.not-available {
     color: var(--text-color-disabled);
 }
+
+
+.ui_key_moments_link_navigation-list {
+    list-style: none;
+    padding: 0;
+}
+.ui_key_moments_link_navigation-list_item {
+    /*
+    color: oklch(calc(var(--animation-local-impact, 0) * 67.35%) 0.217 12.23);
+    */
+    color: hsl(0, 100%, calc(50% * var(--animation-local-impact, 0)));
+}
+.ui_key_moments_link_navigation-list_item-input {
+    text-decoration: none;
+}
