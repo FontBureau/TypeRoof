@@ -542,16 +542,25 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 
 
-.ui_key_moments_link_navigation-list {
+.ui_key_moments_link_navigation-list,
+.ui_more_raps-list {
     list-style: none;
     padding: 0;
 }
-.ui_key_moments_link_navigation-list_item {
+
+.ui_more_raps-list_item.active {
+    --animation-local-impact: 1;
+}
+
+.ui_key_moments_link_navigation-list_item,
+.ui_more_raps-list_item.active
+{
     /*
     color: oklch(calc(var(--animation-local-impact, 0) * 67.35%) 0.217 12.23);
     */
     color: hsl(0, 100%, calc(50% * var(--animation-local-impact, 0)));
 }
-.ui_key_moments_link_navigation-list_item-input {
+.ui_key_moments_link_navigation-list_item-input,
+.ui_more_raps-list_item-input {
     text-decoration: none;
 }
