@@ -599,3 +599,19 @@ li.ui_key_moment_controller.active:not(:last-child) {
     outline: .05em solid grey;
 }
 
+
+.actor_renderer-videoproof_array_v2-zone{
+    font-size: 54pt;
+    line-height: 1.5;
+    height: 1.5em;
+    text-align: center;
+    display: inline-block;
+    position: relative;
+    width: 3em;
+}
+.actor_renderer-videoproof_array_v2-cell {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+}
