@@ -7,7 +7,11 @@ if [ -d harfbuzzjs ]; then
    cd harfbuzzjs
    git pull --recurse-submodules --rebase
 else
-   git clone --recursive --depth 1 git@github.com:harfbuzz/harfbuzzjs.git
+   # use js-callbacks as branch as it has just the features argument
+   # of shape implemented. when the PR is through, this can fetch master
+   # again ...
+   # https://github.com/harfbuzz/harfbuzzjs/pull/97
+   git clone -b js-callbacks --single-branch --recursive --depth 1 git@github.com:harfbuzz/harfbuzzjs.git
    cd harfbuzzjs
 fi
 
@@ -22,3 +26,5 @@ echo '});' >> hbjs.js
 cat .build/harfbuzzjs/hbjs.js > hbjs.mjs
 echo 'export default hbjs;' >> hbjs.mjs
 
+cat .build/harfbuzzjs/hb.js > hb.mjs
+echo 'export default Module;' >> hb.mjs
