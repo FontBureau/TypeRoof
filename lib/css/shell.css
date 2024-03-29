@@ -607,7 +607,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
     text-align: center;
     display: inline-block;
     position: relative;
-    width: 3em;
+    width: calc(1em * (var(--widest-cell-em, 3) + 0.2));
 }
 .actor_renderer-videoproof_array_v2-cell {
   position: absolute;
