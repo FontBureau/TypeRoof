@@ -604,14 +604,24 @@ li.ui_key_moment_controller.active:not(:last-child) {
     font-size: 54pt;
     line-height: 1.5;
     height: 1.5em;
-    text-align: center;
-    display: inline-block;
+
+    display: inline flex;
+    justify-content: center;
+    align-items: end;
+
     position: relative;
     width: calc(1em * (var(--widest-cell-em, 3) + 0.2));
+    outline: 1px solid;
 }
 .actor_renderer-videoproof_array_v2-cell {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
+    position: absolute;
+    line-height: initial;
+    outline: 1px solid;
+    /* align-items: end; puts the boxes on their descender bottom
+     * now with css-bottom we can adjust to fit to the baselines.
+     * bottom: 10px
+     * FIXME: good feature additionally would be drawing the baseline
+     * optionally.
+     */
+
 }
