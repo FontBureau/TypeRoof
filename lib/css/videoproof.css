@@ -642,9 +642,13 @@ ul.sidebar-list a:hover {
 
 /* used in contextual/kerning mode */
 #the-proof.fixed-lines span {
-        display: inline;
-        margin-right: 0;
-        white-space: nowrap;
+    display: inline;
+    margin-right: calc(1em * var(--gap-em, 0));
+    white-space: nowrap;
+}
+
+#the-proof.fixed-lines span.end-of-line {
+    margin-right: 0;
 }
 
 
