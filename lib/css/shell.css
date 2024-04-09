@@ -600,17 +600,39 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 
 
-.actor_renderer-videoproof_array_v2-zone{
-    font-size: 54pt;
-    line-height: 1.5;
-    height: 1.5em;
+.actor_renderer-videoproof_array_v2 {
+    /* configuration in CSS is not yet a common praxis in this project
+     * line-height: 1.5;
+     */
+    --line-height-em: 1.5;
+    --gap-widht-em: 0.2;
 
-    display: inline flex;
+    display: block flex;
+    /*row-gap: .4em;*/
+    /* Better than having display: inline children as together with
+     * "flex-wrap: wrap" the children have line breaks, but with column-gap
+     * we can control the gap between children without having to remove
+     * e.g. the margin-right on a last element of the line.
+     */
+    flex-wrap: wrap;
+
+    column-gap: calc(1pt * var(--font-size-pt, 24) * var(--gap-widht-em, 0));
+    row-gap: 0em;
+}
+
+.actor_renderer-videoproof_array_v2-zone{
+    font-size: calc(1pt * var(--font-size-pt, 24));
+    height: calc(1em * var(--line-height-em, 1));
+
+    /* inline is not required anymore, as the parent lays these out as
+     * flex with flex-wrap: wrap.
+     */
+    display: /*inline*/ flex;
     justify-content: center;
     align-items: end;
 
     position: relative;
-    width: calc(1em * (var(--widest-cell-em, 3) + 0.2));
+    width: calc(1em * (var(--widest-cell-em, 3)));
     outline: 1px solid;
 }
 .actor_renderer-videoproof_array_v2-cell {
