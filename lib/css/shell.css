@@ -599,13 +599,12 @@ li.ui_key_moment_controller.active:not(:last-child) {
     outline: .05em solid grey;
 }
 
-
 .actor_renderer-videoproof_array_v2 {
     /* configuration in CSS is not yet a common praxis in this project
      * line-height: 1.5;
      */
     --line-height-em: 1.5;
-    --gap-widht-em: 0.2;
+    --gap-widht-em: 0.1;
 
     display: block flex;
     /*row-gap: .4em;*/
@@ -620,7 +619,12 @@ li.ui_key_moment_controller.active:not(:last-child) {
     row-gap: 0em;
 }
 
-.actor_renderer-videoproof_array_v2-zone{
+.typeroof-layout > .actor_renderer-videoproof_array_v2 {
+    /* To make sure the outline of the cell boxes is visible at the top */
+    margin-top: var(--gap-size);
+}
+
+.actor_renderer-videoproof_array_v2-zone {
     font-size: calc(1pt * var(--font-size-pt, 24));
     height: calc(1em * var(--line-height-em, 1));
 
@@ -628,22 +632,50 @@ li.ui_key_moment_controller.active:not(:last-child) {
      * flex with flex-wrap: wrap.
      */
     display: /*inline*/ flex;
-    justify-content: center;
-    align-items: end;
+    justify-content: center; /* this is the actual text align */
 
     position: relative;
     width: calc(1em * (var(--widest-cell-em, 3)));
-    outline: 1px solid;
+    /*outline: 1px solid;*/
 }
 .actor_renderer-videoproof_array_v2-cell {
     position: absolute;
     line-height: initial;
-    outline: 1px solid;
-    /* align-items: end; puts the boxes on their descender bottom
-     * now with css-bottom we can adjust to fit to the baselines.
-     * bottom: 10px
+
+    /* This is a nice feature to turn on optionally, as it accurateley
+     * draws the glyph box and that in the text color, so it is easy
+     * to understand.
+     */
+    /* outline: 1px solid; */
+
+
+    /*
      * FIXME: good feature additionally would be drawing the baseline
      * optionally.
      */
 
+    /* The box height seems rounded to */
+
+    /**
+     * align to bottom of box
+     * --descender-em: move down to align baseline with bottom of the box
+     * --max-descender-em: move up to align with bottom of the biggest cell descender
+
+     This is good because it leaves some space at the to of the page
+     to no clip extensively high diacritics. However, at the bottom, it
+     may clip extensively low diacritics.
+     */
+    bottom: calc(1em *(var(--max-descender-em) - var(--descender-em)));
+
+
+    /**
+     * align to top of box
+     * --ascender-em: move up to align baseline with top of the box
+     * --max-ascender-em: move down to align with top of the biggest cell descender
+
+    top: calc(1em *(var(--max-ascender-em) - var(--ascender-em)))
+     */
+}
+.actor_renderer-videoproof_array_v2-cell:first-child {
+    margin-left: 0;
 }
