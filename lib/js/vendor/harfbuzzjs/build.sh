@@ -11,7 +11,9 @@ else
    # of shape implemented. when the PR is through, this can fetch master
    # again ...
    # https://github.com/harfbuzz/harfbuzzjs/pull/97
-   git clone -b js-callbacks --single-branch --recursive --depth 1 git@github.com:harfbuzz/harfbuzzjs.git
+   # Added custom function exports, that the official version doesn't
+   # export (yet?)
+   git clone -b js-callbacks --single-branch --recursive --depth 1 -b TypeRoof-main git@github.com:graphicore/harfbuzzjs.git
    cd harfbuzzjs
 fi
 
