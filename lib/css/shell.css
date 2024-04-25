@@ -679,3 +679,8 @@ li.ui_key_moment_controller.active:not(:last-child) {
 .actor_renderer-videoproof_array_v2-cell:first-child {
     margin-left: 0;
 }
+
+.ui_axes_math, .ui_axes_math div {
+  padding: .3em;
+  outline: 1px dashed;
+}
