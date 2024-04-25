@@ -632,7 +632,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
      * flex with flex-wrap: wrap.
      */
     display: /*inline*/ flex;
-    justify-content: center; /* this is the actual text align */
+    justify-content: var(--cell-alignment, center); /* this is the actual text align */
 
     position: relative;
     width: calc(1em * (var(--widest-cell-em, 3)));
@@ -684,3 +684,105 @@ li.ui_key_moment_controller.active:not(:last-child) {
   padding: .3em;
   outline: 1px dashed;
 }
+
+:root {
+    /* Note: using \ to escape newlines works well in Chrome and Firefox
+     * but it destroys syntax highlighting in my editor. Actually, having
+     * a full stop at the end of this comment and some magic(?) number
+     * of characters in the last line restores syntax highlighting again.
+     */
+    --alignment-left-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='%23CCC' x1='0' y1='2' x2='6' y2='2' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='0' y1='6' x2='4' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-left-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='black' x1='0' y1='2' x2='6' y2='2' stroke-width='1'/>\
+            <line stroke='black' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='black' x1='0' y1='6' x2='4' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-center-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='%23CCC' x1='1' y1='2' x2='7' y2='2' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='2' y1='6' x2='6' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-center-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='black' x1='1' y1='2' x2='7' y2='2' stroke-width='1'/>\
+            <line stroke='black' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='black' x1='2' y1='6' x2='6' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-right-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='%23CCC' x1='8' y1='2' x2='2' y2='2' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='8' y1='4' x2='0' y2='4' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='8' y1='6' x2='4' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-right-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='black' x1='8' y1='2' x2='2' y2='2' stroke-width='1'/>\
+            <line stroke='black' x1='8' y1='4' x2='0' y2='4' stroke-width='1'/>\
+            <line stroke='black' x1='8' y1='6' x2='4' y2='6' stroke-width='1'/>\
+        </svg>");
+}
+
+.ui_alignment label {
+    display: block;
+}
+.ui_alignment-radio_icon{
+    display: none;
+}
+
+
+.ui_alignment input + .ui_alignment-radio_icon{
+    display: block;
+    font-size: inherit;
+    width: 3em;
+    height: 3em;
+    background: no-repeat;
+    background-size: cover;
+    background-position: center center;
+    margin: 0 auto;
+    background-color: white;
+    position: absolute;
+    z-index: 1;
+}
+
+.ui_alignment label.ui_alignment-radio_label {
+    display: inline-block;
+    vertical-align: text-top;
+    position: relative;
+    width: 3em;
+    height: 3em;
+    overflow: hidden;
+}
+.ui_alignment input {
+    position: absolute;
+    z-index: 0;
+}
+
+.ui_alignment input.ui_alignment-left + .ui_alignment-radio_icon {
+    background-image: var(--alignment-left-icon);
+}
+.ui_alignment input.ui_alignment-left:checked + .ui_alignment-radio_icon {
+    background-image: var(--alignment-left-active-icon);
+}
+
+.ui_alignment input.ui_alignment-center + .ui_alignment-radio_icon {
+    background-image: var(--alignment-center-icon);
+}
+.ui_alignment input.ui_alignment-center:checked + .ui_alignment-radio_icon {
+    background-image: var(--alignment-center-active-icon);
+}
+
+.ui_alignment input.ui_alignment-right + .ui_alignment-radio_icon {
+    background-image: var(--alignment-right-icon);
+}
+.ui_alignment input.ui_alignment-right:checked + .ui_alignment-radio_icon {
+    background-image: var(--alignment-right-active-icon);
+}
+
+.ui_alignment input.ui_alignment-justify + .ui_alignment-radio_icon {
+    background-image: var(--alignment-justify-icon);
+}
+.ui_alignment input.ui_alignment-justify:checked + .ui_alignment-radio_icon {
+    background-image: var(--alignment-justify-active-icon);
+}
+
