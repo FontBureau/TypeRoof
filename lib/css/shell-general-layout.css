@@ -19,6 +19,7 @@
     --transparency-indicator-bg-size: 15px 15px;
 
     --text-color: #121212;
+    --text-color-disabled: #888;
 }
 
 body {
@@ -57,8 +58,21 @@ body > .wrapper > .typeroof-ui_sidebar {
 
 body > .wrapper > .typeroof-main {
     grid-area: main;
-    overflow: auto;
     background: var(--background-color, magenta);
+    display: flex;
+    flex-direction: column;
+}
+
+/**
+ * With this configuration we can measure the size of .typeroof-layout
+ * to know how much space it has available without scrolling.
+ *
+ * Also, the controls in .typeroof-layout-before and
+ * .typeroof-layout-after will always stay visible.
+ */
+body > .wrapper > .typeroof-main >.typeroof-layout {
+    overflow: auto;
+    flex-grow: 1;
 }
 
 body > .wrapper > footer{

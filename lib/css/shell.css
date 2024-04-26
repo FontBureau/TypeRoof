@@ -5,6 +5,25 @@
     display: block;
 }
 
+/**
+ * Using .typeroof-ui as the class for containers within which the
+ * elements will be treated as typeroof ui components. Especially
+ * for the styling general html-elements (h1, h2, ...).
+ */
+.typeroof-ui :is(h1, h2, h3, h4, h5, h6){
+    margin-block-start: var(--gap-size);
+    margin-block-end: var(--gap-size);
+}
+.typeroof-ui :is(ol, ul) {
+    margin-block-start: var(--gap-size);
+    margin-block-end: var(--gap-size);
+}
+/* No margin for nested lists. */
+.typeroof-ui :is(ol, ul) :is(ul, ol) {
+    margin-block-start: 0;
+    margin-block-end: 0;
+}
+
 .key_moments_timeline-items {
     list-style: none;
     padding: 0;
@@ -156,12 +175,17 @@ li.ui_key_moment_controller.active:not(:last-child) {
     stroke-width: 5;
 }
 
-.stage-manager_actors * {
+:root {
     --indicator-padding: .2em;
     --drop-indicator-color: #333;
     --indentation-width: .7em;
 }
 
+.stage-manager_actors > ol:empty::before {
+  display: block;
+  content: "(empty: drop actor here)";
+  background-color: var(--list-item-odd-bg);
+}
 
 .stage-manager_actors li.odd-row {
     --background-base-color: var(--list-item-odd-bg);
@@ -170,6 +194,19 @@ li.ui_key_moment_controller.active:not(:last-child) {
 
 .stage-manager_actors > ol,
 .stage-manager_actors li.even-row {
+    --background-base-color: var(--list-item-even-bg);
+    background: var(--list-item-even-bg);
+}
+
+
+
+.ui_videoproof_array_layers-items > *:nth-child(odd) {
+    --background-base-color: var(--list-item-odd-bg);
+    background: var(--list-item-odd-bg);
+}
+
+.ui_videoproof_array_layers-items,
+.ui_videoproof_array_layers-items> *:nth-child(even){
     --background-base-color: var(--list-item-even-bg);
     background: var(--list-item-even-bg);
 }
@@ -189,12 +226,18 @@ li.ui_key_moment_controller.active:not(:last-child) {
     margin-inline-start: calc(var(--indentation-width, 1em) * var(--structural-depth, 0));
 }
 
+
+:is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *):is(.drop_target_indicator-before, .drop_target_indicator-after),
+
 .stage-manager_actors li.drop_target_indicator-before,
 .stage-manager_actors li.drop_target_indicator-after {
     background-position: calc(var(--indentation-width, 1em) * var(--structural-depth, 0)) 0;
     background-size: 10em auto;
     background-repeat: no-repeat;
 }
+
+:is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *):is(.drop_target_indicator-before),
+
 .stage-manager_actors li.drop_target_indicator-before {
     padding: var( --indicator-padding) 0 0 0;
     background-image: linear-gradient(
@@ -203,6 +246,8 @@ li.ui_key_moment_controller.active:not(:last-child) {
         var(--background-base-color) var(--indicator-padding)
     );
 }
+
+:is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *):is(.drop_target_indicator-after),
 
 .stage-manager_actors li.drop_target_indicator-after {
     padding: 0 0 var( --indicator-padding) 0;
@@ -455,3 +500,289 @@ li.ui_key_moment_controller.active:not(:last-child) {
     white-space: nowrap;
 
 }
+
+/** =>> START from Videoproof Array **/
+.fixed-line-breaks {
+    word-break: break-all;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-size: 36pt;
+    line-height: 1.5;
+    text-align: left;
+}
+
+/* where is this rule used? */
+.end-of-line:after {
+    display: block;
+    content: '';
+}
+
+.fixed-line-breaks div, .fixed-line-breaks span {
+    display: block;
+    white-space: nowrap;
+    word-break: normal;
+    word-wrap: normal;
+    overflow-wrap: normal;
+}
+
+.fixed-line-breaks span {
+    display: inline-block;
+    min-width: .1em;
+/* 	font: inherit; */
+    text-align: left;
+    margin-right: 0.3em;
+}
+
+/* used in contextual/kerning mode */
+.fixed-lines span {
+    display: inline;
+    margin-right: 0;
+    white-space: nowrap;
+}
+
+.actor_renderer-videoproof_array {
+    /**
+     * This way it scrolls vertically within the stage.
+     * FIXME:CAUTION: May be too simplistic and require rethinking but
+     * looks good so far. In a stand-alone layout, as opposed to in the
+     * stage-and-actors layout, we might need a different handling.
+     * I.e. in the case of usage within an movie/film-like
+     * non-interactive animation, it is wrong to add manual scrolling to
+     * this! However, so far there's no distinction made between
+     * interactive and non-interactive usage. Overflow setup could be
+     * another property.
+     */
+    height: 100%;
+    overflow-y: auto;
+}
+/** <<= END from Videoproof Array **/
+
+
+.ui_checkbox-extended.not-available {
+    color: var(--text-color-disabled);
+}
+
+
+.ui_key_moments_link_navigation-list,
+.ui_more_raps-list {
+    list-style: none;
+    padding: 0;
+}
+
+.ui_more_raps-list_item.active {
+    --animation-local-impact: 1;
+}
+
+.ui_key_moments_link_navigation-list_item,
+.ui_more_raps-list_item.active
+{
+    /*
+    color: oklch(calc(var(--animation-local-impact, 0) * 67.35%) 0.217 12.23);
+    */
+    color: hsl(0, 100%, calc(50% * var(--animation-local-impact, 0)));
+}
+.ui_key_moments_link_navigation-list_item-input,
+.ui_more_raps-list_item-input {
+    text-decoration: none;
+}
+
+.ui_videoproof_array_layers-items {
+    padding: 0;
+}
+
+.ui_videoproof_array_layers-items > *{
+    display: list-item;
+    list-style: none;
+}
+
+.dragging {
+    outline: .05em solid grey;
+}
+
+.actor_renderer-videoproof_array_v2 {
+    /* configuration in CSS is not yet a common praxis in this project
+     * line-height: 1.5;
+     */
+    --line-height-em: 1.5;
+    --gap-widht-em: 0.1;
+
+    display: block flex;
+    /*row-gap: .4em;*/
+    /* Better than having display: inline children as together with
+     * "flex-wrap: wrap" the children have line breaks, but with column-gap
+     * we can control the gap between children without having to remove
+     * e.g. the margin-right on a last element of the line.
+     */
+    flex-wrap: wrap;
+
+    column-gap: calc(1pt * var(--font-size-pt, 24) * var(--gap-widht-em, 0));
+    row-gap: 0em;
+}
+
+.typeroof-layout > .actor_renderer-videoproof_array_v2 {
+    /* To make sure the outline of the cell boxes is visible at the top */
+    margin-top: var(--gap-size);
+}
+
+.actor_renderer-videoproof_array_v2-zone {
+    font-size: calc(1pt * var(--font-size-pt, 24));
+    height: calc(1em * var(--line-height-em, 1));
+
+    /* inline is not required anymore, as the parent lays these out as
+     * flex with flex-wrap: wrap.
+     */
+    display: /*inline*/ flex;
+    justify-content: var(--cell-alignment, center); /* this is the actual text align */
+
+    position: relative;
+    width: calc(1em * (var(--widest-cell-em, 3)));
+    /*outline: 1px solid;*/
+}
+.actor_renderer-videoproof_array_v2-cell {
+    position: absolute;
+    line-height: initial;
+
+    /* This is a nice feature to turn on optionally, as it accurateley
+     * draws the glyph box and that in the text color, so it is easy
+     * to understand.
+     */
+    /* outline: 1px solid; */
+
+
+    /*
+     * FIXME: good feature additionally would be drawing the baseline
+     * optionally.
+     */
+
+    /* The box height seems rounded to */
+
+    /**
+     * align to bottom of box
+     * --descender-em: move down to align baseline with bottom of the box
+     * --max-descender-em: move up to align with bottom of the biggest cell descender
+
+     This is good because it leaves some space at the to of the page
+     to no clip extensively high diacritics. However, at the bottom, it
+     may clip extensively low diacritics.
+     */
+    bottom: calc(1em *(var(--max-descender-em) - var(--descender-em)));
+
+
+    /**
+     * align to top of box
+     * --ascender-em: move up to align baseline with top of the box
+     * --max-ascender-em: move down to align with top of the biggest cell descender
+
+    top: calc(1em *(var(--max-ascender-em) - var(--ascender-em)))
+     */
+}
+.actor_renderer-videoproof_array_v2-cell:first-child {
+    margin-left: 0;
+}
+
+.ui_axes_math, .ui_axes_math div {
+  padding: .3em;
+  outline: 1px dashed;
+}
+
+:root {
+    /* Note: using \ to escape newlines works well in Chrome and Firefox
+     * but it destroys syntax highlighting in my editor. Actually, having
+     * a full stop at the end of this comment and some magic(?) number
+     * of characters in the last line restores syntax highlighting again.
+     */
+    --alignment-left-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='%23CCC' x1='0' y1='2' x2='6' y2='2' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='0' y1='6' x2='4' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-left-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='black' x1='0' y1='2' x2='6' y2='2' stroke-width='1'/>\
+            <line stroke='black' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='black' x1='0' y1='6' x2='4' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-center-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='%23CCC' x1='1' y1='2' x2='7' y2='2' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='2' y1='6' x2='6' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-center-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='black' x1='1' y1='2' x2='7' y2='2' stroke-width='1'/>\
+            <line stroke='black' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='black' x1='2' y1='6' x2='6' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-right-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='%23CCC' x1='8' y1='2' x2='2' y2='2' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='8' y1='4' x2='0' y2='4' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='8' y1='6' x2='4' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-right-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='black' x1='8' y1='2' x2='2' y2='2' stroke-width='1'/>\
+            <line stroke='black' x1='8' y1='4' x2='0' y2='4' stroke-width='1'/>\
+            <line stroke='black' x1='8' y1='6' x2='4' y2='6' stroke-width='1'/>\
+        </svg>");
+}
+
+.ui_alignment label {
+    display: block;
+}
+.ui_alignment-radio_icon{
+    display: none;
+}
+
+
+.ui_alignment input + .ui_alignment-radio_icon{
+    display: block;
+    font-size: inherit;
+    width: 3em;
+    height: 3em;
+    background: no-repeat;
+    background-size: cover;
+    background-position: center center;
+    margin: 0 auto;
+    background-color: white;
+    position: absolute;
+    z-index: 1;
+}
+
+.ui_alignment label.ui_alignment-radio_label {
+    display: inline-block;
+    vertical-align: text-top;
+    position: relative;
+    width: 3em;
+    height: 3em;
+    overflow: hidden;
+}
+.ui_alignment input {
+    position: absolute;
+    z-index: 0;
+}
+
+.ui_alignment input.ui_alignment-left + .ui_alignment-radio_icon {
+    background-image: var(--alignment-left-icon);
+}
+.ui_alignment input.ui_alignment-left:checked + .ui_alignment-radio_icon {
+    background-image: var(--alignment-left-active-icon);
+}
+
+.ui_alignment input.ui_alignment-center + .ui_alignment-radio_icon {
+    background-image: var(--alignment-center-icon);
+}
+.ui_alignment input.ui_alignment-center:checked + .ui_alignment-radio_icon {
+    background-image: var(--alignment-center-active-icon);
+}
+
+.ui_alignment input.ui_alignment-right + .ui_alignment-radio_icon {
+    background-image: var(--alignment-right-icon);
+}
+.ui_alignment input.ui_alignment-right:checked + .ui_alignment-radio_icon {
+    background-image: var(--alignment-right-active-icon);
+}
+
+.ui_alignment input.ui_alignment-justify + .ui_alignment-radio_icon {
+    background-image: var(--alignment-justify-icon);
+}
+.ui_alignment input.ui_alignment-justify:checked + .ui_alignment-radio_icon {
+    background-image: var(--alignment-justify-active-icon);
+}
+
