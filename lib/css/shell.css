@@ -829,3 +829,12 @@ li.ui_key_moment_controller.active:not(:last-child) {
     background-image: var(--alignment-justify-active-icon);
 }
 
+.ui_axes_math-consecutive_locations_summary-list li {
+    list-style-type: "× ";
+}
+
+.ui_axes_math-consecutive_locations_summary-list li:first-child {
+  list-style-type: "";
+}
+
+
