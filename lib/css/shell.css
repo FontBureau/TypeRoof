@@ -833,8 +833,20 @@ li.ui_key_moment_controller.active:not(:last-child) {
     list-style-type: "× ";
 }
 
-.ui_axes_math-consecutive_locations_summary-list li:first-child {
+.ui_axes_math-consecutive_locations_summary-list li:first-child,
+.ui_axes_math-locations_sum-items > *:first-child {
   list-style-type: "";
 }
 
+.ui_axes_math-locations_sum-items > * {
+    display: list-item;
+    list-style-type: "+ ";
+}
 
+input:valid {
+    border: 1px solid green;
+}
+
+input:invalid {
+    border: 1px solid red;
+}
