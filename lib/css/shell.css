@@ -723,11 +723,6 @@ li.ui_key_moment_controller.active:not(:last-child) {
     margin-left: 0;
 }
 
-.ui_axes_math, .ui_axes_math div {
-  padding: .3em;
-  outline: 1px dashed;
-}
-
 :root {
     /* Note: using \ to escape newlines works well in Chrome and Firefox
      * but it destroys syntax highlighting in my editor. Actually, having
@@ -841,6 +836,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
 .ui_axes_math-locations_sum-items > * {
     display: list-item;
     list-style-type: "+ ";
+    list-style-position: inside;
 }
 
 input:valid {
@@ -850,6 +846,13 @@ input:valid {
 input:invalid {
     border: 1px solid red;
 }
+
+/*
+.ui_axes_math, .ui_axes_math div {
+  padding: .3em;
+  outline: 1px dashed;
+}
+*/
 
 /*
  * hide
@@ -874,6 +877,21 @@ input:invalid {
 .ui-axes_math-location_value-output
 {
     display: initial;
+}
+
+/* this coulde be handled as above with focus-within and <output>*/
+.ui_axes_math-locations_product-item .ui_axes_math-locations_product-tag {
+    font-weight: bold;
+    font-size: 1em;
+    border: none;
+}
+
+.ui_axes_math-locations_product-item
+    :is(
+        .ui_axes_math-locations_product-tag,
+        .ui-axes_math-location_value){
+    display: inline-block;
+    margin-right: .5em;
 }
 
 
