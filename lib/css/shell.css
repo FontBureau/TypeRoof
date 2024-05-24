@@ -850,3 +850,30 @@ input:valid {
 input:invalid {
     border: 1px solid red;
 }
+
+/*
+ * hide
+ *    - output: when focused
+ *    - inputs: when not focused (by default)
+ */
+.ui-axes_math-location_value:focus-within .ui-axes_math-location_value-output,
+.ui-axes_math-location_value :is(
+    .ui-axes_math-location_value-logical_value,
+    .ui-axes_math-location_value-numeric_value) {
+    display: none;
+}
+/*
+ * show
+ *    - output: when not focused (default)
+ *    - inputs: when focused
+ */
+.ui-axes_math-location_value:focus-within :is(
+    .ui-axes_math-location_value-logical_value,
+    .ui-axes_math-location_value-numeric_value
+    ),
+.ui-axes_math-location_value-output
+{
+    display: initial;
+}
+
+
