@@ -837,7 +837,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 .ui_axes_math-locations_sum-items > * {
     display: list-item;
-    list-style-type: "+";
+    list-style-type: "+ ";
 }
 
 input:valid {
@@ -861,29 +861,38 @@ input:invalid {
  *    - inputs: when not focused (by default)
  */
 .ui-axes_math-location_value:focus-within .ui-axes_math-location_value-output,
-.ui-axes_math-location_value :is(
-    .ui-axes_math-location_value-logical_value,
-    .ui-axes_math-location_value-numeric_value) {
+.ui-axes_math-location_value-drag_handle,
+.ui-axes_math-location_value .ui-axes_math-location_value-logical_value,
+.ui-axes_math-location_value .ui-axes_math-location_value-numeric_value,
+.ui-axes_math-location_value.dragging .ui-axes_math-location_value-logical_value,
+.ui-axes_math-location_value.dragging .ui-axes_math-location_value-numeric_value,
+.ui-axes_math-location_value:focus-within.dragging .ui-axes_math-location_value-logical_value,
+.ui-axes_math-location_value:focus-within.dragging .ui-axes_math-location_value-numeric_value
+{
     display: none;
 }
+
+
 /*
  * show
  *    - output: when not focused (default)
  *    - inputs: when focused
  */
-.ui-axes_math-location_value:focus-within :is(
-    .ui-axes_math-location_value-logical_value,
-    .ui-axes_math-location_value-numeric_value
-    ),
-.ui-axes_math-location_value-output
-{
+.ui-axes_math-location_value:focus-within .ui-axes_math-location_value-logical_value,
+.ui-axes_math-location_value:focus-within .ui-axes_math-location_value-numeric_value,
+.ui-axes_math-location_value:focus-within .ui-axes_math-location_value-drag_handle,
+.ui-axes_math-location_value.dragging .ui-axes_math-location_value-output,
+.ui-axes_math-location_value.dragging .ui-axes_math-location_value-drag_handle {
     display: initial;
 }
 
+.ui-axes_math-location_value-numeric_value{
+    width: calc(5 * .75em);
+}
 /* this coulde be handled as above with focus-within and <output>,
  * the styling would be easier, especially the typography
  */
-.ui_axes_math-map-item .ui_axes_math-axis_tag {
+.ui_axes_math-map-item .ui_axes_math-axis_tag-input {
     font-weight: bold;
     font-size: 1em;
     border: none;
@@ -895,14 +904,21 @@ input:invalid {
     font-variation-settings: "opsz" 12;
     font-size: 1rem;
     font-weight: 600;
+    width: 3em;
 }
 
 .ui_axes_math-map-item
-    :is(
+    > :is(
         .ui_axes_math-axis_tag,
-        .ui-axes_math-location_value){
+        .ui-axes_math-location_value,
+        .drag_handle){
     display: inline-block;
     margin-right: .5em;
+}
+
+.ui_axes_math-axis_tag:has(+ .drag_handle) {
+    display: inline-block;
+    margin-right: .0;
 }
 
 
