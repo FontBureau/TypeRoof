@@ -274,7 +274,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
 :is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
     .ui_axes_math-map, .ui_axes_math-map > *,
     .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
-    .ui_axes_math-map-item, .ui_axes_math-map-item > *
+    .ui_axes_math-map-item, .ui_axes_math-map-item > .ui_axes_math-axis_tag
 ):is(.drop_target_indicator-before, .drop_target_indicator-after),
 
 .stage-manager_actors li.drop_target_indicator-before,
@@ -287,7 +287,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
 :is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
     .ui_axes_math-map, .ui_axes_math-map > *,
     .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
-    .ui_axes_math-map-item, .ui_axes_math-map-item > *
+    .ui_axes_math-map-item, .ui_axes_math-map-item > .ui_axes_math-axis_tag
 ):is(.drop_target_indicator-before),
 
 .stage-manager_actors li.drop_target_indicator-before {
@@ -302,7 +302,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
 :is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
     .ui_axes_math-map, .ui_axes_math-map > *,
     .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
-    .ui_axes_math-map-item, .ui_axes_math-map-item > *
+    .ui_axes_math-map-item, .ui_axes_math-map-item > .ui_axes_math-axis_tag
 ):is(.drop_target_indicator-after),
 
 .stage-manager_actors li.drop_target_indicator-after {
@@ -313,6 +313,14 @@ li.ui_key_moment_controller.active:not(:last-child) {
         var(--background-base-color) var(--indicator-padding)
     );
 }
+
+.ui-axes_math-location_value.drop_target_indicator-after{
+    border-right: .3em inset black;
+}
+.ui-axes_math-location_value.drop_target_indicator-before {
+    border-left: .3em inset black;
+}
+
 
 .stage-manager_actors .drop_target_indicator-after:last-child  {
     padding: calc(var( --indicator-padding) * 0.5) 0 var(--indicator-padding) 0;
