@@ -235,9 +235,11 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 
 
+
 /* FIXME: make alternating */
 .ui_axes_math-map, .ui_axes_math-map > *,
-.ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *{
+.ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
+.ui_axes_math-map-item, .ui_axes_math-map-item > * {
     --background-base-color: var(--list-item-even-bg);
     background: var(--list-item-even-bg);
 }
@@ -271,7 +273,8 @@ li.ui_key_moment_controller.active:not(:last-child) {
 
 :is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
     .ui_axes_math-map, .ui_axes_math-map > *,
-    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *
+    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
+    .ui_axes_math-map-item, .ui_axes_math-map-item > *
 ):is(.drop_target_indicator-before, .drop_target_indicator-after),
 
 .stage-manager_actors li.drop_target_indicator-before,
@@ -283,7 +286,8 @@ li.ui_key_moment_controller.active:not(:last-child) {
 
 :is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
     .ui_axes_math-map, .ui_axes_math-map > *,
-    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *
+    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
+    .ui_axes_math-map-item, .ui_axes_math-map-item > *
 ):is(.drop_target_indicator-before),
 
 .stage-manager_actors li.drop_target_indicator-before {
@@ -297,7 +301,8 @@ li.ui_key_moment_controller.active:not(:last-child) {
 
 :is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
     .ui_axes_math-map, .ui_axes_math-map > *,
-    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *
+    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
+    .ui_axes_math-map-item, .ui_axes_math-map-item > *
 ):is(.drop_target_indicator-after),
 
 .stage-manager_actors li.drop_target_indicator-after {
