@@ -289,9 +289,9 @@ li.ui_key_moment_controller.active:not(:last-child) {
     .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
     .ui_axes_math-map-item, .ui_axes_math-map-item > .ui_axes_math-axis_tag
 ):is(.drop_target_indicator-before),
-
 .stage-manager_actors li.drop_target_indicator-before {
-    padding: var( --indicator-padding) 0 0 0;
+    --local-indicator-padding: calc(var(--indicator-padding) + var(--own-padding-top, 00em));
+    padding: var(--local-indicator-padding) 0 var(--own-padding-bottom, 0em) 0;
     background-image: linear-gradient(
         to bottom,
         var(--drop-indicator-color) var(--indicator-padding),
@@ -304,21 +304,14 @@ li.ui_key_moment_controller.active:not(:last-child) {
     .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
     .ui_axes_math-map-item, .ui_axes_math-map-item > .ui_axes_math-axis_tag
 ):is(.drop_target_indicator-after),
-
 .stage-manager_actors li.drop_target_indicator-after {
-    padding: 0 0 var( --indicator-padding) 0;
+    --local-indicator-padding: calc(var(--indicator-padding) + var(--own-padding-bottom, 0em));
+    padding: var(--own-padding-top, 0em) 0 var(--local-indicator-padding) 0;
     background-image: linear-gradient(
         to top,
         var(--drop-indicator-color) var(--indicator-padding),
         var(--background-base-color) var(--indicator-padding)
     );
-}
-
-.ui-axes_math-location_value.drop_target_indicator-after{
-    border-right: .3em inset black;
-}
-.ui-axes_math-location_value.drop_target_indicator-before {
-    border-left: .3em inset black;
 }
 
 
@@ -852,20 +845,16 @@ li.ui_key_moment_controller.active:not(:last-child) {
     background-image: var(--alignment-justify-active-icon);
 }
 
-.ui_axes_math-consecutive_locations_summary-list li {
-    list-style-type: "× ";
-}
-
-.ui_axes_math-consecutive_locations_summary-list li:first-child,
-.ui_axes_math-locations_sum-items > *:first-child {
-  list-style-type: "";
-}
 .ui_axes_math-locations_sum-items {
-  margin-left: 1em; /* space for the list-style-type */
+    margin-left: var(--indentation-width, 1em); /* space for the list-style-type */
+    --own-padding-top: 0.25em;
+    --own-padding-bottom: 0em;
 }
 .ui_axes_math-locations_sum-items > * {
     display: list-item;
-    list-style-type: "+ ";
+    list-style: none;
+    padding-top: var(--own-padding-top, 0);
+    padding-bottom: var(--own-padding-bottom, 0);
 }
 
 input:valid {
@@ -876,12 +865,12 @@ input:invalid {
     border: 1px solid red;
 }
 
-/*
-.ui_axes_math, .ui_axes_math div {
-  padding: .3em;
-  outline: 1px dashed;
+
+.ui_axes_math-map-label, .ui_axes_math-locations_sum-label {
+    padding: 0 .2em;
+    border: .1em solid black;
 }
-*/
+
 
 /*
  * hide
@@ -935,16 +924,42 @@ input:invalid {
     width: 3em;
 }
 
+.ui_axes_math-map-item {
+    --padding-horizontal: .25em;
+    --drop-target-indicator-width: .2em;
+}
+
 .ui_axes_math-map-item
     > :is(
         .ui_axes_math-axis_tag,
-        .ui-axes_math-location_value,
-        .drag_handle){
+        .drag_handle) {
     display: inline-block;
-    margin-right: .5em;
+    padding-right: var(--padding-horizontal);
+}
+.ui_axes_math-axis_tag:has(+ .drag_handle) {
+    padding-right: 0;
 }
 
-.ui_axes_math-axis_tag:has(+ .drag_handle) {
+.ui_axes_math-map-item > .ui-axes_math-location_value {
     display: inline-block;
-    margin-right: .0;
+    padding: 0 var(--padding-horizontal);
 }
+
+.ui-axes_math-location_value.drop_target_indicator-after{
+    border-right: var( --drop-target-indicator-width) solid var(--drop-indicator-color);
+    padding-right: calc(var(--padding-horizontal) - var( --drop-target-indicator-width) / 2);
+}
+
+.ui-axes_math-location_value.drop_target_indicator-after + .ui-axes_math-location_value {
+    padding-left: calc(var(--padding-horizontal) - var( --drop-target-indicator-width) / 2);
+}
+
+.ui-axes_math-location_value.drop_target_indicator-before {
+    border-left: var(--drop-target-indicator-width) solid var(--drop-indicator-color);
+    padding-left: calc(var(--padding-horizontal) - var( --drop-target-indicator-width) / 2);
+}
+
+:is(.ui_axes_math-axis_tag, .drag_handle, .ui-axes_math-location_value):has(+ .drop_target_indicator-before){
+    padding-right: calc(var(--padding-horizontal) - var( --drop-target-indicator-width) / 2);
+}
+
