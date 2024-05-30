@@ -218,8 +218,14 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 
 .stage-manager_actors > ol:empty::before {
+    content: "(empty: drop actor here)";
+}
+.ui_axes_math-locations_sum-items:empty::before {
+    content: "(empty: drop item here)";
+}
+.stage-manager_actors > ol:empty::before,
+.ui_axes_math-locations_sum-items:empty::before {
   display: block;
-  content: "(empty: drop actor here)";
   background-color: var(--list-item-odd-bg);
 }
 
@@ -338,6 +344,14 @@ li.ui_key_moment_controller.active:not(:last-child) {
     );
     background-size: 10em auto;
     background-repeat: no-repeat;
+}
+
+.ui_axes_math-locations_sum-items:empty::before {
+    padding: var(--indicator-padding);
+}
+.ui_axes_math-locations_sum-items.drop_target_indicator-insert::before {
+    border:var(--indicator-padding) solid var(--drop-indicator-color);
+    padding: 0;
 }
 
 .stage-manager_actors li > * {
