@@ -24,6 +24,36 @@
     margin-block-end: 0;
 }
 
+.typeroof-ui{
+    font-size: .8rem;
+    font-variation-settings: "opsz" 9;
+}
+
+.typeroof-ui > :is(
+        .ui_font-select,
+        .ui_layout_select,
+    ):is(label, .label) > span:first-child,
+.ui_select_task_automation .ui_plain_select-label {
+    display: block;
+    margin: .5em 0 .35em 0;
+}
+
+.typeroof-ui > :is(
+        .ui_font-select,
+        .ui_layout_select,
+    ):is(label, .label) > span:first-child,
+.ui_select_task_automation .ui_plain_select-label,
+fieldset > legend {
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* Should probably not use <strong> there! */
+.typeroof-ui label > :is(strong, span):first-child{
+    font-weight: 600;
+}
+
 .key_moments_timeline-items {
     list-style: none;
     padding: 0;
@@ -118,12 +148,21 @@
 .stage_and_actors-layer > svg circle {
 }
 
+.stage-manager{
+    padding: 0;
+    margin-bottom: 1em;
+}
 .stage-manager_actors li.active > button span {
     font-weight: 700;
 }
 
 .ui_toggle_key_moment_button.active {
     font-weight: 700;
+}
+
+.key_moments_controls .key_moments_controls-insert_moment::before {
+  content: "⎀ ";
+  line-height: 1em;
 }
 
 ol.ui_zone-key_moments_main {
@@ -144,9 +183,6 @@ li.ui_key_moment_controller.active:not(:last-child) {
     padding-bottom: 1em;
 }
 
-.stage-manager_actors{
-    margin-bottom: 1em;
-}
 .stage-manager_actors ol {
     list-style: none;
     padding-inline-start: 0;
@@ -401,6 +437,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
 .ui_color_chooser-label_toggle {
     display: list-item;
     list-style-type: disclosure-closed;
+    list-style-position: inside;
 }
 
 .ui_color_chooser.settings_visible .ui_color_chooser-label_toggle {
@@ -567,6 +604,12 @@ li.ui_key_moment_controller.active:not(:last-child) {
 .ui_more_raps-list {
     list-style: none;
     padding: 0;
+    font-size: .8em;
+    font-variation-settings: "opsz" 7;
+}
+
+:is(.ui_key_moments_link_navigation-list, .ui_more_raps-list) li {
+   margin: .25em 0
 }
 
 .ui_more_raps-list_item.active {

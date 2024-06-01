@@ -130,6 +130,27 @@ button:hover, form button:hover {
     box-shadow: rgba(43, 43, 43, 0.15) 0 0 0.625rem;
 }
 
+fieldset{
+    border: 1px solid #b7b4b0;
+    border-radius: 0.125rem;
+    min-inline-size: min-content;
+    margin-inline: 0;
+    padding-inline: .2em;
+}
+
+fieldset {
+    /*
+     * The goal here is to create a similar distance between the borders
+     * of fieldsets with legend and fieldsets without. A fieldset with
+     * legend requires less margin, as the legend pushes it down as well.
+     */
+    margin-block-start: .9em;
+}
+fieldset:has(> legend) {
+    margin-block-start: .5em;
+}
+
+
 footer, header {
     background-color: #121212;
     padding: 1rem;
