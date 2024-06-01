@@ -20,13 +20,13 @@
 
 @font-face {
   font-family: RobotoFlex;
-  src:url("../assets/fonts/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].woff") format("woff");
+  src:url("../assets/fonts/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].woff2") format("woff2");
   font-weight:100 900;
 }
 
 @font-face {
   font-family: RobotoFlex;
-  src:url("../assets/fonts/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].woff") format("woff");
+  src:url("../assets/fonts/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].woff2") format("woff2");
   font-style:italic;
   font-weight:100 900;
 }
