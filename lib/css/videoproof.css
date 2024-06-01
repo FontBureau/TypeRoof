@@ -524,6 +524,7 @@ ul.sidebar-list {
 ul.sidebar-list li {
 	font-family: RobotoFlex !important;
 	font-size: .8em;
+	font-variation-settings: "opsz" 7;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
@@ -537,7 +538,6 @@ ul.sidebar-list li.current {
 ul.sidebar-list a {
 	color: inherit;
 	cursor: pointer;
-	font-variation-settings: normal !important;
 }
 
 ul.sidebar-list a:hover {
