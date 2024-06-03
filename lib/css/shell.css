@@ -933,7 +933,7 @@ input:invalid {
     /* body text setup, it's hard to inherit for <input>*/
     font-family: RobotoFlex, sans-serif;
     font-variation-settings: "opsz" 12;
-    font-size: 1rem;
+    font-size: inherit;
     font-weight: 600;
     width: 3em;
 }
@@ -977,3 +977,29 @@ input:invalid {
     padding-right: calc(var(--padding-horizontal) - var( --drop-target-indicator-width) / 2);
 }
 
+.ui_axes_math-map-tools{
+    display: inline-block;
+    margin-left: .5em;
+    vertical-align: middle;
+}
+.ui_axes_math-map-tools > * {
+    display: none;
+}
+:focus-within > .ui_axes_math-map-tools > * {
+    display: initial;
+}
+
+.ui-button-input:disabled {
+  color: lightgray;
+}
+
+.ui_axes_math-map-tools :is(.ui_axes_math-axis_tag-input,
+.ui-button) {
+    font-size: inherit;
+    padding-block: 0;
+}
+
+.ui_axes_math-map_product-item:has(> :last-child:not(.ui-axes_math-location_value))::after {
+    content: " (empty: add item here) ";
+    background: var(--list-item-odd-bg);
+}
