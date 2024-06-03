@@ -223,6 +223,10 @@ li.ui_key_moment_controller.active:not(:last-child) {
 .ui_axes_math-locations_sum-items:empty::before {
     content: "(empty: drop item here)";
 }
+.ui-axes_math-location_values:empty::before {
+    content: " (empty: add item here) ";
+    background: var(--list-item-odd-bg);
+}
 .stage-manager_actors > ol:empty::before,
 .ui_axes_math-locations_sum-items:empty::before {
   display: block;
@@ -346,10 +350,12 @@ li.ui_key_moment_controller.active:not(:last-child) {
     background-repeat: no-repeat;
 }
 
-.ui_axes_math-locations_sum-items:empty::before {
+.ui_axes_math-locations_sum-items:empty::before,
+.ui-axes_math-location_values:empty::before {
     padding: var(--indicator-padding);
 }
-.ui_axes_math-locations_sum-items.drop_target_indicator-insert::before {
+.ui_axes_math-locations_sum-items.drop_target_indicator-insert::before,
+.ui-axes_math-location_values.drop_target_indicator-insert::before {
     border:var(--indicator-padding) solid var(--drop-indicator-color);
     padding: 0;
 }
@@ -950,11 +956,17 @@ input:invalid {
     display: inline-block;
     padding-right: var(--padding-horizontal);
 }
+
+.ui_axes_math-map-item .ui-axes_math-location_values{
+    display: inline;
+}
 .ui_axes_math-axis_tag:has(+ .drag_handle) {
     padding-right: 0;
 }
 
-.ui_axes_math-map-item > .ui-axes_math-location_value {
+
+.ui_axes_math-map-item > .ui-axes_math-location_value,
+.ui-axes_math-location_values > .ui-axes_math-location_value {
     display: inline-block;
     padding: 0 var(--padding-horizontal);
 }
@@ -997,9 +1009,4 @@ input:invalid {
 .ui-button) {
     font-size: inherit;
     padding-block: 0;
-}
-
-.ui_axes_math-map_product-item:has(> :last-child:not(.ui-axes_math-location_value))::after {
-    content: " (empty: add item here) ";
-    background: var(--list-item-odd-bg);
 }
