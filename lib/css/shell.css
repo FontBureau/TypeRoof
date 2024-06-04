@@ -43,6 +43,7 @@
         .ui_layout_select,
     ):is(label, .label) > span:first-child,
 .ui_select_task_automation .ui_plain_select-label,
+.ui_axes_math > label,
 fieldset > legend {
     font-weight: 600;
     letter-spacing: 0.05em;
@@ -220,7 +221,8 @@ li.ui_key_moment_controller.active:not(:last-child) {
 .stage-manager_actors > ol:empty::before {
     content: "(empty: drop actor here)";
 }
-.ui_axes_math-locations_sum-items:empty::before {
+.ui_axes_math-locations_sum-items:empty::before,
+.ui_axes_math-map_product-items:empty::before {
     content: "(empty: drop item here)";
 }
 .ui-axes_math-location_values:empty::before {
@@ -228,7 +230,8 @@ li.ui_key_moment_controller.active:not(:last-child) {
     background: var(--list-item-odd-bg);
 }
 .stage-manager_actors > ol:empty::before,
-.ui_axes_math-locations_sum-items:empty::before {
+.ui_axes_math-locations_sum-items:empty::before,
+.ui_axes_math-map_product-items:empty::before {
   display: block;
   background-color: var(--list-item-odd-bg);
 }
@@ -351,10 +354,12 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 
 .ui_axes_math-locations_sum-items:empty::before,
+.ui_axes_math-map_product-items:empty::before,
 .ui-axes_math-location_values:empty::before {
     padding: var(--indicator-padding);
 }
 .ui_axes_math-locations_sum-items.drop_target_indicator-insert::before,
+.ui_axes_math-map_product-items.drop_target_indicator-insert::before,
 .ui-axes_math-location_values.drop_target_indicator-insert::before {
     border:var(--indicator-padding) solid var(--drop-indicator-color);
     padding: 0;
