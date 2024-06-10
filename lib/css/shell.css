@@ -367,6 +367,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
 
 .stage-manager_actors li > * {
     vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
 }
 
 .drag_handle{
@@ -998,6 +999,7 @@ input:invalid {
     display: inline-block;
     margin-left: .5em;
     vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
 }
 .ui_axes_math-map-tools > * {
     display: none;

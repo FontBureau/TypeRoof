@@ -63,6 +63,7 @@ footer li::after{
     color: white;
     line-height: .5em; /* basically reset the 2 em font-size to 1em*/
     vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
     overflow: hidden;
 }
 
@@ -110,6 +111,7 @@ body.dropzone::after {
 	font-size: 3rem;
 	text-align: center;
 	vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
 	padding: 40% 1rem;
 	content: "Drop your own font file(s) here";
 	z-index: 1000;
@@ -174,6 +176,7 @@ body.dropzone::after {
 #controls .color_chooser label > *,
 #controls .color_chooser .colors_chooser-invert {
     vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
     height: 2.5em;
     line-height: 1;
     border-width: 1px;
@@ -288,6 +291,7 @@ input[type=range][disabled] {
 #colors > * {
 	display: inline-block;
 	vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
 }
 
 #colors button {
@@ -311,7 +315,9 @@ input[type=range][disabled] {
 	border: 0;
 	margin: 0 0.333em;
 	vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
 }
+
 
 /* GLYPH GROUPS */
 
@@ -467,12 +473,14 @@ input[type=range][disabled] {
         border-radius: .5em;
         box-shadow: 2px 2px 2px grey;
         vertical-align: middle;
+        vertical-align: -webkit-baseline-middle;
         margin: 0 .3em;
 }
 
 #animation-controls button svg {
     height: 2em;
     vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
     fill: white
 }
 
@@ -867,6 +875,7 @@ input.font_leading-mode:checked + .font_leading-mode_label::after {
     content: counter(fontsize);
     font-size: min(.7em, var(--toggle-edit-size));
     vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
 }
 
 

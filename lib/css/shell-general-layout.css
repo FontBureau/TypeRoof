@@ -183,6 +183,7 @@ footer li::after{
     color: white;
     line-height: .5em; /* basically reset the 2 em font-size to 1em*/
     vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
     overflow: hidden;
 }
 
