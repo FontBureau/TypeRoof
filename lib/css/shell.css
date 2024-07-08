@@ -1071,7 +1071,7 @@ input:invalid {
     list-style-type: disclosure-closed;
     list-style-position: inside;
 }
-.ui_collapsible_mixin-open :is(legend) {
+.ui_collapsible_mixin-open > :is(legend) {
     list-style-type: disclosure-open;
 }
 
@@ -1080,4 +1080,14 @@ input:invalid {
 }
 .ui_collapsible_mixin-open {
     padding-block: 0.35em 0.625em;
+}
+
+.ui-dialog_openers-items {
+  margin: 0;
+  list-style: inside square;
+  padding: 0;
+}
+
+.ui-dialog_openers-item-button {
+  text-decoration: none;
 }
