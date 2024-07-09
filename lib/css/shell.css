@@ -1091,3 +1091,10 @@ input:invalid {
 .ui-dialog_openers-item-button {
   text-decoration: none;
 }
+
+.ui-dialog-manage_state-serialize_output {
+  white-space: pre;
+  width: 80vw;
+  display: block;
+  overflow: auto;
+}
