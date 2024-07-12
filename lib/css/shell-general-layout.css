@@ -118,6 +118,7 @@ button, form button {
     font-variation-settings: "opsz" 14;
     transition: all 75ms linear;
     white-space: nowrap;
+    line-height: 1.5em;
 }
 
 form button {

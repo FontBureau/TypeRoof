@@ -1038,3 +1038,13 @@ input:invalid {
 .ui_axes_math .ui_key_moments_link_navigation-list {
   margin-block-start: 0;
 }
+
+
+.ui_time_control .ui_time_control_circle {
+    display: block;
+    margin: 0 auto;
+}
+
+.ui_time_control .ui_time_control-duration input{
+    width: 6em;
+}
