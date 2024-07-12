@@ -1022,3 +1022,19 @@ input:invalid {
 .ui_axes_math > .ui_axes_math-locations_sum > :is(.ui_axes_math-locations_sum-drag_handle, .ui_axes_math-locations_sum-label){
     display: none;
 }
+
+.ui_axes_math > .ui_axes_math-locations_sum > .ui_axes_math-locations_sum-items {
+    margin-left: 0;
+}
+
+.ui_axes_math .ui_key_moments_link_navigation .ui_key_moments_link_navigation-label{
+    font-weight: 600;
+}
+
+.ui_axes_math .ui_key_moments_link_navigation {
+  margin-block-start: var(--gap-size);
+  margin-block-end: var(--gap-size);
+}
+.ui_axes_math .ui_key_moments_link_navigation-list {
+  margin-block-start: 0;
+}
