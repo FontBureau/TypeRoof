@@ -1040,6 +1040,11 @@ input:invalid {
   margin-block-start: 0;
 }
 
+.ui_axes_math .ui_key_moments_link_navigation {
+    /* it's nested into another fieldset */
+    border: none;
+    padding: 0
+}
 
 .ui_time_control.ui_collapsible_mixin-open .ui_time_control_circle {
     display: block;
