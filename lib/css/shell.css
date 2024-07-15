@@ -1100,6 +1100,7 @@ input:invalid {
 .ui-dialog-manage_state-serialize_output {
   white-space: pre;
   width: 80vw;
+  min-height: 10em;
   display: block;
   overflow: auto;
 }
