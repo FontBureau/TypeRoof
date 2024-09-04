@@ -71,6 +71,7 @@ jobs:
               FILESTEM="${FILENAME%.*}"
               cp $FULLNAME $FILES_WORK_DIR/$FILENAME
               woff2_compress $FILES_WORK_DIR/$FILENAME
+              echo "DEBUG: cp from: $FILES_WORK_DIR/$FILESTEM.woff2 to: $TARGET_FILE ..."
               cp $FILES_WORK_DIR/$FILESTEM.woff2 $TARGET_FILE
             else
               # don't do anything to the files
