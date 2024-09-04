@@ -88,6 +88,8 @@ jobs:
             process_file $SOURCE_FILE $TARGET_FILE
           done
           cat $LOG_FILE
+          echo "DEBUG: ls $FILES_RESULT_DIR ..."
+          ls $FILES_RESULT_DIR
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.FILES_SPEC.unique_path }}
