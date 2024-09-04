@@ -71,7 +71,6 @@ jobs:
               FILESTEM="${FILENAME%.*}"
               cp $FULLNAME $FILES_WORK_DIR/$FILENAME
               woff2_compress $FILES_WORK_DIR/$FILENAME
-              echo "DEBUG: cp from: $FILES_WORK_DIR/$FILESTEM.woff2 to: $TARGET_FILE ..."
               cp $FILES_WORK_DIR/$FILESTEM.woff2 $TARGET_FILE
             else
               # don't do anything to the files
@@ -88,12 +87,11 @@ jobs:
             process_file $SOURCE_FILE $TARGET_FILE
           done
           cat $LOG_FILE
-          echo "DEBUG: ls $FILES_RESULT_DIR ..."
-          ls $FILES_RESULT_DIR
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.FILES_SPEC.unique_path }}
           path: ${{ env.FILES_RESULT_DIR }}
+          include-hidden-files: true
   push-results:
     runs-on: ubuntu-latest
     needs: pull-files
