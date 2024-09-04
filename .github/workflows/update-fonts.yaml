@@ -126,6 +126,8 @@ jobs:
           }
           export -f copy_file
           export ARTEFACTS_DIR
+          # find may fail if there is no ARTEFACTS_DIR because there were no artifacts
+          mkdir -p $ARTEFACTS_DIR
           find $ARTEFACTS_DIR -type f -exec bash -c 'copy_file "$0"' {} \;
       - name: Commit files and push
         run: |
