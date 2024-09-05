@@ -448,7 +448,6 @@ li.ui_key_moment_controller.active:not(:last-child) {
 .common_actor_properties-list {
     padding: 0;
     list-style: inside none;
-    max-width: 20em;
 }
 
 .common_actor_properties-item:nth-child(even) {
