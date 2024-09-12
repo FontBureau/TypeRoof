@@ -1103,3 +1103,30 @@ input:invalid {
   display: block;
   overflow: auto;
 }
+
+
+.ui-dialog-manage_state-message-status_reset {
+  display: none;
+}
+
+:is(
+      .ui-dialog-manage_state-message-status_success
+    , .ui-dialog-manage_state-message-status_fail
+) .ui-dialog-manage_state-message-process_label:after {
+  text-transform: uppercase;
+  color: white;
+  margin-left: .3em;
+  /* top/bottom padding seems to work nicely in the <legend> context */
+  padding: .3em;
+  font-weight: bolder;
+}
+
+.ui-dialog-manage_state-message-status_success .ui-dialog-manage_state-message-process_label:after{
+  content: "succeeded";
+  background: darkgreen;
+}
+
+.ui-dialog-manage_state-message-status_fail .ui-dialog-manage_state-message-process_label:after{
+  content: "failed";
+  background: darkred;
+}
