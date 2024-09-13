@@ -134,7 +134,7 @@ button:hover, form button:hover {
 fieldset{
     border: 1px solid #b7b4b0;
     border-radius: 0.125rem;
-    min-inline-size: min-content;
+    min-inline-size: 0;
     margin-inline: 0;
     padding-inline: .2em;
 }
