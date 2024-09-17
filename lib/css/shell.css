@@ -441,8 +441,12 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 
 
-.ui_color_patch-no_color:before{
-    content: '❌';
+.ui_color_patch-no_color_label {
+    display: none;
+}
+.ui_color_patch-no_color .ui_color_patch-no_color_label{
+    display: initial;
+    padding-left: 2em;
 }
 
 .common_actor_properties-list {
@@ -497,6 +501,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
     display: inline-block;
     margin-left: .5em;
     vertical-align: baseline;
+    margin-top: 0.3em;
 }
 
 
