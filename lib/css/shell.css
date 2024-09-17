@@ -142,8 +142,8 @@ fieldset > legend {
     display: block;
     white-space: pre;
 
-    height: inherit;
-    width: inherit;
+    height: fit-content; /*inherit;*/
+    width: fit-content; /*inherit;*/
 }
 
 .stage_and_actors-layer > svg circle {
@@ -441,14 +441,17 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 
 
-.ui_color_patch-no_color:before{
-    content: '❌';
+.ui_color_patch-no_color_label {
+    display: none;
+}
+.ui_color_patch-no_color .ui_color_patch-no_color_label{
+    display: initial;
+    padding-left: 2em;
 }
 
 .common_actor_properties-list {
     padding: 0;
     list-style: inside none;
-    max-width: 20em;
 }
 
 .common_actor_properties-item:nth-child(even) {
@@ -498,6 +501,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
     display: inline-block;
     margin-left: .5em;
     vertical-align: baseline;
+    margin-top: 0.3em;
 }
 
 
@@ -1040,6 +1044,11 @@ input:invalid {
   margin-block-start: 0;
 }
 
+.ui_axes_math .ui_key_moments_link_navigation {
+    /* it's nested into another fieldset */
+    border: none;
+    padding: 0
+}
 
 .ui_time_control.ui_collapsible_mixin-open .ui_time_control_circle {
     display: block;
@@ -1071,7 +1080,7 @@ input:invalid {
     list-style-type: disclosure-closed;
     list-style-position: inside;
 }
-.ui_collapsible_mixin-open :is(legend) {
+.ui_collapsible_mixin-open > :is(legend) {
     list-style-type: disclosure-open;
 }
 
@@ -1080,4 +1089,49 @@ input:invalid {
 }
 .ui_collapsible_mixin-open {
     padding-block: 0.35em 0.625em;
+}
+
+.ui-dialog_openers-items {
+  margin: 0;
+  list-style: inside square;
+  padding: 0;
+}
+
+.ui-dialog_openers-item-button {
+  text-decoration: none;
+}
+
+.ui-dialog-manage_state-serialize_output {
+  white-space: pre;
+  width: 80vw;
+  min-height: 10em;
+  display: block;
+  overflow: auto;
+}
+
+
+.ui-dialog-manage_state-message-status_reset {
+  display: none;
+}
+
+:is(
+      .ui-dialog-manage_state-message-status_success
+    , .ui-dialog-manage_state-message-status_fail
+) .ui-dialog-manage_state-message-process_label:after {
+  text-transform: uppercase;
+  color: white;
+  margin-left: .3em;
+  /* top/bottom padding seems to work nicely in the <legend> context */
+  padding: .3em;
+  font-weight: bolder;
+}
+
+.ui-dialog-manage_state-message-status_success .ui-dialog-manage_state-message-process_label:after{
+  content: "succeeded";
+  background: darkgreen;
+}
+
+.ui-dialog-manage_state-message-status_fail .ui-dialog-manage_state-message-process_label:after{
+  content: "failed";
+  background: darkred;
 }
