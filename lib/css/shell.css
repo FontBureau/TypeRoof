@@ -142,8 +142,8 @@ fieldset > legend {
     display: block;
     white-space: pre;
 
-    height: inherit;
-    width: inherit;
+    height: fit-content; /*inherit;*/
+    width: fit-content; /*inherit;*/
 }
 
 .stage_and_actors-layer > svg circle {
