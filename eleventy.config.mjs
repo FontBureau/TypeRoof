@@ -10,6 +10,8 @@ export default function (eleventyConfig) {
     // use this as the default layout.
     eleventyConfig.addGlobalData("layout", "typeroof");
 
+    // Don't change
+    eleventyConfig.addPassthroughCopy("index.html");
     // NOTE: these are also mentioned in .eleventyignore
     eleventyConfig.addPassthroughCopy("lib");
     eleventyConfig.addPassthroughCopy("shell.html");
