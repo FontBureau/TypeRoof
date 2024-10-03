@@ -1,0 +1,5 @@
+./lib/js/vendor/intro.js/docs
+./lib/js/vendor/culori/docs
+./lib/js/vendor/diff-match-patch/*/tests
+./lib/js/vendor/harfbuzzjs/.build
+./shell.html
