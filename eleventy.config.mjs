@@ -10,10 +10,10 @@ export default function (eleventyConfig) {
     // use this as the default layout.
     eleventyConfig.addGlobalData("layout", "typeroof");
 
-    eleventyConfig.addPassthroughCopy("lib", {
-        // debug: true
-    });
-    eleventyConfig.addPassthroughCopy("shell.html")
+    // NOTE: these are also mentioned in .eleventyignore
+    eleventyConfig.addPassthroughCopy("lib");
+    eleventyConfig.addPassthroughCopy("shell.html");
+    eleventyConfig.addPassthroughCopy("docs/experiments");
 
     let mdOptions = {
         html: true,
