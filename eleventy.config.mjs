@@ -1,23 +1,34 @@
 import markdownIt from "markdown-it";
 import syntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
+import path from 'path'
 
 export default function (eleventyConfig) {
-	// Output directory: _site
-	
-	// Copy `lib/` to `_site/img`
-	eleventyConfig.addPassthroughCopy("lib", {
-		// debug: true
-	});
-	eleventyConfig.addPassthroughCopy("shell.html")
-	//console.log('Hello World, eleventyConfig:', eleventyConfig);
+    // Output directory: _site
 
-	let mdOptions = {
-		html: true,
-		breaks: true,
-		linkify: true,
-		typographer: true,
-	};
-	eleventyConfig.setLibrary("md", markdownIt(mdOptions));
-	eleventyConfig.addPlugin(syntaxHighlight);
+    eleventyConfig.setIncludesDirectory("docs/_includes");
+
+    // use this as the default layout.
+    eleventyConfig.addGlobalData("layout", "typeroof");
+
+    eleventyConfig.addPassthroughCopy("lib", {
+        // debug: true
+    });
+    eleventyConfig.addPassthroughCopy("shell.html")
+
+    let mdOptions = {
+        html: true,
+        breaks: true,
+        linkify: true,
+        typographer: true,
+    };
+    eleventyConfig.setLibrary("md", markdownIt(mdOptions));
+    eleventyConfig.addPlugin(syntaxHighlight);
+    eleventyConfig.addGlobalData('eleventyComputed.rootPath', ()=>{
+        return data=>data.page.url
+                .split('/')
+                .filter(x=>x)
+                .map(()=>'../')
+                .join('');
+        }
+    );
 };
-
