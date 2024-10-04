@@ -1,0 +1,555 @@
+{
+  "activeState": {
+    "t": "0",
+    "duration": "10",
+    "isLoop": "0",
+    "perpetual": "1",
+    "playing": "0",
+    "activeActors": [
+      {
+        "instance": {
+          "isLoop": "0",
+          "label": "timing",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "t",
+                  "0"
+                ]
+              ],
+              "autoOPSZ": "0",
+              "backgroundColor": {
+                "instance": {
+                  "L": "0.00000",
+                  "C": "0.00000",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "OKLCH"
+              }
+            },
+            {
+              "label": "Key Moment 2",
+              "duration": "1",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "t",
+                  "1"
+                ]
+              ],
+              "autoOPSZ": "0",
+              "backgroundColor": {
+                "instance": {
+                  "L": "0.00000",
+                  "C": "0.00000",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "OKLCH"
+              }
+            },
+            {
+              "label": "Key Moment 3",
+              "duration": "0",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "t",
+                  "1"
+                ]
+              ],
+              "autoOPSZ": "0",
+              "backgroundColor": {
+                "instance": {
+                  "L": "0.00000",
+                  "C": "0.00000",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "OKLCH"
+              }
+            },
+            {
+              "label": "Key Moment 4",
+              "duration": "1",
+              "isActive": "1",
+              "autoOPSZ": "0"
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "isLoop": "1",
+                "label": "A-Z",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "A"
+                  },
+                  {
+                    "label": "Key Moment 2",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "B"
+                  },
+                  {
+                    "label": "Key Moment 3",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "C"
+                  },
+                  {
+                    "label": "Key Moment 4",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "D"
+                  },
+                  {
+                    "label": "Key Moment 5",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "E"
+                  },
+                  {
+                    "label": "Key Moment 6",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "F"
+                  },
+                  {
+                    "label": "Key Moment 7",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "G"
+                  },
+                  {
+                    "label": "Key Moment 8",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "H"
+                  },
+                  {
+                    "label": "Key Moment 9",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "I"
+                  },
+                  {
+                    "label": "Key Moment 10",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "J"
+                  },
+                  {
+                    "label": "Key Moment 11",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "K"
+                  },
+                  {
+                    "label": "Key Moment 12",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "L",
+                    "heightTreatment": "default"
+                  },
+                  {
+                    "label": "Key Moment 13",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "M",
+                    "heightTreatment": "default"
+                  },
+                  {
+                    "label": "Key Moment 14",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "N"
+                  },
+                  {
+                    "label": "Key Moment 15",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "O"
+                  },
+                  {
+                    "label": "Key Moment 16",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "P"
+                  },
+                  {
+                    "label": "Key Moment 17",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "Q"
+                  },
+                  {
+                    "label": "Key Moment 18",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "R"
+                  },
+                  {
+                    "label": "Key Moment 19",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "S"
+                  },
+                  {
+                    "label": "Key Moment 20",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "T"
+                  },
+                  {
+                    "label": "Key Moment 21",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "U"
+                  },
+                  {
+                    "label": "Key Moment 22",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "V"
+                  },
+                  {
+                    "label": "Key Moment 23",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "W"
+                  },
+                  {
+                    "label": "Key Moment 24",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "X"
+                  },
+                  {
+                    "label": "Key Moment 25",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "Y"
+                  },
+                  {
+                    "label": "Key Moment 26",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "Z"
+                  }
+                ],
+                "activeActors": [
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "zoom in",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "1",
+                          "isActive": "1",
+                          "numericProperties": [
+                            [
+                              "line-height-em",
+                              "1"
+                            ],
+                            [
+                              "scale",
+                              "0"
+                            ],
+                            [
+                              "x",
+                              "-1635"
+                            ],
+                            [
+                              "y",
+                              "0"
+                            ],
+                            [
+                              "width",
+                              "4000"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "axesLocations": [
+                            [
+                              "wght",
+                              "1000"
+                            ],
+                            [
+                              "opsz",
+                              "8"
+                            ]
+                          ],
+                          "fontSize": "600",
+                          "textColor": {
+                            "instance": {
+                              "L": "0.00000",
+                              "C": "0.00000"
+                            },
+                            "colorTypeKey": "OKLCH"
+                          },
+                          "textAlign": "center",
+                          "positioningVertical": "top"
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "1",
+                          "isActive": "1",
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "5"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  }
+                ]
+              },
+              "actorTypeKey": "LayerActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "isLoop": "0",
+          "label": "timing",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "isActive": "0",
+              "numericProperties": [
+                [
+                  "t",
+                  "0"
+                ]
+              ],
+              "autoOPSZ": "0"
+            },
+            {
+              "label": "Key Moment 2",
+              "duration": "0.7",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "t",
+                  "0"
+                ]
+              ],
+              "autoOPSZ": "0"
+            },
+            {
+              "label": "Key Moment 3",
+              "duration": "1",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "t",
+                  "1"
+                ]
+              ],
+              "autoOPSZ": "0"
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "isLoop": "1",
+                "label": "The roof for all type",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "10",
+                    "isActive": "1",
+                    "autoOPSZ": "0",
+                    "textRun": "The roof"
+                  },
+                  {
+                    "label": "Key Moment 2",
+                    "duration": "2",
+                    "isActive": "1",
+                    "autoOPSZ": "0",
+                    "textRun": "for"
+                  },
+                  {
+                    "label": "Key Moment 3",
+                    "duration": "1",
+                    "isActive": "1",
+                    "autoOPSZ": "0",
+                    "textRun": "all"
+                  },
+                  {
+                    "label": "Key Moment 4",
+                    "duration": "1",
+                    "isActive": "1",
+                    "autoOPSZ": "0",
+                    "textRun": "type"
+                  },
+                  {
+                    "label": "Key Moment 5",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "textRun": "TypeRoof!"
+                  }
+                ],
+                "activeActors": [
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "zoom in",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "1",
+                          "isActive": "1",
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0"
+                            ],
+                            [
+                              "width",
+                              "8000"
+                            ],
+                            [
+                              "x",
+                              "-3641"
+                            ],
+                            [
+                              "y",
+                              "0"
+                            ],
+                            [
+                              "line-height-em",
+                              "1"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ]
+                          ],
+                          "fontSize": "600",
+                          "textColor": {
+                            "instance": {
+                              "L": "100.00000",
+                              "C": "0.00000"
+                            },
+                            "colorTypeKey": "OKLCH"
+                          },
+                          "textAlign": "center"
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "1",
+                          "isActive": "1",
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.4"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "axesLocations": [
+                            [
+                              "wght",
+                              "465"
+                            ],
+                            [
+                              "wdth",
+                              "100"
+                            ],
+                            [
+                              "opsz",
+                              "60"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "0.5",
+                          "isActive": "1",
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "10"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "axesLocations": [
+                            [
+                              "wght",
+                              "980"
+                            ],
+                            [
+                              "opsz",
+                              "144"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  }
+                ]
+              },
+              "actorTypeKey": "LayerActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      }
+    ],
+    "width": "720",
+    "height": "720"
+  },
+  "activeLayoutKey": "StageAndActors",
+  "activeFontKey": "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"
+}
