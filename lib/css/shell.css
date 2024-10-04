@@ -469,6 +469,24 @@ li.ui_key_moment_controller.active:not(:last-child) {
     display: inline-block;
 }
 
+.common_actor_properties-item-type_color,
+.common_actor_properties-item-type_text {
+    overflow: hidden;
+    white-space: nowrap;
+}
+.common_actor_properties-item-type_color:hover,
+.common_actor_properties-item-type_text:hover {
+    white-space: initial;
+}
+.common_actor_properties-item-type_color:hover{
+    overflow: initial;
+}
+
+.common_actor_properties-item-type_color:hover .common_actor_properties-value-text,
+.common_actor_properties-item-type_text:hover .common_actor_properties-value-text {
+    display: block;
+}
+
 .common_actor_properties-value-text {
     text-overflow: ellipsis;
     overflow: hidden;
@@ -478,6 +496,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
     vertical-align: bottom;
 }
 
+.common_actor_properties-item-type_color:hover .common_actor_properties-value-text,
 .common_actor_properties-value-text:hover {
     text-overflow: ellipsis;
     overflow: initial;
