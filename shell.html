@@ -10,17 +10,33 @@
     // With this pattern it's save to load the controller javascript asyncronously.
     if(!window.remoteResources)
          window.remoteResources = [];
+    {
+    const localURL = url=>new URL(url, window.location.origin);
     window.remoteResources.push(
-        ['font', fetch('./lib/assets/fonts/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].woff2')],
-        ['font', fetch('./lib/assets/fonts/RobotoA2-avar2-clean-VF.woff2')],
-        ['font', fetch('./lib/assets/fonts/AmstelvarA2-Roman_avar2.woff2')],
-        ['font', fetch('./lib/assets/fonts/AmstelvarA2-Italic_avar2.woff2')],
-        ['font', fetch('./lib/assets/fonts/Roboto-Italic[wdth,wght].woff2')],
-        ['font', fetch('./lib/assets/fonts/Roboto[wdth,wght].woff2')],
+        ['font', localURL('./lib/assets/fonts/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].woff2')
+            , {name: "Roboto Flex Regular", version: "Version 3.200;gftools[0.9.32]", fullName: "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"}],
+        ['font', localURL('./lib/assets/fonts/RobotoA2-avar2-clean-VF.woff2')
+            , {name: "RobotoAvar2 Regular", version: "Version 3.000", fullName: "from-url RobotoAvar2 Regular Version_3-000"}],
+        ['font', localURL('./lib/assets/fonts/AmstelvarA2-Roman_avar2.woff2')
+            , {name: "AmstelvarA2 Roman wght400", version: "Version 0.001", fullName: "from-url AmstelvarA2 Roman wght400 Version_0-001"}],
+        ['font', localURL('./lib/assets/fonts/AmstelvarA2-Italic_avar2.woff2')
+            , {name: "AmstelvarA2 Italic wght400", version: "Version 0.001", fullName: "from-url AmstelvarA2 Italic wght400 Version_0-001"}],
+        ['font', localURL('./lib/assets/fonts/Roboto-Italic[wdth,wght].woff2')
+            , {name: "Roboto Italic", version: "Version 3.009; 2024", fullName: "from-url Roboto Italic Version_3-009 _2024"}],
+        ['font', localURL('./lib/assets/fonts/Roboto[wdth,wght].woff2')
+            ,  {name: "Roboto Regular", version: "Version 3.009; 2024", fullName: "from-url Roboto Regular Version_3-009 _2024"}],
         // So far only bundled for the initial demo
-        ['font', fetch('./lib/assets/fonts/Kablammo[MORF].woff2')],
-        ['font', fetch('./lib/assets/fonts/Zycon.woff2')],
+        ['font', localURL('./lib/assets/fonts/Kablammo[MORF].woff2')
+            , {name: "Kablammo Regular", version: "Version 1.002", fullName: "from-url Kablammo Regular Version_1-002"}],
+        // In this case, this should result in a drop-in replacement for
+        //           ['font', fetch('./lib/assets/fonts/Zycon.woff2')],
+        // However, since the key and name are not taken from the font
+        // file, it seems a bit brittle. The key, at least could be derrived
+        // directly from the URL, it could be the URL in fact.
+        ['font', localURL('./lib/assets/fonts/Zycon.woff2')
+            , {name: 'Zycon', version: 'Version 1.8', fullName: 'from-url Zycon Version_1-8'}]
     );
+    }
 </script>
     </head>
     <body>
