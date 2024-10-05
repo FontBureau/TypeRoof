@@ -16,6 +16,8 @@ jobs:
       group: ${{ github.workflow }}-${{ github.ref }}
     steps:
       - uses: actions/checkout@v3
+          wirh:
+            submodules: 'true'
 
       - name: Setup Node
         uses: actions/setup-node@v3
