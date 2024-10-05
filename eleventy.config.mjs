@@ -51,15 +51,18 @@ export default function (eleventyConfig) {
         }
     );
 
-    const directoryTemplate = `# Index of : {{page.url}}
-
+    const libDir = 'docs/states_lib'
+   , directoryTemplate = `# Index of : {{page.url}}
+{% if page.url != "/${libDir}/" %}
+  * [\`../\`]({{ '../' | url}})
+{% endif %}
 {%- for item in statesList %}
-  * {{ item }}
+  * [\`{{ item[0] }}\`]({{ item[1] | url}})
 {% endfor -%}
 `
       , directoryTemplateFileName = 'index.md'
       ;
-    for(const path of walkDirSync('docs/states_lib', eleventyConfig.directories.input)) {
+    for(const path of walkDirSync(libDir, eleventyConfig.directories.input)) {
         console.log('adding directory index template at:', path);
         // TODO: should not override existing templates that create index.html
         eleventyConfig.addTemplate(`${path}/${directoryTemplateFileName}`, directoryTemplate, {});
