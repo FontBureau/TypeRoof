@@ -1,6 +1,7 @@
 [submodule "opentype.js"]
 	path = lib/js/vendor/opentype.js
 	url = https://github.com/graphicore/opentype.js.git
+	branch = main
 [submodule "intro.js"]
 	path = lib/js/vendor/intro.js
 	url = https://github.com/usablica/intro.js
