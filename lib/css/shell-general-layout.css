@@ -1,0 +1,207 @@
+
+:root {
+    overflow-y: auto;
+    margin: 0;
+    --gap-color: #dfdfdf;
+    --gap-size: .3rem;
+    --list-item-odd-bg: #eee;
+    --list-item-even-bg: #fff;
+    --background-color: #fff;
+
+    --transparency-indicator-bg-dark: #666;
+    --transparency-indicator-bg-light: #ccc;
+    --transparency-indicator-bg-image: conic-gradient(
+            var(--transparency-indicator-bg-light) 90deg,
+            var(--transparency-indicator-bg-dark) 90deg 180deg,
+            var(--transparency-indicator-bg-light) 180deg 270deg,
+            var(--transparency-indicator-bg-dark) 270deg 0deg
+    );
+    --transparency-indicator-bg-size: 15px 15px;
+
+    --text-color: #121212;
+    --text-color-disabled: #888;
+}
+
+body {
+    background: var(--gap-color);
+    margin: var(--gap-size);
+    font-variation-settings: initial;
+    color: var(--text-color);
+    font-family: RobotoFlex, sans-serif;
+    font-variation-settings: "opsz" 12;
+    font-size: 1rem;
+    font-weight: 369;
+}
+
+body > .wrapper {
+  display: grid;
+  gap: var(--gap-size);
+  grid-template-columns: 17.375rem auto;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:  "header main"
+                        "sidebar main"
+                        "sidebar footer";
+  height: calc(100vh - (2 * var(--gap-size, 0)));
+}
+
+body > .wrapper > header {
+  grid-area: header;
+  height: fit-content;
+}
+
+body > .wrapper > .typeroof-ui_sidebar {
+    grid-area: sidebar;
+    padding: 1rem  var(--gap-size, 1rem);
+    overflow-y: auto;
+    background: var(--background-color, red);
+}
+
+body > .wrapper > .typeroof-main {
+    grid-area: main;
+    background: var(--background-color, magenta);
+    display: flex;
+    flex-direction: column;
+}
+
+/**
+ * With this configuration we can measure the size of .typeroof-layout
+ * to know how much space it has available without scrolling.
+ *
+ * Also, the controls in .typeroof-layout-before and
+ * .typeroof-layout-after will always stay visible.
+ */
+body > .wrapper > .typeroof-main >.typeroof-layout {
+    overflow: auto;
+    flex-grow: 1;
+}
+
+body > .wrapper > footer{
+    grid-area: footer;
+    height: fit-content;
+}
+
+
+a {
+    text-decoration: underline;
+}
+a:link, a:visited {
+    color: #121212;
+}
+body, select, input, textarea {
+    color: var(--text-color);
+}
+dialog {
+  background-color: var(--background-color);
+  border: var(--gap-size) solid var(--gap-color);
+}
+
+form fieldset {
+    background-color: var(--background-color);
+    border: var(--gap-size) solid var(--gap-color);
+    margin-bottom: 1.125rem;
+    padding: 0.9375rem 0.75rem;
+}
+
+dialog label {
+    display: block;
+}
+
+button, form button {
+    background-color: var(--background-color);
+    box-shadow: rgba(43, 43, 43, 0.08) 0 0 0.1875rem;
+    border: 1px solid #b7b4b0;
+    border-radius: 0.125rem;
+    color: var(--text-color);
+    display: inline-block;
+    font-size: 0.875rem;
+    font-family: RobotoFlex, sans-serif;
+    font-variation-settings: "opsz" 14;
+    transition: all 75ms linear;
+    white-space: nowrap;
+    line-height: 1.5em;
+}
+
+form button {
+    height: 2.625rem;
+    line-height: 2.625rem;
+    padding: 0 1em;
+}
+
+button:hover, form button:hover {
+    box-shadow: rgba(43, 43, 43, 0.15) 0 0 0.625rem;
+}
+
+fieldset{
+    border: 1px solid #b7b4b0;
+    border-radius: 0.125rem;
+    min-inline-size: 0;
+    margin-inline: 0;
+    padding-inline: .2em;
+}
+
+fieldset {
+    /*
+     * The goal here is to create a similar distance between the borders
+     * of fieldsets with legend and fieldsets without. A fieldset with
+     * legend requires less margin, as the legend pushes it down as well.
+     */
+    margin-block-start: .9em;
+}
+fieldset:has(> legend) {
+    margin-block-start: .5em;
+}
+
+
+footer, header {
+    background-color: #121212;
+    padding: 1rem;
+    color: #fff;
+}
+
+footer > *, header > * {
+    margin: 0;
+}
+
+header h1 {
+    font-size: 1.5em;
+    font-variation-settings: "opsz" 16;
+    font-weight: 300;
+}
+
+
+footer {
+    font-size: .8em;
+    font-variation-settings: "opsz" 10;
+}
+
+footer ul{
+    padding: 0;
+}
+footer li::after{
+    display: inline-block;
+    content: "\A0•\A0";
+    font-size: 2em;
+    color: white;
+    line-height: .5em; /* basically reset the 2 em font-size to 1em*/
+    vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
+    overflow: hidden;
+}
+
+footer li:last-child::after{
+    content: none;
+}
+
+:is(footer) :is(a, a:visited, a:link) {
+    color: #fff;
+}
+
+:is(header, .sidebar, footer) :is(a, a:visited, a:link) {
+  --text-decoration: none;
+}
+
+footer li {
+    display: inline;
+    padding: 0;
+    margin: 0;
+}

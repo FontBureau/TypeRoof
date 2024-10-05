@@ -1,0 +1,136 @@
+# Format tips:
+#  * Indentation is important! Four spaces.
+#  * Most strings can be unquoted, unless they contain quotes or some other punctuation. If in doubt, you can quote (single or double)
+#  * Unquoted single characters Y/N/y/n are synonyms for True and False in YAML, so they should be quoted if used
+#
+# Character groupings can be one or two levels deep (see Latin > Symbols)
+#
+# Two ways of handling "extended" character sets:
+# 1. For simple one-to-many character extensions (e.g. accented Latin letters), add them to the global "_extended" list at the bottom.
+#     These will be expanded "in place" automatically whenever that character is encountered in a character set.
+# 2. For custom extensions (e.g. currency symbols) include "_default" and "_extended" strings under each label
+
+Latin:
+    Uppercase: ABCDEFGHIJKLMNOPQRSTUVWXYZ&
+    Lowercase: abcdefghijklmnopqrstuvwxyz
+    Mixed: ǅǈǋǉ
+    ASCII: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789<([{@#$%&?!/|\\\"~`*^':;.,)]}>"
+    Symbols:
+        Punctuation: ',-.:;…∙·!¡?¿–—―‐'
+        Reference: '*§¶†‡•'
+        Quotation: "\"'“”‚„‹›«»′″"
+        Parenthetical: '()[]{}'
+        Math: '+÷×−±<>≤≥≈≠=^~¬∕­/'
+        Commercial: '®©™#@⁒ʹʺ/\¦|_№⟨⟩µ⁄'
+Greek:
+    Uppercase: ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ
+    Lowercase: αβγδεζηθικλμνξοπρστυφχψως
+Cyrillic:
+    Uppercase: АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ
+    Lowercase: абвгдежзийклмнопрстуфхцчшщъыьэюя
+World:
+    Figures:
+        _default: 0123456789
+        _extended: ⁰¹²³⁴⁵⁶⁷⁸⁹⅛⅙⅕¼⅓⅜⅖½⅗⅔⅝¾⅘⅚⅞%‰
+    Monetary:
+        _default: $¢£¥
+        _extended: ₡₣₤₦₧₩₫€ƒ₭₱₲₵₹₺₼₽¤
+    Accents:
+        _default: '`¨¯°´ˆˇ˘˙˚˛˜˝‘’¸ʼ'
+        _extended: 'ˉ̧̨̛̣̤̦̮̱̀́̂̃̄̆̇̈̉̊̋̌̏̑'
+_extended:
+    # YAML evaluates Y/N/y/n as true and false, so we have to put quotes around those
+    A: ÀÁÂÃÄÅĀĂǺȀȂĄẠẢẤẦẨẪẬẮẰẲẴẶÆǼ
+    C: ÇĆĈĊČ
+    D: ĎÐĐǄǅ
+    E: ÈÉÊËĒĔĖĘĚȄȆẸẺẼẾỀỂỄỆÆǼŒƏ
+    G: ĜĞĠĢǦ
+    H: ĤĦ
+    I: ÌÍÎÏĨĪĬĮİȈȊỈỊĲǉǇǊ # /IJacute 
+    J: ĴĲ # /IJacute
+    K: Ķ
+    L: ĹĻĽĿŁǇǈ
+    "N": ÑŃŅŇŊǊǋ
+    O: ÒÓÔÕÖŌŎŐƠǪȌȎȪȬȰỌỎỐỒỔỖỘỚỜỞỠỢØǾŒ
+    P: Þ
+    R: ŔŖŘȐȒ
+    S: ŚŜŞŠȘẞ
+    T: ŢŤȚŦ
+    U: ÙÚÛÜŨŪŬŮŰŲƯȔȖỤỦỨỪỬỮỰ
+    W: ŴẀẂẄ
+    "Y": ÝŶŸȲỲỴỶỸ
+    Z: ŹŻŽǄ
+    a: àáâãäåāăąǻȁȃạảấầẩẫậắằẳẵặæǽª
+    c: çćĉċč
+    d: ďđǆð
+    e: èéêëēĕėęěȅȇẹẻẽếềểễệəæǽœ
+    f: ﬀﬁﬂﬃﬄ # /f_f_ij /f_ij 
+    g: ĝğġģǧ
+    h: ĥħ
+    i: ıĩīĭįȉȋỉịìíîïĳﬁﬃ # /idotaccent /ijacute /f_ij /f_f_ij
+    j: ȷĵǉĳǌǈ #/f_ij  /f_f_ij
+    k: ķĸ
+    l: ĺļľŀłﬂﬄ
+    "n": ñńņňŉŋǌ
+    o: òóôõöōŏőơǫȍȏȫȭȱọỏốồổỗộớờởỡợøǿœº
+    p: þ
+    r: ŕŗřȑȓ
+    s: śŝşšșß
+    t: ţťțŧ
+    u: ùúûüũūŭůűųưȕȗụủứừửữự
+    w: ŵẁẃẅ
+    "y": ýÿŷȳỳỵỷỹ
+    z: źżžǅ
+    #Greek
+    #Uppercase: ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ
+    #Lowercase: αβγδεζηθικλμνξοπρστυφχψως
+    Α: Ά
+    Ε: Έ
+    Η: Ή
+    Ι: ΊΪ
+    Ο: Ό
+    Υ: ΎΫ
+    Ω: Ώ
+    α: ά
+    ε: έ
+    η: ή
+    ι: ίΐϊ
+    ο: ό
+    υ: ύΰϋ
+    ω: ώ
+    #Cyrillic
+    #Uppercase: АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ
+    #Lowercase: абвгдежзийклмнопрстуфхцчшщъыьэюя
+    А: ӒӐӘӔ
+    Г: ЃҐҒҔ
+    Д: ЂЋ
+    Е: ЀЁӖЄ
+    Ж: ӜӁҖ
+    З: ӞҘЅ
+    И: ӤЍӢӀІЇЈ
+    К: ЌҚҜҠ
+    Л: Љ
+    Н: ҢЊҤ
+    О: ӦѲӨ
+    С: Ҫ
+    У: ӮӰӲЎҮҰЏ
+    Х: ҲҺ
+    Ч: ӴҶҸ
+    Ы: Ӹ
+    а: ӓӑәӕ
+    г: ѓґғҕ
+    д: ђћ
+    е: ѐёӗє
+    ж: ӝӂҗ
+    з: ӟҙѕ
+    и: ӥѝӣӏіїј
+    к: ќқҝҡ
+    л: љ
+    н: ңњҥ
+    о: ӧѳө
+    с: ҫ
+    у: ӯӱӳўүұџ
+    х: ҳһ
+    ч: ӵҷҹ
+    ы: ӹ
+

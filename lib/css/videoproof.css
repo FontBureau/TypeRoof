@@ -1,0 +1,1063 @@
+
+
+
+/* override a few global TN styles */
+html {
+    overflow-y: auto;
+}
+
+body {
+   font-variation-settings: initial
+}
+
+body > .wrapper {
+  display: grid;
+  grid-template-columns: 17.375rem auto;
+  grid-template-rows: auto auto auto;
+  grid-template-areas:  "header main"
+                        "sidebar main"
+                        "sidebar footer";
+  height: 100vh;
+}
+
+body > .wrapper > header{
+    grid-area: header;
+    padding: 1rem;
+}
+header h1{
+    font-size: 1.5em;
+}
+body > .wrapper > .sidebar {
+    padding: 0 1rem 1rem 1rem;
+    width: 100%;
+    height: 100%;
+    grid-area: sidebar;
+    overflow-y: auto;
+}
+
+body > .wrapper > .main-stage{
+    grid-area: main;
+    overflow: auto;
+}
+
+body > .wrapper > footer {
+    grid-area: footer;
+    width: 100%;
+}
+
+header, .sidebar{
+    background: white;
+    border-right: 1px solid rgba(183, 180, 176, 0.5);
+}
+
+footer {
+    background-color: #121212;
+    font-size: .8em;
+    padding: 0.5em;
+}
+
+footer li::after{
+    display: inline-block;
+    content: " •";
+    font-size: 2em;
+    color: white;
+    line-height: .5em; /* basically reset the 2 em font-size to 1em*/
+    vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
+    overflow: hidden;
+}
+
+footer li:last-child::after{
+    content: none;
+}
+
+:is(footer) :is(a, a:visited, a:link) {
+    color: #fff;
+}
+
+:is(header, .sidebar, footer) :is(a, a:visited, a:link) {
+  text-decoration: none;
+}
+
+footer li {
+    display: inline;
+    padding: 0;
+    margin: 0;
+}
+
+.content-main {
+    padding-bottom: 4em;
+}
+.sidebar{
+    font-size: .8rem;
+}
+select, input, label input, textarea {
+    font-size: 1em;
+}
+
+form button{
+    color: black;
+}
+
+
+body.dropzone::after {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background-color: rgba(64, 64, 64, 0.9);
+	color: white;
+	font-size: 3rem;
+	text-align: center;
+	vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
+	padding: 40% 1rem;
+	content: "Drop your own font file(s) here";
+	z-index: 1000;
+}
+
+#reset {
+	color: red;
+}
+
+#bookmark {
+	color: blue;
+}
+
+#videoproof *:focus {
+	outline: none;
+}
+
+/* CONTROLS */
+
+.sidebar * {
+	margin: .25em 0;
+}
+
+#controls input {
+	vertical-align: baseline;
+}
+
+#controls label {
+	display: inline;
+	line-height: inherit;
+}
+
+#controls h3 {
+	border: none;
+	margin-bottom: 0;
+}
+
+#controls h3 + * {
+	margin-top: 0;
+}
+
+#controls h3.inline {
+	display: inline;
+}
+
+#controls h3 label {
+	font: inherit;
+	color: inherit;
+	line-height: inherit;
+	text-transform: inherit;
+	letter-spacing: inherit;
+}
+
+#controls select {
+    max-width: 100%;
+}
+
+.color_chooser input{
+    padding: 0;
+}
+
+#controls .color_chooser label > *,
+#controls .color_chooser .colors_chooser-invert {
+    vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
+    height: 2.5em;
+    line-height: 1;
+    border-width: 1px;
+}
+
+.color_chooser .colors_chooser-invert{
+    padding: 0 .7em;
+    margin: 0 .3em;
+}
+
+#controls #add-your-own-button {
+	font-size: 0.8em;
+	display: block;
+	text-align: right;
+}
+
+#controls #custom-fonts {
+	position: absolute;
+	left: -200vw;
+}
+
+#controls input[type=text][disabled] {
+    display: none;
+}
+
+/* sliders */
+
+#controls .slider {
+	display: grid;
+	grid-template-columns: auto 3.5em;
+	grid-template-rows: auto auto;
+	grid-gap: 0.5em 0;
+	align-items: baseline;
+	width: 100%;
+	padding: 0;
+	text-indent: 0;
+	margin: 1em 0;
+}
+
+#controls label, #controls legend{
+    text-transform: none;
+    color: inherit;
+    font-weight: bold;
+    letter-spacing: 0;
+    font-variation-settings: "opsz" 12;
+
+}
+
+#controls label {
+    font-size: .75em;
+}
+
+#controls label > * {
+    font-size: 1.33em; /* 4/3 */
+}
+
+#controls .slider label abbr {
+	color: #999;
+}
+
+#controls .slider label abbr::before {
+	content: "(";
+}
+
+#controls .slider label abbr::after {
+	content: ")";
+}
+
+#controls .slider input[type=number] {
+	border: none;
+	color: #999;
+	width: 100%;
+	max-width: 4em;
+	text-align: right;
+}
+
+#controls .slider input[type=range] {
+	grid-column: 1/3;
+	grid-row: 2;
+	width: 100%;
+/*
+	width: calc(100% - 6em);
+	margin: 0 3em;
+*/
+}
+
+
+/* SLIDERS see form-controls.scss */
+
+/*
+input[type=range]::before {
+	display: none;
+	position: absolute;
+	right: 105%;
+	content: attr(min);
+}
+
+input[type=range]::after {
+	display: none;
+	position: absolute;
+	left: 105%;
+	content: attr(max);
+}
+*/
+
+input[type=range][disabled] {
+	opacity: 0.5;
+}
+
+/* alignment - color */
+
+#colors > * {
+	display: inline-block;
+	vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
+}
+
+#colors button {
+	background: transparent;
+	padding: 0;
+	font-size: 1.2em;
+	width: 1.5em;
+	line-height: 1;
+	text-align: center;
+	color: black;
+	border: 0;
+	box-shadow: none;
+}
+
+#colors input[type=color] {
+	-webkit-appearance: none;
+	position: relative;
+	height: 0.24in;
+	width: 0.25in;
+	padding: 0;
+	border: 0;
+	margin: 0 0.333em;
+	vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
+}
+
+
+/* GLYPH GROUPS */
+
+#show-extended-glyphs:disabled ~ * {
+	opacity: 0.25;
+}
+
+#layout-specific-controls {
+	display: block;
+	margin: 0;
+	padding: 0;
+}
+
+#layout-specific-controls > li {
+	margin: 0;
+	padding: 0;
+	text-indent: 0;
+}
+
+
+
+
+:root {
+    /* Note: using \ to escape newlines works well in Chrome and Firefox
+     * but it destroys syntax highlighting in my editor. Actually, having
+     * a full stop at the end of this comment and some magic(?) number
+     * of characters in the last line restores syntax highlighting again.
+     */
+    --alignment-left-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='%23CCC' x1='0' y1='2' x2='6' y2='2' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='0' y1='6' x2='4' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-left-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='black' x1='0' y1='2' x2='6' y2='2' stroke-width='1'/>\
+            <line stroke='black' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='black' x1='0' y1='6' x2='4' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-center-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='%23CCC' x1='1' y1='2' x2='7' y2='2' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='2' y1='6' x2='6' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-center-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='black' x1='1' y1='2' x2='7' y2='2' stroke-width='1'/>\
+            <line stroke='black' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='black' x1='2' y1='6' x2='6' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-right-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='%23CCC' x1='8' y1='2' x2='2' y2='2' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='8' y1='4' x2='0' y2='4' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='8' y1='6' x2='4' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-right-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='black' x1='8' y1='2' x2='2' y2='2' stroke-width='1'/>\
+            <line stroke='black' x1='8' y1='4' x2='0' y2='4' stroke-width='1'/>\
+            <line stroke='black' x1='8' y1='6' x2='4' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-justify-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='%23CCC' x1='0' y1='2' x2='8' y2='2' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='0' y1='6' x2='8' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-left-justify-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='black' x1='0' y1='2' x2='8' y2='2' stroke-width='1'/>\
+            <line stroke='black' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='black' x1='0' y1='6' x2='8' y2='6' stroke-width='1'/>\
+        </svg>");
+}
+
+#alignment-color-container label {
+    display: block;
+}
+.radio-icon {
+    display: none;
+}
+
+#alignment-color-container label.radio-main-label{
+
+}
+
+#alignment-color-container input + .radio-icon {
+    display: block;
+    font-size: inherit;
+    width: 3em;
+    height: 3em;
+    background: no-repeat;
+    background-size: cover;
+    background-position: center center;
+    margin: 0 auto;
+}
+
+#alignment-color-container label.radio-label {
+    display: inline-block;
+    vertical-align: text-top;
+    position: relative;
+    width: 4.5em;
+    height: 4.5em;
+    overflow: hidden;
+}
+#alignment-color-container input {
+    position: absolute;
+    top: -100em;
+}
+
+#alignment-color-container input.alignment-left + .radio-icon {
+    background-image: var(--alignment-left-icon);
+}
+#alignment-color-container input.alignment-left:checked + .radio-icon {
+    background-image: var(--alignment-left-active-icon);
+}
+
+#alignment-color-container input.alignment-center + .radio-icon {
+    background-image: var(--alignment-center-icon);
+}
+#alignment-color-container input.alignment-center:checked + .radio-icon {
+    background-image: var(--alignment-center-active-icon);
+}
+
+#alignment-color-container input.alignment-right + .radio-icon {
+    background-image: var(--alignment-right-icon);
+}
+#alignment-color-container input.alignment-right:checked + .radio-icon {
+    background-image: var(--alignment-right-active-icon);
+}
+
+#alignment-color-container input.alignment-justify + .radio-icon {
+    background-image: var(--alignment-justify-icon);
+}
+#alignment-color-container input.alignment-justify:checked + .radio-icon {
+    background-image: var(--alignment-justify-active-icon);
+}
+
+/* ANIMATIION */
+
+#animation-controls {
+	display: inline-block;
+	margin-top: 0.5rem;
+        margin-bottom:0.1rem;
+	font-size: 100%;
+}
+
+#animation-controls > * {
+	text-align: center;
+	font-size: 1em;
+}
+
+#animation-controls button {
+	background: transparent;
+        padding: 0 0.5em;
+        background: lightsteelblue;
+        border: 0.2em ridge;
+        border-radius: .5em;
+        box-shadow: 2px 2px 2px grey;
+        vertical-align: middle;
+        vertical-align: -webkit-baseline-middle;
+        margin: 0 .3em;
+}
+
+#animation-controls button svg {
+    height: 2em;
+    vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
+    fill: white
+}
+
+#animation-controls button.start {
+}
+
+#animation-controls button.back {
+}
+
+#animation-controls button.play-pause {
+      width: 10em;
+}
+
+#animation-controls button.forward {
+}
+
+#animation-controls button.end {
+}
+
+#animation-duration-container {
+	font-size: smaller;
+	display: inline-block;
+	margin: 0 1em;
+}
+
+input#animation-duration {
+	width: 3em;
+}
+
+
+output#aniparams {
+	display: inline-block;
+	color: #09f;
+	font-size: 0.75rem;
+	font-family: Verdana;
+	font-weight: normal;
+	font-style: normal;
+	font-feature-settings: normal;
+	line-height: 1.2;
+	padding-left: 1rem;
+}
+
+
+ul.sidebar-list {
+	white-space: nowrap;
+	overflow: auto;
+}
+
+ul.sidebar-list li {
+	font-family: RobotoFlex !important;
+	font-size: .8em;
+	font-variation-settings: "opsz" 7;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+
+ul.sidebar-list li.current {
+	color: red;
+	font-weight: bold;
+}
+
+ul.sidebar-list a {
+	color: inherit;
+	cursor: pointer;
+}
+
+ul.sidebar-list a:hover {
+	color: red;
+}
+
+.number-and-range-input {
+    display: block;
+    position: relative;
+    padding-top: 1em;
+}
+
+#controls .number-and-range-input label{
+
+}
+.number-and-range-input input[type=number] {
+    width: 4em;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+.number-and-range-input input[type=range] {
+    display: block;
+    width: 100%;
+    margin-top: .2em;
+    height: 0.3em;
+}
+.number-and-range-input > *  {
+    vertical-align: text-top;
+}
+
+#axis-opsz_container,
+#axis-opsz_range {
+
+}
+
+#controls h3,
+#controls .manual_axis_locatioms h3,
+#controls .variation_settings_flags-head_label {
+    margin: .5em 0 .35em 0;
+    font-size: 1em;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+#controls .manual_axis_locatioms > * {
+  display: block;
+  margin: .5em 0;
+}
+
+#controls  #size-leading {
+     margin-bottom: .75em;
+}
+
+#controls  #size-leading  > * {
+        margin-bottom: .5em;
+}
+
+/* CONTENT */
+
+#the-proof {
+/* 	width: 100%; */
+	max-width: none;
+	margin: 0;
+	/*padding: 1rem;*/
+
+       color: var(--color-fg, #000);
+       background-color: var(--color-bg, #fff);
+
+}
+
+#the-proof.fixed-line-breaks {
+	word-break: break-all;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+	font-size: 36pt;
+	line-height: 1.5;
+	text-align: left;
+}
+
+#the-proof .end-of-line:after {
+    display: block;
+    content: '';
+}
+
+#the-proof.fixed-line-breaks div, #the-proof.fixed-line-breaks span {
+	display: block;
+	white-space: nowrap;
+	word-break: normal;
+	word-wrap: normal;
+	overflow-wrap: normal;
+}
+
+#the-proof.fixed-line-breaks span {
+	display: inline-block;
+        min-width: .1em;
+/* 	font: inherit; */
+	text-align: left;
+	margin-right: 0.3em;
+}
+
+/* used in contextual/kerning mode */
+#the-proof.fixed-lines span {
+    display: inline;
+    margin-right: calc(1em * var(--gap-em, 0));
+    white-space: nowrap;
+}
+
+#the-proof.fixed-lines span.end-of-line {
+    margin-right: 0;
+}
+
+
+/* ANIMATION */
+
+#the-proof, #the-proof .animation-target, #keyframes-display a {
+    -x--animation-name: videoproof;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-duration: 60s;
+    /* this is a standin for percent of animation cycle
+     * TODO: I don't really understand how this is used.
+     * It has the same numeric value as the percentage progress of
+     * the the animation, but I can't find where it is used. Maybe
+     * it's intended for debugging to read in the web-developer tool.
+     */
+    outline-offset: 100px;
+    outline-style: solid;
+    outline-color: transparent;
+    outline-width: 1px;
+}
+
+.paused #the-proof, .paused #the-proof .animation-target, .paused #keyframes-display a {
+	animation-play-state: paused;
+}
+
+.moar #the-proof, .moar #the-proof .animation-target {
+	--x-animation-name: moar;
+	animation-duration: 6s;
+	animation-iteration-count: infinite;
+}
+
+.moar #keyframes-display a {
+	animation-play-state: paused;
+}
+
+
+#comment-box {
+    /* initially hidden */
+    display: none;
+}
+
+#comment-box textarea {
+	width: 100%;
+}
+
+.videoproof-controller {
+    z-index: 10000;
+    position: relative;
+}
+
+
+/* CSS is nice to potentially diversify this behavior
+ * i.e. using the :not() selector, to leave disabled elements visible.
+ */
+
+#controls .input-disabled,
+#main-stage .input-disabled,
+.input-disabled {
+    display: none;
+}
+
+#contextual-pad-custom {
+    width: 2em;
+    box-sizing: content-box;
+}
+
+/* required for the selection/highlight boxes */
+#the-proof {
+    position: relative;
+    z-index: 0;
+}
+
+span.selection {
+    /* Using an alpha channel here, so .temp-selection can shine through.
+     * Color is similar to lightblue when background is white. */
+    background: #4ba5c378;
+}
+
+div.selection {
+    position: absolute;
+    z-index: -2;
+    background: lightblue;
+}
+
+div.temp-selection {
+    position: absolute;
+    z-index: -1;
+    background: plum;
+}
+
+#the-proof.typespec{
+    --line-height: 1.375em;
+}
+
+
+#the-proof.typespec .typespec-element > * {
+    display: table-cell;
+    vertical-align: baseline;
+    border: none;
+}
+
+#the-proof.typespec .typespec-element > label {
+    padding: 0.5rem 0.5rem 1rem;
+    font-variation-settings: initial;
+}
+
+#the-proof.typespec .typespec-element > .typespec-element_wrapper {
+    /* FIXME: need to set and use typespec-element font-size for this to work*/
+    --typespec-font-size: 16; /* in PT TODO: add control */
+    /* 0.5pt because we use EN not EM */
+    width: calc(0.5pt * var(--typespec-font-size) * var(--column-width));
+    box-sizing: content-box;
+    padding-left: .25rem;
+}
+
+#the-proof.typespec .typespec-element .typespec-element_show-parameters,
+#the-proof.waterfall .waterfall-line .waterfall-show_parameters,
+#the-proof.vartools-grid .grid-show_parameters {
+    color: #09f;
+    font-size: .75rem;
+    text-align: right;
+    font-family: monospace;
+}
+
+#the-proof.typespec .typespec-element  .typespec-element_target,
+#the-proof.typespec .typespec-element .typespec-element_target * {
+
+    font-size: calc(1pt * var(--font-size, 1em));
+    font-variation-settings: inherit;/*"opsz"  var(--font-size);*/
+    /* FIXME: input should be in EM! */
+    line-height: calc(100% * var(--font-leading));
+    text-align: var(--alignment);
+}
+
+#the-proof.typespec .typespec-element--active.typespec-element_heading [contenteditable] {
+    /* Otherwise can't insert spaces at the end of line. Could however
+     * maybe remove line breaks from input in javascript event handling.
+     *
+     * This white-space mode is only set for the active element, when not
+     * editing, it returns to "normal". This is to keep the editing
+     * experience as expected, e.g. pressing spaces creates spaces, but also
+     * to keep the html behavior close to the default. If that's anoying
+     * to the users, this mode could be applied to the non-editing markup
+     * as well, however, breaking potentially expectations when porting
+     * the content to another setting, where white-space is set to "normal".
+     */
+    white-space: break-spaces;
+}
+
+#the-proof.typespec div[contenteditable] {
+    /* Required to be able place a cursor when element is empty. */
+    min-height: var(--line-height);
+    /* Solves jumping cursor when inputing into empty element. */
+    border-top: 1px solid transparent;
+    white-space: pre-wrap; /* alternatively:  break-spaces or pre-wrap; not sure what is better*/
+}
+
+#the-proof.typespec div[contenteditable] p {
+    min-height: var(--line-height);
+    font-variation-settings: inherit;
+}
+
+#the-proof.typespec .typespec-element--active label{
+    background: #EEF;
+}
+
+
+input.font_leading-mode{
+    display: none;
+}
+input.font_leading-mode + .font_leading-mode_label::after {
+    content: 'auto';
+}
+input.font_leading-mode:checked + .font_leading-mode_label::after {
+    content: 'manual';
+}
+
+.font_leading .font_leading-value {
+    width: 4em;
+}
+.font_leading .font_leading-mode_label {
+    border: 1px solid #b7b4b0;
+    background: #F8F7F7;
+    display: inline-block;
+    padding: 0.3em 1em;
+}
+#controls .font_leading-mode_label {
+    font-size: inherit;
+}
+
+
+#the-proof.waterfall,
+#the-proof.vartools-grid {
+    overflow-x: auto;
+}
+
+#the-proof.waterfall .waterfall-container {
+    line-height: 1.2;
+    text-align: var(--alignment);
+}
+
+
+#the-proof.waterfall .waterfall-line {
+    position: relative;
+    font-size: calc(1pt * var(--font-size, 1em));
+    --toggle-edit-size: 1.5rem;
+    --toggle-edit-width: calc(1.5 * var(--toggle-edit-size));
+    --toggle-edit-gap: calc(.5 * var(--toggle-edit-size));
+    padding-left: calc(var(--toggle-edit-width) + var(--toggle-edit-gap));
+}
+
+#the-proof.waterfall .waterfall-line .waterfall-toggle_edit::before,
+#the-proof.vartools-grid .grid-toggle_edit::before {
+    counter-reset: fontsize var(--font-size);
+    content: counter(fontsize);
+    font-size: min(.7em, var(--toggle-edit-size));
+    vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
+}
+
+
+#the-proof.waterfall .waterfall-line .waterfall-toggle_edit:hover::before,
+#the-proof.vartools-grid .grid-toggle_edit::before {
+    content: '✎';
+}
+
+#the-proof.waterfall .waterfall-line_content {
+    white-space: nowrap;
+}
+#the-proof.waterfall .waterfall-line_content[contenteditable=true] {
+    /* For better feedback when typing while editing. */
+    white-space: break-spaces;
+}
+
+#the-proof.waterfall .waterfall-line .waterfall-toggle_edit,
+#the-proof.vartools-grid .grid-toggle_edit {
+    width: var(--toggle-edit-width);
+    height: 100%;
+    display: block;
+    position: absolute;
+    cursor: pointer;
+    left: 0;
+    bottom: 0;
+    text-align: right;
+    font-family: monospace; /* Use at least something with tabular figures! */
+}
+
+.grid_dimension_controls-invert_button{
+font-size: 1.4em;
+width: 100%;
+height: 1.4em;
+line-height: 1;
+}
+
+.grid_dimension_controls .grid_dimension_x,
+.grid_dimension_controls .grid_dimension_y,
+.grid_dimension_controls-invert_button {
+    margin-bottom: .3em;
+}
+
+.grid_dimension_controls .grid_dimension {
+    padding: .2em;
+    white-space: nowrap;
+}
+.grid_dimension_controls .grid_dimension_x legend::after{
+    content: ' ▸';
+}
+.grid_dimension_controls .grid_dimension_y legend::after {
+    content: ' ▾';
+}
+
+.grid_dimension_controls .grid_dimension_x legend::after,
+.grid_dimension_controls .grid_dimension_y legend::after {
+    font-size: 1.5em;
+}
+
+
+#controls .grid_dimension-axis_label,
+#controls .grid_dimension-stepping_label {
+    display: block;
+    margin: .5em 0;
+}
+
+#controls .grid_dimension-stepping_value {
+    width: 3em;
+}
+
+#controls .grid_dimension-axis_label, #controls .grid_dimension-stepping_label {
+  display: block;
+  margin: .5em 0;
+}
+
+#controls label {
+  display: inline-block;
+  line-height: inherit;
+}
+#controls .disabled {
+    opacity: 0.7;
+}
+
+.grid-container {
+    display: table-table;
+}
+
+.grid-row {
+    display: table-row;
+}
+
+.grid-cell {
+    display: table-cell;
+    position: relative;
+}
+
+#the-proof.vartools-grid .grid-show_parameters {
+    padding: .3em;
+    text-align: left;
+}
+
+
+.grid-cell_content {
+    font-size: calc(1pt * var(--font-size, 1em));
+    text-align: var(--alignment);
+    white-space: break-spaces;
+}
+
+#the-proof.vartools-grid .grid-cell .grid-toggle_edit {
+    display: none;
+}
+#the-proof.vartools-grid .grid-cell:hover .grid-toggle_edit {
+    display: block;
+}
+
+
+dialog p, dialog label, dialog menu, dialog blockquote {
+    margin: 1em 0;
+}
+dialog menu > *:first-child {
+    margin-top: 0;
+}
+
+dialog legend {
+    font-weight: bold;
+}
+
+dialog label {
+  color: #000;
+  display: block;
+  font-size: 1rem;
+  font-variation-settings: "opsz" 12;
+  letter-spacing: initial;
+  line-height: initial;
+  position: initial;
+  text-transform: initial;
+}
+
+dialog .dialog-line label {
+    display: inline;
+}
+
+dialog .dialog-multi_select_fonts label{
+    margin: 0;
+    line-height: 1.5;
+}
+
+dialog .dialog-multi_select_fonts{
+    overflow-y: auto;
+    max-height: 7.5em;
+    border: 1px solid grey;
+    padding: .5em;
+
+}
+
+dialog .dialog-multi_select_fonts > * {
+    background: lightyellow;
+}
+dialog .dialog-multi_select_fonts > *:nth-child(2n){
+    background: white;
+}
+
+
+#controls .ot_features_chooser {
+    padding: 0 .4em;
+}
+
+#controls .ot_features_chooser.collapsed {
+    border: 0;
+    padding: 0;
+}
+
+#controls .ot_features_chooser.collapsed .ot_features_chooser-children_container {
+    display: none;
+}
+
+#controls .ot_features_chooser-head_label label::after,
+#controls .ot_features_chooser-children_container label::after {
+    content: '*';
+    color: transparent;
+}
+
+#controls .ot_features_chooser-head_label.non_default label::after,
+#controls .ot_features_chooser-children_container label.non_default::after {
+    color: black;
+}

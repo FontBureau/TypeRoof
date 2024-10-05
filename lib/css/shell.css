@@ -1,0 +1,1156 @@
+@import url(./fonts.css);
+@import url(./shell-general-layout.css);
+
+.ui_layout_select {
+    display: block;
+}
+
+/**
+ * Using .typeroof-ui as the class for containers within which the
+ * elements will be treated as typeroof ui components. Especially
+ * for the styling general html-elements (h1, h2, ...).
+ */
+.typeroof-ui :is(h1, h2, h3, h4, h5, h6){
+    margin-block-start: var(--gap-size);
+    margin-block-end: var(--gap-size);
+}
+.typeroof-ui :is(ol, ul) {
+    margin-block-start: var(--gap-size);
+    margin-block-end: var(--gap-size);
+}
+/* No margin for nested lists. */
+.typeroof-ui :is(ol, ul) :is(ul, ol) {
+    margin-block-start: 0;
+    margin-block-end: 0;
+}
+
+.typeroof-ui{
+    font-size: .8rem;
+    font-variation-settings: "opsz" 9;
+}
+
+.typeroof-ui > :is(
+        .ui_font-select,
+        .ui_layout_select,
+    ):is(label, .label) > span:first-child,
+.ui_select_task_automation .ui_plain_select-label {
+    display: block;
+    margin: .5em 0 .35em 0;
+}
+
+.typeroof-ui > :is(
+        .ui_font-select,
+        .ui_layout_select,
+    ):is(label, .label) > span:first-child,
+.ui_select_task_automation .ui_plain_select-label,
+.ui_axes_math > label,
+fieldset > legend {
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* Should probably not use <strong> there! */
+.typeroof-ui label > :is(strong, span):first-child{
+    font-weight: 600;
+}
+
+.key_moments_timeline-items {
+    list-style: none;
+    padding: 0;
+}
+
+.active > .key_moments_timeline-button {
+    font-weight: 700
+}
+
+.ui_time_control_circle{
+  touch-action: none;
+  width: 200px;
+  height: 200px;
+}
+
+.ui_time_control_circle-track {
+    fill: oklch(.95 .05 calc(1turn * var(--t)));
+    stroke: black;
+    stroke-width: 2;
+}
+.ui_time_control_circle-track_back{
+    fill: var(--gap-color);
+}
+.ui_time_control_circle-hand {
+    stroke: black;
+    stroke-width: 2;
+    fill: oklch(.9 .2 calc(1turn * var(--t)));
+}
+
+.ui_time_control_circle-key_moments > * {
+    fill: black;
+}
+.ui_time_control_circle-key_moments > .active {
+    fill: red;
+}
+.ui_time_control_circle-key_moments :hover {
+  stroke: black;
+  stroke-width: 7;
+  stroke-opacity: .3;
+  /* paint the stroke under the fill*/
+  paint-order: stroke;
+}
+
+.stage_and_actors {
+    /* It's important, that the inner size of the stage has
+     * the exact width/height dimensions.
+     */
+    box-sizing: content-box;
+    border: var(--gap-size) solid var(--gap-color, black);
+    border-inline-start-width: 0;
+}
+.stage_and_actors-wrapper {
+    position: relative;
+    overflow: hidden;
+}
+
+.stage_and_actors-wrapper:before {
+  content: "";
+  display: block;
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: var(--transparency-indicator-bg-size);
+  background-image: var(--transparency-indicator-bg-image);
+}
+
+.stage_and_actors-wrapper > .stage_and_actors-layer-top {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+}
+
+.stage_and_actors-layer-sub {
+    position: absolute;
+    overflow: visible;
+}
+
+.actor_renderer-line_of_text {
+    display: block;
+    white-space: pre;
+
+    height: fit-content; /*inherit;*/
+    width: fit-content; /*inherit;*/
+}
+
+.stage_and_actors-layer > svg circle {
+}
+
+.stage-manager_actors li.active > button span {
+    font-weight: 700;
+}
+
+.ui_toggle_key_moment_button.active {
+    font-weight: 700;
+}
+
+.key_moments_controls .key_moments_controls-insert_moment::before {
+  content: "⎀ ";
+  line-height: 1em;
+}
+
+ol.ui_zone-key_moments_main {
+    padding: 0;
+    list-style:inside square;
+}
+
+.ui_key_moment_controller > label {
+  display: block;
+}
+
+.ui_zone-key_moments_main .ui_key_moment_controller:nth-child(odd){
+    background: var(--list-item-odd-bg);
+}
+.ui_zone-key_moments_main .ui_key_moment_controller:nth-child(even){
+    background: var(--list-item-even-bg);
+}
+
+li.ui_key_moment_controller.active:not(:last-child) {
+    border-bottom: var(--gap-size) solid var(--gap-color);
+    margin-bottom: 1em;
+    padding-bottom: 1em;
+}
+
+.stage-manager_actors ol {
+    list-style: none;
+    padding-inline-start: 0;
+}
+
+.stage-manager_actors > ol {
+    padding-inline-start: 0;
+}
+
+.ui_font-select{
+    display: block;
+}
+.ui_font-select_select {
+  max-width: 15em;
+}
+
+.ui_actor_time_control_circle {
+    width: 75px;
+    height: 75px;
+}
+
+.ui_actor_time_control_circle :is(
+    .ui_time_control_circle-track
+  , .ui_time_control_circle-hand
+) {
+    stroke-width: 5;
+}
+
+:root {
+    --indicator-padding: .2em;
+    --drop-indicator-color: #333;
+    --indentation-width: .7em;
+}
+
+.stage-manager_actors > ol:empty::before {
+    content: "(empty: drop actor here)";
+}
+.ui_axes_math-locations_sum-items:empty::before,
+.ui_axes_math-map_product-items:empty::before {
+    content: "(empty: drop item here)";
+}
+.ui-axes_math-location_values:empty::before {
+    content: " (empty: add item here) ";
+    background: var(--list-item-odd-bg);
+}
+.stage-manager_actors > ol:empty::before,
+.ui_axes_math-locations_sum-items:empty::before,
+.ui_axes_math-map_product-items:empty::before {
+  display: block;
+  background-color: var(--list-item-odd-bg);
+}
+
+.stage-manager_actors li.odd-row {
+    --background-base-color: var(--list-item-odd-bg);
+    background: var(--list-item-odd-bg);
+}
+
+.stage-manager_actors > ol,
+.stage-manager_actors li.even-row {
+    --background-base-color: var(--list-item-even-bg);
+    background: var(--list-item-even-bg);
+}
+
+
+
+/* FIXME: make alternating */
+.ui_axes_math-map, .ui_axes_math-map > *,
+.ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
+.ui_axes_math-map-item, .ui_axes_math-map-item > * {
+    --background-base-color: var(--list-item-even-bg);
+    background: var(--list-item-even-bg);
+}
+
+.ui_videoproof_array_layers-items > *:nth-child(odd) {
+    --background-base-color: var(--list-item-odd-bg);
+    background: var(--list-item-odd-bg);
+}
+
+.ui_videoproof_array_layers-items,
+.ui_videoproof_array_layers-items> *:nth-child(even){
+    --background-base-color: var(--list-item-even-bg);
+    background: var(--list-item-even-bg);
+}
+
+.stage-manager_actors li:last-child > ol {
+    /* Only for layer (container) items
+     * This way there's a drop zone to insert the drop after the li.
+     */
+    padding-bottom: .1em;
+}
+
+.stage-manager_actors li {
+    padding: calc(var( --indicator-padding) * 0.5) 0 calc(var(--indicator-padding) * 0.5) 0;
+}
+
+.stage-manager_actors li > :first-child {
+    margin-inline-start: calc(var(--indentation-width, 1em) * var(--structural-depth, 0));
+}
+
+
+:is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
+    .ui_axes_math-map, .ui_axes_math-map > *,
+    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
+    .ui_axes_math-map-item, .ui_axes_math-map-item > .ui_axes_math-axis_tag
+):is(.drop_target_indicator-before, .drop_target_indicator-after),
+
+.stage-manager_actors li.drop_target_indicator-before,
+.stage-manager_actors li.drop_target_indicator-after {
+    background-position: calc(var(--indentation-width, 1em) * var(--structural-depth, 0)) 0;
+    background-size: 10em auto;
+    background-repeat: no-repeat;
+}
+
+:is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
+    .ui_axes_math-map, .ui_axes_math-map > *,
+    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
+    .ui_axes_math-map-item, .ui_axes_math-map-item > .ui_axes_math-axis_tag
+):is(.drop_target_indicator-before),
+.stage-manager_actors li.drop_target_indicator-before {
+    --local-indicator-padding: calc(var(--indicator-padding) + var(--own-padding-top, 00em));
+    padding: var(--local-indicator-padding) 0 var(--own-padding-bottom, 0em) 0;
+    background-image: linear-gradient(
+        to bottom,
+        var(--drop-indicator-color) var(--indicator-padding),
+        var(--background-base-color) var(--indicator-padding)
+    );
+}
+
+:is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
+    .ui_axes_math-map, .ui_axes_math-map > *,
+    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
+    .ui_axes_math-map-item, .ui_axes_math-map-item > .ui_axes_math-axis_tag
+):is(.drop_target_indicator-after),
+.stage-manager_actors li.drop_target_indicator-after {
+    --local-indicator-padding: calc(var(--indicator-padding) + var(--own-padding-bottom, 0em));
+    padding: var(--own-padding-top, 0em) 0 var(--local-indicator-padding) 0;
+    background-image: linear-gradient(
+        to top,
+        var(--drop-indicator-color) var(--indicator-padding),
+        var(--background-base-color) var(--indicator-padding)
+    );
+}
+
+
+.stage-manager_actors .drop_target_indicator-after:last-child  {
+    padding: calc(var( --indicator-padding) * 0.5) 0 var(--indicator-padding) 0;
+}
+
+.stage-manager_actors ol:empty::after,
+.stage-manager_actors .drop_target_indicator-insert::after {
+    display: block;
+    content: "";
+    margin-left: calc(var(--indentation-width, 1em) * (1 + var(--structural-depth, 0)));
+    padding: var(--indicator-padding) 0;
+}
+
+.stage-manager_actors ol:not(.drop_target_indicator-insert):empty::after {
+    background: var(--background-base-color);
+}
+.stage-manager_actors .drop_target_indicator-insert::after {
+    background-image: linear-gradient(
+        to top,
+        var(--drop-indicator-color) var(--indicator-padding),
+        var(--background-base-color) var(--indicator-padding)
+    );
+    background-size: 10em auto;
+    background-repeat: no-repeat;
+}
+
+.ui_axes_math-locations_sum-items:empty::before,
+.ui_axes_math-map_product-items:empty::before,
+.ui-axes_math-location_values:empty::before {
+    padding: var(--indicator-padding);
+}
+.ui_axes_math-locations_sum-items.drop_target_indicator-insert::before,
+.ui_axes_math-map_product-items.drop_target_indicator-insert::before,
+.ui-axes_math-location_values.drop_target_indicator-insert::before {
+    border:var(--indicator-padding) solid var(--drop-indicator-color);
+    padding: 0;
+}
+
+.stage-manager_actors li > * {
+    vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
+}
+
+.drag_handle{
+    display: inline-block;
+    background: #aaa;
+    padding: 0 .3em;
+    border: 1px outset lightgrey;
+}
+
+.waste_basket_drop_target {
+    display: block;
+}
+
+.waste_basket_drop_target-main_drop_zone{
+    display: inline-block;
+}
+.waste_basket_drop_target-main_drop_zone::after {
+    content: "🗑️";
+    font-size: 2em;
+}
+.waste_basket_drop_target-receptive .waste_basket_drop_target-main_drop_zone{
+    background: lightyellow;
+    outline: .2em solid grey;
+}
+
+.ui_color_component {
+  /*
+   * width: 1em;
+   * height: 1em;
+   */
+}
+.ui_color_patch {
+    position: relative;
+    --width: 1.5em;
+    --height: 1.3em;
+    width: var(--width);
+    height: var(--height);
+    overflow: visible;
+}
+
+.ui_color_patch-has_color:after,
+.ui_color_patch-has_color:before {
+    display:block;
+    content: '';
+    width: var(--width);
+    height: var(--height);
+    position: absolute;
+    left: 0;
+    top: 0;
+
+}
+
+.ui_color_patch-has_color:hover:after {
+    --hover-size: 7rem;
+    min-width: var(--hover-size);
+    height: var(--hover-size);
+    left: calc((-1 * var(--hover-size) / 2) + (var(--width) / 2));
+    top: calc((-1 * var(--hover-size) / 2) + (var(--height) / 2));
+    border-radius: calc(var(--hover-size)/2);
+}
+
+.ui_color_patch-has_color:after {
+    z-index: 1;
+    background-color: var(--color);
+}
+
+.ui_color_patch-has_color:before {
+    z-index: 0;
+    background-size: var(--transparency-indicator-bg-size);
+    background-image: var(--transparency-indicator-bg-image);
+}
+
+
+.ui_color_patch-no_color_label {
+    display: none;
+}
+.ui_color_patch-no_color .ui_color_patch-no_color_label{
+    display: initial;
+    padding-left: 2em;
+}
+
+.common_actor_properties-list {
+    padding: 0;
+    list-style: inside none;
+}
+
+.common_actor_properties-item:nth-child(even) {
+    background: var(--list-item-even-bg);
+}
+.common_actor_properties-item:nth-child(odd) {
+    background: var(--list-item-odd-bg);
+}
+
+.common_actor_properties-value {
+    font-weight: bold;
+}
+
+.common_actor_properties-value-color_patch {
+    display: inline-block;
+}
+
+.common_actor_properties-item-type_color,
+.common_actor_properties-item-type_text {
+    overflow: hidden;
+    white-space: nowrap;
+}
+.common_actor_properties-item-type_color:hover,
+.common_actor_properties-item-type_text:hover {
+    white-space: initial;
+}
+.common_actor_properties-item-type_color:hover{
+    overflow: initial;
+}
+
+.common_actor_properties-item-type_color:hover .common_actor_properties-value-text,
+.common_actor_properties-item-type_text:hover .common_actor_properties-value-text {
+    display: block;
+}
+
+.common_actor_properties-value-text {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 100%;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: bottom;
+}
+
+.common_actor_properties-item-type_color:hover .common_actor_properties-value-text,
+.common_actor_properties-value-text:hover {
+    text-overflow: ellipsis;
+    overflow: initial;
+    white-space: initial;
+    display: initial;
+}
+
+.ui_color_chooser-label_toggle {
+    display: list-item;
+    list-style-type: disclosure-closed;
+    list-style-position: inside;
+}
+
+.ui_color_chooser.settings_visible .ui_color_chooser-label_toggle {
+    list-style-type: disclosure-open;
+}
+
+
+
+.ui_color_chooser .ui_color_patch {
+    display: inline-block;
+    margin-left: .5em;
+    vertical-align: baseline;
+    margin-top: 0.3em;
+}
+
+
+.ui_color_component {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto;
+    grid-template-areas:  "value-box toggle"
+                          "color-bar color-bar";
+}
+
+
+.ui_color_component > .ui_toggle_button {
+    grid-area: toggle;
+    justify-self: end;
+}
+
+.ui_color_component >.number-and-range-input_value-box {
+    grid-area: value-box;
+}
+
+.ui_color_component > .number-and-range-input_color-bar {
+    grid-area: color-bar;
+}
+
+.number-and-range-input_color-bar:before {
+  content: "";
+  display: block;
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: var(--transparency-indicator-bg-size);
+  background-image: var(--transparency-indicator-bg-image);
+}
+
+.number-and-range-input_color-bar {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    height: 3rem;
+}
+.number-and-range-input_color-bar input{
+    width: 100%;
+    width: -moz-available;          /* WebKit-based browsers will ignore this. */
+    width: -webkit-fill-available; /* Mozilla-based browsers will ignore this. */
+    width: fill-available;
+    position: relative;
+    z-index: 1;
+}
+.number-and-range-input_color-bar canvas {
+    width: var(--width, 0);
+    height: var(--height, 0);
+    /*
+     * important, canvas in this element must not change the container height
+     * width and height will be set in javascript to cover all of the container.
+     */
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    left: 0;
+}
+
+.number_and_range_input input[type=number]{
+    max-width: 10ex;
+}
+
+.ui_select_task_automation .ui_plain_select-label {
+    display: block;
+}
+
+.measure_box {
+    position: absolute;
+    top: -100px; /* hide off-screen*/
+    /* rather use 1px, so there is no shortcut optimization that
+     * prevents measuring the content.
+     */
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+.measure_box-sample {
+    white-space: nowrap;
+
+}
+
+/** =>> START from Videoproof Array **/
+.fixed-line-breaks {
+    word-break: break-all;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-size: 36pt;
+    line-height: 1.5;
+    text-align: left;
+}
+
+/* where is this rule used? */
+.end-of-line:after {
+    display: block;
+    content: '';
+}
+
+.fixed-line-breaks div, .fixed-line-breaks span {
+    display: block;
+    white-space: nowrap;
+    word-break: normal;
+    word-wrap: normal;
+    overflow-wrap: normal;
+}
+
+.fixed-line-breaks span {
+    display: inline-block;
+    min-width: .1em;
+/* 	font: inherit; */
+    text-align: left;
+    margin-right: 0.3em;
+}
+
+/* used in contextual/kerning mode */
+.fixed-lines span {
+    display: inline;
+    margin-right: 0;
+    white-space: nowrap;
+}
+
+.actor_renderer-videoproof_array {
+    /**
+     * This way it scrolls vertically within the stage.
+     * FIXME:CAUTION: May be too simplistic and require rethinking but
+     * looks good so far. In a stand-alone layout, as opposed to in the
+     * stage-and-actors layout, we might need a different handling.
+     * I.e. in the case of usage within an movie/film-like
+     * non-interactive animation, it is wrong to add manual scrolling to
+     * this! However, so far there's no distinction made between
+     * interactive and non-interactive usage. Overflow setup could be
+     * another property.
+     */
+    height: 100%;
+    overflow-y: auto;
+}
+/** <<= END from Videoproof Array **/
+
+
+.ui_checkbox-extended.not-available {
+    color: var(--text-color-disabled);
+}
+
+
+.ui_key_moments_link_navigation-list,
+.ui_more_raps-list {
+    list-style: none;
+    padding: 0;
+    font-size: .8em;
+    font-variation-settings: "opsz" 7;
+}
+
+:is(.ui_key_moments_link_navigation-list, .ui_more_raps-list) li {
+   margin: .25em 0
+}
+
+.ui_more_raps-list_item.active {
+    --animation-local-impact: 1;
+}
+
+.ui_key_moments_link_navigation-list_item,
+.ui_more_raps-list_item.active
+{
+    /*
+    color: oklch(calc(var(--animation-local-impact, 0) * 67.35%) 0.217 12.23);
+    */
+    color: hsl(0, 100%, calc(50% * var(--animation-local-impact, 0)));
+}
+.ui_key_moments_link_navigation-list_item-input,
+.ui_more_raps-list_item-input {
+    text-decoration: none;
+}
+
+.ui_videoproof_array_layers-items {
+    padding: 0;
+}
+
+.ui_videoproof_array_layers-items > *{
+    display: list-item;
+    list-style: none;
+}
+
+.dragging {
+    outline: .05em solid grey;
+}
+
+.actor_renderer-videoproof_array_v2 {
+    /* configuration in CSS is not yet a common praxis in this project
+     * line-height: 1.5;
+     */
+    --line-height-em: 1.5;
+    --gap-widht-em: 0.1;
+
+    display: block flex;
+    /*row-gap: .4em;*/
+    /* Better than having display: inline children as together with
+     * "flex-wrap: wrap" the children have line breaks, but with column-gap
+     * we can control the gap between children without having to remove
+     * e.g. the margin-right on a last element of the line.
+     */
+    flex-wrap: wrap;
+
+    column-gap: calc(1pt * var(--font-size-pt, 24) * var(--gap-widht-em, 0));
+    row-gap: 0em;
+}
+
+.typeroof-layout > .actor_renderer-videoproof_array_v2 {
+    /* To make sure the outline of the cell boxes is visible at the top */
+    margin-top: var(--gap-size);
+}
+
+.actor_renderer-videoproof_array_v2-zone {
+    font-size: calc(1pt * var(--font-size-pt, 24));
+    height: calc(1em * var(--line-height-em, 1));
+
+    /* inline is not required anymore, as the parent lays these out as
+     * flex with flex-wrap: wrap.
+     */
+    display: /*inline*/ flex;
+    justify-content: var(--cell-alignment, center); /* this is the actual text align */
+
+    position: relative;
+    width: calc(1em * (var(--widest-cell-em, 3)));
+    /*outline: 1px solid;*/
+}
+.actor_renderer-videoproof_array_v2-cell {
+    position: absolute;
+    line-height: initial;
+
+    /* This is a nice feature to turn on optionally, as it accurateley
+     * draws the glyph box and that in the text color, so it is easy
+     * to understand.
+     */
+    /* outline: 1px solid; */
+
+
+    /*
+     * FIXME: good feature additionally would be drawing the baseline
+     * optionally.
+     */
+
+    /* The box height seems rounded to */
+
+    /**
+     * align to bottom of box
+     * --descender-em: move down to align baseline with bottom of the box
+     * --max-descender-em: move up to align with bottom of the biggest cell descender
+
+     This is good because it leaves some space at the to of the page
+     to no clip extensively high diacritics. However, at the bottom, it
+     may clip extensively low diacritics.
+     */
+    bottom: calc(1em *(var(--max-descender-em) - var(--descender-em)));
+
+
+    /**
+     * align to top of box
+     * --ascender-em: move up to align baseline with top of the box
+     * --max-ascender-em: move down to align with top of the biggest cell descender
+
+    top: calc(1em *(var(--max-ascender-em) - var(--ascender-em)))
+     */
+}
+.actor_renderer-videoproof_array_v2-cell:first-child {
+    margin-left: 0;
+}
+
+:root {
+    /* Note: using \ to escape newlines works well in Chrome and Firefox
+     * but it destroys syntax highlighting in my editor. Actually, having
+     * a full stop at the end of this comment and some magic(?) number
+     * of characters in the last line restores syntax highlighting again.
+     */
+    --alignment-left-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='%23CCC' x1='0' y1='2' x2='6' y2='2' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='0' y1='6' x2='4' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-left-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='black' x1='0' y1='2' x2='6' y2='2' stroke-width='1'/>\
+            <line stroke='black' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='black' x1='0' y1='6' x2='4' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-center-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='%23CCC' x1='1' y1='2' x2='7' y2='2' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='2' y1='6' x2='6' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-center-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='black' x1='1' y1='2' x2='7' y2='2' stroke-width='1'/>\
+            <line stroke='black' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
+            <line stroke='black' x1='2' y1='6' x2='6' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-right-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='%23CCC' x1='8' y1='2' x2='2' y2='2' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='8' y1='4' x2='0' y2='4' stroke-width='1'/>\
+            <line stroke='%23CCC' x1='8' y1='6' x2='4' y2='6' stroke-width='1'/>\
+        </svg>");
+    --alignment-right-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+            <line stroke='black' x1='8' y1='2' x2='2' y2='2' stroke-width='1'/>\
+            <line stroke='black' x1='8' y1='4' x2='0' y2='4' stroke-width='1'/>\
+            <line stroke='black' x1='8' y1='6' x2='4' y2='6' stroke-width='1'/>\
+        </svg>");
+}
+
+.ui_alignment label {
+    display: block;
+}
+.ui_alignment-radio_icon{
+    display: none;
+}
+
+
+.ui_alignment input + .ui_alignment-radio_icon{
+    display: block;
+    font-size: inherit;
+    width: 3em;
+    height: 3em;
+    background: no-repeat;
+    background-size: cover;
+    background-position: center center;
+    margin: 0 auto;
+    background-color: white;
+    position: absolute;
+    z-index: 1;
+}
+
+.ui_alignment label.ui_alignment-radio_label {
+    display: inline-block;
+    vertical-align: text-top;
+    position: relative;
+    width: 3em;
+    height: 3em;
+    overflow: hidden;
+}
+.ui_alignment input {
+    position: absolute;
+    z-index: 0;
+}
+
+.ui_alignment input.ui_alignment-left + .ui_alignment-radio_icon {
+    background-image: var(--alignment-left-icon);
+}
+.ui_alignment input.ui_alignment-left:checked + .ui_alignment-radio_icon {
+    background-image: var(--alignment-left-active-icon);
+}
+
+.ui_alignment input.ui_alignment-center + .ui_alignment-radio_icon {
+    background-image: var(--alignment-center-icon);
+}
+.ui_alignment input.ui_alignment-center:checked + .ui_alignment-radio_icon {
+    background-image: var(--alignment-center-active-icon);
+}
+
+.ui_alignment input.ui_alignment-right + .ui_alignment-radio_icon {
+    background-image: var(--alignment-right-icon);
+}
+.ui_alignment input.ui_alignment-right:checked + .ui_alignment-radio_icon {
+    background-image: var(--alignment-right-active-icon);
+}
+
+.ui_alignment input.ui_alignment-justify + .ui_alignment-radio_icon {
+    background-image: var(--alignment-justify-icon);
+}
+.ui_alignment input.ui_alignment-justify:checked + .ui_alignment-radio_icon {
+    background-image: var(--alignment-justify-active-icon);
+}
+
+.ui_axes_math-locations_sum-items {
+    margin-left: var(--indentation-width, 1em); /* space for the list-style-type */
+    --own-padding-top: 0.25em;
+    --own-padding-bottom: 0em;
+}
+.ui_axes_math-locations_sum-items > * {
+    display: list-item;
+    list-style: none;
+    padding-top: var(--own-padding-top, 0);
+    padding-bottom: var(--own-padding-bottom, 0);
+}
+
+input:valid {
+    border: 1px solid green;
+}
+
+input:invalid {
+    border: 1px solid red;
+}
+
+
+.ui_axes_math-map-label, .ui_axes_math-locations_sum-label {
+    padding: 0 .2em;
+    border: .1em solid black;
+}
+
+
+/*
+ * hide
+ *    - output: when focused
+ *    - inputs: when not focused (by default)
+ */
+.ui-axes_math-location_value:focus-within .ui-axes_math-location_value-output,
+.ui-axes_math-location_value-drag_handle,
+.ui-axes_math-location_value .ui-axes_math-location_value-logical_value,
+.ui-axes_math-location_value .ui-axes_math-location_value-numeric_value,
+.ui-axes_math-location_value.dragging .ui-axes_math-location_value-logical_value,
+.ui-axes_math-location_value.dragging .ui-axes_math-location_value-numeric_value,
+.ui-axes_math-location_value:focus-within.dragging .ui-axes_math-location_value-logical_value,
+.ui-axes_math-location_value:focus-within.dragging .ui-axes_math-location_value-numeric_value
+{
+    display: none;
+}
+
+
+/*
+ * show
+ *    - output: when not focused (default)
+ *    - inputs: when focused
+ */
+.ui-axes_math-location_value:focus-within .ui-axes_math-location_value-logical_value,
+.ui-axes_math-location_value:focus-within .ui-axes_math-location_value-numeric_value,
+.ui-axes_math-location_value:focus-within .ui-axes_math-location_value-drag_handle,
+.ui-axes_math-location_value.dragging .ui-axes_math-location_value-output,
+.ui-axes_math-location_value.dragging .ui-axes_math-location_value-drag_handle {
+    display: initial;
+}
+
+.ui-axes_math-location_value-numeric_value{
+    width: calc(5 * .75em);
+}
+/* this coulde be handled as above with focus-within and <output>,
+ * the styling would be easier, especially the typography
+ */
+.ui_axes_math-map-item .ui_axes_math-axis_tag-input {
+    font-weight: bold;
+    font-size: 1em;
+    border: none;
+    text-align: left;
+    background: #eee;
+
+    /* body text setup, it's hard to inherit for <input>*/
+    font-family: RobotoFlex, sans-serif;
+    font-variation-settings: "opsz" 12;
+    font-size: inherit;
+    font-weight: 600;
+    width: 3em;
+}
+
+.ui_axes_math-map-item {
+    --padding-horizontal: .25em;
+    --drop-target-indicator-width: .2em;
+}
+
+.ui_axes_math-map-item
+    > :is(
+        .ui_axes_math-axis_tag,
+        .drag_handle) {
+    display: inline-block;
+    padding-right: var(--padding-horizontal);
+}
+
+.ui_axes_math-map-item .ui-axes_math-location_values{
+    display: inline;
+}
+.ui_axes_math-axis_tag:has(+ .drag_handle) {
+    padding-right: 0;
+}
+
+
+.ui_axes_math-map-item > .ui-axes_math-location_value,
+.ui-axes_math-location_values > .ui-axes_math-location_value {
+    display: inline-block;
+    padding: 0 var(--padding-horizontal);
+}
+
+.ui-axes_math-location_value.drop_target_indicator-after{
+    border-right: var( --drop-target-indicator-width) solid var(--drop-indicator-color);
+    padding-right: calc(var(--padding-horizontal) - var( --drop-target-indicator-width) / 2);
+}
+
+.ui-axes_math-location_value.drop_target_indicator-after + .ui-axes_math-location_value {
+    padding-left: calc(var(--padding-horizontal) - var( --drop-target-indicator-width) / 2);
+}
+
+.ui-axes_math-location_value.drop_target_indicator-before {
+    border-left: var(--drop-target-indicator-width) solid var(--drop-indicator-color);
+    padding-left: calc(var(--padding-horizontal) - var( --drop-target-indicator-width) / 2);
+}
+
+:is(.ui_axes_math-axis_tag, .drag_handle, .ui-axes_math-location_value):has(+ .drop_target_indicator-before){
+    padding-right: calc(var(--padding-horizontal) - var( --drop-target-indicator-width) / 2);
+}
+
+.ui_axes_math-map-tools{
+    display: inline-block;
+    margin-left: .5em;
+    vertical-align: middle;
+    vertical-align: -webkit-baseline-middle;
+}
+.ui_axes_math-map-tools > * {
+    display: none;
+}
+:focus-within > .ui_axes_math-map-tools > * {
+    display: initial;
+}
+
+.ui-button-input:disabled {
+  color: lightgray;
+}
+
+.ui_axes_math-map-tools :is(.ui_axes_math-axis_tag-input,
+.ui-button) {
+    font-size: inherit;
+    padding-block: 0;
+}
+
+/* don't show these controls for the root collection */
+.ui_axes_math > .ui_axes_math-locations_sum > :is(.ui_axes_math-locations_sum-drag_handle, .ui_axes_math-locations_sum-label){
+    display: none;
+}
+
+.ui_axes_math > .ui_axes_math-locations_sum > .ui_axes_math-locations_sum-items {
+    margin-left: 0;
+}
+
+.ui_axes_math .ui_key_moments_link_navigation .ui_key_moments_link_navigation-label{
+    font-weight: 600;
+}
+
+.ui_axes_math .ui_key_moments_link_navigation {
+  margin-block-start: var(--gap-size);
+  margin-block-end: var(--gap-size);
+}
+.ui_axes_math .ui_key_moments_link_navigation-list {
+  margin-block-start: 0;
+}
+
+.ui_axes_math .ui_key_moments_link_navigation {
+    /* it's nested into another fieldset */
+    border: none;
+    padding: 0
+}
+
+.ui_time_control.ui_collapsible_mixin-open .ui_time_control_circle {
+    display: block;
+    margin: 0 auto;
+}
+
+.ui_time_control .ui_time_control-duration input{
+    width: 6em;
+}
+
+.ui_collapsible_mixin-closed {
+    border-color: transparent;
+}
+
+.ui_collapsible_mixin-open {
+    border-color: #b7b4b0;
+}
+
+.ui_collapsible_mixin-closed > *{
+    display:none;
+}
+
+.ui_collapsible_mixin > :is(legend) {
+    display:initial;
+}
+
+.ui_collapsible_mixin > :is(legend) {
+    display: list-item;
+    list-style-type: disclosure-closed;
+    list-style-position: inside;
+}
+.ui_collapsible_mixin-open > :is(legend) {
+    list-style-type: disclosure-open;
+}
+
+.ui_collapsible_mixin-closed {
+    padding-block: 0;
+}
+.ui_collapsible_mixin-open {
+    padding-block: 0.35em 0.625em;
+}
+
+.ui-dialog_openers-items {
+  margin: 0;
+  list-style: inside square;
+  padding: 0;
+}
+
+.ui-dialog_openers-item-button {
+  text-decoration: none;
+}
+
+.ui-dialog-manage_state-serialize_output {
+  white-space: pre;
+  width: 80vw;
+  min-height: 10em;
+  display: block;
+  overflow: auto;
+}
+
+
+.ui-dialog-manage_state-message-status_reset {
+  display: none;
+}
+
+:is(
+      .ui-dialog-manage_state-message-status_success
+    , .ui-dialog-manage_state-message-status_fail
+) .ui-dialog-manage_state-message-process_label:after {
+  text-transform: uppercase;
+  color: white;
+  margin-left: .3em;
+  /* top/bottom padding seems to work nicely in the <legend> context */
+  padding: .3em;
+  font-weight: bolder;
+}
+
+.ui-dialog-manage_state-message-status_success .ui-dialog-manage_state-message-process_label:after{
+  content: "succeeded";
+  background: darkgreen;
+}
+
+.ui-dialog-manage_state-message-status_fail .ui-dialog-manage_state-message-process_label:after{
+  content: "failed";
+  background: darkred;
+}

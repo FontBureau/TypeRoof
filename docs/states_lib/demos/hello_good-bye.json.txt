@@ -1,0 +1,125 @@
+{
+  "activeState": {
+    "t": "0",
+    "duration": "3",
+    "isLoop": "0",
+    "perpetual": "1",
+    "playing": "0",
+    "activeActors": [
+      {
+        "instance": {
+          "isLoop": "0",
+          "label": "",
+          "keyMoments": [
+            {
+              "label": "Hello, light, outside right",
+              "duration": "1",
+              "isActive": "0",
+              "numericProperties": [
+                [
+                  "y",
+                  "200"
+                ],
+                [
+                  "width",
+                  "720"
+                ],
+                [
+                  "x",
+                  "500"
+                ]
+              ],
+              "autoOPSZ": "0",
+              "axesLocations": [
+                [
+                  "wght",
+                  "100"
+                ],
+                [
+                  "opsz",
+                  "100"
+                ]
+              ],
+              "fontSize": "66",
+              "textRun": "Hello",
+              "textAlign": "center"
+            },
+            {
+              "label": "black, position centered",
+              "duration": "1",
+              "isActive": "0",
+              "numericProperties": [
+                [
+                  "x",
+                  "0"
+                ]
+              ],
+              "autoOPSZ": "0",
+              "axesLocations": [
+                [
+                  "wght",
+                  "1000"
+                ]
+              ]
+            },
+            {
+              "label": "Rest, Good Bye",
+              "duration": "1",
+              "isActive": "0",
+              "autoOPSZ": "0",
+              "axesLocations": [
+                [
+                  "wght",
+                  "1000"
+                ]
+              ],
+              "textRun": "Good Bye"
+            },
+            {
+              "label": "Rest, light",
+              "duration": "1",
+              "isActive": "0",
+              "numericProperties": [
+                [
+                  "x",
+                  "0"
+                ]
+              ],
+              "autoOPSZ": "0",
+              "axesLocations": [
+                [
+                  "wght",
+                  "100"
+                ]
+              ]
+            },
+            {
+              "label": "Outside left",
+              "duration": "1",
+              "isActive": "0",
+              "numericProperties": [
+                [
+                  "x",
+                  "-500"
+                ]
+              ],
+              "autoOPSZ": "0",
+              "axesLocations": [
+                [
+                  "wght",
+                  "100"
+                ]
+              ]
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      }
+    ],
+    "width": "720",
+    "height": "720",
+    "editingActor": "./0"
+  },
+  "activeLayoutKey": "StageAndActors",
+  "activeFontKey": "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"
+}
