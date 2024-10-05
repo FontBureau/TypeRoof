@@ -1,0 +1,11 @@
+*.sublime-workspace
+.DS_Store
+build/
+node_modules
+*.log
+.nyc_output/
+coverage/
+yarn-error.log
+
+# Website
+www/

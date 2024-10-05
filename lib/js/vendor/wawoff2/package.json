@@ -1,0 +1,36 @@
+{
+  "name": "wawoff2",
+  "version": "2.0.1",
+  "description": "Convert TTF font to WOFF2",
+  "keywords": [
+    "font",
+    "ttf",
+    "woff",
+    "woff2",
+    "convertor"
+  ],
+  "license": "MIT",
+  "repository": "fontello/wawoff2",
+  "scripts": {
+    "build": "docker build -t wawoff2_build ./src && docker run --rm -v $(pwd):/src/wawoff2 -u $(id -u):$(id -g) -it wawoff2_build make -C /src/wawoff2/src",
+    "test": "standardx -v . && mocha ./test"
+  },
+  "bin": {
+    "woff2_compress.js": "./bin/woff2_compress.js",
+    "woff2_decompress.js": "./bin/woff2_decompress.js"
+  },
+  "files": [
+    "compress.js",
+    "decompress.js",
+    "index.js",
+    "bin/",
+    "build/"
+  ],
+  "dependencies": {
+    "argparse": "^2.0.1"
+  },
+  "devDependencies": {
+    "mocha": "^9.1.4",
+    "standardx": "^7.0.0"
+  }
+}
