@@ -1,0 +1,1458 @@
+{
+  "activeState": {
+    "t": "0",
+    "duration": "8",
+    "isLoop": "0",
+    "perpetual": "1",
+    "playing": "0",
+    "keyMoments": [
+      {
+        "label": "Key Moment 1",
+        "duration": "1",
+        "isActive": "1",
+        "autoOPSZ": "0"
+      }
+    ],
+    "activeActors": [
+      {
+        "instance": {
+          "isLoop": "0",
+          "label": "Timing, Color",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "t",
+                  "0"
+                ]
+              ],
+              "autoOPSZ": "0",
+              "textColor": {
+                "instance": {
+                  "L": "0.00000",
+                  "C": "0.00000"
+                },
+                "colorTypeKey": "OKLCH"
+              },
+              "backgroundColor": {
+                "instance": {
+                  "L": "100.00000",
+                  "C": "0.00000",
+                  "H": "0.7100000",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "OKLCH"
+              }
+            },
+            {
+              "label": "Key Moment 2",
+              "duration": "3",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "t",
+                  "0.99999"
+                ]
+              ],
+              "autoOPSZ": "0",
+              "textColor": {
+                "instance": {
+                  "L": "88.00000",
+                  "C": "36.00000",
+                  "H": "0.1800000"
+                },
+                "colorTypeKey": "OKLCH"
+              },
+              "backgroundColor": {
+                "instance": {
+                  "L": "39.00000",
+                  "C": "48.00000"
+                },
+                "colorTypeKey": "OKLCH"
+              }
+            },
+            {
+              "label": "Key Moment 3",
+              "duration": "1",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "t",
+                  "1"
+                ]
+              ],
+              "autoOPSZ": "0"
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "isLoop": "1",
+                "label": "Styles",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "6",
+                    "isActive": "1",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "SKLA",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "WMX2",
+                        "0"
+                      ],
+                      [
+                        "TRMB",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 2",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "SKLA",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "WMX2",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "BLDA",
+                        "1000"
+                      ],
+                      [
+                        "TRMB",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 3",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "BLDB",
+                        "1000"
+                      ],
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "SKLA",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ],
+                      [
+                        "WMX2",
+                        "0"
+                      ],
+                      [
+                        "TRMB",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 4",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "SKLA",
+                        "1000"
+                      ],
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "WMX2",
+                        "0"
+                      ],
+                      [
+                        "TRMB",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 5",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "TRMK",
+                        "1000"
+                      ],
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "SKLA",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "WMX2",
+                        "0"
+                      ],
+                      [
+                        "TRMB",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 6",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "SKLD",
+                        "500"
+                      ],
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "SKLA",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "WMX2",
+                        "0"
+                      ],
+                      [
+                        "TRMB",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 7",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "TRMA",
+                        "1000"
+                      ],
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "SKLA",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "WMX2",
+                        "0"
+                      ],
+                      [
+                        "TRMB",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 8",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "TRMB",
+                        "1000"
+                      ],
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "SKLA",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "WMX2",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 9",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "SKLA",
+                        "1000"
+                      ],
+                      [
+                        "TRMB",
+                        "1000"
+                      ],
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "WMX2",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 10",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "TRMC",
+                        "1000"
+                      ],
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "SKLA",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "WMX2",
+                        "0"
+                      ],
+                      [
+                        "TRMB",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 11",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "SKLA",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "WMX2",
+                        "1000"
+                      ],
+                      [
+                        "TRMB",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 12",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "TRMD",
+                        "1000"
+                      ],
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "SKLA",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "WMX2",
+                        "0"
+                      ],
+                      [
+                        "TRMB",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 13",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "SKLA",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "WMX2",
+                        "0"
+                      ],
+                      [
+                        "TRMB",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "1000"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 14",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "TRME",
+                        "1000"
+                      ],
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "SKLA",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "WMX2",
+                        "0"
+                      ],
+                      [
+                        "TRMB",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 15",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "SKLA",
+                        "500"
+                      ],
+                      [
+                        "TRMF",
+                        "500"
+                      ],
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "WMX2",
+                        "0"
+                      ],
+                      [
+                        "TRMB",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 16",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "TRMG",
+                        "1000"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "0"
+                      ],
+                      [
+                        "TRMB",
+                        "0"
+                      ],
+                      [
+                        "WMX2",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "SKLA",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "BLDA",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 17",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "WMX2",
+                        "1000"
+                      ],
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "SKLA",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "TRMB",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 18",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "SKLA",
+                        "1000"
+                      ],
+                      [
+                        "WMX2",
+                        "1000"
+                      ],
+                      [
+                        "TRMB",
+                        "1000"
+                      ],
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "TRMC",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ],
+                      [
+                        "TRML",
+                        "0"
+                      ],
+                      [
+                        "TRMF",
+                        "0"
+                      ],
+                      [
+                        "TRMK",
+                        "0"
+                      ],
+                      [
+                        "BLDB",
+                        "0"
+                      ],
+                      [
+                        "TRMA",
+                        "0"
+                      ],
+                      [
+                        "SKLB",
+                        "0"
+                      ],
+                      [
+                        "TRMG",
+                        "0"
+                      ],
+                      [
+                        "TRME",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 19",
+                    "duration": "1",
+                    "isActive": "0",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "TRMC",
+                        "750"
+                      ],
+                      [
+                        "TRML",
+                        "250"
+                      ],
+                      [
+                        "SKLA",
+                        "1000"
+                      ],
+                      [
+                        "TRMF",
+                        "250"
+                      ],
+                      [
+                        "TRMK",
+                        "250"
+                      ],
+                      [
+                        "BLDB",
+                        "1000"
+                      ],
+                      [
+                        "WMX2",
+                        "750"
+                      ],
+                      [
+                        "TRMB",
+                        "500"
+                      ],
+                      [
+                        "TRMA",
+                        "500"
+                      ],
+                      [
+                        "SKLB",
+                        "1000"
+                      ],
+                      [
+                        "TRMG",
+                        "750"
+                      ],
+                      [
+                        "TRME",
+                        "500"
+                      ],
+                      [
+                        "BLDA",
+                        "0"
+                      ],
+                      [
+                        "TRMD",
+                        "0"
+                      ],
+                      [
+                        "SKLD",
+                        "0"
+                      ]
+                    ]
+                  }
+                ],
+                "activeActors": [
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Size, Movement",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "1",
+                          "isActive": "1",
+                          "numericProperties": [
+                            [
+                              "width",
+                              "1440"
+                            ],
+                            [
+                              "y",
+                              "0"
+                            ],
+                            [
+                              "x",
+                              "-360"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "fontSize": "66",
+                          "textRun": "Decovar",
+                          "textAlign": "center",
+                          "positioningVertical": "top"
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "2",
+                          "isActive": "1",
+                          "numericProperties": [
+                            [
+                              "y",
+                              "230"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "fontSize": "100"
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "1",
+                          "isActive": "1",
+                          "autoOPSZ": "0",
+                          "fontSize": "130"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  }
+                ]
+              },
+              "actorTypeKey": "LayerActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      }
+    ],
+    "width": "720",
+    "height": "720",
+    "editingActor": "./0/instance/activeActors/0/instance/activeActors/0"
+  },
+  "activeLayoutKey": "StageAndActors",
+  "activeFontKey": "from-file Decovar Alpha Regular24 Version_0-000 PS_0-0 hotconv_1-0-88 makeotf-lib2-5-647800_DEVELOPMENT"
+}

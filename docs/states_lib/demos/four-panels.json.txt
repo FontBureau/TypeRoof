@@ -1,0 +1,2490 @@
+{
+  "activeState": {
+    "t": "0.9500000",
+    "duration": "24",
+    "isLoop": "0",
+    "perpetual": "1",
+    "playing": "0",
+    "activeActors": [
+      {
+        "instance": {
+          "isLoop": "0",
+          "label": "Temp",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "z-index",
+                  "1"
+                ]
+              ],
+              "autoOPSZ": "0"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "isLoop": "0",
+          "label": "Main",
+          "activeActors": [
+            {
+              "instance": {
+                "isLoop": "1",
+                "label": "Control 1",
+                "keyMoments": [
+                  {
+                    "label": "On Position",
+                    "duration": "1",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "Move Out",
+                    "duration": "4",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "End",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "-720"
+                      ],
+                      [
+                        "t",
+                        "1"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "Reset",
+                    "duration": "0",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "t",
+                        "1"
+                      ],
+                      [
+                        "x",
+                        "720"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "Start, Move In",
+                    "duration": "14",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "t",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "x",
+                        "720"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  }
+                ],
+                "activeActors": [
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Slide1",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "1",
+                          "isActive": "1",
+                          "numericProperties": [
+                            [
+                              "width",
+                              "720"
+                            ],
+                            [
+                              "height",
+                              "720"
+                            ]
+                          ],
+                          "autoOPSZ": "1",
+                          "fontSize": "162",
+                          "textColor": {
+                            "instance": {
+                              "L": "0.00000",
+                              "C": "45.00000",
+                              "H": "0.1800000"
+                            },
+                            "colorTypeKey": "OKLCH"
+                          }
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "1",
+                          "isActive": "1",
+                          "autoOPSZ": "0",
+                          "textColor": {
+                            "instance": {
+                              "L": "100.00000"
+                            },
+                            "colorTypeKey": "OKLCH"
+                          }
+                        }
+                      ],
+                      "activeActors": [
+                        {
+                          "instance": {
+                            "isLoop": "0",
+                            "label": "Background",
+                            "keyMoments": [
+                              {
+                                "label": "Key Moment 1",
+                                "duration": "1",
+                                "isActive": "1",
+                                "numericProperties": [
+                                  [
+                                    "width",
+                                    "720"
+                                  ],
+                                  [
+                                    "height",
+                                    "720"
+                                  ]
+                                ],
+                                "fillColor": {
+                                  "instance": {
+                                    "L": "86.00000",
+                                    "C": "71.00000",
+                                    "H": "0.4200000"
+                                  },
+                                  "colorTypeKey": "OKLCH"
+                                }
+                              },
+                              {
+                                "label": "Key Moment 2",
+                                "duration": "1",
+                                "isActive": "1",
+                                "fillColor": {
+                                  "instance": {
+                                    "L": "33.00000",
+                                    "C": "20.00000"
+                                  },
+                                  "colorTypeKey": "OKLCH"
+                                }
+                              }
+                            ]
+                          },
+                          "actorTypeKey": "RectangleActorModel"
+                        },
+                        {
+                          "instance": {
+                            "isLoop": "0",
+                            "label": "Roboto",
+                            "keyMoments": [
+                              {
+                                "label": "Key Moment 1",
+                                "duration": "1",
+                                "isActive": "1",
+                                "numericProperties": [
+                                  [
+                                    "y",
+                                    "130"
+                                  ],
+                                  [
+                                    "x",
+                                    "0"
+                                  ]
+                                ],
+                                "autoOPSZ": "0",
+                                "axesLocations": [
+                                  [
+                                    "wght",
+                                    "130"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "25"
+                                  ]
+                                ],
+                                "textColor": {
+                                  "instance": {
+                                    "C": "45.00000",
+                                    "H": "0.0000000"
+                                  },
+                                  "colorTypeKey": "OKLCH"
+                                },
+                                "textRun": "Roboto",
+                                "textAlign": "left",
+                                "positioningHorizontal": "left"
+                              },
+                              {
+                                "label": "Key Moment 2",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "x",
+                                    "0"
+                                  ]
+                                ],
+                                "autoOPSZ": "0",
+                                "axesLocations": [
+                                  [
+                                    "wght",
+                                    "1000"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "151"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Key Moment 3",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "x",
+                                    "-310"
+                                  ]
+                                ],
+                                "autoOPSZ": "0",
+                                "axesLocations": [
+                                  [
+                                    "wght",
+                                    "1000"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "151"
+                                  ]
+                                ],
+                                "textAlign": "left",
+                                "positioningHorizontal": "left"
+                              },
+                              {
+                                "label": "Key Moment 4",
+                                "duration": "0",
+                                "isActive": "1",
+                                "numericProperties": [
+                                  [
+                                    "x",
+                                    "0"
+                                  ],
+                                  [
+                                    "width",
+                                    "1026"
+                                  ]
+                                ],
+                                "autoOPSZ": "0",
+                                "textAlign": "right",
+                                "positioningHorizontal": "right"
+                              },
+                              {
+                                "label": "Key Moment 5",
+                                "duration": "1",
+                                "isActive": "1",
+                                "numericProperties": [
+                                  [
+                                    "width",
+                                    "720"
+                                  ]
+                                ],
+                                "autoOPSZ": "0",
+                                "axesLocations": [
+                                  [
+                                    "wght",
+                                    "1000"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "69"
+                                  ]
+                                ],
+                                "textAlign": "center"
+                              },
+                              {
+                                "label": "Key Moment 6",
+                                "duration": "1",
+                                "isActive": "1",
+                                "autoOPSZ": "0",
+                                "axesLocations": [
+                                  [
+                                    "wght",
+                                    "417"
+                                  ]
+                                ]
+                              }
+                            ]
+                          },
+                          "actorTypeKey": "LineOfTextActorModel"
+                        },
+                        {
+                          "instance": {
+                            "isLoop": "0",
+                            "label": "Flex Worm",
+                            "keyMoments": [
+                              {
+                                "label": "0: positioning",
+                                "duration": "0",
+                                "isActive": "1",
+                                "numericProperties": [
+                                  [
+                                    "x",
+                                    "-300"
+                                  ],
+                                  [
+                                    "y",
+                                    "340"
+                                  ],
+                                  [
+                                    "t",
+                                    "0"
+                                  ]
+                                ],
+                                "autoOPSZ": "0",
+                                "positioningHorizontal": "left"
+                              },
+                              {
+                                "label": "0: time control",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "x",
+                                    "-300"
+                                  ],
+                                  [
+                                    "t",
+                                    "1"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "1: positioning",
+                                "duration": "0",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "x",
+                                    "7.015625"
+                                  ],
+                                  [
+                                    "t",
+                                    "0"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "1: time control",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "x",
+                                    "7.015625"
+                                  ],
+                                  [
+                                    "t",
+                                    "1"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "2: positioning",
+                                "duration": "0",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "x",
+                                    "314.03125"
+                                  ],
+                                  [
+                                    "t",
+                                    "0"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "2: time control",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "x",
+                                    "314.03125"
+                                  ],
+                                  [
+                                    "t",
+                                    "1"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              }
+                            ],
+                            "activeActors": [
+                              {
+                                "instance": {
+                                  "isLoop": "0",
+                                  "label": "",
+                                  "keyMoments": [
+                                    {
+                                      "label": "Start Time Control",
+                                      "duration": "0",
+                                      "isActive": "0",
+                                      "numericProperties": [
+                                        [
+                                          "x",
+                                          "-136.15625"
+                                        ],
+                                        [
+                                          "t",
+                                          "0.2548500881834215"
+                                        ]
+                                      ],
+                                      "autoOPSZ": "0"
+                                    },
+                                    {
+                                      "label": "Pin Inital",
+                                      "duration": "0.7451499118165785",
+                                      "isActive": "0",
+                                      "numericProperties": [
+                                        [
+                                          "x",
+                                          "-136.15625"
+                                        ]
+                                      ],
+                                      "autoOPSZ": "0"
+                                    },
+                                    {
+                                      "label": "Advance",
+                                      "duration": "0",
+                                      "isActive": "0",
+                                      "numericProperties": [
+                                        [
+                                          "x",
+                                          "170.859375"
+                                        ]
+                                      ],
+                                      "autoOPSZ": "0"
+                                    },
+                                    {
+                                      "label": "End Time Control",
+                                      "duration": "0.2548500881834215",
+                                      "isActive": "0",
+                                      "numericProperties": [
+                                        [
+                                          "t",
+                                          "1.2548500881834215"
+                                        ],
+                                        [
+                                          "x",
+                                          "170.859375"
+                                        ]
+                                      ],
+                                      "autoOPSZ": "0"
+                                    }
+                                  ],
+                                  "activeActors": [
+                                    {
+                                      "instance": {
+                                        "isLoop": "0",
+                                        "label": "",
+                                        "keyMoments": [
+                                          {
+                                            "label": "0: Initialization",
+                                            "duration": "0",
+                                            "isActive": "0",
+                                            "numericProperties": [
+                                              [
+                                                "x",
+                                                "0"
+                                              ],
+                                              [
+                                                "y",
+                                                "0"
+                                              ],
+                                              [
+                                                "width",
+                                                "422.9375"
+                                              ]
+                                            ],
+                                            "autoOPSZ": "0",
+                                            "axesLocations": [
+                                              [
+                                                "wdth",
+                                                "151"
+                                              ]
+                                            ],
+                                            "fontSize": "162",
+                                            "textRun": "Flex",
+                                            "textAlign": "right"
+                                          },
+                                          {
+                                            "label": "1: Contraction",
+                                            "duration": "1.7",
+                                            "isActive": "0",
+                                            "numericProperties": [
+                                              [
+                                                "x",
+                                                "0"
+                                              ]
+                                            ],
+                                            "autoOPSZ": "0",
+                                            "axesLocations": [
+                                              [
+                                                "wdth",
+                                                "25"
+                                              ]
+                                            ]
+                                          },
+                                          {
+                                            "label": "2: Re-alignment",
+                                            "duration": "0",
+                                            "isActive": "0",
+                                            "numericProperties": [
+                                              [
+                                                "x",
+                                                "307.015625"
+                                              ]
+                                            ],
+                                            "autoOPSZ": "0",
+                                            "textAlign": "left"
+                                          },
+                                          {
+                                            "label": "3: Expansion",
+                                            "duration": "1",
+                                            "isActive": "0",
+                                            "autoOPSZ": "0",
+                                            "axesLocations": [
+                                              [
+                                                "wdth",
+                                                "151"
+                                              ]
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      "actorTypeKey": "LineOfTextActorModel"
+                                    }
+                                  ]
+                                },
+                                "actorTypeKey": "LayerActorModel"
+                              }
+                            ]
+                          },
+                          "actorTypeKey": "LayerActorModel"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LayerActorModel"
+                  }
+                ]
+              },
+              "actorTypeKey": "LayerActorModel"
+            },
+            {
+              "instance": {
+                "isLoop": "1",
+                "label": "Control 2",
+                "keyMoments": [
+                  {
+                    "label": "Pause",
+                    "duration": "10",
+                    "isActive": "0",
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "Start, Move In",
+                    "duration": "4",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "t",
+                        "0"
+                      ],
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "720"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "On Position",
+                    "duration": "1",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "Move Out",
+                    "duration": "4",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "x",
+                        "0"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "End",
+                    "duration": "1",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "t",
+                        "1"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "x",
+                        "-720"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "Reset",
+                    "duration": "0",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "t",
+                        "0"
+                      ],
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "720"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  }
+                ],
+                "activeActors": [
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Slide 2",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "1",
+                          "isActive": "1",
+                          "autoOPSZ": "0",
+                          "textColor": {
+                            "instance": {
+                              "L": "100.00000",
+                              "C": "0.00000"
+                            },
+                            "colorTypeKey": "OKLCH"
+                          }
+                        }
+                      ],
+                      "activeActors": [
+                        {
+                          "instance": {
+                            "isLoop": "0",
+                            "label": "Background",
+                            "keyMoments": [
+                              {
+                                "label": "Key Moment 1",
+                                "duration": "1",
+                                "isActive": "1",
+                                "numericProperties": [
+                                  [
+                                    "width",
+                                    "720"
+                                  ],
+                                  [
+                                    "height",
+                                    "720"
+                                  ]
+                                ],
+                                "fillColor": {
+                                  "instance": {
+                                    "L": "34.00000",
+                                    "C": "55.00000",
+                                    "H": "0.0500000"
+                                  },
+                                  "colorTypeKey": "OKLCH"
+                                }
+                              }
+                            ]
+                          },
+                          "actorTypeKey": "RectangleActorModel"
+                        },
+                        {
+                          "instance": {
+                            "isLoop": "0",
+                            "label": "opsz",
+                            "keyMoments": [
+                              {
+                                "label": "Key Moment 1",
+                                "duration": "1",
+                                "isActive": "1",
+                                "autoOPSZ": "1",
+                                "fontSize": "8"
+                              },
+                              {
+                                "label": "Key Moment 2",
+                                "duration": "1",
+                                "isActive": "1",
+                                "autoOPSZ": "1",
+                                "fontSize": "144"
+                              }
+                            ],
+                            "activeActors": [
+                              {
+                                "instance": {
+                                  "isLoop": "0",
+                                  "label": "Optical Size",
+                                  "keyMoments": [
+                                    {
+                                      "label": "Key Moment 1",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "numericProperties": [
+                                        [
+                                          "y",
+                                          "559"
+                                        ]
+                                      ],
+                                      "autoOPSZ": "0",
+                                      "textRun": "Optical Size",
+                                      "positioningVertical": "bottom",
+                                      "heightTreatment": "baselineToBottomFix"
+                                    }
+                                  ]
+                                },
+                                "actorTypeKey": "LineOfTextActorModel"
+                              },
+                              {
+                                "instance": {
+                                  "isLoop": "0",
+                                  "label": "14 pt Scaled",
+                                  "keyMoments": [
+                                    {
+                                      "label": "Key Moment 1",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "numericProperties": [
+                                        [
+                                          "y",
+                                          "185"
+                                        ]
+                                      ],
+                                      "autoOPSZ": "0",
+                                      "axesLocations": [
+                                        [
+                                          "opsz",
+                                          "14"
+                                        ]
+                                      ],
+                                      "textRun": "14 pt Scaled"
+                                    }
+                                  ]
+                                },
+                                "actorTypeKey": "LineOfTextActorModel"
+                              },
+                              {
+                                "instance": {
+                                  "isLoop": "0",
+                                  "label": "opsz no scale",
+                                  "keyMoments": [
+                                    {
+                                      "label": "Key Moment 1",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "autoOPSZ": "0",
+                                      "fontSize": "131",
+                                      "textRun": "Optical Size",
+                                      "positioningVertical": "bottom"
+                                    }
+                                  ]
+                                },
+                                "actorTypeKey": "LineOfTextActorModel"
+                              },
+                              {
+                                "instance": {
+                                  "isLoop": "0",
+                                  "label": "",
+                                  "keyMoments": [
+                                    {
+                                      "label": "Key Moment 1",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "numericProperties": [
+                                        [
+                                          "x",
+                                          "0"
+                                        ],
+                                        [
+                                          "width",
+                                          "8"
+                                        ],
+                                        [
+                                          "height",
+                                          "140"
+                                        ],
+                                        [
+                                          "y",
+                                          "390"
+                                        ]
+                                      ],
+                                      "fillColor": {
+                                        "instance": {
+                                          "L": "100.00000",
+                                          "C": "0.00000"
+                                        },
+                                        "colorTypeKey": "OKLCH"
+                                      }
+                                    },
+                                    {
+                                      "label": "Key Moment 2",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "numericProperties": [
+                                        [
+                                          "width",
+                                          "720"
+                                        ]
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "actorTypeKey": "RectangleActorModel"
+                              },
+                              {
+                                "instance": {
+                                  "isLoop": "0",
+                                  "label": "",
+                                  "keyMoments": [
+                                    {
+                                      "label": "Key Moment 1",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "numericProperties": [
+                                        [
+                                          "x",
+                                          "0"
+                                        ],
+                                        [
+                                          "y",
+                                          "417"
+                                        ],
+                                        [
+                                          "width",
+                                          "720"
+                                        ]
+                                      ],
+                                      "autoOPSZ": "1",
+                                      "axesLocations": [
+                                        [
+                                          "wght",
+                                          "100"
+                                        ],
+                                        [
+                                          "wdth",
+                                          "25"
+                                        ]
+                                      ],
+                                      "fontSize": "66",
+                                      "textColor": {
+                                        "instance": {
+                                          "L": "34.00000",
+                                          "C": "55.00000",
+                                          "H": "0.0500000"
+                                        },
+                                        "colorTypeKey": "OKLCH"
+                                      },
+                                      "textRun": "8 pt → 144 pt",
+                                      "textAlign": "left"
+                                    },
+                                    {
+                                      "label": "Key Moment 2",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "autoOPSZ": "0",
+                                      "axesLocations": [
+                                        [
+                                          "wdth",
+                                          "151"
+                                        ],
+                                        [
+                                          "wght",
+                                          "840"
+                                        ]
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "actorTypeKey": "LineOfTextActorModel"
+                              }
+                            ]
+                          },
+                          "actorTypeKey": "LayerActorModel"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LayerActorModel"
+                  }
+                ]
+              },
+              "actorTypeKey": "LayerActorModel"
+            },
+            {
+              "instance": {
+                "isLoop": "1",
+                "label": "Control 3",
+                "keyMoments": [
+                  {
+                    "label": "Pause",
+                    "duration": "5",
+                    "isActive": "0",
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "Start, Move In",
+                    "duration": "9",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "t",
+                        "0"
+                      ],
+                      [
+                        "x",
+                        "720"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "On Position",
+                    "duration": "1",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "Move Out",
+                    "duration": "4",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "End",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "t",
+                        "1"
+                      ],
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "-720"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "Reset",
+                    "duration": "0",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "t",
+                        "0"
+                      ],
+                      [
+                        "x",
+                        "720"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  }
+                ],
+                "activeActors": [
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Slide 3",
+                      "activeActors": [
+                        {
+                          "instance": {
+                            "isLoop": "0",
+                            "label": "Background",
+                            "keyMoments": [
+                              {
+                                "label": "Key Moment 1",
+                                "duration": "1",
+                                "isActive": "1",
+                                "numericProperties": [
+                                  [
+                                    "width",
+                                    "720"
+                                  ],
+                                  [
+                                    "height",
+                                    "720"
+                                  ]
+                                ],
+                                "fillColor": {
+                                  "instance": {
+                                    "L": "85.00000",
+                                    "C": "12.00000",
+                                    "H": "0.6200000"
+                                  },
+                                  "colorTypeKey": "OKLCH"
+                                }
+                              }
+                            ]
+                          },
+                          "actorTypeKey": "RectangleActorModel"
+                        },
+                        {
+                          "instance": {
+                            "isLoop": "0",
+                            "label": "🏵",
+                            "keyMoments": [
+                              {
+                                "label": "Key Moment 1",
+                                "duration": "1",
+                                "isActive": "1",
+                                "numericProperties": [
+                                  [
+                                    "z-index",
+                                    "0"
+                                  ],
+                                  [
+                                    "line-height",
+                                    "1"
+                                  ],
+                                  [
+                                    "line-height-em",
+                                    "1"
+                                  ],
+                                  [
+                                    "y",
+                                    "0"
+                                  ]
+                                ],
+                                "autoOPSZ": "0",
+                                "axesLocations": [
+                                  [
+                                    "T1  ",
+                                    "0"
+                                  ],
+                                  [
+                                    "T3  ",
+                                    "0"
+                                  ],
+                                  [
+                                    "T2  ",
+                                    "0"
+                                  ]
+                                ],
+                                "fontSize": "540",
+                                "textColor": {
+                                  "instance": {
+                                    "L": "56.00000",
+                                    "C": "49.00000",
+                                    "H": "0.2000000",
+                                    "alpha": "0.00000"
+                                  },
+                                  "colorTypeKey": "OKLCH"
+                                },
+                                "textRun": "🏵",
+                                "positioningVertical": "top",
+                                "heightTreatment": "default"
+                              },
+                              {
+                                "label": "Key Moment 2",
+                                "duration": "1",
+                                "isActive": "1",
+                                "autoOPSZ": "0",
+                                "axesLocations": [
+                                  [
+                                    "T1  ",
+                                    "1"
+                                  ],
+                                  [
+                                    "T3  ",
+                                    "0"
+                                  ],
+                                  [
+                                    "T2  ",
+                                    "0"
+                                  ]
+                                ],
+                                "textColor": {
+                                  "instance": {
+                                    "H": "0.7100000",
+                                    "alpha": "2.00000"
+                                  },
+                                  "colorTypeKey": "OKLCH"
+                                }
+                              },
+                              {
+                                "label": "Key Moment 3",
+                                "duration": "1",
+                                "isActive": "1",
+                                "autoOPSZ": "0",
+                                "axesLocations": [
+                                  [
+                                    "T1  ",
+                                    "1"
+                                  ],
+                                  [
+                                    "T3  ",
+                                    "0"
+                                  ],
+                                  [
+                                    "T2  ",
+                                    "1"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Key Moment 4",
+                                "duration": "1",
+                                "isActive": "1",
+                                "autoOPSZ": "0",
+                                "axesLocations": [
+                                  [
+                                    "T3  ",
+                                    "1"
+                                  ],
+                                  [
+                                    "T2  ",
+                                    "1"
+                                  ],
+                                  [
+                                    "T1  ",
+                                    "1"
+                                  ]
+                                ],
+                                "textColor": {
+                                  "instance": {
+                                    "alpha": "36.00000"
+                                  },
+                                  "colorTypeKey": "OKLCH"
+                                }
+                              }
+                            ],
+                            "localActiveFontKey": "from-url Zycon Version_1-8"
+                          },
+                          "actorTypeKey": "LineOfTextActorModel"
+                        },
+                        {
+                          "instance": {
+                            "isLoop": "1",
+                            "label": "wizard lizard",
+                            "keyMoments": [
+                              {
+                                "label": "Key Moment 1",
+                                "duration": "1",
+                                "isActive": "1",
+                                "numericProperties": [
+                                  [
+                                    "z-index",
+                                    "1"
+                                  ]
+                                ],
+                                "autoOPSZ": "0",
+                                "axesLocations": [
+                                  [
+                                    "MORF",
+                                    "0"
+                                  ]
+                                ],
+                                "fontSize": "66",
+                                "textColor": {
+                                  "instance": {
+                                    "L": "50.00000",
+                                    "C": "57.00000",
+                                    "H": "0.0000000"
+                                  },
+                                  "colorTypeKey": "OKLCH"
+                                }
+                              },
+                              {
+                                "label": "Key Moment 2",
+                                "duration": "1",
+                                "isActive": "1",
+                                "autoOPSZ": "0",
+                                "axesLocations": [
+                                  [
+                                    "MORF",
+                                    "60"
+                                  ]
+                                ],
+                                "textColor": {
+                                  "instance": {
+                                    "H": "1.0000000"
+                                  },
+                                  "colorTypeKey": "OKLCH"
+                                }
+                              },
+                              {
+                                "label": "Key Moment 3",
+                                "duration": "1",
+                                "isActive": "1",
+                                "autoOPSZ": "0",
+                                "axesLocations": [
+                                  [
+                                    "MORF",
+                                    "0"
+                                  ]
+                                ],
+                                "fontSize": "66",
+                                "textColor": {
+                                  "colorTypeKey": "OKLCH"
+                                }
+                              },
+                              {
+                                "label": "Key Moment 4",
+                                "duration": "1",
+                                "isActive": "1",
+                                "autoOPSZ": "0",
+                                "axesLocations": [
+                                  [
+                                    "MORF",
+                                    "60"
+                                  ]
+                                ]
+                              }
+                            ],
+                            "activeActors": [
+                              {
+                                "instance": {
+                                  "isLoop": "0",
+                                  "label": "The",
+                                  "keyMoments": [
+                                    {
+                                      "label": "Key Moment 1",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "numericProperties": [
+                                        [
+                                          "x",
+                                          "306"
+                                        ],
+                                        [
+                                          "y",
+                                          "35"
+                                        ]
+                                      ],
+                                      "autoOPSZ": "0",
+                                      "textColor": {
+                                        "instance": {
+                                          "L": "0.00000"
+                                        },
+                                        "colorTypeKey": "OKLCH"
+                                      },
+                                      "textRun": "The"
+                                    }
+                                  ]
+                                },
+                                "actorTypeKey": "LineOfTextActorModel"
+                              },
+                              {
+                                "instance": {
+                                  "isLoop": "0",
+                                  "label": "wizard",
+                                  "keyMoments": [
+                                    {
+                                      "label": "Key Moment 1",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "numericProperties": [
+                                        [
+                                          "x",
+                                          "264"
+                                        ],
+                                        [
+                                          "y",
+                                          "101"
+                                        ]
+                                      ],
+                                      "autoOPSZ": "0",
+                                      "textColor": {
+                                        "instance": {
+                                          "L": "14.00000"
+                                        },
+                                        "colorTypeKey": "OKLCH"
+                                      },
+                                      "textRun": "wizard"
+                                    }
+                                  ]
+                                },
+                                "actorTypeKey": "LineOfTextActorModel"
+                              },
+                              {
+                                "instance": {
+                                  "isLoop": "0",
+                                  "label": "lizard",
+                                  "keyMoments": [
+                                    {
+                                      "label": "Key Moment 1",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "numericProperties": [
+                                        [
+                                          "y",
+                                          "172"
+                                        ],
+                                        [
+                                          "x",
+                                          "181"
+                                        ]
+                                      ],
+                                      "autoOPSZ": "0",
+                                      "textColor": {
+                                        "instance": {
+                                          "L": "28.00000"
+                                        },
+                                        "colorTypeKey": "OKLCH"
+                                      },
+                                      "textRun": "lizard"
+                                    }
+                                  ]
+                                },
+                                "actorTypeKey": "LineOfTextActorModel"
+                              },
+                              {
+                                "instance": {
+                                  "isLoop": "0",
+                                  "label": "ate a",
+                                  "keyMoments": [
+                                    {
+                                      "label": "Key Moment 1",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "numericProperties": [
+                                        [
+                                          "y",
+                                          "241"
+                                        ],
+                                        [
+                                          "x",
+                                          "278"
+                                        ]
+                                      ],
+                                      "autoOPSZ": "0",
+                                      "textColor": {
+                                        "instance": {
+                                          "L": "42.00000"
+                                        },
+                                        "colorTypeKey": "OKLCH"
+                                      },
+                                      "textRun": "ate a"
+                                    }
+                                  ]
+                                },
+                                "actorTypeKey": "LineOfTextActorModel"
+                              },
+                              {
+                                "instance": {
+                                  "isLoop": "0",
+                                  "label": "buzzard",
+                                  "keyMoments": [
+                                    {
+                                      "label": "Key Moment 1",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "numericProperties": [
+                                        [
+                                          "y",
+                                          "310"
+                                        ],
+                                        [
+                                          "x",
+                                          "238"
+                                        ]
+                                      ],
+                                      "autoOPSZ": "0",
+                                      "textColor": {
+                                        "instance": {
+                                          "L": "56.00000"
+                                        },
+                                        "colorTypeKey": "OKLCH"
+                                      },
+                                      "textRun": "buzzard"
+                                    }
+                                  ]
+                                },
+                                "actorTypeKey": "LineOfTextActorModel"
+                              },
+                              {
+                                "instance": {
+                                  "isLoop": "0",
+                                  "label": "with a",
+                                  "keyMoments": [
+                                    {
+                                      "label": "Key Moment 1",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "numericProperties": [
+                                        [
+                                          "y",
+                                          "383"
+                                        ],
+                                        [
+                                          "x",
+                                          "278"
+                                        ]
+                                      ],
+                                      "autoOPSZ": "0",
+                                      "textColor": {
+                                        "instance": {
+                                          "L": "72.00000"
+                                        },
+                                        "colorTypeKey": "OKLCH"
+                                      },
+                                      "textRun": "with a"
+                                    }
+                                  ]
+                                },
+                                "actorTypeKey": "LineOfTextActorModel"
+                              },
+                              {
+                                "instance": {
+                                  "isLoop": "0",
+                                  "label": "gizzard",
+                                  "keyMoments": [
+                                    {
+                                      "label": "Key Moment 1",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "numericProperties": [
+                                        [
+                                          "y",
+                                          "451"
+                                        ],
+                                        [
+                                          "x",
+                                          "198"
+                                        ]
+                                      ],
+                                      "autoOPSZ": "0",
+                                      "textColor": {
+                                        "instance": {
+                                          "L": "92.00000"
+                                        },
+                                        "colorTypeKey": "OKLCH"
+                                      },
+                                      "textRun": "gizzard"
+                                    }
+                                  ]
+                                },
+                                "actorTypeKey": "LineOfTextActorModel"
+                              }
+                            ],
+                            "localActiveFontKey": "from-url Kablammo Regular Version_1-002"
+                          },
+                          "actorTypeKey": "LayerActorModel"
+                        },
+                        {
+                          "instance": {
+                            "isLoop": "0",
+                            "label": "Lizard",
+                            "keyMoments": [
+                              {
+                                "label": "cyle 01 in",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "y",
+                                    "-224"
+                                  ],
+                                  [
+                                    "t",
+                                    "0"
+                                  ],
+                                  [
+                                    "z-index",
+                                    "2"
+                                  ]
+                                ],
+                                "autoOPSZ": "0",
+                                "fontSize": "168",
+                                "positioningVertical": "bottom"
+                              },
+                              {
+                                "label": "cycle 01 out",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "y",
+                                    "-112"
+                                  ],
+                                  [
+                                    "t",
+                                    "1"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "cycle 02 in",
+                                "duration": "0",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "t",
+                                    "0"
+                                  ],
+                                  [
+                                    "y",
+                                    "-112"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "cycle 02 out",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "t",
+                                    "1"
+                                  ],
+                                  [
+                                    "y",
+                                    "0"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "cycle 03 in",
+                                "duration": "0",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "y",
+                                    "0"
+                                  ],
+                                  [
+                                    "t",
+                                    "0"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "cycle 03 out",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "t",
+                                    "1"
+                                  ],
+                                  [
+                                    "y",
+                                    "112"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "cycle 04 in",
+                                "duration": "0",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "y",
+                                    "112"
+                                  ],
+                                  [
+                                    "t",
+                                    "0"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "cycle 04 out",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "y",
+                                    "224"
+                                  ],
+                                  [
+                                    "t",
+                                    "1"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "cycle 05 in",
+                                "duration": "0",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "y",
+                                    "224"
+                                  ],
+                                  [
+                                    "t",
+                                    "0"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "cycle 05 out",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "y",
+                                    "336"
+                                  ],
+                                  [
+                                    "t",
+                                    "1"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "cycle 06 in",
+                                "duration": "0",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "y",
+                                    "336"
+                                  ],
+                                  [
+                                    "t",
+                                    "0"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "cycle 06 out",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "y",
+                                    "448"
+                                  ],
+                                  [
+                                    "t",
+                                    "1"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "cycle 07 in",
+                                "duration": "0",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "y",
+                                    "448"
+                                  ],
+                                  [
+                                    "t",
+                                    "0"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "cycle 07 out",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "t",
+                                    "1"
+                                  ],
+                                  [
+                                    "y",
+                                    "560"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "cycle 08 in",
+                                "duration": "0",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "y",
+                                    "560"
+                                  ],
+                                  [
+                                    "t",
+                                    "0"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "cycle 08 out",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "y",
+                                    "672"
+                                  ],
+                                  [
+                                    "t",
+                                    "1"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "cycle 09 in",
+                                "duration": "0",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "y",
+                                    "672"
+                                  ],
+                                  [
+                                    "t",
+                                    "0"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              },
+                              {
+                                "label": "cycle 09 out",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "y",
+                                    "784"
+                                  ],
+                                  [
+                                    "t",
+                                    "1"
+                                  ]
+                                ],
+                                "autoOPSZ": "0"
+                              }
+                            ],
+                            "activeActors": [
+                              {
+                                "instance": {
+                                  "isLoop": "1",
+                                  "label": "",
+                                  "keyMoments": [
+                                    {
+                                      "label": "Key Moment 1",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "numericProperties": [
+                                        [
+                                          "width",
+                                          "720"
+                                        ]
+                                      ],
+                                      "autoOPSZ": "0",
+                                      "axesLocations": [
+                                        [
+                                          "M1  ",
+                                          "0"
+                                        ]
+                                      ],
+                                      "textColor": {
+                                        "instance": {
+                                          "L": "50.00000",
+                                          "C": "27.00000",
+                                          "H": "0.4000000"
+                                        },
+                                        "colorTypeKey": "OKLCH"
+                                      },
+                                      "textRun": "🦎",
+                                      "textAlign": "center",
+                                      "positioningVertical": "bottom"
+                                    },
+                                    {
+                                      "label": "Key Moment 2",
+                                      "duration": "1",
+                                      "isActive": "0",
+                                      "autoOPSZ": "0",
+                                      "axesLocations": [
+                                        [
+                                          "M1  ",
+                                          "1"
+                                        ]
+                                      ]
+                                    },
+                                    {
+                                      "label": "Key Moment 3",
+                                      "duration": "1",
+                                      "isActive": "0",
+                                      "autoOPSZ": "0",
+                                      "axesLocations": [
+                                        [
+                                          "M1  ",
+                                          "0"
+                                        ]
+                                      ]
+                                    },
+                                    {
+                                      "label": "Key Moment 4",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "autoOPSZ": "0",
+                                      "axesLocations": [
+                                        [
+                                          "M1  ",
+                                          "-1"
+                                        ]
+                                      ],
+                                      "textColor": {
+                                        "instance": {
+                                          "L": "59.00000"
+                                        },
+                                        "colorTypeKey": "OKLCH"
+                                      }
+                                    }
+                                  ]
+                                },
+                                "actorTypeKey": "LineOfTextActorModel"
+                              }
+                            ],
+                            "localActiveFontKey": "from-url Zycon Version_1-8"
+                          },
+                          "actorTypeKey": "LayerActorModel"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LayerActorModel"
+                  }
+                ]
+              },
+              "actorTypeKey": "LayerActorModel"
+            },
+            {
+              "instance": {
+                "isLoop": "1",
+                "label": "Control 4",
+                "keyMoments": [
+                  {
+                    "label": "Pause, Reset",
+                    "duration": "0",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "t",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "720"
+                      ],
+                      [
+                        "x",
+                        "0"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "Start, Move in",
+                    "duration": "14",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "t",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "720"
+                      ],
+                      [
+                        "x",
+                        "0"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "On Position",
+                    "duration": "1",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "Move Out",
+                    "duration": "4",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  },
+                  {
+                    "label": "End",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "t",
+                        "1"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "x",
+                        "-720"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  }
+                ],
+                "activeActors": [
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Slide 4",
+                      "activeActors": [
+                        {
+                          "instance": {
+                            "isLoop": "0",
+                            "label": "Background",
+                            "keyMoments": [
+                              {
+                                "label": "Key Moment 1",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "width",
+                                    "720"
+                                  ],
+                                  [
+                                    "height",
+                                    "720"
+                                  ]
+                                ],
+                                "fillColor": {
+                                  "instance": {
+                                    "L": "94.00000",
+                                    "C": "72.00000",
+                                    "H": "0.2200000"
+                                  },
+                                  "colorTypeKey": "OKLCH"
+                                }
+                              }
+                            ]
+                          },
+                          "actorTypeKey": "RectangleActorModel"
+                        },
+                        {
+                          "instance": {
+                            "isLoop": "0",
+                            "label": "Sizing Header",
+                            "keyMoments": [
+                              {
+                                "label": "Key Moment 1",
+                                "duration": "1",
+                                "isActive": "1",
+                                "numericProperties": [
+                                  [
+                                    "height",
+                                    "200"
+                                  ],
+                                  [
+                                    "y",
+                                    "65"
+                                  ]
+                                ],
+                                "autoOPSZ": "0",
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "114"
+                                  ],
+                                  [
+                                    "wght",
+                                    "433"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "25"
+                                  ]
+                                ],
+                                "positioningVertical": "top"
+                              },
+                              {
+                                "label": "Key Moment 2",
+                                "duration": "1",
+                                "isActive": "1",
+                                "autoOPSZ": "0",
+                                "axesLocations": [
+                                  [
+                                    "wdth",
+                                    "111"
+                                  ],
+                                  [
+                                    "wght",
+                                    "824"
+                                  ]
+                                ]
+                              }
+                            ],
+                            "activeActors": [
+                              {
+                                "instance": {
+                                  "isLoop": "1",
+                                  "label": "",
+                                  "keyMoments": [
+                                    {
+                                      "label": "Key Moment 1",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "autoOPSZ": "0",
+                                      "charGroup": {
+                                        "options": "custom",
+                                        "customText": "versatile",
+                                        "customSeparator": "xxx"
+                                      },
+                                      "cellAlignment": "right"
+                                    },
+                                    {
+                                      "label": "Key Moment 2",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "autoOPSZ": "0",
+                                      "textColor": {
+                                        "instance": {
+                                          "L": "61.00000",
+                                          "C": "47.00000",
+                                          "alpha": "49.00000"
+                                        },
+                                        "colorTypeKey": "OKLCH"
+                                      },
+                                      "charGroup": {
+                                        "customText": "proofing"
+                                      },
+                                      "cellAlignment": "left"
+                                    },
+                                    {
+                                      "label": "Key Moment 3",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "autoOPSZ": "0",
+                                      "charGroup": {
+                                        "customText": "TypeRoof"
+                                      },
+                                      "cellAlignment": "center",
+                                      "stageBackgroundColor": {
+                                        "instance": {
+                                          "L": "100.00000",
+                                          "C": "0.00000",
+                                          "alpha": "0.00000"
+                                        },
+                                        "colorTypeKey": "OKLCH"
+                                      }
+                                    }
+                                  ],
+                                  "activeActors": [
+                                    {
+                                      "instance": {
+                                        "isLoop": "0",
+                                        "label": "",
+                                        "keyMoments": [
+                                          {
+                                            "label": "Key Moment 1",
+                                            "duration": "1",
+                                            "isActive": "1",
+                                            "autoOPSZ": "0",
+                                            "textColor": {
+                                              "instance": {
+                                                "L": "61.00000",
+                                                "C": "47.00000",
+                                                "H": "0.3500000",
+                                                "alpha": "49.00000"
+                                              },
+                                              "colorTypeKey": "OKLCH"
+                                            }
+                                          }
+                                        ],
+                                        "localActiveFontKey": "from-url Roboto Regular Version_3-009 _2024"
+                                      },
+                                      "actorTypeKey": "VideoproofArrayV2CellActorModel"
+                                    },
+                                    {
+                                      "instance": {
+                                        "isLoop": "0",
+                                        "label": "",
+                                        "localActiveFontKey": "from-url AmstelvarA2 Roman wght400 Version_0-001"
+                                      },
+                                      "actorTypeKey": "VideoproofArrayV2CellActorModel"
+                                    },
+                                    {
+                                      "instance": {
+                                        "isLoop": "0",
+                                        "label": "",
+                                        "keyMoments": [
+                                          {
+                                            "label": "Key Moment 1",
+                                            "duration": "1",
+                                            "isActive": "1",
+                                            "autoOPSZ": "0",
+                                            "textColor": {
+                                              "instance": {
+                                                "L": "0.00000",
+                                                "C": "0.00000",
+                                                "alpha": "87.00000"
+                                              },
+                                              "colorTypeKey": "OKLCH"
+                                            }
+                                          }
+                                        ]
+                                      },
+                                      "actorTypeKey": "VideoproofArrayV2CellActorModel"
+                                    }
+                                  ]
+                                },
+                                "actorTypeKey": "VideoproofArrayV2ActorModel"
+                              }
+                            ]
+                          },
+                          "actorTypeKey": "LayerActorModel"
+                        },
+                        {
+                          "instance": {
+                            "isLoop": "0",
+                            "label": "Sizing Body",
+                            "keyMoments": [
+                              {
+                                "label": "Key Moment 1",
+                                "duration": "1",
+                                "isActive": "0",
+                                "numericProperties": [
+                                  [
+                                    "height",
+                                    "400"
+                                  ],
+                                  [
+                                    "y",
+                                    "0"
+                                  ]
+                                ],
+                                "autoOPSZ": "0",
+                                "positioningVertical": "bottom"
+                              }
+                            ],
+                            "activeActors": [
+                              {
+                                "instance": {
+                                  "isLoop": "1",
+                                  "label": "Array",
+                                  "keyMoments": [
+                                    {
+                                      "label": "Key Moment 1",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "autoOPSZ": "0",
+                                      "axesLocations": [
+                                        [
+                                          "opsz",
+                                          "8"
+                                        ],
+                                        [
+                                          "wght",
+                                          "1000"
+                                        ],
+                                        [
+                                          "slnt",
+                                          "0"
+                                        ]
+                                      ],
+                                      "charGroup": {
+                                        "options": "Latin.Uppercase"
+                                      },
+                                      "showCellBoxes": "1",
+                                      "stageBackgroundColor": {
+                                        "instance": {
+                                          "L": "100.00000",
+                                          "C": "0.00000",
+                                          "alpha": "0.00000"
+                                        },
+                                        "colorTypeKey": "OKLCH"
+                                      }
+                                    },
+                                    {
+                                      "label": "Key Moment 2",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "autoOPSZ": "0",
+                                      "axesLocations": [
+                                        [
+                                          "wght",
+                                          "100"
+                                        ]
+                                      ],
+                                      "charGroup": {
+                                        "options": "Latin.Lowercase"
+                                      }
+                                    },
+                                    {
+                                      "label": "Key Moment 3",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "autoOPSZ": "0",
+                                      "axesLocations": [
+                                        [
+                                          "slnt",
+                                          "0"
+                                        ]
+                                      ],
+                                      "charGroup": {
+                                        "options": "Cyrillic.Uppercase"
+                                      }
+                                    },
+                                    {
+                                      "label": "Key Moment 4",
+                                      "duration": "1",
+                                      "isActive": "1",
+                                      "autoOPSZ": "0",
+                                      "axesLocations": [
+                                        [
+                                          "opsz",
+                                          "144"
+                                        ],
+                                        [
+                                          "slnt",
+                                          "-10"
+                                        ]
+                                      ],
+                                      "textColor": {
+                                        "instance": {
+                                          "L": "50.00000",
+                                          "C": "78.00000",
+                                          "H": "0.7300000",
+                                          "alpha": "51.00000"
+                                        },
+                                        "colorTypeKey": "OKLCH"
+                                      },
+                                      "charGroup": {
+                                        "options": "Cyrillic.Lowercase"
+                                      }
+                                    }
+                                  ],
+                                  "activeActors": [
+                                    {
+                                      "instance": {
+                                        "isLoop": "0",
+                                        "label": "",
+                                        "keyMoments": [
+                                          {
+                                            "label": "Key Moment 1",
+                                            "duration": "1",
+                                            "isActive": "1",
+                                            "autoOPSZ": "0",
+                                            "backgroundColor": {
+                                              "instance": {
+                                                "L": "100.00000",
+                                                "C": "0.00000",
+                                                "alpha": "100.00000"
+                                              },
+                                              "colorTypeKey": "OKLCH"
+                                            }
+                                          }
+                                        ]
+                                      },
+                                      "actorTypeKey": "VideoproofArrayV2CellActorModel"
+                                    },
+                                    {
+                                      "instance": {
+                                        "isLoop": "0",
+                                        "label": "",
+                                        "keyMoments": [
+                                          {
+                                            "label": "Key Moment 1",
+                                            "duration": "1",
+                                            "isActive": "1",
+                                            "autoOPSZ": "0",
+                                            "textColor": {
+                                              "instance": {
+                                                "H": "1.0000000"
+                                              },
+                                              "colorTypeKey": "OKLCH"
+                                            }
+                                          }
+                                        ],
+                                        "localActiveFontKey": "from-url AmstelvarA2 Roman wght400 Version_0-001"
+                                      },
+                                      "actorTypeKey": "VideoproofArrayV2CellActorModel"
+                                    }
+                                  ]
+                                },
+                                "actorTypeKey": "VideoproofArrayV2ActorModel"
+                              }
+                            ]
+                          },
+                          "actorTypeKey": "LayerActorModel"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LayerActorModel"
+                  }
+                ]
+              },
+              "actorTypeKey": "LayerActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      }
+    ],
+    "width": "720",
+    "height": "720"
+  },
+  "activeLayoutKey": "StageAndActors",
+  "activeFontKey": "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"
+}

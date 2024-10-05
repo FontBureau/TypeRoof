@@ -1,0 +1,25 @@
+{
+  "name": "typeroof",
+  "version": "0.0.1",
+  "description": "The roof for all type. Successor of VideoProof.",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "typography",
+    "type proofing",
+    "animation"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "main": "lib/js/main.mjs",
+  "type": "module",
+  "dependencies": {
+    "@11ty/eleventy": "^3.0.0",
+    "@11ty/eleventy-plugin-syntaxhighlight": "^5.0.0"
+  }
+}
