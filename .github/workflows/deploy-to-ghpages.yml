@@ -20,9 +20,9 @@ jobs:
           submodules: 'true'
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "lts/*"
+          node-version: latest
 
       - name: Persist npm cache
         uses: actions/cache@v3
