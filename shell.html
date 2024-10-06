@@ -11,7 +11,10 @@
     if(!window.remoteResources)
          window.remoteResources = [];
     {
-    const localURL = url=>new URL(url, window.location.origin);
+    // it's either 'shell.html' or 'shell' what we remove here.
+    const base = window.location.href.split('/').slice(0, -1).join('/')
+      , localURL = url=>new URL(url, base)
+      ;
     window.remoteResources.push(
         ['font', localURL('./lib/assets/fonts/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].woff2')
             , {name: "Roboto Flex Regular", version: "Version 3.200;gftools[0.9.32]", fullName: "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"}],
