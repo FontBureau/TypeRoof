@@ -1,4 +1,5 @@
 ./index.html
 ./lib/**
 ./shell.html
+./legacy.html
 ./docs/experiments/**
