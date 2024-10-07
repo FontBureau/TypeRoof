@@ -1154,3 +1154,8 @@ input:invalid {
   content: "failed";
   background: darkred;
 }
+
+.typeroof-docs_content {
+    overflow: auto;
+    padding: var(--gap-size);
+}
