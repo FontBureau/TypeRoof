@@ -15,7 +15,7 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'true'
 
@@ -25,13 +25,13 @@ jobs:
           node-version: latest
 
       - name: Persist npm cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
 
       - name: Persist Eleventy .cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./.cache
           key: ${{ runner.os }}-eleventy-fetch-cache
@@ -40,7 +40,7 @@ jobs:
       - run: npx @11ty/eleventy
 
       - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         if: github.ref == 'refs/heads/main'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
