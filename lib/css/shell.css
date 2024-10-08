@@ -1158,4 +1158,9 @@ input:invalid {
 .typeroof-docs_content {
     overflow: auto;
     padding: var(--gap-size);
+    max-width: 50em;
+}
+
+.typeroof-docs_content :is(pre, code) {
+    background-color: #eee;
 }

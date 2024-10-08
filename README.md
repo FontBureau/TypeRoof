@@ -1,66 +1,93 @@
-# TypeRoof
+# TypeRoof README
 
-Successor of Video Proof (original README below).
+TypeRoof is type tooling infrastructure. It provides type proofing applications,
+initially based on Video Proof and Variable Type Tools. Now it also explores
+the world of general animation with type as a principal actor.
 
-## Legacy
+TypeRoof is intended as a host for all kinds of type related tools, providing
+advanced methods of resource loading (i.e. fonts, data files) saving and
+restoring state etc. -- features which ad-hoc developed tools
+typically miss out, as they are hard to do right on limited time.
 
-The latest (and final) version that has evolved from Video Proof and Variable Type Tools:
+TypeRoof is Free/Libre Open Source Software and web based, build mainly with
+vanilla JavaScript and a few specialized dependencies. We are looking for
+a community of users and developers who are interested in shaping its future.
 
-https://fontbureau.github.io/TypeRoof/
+## Directions
 
-## Minimal Shell
+* [Documentation -- Landing Page](https://fontbureau.github.io/TypeRoof/docs)
+* [User Kit -- Getting Started and Usage](https://fontbureau.github.io/TypeRoof/docs/usage)
+* [Developer Kit -- Contributing and Customization](https://fontbureau.github.io/TypeRoof/docs/development)
 
-The work in progress *minimal shell* version. It has a data driven and state
-managed approach. It's minimal in so far as that the shell itself only provides
-infrastructure like boot strapping, loading of shared assets, serialization.
-The applications ("Layouts") are loaded as separate modules. This includes
-an animation editor as a proof of concept:
+### [TypeRoof Shell](https://fontbureau.github.io/TypeRoof/shell)
 
-Go to https://fontbureau.github.io/TypeRoof/shell then select *Layout: Stage and Actors*
+The shell provides infrastructure to enable all types of type centered
+tooling for proofing, specimen creation, type setting and it features
+animation capabilities build with variable fonts in mind.
 
-Screen recordings of animations made with the *Stage and Actors* editor: https://fontbureau.github.io/TypeRoof/docs/animation-screenrecordings.html
+### [Video Proof/TypeRoof Legacy Version](https://fontbureau.github.io/TypeRoof/legacy)
+
+The last (and final) version that has evolved from Video Proof and Variable
+Type Tools before the TypeRoof Shell was developed. Eventually the Shell
+will absorb all Layouts (Tools) that are present in this tool and make this
+instance obsolete.
+
+## How to build and run locally (for development)
+
+You don't need to build TypeRoof, it is created using vanilla JavaScript and
+[JavaScript Modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules). You can serve TypeRoof directly from the project root directory:
+
+```
+#  E.g. using the Python-3 builtin web-server.
+$ ~/TypeRoof> python3 -m http.server
+Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+
+# Then go to: http://0.0.0.0:8000/shell.html
+
+# OR use https://www.npmjs.com/package/http-server (installing globally)
+$ ~/TypeRoof> npm install -g http-server
+$ ~/TypeRoof> http-server
+Starting up http-server, serving ./
+
+http-server version: 14.1.1
+
+[...]
+
+Available on:
+  http://127.0.0.1:8080
+  http://192.168.178.87:8080
+
+# Then go to: http://localhost:8080/shell
+
+# OR, maybe you want to use the Eleventy built-in development server
+# which is ideal to write documentation. See the next section.
+```
 
 
----
-*original README*
+## Build the complete static site locally
 
-# Video Proof
+The static web-site at https://fontbureau.github.io/TypeRoof/ (served via GitHub pages)
+is build using [Eleventy](https://www.11ty.dev/). See the [documentation of Eleventy](https://www.11ty.dev/docs/)
+for more specific usage.
 
-Experimental tools for creating animated proofs for variable fonts.
+```
+# You requires Node.js and must install the dependencies first:
+$ ~/TypeRoof> npm install
 
-https://videoproof.graphicore.de/
-SOME DEVELOPERS need more sophisticated composition tools for variable fonts; To exercise, proof and, annotate, demo and share
+# We use eleventy to build the static web site:
+$ ~/TypeRoof> npx @11ty/eleventy
 
-CREATE AND DEMONSTRATE options for integration of registered and parametric axes with the value systems and processes of composition and composers.
+# The resulting site has been created in the `_site` directory.
 
->Proof and adjust the integration via a combination of css, js, and Ui developments
+# You can also use the live updating development server:
 
->Analyze both visually and with filtering and sorting of the data-rich CSS environment now available
+$ ~/TypeRoof> npx @11ty/eleventy serve
+[...]
+[11ty] Copied [xxx] Wrote [xxx] files in 0.75 seconds (v3.0.0)
+[11ty] Watching…
+[11ty] Server at http://localhost:8080/
 
->Annotate issues on glyp, gvar, gpos and other font tables uses with css, js in compostion.
+# Then go to: http://localhost:8080/shell
+# Or go to: http://localhost:8080/shell
 
->Share via fonts, css, js, urls of still and motion proofs notes and code.
-
-And this should be done with the option of a limited number of inputs from the user, or have access to all composition variables.
-
-Typetools was developed as a web-based proofing tool for variable fonts made to test fonts during development and in simulated web use for static instances of fonts.
-
-typetools.typenetwork.com
-
-(Repo link:  https://github.com/TypeNetwork/variable-type-tools)
-
-The variable fonts it was made to test, include those made to  specifications for additional registration of axes proposed by TN, summarized here as containing parametric and registered axes.
-
-(Repo link: https://github.com/microsoft/OpenTypeDesignVariationAxisTags/blob/master/Proposals/TypeNetwork_ParametricAxes/Overview.md)
-
-(Publication Site link: https://variationsguide.typenetwork.com)
-
-Development showed users needed the composition formats, sliders, and other options that are currently evident and defined in the user documentation.
-
-(Publication link: https://variationsguide.typenetwork.com !! Put actual user guide link here ¡¡
-
-User experience showed a repeated user journey including use of sliders to examine a variable font’s designspace, and the need to capture and communicate locations and ranges of design space within the designspace.
-
-Other develpers have confirmed the usefulness of tagging "KEYFRAMES" of varible instances ranges relative to composition of responsive pages.
-
-Development is only a month old and all development is only a month old and all big reports and suggestions are welcome.
+```

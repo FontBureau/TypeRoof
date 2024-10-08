@@ -2,6 +2,7 @@ import markdownIt from "markdown-it";
 import syntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
 import path from 'path'
 import fs from 'fs';
+import eleventyNavigationPlugin from "@11ty/eleventy-navigation";
 
 function* walkDirSync(relDirPath, basePath) {
     const fullPath = path.join(basePath, relDirPath)
@@ -21,6 +22,7 @@ export default function (eleventyConfig) {
     // Output directory: _site
 
     eleventyConfig.setIncludesDirectory("docs/_includes");
+    eleventyConfig.addPlugin(eleventyNavigationPlugin);
 
     // use this as the default layout.
     eleventyConfig.addGlobalData("layout", "typeroof");
@@ -37,7 +39,7 @@ export default function (eleventyConfig) {
 
     let mdOptions = {
         html: true,
-        breaks: true,
+        // breaks: true,
         linkify: true,
         typographer: true,
     };
@@ -63,10 +65,19 @@ export default function (eleventyConfig) {
 {% endfor -%}
 `
       , directoryTemplateFileName = 'index.md'
+      , directoryTitle = 'States Library'
       ;
     for(const path of walkDirSync(libDir, eleventyConfig.directories.input)) {
         // TODO: should not override existing templates that create index.html
         // but there's no case so far.
-        eleventyConfig.addTemplate(`${path}/${directoryTemplateFileName}`, directoryTemplate, {});
+        const eleventyNavigation = {
+            key: path === libDir ? directoryTitle : path.slice(libDir.length)
+        };
+        if(path !== libDir)
+            eleventyNavigation.parent = directoryTitle
+        eleventyConfig.addTemplate(`${path}/${directoryTemplateFileName}`
+              , directoryTemplate
+              , { eleventyNavigation }
+        );
     }
 };

@@ -11,9 +11,16 @@
             <header>
                 <h1>TypeRoof</h1>
             </header>
-            <div class="typeroof-ui_sidebar">
-                <aside class="typeroof-ui typeroof-ui_main"></aside>
-                <aside class="typeroof-ui typeroof-ui_main-after"></aside>
+            <div
+             class="typeroof-ui_sidebar">
+                <nav>
+                    {{ collections.all | eleventyNavigation | eleventyNavigationToHtml | safe }}
+                </nav>
+                <h3>Applications</h3>
+                <ul>
+                    <li><a href="{{rootPath}}/shell">TypeRoof Shell</a></li>
+                    <li><a href="{{rootPath}}/legacy">TypeRoof Legacy App</a></li>
+                </ul>
             </div>
             <div class="typeroof-main">
                 <div class='typeroof-docs_content'>{{ content | safe }}</div>
