@@ -3,6 +3,7 @@ import syntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
 import path from 'path'
 import fs from 'fs';
 import eleventyNavigationPlugin from "@11ty/eleventy-navigation";
+import { EleventyHtmlBasePlugin } from "@11ty/eleventy";
 
 function* walkDirSync(relDirPath, basePath) {
     const fullPath = path.join(basePath, relDirPath)
@@ -21,8 +22,11 @@ function* walkDirSync(relDirPath, basePath) {
 export default function (eleventyConfig) {
     // Output directory: _site
 
+    const pathPrefix = '/TypeRoof/';
+
     eleventyConfig.setIncludesDirectory("docs/_includes");
     eleventyConfig.addPlugin(eleventyNavigationPlugin);
+    eleventyConfig.addPlugin(EleventyHtmlBasePlugin);
 
     // use this as the default layout.
     eleventyConfig.addGlobalData("layout", "typeroof");
@@ -79,5 +83,9 @@ export default function (eleventyConfig) {
               , directoryTemplate
               , { eleventyNavigation }
         );
+    }
+
+    return {
+        pathPrefix
     }
 };
