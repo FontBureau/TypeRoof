@@ -2,6 +2,7 @@ import markdownIt from "markdown-it";
 import syntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
 import path from 'path'
 import fs from 'fs';
+import eleventyNavigationPlugin from "@11ty/eleventy-navigation";
 
 function* walkDirSync(relDirPath, basePath) {
     const fullPath = path.join(basePath, relDirPath)
@@ -21,6 +22,7 @@ export default function (eleventyConfig) {
     // Output directory: _site
 
     eleventyConfig.setIncludesDirectory("docs/_includes");
+    eleventyConfig.addPlugin(eleventyNavigationPlugin);
 
     // use this as the default layout.
     eleventyConfig.addGlobalData("layout", "typeroof");
@@ -30,13 +32,14 @@ export default function (eleventyConfig) {
     // These are also mentioned in .eleventyignore
     eleventyConfig.addPassthroughCopy("lib");
     eleventyConfig.addPassthroughCopy("shell.html");
+    eleventyConfig.addPassthroughCopy("legacy.html");
     eleventyConfig.addPassthroughCopy("docs/experiments");
     // These are not ignored .eleventyignore
     eleventyConfig.addPassthroughCopy("docs/states_lib/**/*.json.txt");
 
     let mdOptions = {
         html: true,
-        breaks: true,
+        // breaks: true,
         linkify: true,
         typographer: true,
     };
@@ -51,6 +54,7 @@ export default function (eleventyConfig) {
         }
     );
 
+    // This creates directory listings for docs/states_lib
     const libDir = 'docs/states_lib'
    , directoryTemplate = `# Index of : {{page.url}}
 {% if page.url != "/${libDir}/" %}
@@ -61,10 +65,19 @@ export default function (eleventyConfig) {
 {% endfor -%}
 `
       , directoryTemplateFileName = 'index.md'
+      , directoryTitle = 'States Library'
       ;
     for(const path of walkDirSync(libDir, eleventyConfig.directories.input)) {
-        console.log('adding directory index template at:', path);
         // TODO: should not override existing templates that create index.html
-        eleventyConfig.addTemplate(`${path}/${directoryTemplateFileName}`, directoryTemplate, {});
+        // but there's no case so far.
+        const eleventyNavigation = {
+            key: path === libDir ? directoryTitle : path.slice(libDir.length)
+        };
+        if(path !== libDir)
+            eleventyNavigation.parent = directoryTitle
+        eleventyConfig.addTemplate(`${path}/${directoryTemplateFileName}`
+              , directoryTemplate
+              , { eleventyNavigation }
+        );
     }
 };

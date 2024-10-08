@@ -1,0 +1,7 @@
+{
+  "eleventyNavigation": {
+       "key": "README",
+       "title": "Project README",
+       "order": 2
+    }
+}
