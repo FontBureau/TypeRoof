@@ -1,0 +1,251 @@
+{
+  "activeState": {
+    "t": "0",
+    "duration": "5",
+    "isLoop": "0",
+    "perpetual": "1",
+    "playing": "0",
+    "activeActors": [
+      {
+        "instance": {
+          "isLoop": "0",
+          "label": "",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "isActive": "1",
+              "autoOPSZ": "1",
+              "fontSize": "200",
+              "backgroundColor": {
+                "instance": {
+                  "L": "0.00000",
+                  "C": "0.00000",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "OKLCH"
+              },
+              "textRun": "start",
+              "textAlign": "center"
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "isLoop": "1",
+                "label": "",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "width",
+                        "720"
+                      ],
+                      [
+                        "z-index",
+                        "1"
+                      ]
+                    ],
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "GRAD",
+                        "0"
+                      ]
+                    ],
+                    "textColor": {
+                      "instance": {
+                        "L": "100.00000",
+                        "C": "0.00000"
+                      },
+                      "colorTypeKey": "OKLCH"
+                    }
+                  },
+                  {
+                    "label": "Key Moment 5",
+                    "duration": "0",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "width",
+                        "720"
+                      ],
+                      [
+                        "z-index",
+                        "0"
+                      ]
+                    ],
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "GRAD",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 2",
+                    "duration": "1",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "z-index",
+                        "0"
+                      ]
+                    ],
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "GRAD",
+                        "150"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 3",
+                    "duration": "1",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "z-index",
+                        "0"
+                      ]
+                    ],
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "GRAD",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "z-index change",
+                    "duration": "0",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "width",
+                        "720"
+                      ],
+                      [
+                        "z-index",
+                        "1"
+                      ]
+                    ],
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "GRAD",
+                        "-0.47872448942047896"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 4",
+                    "duration": "1",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "z-index",
+                        "1"
+                      ]
+                    ],
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "GRAD",
+                        "-200"
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "isLoop": "1",
+                "label": "",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "width",
+                        "720"
+                      ]
+                    ],
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "GRAD",
+                        "0"
+                      ]
+                    ],
+                    "textColor": {
+                      "instance": {
+                        "L": "62.00000",
+                        "C": "0.00000",
+                        "H": "0.0000000",
+                        "alpha": "100.00000"
+                      },
+                      "colorTypeKey": "OKLCH"
+                    }
+                  },
+                  {
+                    "label": "Key Moment 2",
+                    "duration": "1",
+                    "isActive": "1",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "GRAD",
+                        "-200"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 3",
+                    "duration": "1",
+                    "isActive": "1",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "GRAD",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 4",
+                    "duration": "1",
+                    "isActive": "1",
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "GRAD",
+                        "150"
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      }
+    ],
+    "width": "720",
+    "height": "720"
+  },
+  "activeLayoutKey": "StageAndActors",
+  "activeFontKey": "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"
+}
