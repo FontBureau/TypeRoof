@@ -232,5 +232,5 @@
     "height": "720"
   },
   "activeLayoutKey": "StageAndActors",
-  "activeFontKey": "from-file Decovar Alpha Regular24 Version_0-000 PS_0-0 hotconv_1-0-88 makeotf-lib2-5-647800_DEVELOPMENT"
+  "activeFontKey": "from-file Decovar Alpha Regular24 Version_0-000"
 }
