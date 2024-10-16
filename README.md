@@ -81,7 +81,7 @@ $ ~/TypeRoof> npx @11ty/eleventy
 
 # You can also use the live updating development server:
 
-$ ~/TypeRoof> npx @11ty/eleventy serve
+$ ~/TypeRoof> npx @11ty/eleventy --serve
 [...]
 [11ty] Copied [xxx] Wrote [xxx] files in 0.75 seconds (v3.0.0)
 [11ty] Watching…
