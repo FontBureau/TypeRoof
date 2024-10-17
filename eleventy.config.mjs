@@ -4,6 +4,8 @@ import path from 'path'
 import fs from 'fs';
 import eleventyNavigationPlugin from "@11ty/eleventy-navigation";
 import { EleventyHtmlBasePlugin } from "@11ty/eleventy";
+import embedEverything from "eleventy-plugin-embed-everything";
+import markdownItGitHubHeadings from "markdown-it-github-headings";
 
 function* walkDirSync(relDirPath, basePath) {
     const fullPath = path.join(basePath, relDirPath)
@@ -27,6 +29,7 @@ export default function (eleventyConfig) {
     eleventyConfig.setIncludesDirectory("docs/_includes");
     eleventyConfig.addPlugin(eleventyNavigationPlugin);
     eleventyConfig.addPlugin(EleventyHtmlBasePlugin);
+    eleventyConfig.addPlugin(embedEverything);
 
     // use this as the default layout.
     eleventyConfig.addGlobalData("layout", "typeroof");
@@ -47,7 +50,10 @@ export default function (eleventyConfig) {
         linkify: true,
         typographer: true,
     };
-    eleventyConfig.setLibrary("md", markdownIt(mdOptions));
+    const md = markdownIt(mdOptions);
+    md.use(markdownItGitHubHeadings, {})
+    eleventyConfig.setLibrary("md", md);
+
     eleventyConfig.addPlugin(syntaxHighlight);
     eleventyConfig.addGlobalData('eleventyComputed.rootPath', ()=>{
         return data=>data.page.url
@@ -74,14 +80,19 @@ export default function (eleventyConfig) {
     for(const path of walkDirSync(libDir, eleventyConfig.directories.input)) {
         // TODO: should not override existing templates that create index.html
         // but there's no case so far.
-        const eleventyNavigation = {
-            key: path === libDir ? directoryTitle : path.slice(libDir.length)
-        };
-        if(path !== libDir)
+        const isDirRoot = path === libDir
+          , eleventyNavigation = {
+                key: isDirRoot ? directoryTitle : path.slice(libDir.length)
+            }
+          , documentTitle  = isDirRoot
+                ? directoryTitle
+                : `${eleventyNavigation.key} - ${directoryTitle}`
+          ;
+        if(!isDirRoot)
             eleventyNavigation.parent = directoryTitle
         eleventyConfig.addTemplate(`${path}/${directoryTemplateFileName}`
               , directoryTemplate
-              , { eleventyNavigation }
+              , { title: documentTitle, eleventyNavigation }
         );
     }
 
