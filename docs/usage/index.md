@@ -56,6 +56,7 @@ following lessons on these.
  * [TypeRoof Legacy](/legacy)
  * [TypeRoof Shell](/shell)
 
+https://youtu.be/p3STphW0xG4
 
 ### Lesson 03: Custom Fonts
 
