@@ -39,6 +39,8 @@ state, a requirement to, e.g., share it or save it in a file.
  * State: [hello_good-bye.json.txt](/docs/states_lib/demos/hello_good-bye.json.txt)
  * More States: [demos/ - States Library](/docs/states_lib/demos/)
 
+*Duration **4:40** m:s*
+
 https://www.youtube.com/watch?v=XVMaUiL-YGU
 
 ### Lesson 02: TypeRoof Overview
@@ -55,6 +57,8 @@ following lessons on these.
 #### Required Links:
  * [TypeRoof Legacy](/legacy)
  * [TypeRoof Shell](/shell)
+
+*Duration  **15:08** m:s*
 
 https://youtu.be/p3STphW0xG4
 
@@ -73,6 +77,8 @@ from the app again.
  * The font file [DecovarAlpha-VF.ttf](https://github.com/googlefonts/decovar/raw/refs/heads/master/fonts/DecovarAlpha-VF.ttf)
    (link to the [GitHub Repository of Decovar](https://github.com/googlefonts/decovar))
 
+*Duration **4:34** m:s*
+
 https://www.youtube.com/watch?v=5AY1KnkSOcI
 
 ## Layout: Stage and Actors
@@ -82,13 +88,25 @@ property values are central to the animation capabilities of TypeRoof
 Shell. The Layout "Stage and Actors" represents a unified interface that
 exposes all possibilities under that structure; meanwhile, a Layout like
 "Videoproof Array V2" intentionally provides a streamlined interface to
-specific aspects of the animation model. Because of the generic nature of
-the "Stage and Actors" Layout, some complexity is inherent. The UI's
-intentional under-design presents another complication; this is a part of
-the explorative nature of the development process, and subsequent iterations
-will improve this.
+specific aspects of the animation model. Some complexity is inherent
+because of the generic nature of the "Stage and Actors" Layout. The UI is
+intentionally under-designed, presenting another complication; this is a
+part of the explorative nature of the development process, and subsequent
+iterations will improve this.
 
-### Create a simple Animation.
+### Create a Simple Animation.
+
+In this lesson, we create a simple animation of one "Line of Text" actor
+from the ground up, step by step, and learn the basics of working with
+Key Moments.
+
+#### Required Links:
+ * [TypeRoof Shell](/shell)
+ * State: [Lesson-Create_a_Simple_Animation-hello_goodbye.json](/docs/states_lib/demos/Lesson-Create_a_Simple_Animation-hello_goodbye.json)
+
+*Duration **25:14** m:s*
+
+https://youtu.be/T3-Vn3eBfEE
 
 ### Property Inheritance
 
