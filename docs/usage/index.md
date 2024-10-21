@@ -94,7 +94,7 @@ intentionally under-designed, presenting another complication; this is a
 part of the explorative nature of the development process, and subsequent
 iterations will improve this.
 
-### Create a Simple Animation.
+### Lesson 04: Create a Simple Animation.
 
 In this lesson, we create a simple animation of one "Line of Text" actor
 from the ground up, step by step, and learn the basics of working with
