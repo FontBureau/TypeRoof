@@ -13,11 +13,20 @@
             </header>
             <div
              class="typeroof-ui_sidebar">
+
+                <h3>Content</h3>
                 <nav>
-                    {{ collections.all | eleventyNavigation | eleventyNavigationToHtml | safe }}
+                    {{ collections.all
+                        | eleventyNavigation
+                        | eleventyNavigationToHtml({
+                            activeListItemClass: "active",
+                            activeKey: eleventyNavigation.key
+                        })
+                        | safe
+                    }}
                 </nav>
                 <h3>Applications</h3>
-                <ul>
+                <ul class="typeroof-ui_sidebar-app_links">
                     <li><a href="{{rootPath}}/shell">TypeRoof Shell</a></li>
                     <li><a href="{{rootPath}}/legacy">TypeRoof Legacy</a></li>
                 </ul>
@@ -27,8 +36,8 @@
             </div>
             <footer>
                 <ul>
-                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li>
-                    <li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
                 </ul>
             </footer>
         </div> <!-- wrapper -->

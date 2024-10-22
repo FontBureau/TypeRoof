@@ -25,11 +25,11 @@ The shell provides infrastructure to enable all types of type centered
 tooling for proofing, specimen creation, type setting and it features
 animation capabilities build with variable fonts in mind.
 
-### [Video Proof/TypeRoof Legacy Version](https://fontbureau.github.io/TypeRoof/legacy)
+### [TypeRoof Legacy](/legacy) (Video Proof and Variable Type Tools)
 
 The last (and final) version that has evolved from Video Proof and Variable
 Type Tools before the TypeRoof Shell was developed. Eventually the Shell
-will absorb all Layouts (Tools) that are present in this tool and make this
+will absorb all Layouts (Tools) that are present in this app and make this
 instance obsolete.
 
 ## How to build and run locally (for development)

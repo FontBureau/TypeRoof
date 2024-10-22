@@ -205,3 +205,42 @@ footer li {
     padding: 0;
     margin: 0;
 }
+
+
+.typeroof-docs .typeroof-ui_sidebar {
+    font-size: .8rem;
+}
+
+.typeroof-docs .typeroof-ui_sidebar a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.typeroof-docs .typeroof-ui_sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+:is(
+    .typeroof-docs ul.typeroof-ui_sidebar-app_links,
+    .typeroof-docs .typeroof-ui_sidebar nav li > ul
+) li:before {
+    content: "▪";
+    display: inline-block;
+    padding-right: .5em;
+}
+
+.typeroof-docs .typeroof-ui_sidebar h3 {
+    font-size: 1em;
+    margin: .5em 0 .35em 0;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.typeroof-ui_sidebar li.active {
+    color: red;
+}
+.typeroof-ui_sidebar li.active li:not(.active) {
+    color: var(--text-color);
+}
