@@ -58,7 +58,7 @@ footer {
 
 footer li::after{
     display: inline-block;
-    content: " •";
+    content: "\A0•\A0";
     font-size: 2em;
     color: white;
     line-height: .5em; /* basically reset the 2 em font-size to 1em*/
@@ -75,7 +75,7 @@ footer li:last-child::after{
     color: #fff;
 }
 
-:is(header, .sidebar, footer) :is(a, a:visited, a:link) {
+:is(header, .sidebar) :is(a, a:visited, a:link) {
   text-decoration: none;
 }
 
