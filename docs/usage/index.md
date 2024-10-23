@@ -110,7 +110,10 @@ https://youtu.be/T3-Vn3eBfEE
 
 ### Lesson 05: Animate Color
 
-*Duration **??:??** m:s*
+As a starting point, this lesson uses a state that can be understood and
+created with the knowledge of the previous lesson. We explore the aspects
+of color animation in a Horror/Halloween-styled specimen of Decovar,
+traversing from its "Regular" style to its "Mayhem" style.
 
 #### Required Links:
 
@@ -119,6 +122,10 @@ https://youtu.be/T3-Vn3eBfEE
    (link to the [GitHub Repository of Decovar](https://github.com/googlefonts/decovar))
  * Initial State: [Lesson-Animate_Color-decovar-necrovar.json.txt](/docs/states_lib/demos/Lesson-Animate_Color-decovar-necrovar.json.txt)
  * Final State: [decovar-necrovar.json.txt](/docs/states_lib/demos/decovar-necrovar.json.txt)
+
+*Duration **21:43** m:s*
+
+ https://youtu.be/zzYhSBy9vNw
 
 ### Property Inheritance
 
