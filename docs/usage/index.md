@@ -83,7 +83,7 @@ https://www.youtube.com/watch?v=5AY1KnkSOcI
 
 ## Layout: Stage and Actors
 
-The concepts of actors on a stage, "key-moments", and inheritance of
+The concepts of actors on a stage, "Key-Moments", and inheritance of
 property values are central to the animation capabilities of TypeRoof
 Shell. The Layout "Stage and Actors" represents a unified interface that
 exposes all possibilities under that structure; meanwhile, a Layout like
@@ -98,15 +98,21 @@ iterations will improve this.
 
 In this lesson, we create a simple animation of one "Line of Text" actor
 from the ground up, step by step, and learn the basics of working with
-Key Moments.
+Key-Moments.
 
 #### Required Links:
  * [TypeRoof Shell](/shell)
- * State: [Lesson-Create_a_Simple_Animation-hello_goodbye.json](/docs/states_lib/demos/Lesson-Create_a_Simple_Animation-hello_goodbye.json)
+ * State: [Lesson-Create_a_Simple_Animation-hello_goodbye.json.txt](/docs/states_lib/demos/Lesson-Create_a_Simple_Animation-hello_goodbye.json.txt)
 
 *Duration **25:14** m:s*
 
 https://youtu.be/T3-Vn3eBfEE
+
+### Lesson 05: Animate Color
+
+ * [TypeRoof Shell](/shell)
+ * Initial State: [Lesson-Animate_Color-decovar-necrovar.json.txt](/docs/states_lib/demos/Lesson-Animate_Color-decovar-necrovar.json.txt)
+ * Final State: [decovar-necrovar.json.txt](/docs/states_lib/demos/decovar-necrovar.json.txt)
 
 ### Property Inheritance
 

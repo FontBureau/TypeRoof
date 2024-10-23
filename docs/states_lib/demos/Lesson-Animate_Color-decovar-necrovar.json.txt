@@ -1,0 +1,195 @@
+{
+  "activeState": {
+    "t": "0",
+    "duration": "6",
+    "isLoop": "1",
+    "perpetual": "1",
+    "playing": "0",
+    "activeActors": [
+      {
+        "instance": {
+          "isLoop": "1",
+          "label": "",
+          "keyMoments": [
+            {
+              "label": "Decovar, Top",
+              "duration": "1",
+              "isActive": "0",
+              "numericProperties": [
+                [
+                  "width",
+                  "720"
+                ],
+                [
+                  "y",
+                  "0"
+                ]
+              ],
+              "autoOPSZ": "0",
+              "axesLocations": [
+                [
+                  "BLDA",
+                  "0"
+                ],
+                [
+                  "TRMD",
+                  "0"
+                ],
+                [
+                  "TRMC",
+                  "0"
+                ],
+                [
+                  "SKLD",
+                  "0"
+                ],
+                [
+                  "TRML",
+                  "0"
+                ],
+                [
+                  "SKLA",
+                  "0"
+                ],
+                [
+                  "TRMF",
+                  "0"
+                ],
+                [
+                  "TRMK",
+                  "0"
+                ],
+                [
+                  "BLDB",
+                  "0"
+                ],
+                [
+                  "WMX2",
+                  "0"
+                ],
+                [
+                  "TRMB",
+                  "0"
+                ],
+                [
+                  "TRMA",
+                  "0"
+                ],
+                [
+                  "SKLB",
+                  "0"
+                ],
+                [
+                  "TRMG",
+                  "0"
+                ],
+                [
+                  "TRME",
+                  "0"
+                ]
+              ],
+              "fontSize": "66",
+              "textRun": "Decovar",
+              "textAlign": "center"
+            },
+            {
+              "label": "Decrovar",
+              "duration": "1",
+              "isActive": "0",
+              "autoOPSZ": "0",
+              "textRun": "Decrovar"
+            },
+            {
+              "label": "Necrovar",
+              "duration": "1",
+              "isActive": "0",
+              "autoOPSZ": "0",
+              "textRun": "Necrovar"
+            },
+            {
+              "label": "Bottom",
+              "duration": "1",
+              "isActive": "0",
+              "numericProperties": [
+                [
+                  "y",
+                  "600"
+                ]
+              ],
+              "autoOPSZ": "0",
+              "axesLocations": [
+                [
+                  "TRMC",
+                  "750"
+                ],
+                [
+                  "TRML",
+                  "250"
+                ],
+                [
+                  "SKLA",
+                  "1000"
+                ],
+                [
+                  "TRMF",
+                  "250"
+                ],
+                [
+                  "TRMK",
+                  "250"
+                ],
+                [
+                  "BLDB",
+                  "1000"
+                ],
+                [
+                  "WMX2",
+                  "750"
+                ],
+                [
+                  "TRMB",
+                  "500"
+                ],
+                [
+                  "TRMA",
+                  "500"
+                ],
+                [
+                  "SKLB",
+                  "1000"
+                ],
+                [
+                  "TRMG",
+                  "750"
+                ],
+                [
+                  "TRME",
+                  "500"
+                ]
+              ]
+            },
+            {
+              "label": "Decrovar",
+              "duration": "1",
+              "isActive": "0",
+              "autoOPSZ": "0",
+              "textRun": "Decrovar"
+            },
+            {
+              "label": "Decovar",
+              "duration": "1",
+              "isActive": "0",
+              "autoOPSZ": "0",
+              "textRun": "Decovar"
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      }
+    ],
+    "width": "720",
+    "height": "720"
+  },
+  "activeLayoutKey": "StageAndActors",
+  "activeFontKey": "from-file Decovar Alpha Regular24 Version_0-000"
+}
