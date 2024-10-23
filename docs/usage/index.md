@@ -110,7 +110,13 @@ https://youtu.be/T3-Vn3eBfEE
 
 ### Lesson 05: Animate Color
 
+*Duration **??:??** m:s*
+
+#### Required Links:
+
  * [TypeRoof Shell](/shell)
+ * The font file [DecovarAlpha-VF.ttf](https://github.com/googlefonts/decovar/raw/refs/heads/master/fonts/DecovarAlpha-VF.ttf)
+   (link to the [GitHub Repository of Decovar](https://github.com/googlefonts/decovar))
  * Initial State: [Lesson-Animate_Color-decovar-necrovar.json.txt](/docs/states_lib/demos/Lesson-Animate_Color-decovar-necrovar.json.txt)
  * Final State: [decovar-necrovar.json.txt](/docs/states_lib/demos/decovar-necrovar.json.txt)
 
