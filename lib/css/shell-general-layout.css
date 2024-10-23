@@ -238,9 +238,9 @@ footer li {
     text-transform: uppercase;
 }
 
-.typeroof-ui_sidebar li.active {
+.typeroof-docs .typeroof-ui_sidebar li.active {
     color: red;
 }
-.typeroof-ui_sidebar li.active li:not(.active) {
+.typeroof-docs .typeroof-ui_sidebar li.active li:not(.active) {
     color: var(--text-color);
 }
