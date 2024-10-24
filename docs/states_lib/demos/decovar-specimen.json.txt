@@ -20,9 +20,9 @@
           "label": "Timing, Color",
           "keyMoments": [
             {
-              "label": "Key Moment 1",
+              "label": "Initial Black White",
               "duration": "1",
-              "isActive": "1",
+              "isActive": "0",
               "numericProperties": [
                 [
                   "t",
@@ -48,13 +48,13 @@
               }
             },
             {
-              "label": "Key Moment 2",
+              "label": "Child End; Gold Blue",
               "duration": "3",
-              "isActive": "1",
+              "isActive": "0",
               "numericProperties": [
                 [
                   "t",
-                  "0.99999"
+                  "1"
                 ]
               ],
               "autoOPSZ": "0",
@@ -75,15 +75,9 @@
               }
             },
             {
-              "label": "Key Moment 3",
+              "label": "Wait/Pause",
               "duration": "1",
-              "isActive": "1",
-              "numericProperties": [
-                [
-                  "t",
-                  "1"
-                ]
-              ],
+              "isActive": "0",
               "autoOPSZ": "0"
             }
           ],
@@ -94,9 +88,9 @@
                 "label": "Styles",
                 "keyMoments": [
                   {
-                    "label": "Key Moment 1",
+                    "label": "Style: Default",
                     "duration": "6",
-                    "isActive": "1",
+                    "isActive": "0",
                     "autoOPSZ": "0",
                     "axesLocations": [
                       [
@@ -162,7 +156,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 2",
+                    "label": "Style: Open",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -230,7 +224,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 3",
+                    "label": "Style: Worm",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -298,7 +292,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 4",
+                    "label": "Style: Checkered",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -366,7 +360,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 5",
+                    "label": "Style: Checkererd Reverse",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -434,7 +428,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 6",
+                    "label": "Style: Striped",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -502,7 +496,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 7",
+                    "label": "Style: Rounded",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -570,7 +564,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 8",
+                    "label": "Style: Flared",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -638,7 +632,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 9",
+                    "label": "Style: Flared Open",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -706,7 +700,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 10",
+                    "label": "Style: Rounded Slab",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -774,7 +768,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 11",
+                    "label": "Style: Contrast",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -842,7 +836,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 12",
+                    "label": "Style: Sheared",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -910,7 +904,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 13",
+                    "label": "Style: Rounded",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -978,7 +972,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 14",
+                    "label": "Style: Bifurcated",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -1046,7 +1040,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 15",
+                    "label": "Style: Inline",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -1114,7 +1108,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 16",
+                    "label": "Style: Slab",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -1182,7 +1176,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 17",
+                    "label": "Style: Contrast",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -1250,7 +1244,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 18",
+                    "label": "Style: Fancy",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -1318,7 +1312,7 @@
                     ]
                   },
                   {
-                    "label": "Key Moment 19",
+                    "label": "Style: Mayhem",
                     "duration": "1",
                     "isActive": "0",
                     "autoOPSZ": "0",
@@ -1393,9 +1387,9 @@
                       "label": "Size, Movement",
                       "keyMoments": [
                         {
-                          "label": "Key Moment 1",
+                          "label": "center top Decovar",
                           "duration": "1",
-                          "isActive": "1",
+                          "isActive": "0",
                           "numericProperties": [
                             [
                               "width",
@@ -1417,9 +1411,9 @@
                           "positioningVertical": "top"
                         },
                         {
-                          "label": "Key Moment 2",
+                          "label": "max-Y font-size 100",
                           "duration": "2",
-                          "isActive": "1",
+                          "isActive": "0",
                           "numericProperties": [
                             [
                               "y",
@@ -1430,9 +1424,9 @@
                           "fontSize": "100"
                         },
                         {
-                          "label": "Key Moment 3",
+                          "label": "font-size 130",
                           "duration": "1",
-                          "isActive": "1",
+                          "isActive": "0",
                           "autoOPSZ": "0",
                           "fontSize": "130"
                         }
@@ -1450,8 +1444,7 @@
       }
     ],
     "width": "720",
-    "height": "720",
-    "editingActor": "./0/instance/activeActors/0/instance/activeActors/0"
+    "height": "720"
   },
   "activeLayoutKey": "StageAndActors",
   "activeFontKey": "from-file Decovar Alpha Regular24 Version_0-000"
