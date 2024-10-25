@@ -72,10 +72,11 @@ machine for repeated use. The lesson also shows how to remove a custom font
 from the app again.
 
 #### Required Links:
+
  * [TypeRoof Shell](/shell)
- * State: [decovar-specimen.json.txt](/docs/states_lib/demos/decovar-specimen.json.txt)
  * The font file [DecovarAlpha-VF.ttf](https://github.com/googlefonts/decovar/raw/refs/heads/master/fonts/DecovarAlpha-VF.ttf)
    (link to the [GitHub Repository of Decovar](https://github.com/googlefonts/decovar))
+ * State: [decovar-specimen.json.txt](/docs/states_lib/demos/decovar-specimen.json.txt)
 
 *Duration **4:34** m:s*
 
@@ -101,6 +102,7 @@ from the ground up, step by step, and learn the basics of working with
 Key-Moments.
 
 #### Required Links:
+
  * [TypeRoof Shell](/shell)
  * State: [Lesson-Create_a_Simple_Animation-hello_goodbye.json.txt](/docs/states_lib/demos/Lesson-Create_a_Simple_Animation-hello_goodbye.json.txt)
 
@@ -127,7 +129,16 @@ traversing from its "Regular" style to its "Mayhem" style.
 
  https://youtu.be/zzYhSBy9vNw
 
-### Property Inheritance
+### Lesson 06: Property Propagation and Inheritance
+
+#### Required Links:
+
+ * [TypeRoof Shell](/shell)
+ * The font file [DecovarAlpha-VF.ttf](https://github.com/googlefonts/decovar/raw/refs/heads/master/fonts/DecovarAlpha-VF.ttf)
+   (link to the [GitHub Repository of Decovar](https://github.com/googlefonts/decovar))
+ * State: [decovar-specimen.json.txt](/docs/states_lib/demos/decovar-specimen.json.txt)
+
+*Duration **??:??** m:s*
 
 ### Time Control
 
