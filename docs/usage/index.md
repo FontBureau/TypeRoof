@@ -131,6 +131,22 @@ traversing from its "Regular" style to its "Mayhem" style.
 
 ### Lesson 06: Property Propagation and Inheritance
 
+The value of a property can be set explicitly at any Key-Moment. If it's
+not set directly in a Key-Moment, but in one or more Key Moments in the
+same actor, the value is defined by those Key-Moments. A property that is
+set explicitly by only one Key Moment in the entire local timeline of an
+actor has that value throughout the whole timeline and is not affected by
+possible other Key-Moments that don't set that property explicitly. At
+least two Key-Moments in the same timeline must set an explicit value to
+animate a property. A property not defined in a local actor timeline
+inherits its value from a parent actor timeline if defined there. Parent
+actors are container types, like the "Layer" or the root container "Stage."
+Some properties are not inherited, e.g., "x," "y," and "background color."
+These apply directly to the container. If a property is not defined in a
+parent actor and thus can't be inherited, its value is the default value.
+Variable fonts define default axis-locations, while the app's source code
+defines other property defaults.
+
 #### Required Links:
 
  * [TypeRoof Shell](/shell)
@@ -138,7 +154,9 @@ traversing from its "Regular" style to its "Mayhem" style.
    (link to the [GitHub Repository of Decovar](https://github.com/googlefonts/decovar))
  * State: [decovar-specimen.json.txt](/docs/states_lib/demos/decovar-specimen.json.txt)
 
-*Duration **??:??** m:s*
+*Duration **20:29** m:s*
+
+ https://youtu.be/XFk47ceAPZU
 
 ### Time Control
 
