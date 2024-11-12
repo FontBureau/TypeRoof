@@ -8,3 +8,5 @@ fonts/repos/*
 php.ini
 _site
 node_modules
+venv
+__pycache__
