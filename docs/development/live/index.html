@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../lib/css/shell.css">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+
+                <h3>Content</h3>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">Project README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p>link to
+<a href="https://fontbureau.github.io/TypeRoof/live/README/">https://fontbureau.github.io/TypeRoof/live/README/</a></p>
+<p>The principal idea is that TypeRoof does not need to know the particular
+implementation details on how to collect the information about changed
+fonts. It only provides an interface by listening to events created by <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage">window.postMessage</a>
+when it was opened as a PopUp by another web page. These other web pages
+do the specific work of identifying font changes and sending them to TypeRoof,
+in here they are called <strong>adapter</strong>. An adapter could be a font editor
+itself or connect to one by other means.</p>
+<p>In these examples are two <strong>adapters</strong> with different mechanisms to identify
+font changes and to pass them along to TypeRoof Documentation</p>
+<ul>
+<li><code>adapter-websocket-to-typeroof.html</code> uses repeated HTTP-GET calls to a
+simple local webserver and detects font changes by looking at the
+<code>Last-Modified</code> header.</li>
+<li><code>adapter-polling-to-typeroof.html</code> connects to a local Websocket server
+that monitors the file system and pushes change events only when necessary.</li>
+</ul>
+<p>This is rather intended as a demo but</p>
+<p>In the former case, point the web-socket server in Part 1 to the
+directory you are saving your font under and skip Part 3.</p>
+<p>This demos two implementation options to get changed font files updated
+in TypeRoof, both have advantages and disadvantages:</p>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>

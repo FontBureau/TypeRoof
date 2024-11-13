@@ -244,3 +244,7 @@ footer li {
 .typeroof-docs .typeroof-ui_sidebar li.active li:not(.active) {
     color: var(--text-color);
 }
+
+.typeroof-docs_content pre {
+  overflow-y: auto;
+}

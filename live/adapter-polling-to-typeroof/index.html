@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../lib/css/shell.css">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+
+                <h3>Content</h3>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">Project README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Adapter Polling HTTP-Get to TypeRoof</title>
+    <script>
+
+
+function initTypeRoof(state) {
+    const {sendUpdatesTo, lastMessages, typeRoofOriginURL} = state
+        // open TypeRoof
+      ,  myHandle = window.open(`${typeRoofOriginURL}/TypeRoof/shell`, '_blank')
+      ;
+
+    // Listen to TypeRoof requesting font-update messages.
+    window.addEventListener('message', event=> {
+        console.log(`got message ${event}`, event);
+        if(event.source !== myHandle){
+            console.log('I don\'t know event.source:', event.source, 'it is not', myHandle);
+            return;
+        }
+        if(event.data !== 'init-live-fonts'){
+            console.log('I don\'t know what to do. event.data:', event.data);
+            return;
+        }
+
+        console.log('sending updates ... to:', myHandle);
+        sendUpdatesTo.add(myHandle);
+        for(const lastMessage of lastMessages.values())
+            myHandle.postMessage(lastMessage, {targetOrigin: typeRoofOriginURL});
+    });
+}
+
+async function receiveFontChange(state, metaData, fontBuffer) {
+    const {documentFonts, sendUpdatesTo, lastMessages, typeRoofOriginURL} = state
+      , font = new FontFace(`"${metaData.fullName}"`, fontBuffer)
+      ;
+    await font.load();
+    if(documentFonts.has(metaData.fullName)) {
+        const oldFont = documentFonts.get(metaData.fullName);
+        document.fonts.delete(oldFont);
+    }
+    else {
+        const container = document.createElement('div');
+        container.textContent = `${metaData.fullName} ABCabc1234`;
+        container.style.fontFamily = `"${metaData.fullName}"`;
+        container.style.fontSize = '3rem';
+        targetElement = document.querySelector('.typeroof-docs_content')
+                        || document.body;
+        targetElement.append(container);
+    }
+
+    const message = {type: 'font-update', metaData, fontBuffer};
+    lastMessages.set(metaData.fullName, message);
+
+    documentFonts.set(metaData.fullName, font);
+    document.fonts.add(font);
+    for(const win of sendUpdatesTo)
+        win.postMessage(message,  {targetOrigin: typeRoofOriginURL});
+}
+
+async function pollAll(state) {
+    const {baseURL, fonts, modified} = state
+      ,  responses = await Promise.all(fonts.map(fileName=>{
+            const url =  new URL(fileName, baseURL);
+            console.log(`fetching fileName ${fileName} at URL ${url} with baseURL ${baseURL}`, url);
+            return fetch(url);
+        }))
+      ;
+    for(let i=0;i<fonts.length;i++) {
+        const fileName = fonts[i]
+          , response = responses[i]
+          ;
+        if(!response.ok)
+            continue;
+        const lastModified = response.headers.get('Last-Modified');// Wed, 21 Oct 2015 07:28:00 GMT
+        console.log(`Got ${fileName} lastModified: ${lastModified}`);
+
+        if(!modified.has(fileName) || modified.get(fileName) !== lastModified) {
+            modified.set(fileName, lastModified);
+            const fullNameName = fileName.replace('.', '_').replace('/',' _')
+              , version = 'Version 0-live'
+                // For font-family words separated by space seem OK but words have
+                // to start with A-Za-z. I don't know if there's a definit rule to this!
+              , fullNameVersion = version.replace(' ', '_')
+              , fullName =  `from-file ${fullNameName} ${fullNameVersion}`
+              , metaData = {name:fileName, version, fullName}
+              , fontBuffer = await response.arrayBuffer()
+              ;
+            receiveFontChange(state, metaData, fontBuffer);
+        }
+    }
+}
+
+function main() {
+    const documentFonts = new Map()
+      , sendUpdatesTo = new Set()
+      , lastMessages = new Map()
+      , typeRoofOriginURL = 'https://fontbureau.github.io'
+        // e.g. open /TypeRoof/shell from localhost:
+        //, typeRoofOriginURL = 'http://localhost:8081'
+      , baseURL = 'http://0.0.0.0:8000/fonts/'
+      , fonts = ['live-font.ttf']
+      , modified = new Map()
+      , state = {documentFonts, sendUpdatesTo, lastMessages, typeRoofOriginURL, baseURL, fonts, modified}
+      , pollTime = 1000
+      ;
+
+    let timeout = null; // could be used to cancel polling
+    const pollForever = async (pollTime, ...args)=>{
+        await pollAll(...args);
+        timeout = setTimeout(()=>pollForever(pollTime, ...args), pollTime);
+    }
+    pollForever(pollTime, state);
+
+    initTypeRoof(state);
+
+    // In TypeRoof client:
+    // window.addEventListener('message', (...a)=> console.log('ON MESAGE:',...a));
+    // window.opener.postMessage('init-live-fonts', '*');
+};
+
+window.addEventListener('DOMContentLoaded', main);
+    </script>
+  </head>
+  <body>
+  </body>
+</html>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>
