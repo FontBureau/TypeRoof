@@ -4,61 +4,13 @@
     <title>Adapter WebSocket to TypeRoof</title>
     <script>
 
-function main() {
-    const socket = new WebSocket('ws://localhost:8765/');
-    socket.binaryType = "arraybuffer";
-
-    socket.addEventListener("open", (event) => {
-        socket.send(JSON.stringify({ type: 'init' }));
-    })
-
-    const documentFonts = new Map()
-      , lastMessages = new Map()
-      , sendUpdatesTo = new Set()
+function initTypeRoof(state) {
+    const {sendUpdatesTo, lastMessages, typeRoofOriginURL} = state
+        // open TypeRoof
+      ,  myHandle = window.open(`${typeRoofOriginURL}/TypeRoof/shell`, '_blank')
       ;
-    socket.addEventListener('message',  async (event) => {
-        if (event.data instanceof ArrayBuffer) {
-            // binary frame
-            const view = new DataView(event.data)
-              , metadataLength = view.getUint16(0)
-              , metaDataBytes = event.data.slice(2, 2 + metadataLength)
-              , decoder = new TextDecoder()
-              , metaDataStr = decoder.decode(metaDataBytes)
-              , metaData = JSON.parse(metaDataStr)
-              , fontBuffer = event.data.slice(2 + metadataLength)
-              ;
-            const font = new FontFace(`"${metaData.fullName}"`, fontBuffer)
-            await font.load();
-            if(documentFonts.has(metaData.fullName)) {
-                const oldFont = documentFonts.get(metaData.fullName);
-                document.fonts.delete(oldFont);
-            }
-            else {
-                const container = document.createElement('div');
-                container.textContent = `${metaData.fullName} ABCabc1234`;
-                container.style.fontFamily = `"${metaData.fullName}"`;
-                container.style.fontSize = '3rem';
-                document.body.append(container);
-            }
 
-            const message = {type: 'font-update', metaData, fontBuffer};
-            lastMessages.set(metaData.fullName, message);
-
-            documentFonts.set(metaData.fullName, font);
-            document.fonts.add(font);
-            for(const win of sendUpdatesTo)
-                win.postMessage(message,  {targetOrigin: typeRoofOriginURL});
-        }
-    })
-
-    const typeRoofOriginURL = 'https://fontbureau.github.io';
-    // e.g. open /TypeRoof/shell from localhost:
-    // const typeRoofOriginURL = 'http://localhost:8081';
-
-    // open TypeRoof
-    myHandle = window.open(`${typeRoofOriginURL}/TypeRoof/shell`, '_blank');
-
-    // here
+    // Listen to TypeRoof requesting font-update messages.
     window.addEventListener('message', event=> {
         console.log(`got message ${event}`, event);
         if(event.source !== myHandle){
@@ -75,8 +27,69 @@ function main() {
         for(const lastMessage of lastMessages.values())
             myHandle.postMessage(lastMessage, {targetOrigin: typeRoofOriginURL});
     });
+}
 
-    // TypeRoof client:
+async function receiveFontChange(state, metaData, fontBuffer) {
+    const {documentFonts, sendUpdatesTo, lastMessages, typeRoofOriginURL} = state
+      , font = new FontFace(`"${metaData.fullName}"`, fontBuffer)
+      ;
+    await font.load();
+    if(documentFonts.has(metaData.fullName)) {
+        const oldFont = documentFonts.get(metaData.fullName);
+        document.fonts.delete(oldFont);
+    }
+    else {
+        const container = document.createElement('div');
+        container.textContent = `${metaData.fullName} ABCabc1234`;
+        container.style.fontFamily = `"${metaData.fullName}"`;
+        container.style.fontSize = '3rem';
+        targetElement = document.querySelector('.typeroof-docs_content')
+                        || document.body;
+        targetElement.append(container);
+    }
+
+    const message = {type: 'font-update', metaData, fontBuffer};
+    lastMessages.set(metaData.fullName, message);
+
+    documentFonts.set(metaData.fullName, font);
+    document.fonts.add(font);
+    for(const win of sendUpdatesTo)
+        win.postMessage(message,  {targetOrigin: typeRoofOriginURL});
+}
+
+function main() {
+    const documentFonts = new Map()
+      , sendUpdatesTo = new Set()
+      , lastMessages = new Map()
+      , typeRoofOriginURL = 'https://fontbureau.github.io'
+        // e.g. open /TypeRoof/shell from localhost:
+        //, typeRoofOriginURL = 'http://localhost:8081'
+      , state = {documentFonts, sendUpdatesTo, lastMessages, typeRoofOriginURL}
+      , socket = new WebSocket('ws://localhost:8765/')
+      ;
+    socket.binaryType = "arraybuffer";
+    socket.addEventListener("open", (event) => {
+        socket.send(JSON.stringify({ type: 'init' }));
+    })
+
+    socket.addEventListener('message',  async (event) => {
+        if (event.data instanceof ArrayBuffer) {
+            // binary frame
+            const view = new DataView(event.data)
+              , metadataLength = view.getUint16(0)
+              , metaDataBytes = event.data.slice(2, 2 + metadataLength)
+              , decoder = new TextDecoder()
+              , metaDataStr = decoder.decode(metaDataBytes)
+              , metaData = JSON.parse(metaDataStr)
+              , fontBuffer = event.data.slice(2 + metadataLength)
+              ;
+            await receiveFontChange(state, metaData, fontBuffer);
+        }
+    })
+
+    initTypeRoof(state);
+
+    // In TypeRoof client:
     // window.addEventListener('message', (...a)=> console.log('ON MESAGE:',...a));
     // window.opener.postMessage('init-live-fonts', '*');
 };

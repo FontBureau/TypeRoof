@@ -53,7 +53,7 @@ simply test this, go to step 3 first and run the file rotation.
 ```
 # With the activated virtual environment.
 
-(venv) $ ~/path/to/TypeRoof/live > ./websocket-font-update-server.py .fonts/
+(venv) $ ~/path/to/TypeRoof/live > ./websocket-font-update-server.py fonts/
 ```
 
 
@@ -97,10 +97,10 @@ file in a target directory and thus trigger file-change events.
 # With the activated virtual environment.
 
 # Rotate the files in "../lib/assets/fonts/*" as "live-font.ttf" in "the"
-# ./.fonts directory every two seconds. NOTE especially the `-f` flag
+# ./fonts directory every two seconds. NOTE especially the `-f` flag
 # that is meant as safeguard to prevent accidental change to essential
 # data.
-(venv) $ ~/path/to/TypeRoof/live > ./file_rotation.py -f -s 2 -t live-font.ttf ./.fonts/ ../lib/assets/fonts/*
+(venv) $ ~/path/to/TypeRoof/live > ./file_rotation.py -f -s 2 -t live-font.ttf ./fonts/ ../lib/assets/fonts/*
 
 # There's an online help in the tool:
 (venv) $ ~/path/to/TypeRoof/live >  ./file_rotation.py

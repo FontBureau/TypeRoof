@@ -103,13 +103,14 @@ async def packageFile(file_path: str):
        subscriber.send('update...')
     OnSUBSCRIBE we should always send the last message!
     """
-    name = os.path.basename(file_path).replace('.', '_')
+    file_name = os.path.basename(file_path)
+    full_name_name = file_name.replace('.', '_')
     version = 'Version 0-live'
     # For font-family words separated by space seem OK but words have
     # to start with A-Za-z. I don't know if there's a definit rule to this!
     full_name_version = version.replace(' ', '_')
-    full_name =  f'from-file {name} {full_name_version}'
-    metadata = {'name': name, 'version': version, 'fullName': full_name}
+    full_name =  f'from-file {full_name_name} {full_name_version}'
+    metadata = {'name': file_name, 'version': version, 'fullName': full_name}
     metadata_json = json.dumps(metadata)
     metadata_bytes = metadata_json.encode('utf-8')
     async with aiofiles.open(file_path, mode='rb') as f:
