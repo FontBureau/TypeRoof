@@ -39,7 +39,7 @@ You don't need to build TypeRoof, it is created using vanilla JavaScript and
 
 ```
 #  E.g. using the Python-3 builtin web-server.
-$ ~/TypeRoof> python3 -m http.server
+$ ~/TypeRoof> python3 -m http.server 8000
 Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
 
 # Then go to: http://0.0.0.0:8000/shell.html

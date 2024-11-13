@@ -1,26 +1,25 @@
 # Serve live font changes to TypeRoof
 
 This is an example implementation to showcase how TypeRoof can live update
-fonts that have changed in a local folder/directory. The idea is for font
-editors to pick this up and to provide the feature built in for their users.
+fonts that have changed e.g. within a font editor or on your hard-drive.
+The idea is for font editors to pick this up and to provide the feature
+built in for their users.
 
-For font-editor implementers see the technical documentation at: [Developer Kit -- Live font changes](https://fontbureau.github.io/TypeRoof/docs/development/live)
+For font editor implementers or if you are interested in technical details,
+see the technical documentation at: [Developer Kit -- Live font changes](https://fontbureau.github.io/TypeRoof/docs/development/live)
 
-## Use locally
-
-If your editor does not implement this or if you just want to try
-it out. In the former case, point the web-socket server in Part 1 to the
-directory you are saving your font under and skip Part 3.
-
-Part 2, the web-server for the  `adapter-ws-to-typeroof.html` file,
-could be built into the server in Part 1 but one reason for this
-is to demonstrate the different roles that are required to make the
-updates in TypeRoof work and therefore this has a strong separation.
-Let us know if a stand-alone, one stop script, is desirable for you
-[in the issue tracker](https://github.com/FontBureau/TypeRoof/issues).
+If your font editor does not yet implement font updates in TypeRoof directly
+or if you just want to try it out in another scenario you can use these
+scripts to monitor fonts in a local folder/directory on your computer and
+send update messages to TypeRoof, the [Run with WebSocket](#run-with-websocket) example is better suited
+for this case, as the polling example has cross-orign limitations and the
+polling adapter reqiures a (hard-coded) list of known file names to poll.
 
 
 ## Install
+
+You need to do this only in order to use the `websocket-font-update-server.py`
+and `file_rotation.py` scripts.
 
 This installation procedure recommends to use a python virtual environment
 in order to keep the system/user python installation unaffected.
@@ -38,17 +37,40 @@ $ ~/path/to/TypeRoof/live > . venv/bin/activate
 (venv) $ ~/path/to/TypeRoof/live > pip install -r requirements.txt
 ```
 
-## Run
+## Adapters Usage
 
-You will need up to three terminal windows to run the separate parts:
+In order to connect any source of font changes and TypeRoof we load a
+web-page, called an **Adapter,** that in turn opens TypeRoof as a
+popup. That relation enables the usage of the `window.postMessage` API
+to send messages with font updates from the Adapter to TypeRoof.
 
-### Part 1: The web-socket server observing font file changes.
+At the first time you open an adapter PopUps will be blocked in your browser.
+You'll have to **allow PopUps and then reload the page of the adapter** again
+to successfully establish the connection.
 
-This will start a web socket server at `ws://localhost:8765/` where the
-page `adapter-ws-to-typeroof.html` (see Part 2) can connect to.
+In the window of the adapter page you'll also be able to observe the
+currently provided fonts and how they change.
 
-You'll need a directory to observe for font-changes for this. Maybe, to
-simply test this, go to step 3 first and run the file rotation.
+Within TypeRoof, you'll have to select the font/fonts that is/are updated
+yourself once (FIXME: could be automated).
+
+## Run with WebSocket
+
+There are two or three individual steps involved:
+
+ * [WebSocket Part 1: Server](#websocket-part-1-server)
+ * [WebSocket Part 2: Adapter](#websocket-part-2-adapter)
+ * (optionally) [Part 3: File Rotation](#part-3-file-rotation)
+
+### WebSocket Part 1: Server
+
+This will start a WebSocket-server at `ws://localhost:8765/` where the
+page `adapter-websocket-to-typeroof.html` (see  [Part 2](#websocket-part-2-adapter))
+can connect to.
+
+You'll need a directory to observe for font-changes, to test this, go to
+[Part 3: File Rotation](#part-3-file-rotation) first and run the file
+rotation which will create the `fonts` directory.
 
 ```
 # With the activated virtual environment.
@@ -56,34 +78,85 @@ simply test this, go to step 3 first and run the file rotation.
 (venv) $ ~/path/to/TypeRoof/live > ./websocket-font-update-server.py fonts/
 ```
 
+### WebSocket Part 2: Adapter
 
-### Part 2: a simple web-server for `adapter-ws-to-typeroof.html`
+See [Adapters Usage](#adapters-usage).
 
-In order to connect between the web-socket — or any other source of font changes —
-and TypeRoof we load a web-site that in turn opens TypeRoof as a popup. That
-relation enables the usage of the `window.postMessage` API to send messages
-to TypeRoof.
+#### A: Using `file:///`
+
+It's actually possible to open `adapter-websocket-to-typeroof.html` without
+a local web-server directly from disk with a `file://`.
+
+Open `file:///home/username/path/to/TypeRoof/live/adapter-websocket-to-typeroof.html`
+(you need to change the path or open the file from your file manager) in you browser.
+
+#### B: Using a Local Web-Server
+
+Alternatively, you can start a simple web-server to deliver the file:
 
 ```
 # You don't need the virtual environment for this
 
-$ ~/path/to/TypeRoof/live > python3 -m http.server
+$ ~/path/to/TypeRoof/live > python3 -m http.server 8000
 Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
 ```
 
-Open [http://0.0.0.0:8000/adapter-ws-to-typeroof.html](http://0.0.0.0:8000/adapter-ws-to-typeroof.html)
-in your browser. NOTE: the port number (`8000`) and maybe IO-adress may
-differ in your instance, look at the information given by the command.
+Open [http://0.0.0.0:8000/adapter-websocket-to-typeroof.html](http://0.0.0.0:8000/adapter-websocket-to-typeroof.html)
+in your browser.
 
-This will connect to the web-socket server and open TypeRoof as a PopUp
-(you'll have to allow that in your browser and maybe reload the page again).
-In the window of the `adapter-ws-to-typeroof.html` page you'll also be
-able to observe the currently provided fonts and how they change.
+#### C: Use the online Adapter
 
-You'll have to select the font/fonts that is/are updated in TypeRoof
-yourself once.
+The adapter is also online at our web site and since WebSockets don't
+require special cross-site allowance, the online adapter should be able
+to connect to the server started in [WebSocket Part 1: Server](#websocket-part-1-server).
 
-### Part 3: `file_rotation.py`
+Open [https://fontbureau.github.io/TypeRoof/live/adapter-websockets-to-typeroof/](https://fontbureau.github.io/TypeRoof/live/adapter-websockets-to-typeroof/)
+in your browser.
+
+## Run with Polling
+
+There are two or three individual steps involved:
+
+ * [Polling Part 1: Server](#polling-part-1-server)
+ * [Polling Part 2: Adapter](#polling-part-2-adapter)
+ * (optionally) [Part 3: File Rotation](#part-3-file-rotation)
+
+### Polling Part 1: Server
+
+Start a simple web-server. NOTE: there are cross-origin restrictions involved
+with this technique, which is why the adapter and the polling must come
+from the same origin or the server would have to send [Cross-Origin Resource Sharing (CORS)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
+headers.
+
+```
+# You don't need the virtual environment for this
+
+$ ~/path/to/TypeRoof/live > python3 -m http.server 8000
+Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+```
+
+### Polling Part 2: Adapter
+
+See [Adapters Usage](#adapters-usage).
+
+Since the web server is already started you only need to open [http://0.0.0.0:8000/adapter-polling-to-typeroof.html](http://0.0.0.0:8000/adapter-polling-to-typeroof.html)
+in your browser.
+
+The main purpose of this adapter is to serve as an example, thus there
+are some assumptions hard-coded into this adapter:
+
+ * The fonts are located at 'http://0.0.0.0:8000/fonts/'
+ * Looking for one font only called `live-font.ttf`
+
+You can change these assumptions in the JavaScript of the adapter, but
+for general usage the [Run with WebSocket](#run-with-websocket) example
+might be working out of the box.
+
+
+
+See [All Adapters Usage](#adapters-usage)..
+
+## Part 3: File Rotation
 
 This is optional as a demo. To observe file changes created e.g. by a
 font-editor, Part 1 and Part 2 are  sufficient.
@@ -120,8 +193,3 @@ options:
   -s SECONDS, --seconds SECONDS
                         number of seconds between rotations (default: 7)
 ```
-
-
-
-
-
