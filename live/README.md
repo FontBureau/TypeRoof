@@ -51,9 +51,6 @@ to successfully establish the connection.
 In the window of the adapter page you'll also be able to observe the
 currently provided fonts and how they change.
 
-Within TypeRoof, you'll have to select the font/fonts that is/are updated
-yourself once (FIXME: could be automated).
-
 ## Run with WebSocket
 
 There are two or three individual steps involved:
