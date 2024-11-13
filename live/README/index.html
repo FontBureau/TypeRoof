@@ -27,7 +27,7 @@
                 </ul>
             </div>
             <div class="typeroof-main">
-                <div class="typeroof-docs_content"><h1><a id="user-content-serve-live-font-changes-to-typeroof" class="anchor" href="#serve-live-font-changes-to-typeroof" aria-hidden="true"><svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16"><path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Serve live font changes to TypeRoof</h1>
+                <div class="typeroof-docs_content"><h1><a id="user-content-serve-live-font-changes-to-typeroof" class="anchor" href="#serve-live-font-changes-to-typeroof" aria-hidden="true"><svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16"><path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Serve Live Font Changes to TypeRoof</h1>
 <p>This is an example implementation to showcase how TypeRoof can live update
 fonts that have changed e.g. within a font editor or on your hard-drive.
 The idea is for font editors to pick this up and to provide the feature
@@ -59,10 +59,10 @@ $ ~/path/to/TypeRoof/live &gt; . venv/bin/activate
 <h2><a id="user-content-adapters-usage" class="anchor" href="#adapters-usage" aria-hidden="true"><svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16"><path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Adapters Usage</h2>
 <p>In order to connect any source of font changes and TypeRoof we load a
 web-page, called an <strong>Adapter,</strong> that in turn opens TypeRoof as a
-popup. That relation enables the usage of the <code>window.postMessage</code> API
+pop-up. That relation enables the usage of the <code>window.postMessage</code> API
 to send messages with font updates from the Adapter to TypeRoof.</p>
-<p>At the first time you open an adapter PopUps will be blocked in your browser.
-You’ll have to <strong>allow PopUps and then reload the page of the adapter</strong> again
+<p>At the first time you open an adapter pop-ups will be blocked in your browser.
+You’ll have to <strong>allow pop-ups and then reload the page of the adapter</strong> again
 to successfully establish the connection.</p>
 <p>In the window of the adapter page you’ll also be able to observe the
 currently provided fonts and how they change.</p>
@@ -106,7 +106,7 @@ in your browser.</p>
 <p>The adapter is also online at our web site and since WebSockets don’t
 require special cross-site allowance, the online adapter should be able
 to connect to the server started in <a href="#websocket-part-1-server">WebSocket Part 1: Server</a>.</p>
-<p>Open <a href="https://fontbureau.github.io/TypeRoof/live/adapter-websockets-to-typeroof/">https://fontbureau.github.io/TypeRoof/live/adapter-websockets-to-typeroof/</a>
+<p>Open <a href="https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/">https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/</a>
 in your browser.</p>
 <h2><a id="user-content-run-with-polling" class="anchor" href="#run-with-polling" aria-hidden="true"><svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16"><path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Run with Polling</h2>
 <p>There are two or three individual steps involved:</p>
@@ -138,7 +138,7 @@ are some assumptions hard-coded into this adapter:</p>
 <p>You can change these assumptions in the JavaScript of the adapter, but
 for general usage the <a href="#run-with-websocket">Run with WebSocket</a> example
 might be working out of the box.</p>
-<p>See <a href="#adapters-usage">All Adapters Usage</a>…</p>
+<p>See <a href="#adapters-usage">All Adapters Usage</a>.</p>
 <h2><a id="user-content-part-3-file-rotation" class="anchor" href="#part-3-file-rotation" aria-hidden="true"><svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16"><path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Part 3: File Rotation</h2>
 <p>This is optional as a demo. To observe file changes created e.g. by a
 font-editor, Part 1 and Part 2 are  sufficient.</p>
