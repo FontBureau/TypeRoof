@@ -1,4 +1,4 @@
-# Serve live font changes to TypeRoof
+# Serve Live Font Changes to TypeRoof
 
 This is an example implementation to showcase how TypeRoof can live update
 fonts that have changed e.g. within a font editor or on your hard-drive.
@@ -41,11 +41,11 @@ $ ~/path/to/TypeRoof/live > . venv/bin/activate
 
 In order to connect any source of font changes and TypeRoof we load a
 web-page, called an **Adapter,** that in turn opens TypeRoof as a
-popup. That relation enables the usage of the `window.postMessage` API
+pop-up. That relation enables the usage of the `window.postMessage` API
 to send messages with font updates from the Adapter to TypeRoof.
 
-At the first time you open an adapter PopUps will be blocked in your browser.
-You'll have to **allow PopUps and then reload the page of the adapter** again
+At the first time you open an adapter pop-ups will be blocked in your browser.
+You'll have to **allow pop-ups and then reload the page of the adapter** again
 to successfully establish the connection.
 
 In the window of the adapter page you'll also be able to observe the
@@ -110,7 +110,7 @@ The adapter is also online at our web site and since WebSockets don't
 require special cross-site allowance, the online adapter should be able
 to connect to the server started in [WebSocket Part 1: Server](#websocket-part-1-server).
 
-Open [https://fontbureau.github.io/TypeRoof/live/adapter-websockets-to-typeroof/](https://fontbureau.github.io/TypeRoof/live/adapter-websockets-to-typeroof/)
+Open [https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/](https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/)
 in your browser.
 
 ## Run with Polling
@@ -154,7 +154,7 @@ might be working out of the box.
 
 
 
-See [All Adapters Usage](#adapters-usage)..
+See [All Adapters Usage](#adapters-usage).
 
 ## Part 3: File Rotation
 
