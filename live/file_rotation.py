@@ -4,27 +4,24 @@ import sys
 import argparse
 from pathlib import Path
 from time import sleep
-from shutil import copyfile
 
 FONT_FILE_SUFFIXES = ('.ttf', '.otf', '.woff', '.woff2')
 TARGET_FILE_NAME = 'SampleFont.ttf'
 
 def rotate(source_file, target_dir_path, target_file_name=TARGET_FILE_NAME):
-    for file_path in target_dir_path.iterdir():
-        if not file_path.is_file(): continue
-        file_path.unlink()
-
     file_path = Path(source_file)
     if not file_path.is_file():
-        print('skio rotate', file_path.name, 'is not a file')
+        print('skip rotate', file_path.name, 'is not a file')
         return False
     suffix = file_path.suffix
     if suffix not in FONT_FILE_SUFFIXES:
         print('skip rotate' ,file_path.name, 'is not suffixed by any of', *FONT_FILE_SUFFIXES)
         return False
     target_path = target_dir_path.joinpath(target_file_name)
+
     print('copy' ,file_path.name, '->', target_path.name)
-    copyfile(file_path, target_path)
+    with open(file_path, 'rb') as source, open(target_path, 'wb') as target:
+        target.write(source.read())
     return True
 
 def main(source_files, target_dir, seconds, force, target_file_name=TARGET_FILE_NAME):
