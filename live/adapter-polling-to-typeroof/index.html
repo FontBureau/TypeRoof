@@ -5,6 +5,8 @@
         <title> - Documentation - TypeRoof</title>
         <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
         <link rel="stylesheet" href="../../lib/css/shell.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
     </head>
     <body class="typeroof-docs">
         <div class="wrapper">
@@ -16,7 +18,7 @@
                 <h3>Content</h3>
                 <nav>
                     <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
-<li><a href="/TypeRoof/docs/development/">Developer Kit</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/live/README/">live/README</a></li></ul></li></ul></li>
 <li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
 <li><a href="/TypeRoof/README/">Project README</a></li></ul>
                 </nav>
@@ -37,7 +39,7 @@
 function initTypeRoof(state) {
     const {sendUpdatesTo, lastMessages, typeRoofOriginURL} = state
         // open TypeRoof
-      ,  myHandle = window.open(`${typeRoofOriginURL}/TypeRoof/shell`, '_blank')
+      ,  myHandle = window.open(`${typeRoofOriginURL}/TypeRoof/shell`, 'TypeRoof')
       ;
 
     // Listen to TypeRoof requesting font-update messages.

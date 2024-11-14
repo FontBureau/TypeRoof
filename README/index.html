@@ -5,6 +5,8 @@
         <title> - Documentation - TypeRoof</title>
         <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
         <link rel="stylesheet" href="../lib/css/shell.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
     </head>
     <body class="typeroof-docs">
         <div class="wrapper">
@@ -16,7 +18,7 @@
                 <h3>Content</h3>
                 <nav>
                     <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
-<li><a href="/TypeRoof/docs/development/">Developer Kit</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/live/README/">live/README</a></li></ul></li></ul></li>
 <li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
 <li class="active"><a href="/TypeRoof/README/">Project README</a></li></ul>
                 </nav>
@@ -27,7 +29,7 @@
                 </ul>
             </div>
             <div class="typeroof-main">
-                <div class="typeroof-docs_content"><h1><a id="user-content-typeroof-readme" class="anchor" href="#typeroof-readme" aria-hidden="true"><svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16"><path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>TypeRoof README</h1>
+                <div class="typeroof-docs_content"><h1><a id="typeroof-readme" class="heading_anchor" href="#typeroof-readme" aria-hidden="true">#</a>TypeRoof README</h1>
 <p>TypeRoof is type tooling infrastructure. It provides type proofing applications,
 initially based on Video Proof and Variable Type Tools. Now it also explores
 the world of general animation with type as a principal actor.</p>
@@ -38,34 +40,34 @@ typically miss out, as they are hard to do right on limited time.</p>
 <p>TypeRoof is Free/Libre Open Source Software and web based, build mainly with
 vanilla JavaScript and a few specialized dependencies. We are looking for
 a community of users and developers who are interested in shaping its future.</p>
-<h2><a id="user-content-directions" class="anchor" href="#directions" aria-hidden="true"><svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16"><path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Directions</h2>
+<h2><a id="directions" class="heading_anchor" href="#directions" aria-hidden="true">#</a>Directions</h2>
 <ul>
 <li><a href="https://fontbureau.github.io/TypeRoof/docs">Documentation – Landing Page</a></li>
 <li><a href="https://fontbureau.github.io/TypeRoof/docs/usage">User Kit – Getting Started and Usage</a></li>
 <li><a href="https://fontbureau.github.io/TypeRoof/docs/development">Developer Kit – Contributing and Customization</a></li>
 </ul>
-<h3><a id="user-content-typeroof-shell" class="anchor" href="#typeroof-shell" aria-hidden="true"><svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16"><path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><a href="https://fontbureau.github.io/TypeRoof/shell">TypeRoof Shell</a></h3>
+<h3><a id="typeroof-shell" class="heading_anchor" href="#typeroof-shell" aria-hidden="true">#</a><a href="https://fontbureau.github.io/TypeRoof/shell">TypeRoof Shell</a></h3>
 <p>The shell provides infrastructure to enable all types of type centered
 tooling for proofing, specimen creation, type setting and it features
 animation capabilities build with variable fonts in mind.</p>
-<h3><a id="user-content-typeroof-legacy-video-proof-and-variable-type-tools" class="anchor" href="#typeroof-legacy-video-proof-and-variable-type-tools" aria-hidden="true"><svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16"><path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><a href="/TypeRoof/legacy">TypeRoof Legacy</a> (Video Proof and Variable Type Tools)</h3>
+<h3><a id="typeroof-legacy-video-proof-and-variable-type-tools" class="heading_anchor" href="#typeroof-legacy-video-proof-and-variable-type-tools" aria-hidden="true">#</a><a href="/TypeRoof/legacy">TypeRoof Legacy</a> (Video Proof and Variable Type Tools)</h3>
 <p>The last (and final) version that has evolved from Video Proof and Variable
 Type Tools before the TypeRoof Shell was developed. Eventually the Shell
 will absorb all Layouts (Tools) that are present in this app and make this
 instance obsolete.</p>
-<h2><a id="user-content-how-to-build-and-run-locally-for-development" class="anchor" href="#how-to-build-and-run-locally-for-development" aria-hidden="true"><svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16"><path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>How to build and run locally (for development)</h2>
+<h2><a id="how-to-build-and-run-locally-for-development" class="heading_anchor" href="#how-to-build-and-run-locally-for-development" aria-hidden="true">#</a>How to build and run locally (for development)</h2>
 <p>You don’t need to build TypeRoof, it is created using vanilla JavaScript and
 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules">JavaScript Modules</a>. You can serve TypeRoof directly from the project root directory:</p>
-<pre><code>#  E.g. using the Python-3 builtin web-server.
-$ ~/TypeRoof&gt; python3 -m http.server 8000
-Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+<pre class="language-sh-session"><code class="language-sh-session"><span class="token command"><span class="token shell-symbol important">#</span>  <span class="token bash language-bash">E.g. using the Python-3 <span class="token builtin class-name">builtin</span> web-server.</span></span>
+<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> python3 <span class="token parameter variable">-m</span> http.server <span class="token number">8000</span></span></span>
+<span class="token output">Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
 
-# Then go to: http://0.0.0.0:8000/shell.html
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Then go to: http://0.0.0.0:8000/shell.html</span></span>
 
-# OR use https://www.npmjs.com/package/http-server (installing globally)
-$ ~/TypeRoof&gt; npm install -g http-server
-$ ~/TypeRoof&gt; http-server
-Starting up http-server, serving ./
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">OR use https://www.npmjs.com/package/http-server <span class="token punctuation">(</span>installing globally<span class="token punctuation">)</span></span></span>
+<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> <span class="token function">npm</span> <span class="token function">install</span> <span class="token parameter variable">-g</span> http-server</span></span>
+<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> http-server</span></span>
+<span class="token output">Starting up http-server, serving ./
 
 http-server version: 14.1.1
 
@@ -75,34 +77,32 @@ Available on:
   http://127.0.0.1:8080
   http://192.168.178.87:8080
 
-# Then go to: http://localhost:8080/shell
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Then go to: http://localhost:8080/shell</span></span>
 
-# OR, maybe you want to use the Eleventy built-in development server
-# which is ideal to write documentation. See the next section.
-</code></pre>
-<h2><a id="user-content-build-the-complete-static-site-locally" class="anchor" href="#build-the-complete-static-site-locally" aria-hidden="true"><svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16"><path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Build the complete static site locally</h2>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">OR, maybe you want to use the Eleventy built-in development server</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">which</span> is ideal to <span class="token function">write</span> documentation. See the next section.</span></span></code></pre>
+<h2><a id="build-the-complete-static-site-locally" class="heading_anchor" href="#build-the-complete-static-site-locally" aria-hidden="true">#</a>Build the complete static site locally</h2>
 <p>The static web-site at <a href="https://fontbureau.github.io/TypeRoof/">https://fontbureau.github.io/TypeRoof/</a> (served via GitHub pages)
 is build using <a href="https://www.11ty.dev/">Eleventy</a>. See the <a href="https://www.11ty.dev/docs/">documentation of Eleventy</a>
 for more specific usage.</p>
-<pre><code># You requires Node.js and must install the dependencies first:
-$ ~/TypeRoof&gt; npm install
+<pre class="language-sh-session"><code class="language-sh-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">You requires Node.js and must <span class="token function">install</span> the dependencies first:</span></span>
+<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> <span class="token function">npm</span> <span class="token function">install</span></span></span>
 
-# We use eleventy to build the static web site:
-$ ~/TypeRoof&gt; npx @11ty/eleventy
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">We use eleventy to build the static web site:</span></span>
+<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> npx @11ty/eleventy</span></span>
 
-# The resulting site has been created in the `_site` directory.
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">The resulting site has been created <span class="token keyword">in</span> the <span class="token variable"><span class="token variable">`</span>_site<span class="token variable">`</span></span> directory.</span></span>
 
-# You can also use the live updating development server:
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">You can also use the live updating development server:</span></span>
 
-$ ~/TypeRoof&gt; npx @11ty/eleventy --serve
-[...]
+<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> npx @11ty/eleventy <span class="token parameter variable">--serve</span></span></span>
+<span class="token output">[...]
 [11ty] Copied [xxx] Wrote [xxx] files in 0.75 seconds (v3.0.0)
 [11ty] Watching…
 [11ty] Server at http://localhost:8080/
 
-# Then go to: http://localhost:8080/shell
-# Or go to: http://localhost:8080/shell
-
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Then go to: http://localhost:8080/shell</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Or go to: http://localhost:8080/shell</span></span>
 </code></pre>
 </div>
             </div>
