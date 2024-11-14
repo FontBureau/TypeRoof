@@ -49,7 +49,6 @@ class FileObserverEventIterator(object):
 
         return item
 
-
 @asynccontextmanager
 async def observeFiles(path: Path, queue: asyncio.Queue, loop: asyncio.BaseEventLoop,
           ) -> None:
@@ -124,7 +123,9 @@ async def packageFile(file_path: str):
     return message;
 
 async def consumeFileEvents(state: State, queue: asyncio.Queue) -> None:
+    wait_for_close = set()
     async for event in FileObserverEventIterator(queue):
+        path = None
         # Try to keep messages cache updated
         if event.is_directory == True:
             continue;
@@ -139,20 +140,26 @@ async def consumeFileEvents(state: State, queue: asyncio.Queue) -> None:
             # The client doesn't understand this so far, but we could
             # send this as a message
 
-        if event.event_type == 'created'  or event.event_type == 'moved':
-            # FileCreatedEvent(src_path='./hello.ttf', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
-            path = event.dest_path if event.event_type == 'moved' else event.src_path
+        if event.event_type == 'modified':
+            # There can be multiple modified events before the file is
+            # closed, so we can't send this right away.
+            wait_for_close.add(event.src_path)
 
+        if event.event_type == 'closed' and event.src_path in wait_for_close:
+            wait_for_close.remove(event.src_path)
+            path = event.src_path
+
+        if event.event_type == 'created' or event.event_type == 'moved':
+            # FileCreatedEvent(src_path='./hello.ttf', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+            path = event.dest_path if event.event_type == 'moved' \
+                                   else event.src_path
+
+        if path is not None:
+            print('sending>', path)
             message = await packageFile(path)
             state.lastMessages[path] = message
             # this is a sync call!
             broadcast(state.subscribers, message)
-
-        # We don't handle 'modified' FileModifiedEvent as it seems to
-        # duplicate with FileCreatedEvent for this use case.  Maybe this
-        # will require better diversification.
-        # FileModifiedEvent(src_path='./hello.ttf', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
-
 
 async def handleInit(state: State, websocket) -> None:
     for lastMesage in state.lastMessages.values():
