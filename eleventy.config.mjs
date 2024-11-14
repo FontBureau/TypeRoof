@@ -51,7 +51,19 @@ export default function (eleventyConfig) {
         typographer: true,
     };
     const md = markdownIt(mdOptions);
-    md.use(markdownItGitHubHeadings, {})
+    md.use(markdownItGitHubHeadings, {
+        // NOTE: I support the cause of adding prefixes to heading ids,
+        // as described in the docs of markdown-it-github-headings, but
+        // the hrefs created here do not contain the prefixes. The suggestion
+        // is to handle this by listening to hash changes and intercept
+        // these, I'm not interested in that approach, I could live with
+        // links to e.g. #section-introduction but I also think the risk
+        // is in this case not really high, so I just don't use prefixes.
+          prefixHeadingIds: false
+        //, prefix: 'section-'
+        , linkIcon: '#'
+        , className: 'heading_anchor'
+    })
     eleventyConfig.setLibrary("md", md);
 
     eleventyConfig.addPlugin(syntaxHighlight);

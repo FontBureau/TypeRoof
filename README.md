@@ -37,7 +37,7 @@ instance obsolete.
 You don't need to build TypeRoof, it is created using vanilla JavaScript and
 [JavaScript Modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules). You can serve TypeRoof directly from the project root directory:
 
-```
+```sh-session
 #  E.g. using the Python-3 builtin web-server.
 $ ~/TypeRoof> python3 -m http.server 8000
 Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
@@ -70,7 +70,7 @@ The static web-site at https://fontbureau.github.io/TypeRoof/ (served via GitHub
 is build using [Eleventy](https://www.11ty.dev/). See the [documentation of Eleventy](https://www.11ty.dev/docs/)
 for more specific usage.
 
-```
+```sh-session
 # You requires Node.js and must install the dependencies first:
 $ ~/TypeRoof> npm install
 
