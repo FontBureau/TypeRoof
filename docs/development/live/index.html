@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title> - Documentation - TypeRoof</title>
+        <title>Live Font Updates - Documentation - TypeRoof</title>
         <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
         <link rel="stylesheet" href="../../../lib/css/shell.css">
         <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
@@ -18,7 +18,8 @@
                 <h3>Content</h3>
                 <nav>
                     <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
-<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/live/README/">live/README</a></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li class="active"><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">live/README</a></li></ul></li></ul></li>
 <li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
 <li><a href="/TypeRoof/README/">Project README</a></li></ul>
                 </nav>
@@ -29,29 +30,214 @@
                 </ul>
             </div>
             <div class="typeroof-main">
-                <div class="typeroof-docs_content"><p>link to
-<a href="https://fontbureau.github.io/TypeRoof/live/README/">https://fontbureau.github.io/TypeRoof/live/README/</a></p>
-<p>The principal idea is that TypeRoof does not need to know the particular
-implementation details on how to collect the information about changed
-fonts. It only provides an interface by listening to events created by <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage">window.postMessage</a>
-when it was opened as a PopUp by another web page. These other web pages
-do the specific work of identifying font changes and sending them to TypeRoof,
-in here they are called <strong>adapter</strong>. An adapter could be a font editor
-itself or connect to one by other means.</p>
-<p>In these examples are two <strong>adapters</strong> with different mechanisms to identify
-font changes and to pass them along to TypeRoof Documentation</p>
+                <div class="typeroof-docs_content"><h1><a id="live-font-updates" class="heading_anchor" href="#live-font-updates" aria-hidden="true">#</a>Live Font Updates</h1>
+<p>This is documenting the API how to show live font updates directly
+in TypeRoof. For a demo have a look at <a href="/TypeRoof/live/README/">live/README</a>,
+the code for the demo is located at the <a href="https://github.com/FontBureau/TypeRoof/tree/main/live">TypeRoof GitHub</a>.</p>
+<h2><a id="concept" class="heading_anchor" href="#concept" aria-hidden="true">#</a>Concept</h2>
+<p>The principal idea is that TypeRoof should not need to know the implementation
+details on how to collect information about updated fonts. It rather provides
+a public interface by listening to events created by <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage">window.postMessage</a>
+<strong>when it was opened as a pop-up/iframe by another web page</strong>. This way
+issues with the <a href="https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy">same-origin policy</a>
+or possibly authentication are avoided and TypeRoof must not be changed
+to work with new providers of live font updates who wish to offer
+TypeRoof to their users. For providers of font updates, this means TypeRoof
+does not need to be packaged by them and will not create a maintenance burden.</p>
+<h3><a id="viable-usage-scenarios" class="heading_anchor" href="#viable-usage-scenarios" aria-hidden="true">#</a>Viable Usage Scenarios</h3>
 <ul>
-<li><code>adapter-websocket-to-typeroof.html</code> uses repeated HTTP-GET calls to a
-simple local webserver and detects font changes by looking at the
-<code>Last-Modified</code> header.</li>
-<li><code>adapter-polling-to-typeroof.html</code> connects to a local Websocket server
-that monitors the file system and pushes change events only when necessary.</li>
+<li>A browser based font editor (e.g. Fontra?) can open TypeRoof in a new
+window and push updated fonts directly to TypeRoof. In that case no extra
+<code>Adapter</code> is required at all.</li>
+<li>A native font editor (e.g. Glyphs, FontLab) can start a local web server
+or WebSocket server and open an <code>Adapter</code> in the browser of the user.
+The Adapter knows how to receive font updates from the editor and passes
+messages along to TypeRoof, which it opened in a new window or directly
+in an iframe.</li>
+<li>Any web site, e.g. of a foundry or retailer, that has access to the binary
+data of a font file can open it for proofing, inspection, type setting,
+etc. in TypeRoof.</li>
+<li>Without direct support of an editor, a user could have a program
+watch the file system for changes and update the font in TypeRoof when
+it is saved to disk.</li>
 </ul>
-<p>This is rather intended as a demo but</p>
-<p>In the former case, point the web-socket server in Part 1 to the
-directory you are saving your font under and skip Part 3.</p>
-<p>This demos two implementation options to get changed font files updated
-in TypeRoof, both have advantages and disadvantages:</p>
+<h2><a id="the-live-fonts-protocol--version-1" class="heading_anchor" href="#the-live-fonts-protocol--version-1" aria-hidden="true">#</a>The Live Fonts Protocol — Version 1</h2>
+<p>The role of TypeRoof will be called <code>Receiver</code> in the following.</p>
+<p>The purpose of this protocol is to send live font updates to a web application,
+referred to as the <code>Receiver</code>, running in a web browser. The sources of these
+font updates, hereafter called <code>Source</code>, and the mechanisms for loading font
+data into the browser can be manifold. Therefore, there is no straightforward
+path to enable this directly in the <code>Receiver</code>. The component that connects the
+<code>Source</code> to the <code>Receiver</code> is called the <code>Adapter</code>. This is a web page running in
+the browser with a specific implementation to receive data from the Source.</p>
+<h3><a id="connect-adapter-and-receiver" class="heading_anchor" href="#connect-adapter-and-receiver" aria-hidden="true">#</a>Connect <code>Adapter</code> and <code>Receiver</code></h3>
+<p>The principal mechanism to connect the <code>Adapter</code> to the <code>Receiver</code> is the
+web standard <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage%5D"><code>window.postMessage</code></a>.</p>
+<p>In order to establish a connection between <code>Adapter</code> and <code>Receiver</code> the
+<code>Adapter</code> has to create the <code>window</code> of the <code>Receiver</code> in the example
+implementations (see <a href="/TypeRoof/live/README/">live/README</a>) we explore two approaches
+for this <strong>pop-up/new tab</strong> and <strong>iframe</strong>.</p>
+<h4><a id="pop-upnew-tab" class="heading_anchor" href="#pop-upnew-tab" aria-hidden="true">#</a>pop-up/new tab</h4>
+<ul>
+<li>Uses the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/open%5D"><code>window.open</code></a> method to load the <code>Receiver</code>.</li>
+<li>In the <code>Receiver</code> the <code>Adapter</code> is accessed using the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/opener"><code>window.opener</code></a> property.</li>
+<li>The <code>Adapter</code> stays open as an extra tab, it could implement a user interface e.g. to spawn and manage different <code>Receivers</code> for the same <code>Source</code>.</li>
+</ul>
+<h4><a id="iframe" class="heading_anchor" href="#iframe" aria-hidden="true">#</a>iframe</h4>
+<ul>
+<li>Creates an <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe%5D"><code>iframe</code></a> to load the <code>Receiver</code>.</li>
+<li>In the <code>Receiver</code> the <code>Adapter</code> is accessed using the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/parent"><code>window.parent</code></a> property.</li>
+<li>The <code>Adapter</code> can visually disappear and create a seamless user experience.</li>
+</ul>
+<h3><a id="messages" class="heading_anchor" href="#messages" aria-hidden="true">#</a>Messages</h3>
+<p>There are only two types of messages exchanged between <code>Adapter</code> and <code>Receiver</code>.</p>
+<h4><a id="message-type-init-live-fonts" class="heading_anchor" href="#message-type-init-live-fonts" aria-hidden="true">#</a>Message Type: <code>init-live-fonts</code></h4>
+<ul>
+<li>This message is sent from the <code>Receiver</code> to the <code>Adapter</code>.</li>
+<li>It’s purpose is to establish the protocol and signal readiness to receive
+<code>font-update</code> messages.</li>
+<li>The <code>Adapter</code> will answer with <a href="@message-type-font-update"><code>font-update</code></a>
+messages for each current font it is already aware of and then keep
+sending messages for new and updated fonts.</li>
+</ul>
+<h5><a id="the-message-format" class="heading_anchor" href="#the-message-format" aria-hidden="true">#</a>The Message Format</h5>
+<p>The  value of the <code>message</code> argument is simply the string <code>&quot;init-live-fonts&quot;</code>.</p>
+<h5><a id="in-the-sending-receiver" class="heading_anchor" href="#in-the-sending-receiver" aria-hidden="true">#</a>In the sending <code>Receiver</code></h5>
+<p>To obtain <code>adapterWindow</code> see <a href="#connect-adapter-and-receiver">Connect <code>Adapter</code> and <code>Receiver</code></a>.</p>
+<p>The value of the <code>targetOrigin</code> is <code>&quot;*&quot;</code> which means the <code>Receiver</code> accepts
+any origin as an <code>Adapter</code>. The value of the message does not contain any
+payload data beyond the message type string, thus it is not possible to leak
+data with this message.</p>
+<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> adapterWindow <span class="token operator">=</span> window<span class="token punctuation">.</span>opener <span class="token operator">||</span> window<span class="token punctuation">.</span>parent<span class="token punctuation">;</span>
+adapterWindow<span class="token punctuation">.</span><span class="token function">postMessage</span><span class="token punctuation">(</span><span class="token string">'init-live-fonts'</span><span class="token punctuation">,</span> <span class="token string">'*'</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<h5><a id="in-the-listening-adapter" class="heading_anchor" href="#in-the-listening-adapter" aria-hidden="true">#</a>In the listening <code>Adapter</code></h5>
+<p>There are two checks to verify the received message and to accept the subscription.</p>
+<p>The expected  <code>event.origin</code> is known by the <code>Adapter</code> as it opened the <code>Receiver</code>
+page itself, any other origin is rejected.</p>
+<p>The <code>event,data</code> must be the string <code>&quot;init-live-fonts&quot;</code> , any other value
+is rejected.</p>
+<p>If those checks are passed the <code>Receiver</code> is subscribed. The Adapter should
+immediately send <a href="@message-type-font-update"><code>font-update</code></a> messages for
+all known fonts and subsequently, at any time, the same message type for
+each new and updated font.</p>
+<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> expectedOriginURL <span class="token operator">=</span> <span class="token string">'https://fontbureau.github.io'</span>
+  <span class="token punctuation">,</span> sendUpdatesTo <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Set</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment">// keys are the value of `metadata.fullName` in the message.</span>
+  <span class="token punctuation">,</span> lastMessages <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">;</span>
+window<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'message'</span><span class="token punctuation">,</span> <span class="token parameter">event</span><span class="token operator">=></span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span>origin <span class="token operator">!==</span> expectedOrigin<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span>data <span class="token operator">!==</span> <span class="token string">'init-live-fonts'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// subscribe</span>
+    sendUpdatesTo<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span>source<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// immediately send the current font states</span>
+    <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">const</span> lastMessage <span class="token keyword">of</span> lastMessages<span class="token punctuation">.</span><span class="token function">values</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        event<span class="token punctuation">.</span>source<span class="token punctuation">.</span><span class="token function">postMessage</span><span class="token punctuation">(</span>lastMessage<span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token literal-property property">targetOrigin</span><span class="token operator">:</span> expectedOriginURL<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<h4><a id="message-type-font-update" class="heading_anchor" href="#message-type-font-update" aria-hidden="true">#</a>Message Type: <code>font-update</code></h4>
+<ul>
+<li>This message is sent from the <code>Adapter</code> to the <code>Receiver</code>.</li>
+<li>It’s only sent after the <code>Receiver</code> subscribed to the <code>Adapter</code> with
+the <a href="@message-type-init-live-fonts"><code>init-live-fonts</code></a> message.</li>
+</ul>
+<h5><a id="the-message-format-1" class="heading_anchor" href="#the-message-format-1" aria-hidden="true">#</a>The Message Format</h5>
+<p>The message is an object with three keys <code>{type, metaData, fontBuffer}</code>;</p>
+<ul>
+<li><strong><code>type</code></strong> the string <code>&quot;font-update&quot;</code></li>
+<li><strong><code>metData</code></strong> is an object with three keys <code>{name, version, fullName}</code>
+<ul>
+<li>
+<p><strong><code>metData.name</code></strong> a string width the name of the font to be displayed
+to the user. It should have a reasonable length for user interfaces,
+but so far there are no explicit restrictions.</p>
+</li>
+<li>
+<p><strong><code>metData.version</code></strong> a string width the version of the font to be
+displayed to the user. It should have a reasonable length for user interfaces,
+but so far there are no explicit restrictions.</p>
+</li>
+<li>
+<p><strong><code>metaData.fullName</code></strong> a string acting as a key, It must be unique
+for the font and all of its subsequent updates. It also must be acceptable
+as a <a href="https://www.w3.org/TR/css-fonts-4/#family-name-value">CSS <code>&lt;family-name&gt;</code> value</a>.
+This means at least that words must start with <code>[A-Z][a-z]</code>, can contain
+<code>[A-Z][a-z][0-9]-_</code> and are separated by spaces <code> </code>. There may be
+more rules to it (Link anyone?).</p>
+</li>
+</ul>
+</li>
+<li><strong><code>fontBuffer</code></strong> an instance of <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer"><code>ArrayBuffer</code></a>
+with the binary data of the font file.</li>
+</ul>
+<h5><a id="in-the-sending-adapter" class="heading_anchor" href="#in-the-sending-adapter" aria-hidden="true">#</a>In the sending <code>Adapter</code></h5>
+<p>The adapter must make sure it only sends messages to origins it trusts,
+as this message can contain sensitive user owned data.</p>
+<p>The means on how the <code>Adapter</code> collects the data for the message are not
+part of this protocol.</p>
+<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> expectedOriginURL <span class="token operator">=</span> <span class="token string">'https://fontbureau.github.io'</span><span class="token punctuation">;</span>
+  <span class="token punctuation">,</span> message <span class="token operator">=</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'font-update'</span>
+      <span class="token punctuation">,</span> <span class="token literal-property property">metData</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Creepster Flex'</span>
+          <span class="token punctuation">,</span> <span class="token literal-property property">version</span><span class="token operator">:</span> <span class="token string">'Live'</span>
+          <span class="token punctuation">,</span> <span class="token literal-property property">fullName</span><span class="token operator">:</span> <span class="token string">'Creepster FLex Live'</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">,</span> <span class="token literal-property property">fontBuffer</span><span class="token operator">:</span> creepsterFlexBinaryData
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">;</span>
+receiverWindow<span class="token punctuation">.</span><span class="token function">postMessage</span><span class="token punctuation">(</span>message<span class="token punctuation">,</span> expectedOriginURL<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<h5><a id="in-the-listening-receiver" class="heading_anchor" href="#in-the-listening-receiver" aria-hidden="true">#</a>In the listening <code>Receiver</code></h5>
+<p>If the receiver did not open another window itself it can expect the
+message is coming from it’s own <code>window.parent</code> or <code>window.opener</code> other
+it should check <code>event.source</code>.</p>
+<p>The expected  <code>event.origin</code> is known by the <code>Adapter</code> as it opened the <code>Receiver</code>
+page itself, any other origin is rejected.</p>
+<p>The values for <code>message.fontBuffer</code> and <code>message.metaData</code> must be checked
+and applied by subsequent processing in the <code>Receiver</code>.</p>
+<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> adapterWindow <span class="token operator">=</span> window<span class="token punctuation">.</span>opener <span class="token operator">||</span> window<span class="token punctuation">.</span>parent<span class="token punctuation">;</span>
+window<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'message'</span><span class="token punctuation">,</span> <span class="token parameter">event</span><span class="token operator">=></span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span>source <span class="token operator">!==</span> adapterWindow<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">const</span> <span class="token punctuation">{</span>type<span class="token punctuation">,</span> fontBuffer<span class="token punctuation">,</span> metaData<span class="token punctuation">}</span> <span class="token operator">=</span> event<span class="token punctuation">.</span>data<span class="token punctuation">;</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>type <span class="token operator">!==</span> <span class="token string">'font-update'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">loadFontFromMessage</span><span class="token punctuation">(</span>fontBuffer<span class="token punctuation">,</span> metaData<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<h2><a id="about-adapters" class="heading_anchor" href="#about-adapters" aria-hidden="true">#</a>About Adapters</h2>
+<p>See the examples in <a href="/TypeRoof/live/README/">live/README</a> for <code>Source</code>
+and <code>Adapter</code> implementations and possible interaction patterns.</p>
+<h2><a id="security-considerations" class="heading_anchor" href="#security-considerations" aria-hidden="true">#</a>Security Considerations</h2>
+<p>This section raises awareness for some topics of data security. The Live
+Fonts Protocol is not affected by these issues, however, the way how an
+adapter accesses the font data can be affected if it is crafted unprepared.</p>
+<h3><a id="cross-site-websocket-hijacking" class="heading_anchor" href="#cross-site-websocket-hijacking" aria-hidden="true">#</a>Cross-Site WebSocket Hijacking</h3>
+<p>There’s no Same-Origin-Policy in the browsers for WebSockets, instead,
+the server is responsible for checking if the requesting origin is acceptable.
+Without checking the origin, a <strong>local</strong> (running on the machine that also
+runs the browser) WebSocket server would send out the fonts data to any
+website asking for it, that in turn could pass the data along and thus
+leak it. A scenario for that concern is: the user has a local WebSocket
+server running; they visit a malicious website that covertly connects to
+the WebSocket in order to obtain copies of e.g. a private/commercial/in
+progress font project. The data would have been leaked.</p>
+<p>Our <a href="live/README/#websocket-part-1-server">WebSocket server example</a> <strong>is
+safe</strong> against this kind of attack: accepted local origins with any port
+combination are <code>http://localhost</code>, <code>http://127.0.0.1</code> and <code>http://0.0.0.0</code>;
+we also accept the origin of the project website <code>https://fontbureau.github.io/</code>
+as we know it’s not leaking data as it Is <strong>controlled by us and open
+source software</strong>.</p>
+<h3><a id="authentication" class="heading_anchor" href="#authentication" aria-hidden="true">#</a>Authentication</h3>
+<p>If a WebSocket server or web server that hosts private files and is connected
+to the open internet or another open/insecure network, it should
+authenticate and authorize the requesting clients and also use secure
+connections. The details of this go far beyond the scope of this document.</p>
 </div>
             </div>
             <footer>

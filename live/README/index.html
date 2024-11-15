@@ -18,7 +18,8 @@
                 <h3>Content</h3>
                 <nav>
                     <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
-<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li class="active"><a href="/TypeRoof/live/README/">live/README</a></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li class="active"><a href="/TypeRoof/live/README/">live/README</a></li></ul></li></ul></li>
 <li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
 <li><a href="/TypeRoof/README/">Project README</a></li></ul>
                 </nav>
@@ -60,13 +61,16 @@ in order to keep the system/user python installation unaffected.</p>
 <h2><a id="adapters-usage" class="heading_anchor" href="#adapters-usage" aria-hidden="true">#</a>Adapters Usage</h2>
 <p>In order to connect any source of font changes and TypeRoof we load a
 web-page, called an <strong>Adapter,</strong> that in turn opens TypeRoof as a
-pop-up. That relation enables the usage of the <code>window.postMessage</code> API
-to send messages with font updates from the Adapter to TypeRoof.</p>
-<p>At the first time you open an adapter pop-ups will be blocked in your browser.
-You’ll have to <strong>allow pop-ups and then reload the page of the adapter</strong> again
-to successfully establish the connection.</p>
+pop-up or in an iframe. That relation enables the usage of the <code>window.postMessage</code>
+API to send messages with font updates from the Adapter to TypeRoof.</p>
+<p>For the <strong>pop-up/new tab versions</strong> At the first time you open an adapter pop-ups
+will be blocked in your browser. You’ll have to <strong>allow pop-ups and then
+reload the page of the adapter</strong> again to successfully establish the connection.</p>
 <p>In the window of the adapter page you’ll also be able to observe the
 currently provided fonts and how they change.</p>
+<p>For the <strong>iframe versions</strong> these open an <code>&lt;iframe&gt;</code> and make it cover the
+full document, theres’s no new window, the separation between the adapter
+and the app is hidden.</p>
 <h2><a id="run-with-websocket" class="heading_anchor" href="#run-with-websocket" aria-hidden="true">#</a>Run with WebSocket</h2>
 <p>There are two or three individual steps involved:</p>
 <ul>
@@ -86,11 +90,17 @@ rotation which will create the <code>fonts</code> directory.</p>
 <span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash"><span class="token punctuation">(</span>venv<span class="token punctuation">)</span>~/path/to/TypeRoof/live<span class="token operator">></span> ./websocket-font-update-server.py fonts/</span></span></code></pre>
 <h3><a id="websocket-part-2-adapter" class="heading_anchor" href="#websocket-part-2-adapter" aria-hidden="true">#</a>WebSocket Part 2: Adapter</h3>
 <p>See <a href="#adapters-usage">Adapters Usage</a>.</p>
-<h4><a id="a-using-file" class="heading_anchor" href="#a-using-file" aria-hidden="true">#</a>A: Using <code>file:///</code></h4>
-<p>It’s actually possible to open <code>adapter-websocket-to-typeroof.html</code> without
-a local web-server directly from disk with a <code>file://</code>.</p>
-<p>Open <code>file:///home/username/path/to/TypeRoof/live/adapter-websocket-to-typeroof.html</code>
-(you need to change the path or open the file from your file manager) in you browser.</p>
+<h4><a id="a-use-the-online-adapter" class="heading_anchor" href="#a-use-the-online-adapter" aria-hidden="true">#</a>A: Use the online Adapter</h4>
+<p>The adapter is also online at our web site and since WebSockets don’t
+require special cross-site allowance in the browser (the server is required
+to check), the online adapter is able to connect to the server started
+in <a href="#websocket-part-1-server">WebSocket Part 1: Server</a>.</p>
+<ul>
+<li>Open <a href="https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof-iframe/">https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof-iframe/</a>
+in your browser (iframe version).</li>
+<li>or open <a href="https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/">https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/</a>
+in your browser (pop-up/new tab version).</li>
+</ul>
 <h4><a id="b-using-a-local-web-server" class="heading_anchor" href="#b-using-a-local-web-server" aria-hidden="true">#</a>B: Using a Local Web-Server</h4>
 <p>Alternatively, you can start a simple web-server to deliver the file:</p>
 <pre class="language-sh-session"><code class="language-sh-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">You don</span></span><span class="token output">'t need the virtual environment for this
@@ -98,14 +108,12 @@ a local web-server directly from disk with a <code>file://</code>.</p>
 </span><span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/path/to/TypeRoof/live<span class="token operator">></span> python3 <span class="token parameter variable">-m</span> http.server <span class="token number">8000</span></span></span>
 <span class="token output">Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
 </span></code></pre>
-<p>Open <a href="http://0.0.0.0:8000/adapter-websocket-to-typeroof.html">http://0.0.0.0:8000/adapter-websocket-to-typeroof.html</a>
-in your browser.</p>
-<h4><a id="c-use-the-online-adapter" class="heading_anchor" href="#c-use-the-online-adapter" aria-hidden="true">#</a>C: Use the online Adapter</h4>
-<p>The adapter is also online at our web site and since WebSockets don’t
-require special cross-site allowance, the online adapter should be able
-to connect to the server started in <a href="#websocket-part-1-server">WebSocket Part 1: Server</a>.</p>
-<p>Open <a href="https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/">https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/</a>
-in your browser.</p>
+<ul>
+<li>Open <a href="http://0.0.0.0:8000/adapter-websocket-to-typeroof-iframe.html">http://0.0.0.0:8000/adapter-websocket-to-typeroof-iframe.html</a>
+in your browser (iframe version).</li>
+<li>or open <a href="http://0.0.0.0:8000/adapter-websocket-to-typeroof.html">http://0.0.0.0:8000/adapter-websocket-to-typeroof.html</a>
+in your browser (pop-up/new tab version).</li>
+</ul>
 <h2><a id="run-with-polling" class="heading_anchor" href="#run-with-polling" aria-hidden="true">#</a>Run with Polling</h2>
 <p>There are two or three individual steps involved:</p>
 <ul>

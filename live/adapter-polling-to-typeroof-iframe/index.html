@@ -33,62 +33,58 @@
                 <div class="typeroof-docs_content"><!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Adapter Polling HTTP-Get to TypeRoof</title>
+    <title>Adapter WebSocket to TypeRoof</title>
+    <style type="text/css">
+* {
+    margin:0;
+    padding:0;
+    border:0;
+    overscroll-behavior: none;
+}
+iframe {
+    width: 100vw;
+    height: 100vh;
+}
+    </style>
     <script>
 
-
-function initTypeRoof(state) {
+function initIframeTypeRoof(state) {
     const {sendUpdatesTo, lastMessages, typeRoofOriginURL} = state
-        // open TypeRoof
-      ,  myHandle = window.open(`${typeRoofOriginURL}/TypeRoof/shell`, 'TypeRoof')
+      , iframe = document.createElement('iframe')
       ;
+    iframe.src = `${typeRoofOriginURL}/TypeRoof/shell`;
+    document.body.append(iframe);
+    const myHandle = iframe.contentWindow;
+
 
     // Listen to TypeRoof requesting font-update messages.
     window.addEventListener('message', event=> {
         console.log(`got message ${event}`, event);
-        if(event.source !== myHandle){
-            console.log('I don\'t know event.source:', event.source, 'it is not', myHandle);
+        if(event.origin !== typeRoofOriginURL){
+            console.warn('I don\'t know event.origin:', event.origin, 'it is not', typeRoofOriginURL);
             return;
         }
-        if(event.data !== 'init-live-fonts'){
-            console.log('I don\'t know what to do. event.data:', event.data);
+        if(event.data !== 'init-live-fonts') {
+            console.warn('I don\'t know what to do. event.data:', event.data);
             return;
         }
 
-        console.log('sending updates ... to:', myHandle);
-        sendUpdatesTo.add(myHandle);
+        console.log('sending updates ... to:', event.source);
+        sendUpdatesTo.add(event.source);
         for(const lastMessage of lastMessages.values())
-            myHandle.postMessage(lastMessage, {targetOrigin: typeRoofOriginURL});
+            event.source.postMessage(lastMessage, {targetOrigin: typeRoofOriginURL});
     });
 }
 
-async function receiveFontChange(state, metaData, fontBuffer) {
-    const {documentFonts, sendUpdatesTo, lastMessages, typeRoofOriginURL} = state
-      , font = new FontFace(`"${metaData.fullName}"`, fontBuffer)
-      ;
-    await font.load();
-    if(documentFonts.has(metaData.fullName)) {
-        const oldFont = documentFonts.get(metaData.fullName);
-        document.fonts.delete(oldFont);
-    }
-    else {
-        const container = document.createElement('div');
-        container.textContent = `${metaData.fullName} ABCabc1234`;
-        container.style.fontFamily = `"${metaData.fullName}"`;
-        container.style.fontSize = '3rem';
-        targetElement = document.querySelector('.typeroof-docs_content')
-                        || document.body;
-        targetElement.append(container);
-    }
 
+async function receiveFontChange(state, metaData, fontBuffer) {
+    const {sendUpdatesTo, lastMessages, typeRoofOriginURL} = state;
     const message = {type: 'font-update', metaData, fontBuffer};
     lastMessages.set(metaData.fullName, message);
-
-    documentFonts.set(metaData.fullName, font);
-    document.fonts.add(font);
     for(const win of sendUpdatesTo)
         win.postMessage(message,  {targetOrigin: typeRoofOriginURL});
 }
+
 
 async function pollAll(state) {
     const {baseURL, fonts, modified} = state
@@ -124,8 +120,7 @@ async function pollAll(state) {
 }
 
 function main() {
-    const documentFonts = new Map()
-      , sendUpdatesTo = new Set()
+    const sendUpdatesTo = new Set()
       , lastMessages = new Map()
       , typeRoofOriginURL = 'https://fontbureau.github.io'
         // e.g. open /TypeRoof/shell from localhost:
@@ -133,7 +128,7 @@ function main() {
       , baseURL = 'http://0.0.0.0:8000/fonts/'
       , fonts = ['live-font.ttf']
       , modified = new Map()
-      , state = {documentFonts, sendUpdatesTo, lastMessages, typeRoofOriginURL, baseURL, fonts, modified}
+      , state = {sendUpdatesTo, lastMessages, typeRoofOriginURL, baseURL, fonts, modified}
       , pollTime = 1000
       ;
 
@@ -144,11 +139,11 @@ function main() {
     }
     pollForever(pollTime, state);
 
-    initTypeRoof(state);
+    initIframeTypeRoof(state);
 
     // In TypeRoof client:
     // window.addEventListener('message', (...a)=> console.log('ON MESAGE:',...a));
-    // window.opener.postMessage('init-live-fonts', '*');
+    // window.parent.postMessage('init-live-fonts', '*');
 };
 
 window.addEventListener('DOMContentLoaded', main);
