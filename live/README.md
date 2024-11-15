@@ -49,15 +49,19 @@ $ (venv)~/path/to/TypeRoof/live> pip install -r requirements.txt
 
 In order to connect any source of font changes and TypeRoof we load a
 web-page, called an **Adapter,** that in turn opens TypeRoof as a
-pop-up. That relation enables the usage of the `window.postMessage` API
-to send messages with font updates from the Adapter to TypeRoof.
+pop-up or in an iframe. That relation enables the usage of the `window.postMessage`
+API to send messages with font updates from the Adapter to TypeRoof.
 
-At the first time you open an adapter pop-ups will be blocked in your browser.
-You'll have to **allow pop-ups and then reload the page of the adapter** again
-to successfully establish the connection.
+For the **pop-up/new tab versions** At the first time you open an adapter pop-ups
+will be blocked in your browser. You'll have to **allow pop-ups and then
+reload the page of the adapter** again to successfully establish the connection.
 
 In the window of the adapter page you'll also be able to observe the
 currently provided fonts and how they change.
+
+For the **iframe versions** these open an `<iframe>` and make it cover the
+full document, theres's no new window, the separation between the adapter
+and the app is hidden.
 
 ## Run with WebSocket
 
@@ -87,13 +91,17 @@ $ (venv)~/path/to/TypeRoof/live> ./websocket-font-update-server.py fonts/
 
 See [Adapters Usage](#adapters-usage).
 
-#### A: Using `file:///`
+#### A: Use the online Adapter
 
-It's actually possible to open `adapter-websocket-to-typeroof.html` without
-a local web-server directly from disk with a `file://`.
+The adapter is also online at our web site and since WebSockets don't
+require special cross-site allowance in the browser (the server is required
+to check), the online adapter is able to connect to the server started
+in [WebSocket Part 1: Server](#websocket-part-1-server).
 
-Open `file:///home/username/path/to/TypeRoof/live/adapter-websocket-to-typeroof.html`
-(you need to change the path or open the file from your file manager) in you browser.
+ * Open [https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof-iframe/](https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof-iframe/)
+in your browser (iframe version).
+ * or open [https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/](https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/)
+in your browser (pop-up/new tab version).
 
 #### B: Using a Local Web-Server
 
@@ -106,17 +114,10 @@ $ ~/path/to/TypeRoof/live> python3 -m http.server 8000
 Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
 ```
 
-Open [http://0.0.0.0:8000/adapter-websocket-to-typeroof.html](http://0.0.0.0:8000/adapter-websocket-to-typeroof.html)
-in your browser.
-
-#### C: Use the online Adapter
-
-The adapter is also online at our web site and since WebSockets don't
-require special cross-site allowance, the online adapter should be able
-to connect to the server started in [WebSocket Part 1: Server](#websocket-part-1-server).
-
-Open [https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/](https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/)
-in your browser.
+ * Open [http://0.0.0.0:8000/adapter-websocket-to-typeroof-iframe.html](http://0.0.0.0:8000/adapter-websocket-to-typeroof-iframe.html)
+in your browser (iframe version).
+ * or open [http://0.0.0.0:8000/adapter-websocket-to-typeroof.html](http://0.0.0.0:8000/adapter-websocket-to-typeroof.html)
+in your browser (pop-up/new tab version).
 
 ## Run with Polling
 
