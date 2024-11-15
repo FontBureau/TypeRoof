@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Adapter WebSocket to TypeRoof</title>
+    <style type="text/css">
+* {
+    margin:0;
+    padding:0;
+    border:0;
+    overscroll-behavior: none;
+}
+iframe {
+    width: 100vw;
+    height: 100vh;
+}
+    </style>
+    <script>
+
+function initIframeTypeRoof(state) {
+    const {sendUpdatesTo, lastMessages, typeRoofOriginURL} = state
+      , iframe = document.createElement('iframe')
+      ;
+    iframe.src = `${typeRoofOriginURL}/TypeRoof/shell`;
+    document.body.append(iframe);
+    const myHandle = iframe.contentWindow;
+
+
+    // Listen to TypeRoof requesting font-update messages.
+    window.addEventListener('message', event=> {
+        console.log(`got message ${event}`, event);
+        if(event.origin !== typeRoofOriginURL){
+            console.warn('I don\'t know event.origin:', event.origin, 'it is not', typeRoofOriginURL);
+            return;
+        }
+        if(event.data !== 'init-live-fonts') {
+            console.warn('I don\'t know what to do. event.data:', event.data);
+            return;
+        }
+
+        console.log('sending updates ... to:', event.source);
+        sendUpdatesTo.add(event.source);
+        for(const lastMessage of lastMessages.values())
+            event.source.postMessage(lastMessage, {targetOrigin: typeRoofOriginURL});
+    });
+}
+
+async function receiveFontChange(state, metaData, fontBuffer) {
+    const {sendUpdatesTo, lastMessages, typeRoofOriginURL} = state;
+    const message = {type: 'font-update', metaData, fontBuffer};
+    lastMessages.set(metaData.fullName, message);
+    for(const win of sendUpdatesTo)
+        win.postMessage(message,  {targetOrigin: typeRoofOriginURL});
+}
+
+function main() {
+    const sendUpdatesTo = new Set()
+      , lastMessages = new Map()
+        //, typeRoofOriginURL = 'https://fontbureau.github.io'
+        // e.g. open /TypeRoof/shell from localhost:
+      , typeRoofOriginURL = 'https://fontbureau.github.io'
+      , state = {sendUpdatesTo, lastMessages, typeRoofOriginURL}
+      , socket = new WebSocket('ws://localhost:8765/')
+      ;
+    socket.binaryType = "arraybuffer";
+    socket.addEventListener("open", (event) => {
+        socket.send(JSON.stringify({ type: 'init' }));
+    })
+
+    socket.addEventListener('message',  async (event) => {
+        if (event.data instanceof ArrayBuffer) {
+            // binary frame
+            const view = new DataView(event.data)
+              , metadataLength = view.getUint16(0)
+              , metaDataBytes = event.data.slice(2, 2 + metadataLength)
+              , decoder = new TextDecoder()
+              , metaDataStr = decoder.decode(metaDataBytes)
+              , metaData = JSON.parse(metaDataStr)
+              , fontBuffer = event.data.slice(2 + metadataLength)
+              ;
+            await receiveFontChange(state, metaData, fontBuffer);
+        }
+    })
+
+    initIframeTypeRoof(state);
+
+    // In TypeRoof client:
+    // window.addEventListener('message', (...a)=> console.log('ON MESAGE:',...a));
+    // window.parent.postMessage('init-live-fonts', '*');
+};
+
+window.addEventListener('DOMContentLoaded', main);
+    </script>
+  </head>
+  <body>
+  </body>
+</html>

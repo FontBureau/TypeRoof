@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Adapter WebSocket to TypeRoof</title>
+    <style type="text/css">
+* {
+    margin:0;
+    padding:0;
+    border:0;
+    overscroll-behavior: none;
+}
+iframe {
+    width: 100vw;
+    height: 100vh;
+}
+    </style>
+    <script>
+
+function initIframeTypeRoof(state) {
+    const {sendUpdatesTo, lastMessages, typeRoofOriginURL} = state
+      , iframe = document.createElement('iframe')
+      ;
+    iframe.src = `${typeRoofOriginURL}/TypeRoof/shell`;
+    document.body.append(iframe);
+    const myHandle = iframe.contentWindow;
+
+
+    // Listen to TypeRoof requesting font-update messages.
+    window.addEventListener('message', event=> {
+        console.log(`got message ${event}`, event);
+        if(event.origin !== typeRoofOriginURL){
+            console.warn('I don\'t know event.origin:', event.origin, 'it is not', typeRoofOriginURL);
+            return;
+        }
+        if(event.data !== 'init-live-fonts') {
+            console.warn('I don\'t know what to do. event.data:', event.data);
+            return;
+        }
+
+        console.log('sending updates ... to:', event.source);
+        sendUpdatesTo.add(event.source);
+        for(const lastMessage of lastMessages.values())
+            event.source.postMessage(lastMessage, {targetOrigin: typeRoofOriginURL});
+    });
+}
+
+
+async function receiveFontChange(state, metaData, fontBuffer) {
+    const {sendUpdatesTo, lastMessages, typeRoofOriginURL} = state;
+    const message = {type: 'font-update', metaData, fontBuffer};
+    lastMessages.set(metaData.fullName, message);
+    for(const win of sendUpdatesTo)
+        win.postMessage(message,  {targetOrigin: typeRoofOriginURL});
+}
+
+
+async function pollAll(state) {
+    const {baseURL, fonts, modified} = state
+      ,  responses = await Promise.all(fonts.map(fileName=>{
+            const url =  new URL(fileName, baseURL);
+            console.log(`fetching fileName ${fileName} at URL ${url} with baseURL ${baseURL}`, url);
+            return fetch(url);
+        }))
+      ;
+    for(let i=0;i<fonts.length;i++) {
+        const fileName = fonts[i]
+          , response = responses[i]
+          ;
+        if(!response.ok)
+            continue;
+        const lastModified = response.headers.get('Last-Modified');// Wed, 21 Oct 2015 07:28:00 GMT
+        console.log(`Got ${fileName} lastModified: ${lastModified}`);
+
+        if(!modified.has(fileName) || modified.get(fileName) !== lastModified) {
+            modified.set(fileName, lastModified);
+            const fullNameName = fileName.replace('.', '_').replace('/',' _')
+              , version = 'Version 0-live'
+                // For font-family words separated by space seem OK but words have
+                // to start with A-Za-z. I don't know if there's a definit rule to this!
+              , fullNameVersion = version.replace(' ', '_')
+              , fullName =  `from-file ${fullNameName} ${fullNameVersion}`
+              , metaData = {name:fileName, version, fullName}
+              , fontBuffer = await response.arrayBuffer()
+              ;
+            receiveFontChange(state, metaData, fontBuffer);
+        }
+    }
+}
+
+function main() {
+    const sendUpdatesTo = new Set()
+      , lastMessages = new Map()
+      , typeRoofOriginURL = 'https://fontbureau.github.io'
+        // e.g. open /TypeRoof/shell from localhost:
+        //, typeRoofOriginURL = 'http://localhost:8081'
+      , baseURL = 'http://0.0.0.0:8000/fonts/'
+      , fonts = ['live-font.ttf']
+      , modified = new Map()
+      , state = {sendUpdatesTo, lastMessages, typeRoofOriginURL, baseURL, fonts, modified}
+      , pollTime = 1000
+      ;
+
+    let timeout = null; // could be used to cancel polling
+    const pollForever = async (pollTime, ...args)=>{
+        await pollAll(...args);
+        timeout = setTimeout(()=>pollForever(pollTime, ...args), pollTime);
+    }
+    pollForever(pollTime, state);
+
+    initIframeTypeRoof(state);
+
+    // In TypeRoof client:
+    // window.addEventListener('message', (...a)=> console.log('ON MESAGE:',...a));
+    // window.parent.postMessage('init-live-fonts', '*');
+};
+
+window.addEventListener('DOMContentLoaded', main);
+    </script>
+  </head>
+  <body>
+  </body>
+</html>
