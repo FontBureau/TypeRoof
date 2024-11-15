@@ -21,6 +21,7 @@ from watchdog.events import FileCreatedEvent, FileSystemEvent, FileSystemEventHa
 from watchdog.observers import Observer
 
 from websockets.asyncio.server import serve, broadcast
+import http
 
 class FileObserverEventHandler(FileSystemEventHandler):
     def __init__(self, queue: asyncio.Queue, loop: asyncio.BaseEventLoop,
@@ -53,7 +54,7 @@ class FileObserverEventIterator(object):
 async def observeFiles(path: Path, queue: asyncio.Queue, loop: asyncio.BaseEventLoop,
           ) -> None:
     # report a message
-    print('>entering the observer context manager')
+    # print('>entering the observer context manager')
     handler = FileObserverEventHandler(queue, loop)
     observer = Observer()
     # CAUTION: if recursive changes the collection of initial files
@@ -155,7 +156,7 @@ async def consumeFileEvents(state: State, queue: asyncio.Queue) -> None:
                                    else event.src_path
 
         if path is not None:
-            print('sending>', path)
+            # print('sending>', path)
             message = await packageFile(path)
             state.lastMessages[path] = message
             # this is a sync call!
@@ -166,6 +167,35 @@ async def handleInit(state: State, websocket) -> None:
         # The "init" event will always answer with the
         # last messages to set the initial client state.
         await websocket.send(lastMesage);
+
+def process_request_origin(origins, websocket, request):
+    """ The origins argument in websockets.serve works similar,
+        however, this allows a wildcard port argument especially to
+        allow different possible localhost origins i.e.:
+        origins=['http://localhost:*'] allows any port and no
+        explicit port. Different simple HTTP servers use different
+        ports like :8000, :8001, ..., or :8080, :8081, ... and it
+        also often depends on which port is free at server creartion.
+    """
+    origin = request.headers.get("Origin")
+    if origin in origins:
+        return None
+    for allowed_origin in origins:
+        # here only check wildcard ports
+        if not allowed_origin.endswith(':*'):
+            continue
+        alowed_front = allowed_origin[:-2]
+        if origin == alowed_front:
+            return None
+        if ':' not in origin:
+            continue
+        [front, port] = origin.rsplit(':', 1)
+        if front == alowed_front:
+            return None
+    return websocket.respond(
+        http.HTTPStatus.FORBIDDEN,
+        f"Failed to open a WebSocket connection, invalid Origin header: {origin}.\n",
+    )
 
 async def handler(state: State, websocket):
     try:
@@ -183,9 +213,20 @@ async def main(observe_path):
     state = State()
     loop = asyncio.get_event_loop()
     queue = asyncio.Queue()
-
-    async with serve(partial(handler, state), "localhost", 8765), \
-                observeFiles(Path(observe_path), queue, loop):
+    # In this implementation we allow https://fontbureau.github.io to
+    # enable users to load the adapter directly from the project website.
+    # Origin=https://fontbureau.github.io'
+    # To allow different versions of http://localhost with and without port
+    # arbitrary port numbers `process_response` is used
+    origins=['https://fontbureau.github.io',
+        'http://localhost:*',
+        'http://0.0.0.0:*',
+        'http://127.0.0.1:*',
+    ]
+    async with serve(partial(handler, state,), "localhost", 8765,
+                process_request=partial(process_request_origin, origins)
+                ), \
+            observeFiles(Path(observe_path), queue, loop):
         futures = [
             consumeFileEvents(state, queue),
             loop.create_future()  #run forever
