@@ -42,7 +42,7 @@ does not need to be packaged by them and will not create a maintenance burden.
    watch the file system for changes and update the font in TypeRoof when
    it is saved to disk.
 
-## The Live Fonts Protocol — Version 1
+## The Live Fonts Protocol — Version 1.0
 
 The role of TypeRoof will be called `Receiver` in the following.
 
@@ -74,7 +74,7 @@ for this **pop-up/new tab** and **iframe**.
 
   * Creates an [`iframe`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe]) to load the `Receiver`.
   * In the `Receiver` the `Adapter` is accessed using the [`window.parent`](https://developer.mozilla.org/en-US/docs/Web/API/Window/parent) property.
-  * The `Adapter` can visually disappear and create a seamless user experience.
+  * The `Adapter` can create a seamless user experience, disappearing visually by displaying the `iframe` full screen in the foreground.
 
 ### Messages
 
@@ -156,11 +156,10 @@ The message is an object with three keys `{type, metaData, fontBuffer}`;
 
 * **`type`** the string `"font-update"`
 * **`metData`** is an object with three keys `{name, version, fullName}`
-    * **`metData.name`** a string width the name of the font to be displayed
+    * **`metData.name`** a string with the name of the font to be displayed
       to the user. It should have a reasonable length for user interfaces,
       but so far there are no explicit restrictions.
-
-    * **`metData.version`** a string width the version of the font to be
+    * **`metData.version`** a string with the version of the font to be
       displayed to the user. It should have a reasonable length for user interfaces,
       but so far there are no explicit restrictions.
     * **`metaData.fullName`** a string acting as a key, It must be unique
@@ -198,11 +197,8 @@ receiverWindow.postMessage(message, expectedOriginURL);
 ##### In the listening `Receiver`
 
 If the receiver did not open another window itself it can expect the
-message is coming from it's own `window.parent` or `window.opener` other
+message is coming from its own `window.parent` or `window.opener` otherwise
 it should check `event.source`.
-
-The expected  `event.origin` is known by the `Adapter` as it opened the `Receiver`
-page itself, any other origin is rejected.
 
 The values for `message.fontBuffer` and `message.metaData` must be checked
 and applied by subsequent processing in the `Receiver`.
@@ -229,8 +225,9 @@ and `Adapter` implementations and possible interaction patterns.
 ## Security Considerations
 
 This section raises awareness for some topics of data security. The Live
-Fonts Protocol is not affected by these issues, however, the way how an
-adapter accesses the font data can be affected if it is crafted unprepared.
+Fonts Protocol describes how `Adapters` should handle the `Receiver` origin
+however, the `Source` sending data to the `Adapter` can be affected if it
+is crafted unaware.
 
 ### Cross-Site WebSocket Hijacking
 
