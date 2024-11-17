@@ -61,7 +61,7 @@ etc. in TypeRoof.</li>
 watch the file system for changes and update the font in TypeRoof when
 it is saved to disk.</li>
 </ul>
-<h2><a id="the-live-fonts-protocol--version-1" class="heading_anchor" href="#the-live-fonts-protocol--version-1" aria-hidden="true">#</a>The Live Fonts Protocol — Version 1</h2>
+<h2><a id="the-live-fonts-protocol--version-10" class="heading_anchor" href="#the-live-fonts-protocol--version-10" aria-hidden="true">#</a>The Live Fonts Protocol — Version 1.0</h2>
 <p>The role of TypeRoof will be called <code>Receiver</code> in the following.</p>
 <p>The purpose of this protocol is to send live font updates to a web application,
 referred to as the <code>Receiver</code>, running in a web browser. The sources of these
@@ -87,7 +87,7 @@ for this <strong>pop-up/new tab</strong> and <strong>iframe</strong>.</p>
 <ul>
 <li>Creates an <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe%5D"><code>iframe</code></a> to load the <code>Receiver</code>.</li>
 <li>In the <code>Receiver</code> the <code>Adapter</code> is accessed using the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/parent"><code>window.parent</code></a> property.</li>
-<li>The <code>Adapter</code> can visually disappear and create a seamless user experience.</li>
+<li>The <code>Adapter</code> can create a seamless user experience, disappearing visually by displaying the <code>iframe</code> full screen in the foreground.</li>
 </ul>
 <h3><a id="messages" class="heading_anchor" href="#messages" aria-hidden="true">#</a>Messages</h3>
 <p>There are only two types of messages exchanged between <code>Adapter</code> and <code>Receiver</code>.</p>
@@ -151,24 +151,18 @@ the <a href="@message-type-init-live-fonts"><code>init-live-fonts</code></a> mes
 <li><strong><code>type</code></strong> the string <code>&quot;font-update&quot;</code></li>
 <li><strong><code>metData</code></strong> is an object with three keys <code>{name, version, fullName}</code>
 <ul>
-<li>
-<p><strong><code>metData.name</code></strong> a string width the name of the font to be displayed
+<li><strong><code>metData.name</code></strong> a string with the name of the font to be displayed
 to the user. It should have a reasonable length for user interfaces,
-but so far there are no explicit restrictions.</p>
-</li>
-<li>
-<p><strong><code>metData.version</code></strong> a string width the version of the font to be
+but so far there are no explicit restrictions.</li>
+<li><strong><code>metData.version</code></strong> a string with the version of the font to be
 displayed to the user. It should have a reasonable length for user interfaces,
-but so far there are no explicit restrictions.</p>
-</li>
-<li>
-<p><strong><code>metaData.fullName</code></strong> a string acting as a key, It must be unique
+but so far there are no explicit restrictions.</li>
+<li><strong><code>metaData.fullName</code></strong> a string acting as a key, It must be unique
 for the font and all of its subsequent updates. It also must be acceptable
 as a <a href="https://www.w3.org/TR/css-fonts-4/#family-name-value">CSS <code>&lt;family-name&gt;</code> value</a>.
 This means at least that words must start with <code>[A-Z][a-z]</code>, can contain
 <code>[A-Z][a-z][0-9]-_</code> and are separated by spaces <code> </code>. There may be
-more rules to it (Link anyone?).</p>
-</li>
+more rules to it (Link anyone?).</li>
 </ul>
 </li>
 <li><strong><code>fontBuffer</code></strong> an instance of <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer"><code>ArrayBuffer</code></a>
@@ -193,10 +187,8 @@ part of this protocol.</p>
 receiverWindow<span class="token punctuation">.</span><span class="token function">postMessage</span><span class="token punctuation">(</span>message<span class="token punctuation">,</span> expectedOriginURL<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
 <h5><a id="in-the-listening-receiver" class="heading_anchor" href="#in-the-listening-receiver" aria-hidden="true">#</a>In the listening <code>Receiver</code></h5>
 <p>If the receiver did not open another window itself it can expect the
-message is coming from it’s own <code>window.parent</code> or <code>window.opener</code> other
+message is coming from its own <code>window.parent</code> or <code>window.opener</code> otherwise
 it should check <code>event.source</code>.</p>
-<p>The expected  <code>event.origin</code> is known by the <code>Adapter</code> as it opened the <code>Receiver</code>
-page itself, any other origin is rejected.</p>
 <p>The values for <code>message.fontBuffer</code> and <code>message.metaData</code> must be checked
 and applied by subsequent processing in the <code>Receiver</code>.</p>
 <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> adapterWindow <span class="token operator">=</span> window<span class="token punctuation">.</span>opener <span class="token operator">||</span> window<span class="token punctuation">.</span>parent<span class="token punctuation">;</span>
@@ -215,8 +207,9 @@ window<span class="token punctuation">.</span><span class="token function">addEv
 and <code>Adapter</code> implementations and possible interaction patterns.</p>
 <h2><a id="security-considerations" class="heading_anchor" href="#security-considerations" aria-hidden="true">#</a>Security Considerations</h2>
 <p>This section raises awareness for some topics of data security. The Live
-Fonts Protocol is not affected by these issues, however, the way how an
-adapter accesses the font data can be affected if it is crafted unprepared.</p>
+Fonts Protocol describes how <code>Adapters</code> should handle the <code>Receiver</code> origin
+however, the <code>Source</code> sending data to the <code>Adapter</code> can be affected if it
+is crafted unaware.</p>
 <h3><a id="cross-site-websocket-hijacking" class="heading_anchor" href="#cross-site-websocket-hijacking" aria-hidden="true">#</a>Cross-Site WebSocket Hijacking</h3>
 <p>There’s no Same-Origin-Policy in the browsers for WebSockets, instead,
 the server is responsible for checking if the requesting origin is acceptable.

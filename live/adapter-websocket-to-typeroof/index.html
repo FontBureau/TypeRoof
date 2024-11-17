@@ -45,8 +45,8 @@ function initTypeRoof(state) {
     // Listen to TypeRoof requesting font-update messages.
     window.addEventListener('message', event=> {
         console.log(`got message ${event}`, event);
-        if(event.source !== myHandle){
-            console.log('I don\'t know event.source:', event.source, 'it is not', myHandle);
+        if(event.origin !== typeRoofOriginURL) {
+            console.log('I don\'t know event.origin:', event.origin, 'it is not', typeRoofOriginURL);
             return;
         }
         if(event.data !== 'init-live-fonts'){
@@ -54,10 +54,10 @@ function initTypeRoof(state) {
             return;
         }
 
-        console.log('sending updates ... to:', myHandle);
-        sendUpdatesTo.add(myHandle);
+        console.log('sending updates ... to:', event.origin);
+        sendUpdatesTo.add(event.source);
         for(const lastMessage of lastMessages.values())
-            myHandle.postMessage(lastMessage, {targetOrigin: typeRoofOriginURL});
+            event.source.postMessage(lastMessage, {targetOrigin: typeRoofOriginURL});
     });
 }
 

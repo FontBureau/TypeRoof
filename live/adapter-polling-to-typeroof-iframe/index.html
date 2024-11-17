@@ -60,7 +60,7 @@ function initIframeTypeRoof(state) {
     // Listen to TypeRoof requesting font-update messages.
     window.addEventListener('message', event=> {
         console.log(`got message ${event}`, event);
-        if(event.origin !== typeRoofOriginURL){
+        if(event.origin !== typeRoofOriginURL) {
             console.warn('I don\'t know event.origin:', event.origin, 'it is not', typeRoofOriginURL);
             return;
         }
