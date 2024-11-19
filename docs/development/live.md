@@ -103,7 +103,7 @@ payload data beyond the message type string, thus it is not possible to leak
 data with this message.
 
 ```js
-const adapterWindow = window.opener || window.parent;
+const adapterWindow = window.opener || (window.parent !== window ? window.parent : null);
 adapterWindow.postMessage('init-live-fonts', '*');
 ```
 
@@ -204,7 +204,7 @@ The values for `message.fontBuffer` and `message.metaData` must be checked
 and applied by subsequent processing in the `Receiver`.
 
 ```js
-const adapterWindow = window.opener || window.parent;
+const adapterWindow = window.opener || (window.parent !== window ? window.parent : null);
 window.addEventListener('message', event=> {
     if(event.source !== adapterWindow) {
         return;
