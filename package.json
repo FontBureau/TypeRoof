@@ -23,6 +23,7 @@
     "@11ty/eleventy-navigation": "^0.3.5",
     "@11ty/eleventy-plugin-syntaxhighlight": "^5.0.0",
     "eleventy-plugin-embed-everything": "^1.19.0",
+    "globals": "^15.12.0",
     "markdown-it-github-headings": "^2.0.1"
   }
 }
