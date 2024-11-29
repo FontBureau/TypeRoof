@@ -386,8 +386,20 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 .waste_basket_drop_target-main_drop_zone::after {
     content: "🗑️";
-    font-size: 2em;
+    font-size: 1.2em;
+    padding: .2em;
+    display: inline-block;
 }
+
+.ui_button.ui_button-remove{
+    border-radius: 50%;
+    color: darkred;
+}
+
+.ui_button-add, .ui_button-move{
+    font-weight: bolder;
+}
+
 .waste_basket_drop_target-receptive .waste_basket_drop_target-main_drop_zone{
     background: lightyellow;
     outline: .2em solid grey;
@@ -707,6 +719,14 @@ li.ui_key_moment_controller.active:not(:last-child) {
 .ui_videoproof_array_layers-items > *{
     display: list-item;
     list-style: none;
+}
+
+.ui_videoproof_array_layers-item {
+  padding: var(--gap-size) 0;
+}
+
+.ui_videoproof_array_layers-item .ui_button {
+  float: right;
 }
 
 .dragging {
