@@ -82,7 +82,7 @@ async function pollAll(state) {
                 // For font-family words separated by space seem OK but words have
                 // to start with A-Za-z. I don't know if there's a definit rule to this!
               , fullNameVersion = version.replace(' ', '_')
-              , fullName =  `from-file ${fullNameName} ${fullNameVersion}`
+              , fullName =  `${fullNameName} ${fullNameVersion}`
               , metaData = {name:fileName, version, fullName}
               , fontBuffer = await response.arrayBuffer()
               ;

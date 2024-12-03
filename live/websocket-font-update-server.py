@@ -109,7 +109,7 @@ async def packageFile(file_path: str):
     # For font-family words separated by space seem OK but words have
     # to start with A-Za-z. I don't know if there's a definit rule to this!
     full_name_version = version.replace(' ', '_')
-    full_name =  f'from-file {full_name_name} {full_name_version}'
+    full_name =  f'{full_name_name} {full_name_version}'
     metadata = {'name': file_name, 'version': version, 'fullName': full_name}
     metadata_json = json.dumps(metadata)
     metadata_bytes = metadata_json.encode('utf-8')
