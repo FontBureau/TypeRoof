@@ -221,6 +221,15 @@ li.ui_key_moment_controller.active:not(:last-child) {
 .stage-manager_actors > ol:empty::before {
     content: "(empty: drop actor here)";
 }
+
+.tree_editor > ol:empty::before {
+    content: "(empty: add item here)";
+}
+
+.stage-manager_actors > ol:empty::before {
+    content: "(empty: drop actor here)";
+}
+
 .ui_axes_math-locations_sum-items:empty::before,
 .ui_axes_math-map_product-items:empty::before {
     content: "(empty: drop item here)";
