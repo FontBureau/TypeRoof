@@ -9,12 +9,16 @@
 # 1. For simple one-to-many character extensions (e.g. accented Latin letters), add them to the global "_extended" list at the bottom.
 #     These will be expanded "in place" automatically whenever that character is encountered in a character set.
 # 2. For custom extensions (e.g. currency symbols) include "_default" and "_extended" strings under each label
-
+#
+# Generate the glyps-groups.json file with the command:
+#    $ yq glyph-groups.yaml -o json > glyph-groups.json
+#
 Latin:
     Uppercase: ABCDEFGHIJKLMNOPQRSTUVWXYZ&
     Lowercase: abcdefghijklmnopqrstuvwxyz
     Mixed: ǅǈǋǉ
     ASCII: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789<([{@#$%&?!/|\\\"~`*^':;.,)]}>"
+    Latin-1: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\u00A0¡¢£¤¥¦§¨©ª«¬\u00AD®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ"
     Symbols:
         Punctuation: ',-.:;…∙·!¡?¿–—―‐'
         Reference: '*§¶†‡•'
@@ -30,7 +34,7 @@ Cyrillic:
     Lowercase: абвгдежзийклмнопрстуфхцчшщъыьэюя
 World:
     Figures:
-        _default: 0123456789
+        _default: "0123456789"
         _extended: ⁰¹²³⁴⁵⁶⁷⁸⁹⅛⅙⅕¼⅓⅜⅖½⅗⅔⅝¾⅘⅚⅞%‰
     Monetary:
         _default: $¢£¥
