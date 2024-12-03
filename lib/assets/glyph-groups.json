@@ -4,6 +4,7 @@
     "Lowercase": "abcdefghijklmnopqrstuvwxyz",
     "Mixed": "ǅǈǋǉ",
     "ASCII": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789<([{@#$%&?!/|\\\"~`*^':;.,)]}>",
+    "Latin-1": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ",
     "Symbols": {
       "Punctuation": ",-.:;…∙·!¡?¿–—―‐",
       "Reference": "*§¶†‡•",
