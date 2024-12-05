@@ -1183,3 +1183,23 @@ input:invalid {
   content: "failed";
   background: darkred;
 }
+
+.ui_missing-ui_element {
+    --border-spec: 1px dashed red;
+    border-bottom: var(--border-spec);
+    margin-bottom: var(--gap-size) 0;
+}
+
+.ui_missing-ui_element h4 {
+  background: darkred;
+  color: white;
+}
+
+.ui_missing-ui_element-full_key{
+    font-weight: bold;
+}
+
+.ui_missing-ui_element-message {
+    display: block;
+    background: khaki;
+}
