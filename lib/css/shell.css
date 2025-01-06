@@ -258,12 +258,12 @@ li.ui_key_moment_controller.active:not(:last-child) {
 
 
 
-/* FIXME: make alternating */
+/* FIXME: make alternating perhaps? */
 .ui_axes_math-map, .ui_axes_math-map > *,
 .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
 .ui_axes_math-map-item, .ui_axes_math-map-item > * {
-    --background-base-color: var(--list-item-even-bg);
-    background: var(--list-item-even-bg);
+    --background-base-color: var(--list-item-odd-bg);
+    background: var(--list-item-odd-bg);
 }
 
 .ui_videoproof_array_layers-items > *:nth-child(odd) {
