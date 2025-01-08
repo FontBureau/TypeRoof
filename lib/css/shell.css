@@ -51,6 +51,7 @@ fieldset > legend {
 }
 
 /* Should probably not use <strong> there! */
+.typeroof-ui-label,
 .typeroof-ui label > :is(strong, span):first-child{
     font-weight: 600;
 }
@@ -223,23 +224,21 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 
 .tree_editor > ol:empty::before {
-    content: "(empty: add item here)";
-}
-
-.stage-manager_actors > ol:empty::before {
-    content: "(empty: drop actor here)";
+    content: "(empty: drop item here)";
 }
 
 .ui_axes_math-locations_sum-items:empty::before,
-.ui_axes_math-map_product-items:empty::before {
-    content: "(empty: drop item here)";
+.ui_base_map-items:empty::before {
+    content: "(empty: add item here)";
 }
+
 .ui-axes_math-location_values:empty::before {
     content: " (empty: add item here) ";
     background: var(--list-item-odd-bg);
 }
 .stage-manager_actors > ol:empty::before,
 .ui_axes_math-locations_sum-items:empty::before,
+.ui_base_map-items:empty::before,
 .ui_axes_math-map_product-items:empty::before {
   display: block;
   background-color: var(--list-item-odd-bg);
@@ -259,9 +258,9 @@ li.ui_key_moment_controller.active:not(:last-child) {
 
 
 /* FIXME: make alternating perhaps? */
-.ui_axes_math-map, .ui_axes_math-map > *,
+.ui_base_map, .ui_base_map > *,
 .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
-.ui_axes_math-map-item, .ui_axes_math-map-item > * {
+.ui_base_map-item, .ui_base_map-item > * {
     --background-base-color: var(--list-item-odd-bg);
     background: var(--list-item-odd-bg);
 }
@@ -294,11 +293,10 @@ li.ui_key_moment_controller.active:not(:last-child) {
 
 
 :is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
-    .ui_axes_math-map, .ui_axes_math-map > *,
-    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
-    .ui_axes_math-map-item, .ui_axes_math-map-item > .ui_axes_math-axis_tag
+    .ui_base_map, .ui_base_map > *,
+    .ui_base_map-item, .ui_base_map-item > .ui_base_map-key,
+    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *
 ):is(.drop_target_indicator-before, .drop_target_indicator-after),
-
 .stage-manager_actors li.drop_target_indicator-before,
 .stage-manager_actors li.drop_target_indicator-after {
     background-position: calc(var(--indentation-width, 1em) * var(--structural-depth, 0)) 0;
@@ -307,9 +305,9 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 
 :is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
-    .ui_axes_math-map, .ui_axes_math-map > *,
-    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
-    .ui_axes_math-map-item, .ui_axes_math-map-item > .ui_axes_math-axis_tag
+    .ui_base_map, .ui_base_map > *,
+    .ui_base_map-item, .ui_base_map-item > .ui_base_map-key,
+    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *
 ):is(.drop_target_indicator-before),
 .stage-manager_actors li.drop_target_indicator-before {
     --local-indicator-padding: calc(var(--indicator-padding) + var(--own-padding-top, 00em));
@@ -322,9 +320,9 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 
 :is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
-    .ui_axes_math-map, .ui_axes_math-map > *,
-    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
-    .ui_axes_math-map-item, .ui_axes_math-map-item > .ui_axes_math-axis_tag
+    .ui_base_map, .ui_base_map > *,
+    .ui_base_map-item, .ui_base_map-item > .ui_base_map-key,
+    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *
 ):is(.drop_target_indicator-after),
 .stage-manager_actors li.drop_target_indicator-after {
     --local-indicator-padding: calc(var(--indicator-padding) + var(--own-padding-bottom, 0em));
@@ -363,11 +361,13 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 
 .ui_axes_math-locations_sum-items:empty::before,
+.ui_base_map-items:empty::before,
 .ui_axes_math-map_product-items:empty::before,
 .ui-axes_math-location_values:empty::before {
     padding: var(--indicator-padding);
 }
 .ui_axes_math-locations_sum-items.drop_target_indicator-insert::before,
+.ui_base_map-items.drop_target_indicator-insert::before,
 .ui_axes_math-map_product-items.drop_target_indicator-insert::before,
 .ui-axes_math-location_values.drop_target_indicator-insert::before {
     border:var(--indicator-padding) solid var(--drop-indicator-color);
@@ -379,11 +379,24 @@ li.ui_key_moment_controller.active:not(:last-child) {
     vertical-align: -webkit-baseline-middle;
 }
 
+/* style is VERY similar to button in shell-general-layout.css */
 .drag_handle{
     display: inline-block;
-    background: #aaa;
+    font-size: 1.1em;/* a bit bigger to make more accessible */
     padding: 0 .3em;
-    border: 1px outset lightgrey;
+    background-color: var(--background-color);
+    box-shadow: rgba(43, 43, 43, 0.08) 0 0 0.1875rem;
+    border: 1px solid #b7b4b0;
+    border-radius: 0.125rem;
+    color: var(--text-color);
+    cursor: grab;
+}
+.drag_handle:hover  {
+  box-shadow: rgba(43, 43, 43, 0.15) 0 0 0.625rem;
+}
+
+.drag_handle:active:hover{
+    cursor: grabbing;
 }
 
 .waste_basket_drop_target {
@@ -988,7 +1001,7 @@ input:invalid {
 /* this coulde be handled as above with focus-within and <output>,
  * the styling would be easier, especially the typography
  */
-.ui_axes_math-map-item .ui_axes_math-axis_tag-input {
+.ui_base_map-item .ui_base_map-key-input {
     font-weight: bold;
     font-size: 1em;
     border: none;
@@ -1003,17 +1016,45 @@ input:invalid {
     width: 3em;
 }
 
+:is(ol, ul).ui_base_map-items{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.ui_base_map-item,
 .ui_axes_math-map-item {
     --padding-horizontal: .25em;
     --drop-target-indicator-width: .2em;
 }
 
-.ui_axes_math-map-item
+:is(.ui_axes_math-map-item, .ui_base_map-item)
     > :is(
         .ui_axes_math-axis_tag,
+        .ui_base_map-key,
         .drag_handle) {
     display: inline-block;
     padding-right: var(--padding-horizontal);
+}
+
+.ui_style_patches_map-item{
+    display: flex;
+}
+
+.ui_style_patches_map .ui_base_map-key {
+    flex-grow: 1;
+}
+.ui_style_patches_map-item .ui_base_map-key-input {
+    width: 100%;
+}
+
+.ui_style_patches_map-item-value{
+    min-width: 5.3em;
+    padding-inline-start: .2em;
+}
+
+.ui_style_patches_map-item-drag_handle {
+    order: -10
 }
 
 .ui_axes_math-map-item .ui-axes_math-location_values{
@@ -1048,27 +1089,41 @@ input:invalid {
     padding-right: calc(var(--padding-horizontal) - var( --drop-target-indicator-width) / 2);
 }
 
-.ui_axes_math-map-tools{
+.ui_base_map-tools{
     display: inline-block;
     margin-left: .5em;
     vertical-align: middle;
     vertical-align: -webkit-baseline-middle;
 }
-.ui_axes_math-map-tools > * {
+.ui_base_map-tools > * {
     display: none;
 }
-:focus-within > .ui_axes_math-map-tools > * {
+:focus-within > .ui_base_map-tools > *,
+.ui_style_patches_map-tools > * {
     display: initial;
+}
+
+.ui_style_patches_map-tools {
+    margin-left: 0;
 }
 
 .ui-button-input:disabled {
   color: lightgray;
 }
 
-.ui_axes_math-map-tools :is(.ui_axes_math-axis_tag-input,
-.ui-button) {
+.ui_axes_math-map-tools :is(
+    .ui_axes_math-axis_tag-input, .ui-button),
+.ui_base_map-tools :is(
+    .ui_base_map-key-input, .ui-button),
+.ui_style_patches_map-tools :is(
+    .ui_plain_select, .ui_plain_select-select)
+{
     font-size: inherit;
     padding-block: 0;
+}
+
+.ui_style_patches_map-tools .ui_base_map-key-input{
+    width: 4em;
 }
 
 /* don't show these controls for the root collection */
