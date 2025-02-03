@@ -403,15 +403,27 @@ li.ui_key_moment_controller.active:not(:last-child) {
     display: block;
 }
 
-.waste_basket_drop_target-main_drop_zone{
+.ui_base_drop_target-main_drop_zone{
     display: inline-block;
 }
-.waste_basket_drop_target-main_drop_zone::after {
-    content: "🗑️";
+
+.ui_base_drop_target-main_drop_zone::after {
+    content: "";
     font-size: 1.2em;
     padding: .2em;
     display: inline-block;
 }
+
+.waste_basket_drop_target-main_drop_zone::after {
+    content: "🗑️";
+}
+
+.ui_document_segment_typespec-main_drop_zone::after {
+    content: "⌖";
+    outline: .1em dashed grey;
+    padding: .15em;
+}
+
 
 .ui_button.ui_button-remove{
     border-radius: 50%;
@@ -422,6 +434,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
     font-weight: bolder;
 }
 
+.ui_document_segment_typespec-receptive .ui_document_segment_typespec-main_drop_zone,
 .waste_basket_drop_target-receptive .waste_basket_drop_target-main_drop_zone{
     background: lightyellow;
     outline: .2em solid grey;
