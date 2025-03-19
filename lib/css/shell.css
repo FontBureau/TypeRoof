@@ -1066,6 +1066,14 @@ input:invalid {
     min-width: 5.3em;
 }
 
+.ui_style_patches_map-item-value.active{
+    font-weight: 700;
+}
+
+button.ui_style_patches_map-item-value {
+    line-height: 1;
+}
+
 .ui_style_patches_map-item-value,
 .ui_style_patches_links_map-item_value{
     padding-inline-start: .2em;
