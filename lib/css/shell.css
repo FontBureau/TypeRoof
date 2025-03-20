@@ -232,10 +232,13 @@ li.ui_key_moment_controller.active:not(:last-child) {
     content: "(empty: add item here)";
 }
 
-.ui-axes_math-location_values:empty::before {
+.ui-axes_math-location_values:empty::before,
+.ui-style_patch-composite:empty::before {
     content: " (empty: add item here) ";
     background: var(--list-item-odd-bg);
 }
+
+.ui-style_patch-composite:empty::before,
 .stage-manager_actors > ol:empty::before,
 .ui_axes_math-locations_sum-items:empty::before,
 .ui_base_map-items:empty::before,
@@ -244,12 +247,14 @@ li.ui_key_moment_controller.active:not(:last-child) {
   background-color: var(--list-item-odd-bg);
 }
 
+.ui-style_patch-composite > *:nth-child(odd),
 .stage-manager_actors li.odd-row {
     --background-base-color: var(--list-item-odd-bg);
     background: var(--list-item-odd-bg);
 }
 
 .stage-manager_actors > ol,
+.ui-style_patch-composite > *:nth-child(even),
 .stage-manager_actors li.even-row {
     --background-base-color: var(--list-item-even-bg);
     background: var(--list-item-even-bg);
@@ -295,7 +300,8 @@ li.ui_key_moment_controller.active:not(:last-child) {
 :is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
     .ui_base_map, .ui_base_map > *,
     .ui_base_map-item, .ui_base_map-item > .ui_base_map-key,
-    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *
+    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
+    .ui-style_patch-composite, .ui-style_patch-composite > *
 ):is(.drop_target_indicator-before, .drop_target_indicator-after),
 .stage-manager_actors li.drop_target_indicator-before,
 .stage-manager_actors li.drop_target_indicator-after {
@@ -307,7 +313,8 @@ li.ui_key_moment_controller.active:not(:last-child) {
 :is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
     .ui_base_map, .ui_base_map > *,
     .ui_base_map-item, .ui_base_map-item > .ui_base_map-key,
-    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *
+    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
+    .ui-style_patch-composite, .ui-style_patch-composite > *
 ):is(.drop_target_indicator-before),
 .stage-manager_actors li.drop_target_indicator-before {
     --local-indicator-padding: calc(var(--indicator-padding) + var(--own-padding-top, 00em));
@@ -322,7 +329,8 @@ li.ui_key_moment_controller.active:not(:last-child) {
 :is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
     .ui_base_map, .ui_base_map > *,
     .ui_base_map-item, .ui_base_map-item > .ui_base_map-key,
-    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *
+    .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
+    .ui-style_patch-composite, .ui-style_patch-composite > *
 ):is(.drop_target_indicator-after),
 .stage-manager_actors li.drop_target_indicator-after {
     --local-indicator-padding: calc(var(--indicator-padding) + var(--own-padding-bottom, 0em));
@@ -360,16 +368,25 @@ li.ui_key_moment_controller.active:not(:last-child) {
     background-repeat: no-repeat;
 }
 
-.ui_axes_math-locations_sum-items:empty::before,
-.ui_base_map-items:empty::before,
-.ui_axes_math-map_product-items:empty::before,
-.ui-axes_math-location_values:empty::before {
+:is(
+    .ui_axes_math-locations_sum-items,
+    .ui_base_map-items,
+    .ui_axes_math-map_product-items,
+    .ui-axes_math-location_values,
+    .ui-style_patch-composite
+):empty::before
+{
     padding: var(--indicator-padding);
 }
-.ui_axes_math-locations_sum-items.drop_target_indicator-insert::before,
-.ui_base_map-items.drop_target_indicator-insert::before,
-.ui_axes_math-map_product-items.drop_target_indicator-insert::before,
-.ui-axes_math-location_values.drop_target_indicator-insert::before {
+
+:is(
+  .ui_axes_math-locations_sum-items,
+    .ui_base_map-items,
+    .ui_axes_math-map_product-items,
+    .ui-axes_math-location_values,
+    .ui-style_patch-composite
+).drop_target_indicator-insert::before
+{
     border:var(--indicator-padding) solid var(--drop-indicator-color);
     padding: 0;
 }
@@ -393,6 +410,9 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 .drag_handle:hover  {
   box-shadow: rgba(43, 43, 43, 0.15) 0 0 0.625rem;
+  outline: .1em solid black;
+  z-index: 1;
+  position: relative;
 }
 
 .drag_handle:active:hover{
