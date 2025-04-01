@@ -17,10 +17,10 @@ jobs:
     strategy:
       matrix:
         FILES_SPEC:
-          - repo: googlefonts/roboto-flex-avar2
-            unique_path: roboto-flex-avar2
+          - repo: googlefonts/roboto-delta
+            unique_path: roboto-delta-vf
             files:
-              - [fonts/LGCAlpha/RobotoA2-avar2-VF.ttf, lib/assets/fonts/RobotoA2-avar2-clean-VF.woff2]
+              - [fonts/LGCAlpha/Roboto-Delta-VF.ttf, lib/assets/fonts/Roboto-Delta-VF.woff2]
           - repo: googlefonts/amstelvar-avar2
             unique_path: amstelvar-avar2
             files:
