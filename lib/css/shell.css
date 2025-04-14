@@ -463,10 +463,10 @@ li.ui_key_moment_controller.active:not(:last-child) {
     font-weight: bolder;
 }
 
-.ui_document_segment_typespec-receptive .ui_document_segment_typespec-main_drop_zone,
+.ui_document_element_typespec-receptive,
 .waste_basket_drop_target-receptive .waste_basket_drop_target-main_drop_zone{
     background: lightyellow;
-    outline: .2em solid grey;
+    outline: 3pt solid grey;
 }
 
 .ui_color_component {
