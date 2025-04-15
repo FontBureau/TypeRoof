@@ -1385,3 +1385,8 @@ button.ui_style_patches_map-item-value {
     display: block;
     background: khaki;
 }
+
+.ui_leading-algorithm_container > :not(:first-child) {
+  background: #dfdfdf;
+  padding: .2em;
+}
