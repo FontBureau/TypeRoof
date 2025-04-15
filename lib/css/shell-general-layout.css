@@ -4,8 +4,8 @@
     margin: 0;
     --gap-color: #dfdfdf;
     --gap-size: .3rem;
-    --list-item-odd-bg: #eee;
-    --list-item-even-bg: #fff;
+    --list-item-odd-bg: #fff;
+    --list-item-even-bg: #eee;
     --background-color: #fff;
 
     --transparency-indicator-bg-dark: #666;
@@ -51,14 +51,18 @@ h4 {
 }
 
 body, h1, h2, h3, h4, h5, h6, h7, .heading_anchor {
-    font-size: calc(var(--font-size-change) * 1rem);
+    --font-size-base-unit: 1rem;
+    font-size: calc(var(--font-size-change) * var(--font-size-base-unit));
     /* There's no pure CSS way to determine the actual font size in pt
      * however, the default is 16px/12pt so I'm going to base of that
      * Also given that the reading intent corresponds to these sizes.
      */
     --font-size-pt-assumption: 12;
     font-variation-settings: "opsz" calc(var(--font-size-pt-assumption) * var(--font-size-change));
-    font-size: calc(1rem * var(--font-size-change));
+}
+
+.typeroof-ui :is(h1, h2, h3, h4, h5, h6, h7) {
+    --font-size-base-unit: .8em;
 }
 
 
@@ -161,7 +165,8 @@ button:hover, form button:hover {
 }
 
 fieldset{
-    border: 1px solid #b7b4b0;
+    border: none;
+    border-bottom: 1px solid #b7b4b0;
     border-radius: 0.125rem;
     min-inline-size: 0;
     margin-inline: 0;

@@ -766,7 +766,7 @@ div.temp-selection {
 
 #the-proof.typespec .typespec-element > .typespec-element_wrapper {
     /* FIXME: need to set and use typespec-element font-size for this to work*/
-    --typespec-font-size: 16; /* in PT TODO: add control */
+    --typespec-font-size: 12; /* in PT TODO: add control */
     /* 0.5pt because we use EN not EM */
     width: calc(0.5pt * var(--typespec-font-size) * var(--column-width));
     box-sizing: content-box;

@@ -51,6 +51,7 @@ fieldset > legend {
 }
 
 /* Should probably not use <strong> there! */
+.typeroof-ui-label,
 .typeroof-ui label > :is(strong, span):first-child{
     font-weight: 600;
 }
@@ -221,27 +222,42 @@ li.ui_key_moment_controller.active:not(:last-child) {
 .stage-manager_actors > ol:empty::before {
     content: "(empty: drop actor here)";
 }
-.ui_axes_math-locations_sum-items:empty::before,
-.ui_axes_math-map_product-items:empty::before {
+
+.tree_editor > ol:empty::before {
     content: "(empty: drop item here)";
 }
-.ui-axes_math-location_values:empty::before {
+
+
+.ui_axes_math-locations_sum-items:empty::before,
+.ui_base_list-items:empty::before,
+.ui_base_map-items:empty::before {
+    content: "(empty: add item here)";
+}
+
+.ui-axes_math-location_values:empty::before,
+.ui-style_patch-composite:empty::before {
     content: " (empty: add item here) ";
     background: var(--list-item-odd-bg);
 }
+
+.ui-style_patch-composite:empty::before,
 .stage-manager_actors > ol:empty::before,
 .ui_axes_math-locations_sum-items:empty::before,
+.ui_base_list-items:empty::before,
+.ui_base_map-items:empty::before,
 .ui_axes_math-map_product-items:empty::before {
   display: block;
   background-color: var(--list-item-odd-bg);
 }
 
+.ui-style_patch-composite > *:nth-child(odd),
 .stage-manager_actors li.odd-row {
     --background-base-color: var(--list-item-odd-bg);
     background: var(--list-item-odd-bg);
 }
 
 .stage-manager_actors > ol,
+.ui-style_patch-composite > *:nth-child(even),
 .stage-manager_actors li.even-row {
     --background-base-color: var(--list-item-even-bg);
     background: var(--list-item-even-bg);
@@ -249,12 +265,13 @@ li.ui_key_moment_controller.active:not(:last-child) {
 
 
 
-/* FIXME: make alternating */
-.ui_axes_math-map, .ui_axes_math-map > *,
+/* FIXME: make alternating perhaps? */
+.ui_base_map, .ui_base_map > *,
 .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
-.ui_axes_math-map-item, .ui_axes_math-map-item > * {
-    --background-base-color: var(--list-item-even-bg);
-    background: var(--list-item-even-bg);
+.ui_base_list-items, .ui_base_list-items > *,
+.ui_base_map-item, .ui_base_map-item > * {
+    --background-base-color: var(--list-item-odd-bg);
+    background: var(--list-item-odd-bg);
 }
 
 .ui_videoproof_array_layers-items > *:nth-child(odd) {
@@ -285,11 +302,12 @@ li.ui_key_moment_controller.active:not(:last-child) {
 
 
 :is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
-    .ui_axes_math-map, .ui_axes_math-map > *,
+    .ui_base_map, .ui_base_map > *,
+    .ui_base_map-item, .ui_base_map-item > .ui_base_map-key,
     .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
-    .ui_axes_math-map-item, .ui_axes_math-map-item > .ui_axes_math-axis_tag
+    .ui_base_list-items, .ui_base_list-items > *,
+    .ui-style_patch-composite, .ui-style_patch-composite > *
 ):is(.drop_target_indicator-before, .drop_target_indicator-after),
-
 .stage-manager_actors li.drop_target_indicator-before,
 .stage-manager_actors li.drop_target_indicator-after {
     background-position: calc(var(--indentation-width, 1em) * var(--structural-depth, 0)) 0;
@@ -298,9 +316,11 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 
 :is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
-    .ui_axes_math-map, .ui_axes_math-map > *,
+    .ui_base_map, .ui_base_map > *,
+    .ui_base_map-item, .ui_base_map-item > .ui_base_map-key,
     .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
-    .ui_axes_math-map-item, .ui_axes_math-map-item > .ui_axes_math-axis_tag
+    .ui_base_list-items, .ui_base_list-items > *,
+    .ui-style_patch-composite, .ui-style_patch-composite > *
 ):is(.drop_target_indicator-before),
 .stage-manager_actors li.drop_target_indicator-before {
     --local-indicator-padding: calc(var(--indicator-padding) + var(--own-padding-top, 00em));
@@ -313,9 +333,11 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 
 :is(.ui_videoproof_array_layers-items, .ui_videoproof_array_layers-items > *,
-    .ui_axes_math-map, .ui_axes_math-map > *,
+    .ui_base_map, .ui_base_map > *,
+    .ui_base_map-item, .ui_base_map-item > .ui_base_map-key,
     .ui_axes_math-locations_sum, .ui_axes_math-locations_sum > *,
-    .ui_axes_math-map-item, .ui_axes_math-map-item > .ui_axes_math-axis_tag
+    .ui_base_list-items, .ui_base_list-items > *,
+    .ui-style_patch-composite, .ui-style_patch-composite > *
 ):is(.drop_target_indicator-after),
 .stage-manager_actors li.drop_target_indicator-after {
     --local-indicator-padding: calc(var(--indicator-padding) + var(--own-padding-bottom, 0em));
@@ -353,14 +375,27 @@ li.ui_key_moment_controller.active:not(:last-child) {
     background-repeat: no-repeat;
 }
 
-.ui_axes_math-locations_sum-items:empty::before,
-.ui_axes_math-map_product-items:empty::before,
-.ui-axes_math-location_values:empty::before {
+:is(
+    .ui_axes_math-locations_sum-items,
+    .ui_base_list-items,
+    .ui_base_map-items,
+    .ui_axes_math-map_product-items,
+    .ui-axes_math-location_values,
+    .ui-style_patch-composite
+):empty::before
+{
     padding: var(--indicator-padding);
 }
-.ui_axes_math-locations_sum-items.drop_target_indicator-insert::before,
-.ui_axes_math-map_product-items.drop_target_indicator-insert::before,
-.ui-axes_math-location_values.drop_target_indicator-insert::before {
+
+:is(
+    .ui_axes_math-locations_sum-items,
+    .ui_base_list-items,
+    .ui_base_map-items,
+    .ui_axes_math-map_product-items,
+    .ui-axes_math-location_values,
+    .ui-style_patch-composite
+).drop_target_indicator-insert::before
+{
     border:var(--indicator-padding) solid var(--drop-indicator-color);
     padding: 0;
 }
@@ -370,27 +405,68 @@ li.ui_key_moment_controller.active:not(:last-child) {
     vertical-align: -webkit-baseline-middle;
 }
 
+/* style is VERY similar to button in shell-general-layout.css */
 .drag_handle{
     display: inline-block;
-    background: #aaa;
+    font-size: 1.1em;/* a bit bigger to make more accessible */
     padding: 0 .3em;
-    border: 1px outset lightgrey;
+    background-color: var(--background-color);
+    box-shadow: rgba(43, 43, 43, 0.08) 0 0 0.1875rem;
+    border: 1px solid #b7b4b0;
+    border-radius: 0.125rem;
+    color: var(--text-color);
+    cursor: grab;
+}
+.drag_handle:hover  {
+  box-shadow: rgba(43, 43, 43, 0.15) 0 0 0.625rem;
+  outline: .1em solid black;
+  z-index: 1;
+  position: relative;
+}
+
+.drag_handle:active:hover{
+    cursor: grabbing;
 }
 
 .waste_basket_drop_target {
     display: block;
 }
 
-.waste_basket_drop_target-main_drop_zone{
+.ui_base_drop_target-main_drop_zone{
     display: inline-block;
 }
+
+.ui_base_drop_target-main_drop_zone::after {
+    content: "";
+    font-size: 1.2em;
+    padding: .2em;
+    display: inline-block;
+}
+
 .waste_basket_drop_target-main_drop_zone::after {
     content: "🗑️";
-    font-size: 2em;
 }
+
+.ui_document_segment_typespec-main_drop_zone::after {
+    content: "⌖";
+    outline: .1em dashed grey;
+    padding: .15em;
+}
+
+
+.ui_button.ui_button-remove{
+    border-radius: 50%;
+    color: darkred;
+}
+
+.ui_button-add, .ui_button-move{
+    font-weight: bolder;
+}
+
+.ui_document_element_typespec-receptive,
 .waste_basket_drop_target-receptive .waste_basket_drop_target-main_drop_zone{
     background: lightyellow;
-    outline: .2em solid grey;
+    outline: 3pt solid grey;
 }
 
 .ui_color_component {
@@ -449,45 +525,45 @@ li.ui_key_moment_controller.active:not(:last-child) {
     padding-left: 2em;
 }
 
-.common_actor_properties-list {
+.ui-show_processed_properties-list {
     padding: 0;
     list-style: inside none;
 }
 
-.common_actor_properties-item:nth-child(even) {
+.ui-show_processed_properties-item:nth-child(even) {
     background: var(--list-item-even-bg);
 }
-.common_actor_properties-item:nth-child(odd) {
+.ui-show_processed_properties-item:nth-child(odd) {
     background: var(--list-item-odd-bg);
 }
 
-.common_actor_properties-value {
+.ui-show_processed_properties-value {
     font-weight: bold;
 }
 
-.common_actor_properties-value-color_patch {
+.ui-show_processed_properties-value-color_patch {
     display: inline-block;
 }
 
-.common_actor_properties-item-type_color,
-.common_actor_properties-item-type_text {
+.ui-show_processed_properties-item-type_color,
+.ui-show_processed_properties-item-type_text {
     overflow: hidden;
     white-space: nowrap;
 }
-.common_actor_properties-item-type_color:hover,
-.common_actor_properties-item-type_text:hover {
+.ui-show_processed_properties-item-type_color:hover,
+.ui-show_processed_properties-item-type_text:hover {
     white-space: initial;
 }
-.common_actor_properties-item-type_color:hover{
+.ui-show_processed_properties-item-type_color:hover{
     overflow: initial;
 }
 
-.common_actor_properties-item-type_color:hover .common_actor_properties-value-text,
-.common_actor_properties-item-type_text:hover .common_actor_properties-value-text {
+.ui-show_processed_properties-item-type_color:hover .ui-show_processed_properties-value-text,
+.ui-show_processed_properties-item-type_text:hover .ui-show_processed_properties-value-text {
     display: block;
 }
 
-.common_actor_properties-value-text {
+.ui-show_processed_properties-value-text {
     text-overflow: ellipsis;
     overflow: hidden;
     max-width: 100%;
@@ -496,8 +572,8 @@ li.ui_key_moment_controller.active:not(:last-child) {
     vertical-align: bottom;
 }
 
-.common_actor_properties-item-type_color:hover .common_actor_properties-value-text,
-.common_actor_properties-value-text:hover {
+.ui-show_processed_properties-item-type_color:hover .ui-show_processed_properties-value-text,
+.ui-show_processed_properties-value-text:hover {
     text-overflow: ellipsis;
     overflow: initial;
     white-space: initial;
@@ -709,6 +785,14 @@ li.ui_key_moment_controller.active:not(:last-child) {
     list-style: none;
 }
 
+.ui_videoproof_array_layers-item {
+  padding: var(--gap-size) 0;
+}
+
+.ui_videoproof_array_layers-item .ui_button {
+  float: right;
+}
+
 .dragging {
     outline: .05em solid grey;
 }
@@ -916,11 +1000,26 @@ input:invalid {
 }
 
 
-.ui_axes_math-map-label, .ui_axes_math-locations_sum-label {
+.ui_axes_math-map-label,
+.ui_axes_math-locations_sum-label,
+.ui-axes_math-locations_sum_item-label {
     padding: 0 .2em;
     border: .1em solid black;
 }
 
+.ui-axes_math-locations_sum_item > :last-child {
+    /* have the label on the same line as the drag-handle
+     * the drag-handle is first-child if present
+     * The child widget (currently!!) is inserted last.
+     * this affects the this.element/localZoneElement
+     *
+     * I would have moved the label outside, but the focus-within
+     * mechanism below, that reveals some tools, is nice like that and
+     * the label is a natural element to click on and hence capture
+     * focus.
+     */
+    display: inline;
+}
 
 /*
  * hide
@@ -959,7 +1058,7 @@ input:invalid {
 /* this coulde be handled as above with focus-within and <output>,
  * the styling would be easier, especially the typography
  */
-.ui_axes_math-map-item .ui_axes_math-axis_tag-input {
+.ui_base_map-item .ui_base_map-key-input {
     font-weight: bold;
     font-size: 1em;
     border: none;
@@ -974,17 +1073,58 @@ input:invalid {
     width: 3em;
 }
 
+:is(ol, ul).ui_base_map-items{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.ui_base_map-item,
 .ui_axes_math-map-item {
     --padding-horizontal: .25em;
     --drop-target-indicator-width: .2em;
 }
 
-.ui_axes_math-map-item
+:is(.ui_axes_math-map-item, .ui_base_map-item)
     > :is(
         .ui_axes_math-axis_tag,
+        .ui_base_map-key,
         .drag_handle) {
     display: inline-block;
     padding-right: var(--padding-horizontal);
+}
+
+.ui_style_patches_map-item{
+    display: flex;
+}
+
+.ui_style_patches_map .ui_base_map-key {
+    flex-grow: 1;
+}
+.ui_style_patches_map-item .ui_base_map-key-input {
+    width: 100%;
+}
+
+
+.ui_style_patches_map-item-value{
+    min-width: 5.3em;
+}
+
+.ui_style_patches_map-item-value.active{
+    font-weight: 700;
+}
+
+button.ui_style_patches_map-item-value {
+    line-height: 1;
+}
+
+.ui_style_patches_map-item-value,
+.ui_style_patches_links_map-item_value{
+    padding-inline-start: .2em;
+}
+
+.ui_style_patches_map-item-drag_handle {
+    order: -10
 }
 
 .ui_axes_math-map-item .ui-axes_math-location_values{
@@ -1019,32 +1159,103 @@ input:invalid {
     padding-right: calc(var(--padding-horizontal) - var( --drop-target-indicator-width) / 2);
 }
 
-.ui_axes_math-map-tools{
+.ui_base_map-tools{
     display: inline-block;
     margin-left: .5em;
     vertical-align: middle;
     vertical-align: -webkit-baseline-middle;
 }
-.ui_axes_math-map-tools > * {
+.ui_base_map-tools > * {
     display: none;
 }
-:focus-within > .ui_axes_math-map-tools > * {
+:focus-within > .ui_base_map-tools:not(.ui_style_patches_links_map-tools) > *,
+.ui_style_patches_map-tools > *,
+.ui_style_patches_links_map-tools > *
+{
     display: initial;
+}
+
+
+
+.ui_style_patches_links_map-tools {
+    margin-left: 0;
+    margin-bottom: .5em;
+    display: block;
+}
+
+.ui_style_patches_links_map-tools > *:not(.ui_style_patches_links_map-create_select) {
+    display: none;
+}
+
+.ui_style_patches_links_map-tools:focus-within > *{
+    display: block;
+}
+
+.ui_style_patches_links_map-item {
+    display: flex;
+    flex-wrap: wrap;
+}
+.ui_style_patches_links_map-item > .ui_base_map-key {
+  flex-grow: 1;
+  & .ui_base_map-key-input {
+    width: 100%;
+  }
+}
+.ui_style_patches_links_map-item-drag_handle {
+  order: -1;
+}
+
+
+.ui_style_patches_links_map-item_value {
+    flex-grow: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.ui_style_patches_links_map-item_value-value_label {
+    flex: 1 1 100%;
+}
+.ui_style_patches_links_map-item_value-change_input {
+    flex: 1;
+}
+.ui_style_patches_links_map-item_value-change_input >
+.ui_style_patches_links_map-item_value-change_input-input {
+    width: 100%;
+}
+
+.ui_style_patches_links_map-item_value-change_select, .ui_style_patches_links_map-item_value-change_input{
+    display: none;
+}
+
+.ui_style_patches_links_map-item_value:focus-within
+    :is(
+        .ui_style_patches_links_map-item_value-change_select,
+        .ui_style_patches_links_map-item_value-change_input
+    ) {
+    display: block;
+}
+
+.ui_style_patches_map-tools {
+    margin-left: 0;
 }
 
 .ui-button-input:disabled {
   color: lightgray;
 }
 
-.ui_axes_math-map-tools :is(.ui_axes_math-axis_tag-input,
-.ui-button) {
+.ui_axes_math-map-tools :is(
+    .ui_axes_math-axis_tag-input, .ui-button),
+.ui_base_map-tools :is(
+    .ui_base_map-key-input, .ui-button),
+.ui_style_patches_map-tools :is(
+    .ui_plain_select, .ui_plain_select-select)
+{
     font-size: inherit;
     padding-block: 0;
 }
 
-/* don't show these controls for the root collection */
-.ui_axes_math > .ui_axes_math-locations_sum > :is(.ui_axes_math-locations_sum-drag_handle, .ui_axes_math-locations_sum-label){
-    display: none;
+.ui_style_patches_map-tools .ui_base_map-key-input{
+    width: 4em;
 }
 
 .ui_axes_math > .ui_axes_math-locations_sum > .ui_axes_math-locations_sum-items {
@@ -1153,4 +1364,29 @@ input:invalid {
 .ui-dialog-manage_state-message-status_fail .ui-dialog-manage_state-message-process_label:after{
   content: "failed";
   background: darkred;
+}
+
+.ui_missing-ui_element {
+    --border-spec: 1px dashed red;
+    border-bottom: var(--border-spec);
+    margin-bottom: var(--gap-size) 0;
+}
+
+.ui_missing-ui_element h4 {
+  background: darkred;
+  color: white;
+}
+
+.ui_missing-ui_element-full_key{
+    font-weight: bold;
+}
+
+.ui_missing-ui_element-message {
+    display: block;
+    background: khaki;
+}
+
+.ui_leading-algorithm_container > :not(:first-child) {
+  background: #dfdfdf;
+  padding: .2em;
 }
