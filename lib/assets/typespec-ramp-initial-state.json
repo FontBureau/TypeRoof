@@ -1,6 +1,6 @@
 {
   "typeSpec": {
-    "columnWidth": "34.3",
+    "columnWidth": "53",
     "baseFontSize": "14",
     "autoOPSZ": "1",
     "children": [
@@ -9,6 +9,12 @@
         {
           "relativeFontSize": "4.571428571",
           "autoOPSZ": "1",
+          "axesLocations": [
+              [
+                "wght",
+                "700"
+              ]
+          ],
           "label": "H1"
         }
       ],
@@ -17,6 +23,12 @@
         {
           "relativeFontSize": "1.785714286",
           "autoOPSZ": "1",
+          "axesLocations": [
+            [
+              "wght",
+              "600"
+            ]
+          ],
           "label": "H2"
         }
       ],
@@ -25,6 +37,12 @@
         {
           "relativeFontSize": "1.285714286",
           "autoOPSZ": "1",
+          "axesLocations": [
+            [
+              "wght",
+              "550"
+            ]
+          ],
           "label": "H3"
         }
       ],
