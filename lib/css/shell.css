@@ -1391,6 +1391,10 @@ button.ui_style_patches_map-item-value {
   padding: .2em;
 }
 
+.typeroof-document{
+    margin-left: 2em;
+}
+
 .typeroof-document-element{
     line-height: var(--line-height);
 }
