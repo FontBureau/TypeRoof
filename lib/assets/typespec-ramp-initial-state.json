@@ -1,6 +1,6 @@
 {
   "typeSpec": {
-    "columnWidth": "53",
+    "columnWidth": "53.0",
     "baseFontSize": "14",
     "autoOPSZ": "1",
     "children": [
@@ -10,10 +10,10 @@
           "relativeFontSize": "4.571428571",
           "autoOPSZ": "1",
           "axesLocations": [
-              [
-                "wght",
-                "700"
-              ]
+            [
+              "wght",
+              "700"
+            ]
           ],
           "label": "H1"
         }
@@ -51,19 +51,94 @@
         {
           "relativeFontSize": "1.285714286",
           "autoOPSZ": "1",
-          "label": "T1"
+          "label": "T1",
+          "stylePatches": [
+            [
+              "italic",
+              "italic"
+            ],
+            [
+              "bold",
+              "bold"
+            ],
+            [
+              "bold italic",
+              "bold italic"
+            ]
+          ]
         }
       ],
       [
         "4",
         {
           "autoOPSZ": "1",
-          "label": "T2"
+          "label": "T2",
+          "stylePatches": [
+            [
+              "italic",
+              "italic"
+            ],
+            [
+              "bold",
+              "bold"
+            ],
+            [
+              "bold italic",
+              "bold italic"
+            ]
+          ]
         }
       ]
     ],
     "label": ""
   },
+  "stylePatchesSource": [
+    [
+      "italic",
+      {
+        "instance": {
+          "axesLocations": [
+            [
+              "slnt",
+              {
+                "logicalValue": "min"
+              }
+            ]
+          ]
+        },
+        "stylePatchTypeKey": "SimpleStylePatch"
+      }
+    ],
+    [
+      "bold",
+      {
+        "instance": {
+          "axesLocations": [
+            [
+              "wght",
+              {
+                "logicalValue": "number",
+                "numericValue": "700"
+              }
+            ]
+          ]
+        },
+        "stylePatchTypeKey": "SimpleStylePatch"
+      }
+    ],
+    [
+      "bold italic",
+      {
+        "instance": {
+          "styles": [
+            "bold",
+            "italic"
+          ]
+        },
+        "stylePatchTypeKey": "CompositeStylePatch"
+      }
+    ]
+  ],
   "document": {
     "nodes": [
       [
@@ -136,7 +211,55 @@
                 "0",
                 {
                   "instance": {
-                    "text": "Intro text leads reader into the article by the nose, with grace and dignity and a little pithy charm. Typeface has changed to the appropriate optical size by the miracle of modern typography."
+                    "text": "Intro text leads reader into the article by the nose, with grace and dignity and a little pithy charm. "
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "1",
+                {
+                  "instance": {
+                    "styleLink": "bold",
+                    "text": "Typeface"
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "2",
+                {
+                  "instance": {
+                    "text": " has changed to the "
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "3",
+                {
+                  "instance": {
+                    "styleLink": "italic",
+                    "text": "appropriate"
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "4",
+                {
+                  "instance": {
+                    "text": " optical size by the miracle of modern "
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "5",
+                {
+                  "instance": {
+                    "styleLink": "bold italic",
+                    "text": "typography."
                   },
                   "documentNodeTypeKey": "TextRun"
                 }
@@ -156,7 +279,64 @@
                 "0",
                 {
                   "instance": {
-                    "text": "Johannes Gutenberg’s work on the printing press began in approximately 1436 when he partnered with Andreas Heilmann, owner of a paper mill. Having previously worked as a goldsmith, Gutenberg made skillful use of the knowledge of metals he had learned as a craftsman. He was the first to make type from an alloy of lead, tin, and antimony, which was critical for producing durable type that produced high-quality printed books and proved to be much better suited for printing than all other known materials."
+                    "text": "Johannes Gutenberg’s work on the "
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "1",
+                {
+                  "instance": {
+                    "styleLink": "bold",
+                    "text": "printing press"
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "2",
+                {
+                  "instance": {
+                    "text": " began in approximately 1436 when he partnered with Andreas Heilmann, owner of a "
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "3",
+                {
+                  "instance": {
+                    "styleLink": "italic",
+                    "text": "paper mill"
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "4",
+                {
+                  "instance": {
+                    "text": ". Having previously worked as a "
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "5",
+                {
+                  "instance": {
+                    "styleLink": "bold italic",
+                    "text": "goldsmith"
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "6",
+                {
+                  "instance": {
+                    "text": ", Gutenberg made skillful use of the knowledge of metals he had learned as a craftsman. He was the first to make type from an alloy of lead, tin, and antimony, which was critical for producing durable type that produced high-quality printed books and proved to be much better suited for printing than all other known materials."
                   },
                   "documentNodeTypeKey": "TextRun"
                 }
@@ -176,7 +356,64 @@
                 "0",
                 {
                   "instance": {
-                    "text": "Επειδη δε κοινη το των Αρκαδων εθνος εχει τινα παρα πασι τοις Ελλησιν επ αρετη φημην, ου μονον δια ρην εν τοις ηθεσι και βιοις φιλοξενιαν και φιλανθρωπιαν, μαλιστα δε δια την εις το θειον ευσεβειαν, αξιον βραχυ διαπορησαι περι της Κυναιθεων αγριοτητος, πως οντες ομολογουμενως Αρκαδες τοσουτο κατ εκεινους τοθς καιπους διηνεγκαν των αλλων Ελληνων ωμοτητι και παρανομια. δοκαυσι δε μοι, διοτι τα καλως υπο των αρχαιων επινενοημενα και φυσικως συντεθεωρημενα περι παντας τους κατοικουντας την Αρκαδιαν, ταυτα δη πρωτοι και μονοι Αρκαδων εγκατελιπον. μουσικην γαρ, την γ αληθως μουσικην, πασι μεν ανθρωποις οφελος ασκειν Αρκασι δε και αναγκαιον. ου γαρ ηγητεον μουσικην, ως Εφορος φησιν εν τω προοιμιω της ολης προγματειας, ουδαμως αρμοζοντα λογον αυτω πιψας, επ απατη και γοητεια παραισηχθαι τοις ανθρωποις, ουδε τους παλαιοθς Κρητων και Λακεδαιμονιων αυλον και ρυθμον εις τον πολεμον αντι σαλπιγγος εικη νομιστεον εισαγαγειν, ουδε τους πρωτους Αρκαδων εις την ολην πολιτειαν την μοθσικην παραλαβειν επι τοσουτον ωστε μη μονον παισιν ουσιν, αλλα ακι νεανισκοις γενομενοις εως τριακοντ ετων κατ αναγκην ουντροφον ποιειν αυτην, ταλλα τοις βιοις οντας αυστηροτατους."
+                    "text": "Επειδη δε κοινη το των "
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "1",
+                {
+                  "instance": {
+                    "styleLink": "bold",
+                    "text": "Αρκαδων εθνος"
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "2",
+                {
+                  "instance": {
+                    "text": " εχει τινα παρα πασι τοις "
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "3",
+                {
+                  "instance": {
+                    "styleLink": "italic",
+                    "text": "Ελλησιν"
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "4",
+                {
+                  "instance": {
+                    "text": " επ αρετη φημην, ου μονον δια ρην εν τοις ηθεσι και βιοις φιλοξενιαν και φιλανθρωπιαν, "
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "5",
+                {
+                  "instance": {
+                    "styleLink": "bold italic",
+                    "text": "μαλιστα δε δια την εις το θειον ευσεβειαν,"
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "6",
+                {
+                  "instance": {
+                    "text": " αξιον βραχυ διαπορησαι περι της Κυναιθεων αγριοτητος, πως οντες ομολογουμενως Αρκαδες τοσουτο κατ εκεινους τοθς καιπους διηνεγκαν των αλλων Ελληνων ωμοτητι και παρανομια. δοκαυσι δε μοι, διοτι τα καλως υπο των αρχαιων επινενοημενα και φυσικως συντεθεωρημενα περι παντας τους κατοικουντας την Αρκαδιαν, ταυτα δη πρωτοι και μονοι Αρκαδων εγκατελιπον. μουσικην γαρ, την γ αληθως μουσικην, πασι μεν ανθρωποις οφελος ασκειν Αρκασι δε και αναγκαιον. ου γαρ ηγητεον μουσικην, ως Εφορος φησιν εν τω προοιμιω της ολης προγματειας, ουδαμως αρμοζοντα λογον αυτω πιψας, επ απατη και γοητεια παραισηχθαι τοις ανθρωποις, ουδε τους παλαιοθς Κρητων και Λακεδαιμονιων αυλον και ρυθμον εις τον πολεμον αντι σαλπιγγος εικη νομιστεον εισαγαγειν, ουδε τους πρωτους Αρκαδων εις την ολην πολιτειαν την μοθσικην παραλαβειν επι τοσουτον ωστε μη μονον παισιν ουσιν, αλλα ακι νεανισκοις γενομενοις εως τριακοντ ετων κατ αναγκην ουντροφον ποιειν αυτην, ταλλα τοις βιοις οντας αυστηροτατους."
                   },
                   "documentNodeTypeKey": "TextRun"
                 }
@@ -196,7 +433,64 @@
                 "0",
                 {
                   "instance": {
-                    "text": "В глубоких и темных водах Антарктики ученые обнаружили невероятное изобилие до сих пор неизвестных видов морской жизни. Исследователи открыли более 700 новых видов морских существ в морях, которые раньше считались слишком неблагоприятными для существования большого биологического разнообразия. Эти темные воды буквально кишат стаями хищных губок, свободноплавающих червей, ракообразных и моллюсков. Доклад о новых видах фауны был опубликован в журнале Nature. “То, что раньше считалось пустой бездной, на поверку оказалось динамичной, меняющейся и биологически богатой средой”, - сказала одна из соавторов документа, морской биолог Британского общества исследования Антарктики доктор Кэтрин Линс. “Находка этой сокровищницы морской живности - наш первый шаг на пути к пониманию сложного взаимоотношения глубоких океанов и распределения морской жизни”, - добавила она. Науке это пока неизвестно. Исследование антарктических вод было проведено в рамках проекта Andeep, изучающего биологическое разнообразие глубоководного антарктического дна. Один из ранее неизвестных ракообразных (Cylindrarcturus), найденных в Антарктитке Исследователи не ожидали обнаружить такого разнобразия морской жизни Проект призван заполнить “вакуум знаний” о фауне, населяющей самые глубокие воды Южного океана."
+                    "text": "В глубоких и темных водах "
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "1",
+                {
+                  "instance": {
+                    "styleLink": "bold",
+                    "text": "Антарктики"
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "2",
+                {
+                  "instance": {
+                    "text": " ученые обнаружили "
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "3",
+                {
+                  "instance": {
+                    "styleLink": "italic",
+                    "text": "невероятное"
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "4",
+                {
+                  "instance": {
+                    "text": " изобилие до сих пор неизвестных видов морской жизни. "
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "5",
+                {
+                  "instance": {
+                    "styleLink": "bold italic",
+                    "text": "Исследователи"
+                  },
+                  "documentNodeTypeKey": "TextRun"
+                }
+              ],
+              [
+                "6",
+                {
+                  "instance": {
+                    "text": " открыли более 700 новых видов морских существ в морях, которые раньше считались слишком неблагоприятными для существования большого биологического разнообразия. Эти темные воды буквально кишат стаями хищных губок, свободноплавающих червей, ракообразных и моллюсков. Доклад о новых видах фауны был опубликован в журнале Nature. “То, что раньше считалось пустой бездной, на поверку оказалось динамичной, меняющейся и биологически богатой средой”, - сказала одна из соавторов документа, морской биолог Британского общества исследования Антарктики доктор Кэтрин Линс. “Находка этой сокровищницы морской живности - наш первый шаг на пути к пониманию сложного взаимоотношения глубоких океанов и распределения морской жизни”, - добавила она. Науке это пока неизвестно. Исследование антарктических вод было проведено в рамках проекта Andeep, изучающего биологическое разнообразие глубоководного антарктического дна. Один из ранее неизвестных ракообразных (Cylindrarcturus), найденных в Антарктитке Исследователи не ожидали обнаружить такого разнобразия морской жизни Проект призван заполнить “вакуум знаний” о фауне, населяющей самые глубокие воды Южного океана."
                   },
                   "documentNodeTypeKey": "TextRun"
                 }
@@ -246,6 +540,7 @@
           "documentNodeTypeKey": "Element"
         }
       ]
-    ]
+    ],
+    "editingNode": "./4/instance/nodes/5"
   }
 }
