@@ -3,8 +3,6 @@ name: Deploy to GitHub Pages
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
   pull_request:
 
 jobs:
@@ -17,29 +15,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: 'true'
+          submodules: "true"
 
-      - name: Setup Node
+      - name: ⚙️ Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: latest
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
-      - name: Persist npm cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
-
-      - name: Persist Eleventy .cache
+      - name: 💾 Persist Eleventy .cache
         uses: actions/cache@v4
         with:
           path: ./.cache
           key: ${{ runner.os }}-eleventy-fetch-cache
 
-      - run: npm install
-      - run: npx @11ty/eleventy
+      - name: 📦 Install dependencies
+        run: npm ci
 
-      - name: Deploy
+      - name: 🧪 Test
+        run: npm run test
+
+      - name: 📚 Build documentation & application
+        run: npm run build
+
+      - name: 🚀 Deploy
         uses: peaceiris/actions-gh-pages@v4
         if: github.ref == 'refs/heads/main'
         with:
