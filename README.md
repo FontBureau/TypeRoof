@@ -15,9 +15,9 @@ a community of users and developers who are interested in shaping its future.
 
 ## Directions
 
-* [Documentation -- Landing Page](https://fontbureau.github.io/TypeRoof/docs)
-* [User Kit -- Getting Started and Usage](https://fontbureau.github.io/TypeRoof/docs/usage)
-* [Developer Kit -- Contributing and Customization](https://fontbureau.github.io/TypeRoof/docs/development)
+- [Documentation -- Landing Page](https://fontbureau.github.io/TypeRoof/docs)
+- [User Kit -- Getting Started and Usage](https://fontbureau.github.io/TypeRoof/docs/usage)
+- [Developer Kit -- Contributing and Customization](https://fontbureau.github.io/TypeRoof/docs/development)
 
 ### [TypeRoof Shell](https://fontbureau.github.io/TypeRoof/shell)
 
@@ -62,7 +62,6 @@ Available on:
 # OR, maybe you want to use the Eleventy built-in development server
 # which is ideal to write documentation. See the next section.
 ```
-
 
 ## Build the complete static site locally
 
