@@ -38,11 +38,14 @@ export default function (eleventyConfig) {
     eleventyConfig.addPassthroughCopy("index.html");
     // These are also mentioned in .eleventyignore
     eleventyConfig.addPassthroughCopy("lib");
-    eleventyConfig.addPassthroughCopy("shell.html");
     eleventyConfig.addPassthroughCopy("legacy.html");
     eleventyConfig.addPassthroughCopy("docs/experiments");
     // These are not ignored .eleventyignore
     eleventyConfig.addPassthroughCopy("docs/states_lib/**/*.json.txt");
+    
+    // Include Vite build output (built shell.html and optimized assets)
+    eleventyConfig.addPassthroughCopy({ "dist/shell.html": "shell.html" });
+    eleventyConfig.addPassthroughCopy({ "dist/assets": "assets" });
 
     let mdOptions = {
         html: true,

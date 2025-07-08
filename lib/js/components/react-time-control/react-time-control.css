@@ -1,0 +1,33 @@
+.react-time-control {
+  padding: 0.75em 0;
+  border-bottom: 1px solid #b7b4b0;
+}
+
+.react-time-control__controls {
+  margin-bottom: 1em;
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+}
+
+.react-time-control__button {
+  transition: background-color 0.2s ease;
+}
+
+.react-time-control__button--playing {
+  background-color: #f77;
+}
+
+.react-time-control__time-display {
+  font-size: 0.9em;
+}
+
+.react-time-control__slider-label {
+  display: block;
+  margin-bottom: 0.25em;
+}
+
+.react-time-control__slider {
+  width: 100%;
+  cursor: pointer;
+}
