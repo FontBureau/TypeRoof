@@ -4,10 +4,10 @@ env:
 on:
   workflow_dispatch:
   schedule:
-     # '*' is a special character in YAML so you have to quote this string
-     # run at minute 35 past hour 0 and 12, every day
-     # i.e.:  0:35 am and 12:35 pm
-     - cron:  '35 0,12 * * *'
+    # '*' is a special character in YAML so you have to quote this string
+    # run at minute 35 past hour 0 and 12, every day
+    # i.e.:  0:35 am and 12:35 pm
+    - cron: "35 0,12 * * *"
 jobs:
   pull-files:
     runs-on: ubuntu-latest
@@ -20,18 +20,36 @@ jobs:
           - repo: googlefonts/roboto-delta
             unique_path: roboto-delta-vf
             files:
-              - [fonts/LGCAlpha/Roboto-Delta-VF.ttf, lib/assets/fonts/Roboto-Delta-VF.woff2]
+              - [
+                  fonts/LGCAlpha/Roboto-Delta-VF.ttf,
+                  lib/assets/fonts/Roboto-Delta-VF.woff2,
+                ]
           - repo: googlefonts/amstelvar-avar2
             unique_path: amstelvar-avar2
             files:
-              - [Fonts/AmstelvarA2-Roman_avar2.ttf, lib/assets/fonts/AmstelvarA2-Roman_avar2.woff2]
-              - [Fonts/AmstelvarA2-Italic_avar2.ttf, lib/assets/fonts/AmstelvarA2-Italic_avar2.woff2]
+              - [
+                  Fonts/AmstelvarA2-Roman_avar2.ttf,
+                  lib/assets/fonts/AmstelvarA2-Roman_avar2.woff2,
+                ]
+              - [
+                  Fonts/AmstelvarA2-Italic_avar2.ttf,
+                  lib/assets/fonts/AmstelvarA2-Italic_avar2.woff2,
+                ]
           - repo: google/fonts
             unique_path: googlefonts
             files:
-              - ["ofl/robotoflex/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].ttf", "lib/assets/fonts/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].woff2"]
-              - ["ofl/roboto/Roboto[wdth,wght].ttf", "lib/assets/fonts/Roboto[wdth,wght].woff2"]
-              - ["ofl/roboto/Roboto-Italic[wdth,wght].ttf", "lib/assets/fonts/Roboto-Italic[wdth,wght].woff2"]
+              - [
+                  "ofl/robotoflex/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].ttf",
+                  "lib/assets/fonts/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].woff2",
+                ]
+              - [
+                  "ofl/roboto/Roboto[wdth,wght].ttf",
+                  "lib/assets/fonts/Roboto[wdth,wght].woff2",
+                ]
+              - [
+                  "ofl/roboto/Roboto-Italic[wdth,wght].ttf",
+                  "lib/assets/fonts/Roboto-Italic[wdth,wght].woff2",
+                ]
     steps:
       - uses: awalsh128/cache-apt-pkgs-action@latest
         # https://github.com/marketplace/actions/cache-apt-packages
