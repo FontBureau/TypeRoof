@@ -6,7 +6,13 @@ fonts/axes.json
 fonts/repos/*
 !fonts/repos/README.md
 php.ini
-_site
 node_modules
 venv
 __pycache__
+
+# Vite build outputs
+dist
+*.local
+
+# Eleventy build output
+_site
