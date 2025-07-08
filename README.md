@@ -34,59 +34,86 @@ instance obsolete.
 
 ## How to build and run locally (for development)
 
-You don't need to build TypeRoof, it is created using vanilla JavaScript and
-[JavaScript Modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules). You can serve TypeRoof directly from the project root directory:
+TypeRoof uses a modern development setup with [Vite](https://vitejs.dev/) for the shell application and [Eleventy](https://www.11ty.dev/) for documentation. The development servers are configured to work together seamlessly.
+
+### Prerequisites
+
+You need Node.js installed. Then install the dependencies:
 
 ```sh-session
-#  E.g. using the Python-3 builtin web-server.
+$ ~/TypeRoof> npm ci
+```
+
+### Development Commands
+
+**For full development (recommended):**
+
+```sh-session
+# Start both shell and documentation servers
+$ ~/TypeRoof> npm run dev
+
+# Then go to: http://localhost:3000/TypeRoof/
+# - TypeRoof Shell: http://localhost:3000/TypeRoof/shell.html
+# - Documentation: http://localhost:3000/TypeRoof/docs/
+```
+
+**For shell development only:**
+
+```sh-session
+# Start only the Vite development server for the shell
+$ ~/TypeRoof> npm run dev:app
+
+# Then go to: http://localhost:3000/TypeRoof/shell.html
+# (Documentation routes will show a helpful "not available" message)
+```
+
+**For documentation development only:**
+
+```sh-session
+# Start only the Eleventy development server
+$ ~/TypeRoof> npm run dev:doc
+
+# Then go to: http://localhost:8080/TypeRoof/docs/
+```
+
+### Legacy Development Method
+
+If you prefer a simple file server approach, TypeRoof (legacy) can still be served directly:
+
+```sh-session
+# Using Python's built-in server
 $ ~/TypeRoof> python3 -m http.server 8000
-Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+# Then go to: http://localhost:8000/legacy.html
 
-# Then go to: http://0.0.0.0:8000/shell.html
-
-# OR use https://www.npmjs.com/package/http-server (installing globally)
-$ ~/TypeRoof> npm install -g http-server
-$ ~/TypeRoof> http-server
-Starting up http-server, serving ./
-
-http-server version: 14.1.1
-
-[...]
-
-Available on:
-  http://127.0.0.1:8080
-  http://192.168.178.87:8080
-
-# Then go to: http://localhost:8080/shell
-
-# OR, maybe you want to use the Eleventy built-in development server
-# which is ideal to write documentation. See the next section.
+# Using Node.js http-server (if installed globally)
+$ ~/TypeRoof> npx http-server
+# Then go to: http://localhost:8080/legacy.html
 ```
 
 ## Build the complete static site locally
 
-The static web-site at https://fontbureau.github.io/TypeRoof/ (served via GitHub pages)
-is build using [Eleventy](https://www.11ty.dev/). See the [documentation of Eleventy](https://www.11ty.dev/docs/)
-for more specific usage.
+The [static website](https://fontbureau.github.io/TypeRoof/) (served via GitHub Pages) is built using both [Vite](https://vitejs.dev/) for the shell application and [Eleventy](https://www.11ty.dev/) for documentation.
+
+### Build Commands
+
+**Build everything (recommended):**
 
 ```sh-session
-# You requires Node.js and must install the dependencies first:
-$ ~/TypeRoof> npm install
+# Build both shell application and documentation
+$ ~/TypeRoof> npm run build
 
-# We use eleventy to build the static web site:
-$ ~/TypeRoof> npx @11ty/eleventy
+# The complete site will be created in the `_site` directory
+# This includes:
+# - Optimized shell application (from Vite)
+# - Generated documentation (from Eleventy)
+```
 
-# The resulting site has been created in the `_site` directory.
+**Build individual parts:**
 
-# You can also use the live updating development server:
+```sh-session
+# Build only the shell application (creates `dist/` directory)
+$ ~/TypeRoof> npm run build:app
 
-$ ~/TypeRoof> npx @11ty/eleventy --serve
-[...]
-[11ty] Copied [xxx] Wrote [xxx] files in 0.75 seconds (v3.0.0)
-[11ty] Watching…
-[11ty] Server at http://localhost:8080/
-
-# Then go to: http://localhost:8080/shell
-# Or go to: http://localhost:8080/shell
-
+# Build only the documentation (creates `_site/` directory)
+$ ~/TypeRoof> npm run build:doc
 ```
