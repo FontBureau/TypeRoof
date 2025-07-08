@@ -8,9 +8,15 @@
   },
   "scripts": {
     "test": "npm run lint && npm run format:check",
-    "dev:doc": "eleventy --serve",
-    "build": "npm run build:doc",
+    "build": "npm run build:app && npm run build:doc",
+    "dev": "concurrently \"npm run dev:doc\" \"npm run dev:app:delayed\"",
+    "build:app": "vite build",
     "build:doc": "eleventy",
+    "build:serve": "rm -rf _site && rm -rf _site_temp && npm run build && mv _site/ _site_temp && mkdir -p _site && mv _site_temp/ _site/TypeRoof && npm run serve",
+    "serve": "http-server ./_site -p 8080 -d -o /TypeRoof/shell.html",
+    "dev:app": "vite",
+    "dev:app:delayed": "node -e \"setTimeout(() => process.exit(0), 3000)\" && npm run dev:app",
+    "dev:doc": "eleventy --serve",
     "lint": "eslint .",
     "format:write": "prettier --write .",
     "format:check": "prettier --check ."
@@ -30,11 +36,20 @@
     "@11ty/eleventy-plugin-syntaxhighlight": "^5.0.0",
     "eleventy-plugin-embed-everything": "^1.19.0",
     "globals": "^15.12.0",
-    "markdown-it-github-headings": "^2.0.1"
+    "markdown-it-github-headings": "^2.0.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "concurrently": "^8.2.2",
     "eslint": "^9.30.1",
     "prettier": "^3.6.2",
-    "puppeteer": "^24.17.0"
+    "puppeteer": "^24.17.0",
+    "http-server": "^14.1.1",
+    "vite": "^5.0.0",
+    "vite-plugin-static-copy": "^3.1.0"
   }
 }
