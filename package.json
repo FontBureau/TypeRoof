@@ -7,14 +7,20 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run lint && npm run format:check",
+    "dev:doc": "eleventy --serve",
+    "build": "npm run build:doc",
+    "build:doc": "eleventy",
+    "lint": "eslint .",
+    "format:write": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [
     "typography",
     "type proofing",
     "animation"
   ],
-  "author": "",
+  "author": "TypeRoof Contributors",
   "license": "Apache-2.0",
   "main": "lib/js/main.mjs",
   "type": "module",
@@ -25,5 +31,9 @@
     "eleventy-plugin-embed-everything": "^1.19.0",
     "globals": "^15.12.0",
     "markdown-it-github-headings": "^2.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^9.30.1",
+    "prettier": "^3.6.2"
   }
 }

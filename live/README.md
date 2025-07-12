@@ -23,7 +23,6 @@ send update messages to TypeRoof, the [Run with WebSocket](#run-with-websocket) 
 for this case, as the polling example has cross-orign limitations and the
 polling adapter reqiures a (hard-coded) list of known file names to poll.
 
-
 ## Install
 
 You need to do this only in order to use the `websocket-font-update-server.py`
@@ -67,14 +66,14 @@ and the app is hidden.
 
 There are two or three individual steps involved:
 
- * [WebSocket Part 1: Server](#websocket-part-1-server)
- * [WebSocket Part 2: Adapter](#websocket-part-2-adapter)
- * (optionally) [Part 3: File Rotation](#part-3-file-rotation)
+- [WebSocket Part 1: Server](#websocket-part-1-server)
+- [WebSocket Part 2: Adapter](#websocket-part-2-adapter)
+- (optionally) [Part 3: File Rotation](#part-3-file-rotation)
 
 ### WebSocket Part 1: Server
 
 This will start a WebSocket-server at `ws://localhost:8765/` where the
-page `adapter-websocket-to-typeroof.html` (see  [Part 2](#websocket-part-2-adapter))
+page `adapter-websocket-to-typeroof.html` (see [Part 2](#websocket-part-2-adapter))
 can connect to.
 
 You'll need a directory to observe for font-changes, to test this, go to
@@ -98,10 +97,10 @@ require special cross-site allowance in the browser (the server is required
 to check), the online adapter is able to connect to the server started
 in [WebSocket Part 1: Server](#websocket-part-1-server).
 
- * Open [https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof-iframe/](https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof-iframe/)
-in your browser (iframe version).
- * or open [https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/](https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/)
-in your browser (pop-up/new tab version).
+- Open [https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof-iframe/](https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof-iframe/)
+  in your browser (iframe version).
+- or open [https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/](https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/)
+  in your browser (pop-up/new tab version).
 
 #### B: Using a Local Web-Server
 
@@ -114,18 +113,18 @@ $ ~/path/to/TypeRoof/live> python3 -m http.server 8000
 Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
 ```
 
- * Open [http://0.0.0.0:8000/adapter-websocket-to-typeroof-iframe.html](http://0.0.0.0:8000/adapter-websocket-to-typeroof-iframe.html)
-in your browser (iframe version).
- * or open [http://0.0.0.0:8000/adapter-websocket-to-typeroof.html](http://0.0.0.0:8000/adapter-websocket-to-typeroof.html)
-in your browser (pop-up/new tab version).
+- Open [http://0.0.0.0:8000/adapter-websocket-to-typeroof-iframe.html](http://0.0.0.0:8000/adapter-websocket-to-typeroof-iframe.html)
+  in your browser (iframe version).
+- or open [http://0.0.0.0:8000/adapter-websocket-to-typeroof.html](http://0.0.0.0:8000/adapter-websocket-to-typeroof.html)
+  in your browser (pop-up/new tab version).
 
 ## Run with Polling
 
 There are two or three individual steps involved:
 
- * [Polling Part 1: Server](#polling-part-1-server)
- * [Polling Part 2: Adapter](#polling-part-2-adapter)
- * (optionally) [Part 3: File Rotation](#part-3-file-rotation)
+- [Polling Part 1: Server](#polling-part-1-server)
+- [Polling Part 2: Adapter](#polling-part-2-adapter)
+- (optionally) [Part 3: File Rotation](#part-3-file-rotation)
 
 ### Polling Part 1: Server
 
@@ -151,21 +150,19 @@ in your browser.
 The main purpose of this adapter is to serve as an example, thus there
 are some assumptions hard-coded into this adapter:
 
- * The fonts are located at 'http://0.0.0.0:8000/fonts/'
- * Looking for one font only called `live-font.ttf`
+- The fonts are located at 'http://0.0.0.0:8000/fonts/'
+- Looking for one font only called `live-font.ttf`
 
 You can change these assumptions in the JavaScript of the adapter, but
 for general usage the [Run with WebSocket](#run-with-websocket) example
 might be working out of the box.
-
-
 
 See [All Adapters Usage](#adapters-usage).
 
 ## Part 3: File Rotation
 
 This is optional as a demo. To observe file changes created e.g. by a
-font-editor, Part 1 and Part 2 are  sufficient.
+font-editor, Part 1 and Part 2 are sufficient.
 
 If you don't have a source directory for a changing font file that you want
 to see updated in TypeRoof, i.e. a font updated by an editor or build process,
