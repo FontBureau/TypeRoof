@@ -493,7 +493,6 @@ li.ui_key_moment_controller.active:not(:last-child) {
     position: absolute;
     left: 0;
     top: 0;
-
 }
 
 .ui_color_patch-has_color:hover:after {
@@ -503,6 +502,15 @@ li.ui_key_moment_controller.active:not(:last-child) {
     left: calc((-1 * var(--hover-size) / 2) + (var(--width) / 2));
     top: calc((-1 * var(--hover-size) / 2) + (var(--height) / 2));
     border-radius: calc(var(--hover-size)/2);
+    /* NOTE for transparent colors this is important, otherwise, we can't
+     * see why/where surrounding UIs are blocked.*/
+    border: var(--gap-size) solid var(--gap-color);
+    /* This way the enlarged color patch won't keep the hover state, i.e.
+     * making the bigger hover color patch disappear when the area
+     * of the .ui_color_patch-has_color is left by the pointer.
+     */
+    pointer-events: none;
+    z-index: 2;
 }
 
 .ui_color_patch-has_color:after {

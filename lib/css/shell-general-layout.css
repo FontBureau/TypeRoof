@@ -16,7 +16,7 @@
             var(--transparency-indicator-bg-light) 180deg 270deg,
             var(--transparency-indicator-bg-dark) 270deg 0deg
     );
-    --transparency-indicator-bg-size: 15px 15px;
+    --transparency-indicator-bg-size: 10px 10px;
 
     --text-color: #121212;
     --text-color-disabled: #888;
