@@ -6,7 +6,6 @@ export default [
     ignores: [
       "**/vendor/**",
       "_site/**",
-      "lib/js/components/layouts/list-of-many-links.mjs", // TODO: parser error in this file
     ],
   },
   // Main configuration
