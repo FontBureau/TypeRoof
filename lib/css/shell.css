@@ -31,7 +31,7 @@
 
 .typeroof-ui > :is(
         .ui_font-select,
-        .ui_layout_select,
+        .ui_layout_select
     ):is(label, .label) > span:first-child,
 .ui_select_task_automation .ui_plain_select-label {
     display: block;
@@ -40,7 +40,7 @@
 
 .typeroof-ui > :is(
         .ui_font-select,
-        .ui_layout_select,
+        .ui_layout_select
     ):is(label, .label) > span:first-child,
 .ui_select_task_automation .ui_plain_select-label,
 .ui_axes_math > label,
