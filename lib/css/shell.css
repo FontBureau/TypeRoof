@@ -1415,3 +1415,12 @@ button.ui_style_patches_map-item-value {
 .typeroof-document-element:not(:first-child) {
     margin-top: var(--line-height);
 }
+
+
+.ui_type_tools_grid-row {
+    display: table-row;
+}
+
+.ui_type_tools_grid-cell {
+    display: table-cell;
+}
