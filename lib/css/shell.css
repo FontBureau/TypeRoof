@@ -1421,6 +1421,51 @@ button.ui_style_patches_map-item-value {
     display: table-row;
 }
 
+/*
+.ui_type_tools_grid-row:nth-child(even) {
+    background: #eee;
+}
+*/
+
 .ui_type_tools_grid-cell {
     display: table-cell;
+    white-space: pre;
+
+    /* Not sure if this produces typographically correct lines
+     * is the line height still correct? It seems like the trimmed value
+     * is lost from the line height...
+     * Not sure if it's just lost for the initial line, and in-between lines
+     * it's correct. I had a box, one line, font size: 52px; (39pt) bit the
+     * box height measured (debugger, Computed, box model diagram) was 48px; line-height was
+     * set to 1;
+     * With two lines and a line break height was 100; (48 + 52 == 100) and
+     * three lines: 152; so, it seems the trimmed value is lost only once,
+     * for the box and the inter-line height is preserved. this has however
+     * implications for boxes/block elements that create lines, as these
+     * line-heights, when stacked, are shorter!
+     *
+     * It would probably be correct to add the trimmed value at the top of
+     * the box. i.e. padding-top: 4px for the example above.
+     */
+    text-box-trim: trim-both;
+    text-box-edge: text alphabetic;
+
+    line-height: 1;
+
+
+    /* the below doesn't work for more than one line, as the height is
+     * then bigger than 1em and thus the trimmed amount misses again.
+     * it would be good to add the trimmed amount as padding-top...
+     * but there's likely no css-way to calculate that.
+     *
+     * As this is a table cell height is essentialy min-height, as the
+     * cell will grow with other cells. min-height doesn't have an effect
+     * with table-cell, so in another context, min-height would be better
+     * here. This is to make the line height consistent also for first
+     * lines. See above in the comment about tex-box-*.
+       vertical-align: bottom;
+       height: 1em;
+     */
+
+
 }
