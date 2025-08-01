@@ -40,6 +40,10 @@
     "eleventy-plugin-embed-everything": "^1.19.0",
     "globals": "^15.12.0",
     "markdown-it-github-headings": "^2.0.1",
+    "prosemirror-model": "^1.25.2",
+    "prosemirror-schema-basic": "^1.2.4",
+    "prosemirror-state": "^1.4.3",
+    "prosemirror-view": "^1.40.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
