@@ -1088,7 +1088,8 @@ input:invalid {
 }
 
 .ui_base_map-item,
-.ui_axes_math-map-item {
+.ui_axes_math-map-item,
+.ui-dimension_sequence {
     --padding-horizontal: .25em;
     --drop-target-indicator-width: .2em;
 }
@@ -1466,6 +1467,23 @@ button.ui_style_patches_map-item-value {
        vertical-align: bottom;
        height: 1em;
      */
-
-
 }
+
+.ui-dimension_sequence .typeroof-ui-label {
+    margin-inline-end: .5em;
+}
+
+/* "fontAxisTagValue" FIXME: not a good selector, not a good label */
+.ui-dimension_sequence .ui_generic_struct_container .line_of_text label{
+    margin-top: .3em;
+    font-weight: 600;
+    display: block;
+}
+/* "fontAxisTagValue" FIXME: not a good selector, not a good label */
+.ui-dimension_sequence .ui_generic_struct_container .line_of_text label,
+.ui-dimension_sequence .ui_generic_struct_container .number_input label {
+    margin-top: .3em;
+    font-weight: 600;
+    display: block;
+}
+
