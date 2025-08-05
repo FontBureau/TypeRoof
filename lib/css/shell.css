@@ -493,7 +493,6 @@ li.ui_key_moment_controller.active:not(:last-child) {
     position: absolute;
     left: 0;
     top: 0;
-
 }
 
 .ui_color_patch-has_color:hover:after {
@@ -503,6 +502,15 @@ li.ui_key_moment_controller.active:not(:last-child) {
     left: calc((-1 * var(--hover-size) / 2) + (var(--width) / 2));
     top: calc((-1 * var(--hover-size) / 2) + (var(--height) / 2));
     border-radius: calc(var(--hover-size)/2);
+    /* NOTE for transparent colors this is important, otherwise, we can't
+     * see why/where surrounding UIs are blocked.*/
+    border: var(--gap-size) solid var(--gap-color);
+    /* This way the enlarged color patch won't keep the hover state, i.e.
+     * making the bigger hover color patch disappear when the area
+     * of the .ui_color_patch-has_color is left by the pointer.
+     */
+    pointer-events: none;
+    z-index: 2;
 }
 
 .ui_color_patch-has_color:after {
@@ -1080,7 +1088,8 @@ input:invalid {
 }
 
 .ui_base_map-item,
-.ui_axes_math-map-item {
+.ui_axes_math-map-item,
+.ui-dimension_sequence {
     --padding-horizontal: .25em;
     --drop-target-indicator-width: .2em;
 }
@@ -1407,3 +1416,74 @@ button.ui_style_patches_map-item-value {
 .typeroof-document-element:not(:first-child) {
     margin-top: var(--line-height);
 }
+
+
+.ui_type_tools_grid-row {
+    display: table-row;
+}
+
+/*
+.ui_type_tools_grid-row:nth-child(even) {
+    background: #eee;
+}
+*/
+
+.ui_type_tools_grid-cell {
+    display: table-cell;
+    white-space: pre;
+
+    /* Not sure if this produces typographically correct lines
+     * is the line height still correct? It seems like the trimmed value
+     * is lost from the line height...
+     * Not sure if it's just lost for the initial line, and in-between lines
+     * it's correct. I had a box, one line, font size: 52px; (39pt) bit the
+     * box height measured (debugger, Computed, box model diagram) was 48px; line-height was
+     * set to 1;
+     * With two lines and a line break height was 100; (48 + 52 == 100) and
+     * three lines: 152; so, it seems the trimmed value is lost only once,
+     * for the box and the inter-line height is preserved. this has however
+     * implications for boxes/block elements that create lines, as these
+     * line-heights, when stacked, are shorter!
+     *
+     * It would probably be correct to add the trimmed value at the top of
+     * the box. i.e. padding-top: 4px for the example above.
+     */
+    text-box-trim: trim-both;
+    text-box-edge: text alphabetic;
+
+    line-height: 1;
+
+
+    /* the below doesn't work for more than one line, as the height is
+     * then bigger than 1em and thus the trimmed amount misses again.
+     * it would be good to add the trimmed amount as padding-top...
+     * but there's likely no css-way to calculate that.
+     *
+     * As this is a table cell height is essentialy min-height, as the
+     * cell will grow with other cells. min-height doesn't have an effect
+     * with table-cell, so in another context, min-height would be better
+     * here. This is to make the line height consistent also for first
+     * lines. See above in the comment about tex-box-*.
+       vertical-align: bottom;
+       height: 1em;
+     */
+}
+
+.ui-dimension_sequence .typeroof-ui-label {
+    margin-inline-end: .5em;
+}
+
+/* "fontAxisTagValue" FIXME: not a good selector, not a good label */
+.ui-dimension_sequence .ui_generic_struct_container .line_of_text label{
+    margin-top: .3em;
+    font-weight: 600;
+    display: block;
+}
+/* "fontAxisTagValue" FIXME: not a good selector, not a good label */
+.ui-dimension_sequence .ui_generic_struct_container .line_of_text label,
+.ui-dimension_sequence .ui_generic_struct_container .number_input label {
+    margin-top: .3em;
+    font-weight: 600;
+    display: block;
+}
+
