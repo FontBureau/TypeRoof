@@ -3,10 +3,7 @@ import globals from "globals";
 export default [
   // Global ignores
   {
-    ignores: [
-      "**/vendor/**",
-      "_site/**",
-    ],
+    ignores: ["**/vendor/**", "_site/**"],
   },
   // Main configuration
   {

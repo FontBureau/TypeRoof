@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 
-export default function (configData) {
+export default function (/*configData*/) {
     return {
         eleventyComputed: {
             statesList: (data)=>{
