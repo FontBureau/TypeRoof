@@ -1192,7 +1192,7 @@ button.ui_style_patches_map-item-value {
     display: block;
 }
 
-.ui_style_patches_links_map-tools > *:not(.ui_style_patches_links_map-create_select) {
+.ui_style_patches_links_map-tools > *:not(.ui_links_map-create_select) {
     display: none;
 }
 
