@@ -493,6 +493,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
     position: absolute;
     left: 0;
     top: 0;
+
 }
 
 .ui_color_patch-has_color:hover:after {
@@ -1128,7 +1129,7 @@ button.ui_style_patches_map-item-value {
 }
 
 .ui_style_patches_map-item-value,
-.ui_style_patches_links_map-item_value{
+.ui_links_map-item_value{
     padding-inline-start: .2em;
 }
 
@@ -1177,69 +1178,69 @@ button.ui_style_patches_map-item-value {
 .ui_base_map-tools > * {
     display: none;
 }
-:focus-within > .ui_base_map-tools:not(.ui_style_patches_links_map-tools) > *,
+:focus-within > .ui_base_map-tools:not(.ui_links_map-tools) > *,
 .ui_style_patches_map-tools > *,
-.ui_style_patches_links_map-tools > *
+.ui_links_map-tools > *
 {
     display: initial;
 }
 
 
 
-.ui_style_patches_links_map-tools {
+.ui_links_map-tools {
     margin-left: 0;
     margin-bottom: .5em;
     display: block;
 }
 
-.ui_style_patches_links_map-tools > *:not(.ui_links_map-create_select) {
+.ui_links_map-tools > *:not(.ui_links_map-create_select) {
     display: none;
 }
 
-.ui_style_patches_links_map-tools:focus-within > *{
+.ui_links_map-tools:focus-within > *{
     display: block;
 }
 
-.ui_style_patches_links_map-item {
+.ui_links_map-item {
     display: flex;
     flex-wrap: wrap;
 }
-.ui_style_patches_links_map-item > .ui_base_map-key {
+.ui_links_map-item > .ui_base_map-key {
   flex-grow: 1;
   & .ui_base_map-key-input {
     width: 100%;
   }
 }
-.ui_style_patches_links_map-item-drag_handle {
+.ui_links_map-item-drag_handle {
   order: -1;
 }
 
 
-.ui_style_patches_links_map-item_value {
+.ui_links_map-item_value {
     flex-grow: 1;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
 }
-.ui_style_patches_links_map-item_value-value_label {
+.ui_links_map-item_value-value_label {
     flex: 1 1 100%;
 }
-.ui_style_patches_links_map-item_value-change_input {
+.ui_links_map-item_value-change_input {
     flex: 1;
 }
-.ui_style_patches_links_map-item_value-change_input >
-.ui_style_patches_links_map-item_value-change_input-input {
+.ui_links_map-item_value-change_input >
+.ui_links_map-item_value-change_input-input {
     width: 100%;
 }
 
-.ui_style_patches_links_map-item_value-change_select, .ui_style_patches_links_map-item_value-change_input{
+.ui_links_map-item_value-change_select, .ui_links_map-item_value-change_input{
     display: none;
 }
 
-.ui_style_patches_links_map-item_value:focus-within
+.ui_links_map-item_value:focus-within
     :is(
-        .ui_style_patches_links_map-item_value-change_select,
-        .ui_style_patches_links_map-item_value-change_input
+        .ui_links_map-item_value-change_select,
+        .ui_links_map-item_value-change_input
     ) {
     display: block;
 }
