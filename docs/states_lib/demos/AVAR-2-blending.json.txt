@@ -1,0 +1,108 @@
+{
+  "activeState": {
+    "t": "1",
+    "duration": "1",
+    "isLoop": "0",
+    "perpetual": "0",
+    "playing": "0",
+    "keyMoments": [
+      {
+        "label": "Key Moment 1",
+        "duration": "1",
+        "isActive": "1",
+        "autoOPSZ": "0",
+        "textColor": {
+          "instance": {
+            "R": "77.00000",
+            "G": "80.00000",
+            "B": "85.00000"
+          },
+          "colorTypeKey": "RGB"
+        },
+        "stageBackgroundColor": {
+          "instance": {
+            "R": "0.00000",
+            "G": "34.00000",
+            "B": "64.00000"
+          },
+          "colorTypeKey": "RGB"
+        }
+      }
+    ],
+    "activeActors": [
+      {
+        "instance": {
+          "isLoop": "0",
+          "label": "",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "isActive": "1",
+              "autoOPSZ": "0",
+              "axesLocations": [
+                [
+                  "opsz",
+                  "21"
+                ]
+              ]
+            },
+            {
+              "label": "Key Moment 2",
+              "duration": "1",
+              "isActive": "1",
+              "autoOPSZ": "0",
+              "axesLocations": [
+                [
+                  "opsz",
+                  "111"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "isLoop": "0",
+                "label": "",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "y",
+                        "200"
+                      ]
+                    ],
+                    "autoOPSZ": "0",
+                    "fontSize": "50",
+                    "textRun": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+                    "textAlign": "center",
+                    "positioningHorizontal": "left"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      }
+    ],
+    "width": "1280",
+    "height": "720",
+    "editingActor": "./0"
+  },
+  "activeLayoutKey": "StageAndActors",
+  "activeFontKey": "from-url Roboto Delta Regular Version_3-000"
+}
