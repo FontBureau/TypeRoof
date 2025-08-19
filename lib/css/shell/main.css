@@ -1529,3 +1529,7 @@ button.ui_style_patches_map-item-value {
   font-weight: 600;
   display: block;
 }
+
+.ui_node_spec_map-item .ui_base_map-key-input {
+  width: initial;
+}
