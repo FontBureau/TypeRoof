@@ -21,7 +21,7 @@ jobs:
             unique_path: roboto-delta-vf
             files:
               - [
-                  fonts/LGCAlpha/Roboto-Delta-VF.ttf,
+                  fonts/LGCAlpha/Roboto-Delta-blended-parametric-VF.ttf,
                   lib/assets/fonts/Roboto-Delta-VF.woff2,
                 ]
           - repo: googlefonts/amstelvar-avar2
