@@ -1,0 +1,566 @@
+---json
+{
+  "permalink": "/docs/states_lib/demos/AVAR-2-blending-gen.json.txt",
+  "layout": null
+}
+---
+{
+  "activeState": {
+    "t": "0",
+    "duration": "10",
+    "isLoop": "0",
+    "perpetual": "0",
+    "playing": "0",
+    "keyMoments": [
+      {
+        "label": "Key Moment 1",
+        "duration": "1",
+        "isActive": "0",
+        "autoOPSZ": "0",
+        "textColor": {
+          "instance": {
+            "R": "100.00000",
+            "G": "100.00000",
+            "B": "100.00000"
+          },
+          "colorTypeKey": "RGB"
+        },
+        "stageBackgroundColor": {
+          "instance": {
+            "R": "0.00000",
+            "G": "34.00000",
+            "B": "64.00000"
+          },
+          "colorTypeKey": "RGB"
+        }
+      }
+    ],
+    "activeActors": [
+      {
+        "instance": {
+          "isLoop": "0",
+          "label": "Variable Text Animation",
+          "keyMoments": [
+
+{% for label, axesLocations, duration, isLast in [
+          ["Start",    '[["XOUC","96"],["YOUC","79"],["XTUC","463"],["XTUR","463"],["XTUD","463"],["YTUC","728"],["YOPE","79"],["opsz","14"]]', 0]
+        , ["Defaults", '[["XOUC","96"],["YOUC","79"],["XTUC","463"],["XTUR","463"],["XTUD","463"],["YTUC","728"],["YOPE","79"]]', 1]
+        , ["XOUC",     '[["XOUC","149"], ["YOUC","79"],["XTUC","463"],["XTUR","463"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1]
+        , ["YOUC",     '[["XOUC","149"],["YOUC","116"],["XTUC","463"],["XTUR","463"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1]
+        , ["XTUC",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1]
+        , ["XTUR",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","563"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1]
+        , ["XTUR",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1]
+        , ["XTUD",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","563"],["YTUC","728"], ["YOPE","79"]]', 1]
+        , ["XTUD",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1]
+        , ["YTUC",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","463"],["YTUC","778"], ["YOPE","79"]]', 1]
+        , ["YTUC",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1]
+        , ["YOPE",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","463"],["YTUC","728"],["YOPE","129"]]', 1]
+        , ["YOPE",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1]
+        , ["Final",    '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1, true]
+        ] %}
+            {
+              "label": "{{label}}",
+              "duration": "{{duration}}",
+              "isActive": "0",
+              "autoOPSZ": "0",
+              "axesLocations": {{axesLocations | safe}}
+            }
+          {% if not isLast %},
+          {% endif %}
+{% endfor %}
+
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "isLoop": "0",
+                "label": "Variable Text",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "isActive": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "-500"
+                      ],
+                      [
+                        "width",
+                        "2280"
+                      ],
+                      [
+                        "y",
+                        "250"
+                      ]
+                    ],
+                    "autoOPSZ": "0",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "14"
+                      ]
+                    ],
+                    "fontSize": "48",
+                    "textRun": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+                    "textAlign": "center"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+{
+        "instance": {
+          "isLoop": "0",
+          "label": "Axes Container",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "width",
+                  "1280"
+                ],
+                [
+                  "height",
+                  "230"
+                ],
+                [
+                  "y",
+                  "0"
+                ],
+                [
+                  "line-height-em",
+                  "1.5"
+                ]
+              ],
+              "autoOPSZ": "1",
+              "fontSize": "30",
+              "textColor": {
+                "instance": {
+                  "R": "77.00000",
+                  "G": "80.00000",
+                  "B": "85.00000"
+                },
+                "colorTypeKey": "RGB"
+              },
+              "positioningVertical": "bottom"
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "isLoop": "0",
+                "label": "BG Axes",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "x",
+                        "265"
+                      ],
+                      [
+                        "width",
+                        "1015"
+                      ],
+                      [
+                        "height",
+                        "230"
+                      ],
+                      [
+                        "z-index",
+                        "-1"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "12.90000",
+                        "G": "27.06000",
+                        "B": "40.00000"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "isLoop": "0",
+                "label": "Horizontal Line",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "3"
+                      ],
+                      [
+                        "y",
+                        "49"
+                      ],
+                      [
+                        "z-index",
+                        "-1"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "L": "55.00000",
+                        "C": "4.90749",
+                        "H": "0.7242320"
+                      },
+                      "colorTypeKey": "OKLCH"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "isLoop": "0",
+                "label": "1-Line User Axes",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "150"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  }
+                ],
+                "activeActors": [
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "User Axes Label",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "1",
+                          "isActive": "1",
+                          "numericProperties": [
+                            [
+                              "width",
+                              "260"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "axesLocations": [
+                            [
+                              "wght",
+                              "700"
+                            ]
+                          ],
+                          "backgroundColor": {
+                            "instance": {
+                              "L": "100.00000",
+                              "C": "0.00000",
+                              "H": "0.0000000",
+                              "alpha": "20.00000"
+                            },
+                            "colorTypeKey": "OKLCH"
+                          },
+                          "textRun": "  User Axes"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "User Axes",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "1",
+                          "isActive": "1",
+                          "numericProperties": [
+                            [
+                              "x",
+                              "260"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "textRun": "    Size 14    Weight 400    Width 100    Slant 0",
+                          "textAlign": "left",
+                          "positioningVertical": "bottom"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  }
+                ]
+              },
+              "actorTypeKey": "LayerActorModel"
+            },
+            {
+              "instance": {
+                "isLoop": "0",
+                "label": "2-Line Finessables",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "85"
+                      ]
+                    ],
+                    "autoOPSZ": "0"
+                  }
+                ],
+                "activeActors": [
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Finessables Label",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "1",
+                          "isActive": "1",
+                          "numericProperties": [
+                            [
+                              "width",
+                              "260"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "axesLocations": [
+                            [
+                              "wght",
+                              "700"
+                            ]
+                          ],
+                          "backgroundColor": {
+                            "instance": {
+                              "L": "100.00000",
+                              "C": "0.00000",
+                              "H": "0.0000000",
+                              "alpha": "20.00000"
+                            },
+                            "colorTypeKey": "OKLCH"
+                          },
+                          "textRun": "  Finessables"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Finessables",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "1",
+                          "isActive": "1",
+                          "numericProperties": [
+                            [
+                              "width",
+                              "1280"
+                            ],
+                            [
+                              "x",
+                              "260"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "textRun": "    Grade    Space    xStem    yStem    Counter",
+                          "textAlign": "left",
+                          "positioningVertical": "bottom"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  }
+                ]
+              },
+              "actorTypeKey": "LayerActorModel"
+            },
+            {
+              "instance": {
+                "isLoop": "0",
+                "label": "3-Line Construction",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "20"
+                      ]
+                    ],
+                    "autoOPSZ": "0",
+                    "textColor": {
+                      "instance": {
+                        "L": "100.00000",
+                        "C": "4.90749",
+                        "H": "0.7242320"
+                      },
+                      "colorTypeKey": "OKLCH"
+                    }
+                  }
+                ],
+                "activeActors": [
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Construction Label",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "1",
+                          "isActive": "1",
+                          "numericProperties": [
+                            [
+                              "width",
+                              "260"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "axesLocations": [
+                            [
+                              "wght",
+                              "700"
+                            ]
+                          ],
+                          "backgroundColor": {
+                            "instance": {
+                              "L": "100.00000",
+                              "C": "0.00000",
+                              "H": "0.0000000",
+                              "alpha": "50.00000"
+                            },
+                            "colorTypeKey": "OKLCH"
+                          },
+                          "textRun": "  Construction"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Construction",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "1",
+                          "isActive": "1",
+                          "numericProperties": [
+                            [
+                              "x",
+                              "260"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "textRun": "    XOUC    YOUC    XTUC    XTUR    XTUD    YTUC    YOPE"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  }
+                ]
+              },
+              "actorTypeKey": "LayerActorModel"
+            },
+            {
+              "instance": {
+                "isLoop": "0",
+                "label": "Marker",
+                "keyMoments": [
+                  {
+                    "label": "init",
+                    "duration": "0",
+                    "isActive": "0",
+                    "fillColor": {
+                      "instance": {
+                        "R": "100.00000",
+                        "G": "100.00000",
+                        "B": "100.00000"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  },
+
+{% set line_1_y = 111 %}
+{% set line_2_y = 111 %}
+{% set line_3_y = 35 %}
+{% for label, numericProperties, duration, isLast in [
+          ["XOUC", '[["x","265"], ["y", "' + line_3_y + '"], ["r", "15"]]', 0]
+        , ["XOUC", '[["x","265"]]', 2]
+        , ["YOUC", '[["x","397"]]', 0]
+        , ["YOUC", '[["x","397"]]', 1]
+        , ["XTUC", '[["x","528"]]', 0]
+        , ["XTUC", '[["x","528"]]', 1]
+        , ["XTUR", '[["x","654"]]', 0]
+        , ["XTUR", '[["x","654"]]', 1]
+        , ["XTUD", '[["x","780"]]', 0]
+        , ["XTUD", '[["x","780"]]', 1]
+        , ["YTUC", '[["x","907"]]', 0]
+        , ["YTUC", '[["x","907"]]', 1]
+        , ["YOPE", '[["x","1035"]]', 0]
+        , ["YOPE", '[["x","1035"]]', 3, true]
+        ] %}
+            {
+              "label": "{{label}}",
+              "duration": "{{duration}}",
+              "isActive": "0",
+              "numericProperties": {{numericProperties | safe}}
+            }
+          {% if not isLast %},
+          {% endif %}
+{% endfor %}
+
+                ]
+              },
+              "actorTypeKey": "CircleActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      }
+    ],
+    "width": "1280",
+    "height": "720",
+    "editingActor": "./1/instance/activeActors/3"
+  },
+  "activeLayoutKey": "StageAndActors",
+  "activeFontKey": "from-url Roboto Delta Regular Version_3-000"
+}
