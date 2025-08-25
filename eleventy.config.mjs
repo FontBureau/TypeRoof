@@ -40,6 +40,7 @@ export default function (eleventyConfig) {
     eleventyConfig.addPassthroughCopy("lib");
     eleventyConfig.addPassthroughCopy("shell.html");
     eleventyConfig.addPassthroughCopy("legacy.html");
+    eleventyConfig.addPassthroughCopy("app/");
     eleventyConfig.addPassthroughCopy("docs/experiments");
     // These are not ignored .eleventyignore
     eleventyConfig.addPassthroughCopy("docs/states_lib/**/*.json.txt");
