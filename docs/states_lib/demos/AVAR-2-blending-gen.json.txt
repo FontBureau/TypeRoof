@@ -43,7 +43,7 @@
               "duration": "0",
               "isActive": "0",
               "autoOPSZ": "0",
-              "axesLocations": [["wght", "400"], ["wdth", "100"], ["XOUC","96"],["YOUC","79"],["XTUC","463"],["opsz","14"]]
+              "axesLocations": [["wght", "400"], ["wdth", "100"], ["XOUC","96"],["YOUC","79"],["XTUC","463"],["opsz","14"], ["YOPQ", "79"]]
             }
           ,
           
@@ -123,11 +123,35 @@
 
         
             {
-              "label": "Final",
-              "duration": "2",
+              "label": "User Pause",
+              "duration": "1",
               "isActive": "0",
               "autoOPSZ": "0",
-              "axesLocations": [["wght", "250"], ["wdth",  "33"], ["XOUC","96"],["YOUC","79"],["XTUC","463"]]
+              "axesLocations": [["YOPQ", "79"]]
+            }
+          ,
+          
+        
+
+        
+            {
+              "label": "Finesse,",
+              "duration": "1",
+              "isActive": "0",
+              "autoOPSZ": "0",
+              "axesLocations": [["YOPQ", "53"]]
+            }
+          ,
+          
+        
+
+        
+            {
+              "label": "Final",
+              "duration": "0",
+              "isActive": "0",
+              "autoOPSZ": "0",
+              "axesLocations": []
             }
           
         
@@ -188,7 +212,7 @@
             {
               "label": "Key Moment 1",
               "duration": "1",
-              "isActive": "1",
+              "isActive": "0",
               "numericProperties": [
                 [
                   "width",
@@ -222,7 +246,7 @@
                   {
                     "label": "Key Moment 1",
                     "duration": "1",
-                    "isActive": "1",
+                    "isActive": "0",
                     "numericProperties": [
                       [
                         "y",
@@ -265,8 +289,8 @@
                 "keyMoments": [
                   {
                     "label": "Setup",
-                    "duration": "1",
-                    "isActive": "1",
+                    "duration": "0",
+                    "isActive": "0",
                     "numericProperties": [
                       [
                         "width",
@@ -329,7 +353,7 @@
 
         
             {
-              "label": "line3",
+              "label": "line3 wait",
               "duration": "3",
               "isActive": "0",
               "numericProperties": [["y", "49"]]
@@ -340,7 +364,7 @@
 
         
             {
-              "label": "line1",
+              "label": "line1 transition",
               "duration": "1",
               "isActive": "0",
               "numericProperties": [["y", "179"]]
@@ -351,10 +375,32 @@
 
         
             {
-              "label": "line1",
-              "duration": "2",
+              "label": "line1 wait",
+              "duration": "0",
               "isActive": "0",
               "numericProperties": [["y", "179"]]
+            }
+          ,
+          
+        
+
+        
+            {
+              "label": "line2 transition",
+              "duration": "1",
+              "isActive": "0",
+              "numericProperties": [["y", "114"]]
+            }
+          ,
+          
+        
+
+        
+            {
+              "label": "line2 wait",
+              "duration": "1",
+              "isActive": "0",
+              "numericProperties": [["y", "114"]]
             }
           
         
@@ -373,7 +419,7 @@
                   {
                     "label": "Inactive Init",
                     "duration": "0",
-                    "isActive": "1",
+                    "isActive": "0",
                     "numericProperties": [
                       [
                         "y",
@@ -395,8 +441,18 @@
                   },
                   {
                     "label": "Active Wait",
-                    "duration": 2,
+                    "duration": 1,
                     "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                  },
+                  {
+                    "label": "Inactive",
+                    "duration": 0,
+                    "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                  },
+                  {
+                    "label": "Inactive Wait",
+                    "duration": 1,
+                    "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
                   }
                 ],
                 "activeActors": [
@@ -408,7 +464,7 @@
                         {
                           "label": "Inactive Init",
                           "duration": "0",
-                          "isActive": "1",
+                          "isActive": "0",
                           "numericProperties": [
                             [
                               "width",
@@ -437,8 +493,18 @@
                         },
                         {
                           "label": "Active Wait",
-                          "duration": "2",
+                          "duration": "1",
                           "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "50.00000"},"colorTypeKey": "OKLCH"}
+                        },
+                        {
+                          "label": "Inactive Wait",
+                          "duration": "0",
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
+                        },
+                        {
+                          "label": "Inactive wait",
+                          "duration": "1",
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
                         }
                       ]
                     },
@@ -462,28 +528,40 @@
                           "autoOPSZ": "0",
                           "textRun": "    Size 14    Weight 400    Width 100    Slant 0",
                           "textAlign": "left",
-                          "positioningVertical": "bottom"
+                          "positioningVertical": "bottom",
+                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
                         },
                         {
-                          "label": "Wait",
+                          "label": "Inactive Wait",
                           "duration": "5",
                           "isActive": "0",
                           "autoOPSZ": "0",
-                          "textRun": "    Size 14    Weight 400    Width 100    Slant 0"
+                          "textRun": "    Size 14    Weight 400    Width 100    Slant 0",
+                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
                         },
                         {
-                          "label": "Result",
+                          "label": "Result Active",
                           "duration": "0",
                           "isActive": "0",
                           "autoOPSZ": "0",
-                          "textRun": "    Size 14    Weight 250    Width 33   Slant 0"
+                          "textRun": "    Size 14    Weight 250    Width 33   Slant 0",
+                          "textColor": {"instance": {"L": "100.00000", "C": "100.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
-                          "label": "Result",
-                          "duration": "2",
-                          "isActive": "0",
-                          "autoOPSZ": "0",
-                          "textRun": "    Size 14    Weight 250    Width 33   Slant 0"
+                          "label": "Highlight",
+                          "duration": 1,
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                        },
+                        {
+                          "label": "Inactive",
+                          "duration": 0,
+                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                        },
+                        {
+                          "label": "Inactive Wait",
+                          "duration": 1,
+                          "textRun": "    Size 14    Weight 250    Width 33   Slant 0",
+                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
                         }
                       ]
                     },
@@ -499,16 +577,32 @@
                 "label": "2-Line Finessables",
                 "keyMoments": [
                   {
-                    "label": "Key Moment 1",
-                    "duration": "1",
-                    "isActive": "1",
+                    "label": "Inactive Init",
+                    "duration": "0",
+                    "isActive": "0",
                     "numericProperties": [
                       [
                         "y",
                         "85"
                       ]
                     ],
-                    "autoOPSZ": "0"
+                    "autoOPSZ": "0",
+                    "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                  },
+                  {
+                    "label": "Inactive Wait",
+                    "duration": 6,
+                    "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                  },
+                  {
+                    "label": "Active",
+                    "duration": 0,
+                    "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                  },
+                  {
+                    "label": "Active Wait",
+                    "duration": 1,
+                    "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
                   }
                 ],
                 "activeActors": [
@@ -518,9 +612,9 @@
                       "label": "Finessables Label",
                       "keyMoments": [
                         {
-                          "label": "Key Moment 1",
-                          "duration": "1",
-                          "isActive": "1",
+                          "label": "Inactive Init",
+                          "duration": "0",
+                          "isActive": "0",
                           "numericProperties": [
                             [
                               "width",
@@ -534,16 +628,23 @@
                               "700"
                             ]
                           ],
-                          "backgroundColor": {
-                            "instance": {
-                              "L": "100.00000",
-                              "C": "0.00000",
-                              "H": "0.0000000",
-                              "alpha": "20.00000"
-                            },
-                            "colorTypeKey": "OKLCH"
-                          },
-                          "textRun": "  Finessables"
+                          "textRun": "  Finessables",
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
+                        },
+                        {
+                          "label": "Inactive Wait",
+                          "duration": "6",
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
+                        },
+                        {
+                          "label": "Active",
+                          "duration": "0",
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "50.00000"},"colorTypeKey": "OKLCH"}
+                        },
+                        {
+                          "label": "Active Wait",
+                          "duration": "1",
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "50.00000"},"colorTypeKey": "OKLCH"}
                         }
                       ]
                     },
@@ -552,26 +653,124 @@
                   {
                     "instance": {
                       "isLoop": "0",
-                      "label": "Finessables",
+                      "label": "Tag Grade",
                       "keyMoments": [
                         {
-                          "label": "Key Moment 1",
-                          "duration": "1",
-                          "isActive": "1",
+                          "label": "Init",
+                          "duration": "0",
+                          "isActive": "0",
                           "numericProperties": [
                             [
-                              "width",
-                              "1280"
-                            ],
-                            [
                               "x",
-                              "260"
+                              "294"
                             ]
                           ],
                           "autoOPSZ": "0",
-                          "textRun": "    Grade    Space    xStem    yStem    Counter",
-                          "textAlign": "left",
-                          "positioningVertical": "bottom"
+                          "textRun": "Grade"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Tag Space",
+                      "keyMoments": [
+                        {
+                          "label": "Init",
+                          "duration": "0",
+                          "isActive": "0",
+                          "numericProperties": [
+                            [
+                              "x",
+                              "427"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "textRun": "Space"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Tag xStem",
+                      "keyMoments": [
+                        {
+                          "label": "Init",
+                          "duration": "0",
+                          "isActive": "0",
+                          "numericProperties": [
+                            [
+                              "x",
+                              "564"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "textRun": "xStem"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Tag yStem",
+                      "keyMoments": [
+                        {
+                          "label": "Inactive Init",
+                          "duration": "0",
+                          "isActive": "0",
+                          "numericProperties": [
+                            [
+                              "x",
+                              "701"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "textRun": "yStem",
+                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                        },
+                        {
+                          "label": "Inactive wait",
+                          "duration": "6",
+                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                        },
+                        {
+                          "label": "Active",
+                          "duration": "0",
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                        },
+                        {
+                          "label": "highlight",
+                          "duration": "1",
+                          "textColor": {"instance": {"L": "100.00000", "C": "100.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Tag Counter",
+                      "keyMoments": [
+                        {
+                          "label": "Init",
+                          "duration": "0",
+                          "isActive": "0",
+                          "numericProperties": [
+                            [
+                              "x",
+                              "838"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "textRun": "Counter"
                         }
                       ]
                     },
@@ -589,7 +788,7 @@
                   {
                     "label": "Init",
                     "duration": "0",
-                    "isActive": "1",
+                    "isActive": "0",
                     "numericProperties": [
                       [
                         "y",
@@ -634,7 +833,7 @@
                         {
                           "label": "Init",
                           "duration": "0",
-                          "isActive": "1",
+                          "isActive": "0",
                           "numericProperties": [
                             [
                               "width",
@@ -680,7 +879,7 @@
                     },
                     "actorTypeKey": "LineOfTextActorModel"
                   },
-{
+                  {
                     "instance": {
                       "isLoop": "0",
                       "label": "Tag XOUC",
@@ -872,7 +1071,7 @@
                         {
                           "label": "Init",
                           "duration": "0",
-                          "isActive": "1",
+                          "isActive": "0",
                           "numericProperties": [
                             [
                               "x",
@@ -1069,21 +1268,10 @@
 
         
             {
-              "label": "hide",
-              "duration": "0",
-              "isActive": "0",
-              "numericProperties": [["x", "-1000"]]
-            }
-          ,
-          
-        
-
-        
-            {
-              "label": "hide",
+              "label": "wait",
               "duration": "1",
               "isActive": "0",
-              "numericProperties": [["x", "-1000"],  ["y", "35"]]
+              "numericProperties": [["x", "528"], ["y", "35"]]
             }
           ,
           
@@ -1103,9 +1291,31 @@
         
             {
               "label": "user",
-              "duration": "2",
+              "duration": "1",
               "isActive": "0",
               "numericProperties": [["x",   "265"], ["y", "165"]]
+            }
+          ,
+          
+        
+
+        
+            {
+              "label": "finesse",
+              "duration": "0",
+              "isActive": "0",
+              "numericProperties": [["x",   "669"], ["y", "100"]]
+            }
+          ,
+          
+        
+
+        
+            {
+              "label": "finesse",
+              "duration": "1",
+              "isActive": "0",
+              "numericProperties": [["x",   "669"], ["y", "100"]]
             }
           
         
