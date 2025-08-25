@@ -173,11 +173,11 @@
                       ],
                       [
                         "x",
-                        "265"
+                        "315"
                       ],
                       [
                         "width",
-                        "1015"
+                        "965"
                       ],
                       [
                         "height",
@@ -320,7 +320,7 @@
                           "numericProperties": [
                             [
                               "width",
-                              "260"
+                              "310"
                             ]
                           ],
                           "autoOPSZ": "0",
@@ -374,7 +374,7 @@
                           "numericProperties": [
                             [
                               "x",
-                              "260"
+                              "310"
                             ]
                           ],
                           "autoOPSZ": "0",
@@ -470,7 +470,7 @@
                           "numericProperties": [
                             [
                               "width",
-                              "260"
+                              "310"
                             ]
                           ],
                           "autoOPSZ": "0",
@@ -514,7 +514,7 @@
                           "numericProperties": [
                             [
                               "x",
-                              "294"
+                              "344"
                             ]
                           ],
                           "autoOPSZ": "0",
@@ -536,7 +536,7 @@
                           "numericProperties": [
                             [
                               "x",
-                              "427"
+                              "477"
                             ]
                           ],
                           "autoOPSZ": "0",
@@ -558,7 +558,7 @@
                           "numericProperties": [
                             [
                               "x",
-                              "564"
+                              "614"
                             ]
                           ],
                           "autoOPSZ": "0",
@@ -580,7 +580,7 @@
                           "numericProperties": [
                             [
                               "x",
-                              "701"
+                              "751"
                             ]
                           ],
                           "autoOPSZ": "0",
@@ -618,7 +618,7 @@
                           "numericProperties": [
                             [
                               "x",
-                              "838"
+                              "888"
                             ]
                           ],
                           "autoOPSZ": "0",
@@ -635,7 +635,7 @@
             {
               "instance": {
                 "isLoop": "0",
-                "label": "3-Line Construction",
+                "label": "3-Line Constructables",
                 "keyMoments": [
                   {
                     "label": "Init",
@@ -689,7 +689,7 @@
                           "numericProperties": [
                             [
                               "width",
-                              "260"
+                              "310"
                             ]
                           ],
                           "autoOPSZ": "0",
@@ -699,7 +699,7 @@
                               "700"
                             ]
                           ],
-                          "textRun": "  Construction",
+                          "textRun": "  Constructables",
                           "backgroundColor": {{ labelBGInactive | safe }}
                         },
                         {
@@ -743,7 +743,7 @@
                           "numericProperties": [
                             [
                               "x",
-                              "295"
+                              "345"
                             ]
                           ],
                           "autoOPSZ": "0",
@@ -801,7 +801,7 @@
                           "numericProperties": [
                             [
                               "x",
-                              "427"
+                              "477"
                             ]
                           ],
                           "autoOPSZ": "0",
@@ -864,7 +864,7 @@
                           "numericProperties": [
                             [
                               "x",
-                              "558"
+                              "608"
                             ]
                           ],
                           "autoOPSZ": "0",
@@ -944,17 +944,17 @@
 {% for label, numericProperties, duration, isLast, skip in [
           ["Init", '[["x", "-1000"], ["y", "' + line_3_y + '"], ["r", "15"]]', 0]
         , ["Wait", '[["x", "-1000"]]', durations.initialPause]
-        , ["XOUC", '[["x", "265"]]', 0]
-        , ["XOUC", '[["x", "265"]]', durations.axis_1]
-        , ["YOUC", '[["x", "397"]]', 0]
-        , ["YOUC", '[["x", "397"]]', durations.axis_2]
-        , ["XTUC", '[["x", "528"]]', 0]
-        , ["XTUC", '[["x", "528"]]', durations.axis_3]
-        , ["wait", '[["x", "528"], ["y", "' + line_3_y + '"]]', durations.transition_1]
-        , ["user", '[["x",   "265"], ["y", "' + line_1_y + '"]]', 0]
-        , ["user", '[["x",   "265"], ["y", "' + line_1_y + '"]]', durations.transition_2]
-        , ["finesse", '[["x",   "669"], ["y", "' + line_2_y + '"]]', 0]
-        , ["finesse", '[["x",   "669"], ["y", "' + line_2_y + '"]]', durations.axis_4, true]
+        , ["XOUC", '[["x", "315"]]', 0]
+        , ["XOUC", '[["x", "315"]]', durations.axis_1]
+        , ["YOUC", '[["x", "447"]]', 0]
+        , ["YOUC", '[["x", "447"]]', durations.axis_2]
+        , ["XTUC", '[["x", "578"]]', 0]
+        , ["XTUC", '[["x", "578"]]', durations.axis_3]
+        , ["wait", '[["x", "578"], ["y", "' + line_3_y + '"]]', durations.transition_1]
+        , ["user", '[["x",   "315"], ["y", "' + line_1_y + '"]]', 0]
+        , ["user", '[["x",   "315"], ["y", "' + line_1_y + '"]]', durations.transition_2]
+        , ["finesse", '[["x",   "719"], ["y", "' + line_2_y + '"]]', 0]
+        , ["finesse", '[["x",   "719"], ["y", "' + line_2_y + '"]]', durations.axis_4, true]
         ] %}
         {% if not skip %}
             {
