@@ -1,7 +1,10 @@
 ---json
 {
   "permalink": "/docs/states_lib/demos/AVAR-2-blending-gen.json.txt",
-  "layout": null
+  "layout": null,
+  "durations": {
+      "initialPause": 1
+  }
 }
 ---
 {
@@ -44,7 +47,7 @@
 
 {% for label, axesLocations, duration, isLast, skip in [
           ["Init",  '[["wght", "400"], ["wdth", "100"], ["XOUC","96"],["YOUC","79"],["XTUC","463"],["opsz","14"], ["YOPQ", "79"]]', 0]
-        , ["Wait",  '[["XOUC","96"],["YOUC","79"],["XTUC","463"]]', 1]
+        , ["Wait",  '[["XOUC","96"],["YOUC","79"],["XTUC","463"]]', durations.initialPause]
         , ["XOUC",  '[["XOUC","66"],["YOUC","79"],["XTUC","463"]]', 1]
         , ["YOUC",  '[["XOUC","66"],["YOUC","60"],["XTUC","463"]]', 1]
         , ["XTUC",  '[["XOUC","66"],["YOUC","60"],["XTUC","446"]]', 1]
@@ -199,7 +202,7 @@
                 "keyMoments": [
                   {
                     "label": "Setup",
-                    "duration": "1",
+                    "duration": "0",
                     "isActive": "0",
                     "numericProperties": [
                       [
@@ -229,7 +232,7 @@
 {% set line_3_y = 49 %}
 {% for label, numericProperties, duration, isLast, skip in [
           ["Init", '[["y", "-1000"]]', 0, false, false]
-        , ["Wait", '[["y", "-1000"]]', 1, false, false]
+        , ["Wait", '[["y", "-1000"]]', durations.initialPause, false, false]
         , ["line3", '[["y", "' + line_3_y + '"]]', 0, false, false]
         , ["line3 wait",       '[["y", "' + line_3_y + '"]]', 3, false, false]
         , ["line1 transition", '[["y", "' + line_1_y + '"]]', 1, false, false]
@@ -274,7 +277,7 @@
                   },
                   {
                     "label": "Inactive Wait",
-                    "duration": 5,
+                    "duration": {{durations.initialPause + 4}},
                     "textColor": {{textColorInactive | safe}}
                   },
                   {
@@ -326,7 +329,7 @@
                         },
                         {
                           "label": "Inactive Wait",
-                          "duration": "5",
+                          "duration": "{{durations.initialPause + 4}}",
                           "backgroundColor": {{ labelBGInactive | safe }}
                         },
                         {
@@ -376,7 +379,7 @@
                         },
                         {
                           "label": "Inactive Wait",
-                          "duration": "5",
+                          "duration": "{{ durations.initialPause + 4 }}",
                           "isActive": "0",
                           "autoOPSZ": "0",
                           "textRun": "    Size 14    Weight 400    Width 100    Slant 0",
@@ -434,7 +437,7 @@
                   },
                   {
                     "label": "Inactive Wait",
-                    "duration": 6,
+                    "duration": {{ durations.initialPause + 5 }},
                     "textColor": {{textColorInactive | safe}}
                   },
                   {
@@ -476,7 +479,7 @@
                         },
                         {
                           "label": "Inactive Wait",
-                          "duration": "6",
+                          "duration": "{{ durations.initialPause + 5 }}",
                           "backgroundColor": {{ labelBGInactive | safe }}
                         },
                         {
@@ -580,7 +583,7 @@
                         },
                         {
                           "label": "Inactive wait",
-                          "duration": "6",
+                          "duration": "{{ durations.initialPause + 5}}",
                           "textColor": {{ textColorInactive | safe }}
                         },
                         {
@@ -643,7 +646,7 @@
                   },
                   {
                     "label": "Init Wait",
-                    "duration": "1",
+                    "duration": "{{ durations.initialPause }}",
                     "textColor": {{textColorInactive | safe}}
                   },
                   {
@@ -695,7 +698,7 @@
                         },
                         {
                           "label": "Inactive Wait",
-                          "duration": "1",
+                          "duration": "{{ durations.initialPause }}",
                           "backgroundColor": {{ labelBGInactive | safe }}
                         },
                         {
@@ -743,7 +746,7 @@
                         },
                         {
                           "label": "Inactive wait",
-                          "duration": "1",
+                          "duration": "{{ durations.initialPause }}",
                           "textColor": {{ textColorInactive | safe }}
                         },
                         {
@@ -801,7 +804,7 @@
                         },
                         {
                           "label": "Inactive wait",
-                          "duration": "1",
+                          "duration": "{{ durations.initialPause }}",
                           "textColor": {{ textColorInactive | safe }}
                         },
                         {
@@ -864,7 +867,7 @@
                         },
                         {
                           "label": "Inactive wait",
-                          "duration": "1",
+                          "duration": "{{ durations.initialPause }}",
                           "textColor": {{ textColorInactive | safe }}
                         },
                         {
@@ -1022,7 +1025,7 @@
 {% set line_3_y = 35 %}
 {% for label, numericProperties, duration, isLast, skip in [
           ["Init", '[["x", "-1000"], ["y", "' + line_3_y + '"], ["r", "15"]]', 0]
-        , ["Wait", '[["x", "-1000"]]', 1]
+        , ["Wait", '[["x", "-1000"]]', durations.initialPause]
         , ["XOUC", '[["x", "265"]]', 0]
         , ["XOUC", '[["x", "265"]]', 1]
         , ["YOUC", '[["x", "397"]]', 0]
