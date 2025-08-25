@@ -7,7 +7,7 @@
 {
   "activeState": {
     "t": "0",
-    "duration": "10",
+    "duration": "4",
     "isLoop": "0",
     "perpetual": "0",
     "playing": "0",
@@ -42,22 +42,17 @@
           "label": "Variable Text Animation",
           "keyMoments": [
 
-{% for label, axesLocations, duration, isLast in [
-          ["Start",    '[["XOUC","96"],["YOUC","79"],["XTUC","463"],["XTUR","463"],["XTUD","463"],["YTUC","728"],["YOPE","79"],["opsz","14"]]', 0]
-        , ["Defaults", '[["XOUC","96"],["YOUC","79"],["XTUC","463"],["XTUR","463"],["XTUD","463"],["YTUC","728"],["YOPE","79"]]', 1]
-        , ["XOUC",     '[["XOUC","149"], ["YOUC","79"],["XTUC","463"],["XTUR","463"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1]
-        , ["YOUC",     '[["XOUC","149"],["YOUC","116"],["XTUC","463"],["XTUR","463"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1]
-        , ["XTUC",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1]
-        , ["XTUR",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","563"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1]
-        , ["XTUR",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1]
-        , ["XTUD",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","563"],["YTUC","728"], ["YOPE","79"]]', 1]
-        , ["XTUD",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1]
-        , ["YTUC",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","463"],["YTUC","778"], ["YOPE","79"]]', 1]
-        , ["YTUC",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1]
-        , ["YOPE",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","463"],["YTUC","728"],["YOPE","129"]]', 1]
-        , ["YOPE",     '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1]
-        , ["Final",    '[["XOUC","149"],["YOUC","116"],["XTUC","389"],["XTUR","463"],["XTUD","463"],["YTUC","728"], ["YOPE","79"]]', 1, true]
+{% for label, axesLocations, duration, isLast, skip in [
+          ["Init",  '[["wght", "400"], ["wdth", "100"], ["XOUC","96"],["YOUC","79"],["XTUC","463"],["opsz","14"]]', 0]
+        , ["Wait",  '[["XOUC","96"],["YOUC","79"],["XTUC","463"]]', 1]
+        , ["XOUC",  '[["XOUC","66"],["YOUC","79"],["XTUC","463"]]', 1]
+        , ["YOUC",  '[["XOUC","66"],["YOUC","60"],["XTUC","463"]]', 1]
+        , ["XTUC",  '[["XOUC","66"],["YOUC","60"],["XTUC","446"]]', 1]
+        , ["Wait",  '[["wght", "400"], ["wdth", "100"], ["XOUC","66"],["YOUC","60"],["XTUC","446"]]', 1]
+        , ['User' , '[["wght", "250"], ["wdth",  "33"], ["XOUC","96"],["YOUC","79"],["XTUC","463"]]', 0]
+        , ["Final", '[["wght", "250"], ["wdth",  "33"], ["XOUC","96"],["YOUC","79"],["XTUC","463"]]', 2, true]
         ] %}
+        {% if not skip %}
             {
               "label": "{{label}}",
               "duration": "{{duration}}",
@@ -67,6 +62,7 @@
             }
           {% if not isLast %},
           {% endif %}
+        {% endif %}
 {% endfor %}
 
           ],
@@ -113,7 +109,9 @@
         },
         "actorTypeKey": "LayerActorModel"
       },
-{
+{% set textColorInactive = '{"instance": {"R": "77","G": "80","B": "85"}, "colorTypeKey": "RGB"}' %}
+{% set textColorActive = '{"instance": {"R": "100","G": "100","B": "100"}, "colorTypeKey": "RGB"}' %}
+      {
         "instance": {
           "isLoop": "0",
           "label": "Axes Container",
@@ -142,14 +140,7 @@
               ],
               "autoOPSZ": "1",
               "fontSize": "30",
-              "textColor": {
-                "instance": {
-                  "R": "77.00000",
-                  "G": "80.00000",
-                  "B": "85.00000"
-                },
-                "colorTypeKey": "RGB"
-              },
+              "textColor": {{textColorInactive | safe}},
               "positioningVertical": "bottom"
             }
           ],
@@ -204,7 +195,7 @@
                 "label": "Horizontal Line",
                 "keyMoments": [
                   {
-                    "label": "Key Moment 1",
+                    "label": "Setup",
                     "duration": "1",
                     "isActive": "1",
                     "numericProperties": [
@@ -215,10 +206,6 @@
                       [
                         "height",
                         "3"
-                      ],
-                      [
-                        "y",
-                        "49"
                       ],
                       [
                         "z-index",
@@ -233,19 +220,43 @@
                       },
                       "colorTypeKey": "OKLCH"
                     }
-                  }
+                  },
+{% set line_1_y = 179 %}
+{% set line_2_y = 114 %}
+{% set line_3_y = 49 %}
+{% for label, numericProperties, duration, isLast, skip in [
+          ["Init", '[["y", "-1000"]]', 0, false, false]
+        , ["Wait", '[["y", "-1000"]]', 1, false, false]
+        , ["line3", '[["y", "' + line_3_y + '"]]', 0, false, false]
+        , ["line3", '[["y", "' + line_3_y + '"]]', 3, false, false]
+        , ["line1", '[["y", "' + line_1_y + '"]]', 1, false, false]
+        , ["line1", '[["y", "' + line_1_y + '"]]', 2, true, false]
+        ] %}
+        {% if not skip %}
+            {
+              "label": "{{label}}",
+              "duration": "{{duration}}",
+              "isActive": "0",
+              "numericProperties": {{numericProperties | safe}}
+            }
+          {% if not isLast %},
+          {% endif %}
+        {% endif %}
+{% endfor %}
                 ]
               },
               "actorTypeKey": "RectangleActorModel"
             },
+{% set labelBGInactive = '{"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}' %}
+{% set labelBGActive = '{"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "50.00000"},"colorTypeKey": "OKLCH"}' %}
             {
               "instance": {
                 "isLoop": "0",
                 "label": "1-Line User Axes",
                 "keyMoments": [
                   {
-                    "label": "Key Moment 1",
-                    "duration": "1",
+                    "label": "Inactive Init",
+                    "duration": "0",
                     "isActive": "1",
                     "numericProperties": [
                       [
@@ -253,7 +264,23 @@
                         "150"
                       ]
                     ],
-                    "autoOPSZ": "0"
+                    "autoOPSZ": "0",
+                    "textColor": {{textColorInactive | safe}}
+                  },
+                  {
+                    "label": "Inactive Wait",
+                    "duration": 5,
+                    "textColor": {{textColorInactive | safe}}
+                  },
+                  {
+                    "label": "Active",
+                    "duration": 0,
+                    "textColor": {{textColorActive | safe}}
+                  },
+                  {
+                    "label": "Active Wait",
+                    "duration": 2,
+                    "textColor": {{textColorActive | safe}}
                   }
                 ],
                 "activeActors": [
@@ -263,8 +290,8 @@
                       "label": "User Axes Label",
                       "keyMoments": [
                         {
-                          "label": "Key Moment 1",
-                          "duration": "1",
+                          "label": "Inactive Init",
+                          "duration": "0",
                           "isActive": "1",
                           "numericProperties": [
                             [
@@ -279,16 +306,23 @@
                               "700"
                             ]
                           ],
-                          "backgroundColor": {
-                            "instance": {
-                              "L": "100.00000",
-                              "C": "0.00000",
-                              "H": "0.0000000",
-                              "alpha": "20.00000"
-                            },
-                            "colorTypeKey": "OKLCH"
-                          },
-                          "textRun": "  User Axes"
+                          "textRun": "  User Axes",
+                          "backgroundColor": {{ labelBGInactive | safe }}
+                        },
+                        {
+                          "label": "Inactive Wait",
+                          "duration": "5",
+                          "backgroundColor": {{ labelBGInactive | safe }}
+                        },
+                        {
+                          "label": "Active",
+                          "duration": "0",
+                          "backgroundColor": {{ labelBGActive | safe }}
+                        },
+                        {
+                          "label": "Active Wait",
+                          "duration": "2",
+                          "backgroundColor": {{ labelBGActive | safe }}
                         }
                       ]
                     },
@@ -300,9 +334,9 @@
                       "label": "User Axes",
                       "keyMoments": [
                         {
-                          "label": "Key Moment 1",
-                          "duration": "1",
-                          "isActive": "1",
+                          "label": "Setup",
+                          "duration": "0",
+                          "isActive": "0",
                           "numericProperties": [
                             [
                               "x",
@@ -313,6 +347,27 @@
                           "textRun": "    Size 14    Weight 400    Width 100    Slant 0",
                           "textAlign": "left",
                           "positioningVertical": "bottom"
+                        },
+                        {
+                          "label": "Wait",
+                          "duration": "5",
+                          "isActive": "0",
+                          "autoOPSZ": "0",
+                          "textRun": "    Size 14    Weight 400    Width 100    Slant 0"
+                        },
+                        {
+                          "label": "Result",
+                          "duration": "0",
+                          "isActive": "0",
+                          "autoOPSZ": "0",
+                          "textRun": "    Size 14    Weight 250    Width 33   Slant 0"
+                        },
+                        {
+                          "label": "Result",
+                          "duration": "2",
+                          "isActive": "0",
+                          "autoOPSZ": "0",
+                          "textRun": "    Size 14    Weight 250    Width 33   Slant 0"
                         }
                       ]
                     },
@@ -416,8 +471,8 @@
                 "label": "3-Line Construction",
                 "keyMoments": [
                   {
-                    "label": "Key Moment 1",
-                    "duration": "1",
+                    "label": "Init",
+                    "duration": "0",
                     "isActive": "1",
                     "numericProperties": [
                       [
@@ -426,25 +481,43 @@
                       ]
                     ],
                     "autoOPSZ": "0",
-                    "textColor": {
-                      "instance": {
-                        "L": "100.00000",
-                        "C": "4.90749",
-                        "H": "0.7242320"
-                      },
-                      "colorTypeKey": "OKLCH"
-                    }
+                    "textColor": {{textColorInactive | safe}}
+                  },
+                  {
+                    "label": "Init Wait",
+                    "duration": "1",
+                    "textColor": {{textColorInactive | safe}}
+                  },
+                  {
+                    "label": "Active",
+                    "duration": "0",
+                    "textColor": {{textColorActive | safe}}
+                  },
+                                    {
+                    "label": "Active Wait",
+                    "duration": "4",
+                    "textColor": {{textColorActive | safe}}
+                  },
+                  {
+                    "label": "Inactive",
+                    "duration": "0",
+                    "textColor": {{textColorInactive | safe}}
+                  },
+                  {
+                    "label": "Inactive Wait",
+                    "duration": "2",
+                    "textColor": {{textColorInactive | safe}}
                   }
                 ],
                 "activeActors": [
                   {
                     "instance": {
                       "isLoop": "0",
-                      "label": "Construction Label",
+                      "label": "Construct Label",
                       "keyMoments": [
                         {
-                          "label": "Key Moment 1",
-                          "duration": "1",
+                          "label": "Init",
+                          "duration": "0",
                           "isActive": "1",
                           "numericProperties": [
                             [
@@ -459,16 +532,33 @@
                               "700"
                             ]
                           ],
-                          "backgroundColor": {
-                            "instance": {
-                              "L": "100.00000",
-                              "C": "0.00000",
-                              "H": "0.0000000",
-                              "alpha": "50.00000"
-                            },
-                            "colorTypeKey": "OKLCH"
-                          },
-                          "textRun": "  Construction"
+                          "textRun": "  Construction",
+                          "backgroundColor": {{ labelBGInactive | safe }}
+                        },
+                        {
+                          "label": "Inactive Wait",
+                          "duration": "1",
+                          "backgroundColor": {{ labelBGInactive | safe }}
+                        },
+                        {
+                          "label": "Active",
+                          "duration": "0",
+                          "backgroundColor": {{ labelBGActive | safe }}
+                        },
+                        {
+                          "label": "Active Wait",
+                          "duration": "4",
+                          "backgroundColor": {{ labelBGActive | safe }}
+                        },
+                        {
+                          "label": "Inactive",
+                          "duration": "0",
+                          "backgroundColor": {{ labelBGInactive | safe }}
+                        },
+                        {
+                          "label": "Inactive Wait",
+                          "duration": "2",
+                          "backgroundColor": {{ labelBGInactive | safe }}
                         }
                       ]
                     },
@@ -480,7 +570,7 @@
                       "label": "Construction",
                       "keyMoments": [
                         {
-                          "label": "Key Moment 1",
+                          "label": "Init",
                           "duration": "1",
                           "isActive": "1",
                           "numericProperties": [
@@ -506,7 +596,7 @@
                 "label": "Marker",
                 "keyMoments": [
                   {
-                    "label": "init",
+                    "label": "Setup",
                     "duration": "0",
                     "isActive": "0",
                     "fillColor": {
@@ -519,25 +609,24 @@
                     }
                   },
 
-{% set line_1_y = 111 %}
-{% set line_2_y = 111 %}
+{% set line_1_y = 165 %}
+{% set line_2_y = 100 %}
 {% set line_3_y = 35 %}
-{% for label, numericProperties, duration, isLast in [
-          ["XOUC", '[["x","265"], ["y", "' + line_3_y + '"], ["r", "15"]]', 0]
-        , ["XOUC", '[["x","265"]]', 2]
-        , ["YOUC", '[["x","397"]]', 0]
-        , ["YOUC", '[["x","397"]]', 1]
-        , ["XTUC", '[["x","528"]]', 0]
-        , ["XTUC", '[["x","528"]]', 1]
-        , ["XTUR", '[["x","654"]]', 0]
-        , ["XTUR", '[["x","654"]]', 1]
-        , ["XTUD", '[["x","780"]]', 0]
-        , ["XTUD", '[["x","780"]]', 1]
-        , ["YTUC", '[["x","907"]]', 0]
-        , ["YTUC", '[["x","907"]]', 1]
-        , ["YOPE", '[["x","1035"]]', 0]
-        , ["YOPE", '[["x","1035"]]', 3, true]
+{% for label, numericProperties, duration, isLast, skip in [
+          ["Init", '[["x", "-1000"], ["y", "' + line_3_y + '"], ["r", "15"]]', 0, false, false]
+        , ["Wait", '[["x", "-1000"]]', 1, false, false]
+        , ["XOUC", '[["x", "265"]]', 0, false, false]
+        , ["XOUC", '[["x", "265"]]', 1, false, false]
+        , ["YOUC", '[["x", "397"]]', 0, false, false]
+        , ["YOUC", '[["x", "397"]]', 1, false, false]
+        , ["XTUC", '[["x", "528"]]', 0, false, false]
+        , ["XTUC", '[["x", "528"]]', 1, false, false]
+        , ["hide", '[["x", "-1000"]]', 0, false, false]
+        , ["hide", '[["x", "-1000"],  ["y", "' + line_3_y + '"]]', 1, false, false]
+        , ["user", '[["x",   "265"], ["y", "' + line_1_y + '"]]', 0, false, false]
+        , ["user", '[["x",   "265"], ["y", "' + line_1_y + '"]]', 2, true, false]
         ] %}
+        {% if not skip %}
             {
               "label": "{{label}}",
               "duration": "{{duration}}",
@@ -546,6 +635,7 @@
             }
           {% if not isLast %},
           {% endif %}
+        {% endif %}
 {% endfor %}
 
                 ]
