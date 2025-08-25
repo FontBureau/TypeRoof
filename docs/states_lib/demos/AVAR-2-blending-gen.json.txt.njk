@@ -43,14 +43,16 @@
           "keyMoments": [
 
 {% for label, axesLocations, duration, isLast, skip in [
-          ["Init",  '[["wght", "400"], ["wdth", "100"], ["XOUC","96"],["YOUC","79"],["XTUC","463"],["opsz","14"]]', 0]
+          ["Init",  '[["wght", "400"], ["wdth", "100"], ["XOUC","96"],["YOUC","79"],["XTUC","463"],["opsz","14"], ["YOPQ", "79"]]', 0]
         , ["Wait",  '[["XOUC","96"],["YOUC","79"],["XTUC","463"]]', 1]
         , ["XOUC",  '[["XOUC","66"],["YOUC","79"],["XTUC","463"]]', 1]
         , ["YOUC",  '[["XOUC","66"],["YOUC","60"],["XTUC","463"]]', 1]
         , ["XTUC",  '[["XOUC","66"],["YOUC","60"],["XTUC","446"]]', 1]
         , ["Wait",  '[["wght", "400"], ["wdth", "100"], ["XOUC","66"],["YOUC","60"],["XTUC","446"]]', 1]
         , ['User' , '[["wght", "250"], ["wdth",  "33"], ["XOUC","96"],["YOUC","79"],["XTUC","463"]]', 0]
-        , ["Final", '[["wght", "250"], ["wdth",  "33"], ["XOUC","96"],["YOUC","79"],["XTUC","463"]]', 2, true]
+        , ["User Pause", '[["YOPQ", "79"]]', 1]
+        , ["Finesse,",   '[["YOPQ", "53"]]', 1]
+        , ["Final", '[]', 0, true]
         ] %}
         {% if not skip %}
             {
@@ -120,7 +122,7 @@
             {
               "label": "Key Moment 1",
               "duration": "1",
-              "isActive": "1",
+              "isActive": "0",
               "numericProperties": [
                 [
                   "width",
@@ -154,7 +156,7 @@
                   {
                     "label": "Key Moment 1",
                     "duration": "1",
-                    "isActive": "1",
+                    "isActive": "0",
                     "numericProperties": [
                       [
                         "y",
@@ -198,7 +200,7 @@
                   {
                     "label": "Setup",
                     "duration": "1",
-                    "isActive": "1",
+                    "isActive": "0",
                     "numericProperties": [
                       [
                         "width",
@@ -229,9 +231,11 @@
           ["Init", '[["y", "-1000"]]', 0, false, false]
         , ["Wait", '[["y", "-1000"]]', 1, false, false]
         , ["line3", '[["y", "' + line_3_y + '"]]', 0, false, false]
-        , ["line3", '[["y", "' + line_3_y + '"]]', 3, false, false]
-        , ["line1", '[["y", "' + line_1_y + '"]]', 1, false, false]
-        , ["line1", '[["y", "' + line_1_y + '"]]', 2, true, false]
+        , ["line3 wait",       '[["y", "' + line_3_y + '"]]', 3, false, false]
+        , ["line1 transition", '[["y", "' + line_1_y + '"]]', 1, false, false]
+        , ["line1 wait",       '[["y", "' + line_1_y + '"]]', 0, false, false]
+        , ["line2 transition", '[["y", "' + line_2_y + '"]]', 1, false, false]
+        , ["line2 wait",       '[["y", "' + line_2_y + '"]]', 1, true, false]
         ] %}
         {% if not skip %}
             {
@@ -258,7 +262,7 @@
                   {
                     "label": "Inactive Init",
                     "duration": "0",
-                    "isActive": "1",
+                    "isActive": "0",
                     "numericProperties": [
                       [
                         "y",
@@ -280,8 +284,18 @@
                   },
                   {
                     "label": "Active Wait",
-                    "duration": 2,
+                    "duration": 1,
                     "textColor": {{textColorActive | safe}}
+                  },
+                  {
+                    "label": "Inactive",
+                    "duration": 0,
+                    "textColor": {{textColorInactive | safe}}
+                  },
+                  {
+                    "label": "Inactive Wait",
+                    "duration": 1,
+                    "textColor": {{textColorInactive | safe}}
                   }
                 ],
                 "activeActors": [
@@ -293,7 +307,7 @@
                         {
                           "label": "Inactive Init",
                           "duration": "0",
-                          "isActive": "1",
+                          "isActive": "0",
                           "numericProperties": [
                             [
                               "width",
@@ -322,8 +336,18 @@
                         },
                         {
                           "label": "Active Wait",
-                          "duration": "2",
+                          "duration": "1",
                           "backgroundColor": {{ labelBGActive | safe }}
+                        },
+                        {
+                          "label": "Inactive Wait",
+                          "duration": "0",
+                          "backgroundColor": {{ labelBGInactive | safe }}
+                        },
+                        {
+                          "label": "Inactive wait",
+                          "duration": "1",
+                          "backgroundColor": {{ labelBGInactive | safe }}
                         }
                       ]
                     },
@@ -347,28 +371,40 @@
                           "autoOPSZ": "0",
                           "textRun": "    Size 14    Weight 400    Width 100    Slant 0",
                           "textAlign": "left",
-                          "positioningVertical": "bottom"
+                          "positioningVertical": "bottom",
+                          "textColor": {{textColorInactive | safe}}
                         },
                         {
-                          "label": "Wait",
+                          "label": "Inactive Wait",
                           "duration": "5",
                           "isActive": "0",
                           "autoOPSZ": "0",
-                          "textRun": "    Size 14    Weight 400    Width 100    Slant 0"
+                          "textRun": "    Size 14    Weight 400    Width 100    Slant 0",
+                          "textColor": {{textColorInactive | safe}}
                         },
                         {
-                          "label": "Result",
+                          "label": "Result Active",
                           "duration": "0",
                           "isActive": "0",
                           "autoOPSZ": "0",
-                          "textRun": "    Size 14    Weight 250    Width 33   Slant 0"
+                          "textRun": "    Size 14    Weight 250    Width 33   Slant 0",
+                          "textColor": {{textColorHighlight | safe}}
                         },
                         {
-                          "label": "Result",
-                          "duration": "2",
-                          "isActive": "0",
-                          "autoOPSZ": "0",
-                          "textRun": "    Size 14    Weight 250    Width 33   Slant 0"
+                          "label": "Highlight",
+                          "duration": 1,
+                          "textColor": {{textColorActive | safe}}
+                        },
+                        {
+                          "label": "Inactive",
+                          "duration": 0,
+                          "textColor": {{textColorInactive | safe}}
+                        },
+                        {
+                          "label": "Inactive Wait",
+                          "duration": 1,
+                          "textRun": "    Size 14    Weight 250    Width 33   Slant 0",
+                          "textColor": {{textColorInactive | safe}}
                         }
                       ]
                     },
@@ -384,16 +420,32 @@
                 "label": "2-Line Finessables",
                 "keyMoments": [
                   {
-                    "label": "Key Moment 1",
-                    "duration": "1",
-                    "isActive": "1",
+                    "label": "Inactive Init",
+                    "duration": "0",
+                    "isActive": "0",
                     "numericProperties": [
                       [
                         "y",
                         "85"
                       ]
                     ],
-                    "autoOPSZ": "0"
+                    "autoOPSZ": "0",
+                    "textColor": {{textColorInactive | safe}}
+                  },
+                  {
+                    "label": "Inactive Wait",
+                    "duration": 6,
+                    "textColor": {{textColorInactive | safe}}
+                  },
+                  {
+                    "label": "Active",
+                    "duration": 0,
+                    "textColor": {{textColorActive | safe}}
+                  },
+                  {
+                    "label": "Active Wait",
+                    "duration": 1,
+                    "textColor": {{textColorActive | safe}}
                   }
                 ],
                 "activeActors": [
@@ -403,9 +455,9 @@
                       "label": "Finessables Label",
                       "keyMoments": [
                         {
-                          "label": "Key Moment 1",
-                          "duration": "1",
-                          "isActive": "1",
+                          "label": "Inactive Init",
+                          "duration": "0",
+                          "isActive": "0",
                           "numericProperties": [
                             [
                               "width",
@@ -419,16 +471,23 @@
                               "700"
                             ]
                           ],
-                          "backgroundColor": {
-                            "instance": {
-                              "L": "100.00000",
-                              "C": "0.00000",
-                              "H": "0.0000000",
-                              "alpha": "20.00000"
-                            },
-                            "colorTypeKey": "OKLCH"
-                          },
-                          "textRun": "  Finessables"
+                          "textRun": "  Finessables",
+                          "backgroundColor": {{ labelBGInactive | safe }}
+                        },
+                        {
+                          "label": "Inactive Wait",
+                          "duration": "6",
+                          "backgroundColor": {{ labelBGInactive | safe }}
+                        },
+                        {
+                          "label": "Active",
+                          "duration": "0",
+                          "backgroundColor": {{ labelBGActive | safe }}
+                        },
+                        {
+                          "label": "Active Wait",
+                          "duration": "1",
+                          "backgroundColor": {{ labelBGActive | safe }}
                         }
                       ]
                     },
@@ -506,7 +565,7 @@
                       "label": "Tag yStem",
                       "keyMoments": [
                         {
-                          "label": "Init",
+                          "label": "Inactive Init",
                           "duration": "0",
                           "isActive": "0",
                           "numericProperties": [
@@ -516,7 +575,23 @@
                             ]
                           ],
                           "autoOPSZ": "0",
-                          "textRun": "yStem"
+                          "textRun": "yStem",
+                          "textColor": {{ textColorInactive | safe }}
+                        },
+                        {
+                          "label": "Inactive wait",
+                          "duration": "6",
+                          "textColor": {{ textColorInactive | safe }}
+                        },
+                        {
+                          "label": "Active",
+                          "duration": "0",
+                          "textColor": {{ textColorActive | safe }}
+                        },
+                        {
+                          "label": "highlight",
+                          "duration": "1",
+                          "textColor": {{ textColorHighlight | safe }}
                         }
                       ]
                     },
@@ -556,7 +631,7 @@
                   {
                     "label": "Init",
                     "duration": "0",
-                    "isActive": "1",
+                    "isActive": "0",
                     "numericProperties": [
                       [
                         "y",
@@ -601,7 +676,7 @@
                         {
                           "label": "Init",
                           "duration": "0",
-                          "isActive": "1",
+                          "isActive": "0",
                           "numericProperties": [
                             [
                               "width",
@@ -647,7 +722,7 @@
                     },
                     "actorTypeKey": "LineOfTextActorModel"
                   },
-{
+                  {
                     "instance": {
                       "isLoop": "0",
                       "label": "Tag XOUC",
@@ -839,7 +914,7 @@
                         {
                           "label": "Init",
                           "duration": "0",
-                          "isActive": "1",
+                          "isActive": "0",
                           "numericProperties": [
                             [
                               "x",
@@ -946,18 +1021,19 @@
 {% set line_2_y = 100 %}
 {% set line_3_y = 35 %}
 {% for label, numericProperties, duration, isLast, skip in [
-          ["Init", '[["x", "-1000"], ["y", "' + line_3_y + '"], ["r", "15"]]', 0, false, false]
-        , ["Wait", '[["x", "-1000"]]', 1, false, false]
-        , ["XOUC", '[["x", "265"]]', 0, false, false]
-        , ["XOUC", '[["x", "265"]]', 1, false, false]
-        , ["YOUC", '[["x", "397"]]', 0, false, false]
-        , ["YOUC", '[["x", "397"]]', 1, false, false]
-        , ["XTUC", '[["x", "528"]]', 0, false, false]
-        , ["XTUC", '[["x", "528"]]', 1, false, false]
-        , ["hide", '[["x", "-1000"]]', 0, false, false]
-        , ["hide", '[["x", "-1000"],  ["y", "' + line_3_y + '"]]', 1, false, false]
-        , ["user", '[["x",   "265"], ["y", "' + line_1_y + '"]]', 0, false, false]
-        , ["user", '[["x",   "265"], ["y", "' + line_1_y + '"]]', 2, true, false]
+          ["Init", '[["x", "-1000"], ["y", "' + line_3_y + '"], ["r", "15"]]', 0]
+        , ["Wait", '[["x", "-1000"]]', 1]
+        , ["XOUC", '[["x", "265"]]', 0]
+        , ["XOUC", '[["x", "265"]]', 1]
+        , ["YOUC", '[["x", "397"]]', 0]
+        , ["YOUC", '[["x", "397"]]', 1]
+        , ["XTUC", '[["x", "528"]]', 0]
+        , ["XTUC", '[["x", "528"]]', 1]
+        , ["wait", '[["x", "528"], ["y", "' + line_3_y + '"]]', 1]
+        , ["user", '[["x",   "265"], ["y", "' + line_1_y + '"]]', 0]
+        , ["user", '[["x",   "265"], ["y", "' + line_1_y + '"]]', 1]
+        , ["finesse", '[["x",   "669"], ["y", "' + line_2_y + '"]]', 0]
+        , ["finesse", '[["x",   "669"], ["y", "' + line_2_y + '"]]', 1, true]
         ] %}
         {% if not skip %}
             {
