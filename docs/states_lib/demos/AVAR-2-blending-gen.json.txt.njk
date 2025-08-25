@@ -109,8 +109,9 @@
         },
         "actorTypeKey": "LayerActorModel"
       },
-{% set textColorInactive = '{"instance": {"R": "77","G": "80","B": "85"}, "colorTypeKey": "RGB"}' %}
-{% set textColorActive = '{"instance": {"R": "100","G": "100","B": "100"}, "colorTypeKey": "RGB"}' %}
+{% set textColorInactive = '{"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}' %}
+{% set textColorActive = '{"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}' %}
+{% set textColorHighlight = '{"instance": {"L": "100.00000", "C": "100.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}' %}
       {
         "instance": {
           "isLoop": "0",
@@ -564,23 +565,273 @@
                     },
                     "actorTypeKey": "LineOfTextActorModel"
                   },
+{
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Tag XOUC",
+                      "keyMoments": [
+                        {
+                          "label": "Inactive Init",
+                          "duration": "0",
+                          "isActive": "0",
+                          "numericProperties": [
+                            [
+                              "x",
+                              "295"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "textRun": "XOUC",
+                          "textColor": {{ textColorInactive | safe }}
+                        },
+                        {
+                          "label": "Inactive wait",
+                          "duration": "1",
+                          "textColor": {{ textColorInactive | safe }}
+                        },
+                        {
+                          "label": "Active",
+                          "duration": "0",
+                          "textColor": {{ textColorActive | safe }}
+                        },
+                        {
+                          "label": "highlight",
+                          "duration": "1",
+                          "textColor": {{ textColorHighlight | safe }}
+                        },
+                        {
+                          "label": "Inactive",
+                          "duration": "0",
+                          "textColor": {{ textColorActive | safe }}
+                        },
+                        {
+                          "label": "Inactive Wait",
+                          "duration": "3",
+                          "textColor": {{ textColorActive | safe }}
+                        },
+                        {
+                          "label": "Inactive",
+                          "duration": "0",
+                          "textColor": {{ textColorInactive | safe }}
+                        },
+                        {
+                          "label": "Inactive Wait",
+                          "duration": "2",
+                          "textColor": {{ textColorInactive | safe }}
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
                   {
                     "instance": {
                       "isLoop": "0",
-                      "label": "Construction",
+                      "label": "Tag YOUC",
+                      "keyMoments": [
+                        {
+                          "label": "Inactive Init",
+                          "duration": "0",
+                          "isActive": "0",
+                          "numericProperties": [
+                            [
+                              "x",
+                              "427"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "textRun": "YOUC",
+                          "textColor": {{ textColorInactive | safe }}
+                        },
+                        {
+                          "label": "Inactive wait",
+                          "duration": "1",
+                          "textColor": {{ textColorInactive | safe }}
+                        },
+                        {
+                          "label": "Active",
+                          "duration": "0",
+                          "textColor": {{ textColorActive | safe }}
+                        },
+                        {
+                          "label": "Active Wait",
+                          "duration": "1",
+                          "textColor": {{ textColorActive | safe }}
+                        },
+                        {
+                          "label": "Highlight",
+                          "duration": "1",
+                          "textColor": {{ textColorHighlight | safe }}
+                        },
+                        {
+                          "label": "Active",
+                          "duration": "0",
+                          "textColor": {{ textColorActive | safe }}
+                        },
+                        {
+                          "label": "Active Wait",
+                          "duration": "2",
+                          "textColor": {{ textColorActive | safe }}
+                        },
+                        {
+                          "label": "Inactive",
+                          "duration": "0",
+                          "textColor": {{ textColorInactive | safe }}
+                        },
+                        {
+                          "label": "Inactive Wait",
+                          "duration": "2",
+                          "textColor": {{ textColorInactive | safe }}
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Tag XTUC",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "isActive": "0",
+                          "numericProperties": [
+                            [
+                              "x",
+                              "558"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "textRun": "XTUC",
+                          "textColor": {{ textColorInactive | safe }}
+                        },
+                        {
+                          "label": "Inactive wait",
+                          "duration": "1",
+                          "textColor": {{ textColorInactive | safe }}
+                        },
+                        {
+                          "label": "Active",
+                          "duration": "0",
+                          "textColor": {{ textColorActive | safe }}
+                        },
+                        {
+                          "label": "Active Wait",
+                          "duration": "2",
+                          "textColor": {{ textColorActive | safe }}
+                        },
+                        {
+                          "label": "Highlight",
+                          "duration": "1",
+                          "textColor": {{ textColorHighlight | safe }}
+                        },
+                        {
+                          "label": "Active",
+                          "duration": "0",
+                          "textColor": {{ textColorActive | safe }}
+                        },
+                        {
+                          "label": "Active Wait",
+                          "duration": "1",
+                          "textColor": {{ textColorActive | safe }}
+                        },
+                        {
+                          "label": "Inactive",
+                          "duration": "0",
+                          "textColor": {{ textColorInactive | safe }}
+                        },
+                        {
+                          "label": "Inactive Wait",
+                          "duration": "2",
+                          "textColor": {{ textColorInactive | safe }}
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Tag XTUR",
                       "keyMoments": [
                         {
                           "label": "Init",
-                          "duration": "1",
+                          "duration": "0",
                           "isActive": "1",
                           "numericProperties": [
                             [
                               "x",
-                              "260"
+                              "686"
                             ]
                           ],
                           "autoOPSZ": "0",
-                          "textRun": "    XOUC    YOUC    XTUC    XTUR    XTUD    YTUC    YOPE"
+                          "textRun": "XTUR"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Tag XTUD",
+                      "keyMoments": [
+                        {
+                          "label": "Init",
+                          "duration": "0",
+                          "isActive": "0",
+                          "numericProperties": [
+                            [
+                              "x",
+                              "811"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "textRun": "XTUD"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Tag  YTUC",
+                      "keyMoments": [
+                        {
+                          "label": "Init",
+                          "duration": "0",
+                          "isActive": "0",
+                          "numericProperties": [
+                            [
+                              "x",
+                              "939"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "textRun": "YTUC"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "isLoop": "0",
+                      "label": "Tag YOPE",
+                      "keyMoments": [
+                        {
+                          "label": "Init",
+                          "duration": "0",
+                          "isActive": "0",
+                          "numericProperties": [
+                            [
+                              "x",
+                              "1067"
+                            ]
+                          ],
+                          "autoOPSZ": "0",
+                          "textRun": "YOPE"
                         }
                       ]
                     },
