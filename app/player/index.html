@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Shell - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <script src="../../lib/js/main-player.mjs" async type="module"></script>
+        <link rel="stylesheet" href="../../lib/css/player.css">
+<script>
+    // With this pattern it's save to load the controller javascript asyncronously.
+    if(!window.remoteResources)
+         window.remoteResources = [];
+    {
+    // it's either 'shell.html' or 'shell' what we remove here.
+    const baseParts = window.location.href.split('/').slice(0, -1);
+    baseParts.push('..', '..', 'lib', 'assets', 'fonts');
+    const base = baseParts.join('/') + '/'
+      , localURL = file=>new URL(`./${file}`, base)
+      ;
+    window.remoteResources.push(
+        ['font', localURL('RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].woff2')
+            , {name: "Roboto Flex Regular", version: "Version 3.200;gftools[0.9.32]", fullName: "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"}],
+        ['font', localURL('Roboto-Delta-VF.woff2')
+            , {name: "Roboto Delta Regular", version: "Version 3.000", fullName: "from-url Roboto Delta Regular Version_3-000"}],
+        ['font', localURL('AmstelvarA2-Roman_avar2.woff2')
+            , {name: "AmstelvarA2 Roman wght400", version: "Version 0.001", fullName: "from-url AmstelvarA2 Roman wght400 Version_0-001"}],
+        ['font', localURL('AmstelvarA2-Italic_avar2.woff2')
+            , {name: "AmstelvarA2 Italic wght400", version: "Version 0.001", fullName: "from-url AmstelvarA2 Italic wght400 Version_0-001"}],
+        ['font', localURL('Roboto-Italic[wdth,wght].woff2')
+            , {name: "Roboto Italic", version: "Version 3.009; 2024", fullName: "from-url Roboto Italic Version_3-009 _2024"}],
+        ['font', localURL('Roboto[wdth,wght].woff2')
+            ,  {name: "Roboto Regular", version: "Version 3.009; 2024", fullName: "from-url Roboto Regular Version_3-009 _2024"}],
+        // So far only bundled for the initial demo
+        ['font', localURL('Kablammo[MORF].woff2')
+            , {name: "Kablammo Regular", version: "Version 1.002", fullName: "from-url Kablammo Regular Version_1-002"}],
+        // In this case, this should result in a drop-in replacement for
+        //           ['font', fetch('Zycon.woff2')],
+        // However, since the key and name are not taken from the font
+        // file, it seems a bit brittle. The key, at least could be derrived
+        // directly from the URL, it could be the URL in fact.
+        ['font', localURL('Zycon.woff2')
+            , {name: 'Zycon', version: 'Version 1.8', fullName: 'from-url Zycon Version_1-8'}]
+    );
+    }
+</script>
+    </head>
+    <body>
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <aside class="typeroof-ui typeroof-ui_main"></aside>
+                <aside class="typeroof-ui typeroof-ui_main-after"></aside>
+            </div>
+            <div class="typeroof-main">
+                <div class='typeroof-layout-before'></div>
+                <div class='typeroof-layout'></div>
+                <div class='typeroof-layout-after'></div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li><!--
+                    --><li><a href="https://fontbureau.github.io/TypeRoof/docs">HELP and Documentation</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>
