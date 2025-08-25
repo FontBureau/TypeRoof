@@ -3,21 +3,27 @@
   "permalink": "/docs/states_lib/demos/AVAR-2-blending-gen.json.txt",
   "layout": null,
   "durations": {
-      "initialPause": 1
+      "initialPause": 0.5
+    , "axis_1": 1.5
+    , "axis_2": 1.5
+    , "axis_3": 1.5
+    , "axis_4": 1.5
+    , "transition_1": 0.5
+    , "transition_2": 1
   }
 }
 ---
 {
   "activeState": {
     "t": "0",
-    "duration": "4",
+    "duration": "10",
     "isLoop": "0",
     "perpetual": "0",
     "playing": "0",
     "keyMoments": [
       {
-        "label": "Key Moment 1",
-        "duration": "1",
+        "label": "Init",
+        "duration": "0",
         "isActive": "0",
         "autoOPSZ": "0",
         "textColor": {
@@ -48,13 +54,13 @@
 {% for label, axesLocations, duration, isLast, skip in [
           ["Init",  '[["wght", "400"], ["wdth", "100"], ["XOUC","96"],["YOUC","79"],["XTUC","463"],["opsz","14"], ["YOPQ", "79"]]', 0]
         , ["Wait",  '[["XOUC","96"],["YOUC","79"],["XTUC","463"]]', durations.initialPause]
-        , ["XOUC",  '[["XOUC","66"],["YOUC","79"],["XTUC","463"]]', 1]
-        , ["YOUC",  '[["XOUC","66"],["YOUC","60"],["XTUC","463"]]', 1]
-        , ["XTUC",  '[["XOUC","66"],["YOUC","60"],["XTUC","446"]]', 1]
-        , ["Wait",  '[["wght", "400"], ["wdth", "100"], ["XOUC","66"],["YOUC","60"],["XTUC","446"]]', 1]
+        , ["XOUC",  '[["XOUC","66"],["YOUC","79"],["XTUC","463"]]', durations.axis_1]
+        , ["YOUC",  '[["XOUC","66"],["YOUC","60"],["XTUC","463"]]', durations.axis_2]
+        , ["XTUC",  '[["XOUC","66"],["YOUC","60"],["XTUC","446"]]', durations.axis_3]
+        , ["Wait",  '[["wght", "400"], ["wdth", "100"], ["XOUC","66"],["YOUC","60"],["XTUC","446"]]', durations.transition_1]
         , ['User' , '[["wght", "250"], ["wdth",  "33"], ["XOUC","96"],["YOUC","79"],["XTUC","463"]]', 0]
-        , ["User Pause", '[["YOPQ", "79"]]', 1]
-        , ["Finesse,",   '[["YOPQ", "53"]]', 1]
+        , ["User Pause", '[["YOPQ", "79"]]', durations.transition_2]
+        , ["Finesse,",   '[["YOPQ", "53"]]', durations.axis_4]
         , ["Final", '[]', 0, true]
         ] %}
         {% if not skip %}
@@ -78,8 +84,8 @@
                 "label": "Variable Text",
                 "keyMoments": [
                   {
-                    "label": "Key Moment 1",
-                    "duration": "1",
+                    "label": "Init",
+                    "duration": "0",
                     "isActive": "0",
                     "numericProperties": [
                       [
@@ -123,8 +129,8 @@
           "label": "Axes Container",
           "keyMoments": [
             {
-              "label": "Key Moment 1",
-              "duration": "1",
+              "label": "Init",
+              "duration": "0",
               "isActive": "0",
               "numericProperties": [
                 [
@@ -157,8 +163,8 @@
                 "label": "BG Axes",
                 "keyMoments": [
                   {
-                    "label": "Key Moment 1",
-                    "duration": "1",
+                    "label": "Init",
+                    "duration": "0",
                     "isActive": "0",
                     "numericProperties": [
                       [
@@ -234,11 +240,11 @@
           ["Init", '[["y", "-1000"]]', 0, false, false]
         , ["Wait", '[["y", "-1000"]]', durations.initialPause, false, false]
         , ["line3", '[["y", "' + line_3_y + '"]]', 0, false, false]
-        , ["line3 wait",       '[["y", "' + line_3_y + '"]]', 3, false, false]
-        , ["line1 transition", '[["y", "' + line_1_y + '"]]', 1, false, false]
+        , ["line3 wait",       '[["y", "' + line_3_y + '"]]', durations.axis_1 + durations.axis_2 + durations.axis_3, false, false]
+        , ["line1 transition", '[["y", "' + line_1_y + '"]]', durations.transition_1, false, false]
         , ["line1 wait",       '[["y", "' + line_1_y + '"]]', 0, false, false]
-        , ["line2 transition", '[["y", "' + line_2_y + '"]]', 1, false, false]
-        , ["line2 wait",       '[["y", "' + line_2_y + '"]]', 1, true, false]
+        , ["line2 transition", '[["y", "' + line_2_y + '"]]', durations.transition_2, false, false]
+        , ["line2 wait",       '[["y", "' + line_2_y + '"]]', durations.axis_4, true, false]
         ] %}
         {% if not skip %}
             {
@@ -277,7 +283,7 @@
                   },
                   {
                     "label": "Inactive Wait",
-                    "duration": {{durations.initialPause + 4}},
+                    "duration": "{{durations.initialPause + durations.axis_1 + durations.axis_2 + durations.axis_3 + durations.transition_1}}",
                     "textColor": {{textColorInactive | safe}}
                   },
                   {
@@ -287,7 +293,7 @@
                   },
                   {
                     "label": "Active Wait",
-                    "duration": 1,
+                    "duration": "{{durations.transition_2}}",
                     "textColor": {{textColorActive | safe}}
                   },
                   {
@@ -297,7 +303,7 @@
                   },
                   {
                     "label": "Inactive Wait",
-                    "duration": 1,
+                    "duration": "{{durations.axis_4}}",
                     "textColor": {{textColorInactive | safe}}
                   }
                 ],
@@ -329,7 +335,7 @@
                         },
                         {
                           "label": "Inactive Wait",
-                          "duration": "{{durations.initialPause + 4}}",
+                          "duration": "{{durations.initialPause + durations.axis_1 + durations.axis_2 + durations.axis_3 + durations.transition_1}}",
                           "backgroundColor": {{ labelBGInactive | safe }}
                         },
                         {
@@ -339,7 +345,7 @@
                         },
                         {
                           "label": "Active Wait",
-                          "duration": "1",
+                          "duration": "{{durations.transition_2}}",
                           "backgroundColor": {{ labelBGActive | safe }}
                         },
                         {
@@ -349,7 +355,7 @@
                         },
                         {
                           "label": "Inactive wait",
-                          "duration": "1",
+                          "duration": "{{durations.axis_4}}",
                           "backgroundColor": {{ labelBGInactive | safe }}
                         }
                       ]
@@ -379,7 +385,7 @@
                         },
                         {
                           "label": "Inactive Wait",
-                          "duration": "{{ durations.initialPause + 4 }}",
+                          "duration": "{{ durations.initialPause + durations.axis_1 + durations.axis_2 + durations.axis_3 + durations.transition_1 }}",
                           "isActive": "0",
                           "autoOPSZ": "0",
                           "textRun": "    Size 14    Weight 400    Width 100    Slant 0",
@@ -395,7 +401,7 @@
                         },
                         {
                           "label": "Highlight",
-                          "duration": 1,
+                          "duration": "{{durations.transition_2}}",
                           "textColor": {{textColorActive | safe}}
                         },
                         {
@@ -405,7 +411,7 @@
                         },
                         {
                           "label": "Inactive Wait",
-                          "duration": 1,
+                          "duration": {{durations.axis_4}},
                           "textRun": "    Size 14    Weight 250    Width 33   Slant 0",
                           "textColor": {{textColorInactive | safe}}
                         }
@@ -437,7 +443,7 @@
                   },
                   {
                     "label": "Inactive Wait",
-                    "duration": {{ durations.initialPause + 5 }},
+                    "duration": "{{ durations.initialPause + durations.axis_1 + durations.axis_2 + durations.axis_3 + durations.transition_1 + durations.transition_2 }}",
                     "textColor": {{textColorInactive | safe}}
                   },
                   {
@@ -447,7 +453,7 @@
                   },
                   {
                     "label": "Active Wait",
-                    "duration": 1,
+                    "duration": "{{durations.axis_4}}",
                     "textColor": {{textColorActive | safe}}
                   }
                 ],
@@ -479,7 +485,7 @@
                         },
                         {
                           "label": "Inactive Wait",
-                          "duration": "{{ durations.initialPause + 5 }}",
+                          "duration": "{{ durations.initialPause + durations.axis_1 + durations.axis_2 + durations.axis_3 + durations.transition_1 + durations.transition_2 }}",
                           "backgroundColor": {{ labelBGInactive | safe }}
                         },
                         {
@@ -489,7 +495,7 @@
                         },
                         {
                           "label": "Active Wait",
-                          "duration": "1",
+                          "duration": "{{durations.axis_4}}",
                           "backgroundColor": {{ labelBGActive | safe }}
                         }
                       ]
@@ -583,7 +589,7 @@
                         },
                         {
                           "label": "Inactive wait",
-                          "duration": "{{ durations.initialPause + 5}}",
+                          "duration": "{{ durations.initialPause + durations.axis_1 + durations.axis_2 + durations.axis_3 + durations.transition_1 + durations.transition_2}}",
                           "textColor": {{ textColorInactive | safe }}
                         },
                         {
@@ -593,7 +599,7 @@
                         },
                         {
                           "label": "highlight",
-                          "duration": "1",
+                          "duration": "{{durations.axis_4}}",
                           "textColor": {{ textColorHighlight | safe }}
                         }
                       ]
@@ -656,7 +662,7 @@
                   },
                                     {
                     "label": "Active Wait",
-                    "duration": "4",
+                    "duration": "{{durations.axis_1 + durations.axis_2 + durations.axis_3 + durations.transition_1}}",
                     "textColor": {{textColorActive | safe}}
                   },
                   {
@@ -666,7 +672,7 @@
                   },
                   {
                     "label": "Inactive Wait",
-                    "duration": "2",
+                    "duration": "{{ durations.transition_2 + durations.axis_4 }}",
                     "textColor": {{textColorInactive | safe}}
                   }
                 ],
@@ -708,7 +714,7 @@
                         },
                         {
                           "label": "Active Wait",
-                          "duration": "4",
+                          "duration": "{{ durations.axis_1 + durations.axis_2 + durations.axis_3 + durations.transition_1 }}",
                           "backgroundColor": {{ labelBGActive | safe }}
                         },
                         {
@@ -718,7 +724,7 @@
                         },
                         {
                           "label": "Inactive Wait",
-                          "duration": "2",
+                          "duration": "{{durations.transition_2 + durations.axis_4}}",
                           "backgroundColor": {{ labelBGInactive | safe }}
                         }
                       ]
@@ -756,7 +762,7 @@
                         },
                         {
                           "label": "highlight",
-                          "duration": "1",
+                          "duration": "{{ durations.axis_1 }}",
                           "textColor": {{ textColorHighlight | safe }}
                         },
                         {
@@ -766,7 +772,7 @@
                         },
                         {
                           "label": "Inactive Wait",
-                          "duration": "3",
+                          "duration": "{{ durations.axis_2 + durations.axis_3 + durations.transition_1}}",
                           "textColor": {{ textColorActive | safe }}
                         },
                         {
@@ -776,7 +782,7 @@
                         },
                         {
                           "label": "Inactive Wait",
-                          "duration": "2",
+                          "duration": "{{durations.transition_2 + durations.axis_4}}",
                           "textColor": {{ textColorInactive | safe }}
                         }
                       ]
@@ -814,12 +820,12 @@
                         },
                         {
                           "label": "Active Wait",
-                          "duration": "1",
+                          "duration": "{{ durations.axis_1 }}",
                           "textColor": {{ textColorActive | safe }}
                         },
                         {
                           "label": "Highlight",
-                          "duration": "1",
+                          "duration": "{{ durations.axis_2 }}",
                           "textColor": {{ textColorHighlight | safe }}
                         },
                         {
@@ -829,7 +835,7 @@
                         },
                         {
                           "label": "Active Wait",
-                          "duration": "2",
+                          "duration": "{{ durations.axis_3 + durations.transition_1}}",
                           "textColor": {{ textColorActive | safe }}
                         },
                         {
@@ -839,7 +845,7 @@
                         },
                         {
                           "label": "Inactive Wait",
-                          "duration": "2",
+                          "duration": "{{ durations.transition_2 + durations.axis_4}}",
                           "textColor": {{ textColorInactive | safe }}
                         }
                       ]
@@ -877,12 +883,12 @@
                         },
                         {
                           "label": "Active Wait",
-                          "duration": "2",
+                          "duration": "{{ durations.axis_1 + durations.axis_2 }}",
                           "textColor": {{ textColorActive | safe }}
                         },
                         {
                           "label": "Highlight",
-                          "duration": "1",
+                          "duration": "{{ durations.axis_3 }}",
                           "textColor": {{ textColorHighlight | safe }}
                         },
                         {
@@ -892,7 +898,7 @@
                         },
                         {
                           "label": "Active Wait",
-                          "duration": "1",
+                          "duration": "{{ durations.transition_1 }}",
                           "textColor": {{ textColorActive | safe }}
                         },
                         {
@@ -902,7 +908,7 @@
                         },
                         {
                           "label": "Inactive Wait",
-                          "duration": "2",
+                          "duration": "{{ durations.transition_2 + durations.axis_4 }}",
                           "textColor": {{ textColorInactive | safe }}
                         }
                       ]
@@ -1027,16 +1033,16 @@
           ["Init", '[["x", "-1000"], ["y", "' + line_3_y + '"], ["r", "15"]]', 0]
         , ["Wait", '[["x", "-1000"]]', durations.initialPause]
         , ["XOUC", '[["x", "265"]]', 0]
-        , ["XOUC", '[["x", "265"]]', 1]
+        , ["XOUC", '[["x", "265"]]', durations.axis_1]
         , ["YOUC", '[["x", "397"]]', 0]
-        , ["YOUC", '[["x", "397"]]', 1]
+        , ["YOUC", '[["x", "397"]]', durations.axis_2]
         , ["XTUC", '[["x", "528"]]', 0]
-        , ["XTUC", '[["x", "528"]]', 1]
-        , ["wait", '[["x", "528"], ["y", "' + line_3_y + '"]]', 1]
+        , ["XTUC", '[["x", "528"]]', durations.axis_3]
+        , ["wait", '[["x", "528"], ["y", "' + line_3_y + '"]]', durations.transition_1]
         , ["user", '[["x",   "265"], ["y", "' + line_1_y + '"]]', 0]
-        , ["user", '[["x",   "265"], ["y", "' + line_1_y + '"]]', 1]
+        , ["user", '[["x",   "265"], ["y", "' + line_1_y + '"]]', durations.transition_2]
         , ["finesse", '[["x",   "669"], ["y", "' + line_2_y + '"]]', 0]
-        , ["finesse", '[["x",   "669"], ["y", "' + line_2_y + '"]]', 1, true]
+        , ["finesse", '[["x",   "669"], ["y", "' + line_2_y + '"]]', durations.axis_4, true]
         ] %}
         {% if not skip %}
             {
@@ -1060,8 +1066,7 @@
       }
     ],
     "width": "1280",
-    "height": "720",
-    "editingActor": "./1/instance/activeActors/3"
+    "height": "720"
   },
   "activeLayoutKey": "StageAndActors",
   "activeFontKey": "from-url Roboto Delta Regular Version_3-000"
