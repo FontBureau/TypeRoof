@@ -1,1 +1,44 @@
 @import url(./shell.css);
+
+:root {
+    overflow: hidden;
+    --gap-size: 0;
+    --background-color: #000;
+    --text-color: #fff;
+}
+
+body > .wrapper > header{
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    background-color: #121212BB;
+}
+
+body > .wrapper > footer{
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    background-color: #121212BB;
+}
+
+body > .wrapper > .typeroof-ui_sidebar{
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 2;
+    background-color: #121212BB;
+}
+
+body > .wrapper {
+  display: block;
+  gap: var(--gap-size);
+  width: 100vw;
+  height: 100vh;
+}
+
+.typeroof-layout {
+    width: 100vw;
+    height: 100vh;
+}
