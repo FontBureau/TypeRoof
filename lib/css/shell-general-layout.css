@@ -69,7 +69,8 @@ body, h1, h2, h3, h4, h5, h6, h7, .heading_anchor {
 body > .wrapper {
   display: grid;
   gap: var(--gap-size);
-  grid-template-columns: 17.375rem auto;
+  --sidbar-width: 17.375rem;
+  grid-template-columns: var(--sidbar-width) calc(100vw - var(--sidbar-width) - 3 * var(--gap-size, 0));
   grid-template-rows: auto 1fr auto;
   grid-template-areas:  "header main"
                         "sidebar main"
