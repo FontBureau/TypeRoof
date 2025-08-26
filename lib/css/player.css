@@ -2,11 +2,18 @@
 
 :root {
     overflow: hidden;
-    --gap-size: 0;
-    --background-color: #000;
+    --gap-size: 0px;
+    --background-color: #121212BB;
     --text-color: #fff;
 }
 
+footer, header {
+    background-color: var(--background-color);
+    padding: 1rem;
+    color: #fff;
+}
+
+nope{
 body > .wrapper > header{
     position: absolute;
     top: 0;
@@ -25,20 +32,41 @@ body > .wrapper > footer{
 
 body > .wrapper > .typeroof-ui_sidebar{
     position: absolute;
-    right: 0;
-    top: 0;
+    left: 0;
+    top: 4em;
     z-index: 2;
     background-color: #121212BB;
 }
+}
 
 body > .wrapper {
-  display: block;
+  display: grid;
   gap: var(--gap-size);
-  width: 100vw;
-  height: 100vh;
+  --sidbar-width: 17.375rem;
+  grid-template-columns: var(--sidbar-width) calc(100vw - var(--sidbar-width) - 3 * var(--gap-size, 0));
+  grid-template-rows: auto min-content 1fr auto;
+  grid-template-areas:  "header free"
+                        "sidebar free"
+                        "free2 free"
+                        "footer footer";
+  height: calc(100vh - (2 * var(--gap-size, 0)));
+  background-color: black;
+}
+
+body > .wrapper > *:not(.typeroof-main) {
+    position: relative;
+    z-index: 2;
 }
 
 .typeroof-layout {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
+}
+
+.wrapper:not(.visible) > *:not(.typeroof-main) {
+    visibility: hidden;
 }
