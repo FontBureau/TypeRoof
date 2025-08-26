@@ -12,9 +12,14 @@
          window.remoteResources = [];
     {
     // it's either 'shell.html' or 'shell' what we remove here.
-    const baseParts = window.location.href.split('/').slice(0, -1);
+    const baseParts = window.location.pathname.split('/')
+            // remove "shell" i.e. this file
+            .slice(0, -1)
+            // remove empty parts
+            .filter(part=>part.length > 0)
+            ;
     baseParts.push('lib', 'assets', 'fonts');
-    const base = baseParts.join('/') + '/'
+    const base = window.location.origin + '/' + baseParts.join('/') + '/'
       , localURL = file=>new URL(`./${file}`, base)
       ;
     window.remoteResources.push(
