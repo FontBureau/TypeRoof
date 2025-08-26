@@ -13,6 +13,10 @@ footer, header {
     color: #fff;
 }
 
+input {
+    background: #333;
+}
+
 nope{
 body > .wrapper > header{
     position: absolute;
