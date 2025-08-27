@@ -4,8 +4,8 @@
         <meta charset="utf-8">
         <title>Shell - TypeRoof</title>
         <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
-        <script src="lib/js/main-shell.mjs" async type="module"></script>
-        <link rel="stylesheet" href="lib/css/shell.css">
+        <script src="../../lib/js/main-player.mjs" async type="module"></script>
+        <link rel="stylesheet" href="../../lib/css/player.css">
 <script>
     // With this pattern it's save to load the controller javascript asyncronously.
     if(!window.remoteResources)
@@ -18,10 +18,11 @@
             // remove empty parts
             .filter(part=>part.length > 0)
             ;
-    baseParts.push('lib', 'assets', 'fonts');
+    baseParts.push('..', '..', 'lib', 'assets', 'fonts');
     const base = window.location.origin + '/' + baseParts.join('/') + '/'
       , localURL = file=>new URL(`./${file}`, base)
       ;
+
     window.remoteResources.push(
         ['font', localURL('RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].woff2')
             , {name: "Roboto Flex Regular", version: "Version 3.200;gftools[0.9.32]", fullName: "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"}],

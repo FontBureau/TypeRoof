@@ -69,7 +69,8 @@ body, h1, h2, h3, h4, h5, h6, h7, .heading_anchor {
 body > .wrapper {
   display: grid;
   gap: var(--gap-size);
-  grid-template-columns: 17.375rem auto;
+  --sidbar-width: 17.375rem;
+  grid-template-columns: var(--sidbar-width) calc(100vw - var(--sidbar-width) - 3 * var(--gap-size, 0));
   grid-template-rows: auto 1fr auto;
   grid-template-areas:  "header main"
                         "sidebar main"
@@ -123,13 +124,19 @@ a:link, a:visited {
 body, select, input, textarea {
     color: var(--text-color);
 }
+
+select, input, textarea {
+    background-color: var(--background-color-no-alpha, var(--background-color));
+}
+
 dialog {
-  background-color: var(--background-color);
+  background-color: var(--background-color-no-alpha, var(--background-color));
+  color: var(--text-color);
   border: var(--gap-size) solid var(--gap-color);
 }
 
 form fieldset {
-    background-color: var(--background-color);
+    background-color: var(--background-color-no-alpha, var(--background-color));
     border: var(--gap-size) solid var(--gap-color);
     margin-bottom: 1.125rem;
     padding: 0.9375rem 0.75rem;
@@ -140,7 +147,7 @@ dialog label {
 }
 
 button, form button {
-    background-color: var(--background-color);
+    background-color: var(--background-color-no-alpha, var(--background-color));
     box-shadow: rgba(43, 43, 43, 0.08) 0 0 0.1875rem;
     border: 1px solid #b7b4b0;
     border-radius: 0.125rem;
@@ -182,7 +189,7 @@ fieldset {
     margin-block-start: .9em;
 }
 fieldset:has(> legend) {
-    margin-block-start: .5em;
+    margin-block: .5em;
 }
 
 
