@@ -124,13 +124,19 @@ a:link, a:visited {
 body, select, input, textarea {
     color: var(--text-color);
 }
+
+select, input, textarea {
+    background-color: var(--background-color-no-alpha, var(--background-color));
+}
+
 dialog {
-  background-color: var(--background-color);
+  background-color: var(--background-color-no-alpha, var(--background-color));
+  color: var(--text-color);
   border: var(--gap-size) solid var(--gap-color);
 }
 
 form fieldset {
-    background-color: var(--background-color);
+    background-color: var(--background-color-no-alpha, var(--background-color));
     border: var(--gap-size) solid var(--gap-color);
     margin-bottom: 1.125rem;
     padding: 0.9375rem 0.75rem;
@@ -141,7 +147,7 @@ dialog label {
 }
 
 button, form button {
-    background-color: var(--background-color);
+    background-color: var(--background-color-no-alpha, var(--background-color));
     box-shadow: rgba(43, 43, 43, 0.08) 0 0 0.1875rem;
     border: 1px solid #b7b4b0;
     border-radius: 0.125rem;
