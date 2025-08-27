@@ -189,7 +189,7 @@ fieldset {
     margin-block-start: .9em;
 }
 fieldset:has(> legend) {
-    margin-block-start: .5em;
+    margin-block: .5em;
 }
 
 
