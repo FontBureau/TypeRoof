@@ -1,5 +1,6 @@
 ./index.html
 ./lib/**
 ./shell.html
+./app/**
 ./legacy.html
 ./docs/experiments/**
