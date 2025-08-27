@@ -4,6 +4,7 @@
     overflow: hidden;
     --gap-size: 0px;
     --background-color: #121212BB;
+    --background-color-no-alpha: #121212;
     --text-color: #fff;
 }
 
@@ -11,36 +12,6 @@ footer, header {
     background-color: var(--background-color);
     padding: 1rem;
     color: #fff;
-}
-
-input {
-    background: #333;
-}
-
-nope{
-body > .wrapper > header{
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 1;
-    background-color: #121212BB;
-}
-
-body > .wrapper > footer{
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    z-index: 1;
-    background-color: #121212BB;
-}
-
-body > .wrapper > .typeroof-ui_sidebar{
-    position: absolute;
-    left: 0;
-    top: 4em;
-    z-index: 2;
-    background-color: #121212BB;
-}
 }
 
 body > .wrapper {
