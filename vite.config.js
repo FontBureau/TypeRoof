@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, transformWithEsbuild } from "vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
 export default defineConfig({
@@ -18,6 +18,29 @@ export default defineConfig({
       structured: true,
       silent: false,
     }),
+    { // custom typeroof jsx flavor
+      name: 'tr.jsx',
+      enforce: 'pre', // Runs this plugin before other transformations
+      async transform(code, id) {
+        if (!id.match(/.*\.tr\.jsx$/))
+            return null
+
+        console.log('id', id, 'MATCHED!');
+        const result = await transformWithEsbuild(code, id, {
+            loader: 'jsx',
+            jsxFactory: 'this._domTool._h', // Explicitly sets 'h' as the JSX factory
+            jsxFragment: 'Fragment',
+            sourcemap: true,
+            // Add other esbuild options here if needed, like target
+        });
+
+        // Return the transformed code
+        return {
+            code: result.code,
+            map: result.map,
+        };
+      },
+    },
   ],
 
   // Set base path to match Eleventy's pathPrefix
@@ -75,6 +98,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: "./shell.html",
+        player: "./app/player/index.html",
       },
     },
   },
