@@ -1,0 +1,22 @@
+#! /usr/bin/env bash
+# run like: /TypeRoof>$ ./scripts/frames-to-video clip_frames/test/
+# creates clip_frames/test.mkv
+
+
+
+#Am besten schmeckt uns
+#  ein MKV/MP4 File
+#  mit H264/AAC Codecs, 1080p50, yuv422, rec709.
+
+MY_DIR=$(dirname $0)
+# SOUND_FILE="${MY_DIR}/../assets/intro_outro.flac"
+SOURCE="$1"
+TARGET_DIR=$(dirname "$1")
+TARGET_BASE=$(basename "$1")
+TARGET_FILE=${TARGET_DIR}/${TARGET_BASE}.mkv
+
+echo $SOURCE creating $TARGET_FILE
+
+# with sound use: ffmpeg -y  -framerate 50 -i ${SOURCE}frame_\%10d.png -i ${SOUND_FILE} -c:v \
+ffmpeg -y  -framerate 50 -i ${SOURCE}frame_\%10d.png -c:v \
+    libx264 -crf 18 -r 50 -pix_fmt yuv422p -c:a aac -vbr 4 ${TARGET_FILE}

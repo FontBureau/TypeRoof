@@ -1,0 +1,136 @@
+#!/usr/bin/env node
+/**
+ * Usage:
+ *   # use https://fontbureau.github.io/TypeRoof/app/player
+ *   $ ./scripts/create-clip-frames /docs/states_lib/demos/four-panels.json.txt ./clip_frames
+ *
+ *   # With explicit url
+ *   $ ./scripts/create-clip-frames --player-url=http://localhost:8080/app/player /docs/states_lib/demos/four-panels.json.txt ./clip_frames
+ *
+ */
+import path from 'node:path';
+import puppeteer from 'puppeteer';
+import { mkdir } from 'node:fs/promises';
+import { ArgumentParser } from 'argparse';
+import { setTimeout } from 'node:timers/promises';
+
+async function runTest(playerUrl, clipUrl, targetFolder, targetUseBaseName, verbose) {
+    const browser = await puppeteer.launch({
+        headless: true
+      , timeout: 100000
+      // , executablePath: '/usr/bin/google-chrome-stable'
+      , executablePath:  '/usr/bin/chromium-browser'
+    });
+
+    try {
+        const url = new URL(`#from-url:${clipUrl}`, playerUrl)
+          , basename = path.basename(clipUrl)
+          , fullTargetFolder = targetUseBaseName
+                ? path.join(targetFolder, basename)
+                : targetFolder
+          , createDir = await mkdir(fullTargetFolder, { recursive: true })
+          ;
+        console.log(`Source: ${url}`);
+        console.log(`Target: ${fullTargetFolder}`);
+        const page = await browser.newPage();
+        await page.setViewport({ width: 1920, height: 1080 });
+        await page.goto(url, {
+            waitUntil: ["load", "domcontentloaded"]
+        });
+        let count = 0;
+        while(!await page.evaluate(()=>'shell' in window)) {
+            if(count * 500 > 10000)
+                throw new Error(`TIMEOUT waiting for shell`);
+            await setTimeout(500);
+            count ++;
+
+        }
+        // shell found, it's actually a widgetBus
+        const data = await page.evaluate(async ()=>{
+            document.querySelector(':root').classList.add('screen-grabbing');
+
+             const activeState = shell.getEntry('activeState')
+              , data = {}
+              ;
+
+            for(const key of ['width', 'height', 't', 'duration'])
+                data[key] = activeState.get(key).value;
+            return data;
+        });
+        // had an initial frame where the ui did not vanish quick enough
+        await setTimeout(100);
+        console.log('got data from activeState:', data);
+
+        const frameRate = 50
+          , seconds=data.duration
+          , tOffset=data.t * data.duration // start where the state starts
+          ;
+        for(let i=0,l=seconds * frameRate;i<l;i++) {
+            const currentTime = tOffset + i/frameRate
+              , t = (currentTime/data.duration) % 1
+              ;
+            // console.log(`setting t`, t, 'currentTime', currentTime);
+            await page.evaluate(
+                async (t)=>{
+                    return await shell.changeState(()=>{
+                        shell.getEntry('activeState/t').value = t;
+                    })
+                }, t
+            );
+            await page.screenshot({
+                type: "png",
+                path: path.join(fullTargetFolder, `frame_${String(i).padStart(10, '0')}.png`),
+                fullPage: true,
+            });
+            if(verbose)
+                console.log(`${i} of ${l} time: ${currentTime - tOffset}s (offset ${tOffset})`);
+        }
+    }
+    catch(error) {
+        console.error(error);
+        throw error;
+    }
+    finally {
+        await browser.close();
+    }
+}
+
+
+const parser = new ArgumentParser({ description: 'Generate the frames for a clip for LGM 2025.' });
+
+parser.add_argument('--player-url', {
+    dest: 'playerUrl'
+  , default: 'https://fontbureau.github.io/TypeRoof/app/player'
+  , help: 'The base source url for the clips, include the port number if necessary (e.g. "http://localhost:8081").'
+});
+
+parser.add_argument('--target-dir', {
+    dest: 'targetDir'
+  , default: 'clip_frames'
+  , help: 'The target directory to store the clips.'
+});
+
+parser.add_argument('-n', '--no-base', {
+    dest: 'noBase'
+  , action: 'store_true'
+  , help: 'Don\'t use the source baseName in the target directory.'
+});
+
+parser.add_argument('-v', '--verbose', {
+    dest: 'verbose'
+  , action: 'store_true'
+  , help: 'More verbose output.'
+});
+
+parser.add_argument('source', {
+    help: 'The path to the clip source'
+});
+
+parser.add_argument('target', {
+    help: 'The directory path to save the clip frames to, will be created.'
+});
+
+
+let args = parser.parse_args();
+//console.log('args:', args);
+runTest(args.playerUrl, args.source, args.target, !args.noBase, args.verbose);
