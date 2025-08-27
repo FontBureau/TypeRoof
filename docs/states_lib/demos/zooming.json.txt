@@ -4,7 +4,7 @@
     "duration": "10",
     "isLoop": "0",
     "perpetual": "1",
-    "playing": "0",
+    "playing": "1",
     "activeActors": [
       {
         "instance": {
