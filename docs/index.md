@@ -30,6 +30,26 @@ TypeRoof is Free/Libre Open Source Software and web based, build mainly with
 vanilla JavaScript and a few specialized dependencies. We are looking for
 a community of users and developers who are interested in shaping its future.
 
+<iframe
+    src="/app/player#from-url:/TypeRoof/docs/states_lib/demos/zooming.json.txt"
+    width="60%"
+    style="aspect-ratio: 1/1"
+    allowfullscreen="true"
+    ></iframe>
+
+### Stand Alone Player
+
+The video above is embedded using the iframe code below:
+
+```
+<iframe
+    src="/app/player#from-url:/TypeRoof/docs/states_lib/demos/zooming.json.txt"
+    width="60%"
+    style="aspect-ratio: 1/1"
+    allowfullscreen="true"
+    ></iframe>
+```
+
 ## Applications
 
 ### [TypeRoof Shell](/shell)
