@@ -42,7 +42,6 @@ body > .wrapper > *:not(.typeroof-main) {
     height: 100vh;
 }
 
-:root.screen-grabbing .wrapper > *:not(.typeroof-main),
 .wrapper:not(.visible) > *:not(.typeroof-main) {
     visibility: hidden;
 }
