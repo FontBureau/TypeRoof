@@ -94,7 +94,7 @@ and learn how to load states into [TypeRoof Shell](/shell).
 {% endif %}
 {%- for item in statesList %}
   * [\`{{ item[0] }}\`]({{ item[1] | url}})
-        <a href="/app/player#from-url:${pathPrefix}{{page.url}}{{item[1]}}" target="_blank" title="open in player">view</a>
+        <a href="/app/player#[autoplay]from-url:${pathPrefix}{{page.url}}{{item[1]}}" target="_blank" title="open in player">view</a>
         <a href="/shell#from-url:${pathPrefix}{{page.url}}{{item[1]}}" target="_blank" title="open in shell-editor">edit</a>
 {% endfor -%}
 `

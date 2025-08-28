@@ -31,35 +31,11 @@ vanilla JavaScript and a few specialized dependencies. We are looking for
 a community of users and developers who are interested in shaping its future.
 
 <iframe
-    src="/app/player#from-url:/TypeRoof/docs/states_lib/demos/zooming.json.txt"
+    src="/app/player#[autoplay]from-url:/TypeRoof/docs/states_lib/demos/zooming.json.txt"
     width="60%"
     style="aspect-ratio: 1/1"
     allowfullscreen="true"
     ></iframe>
-
-### Stand Alone Player
-
-The video above is embedded using the iframe code below:
-
-```
-<iframe
-    src="/app/player#from-url:/TypeRoof/docs/states_lib/demos/zooming.json.txt"
-    width="60%"
-    style="aspect-ratio: 1/1"
-    allowfullscreen="true"
-    ></iframe>
-```
-
-**NOTE:** between `[]` before `from-url:` flags can be passed to change the
-default behavior of the player. Available flags so far are `no-chrome` and
-`screengrab`, which are mutually exclusive. `screengrab` hides the chrome
-also when in paused mode, to make it possible to take screenshots when the
-video is not playing.
-
-* `no-chrome` turns off the visibility of the user interface with no way
- to turn it back on. This is intended for automated video generation, e.g.
- have a look at `/scripts/create-clip-frames`.
-
 
 ## Applications
 
@@ -68,6 +44,41 @@ video is not playing.
 The shell provides infrastructure to enable all types of type centered
 tooling for proofing, specimen creation, type setting and it features
 animation capabilities build with variable fonts in mind.
+
+
+### Stand Alone Player
+
+The video at the top of this article is embedded using the iframe code below:
+
+```
+<iframe
+    src="/app/player#[autoplay]from-url:/TypeRoof/docs/states_lib/demos/zooming.json.txt"
+    width="60%"
+    style="aspect-ratio: 1/1"
+    allowfullscreen="true"
+    ></iframe>
+```
+
+**NOTE:** between `[]` before `from-url:` flags can be passed to change the
+default behavior of the player. Available flags so far are `no-chrome` and
+`screengrab`, which are mutually exclusive, and `autoplay` and `autopause`
+which are also mutually exclusive.
+
+* `screengrab` hides the chrome when the mouse is not moved even when in
+paused mode, to make it possible to take screenshots when the video is
+not playing. The default is that the chrome is hidden while playing when
+the mouse is not moved, but the
+
+* `no-chrome` turns off the visibility of the user interface with no way
+ to turn it back on. This is intended for automated video generation, e.g.
+ have a look at `/scripts/create-clip-frames`.
+
+* `autoplay` plays the video regardless of the setting in the loaded state.
+The default is to to use the loaded state value for playing.
+
+* `autopause` pauses the video regardless of the setting in the loaded state.
+The default is to to use the loaded state value for playing.
+
 
 ### [TypeRoof Legacy](/legacy) (Video Proof and Variable Type Tools)
 
