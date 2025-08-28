@@ -67,17 +67,18 @@ which are also mutually exclusive.
 * `screengrab` hides the chrome when the mouse is not moved even when in
 paused mode, to make it possible to take screenshots when the video is
 not playing. The default is that the chrome is hidden while playing when
-the mouse is not moved, but the
+the mouse is not moved, but it is always visible when paused.
 
 * `no-chrome` turns off the visibility of the user interface with no way
  to turn it back on. This is intended for automated video generation, e.g.
- have a look at `/scripts/create-clip-frames`.
+ have a look at [`/scripts/create-clip-frames`](https://github.com/FontBureau/TypeRoof/blob/main/scripts/create-clip-frames)
+ (and then [`/scripts/create-clip-frames`](https://github.com/FontBureau/TypeRoof/blob/main/scripts/frames-to-video)).
 
 * `autoplay` plays the video regardless of the setting in the loaded state.
-The default is to to use the loaded state value for playing.
+The default is to use the loaded state value for playing.
 
 * `autopause` pauses the video regardless of the setting in the loaded state.
-The default is to to use the loaded state value for playing.
+The default is to use the loaded state value for playing.
 
 
 ### [TypeRoof Legacy](/legacy) (Video Proof and Variable Type Tools)
