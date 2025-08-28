@@ -23,7 +23,7 @@ async function runTest(playerUrl, clipUrl, targetFolder, targetUseBaseName, verb
     });
 
     try {
-        const url = new URL(`#from-url:${clipUrl}`, playerUrl)
+        const url = new URL(`#[no-chrome]from-url:${clipUrl}`, playerUrl)
           , basename = path.basename(clipUrl)
           , fullTargetFolder = targetUseBaseName
                 ? path.join(targetFolder, basename)
@@ -47,14 +47,17 @@ async function runTest(playerUrl, clipUrl, targetFolder, targetUseBaseName, verb
         }
         // shell found, it's actually a widgetBus
         const data = await page.evaluate(async ()=>{
-            document.querySelector(':root').classList.add('screen-grabbing');
-
              const activeState = shell.getEntry('activeState')
               , data = {}
               ;
 
             for(const key of ['width', 'height', 't', 'duration'])
                 data[key] = activeState.get(key).value;
+            await shell.changeState(()=>{
+                // Otherwise, if the video is playing, this would screw
+                // up our frame positions.
+                shell.getEntry('activeState/playing').value = false;
+            })
             return data;
         });
         // had an initial frame where the ui did not vanish quick enough

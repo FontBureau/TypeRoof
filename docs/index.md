@@ -50,6 +50,17 @@ The video above is embedded using the iframe code below:
     ></iframe>
 ```
 
+**NOTE:** between `[]` before `from-url:` flags can be passed to change the
+default behavior of the player. Available flags so far are `no-chrome` and
+`screengrab`, which are mutually exclusive. `screengrab` hides the chrome
+also when in paused mode, to make it possible to take screenshots when the
+video is not playing.
+
+* `no-chrome` turns off the visibility of the user interface with no way
+ to turn it back on. This is intended for automated video generation, e.g.
+ have a look at `/scripts/create-clip-frames`.
+
+
 ## Applications
 
 ### [TypeRoof Shell](/shell)
