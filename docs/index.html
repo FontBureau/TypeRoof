@@ -50,21 +50,46 @@ typically miss out, as they are hard to do right on limited time.</p>
 <p>TypeRoof is Free/Libre Open Source Software and web based, build mainly with
 vanilla JavaScript and a few specialized dependencies. We are looking for
 a community of users and developers who are interested in shaping its future.</p>
-<iframe src="/TypeRoof/app/player#from-url:/TypeRoof/docs/states_lib/demos/zooming.json.txt" width="60%" style="aspect-ratio: 1/1" allowfullscreen="true"></iframe>
-<h3><a id="stand-alone-player" class="heading_anchor" href="#stand-alone-player" aria-hidden="true">#</a>Stand Alone Player</h3>
-<p>The video above is embedded using the iframe code below:</p>
-<pre><code>&lt;iframe
-    src=&quot;/app/player#from-url:/TypeRoof/docs/states_lib/demos/zooming.json.txt&quot;
-    width=&quot;60%&quot;
-    style=&quot;aspect-ratio: 1/1&quot;
-    allowfullscreen=&quot;true&quot;
-    &gt;&lt;/iframe&gt;
-</code></pre>
+<iframe src="/TypeRoof/app/player#[autoplay]from-url:/TypeRoof/docs/states_lib/demos/zooming.json.txt" width="60%" style="aspect-ratio: 1/1" allowfullscreen="true"></iframe>
 <h2><a id="applications" class="heading_anchor" href="#applications" aria-hidden="true">#</a>Applications</h2>
 <h3><a id="typeroof-shell" class="heading_anchor" href="#typeroof-shell" aria-hidden="true">#</a><a href="/TypeRoof/shell">TypeRoof Shell</a></h3>
 <p>The shell provides infrastructure to enable all types of type centered
 tooling for proofing, specimen creation, type setting and it features
 animation capabilities build with variable fonts in mind.</p>
+<h3><a id="stand-alone-player" class="heading_anchor" href="#stand-alone-player" aria-hidden="true">#</a>Stand Alone Player</h3>
+<p>The video at the top of this article is embedded using the iframe code below:</p>
+<pre><code>&lt;iframe
+    src=&quot;/app/player#[autoplay]from-url:/TypeRoof/docs/states_lib/demos/zooming.json.txt&quot;
+    width=&quot;60%&quot;
+    style=&quot;aspect-ratio: 1/1&quot;
+    allowfullscreen=&quot;true&quot;
+    &gt;&lt;/iframe&gt;
+</code></pre>
+<p><strong>NOTE:</strong> between <code>[]</code> before <code>from-url:</code> flags can be passed to change the
+default behavior of the player. Available flags so far are <code>no-chrome</code> and
+<code>screengrab</code>, which are mutually exclusive, and <code>autoplay</code> and <code>autopause</code>
+which are also mutually exclusive.</p>
+<ul>
+<li>
+<p><code>screengrab</code> hides the chrome when the mouse is not moved even when in
+paused mode, to make it possible to take screenshots when the video is
+not playing. The default is that the chrome is hidden while playing when
+the mouse is not moved, but the</p>
+</li>
+<li>
+<p><code>no-chrome</code> turns off the visibility of the user interface with no way
+to turn it back on. This is intended for automated video generation, e.g.
+have a look at <code>/scripts/create-clip-frames</code>.</p>
+</li>
+<li>
+<p><code>autoplay</code> plays the video regardless of the setting in the loaded state.
+The default is to to use the loaded state value for playing.</p>
+</li>
+<li>
+<p><code>autopause</code> pauses the video regardless of the setting in the loaded state.
+The default is to to use the loaded state value for playing.</p>
+</li>
+</ul>
 <h3><a id="typeroof-legacy-video-proof-and-variable-type-tools" class="heading_anchor" href="#typeroof-legacy-video-proof-and-variable-type-tools" aria-hidden="true">#</a><a href="/TypeRoof/legacy">TypeRoof Legacy</a> (Video Proof and Variable Type Tools)</h3>
 <p>The last (and final) version that has evolved from Video Proof and Variable
 Type Tools before the TypeRoof Shell was developed. Eventually the Shell
