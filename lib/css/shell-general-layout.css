@@ -132,6 +132,29 @@ select, input, textarea {
     font-size: inherit;
 }
 
+select,
+select::picker(select) {
+    appearance: base-select;
+}
+
+select {
+    height: 1.5rem;
+}
+
+optgroup {
+    margin: 0.5rem 0;
+}
+
+optgroup > legend,
+option {
+    height: 1.25rem;
+    padding: 0 0.75rem;
+}
+
+optgroup > legend {
+    font-weight: bold;
+}
+
 dialog {
   background-color: var(--background-color-no-alpha, var(--background-color));
   color: var(--text-color);
