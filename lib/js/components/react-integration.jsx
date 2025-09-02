@@ -8,8 +8,20 @@ import {
   , UPDATE_STRATEGY_COMPARE
 } from './basics.mjs';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, createContext, useContext } from 'react';
 import { createRoot } from 'react-dom/client';
+
+// Create a context for the widget system
+const WidgetContext = createContext(null);
+
+// React component that provides the widget context
+function WidgetBridge({ widgetBridge, children }) {
+  return (
+    <WidgetContext.Provider value={widgetBridge}>
+      {children}
+    </WidgetContext.Provider>
+  );
+}
 
 export class ReactRoot extends _BaseComponent {
     [UPDATE_STRATEGY] = UPDATE_STRATEGY_COMPARE;
@@ -18,13 +30,31 @@ export class ReactRoot extends _BaseComponent {
     constructor(widgetBus, ReactComponent, props) {
         super(widgetBus);
         this._ReactComponent = ReactComponent;
+
+        // FIXME: props when they describe dependencies should directly
+        // come from the wrapper.
+        // TODO: test protocol handlers (reading from at least) i.e.
+        // render a color in an animation.
+        // TODO: how to integrate TypeRoof components into react???!!!
+        // should be possible.
+
         this._props = props;
         this.element = this._domTool.createElement('div', {'class': 'ui_react_root'});
         this._insertElement(this.element);
         this._reactRoot = createRoot(this.element);
     }
 
-    _addListener(listener, fullDependencyMappings) {
+    destroy() {
+        this._reactRoot.unmount();
+        this._reactRoot = null;
+        super.destroy();
+    }
+
+    addListener(listener, rawDependencyMappings) {
+        const fullDependencyMappings = this.widgetBus.wrapper.constructor.absPathDependencies(
+                                  this.widgetBus.rootPath
+                                , this.widgetBus.protocolHandlers
+                                , rawDependencyMappings);
         // FIXME: it's interesting, in the regular component system the
         // mapping of dependencies is done by the ComponentWrapper system
         // e.g. _absPathDependencies and then getChangedMapFromCompareResult
@@ -46,10 +76,12 @@ export class ReactRoot extends _BaseComponent {
         const id = this._listenerId++;
         // Store the listener and its dependencies (paths and aliases).
         this._listeners.set(id, { listener, fullDependencyMappings });
-        return [() => this._removeListener(id)];
+        return () => this._removeListener(id);
     }
 
     getInitialEntries(rawDependencyMappings) {
+        // This is called a lot!
+
         const fullDependencyMappings = this.widgetBus.wrapper.constructor.absPathDependencies(
                                   this.widgetBus.rootPath
                                 , this.widgetBus.protocolHandlers
@@ -68,15 +100,13 @@ export class ReactRoot extends _BaseComponent {
                                 , true, compareResult, true/* toLocal */)
           ;
 
-        return [initialChangedMap, (listener)=>this._addListener(listener, fullDependencyMappings)];
+        return initialChangedMap;
     }
 
     _removeListener(id) {
         if (!this._listeners.has(id)) return;
         this._listeners.delete(id);
     }
-
-
 
     initialUpdate(/*rootState*/) {
         // FIXME: I don't think initialUpdate is required at all
@@ -90,14 +120,23 @@ export class ReactRoot extends _BaseComponent {
         // modelDependencies ???
         // this._reactRoot.render(<App widgetBus={widgetBusInstance} />);
         // const compareResult = StateComparison.createInitial(rootState, this.modelDependencies)
-        const widgetBus = Object.assign(
+        const props = Object.assign(Object.fromEntries(this.widgetBus.wrapper.dependencyReverseMapping), this._props)
+         , widgetBridge = Object.assign(
                     Object.create(this.widgetBus) // inherit
                   , {
                         getInitialEntries: this.getInitialEntries.bind(this)
+                      , addListener: this.addListener.bind(this)
                     }
                 )
           ;
-        this._reactRoot.render(React.createElement(this._ReactComponent, {widgetBus, ...this._props}, null));
+
+        this._reactRoot.render(
+        <WidgetBridge widgetBridge={widgetBridge}>
+          <this._ReactComponent {...props} />
+        </WidgetBridge>,
+      );
+
+
         // this.update(compareResult);
         // I believe now, that we have to call an initial update somwhere
         // here, maybe rather in addListener, as there's otherwise no way
@@ -123,24 +162,30 @@ export class ReactRoot extends _BaseComponent {
     }
 }
 
+
 // Custom hook that subscribes a component to a specific set of paths in the model.
-export function useMetamodel(widgetBus, dependencies) {
-    // for an initial state, if required, we could here read entries
-    // from widgetBus using dependencies, and then do:
-    //      useState(Object.fromEntries(intialchangedMap))
-    const [initialChangedMap, addListener]  = widgetBus.getInitialEntries(dependencies);
+export function useMetamodel(dependencies=[]) {
+    const widgetBridge = useContext(WidgetContext);
+    if (!widgetBridge) {
+        throw new Error("useMetamodel must be used within a WidgetBridge component");
+    }
+
+    // Use a function to initialize the state, so it's called only once.
+    const [entries, setEntries] = useState(() => {
+        const initialChangedMap = widgetBridge.getInitialEntries(dependencies);
+        return Object.fromEntries(initialChangedMap);
+    });
 
     // Set up the effect to subscribe and unsubscribe from the State.
     useEffect(() => {
         const listener = (changedMap) => {
-                setEntries(prevEntries=>Object.assign({}, prevEntries, Object.fromEntries(changedMap)));
-            }
-            // Pass the full dependencies array to the bus and
-            // return the cleanup function for useEffect.
-        const [removeListener] = addListener(listener);// removeListener
-        return removeListener;
-    }, [widgetBus, dependencies]);
+            setEntries(prevEntries => Object.assign({}, prevEntries, Object.fromEntries(changedMap)));
+        };
 
-    const [entries, setEntries] = useState(Object.fromEntries(initialChangedMap));
-    return entries;
-};
+        // Pass the full dependencies array to the bus and
+        // return the cleanup function for useEffect.
+        return widgetBridge.addListener(listener, dependencies);
+    }, [widgetBridge, dependencies]);
+
+    return [entries, widgetBridge];
+}

@@ -1,5 +1,5 @@
-import React from 'react';
-import { useMetamodel } from './react-integration.mjs';
+import React, { useMemo } from 'react';
+import { useMetamodel } from './react-integration.jsx';
 import './react-time-control/react-time-control.css';
 
 // Format time as HH:MM:SS.SSS
@@ -12,25 +12,28 @@ function formatTime(time) {
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${milliseconds.toString().padStart(2, "0")}`;
 }
 
-function UIReactTimeControl({widgetBus, tPath, playingPath, durationPath}) {
-
-  const { currentT, playing, duration } = useMetamodel(widgetBus, [
-    [tPath, 'currentT']
-  , [playingPath, 'playing']
-  , [durationPath, 'duration']
-  ]);
+function UIReactTimeControl({tPath, playingPath, durationPath}) {
+  const dependencies = useMemo(() => {
+          return [
+                [tPath, 'currentT']
+              , [playingPath, 'playing']
+              , [durationPath, 'duration']
+          ];
+      }, [])
+    , [{ currentT, playing, duration }, widgetBridge] = useMetamodel(dependencies)
+    ;
 
   const setPlaying = () => {
-        widgetBus.changeState(()=>{
-            const playing = widgetBus.getEntry(playingPath);
+        widgetBridge.changeState(()=>{
+            const playing = widgetBridge.getEntry(playingPath);
             playing.value = !playing.value;
         });
     };
 
   const handleSliderChange = (event) => {
     const newT = parseFloat(event.target.value);
-    widgetBus.changeState(()=>{
-            const t = widgetBus.getEntry(tPath);
+    widgetBridge.changeState(()=>{
+            const t = widgetBridge.getEntry(tPath);
             t.value = newT;
     });
   };
