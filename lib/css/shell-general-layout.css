@@ -155,6 +155,10 @@ optgroup > legend {
     font-weight: bold;
 }
 
+input[type=checkbox] {
+    vertical-align: middle;
+}
+
 dialog {
   background-color: var(--background-color-no-alpha, var(--background-color));
   color: var(--text-color);
