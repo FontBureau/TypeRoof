@@ -1,10 +1,13 @@
-import React from 'react';
-import { useMetamodel } from './react-integration.mjs';
+import React, { useMemo } from 'react';
+import { useMetamodel } from './react-integration.jsx';
 
-const CounterDisplay = ({ widgetBus, counterPath }) => {
-  const { count } = useMetamodel(widgetBus, [
-      [counterPath, 'count']
-  ]);
+const CounterDisplay = ({ counterPath }) => {
+
+  const dependencies = useMemo(() => {
+            return [[counterPath, 'count']];
+        }, [])
+      , [{ count }] = useMetamodel(dependencies)
+      ;
 
   return (
     <div>
@@ -14,24 +17,25 @@ const CounterDisplay = ({ widgetBus, counterPath }) => {
   );
 };
 
-const CounterControls = ({ widgetBus, counterPath }) => {
+const CounterControls = ({ counterPath }) => {
+    const [,widgetBridge] = useMetamodel();
     const increment = () => {
-        widgetBus.changeState(()=>{
-            const counter = widgetBus.getEntry(counterPath);
+        widgetBridge.changeState(()=>{
+            const counter = widgetBridge.getEntry(counterPath);
             counter.value = counter.value + 1;
         });
     };
 
     const decrement = () => {
-        widgetBus.changeState(()=>{
-            const counter = widgetBus.getEntry(counterPath);
+        widgetBridge.changeState(()=>{
+            const counter = widgetBridge.getEntry(counterPath);
             counter.value = counter.value - 1;
         });
     };
 
     const reset = () => {
-        widgetBus.changeState(()=>{
-            widgetBus.getEntry(counterPath).value  = 0;
+        widgetBridge.changeState(()=>{
+            widgetBridge.getEntry(counterPath).value  = 0;
         });
     };
 
@@ -45,16 +49,13 @@ const CounterControls = ({ widgetBus, counterPath }) => {
 };
 
 // The main application component.
-const Counter = ({ widgetBus, counterPath }) => {
+const Counter = ({ counterPath }) => {
   return (
     <div>
         <CounterDisplay
-          widgetBus={widgetBus}
           counterPath={counterPath}
-          test={234}
         />
         <CounterControls
-            widgetBus={widgetBus}
             counterPath={counterPath}
           />
       </div>
