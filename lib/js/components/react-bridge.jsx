@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useCallback } from "react";
+import PropTypes from "prop-types";
 import { createRoot } from "react-dom/client";
 import { _BaseComponent } from "./basics.mjs";
 
@@ -34,6 +35,10 @@ function WidgetProvider({ widgetBridge, children }) {
     </WidgetContext.Provider>
   );
 }
+WidgetProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+  widgetBridge: PropTypes.instanceOf(Object).isRequired,
+};
 
 // Bridge class that connects React components to the widget system
 export class ReactWidgetBridge extends _BaseComponent {
