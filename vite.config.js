@@ -32,7 +32,7 @@ export default defineConfig({
       "^/TypeRoof/(docs|live|index\\.html|README|legacy\\.html)": {
         target: "http://localhost:8080",
         changeOrigin: true,
-        configure: (proxy/*, options*/) => {
+        configure: (proxy /*, options*/) => {
           proxy.on("error", (err, req, res) => {
             // Handle gracefully when Eleventy isn't running
             console.log(
@@ -59,7 +59,7 @@ export default defineConfig({
               </html>
             `);
           });
-          proxy.on("proxyReq", (proxyReq, req/*, res*/) => {
+          proxy.on("proxyReq", (proxyReq, req /*, res*/) => {
             console.log("Proxying request to Eleventy:", req.url);
           });
         },
@@ -79,7 +79,7 @@ export default defineConfig({
     },
   },
   esbuild: {
-    keepNames: true
+    keepNames: true,
   },
   // Path resolution
   resolve: {
