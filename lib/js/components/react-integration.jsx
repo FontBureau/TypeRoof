@@ -14,10 +14,10 @@ import { createRoot } from 'react-dom/client';
 // Create a context for the widget system
 const WidgetContext = createContext(null);
 
-// React component that provides the widget context
-function WidgetBridge({ widgetBridge, children }) {
+// React component that provides the widgetBus context
+function WidgetBus({ widgetBus, children }) {
   return (
-    <WidgetContext.Provider value={widgetBridge}>
+    <WidgetContext.Provider value={widgetBus}>
       {children}
     </WidgetContext.Provider>
   );
@@ -115,7 +115,7 @@ export class ReactRoot extends _BaseComponent {
     initialUpdate(/*rootState*/) {
         // FIXME: I don't think initialUpdate is required at all
         // in this case. I guess everything could be moved into
-        // super and this method  is then just empty. There could also
+        // super and this method is then just empty. There could also
         // be a way to inform the parent that it is not required to call
         // this.
         // If one interface, update, is enough, this could have implications
@@ -125,7 +125,7 @@ export class ReactRoot extends _BaseComponent {
         // this._reactRoot.render(<App widgetBus={widgetBusInstance} />);
         // const compareResult = StateComparison.createInitial(rootState, this.modelDependencies)
         const props = Object.assign(Object.fromEntries(this.widgetBus.wrapper.dependencyReverseMapping), this._props)
-         , widgetBridge = Object.assign(
+         , widgetBus = Object.assign(
                     Object.create(this.widgetBus) // inherit
                   , {
                         getInitialEntries: this.getInitialEntries.bind(this)
@@ -135,9 +135,9 @@ export class ReactRoot extends _BaseComponent {
           ;
 
         this._reactRoot.render(
-        <WidgetBridge widgetBridge={widgetBridge}>
+        <WidgetBus widgetBus={widgetBus}>
           <this._ReactComponent {...props} />
-        </WidgetBridge>,
+        </WidgetBus>,
       );
 
 
@@ -169,14 +169,14 @@ export class ReactRoot extends _BaseComponent {
 
 // Custom hook that subscribes a component to a specific set of paths in the model.
 export function useMetamodel(dependencies=[]) {
-    const widgetBridge = useContext(WidgetContext);
-    if (!widgetBridge) {
-        throw new Error("useMetamodel must be used within a WidgetBridge component");
+    const widgetBus = useContext(WidgetContext);
+    if (!widgetBus) {
+        throw new Error("useMetamodel must be used within a WidgetBus component");
     }
 
     // Use a function to initialize the state, so it's called only once.
     const [entries, setEntries] = useState(() => {
-        const initialChangedMap = widgetBridge.getInitialEntries(dependencies);
+        const initialChangedMap = widgetBus.getInitialEntries(dependencies);
         return Object.fromEntries(initialChangedMap);
     });
 
@@ -188,38 +188,38 @@ export function useMetamodel(dependencies=[]) {
 
         // Pass the full dependencies array to the bus and
         // return the cleanup function for useEffect.
-        return widgetBridge.addListener(listener, dependencies);
-    }, [widgetBridge, dependencies]);
+        return widgetBus.addListener(listener, dependencies);
+    }, [widgetBus, dependencies]);
 
-    return [entries, widgetBridge];
+    return [entries, widgetBus];
 }
 
 export function useMetamodelSimpel(path) {
-    const widgetBridge = useContext(WidgetContext);
+    const widgetBus = useContext(WidgetContext);
 
-    if (!widgetBridge) {
+    if (!widgetBus) {
         throw new Error(
-            "useWidgetState must be used within a WidgetBridge component",
+            "useWidgetState must be used within a WidgetBus component",
         );
     }
 
     const [stateValue, setStateFn] = useState(() => {
-        return widgetBridge.getEntry(path).value;
+        return widgetBus.getEntry(path).value;
     });
 
     useEffect(() => {
         const listener = (changedMap) => setStateFn(changedMap.get(path).value);
         // the resolution of an internal name to an external name is not
         // implemented in addListener
-        const externalName = widgetBridge.getExternalName(path);
-        return widgetBridge.addListener(listener, [[externalName ,path]]);
-    }, [widgetBridge, path]);
+        const externalName = widgetBus.getExternalName(path);
+        return widgetBus.addListener(listener, [[externalName ,path]]);
+    }, [widgetBus, path]);
 
     const setValue = useCallback(
-        async (newValue) => widgetBridge.changeState(() => {
-            widgetBridge.getEntry(path).value = newValue;
+        async (newValue) => widgetBus.changeState(() => {
+            widgetBus.getEntry(path).value = newValue;
         }),
-        [widgetBridge, path]
+        [widgetBus, path]
     );
 
     return [stateValue, setValue];
