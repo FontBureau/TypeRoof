@@ -8,7 +8,7 @@ import {
   , UPDATE_STRATEGY_COMPARE
 } from './basics.mjs';
 
-import React, { useEffect, useState, createContext, useContext } from 'react';
+import React, { useEffect, useState, createContext, useContext, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 
 // Create a context for the widget system
@@ -42,6 +42,10 @@ export class ReactRoot extends _BaseComponent {
         this.element = this._domTool.createElement('div', {'class': 'ui_react_root'});
         this._insertElement(this.element);
         this._reactRoot = createRoot(this.element);
+    }
+
+    toString() {
+        return `[Component ${this.constructor.name} for ReactComponent: ${this._ReactComponent.name}]`;
     }
 
     destroy() {
@@ -188,4 +192,35 @@ export function useMetamodel(dependencies=[]) {
     }, [widgetBridge, dependencies]);
 
     return [entries, widgetBridge];
+}
+
+export function useMetamodelSimpel(path) {
+    const widgetBridge = useContext(WidgetContext);
+
+    if (!widgetBridge) {
+        throw new Error(
+            "useWidgetState must be used within a WidgetBridge component",
+        );
+    }
+
+    const [stateValue, setStateFn] = useState(() => {
+        return widgetBridge.getEntry(path).value;
+    });
+
+    useEffect(() => {
+        const listener = (changedMap) => setStateFn(changedMap.get(path).value);
+        // the resolution of an internal name to an external name is not
+        // implemented in addListener
+        const externalName = widgetBridge.getExternalName(path);
+        return widgetBridge.addListener(listener, [[externalName ,path]]);
+    }, [widgetBridge, path]);
+
+    const setValue = useCallback(
+        async (newValue) => widgetBridge.changeState(() => {
+            widgetBridge.getEntry(path).value = newValue;
+        }),
+        [widgetBridge, path]
+    );
+
+    return [stateValue, setValue];
 }

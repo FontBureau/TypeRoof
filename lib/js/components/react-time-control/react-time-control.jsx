@@ -1,5 +1,5 @@
 import React from "react";
-import { useWidgetState, createReactBridge } from "../react-bridge.jsx";
+import { useMetamodelSimpel as useWidgetState } from "../react-integration.jsx";
 import "./react-time-control.css";
 
 // Format time as HH:MM:SS.SSS
