@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { useMetamodelSimpel as useWidgetState } from "../react-integration.jsx";
 import "./react-time-control.css";
 
@@ -17,14 +17,14 @@ function UIReactTimeControl() {
   const [playing, setPlaying] = useWidgetState("playing");
   const [duration] = useWidgetState("duration");
 
-  const handleSliderChange = (event) => {
+  const handleSliderChange = useCallback((event) => {
     const newT = parseFloat(event.target.value);
     setT(newT);
-  };
+  });
 
-  const handlePlayPauseClick = () => {
+  const handlePlayPauseClick = useCallback(() => {
     setPlaying(!playing);
-  };
+  });
 
   // Provide default values if undefined
   const currentT = t ?? 0;
@@ -34,33 +34,37 @@ function UIReactTimeControl() {
     <div className="react-time-control">
       <div className="react-time-control__controls">
         <button
+          aria-label={isPlaying ? "Pause animation" : "Play animation"}
           className={`react-time-control__button ${isPlaying ? "react-time-control__button--playing" : "react-time-control__button--paused"}`}
           onClick={handlePlayPauseClick}
-          aria-label={isPlaying ? "Pause animation" : "Play animation"}
+          type="button"
         >
           {isPlaying ? "⏸ Pause" : "▶ Play"}
         </button>
+
         <span className="react-time-control__time-display">
           Clock: {formatTime(duration * currentT)}
         </span>
       </div>
+
       <div className="react-time-control__slider-container">
         <label
-          htmlFor="react-time-control-slider"
           className="react-time-control__slider-label"
+          htmlFor="react-time-control-slider"
         >
           Time Position:
         </label>
+
         <input
-          id="react-time-control-slider"
-          type="range"
-          min="0"
-          max="1"
-          step="0.001"
-          value={currentT}
-          onChange={handleSliderChange}
-          className="react-time-control__slider"
           aria-label="Time position slider"
+          className="react-time-control__slider"
+          id="react-time-control-slider"
+          max="1"
+          min="0"
+          onChange={handleSliderChange}
+          step="0.001"
+          type="range"
+          value={currentT}
         />
       </div>
     </div>

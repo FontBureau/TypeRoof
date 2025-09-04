@@ -1,6 +1,7 @@
-import React, { useMemo, useCallback } from 'react';
-import { useMetamodel } from './react-integration.jsx';
-import './react-time-control/react-time-control.css';
+import React, { useMemo, useCallback } from "react";
+import PropTypes from "prop-types";
+import { useMetamodel } from "./react-integration.jsx";
+import "./react-time-control/react-time-control.css";
 
 // Format time as HH:MM:SS.SSS
 // input is in seconds
@@ -12,71 +13,79 @@ function formatTime(time) {
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${milliseconds.toString().padStart(2, "0")}`;
 }
 
-function UIReactTimeControl({tPath, playingPath, durationPath}) {
+function UIReactTimeControl({ tPath, playingPath, durationPath }) {
   const dependencies = useMemo(() => {
-          return [
-                [tPath, 'currentT']
-              , [playingPath, 'playing']
-              , [durationPath, 'duration']
-          ];
-      }, [])
-    , [{ currentT, playing, duration }, widgetBridge] = useMetamodel(dependencies)
-    ;
-
+      return [
+        [tPath, "currentT"],
+        [playingPath, "playing"],
+        [durationPath, "duration"],
+      ];
+    }, []),
+    [{ currentT, playing, duration }, widgetBridge] =
+      useMetamodel(dependencies);
   const setPlaying = useCallback(() => {
-      widgetBridge.changeState(()=>{
-          const playing = widgetBridge.getEntry(playingPath);
-          playing.value = !playing.value;
-      });
+    widgetBridge.changeState(() => {
+      const playing = widgetBridge.getEntry(playingPath);
+      playing.value = !playing.value;
+    });
   });
 
   const handleSliderChange = useCallback((event) => {
-      const newT = parseFloat(event.target.value);
-      widgetBridge.changeState(()=>{
-          const t = widgetBridge.getEntry(tPath);
-          t.value = newT;
-      });
+    const newT = parseFloat(event.target.value);
+    widgetBridge.changeState(() => {
+      const t = widgetBridge.getEntry(tPath);
+      t.value = newT;
+    });
   });
 
   const handlePlayPauseClick = useCallback(() => {
-      setPlaying(!playing.value);
+    setPlaying(!playing.value);
   });
 
   return (
     <div className="react-time-control">
       <div className="react-time-control__controls">
         <button
+          aria-label={playing.value ? "Pause animation" : "Play animation"}
           className={`react-time-control__button ${playing.value ? "react-time-control__button--playing" : "react-time-control__button--paused"}`}
           onClick={handlePlayPauseClick}
-          aria-label={playing.value ? "Pause animation" : "Play animation"}
+          type="button"
         >
           {playing.value ? "⏸ Pause" : "▶ Play"}
         </button>
+
         <span className="react-time-control__time-display">
           Clock: {formatTime(duration.value * currentT.value)}
         </span>
       </div>
+
       <div className="react-time-control__slider-container">
         <label
-          htmlFor="react-time-control-slider"
           className="react-time-control__slider-label"
+          htmlFor="react-time-control-slider"
         >
           Time Position:
         </label>
+
         <input
-          id="react-time-control-slider"
-          type="range"
-          min="0"
-          max="1"
-          step="0.001"
-          value={currentT.value}
-          onChange={handleSliderChange}
-          className="react-time-control__slider"
           aria-label="Time position slider"
+          className="react-time-control__slider"
+          id="react-time-control-slider"
+          max="1"
+          min="0"
+          onChange={handleSliderChange}
+          step="0.001"
+          type="range"
+          value={currentT.value}
         />
       </div>
     </div>
   );
 }
+UIReactTimeControl.propTypes = {
+  durationPath: PropTypes.string.isRequired,
+  playingPath: PropTypes.string.isRequired,
+  tPath: PropTypes.string.isRequired,
+};
 
 export { UIReactTimeControl };
