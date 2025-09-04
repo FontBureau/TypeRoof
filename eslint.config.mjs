@@ -7,17 +7,17 @@ export default [
     ignores: ["**/vendor/**", "_site/**", "dist/**"],
   },
   react.configs.flat.all,
-  react.configs.flat['jsx-runtime'],
+  react.configs.flat["jsx-runtime"],
   {
-  // Main configuration
-    files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
+    // Main configuration
+    files: ["**/*.{js,jsx,mjs,cjs,ts,tsx}"],
     plugins: {
       react,
     },
     settings: {
       react: {
-        version: "detect"
-      }
+        version: "detect",
+      },
     },
     languageOptions: {
       parserOptions: {
@@ -38,11 +38,18 @@ export default [
       // I want to use them.
       "no-sparse-arrays": "off",
       "no-undef": ["error", { typeof: true }],
-      "no-unused-vars": ["warn",{
-          "varsIgnorePattern": "React"
-      }],
+      "no-unused-vars": [
+        "warn",
+        {
+          varsIgnorePattern: "React",
+        },
+      ],
       "react/jsx-no-literals": "off",
-      "react/no-multi-comp": "off"
+      "react/no-multi-comp": "off",
+      "react/jsx-indent-props": "off", // prettier disagrees
+      "react/jsx-indent": "off", // prettier disagrees
+      "react/jsx-one-expression-per-line": "off", // prettier disagrees
+      "react/jsx-max-props-per-line": "off", // prettier disagrees
     },
   },
 ];
