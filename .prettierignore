@@ -16,6 +16,7 @@
 !**/*.tsx 
 !**/*.yaml
 !**/*.yml
+!**/shell/*.css
 
 # Ignore glyph-groups.yaml
 lib/assets/glyph-groups.yaml
