@@ -226,11 +226,13 @@ export function useMetamodel(dependencies = []) {
   return [entries, widgetBus];
 }
 
-export function useMetamodelSimpel(path) {
+export function useMetamodelSimple(path) {
   const widgetBus = useContext(WidgetContext);
 
   if (!widgetBus) {
-    throw new Error("useWidgetState must be used within a WidgetBus component");
+    throw new Error(
+      "useMetamodelSimple must be used within a WidgetBus component",
+    );
   }
 
   const [stateValue, setStateValue] = useState(() => {
@@ -238,6 +240,9 @@ export function useMetamodelSimpel(path) {
   });
 
   useEffect(() => {
+    // It was suggested to check whether changedMap.get(path) returns an
+    // item, but, since we only subscribe to one entry in here, path
+    // must be in there!
     const listener = (changedMap) => setStateValue(changedMap.get(path).value);
     // the resolution of an internal name to an external name is not
     // implemented in addListener

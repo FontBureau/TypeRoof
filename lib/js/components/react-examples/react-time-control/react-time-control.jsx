@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { useMetamodelSimpel as useWidgetState } from "../../react-integration.jsx";
+import { useMetamodelSimple as useWidgetState } from "../../react-integration.jsx";
 import "./react-time-control.css";
 
 // Format time as HH:MM:SS.SSS
@@ -17,14 +17,17 @@ function UIReactTimeControl() {
   const [playing, setPlaying] = useWidgetState("playing");
   const [duration] = useWidgetState("duration");
 
-  const handleSliderChange = useCallback((event) => {
-    const newT = parseFloat(event.target.value);
-    setT(newT);
-  });
+  const handleSliderChange = useCallback(
+    (event) => {
+      const newT = parseFloat(event.target.value);
+      setT(newT);
+    },
+    [setT],
+  );
 
   const handlePlayPauseClick = useCallback(() => {
     setPlaying(!playing);
-  });
+  }, [setPlaying, playing]);
 
   // Provide default values if undefined
   const currentT = t ?? 0;
