@@ -5,7 +5,7 @@ import { useMetamodel } from "../react-integration.jsx";
 function CounterDisplay({ counterPath }) {
   const dependencies = useMemo(() => {
       return [[counterPath, "count"]];
-    }, []),
+    }, [counterPath]),
     [{ count }] = useMetamodel(dependencies);
   return (
     <div>
@@ -26,20 +26,20 @@ function CounterControls({ counterPath }) {
       const counter = widgetBridge.getEntry(counterPath);
       counter.value = counter.value + 1;
     });
-  });
+  }, [widgetBridge, counterPath]);
 
   const decrement = useCallback(() => {
     widgetBridge.changeState(() => {
       const counter = widgetBridge.getEntry(counterPath);
       counter.value = counter.value - 1;
     });
-  });
+  }, [widgetBridge, counterPath]);
 
   const reset = useCallback(() => {
     widgetBridge.changeState(() => {
       widgetBridge.getEntry(counterPath).value = 0;
     });
-  });
+  }, [widgetBridge, counterPath]);
 
   return (
     <div className="flex justify-center space-x-4">
