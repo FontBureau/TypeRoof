@@ -1,5 +1,11 @@
 import { defineConfig } from "vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url)),
+  // Set base path to match Eleventy's pathPrefix
+  basePath = "/TypeRoof/";
 
 export default defineConfig({
   plugins: [
@@ -20,16 +26,15 @@ export default defineConfig({
     }),
   ],
 
-  // Set base path to match Eleventy's pathPrefix
-  base: "/TypeRoof/",
+  base: basePath,
 
   // Development server configuration
   server: {
     port: 3000,
-    open: "/TypeRoof/shell.html",
+    open: `${basePath}shell.html`,
     proxy: {
       // Only proxy documentation routes to Eleventy, not lib/ assets or Vite internals
-      "^/TypeRoof/(docs|live|index\\.html|README|legacy\\.html)": {
+      [`^${basePath}(docs|live|index\\.html|README|legacy\\.html)`]: {
         target: "http://localhost:8080",
         changeOrigin: true,
         configure: (proxy /*, options*/) => {
@@ -54,7 +59,7 @@ export default defineConfig({
                   <p>To access documentation, run: <code>npm run dev</code></p>
                   <p>Or start Eleventy separately: <code>npm run dev:doc</code></p>
                   <hr>
-                  <p><a href="/TypeRoof/shell.html">← Back to TypeRoof Shell</a></p>
+                  <p><a href="${basePath}shell.html">← Back to TypeRoof Shell</a></p>
                 </body>
               </html>
             `);
@@ -74,7 +79,8 @@ export default defineConfig({
     target: "esnext",
     rollupOptions: {
       input: {
-        main: "./shell.html",
+        shell: resolve(__dirname, "shell.html"),
+        player: resolve(__dirname, "app/player/index.html"),
       },
     },
   },
