@@ -150,9 +150,6 @@ fieldset > legend {
   width: fit-content; /* inherit; */
 }
 
-.stage_and_actors-layer > svg circle {
-}
-
 .stage-manager_actors li.active > button span {
   font-weight: 700;
 }
@@ -662,6 +659,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
   display: grid;
   grid-template-columns: auto auto;
   grid-template-rows: auto;
+  /* stylelint-disable-next-line declaration-block-no-redundant-longhand-properties */
   grid-template-areas:
     "value-box toggle"
     "color-bar color-bar";
@@ -704,7 +702,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
   width: 100%;
   width: -moz-available; /* WebKit-based browsers will ignore this. */
   width: -webkit-fill-available; /* Mozilla-based browsers will ignore this. */
-  width: fill-available;
+  width: stretch;
   position: relative;
   z-index: 1;
 }
