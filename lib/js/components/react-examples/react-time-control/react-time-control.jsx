@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { useMetamodelSimpel as useWidgetState } from "../react-integration.jsx";
+import { useMetamodelSimpel as useWidgetState } from "../../react-integration.jsx";
 import "./react-time-control.css";
 
 // Format time as HH:MM:SS.SSS

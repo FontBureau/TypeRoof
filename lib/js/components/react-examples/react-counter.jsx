@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback } from "react";
 import PropTypes from "prop-types";
-import { useMetamodel } from "./react-integration.jsx";
+import { useMetamodel } from "../react-integration.jsx";
 
 function CounterDisplay({ counterPath }) {
   const dependencies = useMemo(() => {
