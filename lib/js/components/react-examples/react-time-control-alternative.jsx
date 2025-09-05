@@ -20,27 +20,27 @@ function UIReactTimeControl({ tPath, playingPath, durationPath }) {
         [playingPath, "playing"],
         [durationPath, "duration"],
       ];
-    }, []),
+    }, [tPath, playingPath, durationPath]),
     [{ currentT, playing, duration }, widgetBridge] =
       useMetamodel(dependencies);
-  const setPlaying = useCallback(() => {
+
+  const togglePlaying = useCallback(() => {
     widgetBridge.changeState(() => {
       const playing = widgetBridge.getEntry(playingPath);
       playing.value = !playing.value;
     });
-  });
+  }, [widgetBridge, playingPath]);
 
-  const handleSliderChange = useCallback((event) => {
-    const newT = parseFloat(event.target.value);
-    widgetBridge.changeState(() => {
-      const t = widgetBridge.getEntry(tPath);
-      t.value = newT;
-    });
-  });
-
-  const handlePlayPauseClick = useCallback(() => {
-    setPlaying(!playing.value);
-  });
+  const handleSliderChange = useCallback(
+    (event) => {
+      const newT = parseFloat(event.target.value);
+      widgetBridge.changeState(() => {
+        const t = widgetBridge.getEntry(tPath);
+        t.value = newT;
+      });
+    },
+    [widgetBridge, tPath],
+  );
 
   return (
     <div className="react-time-control">
@@ -48,7 +48,7 @@ function UIReactTimeControl({ tPath, playingPath, durationPath }) {
         <button
           aria-label={playing.value ? "Pause animation" : "Play animation"}
           className={`react-time-control__button ${playing.value ? "react-time-control__button--playing" : "react-time-control__button--paused"}`}
-          onClick={handlePlayPauseClick}
+          onClick={togglePlaying}
           type="button"
         >
           {playing.value ? "⏸ Pause" : "▶ Play"}
