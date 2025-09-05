@@ -1,6 +1,6 @@
-@import url(./fonts.css);
-@import url(./shell/icons.css);
-@import url(./shell/general.css);
+@import url(../fonts.css);
+@import url(./icons.css);
+@import url(./general.css);
 
 .ui_layout_select {
     display: block;
