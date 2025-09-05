@@ -52,7 +52,7 @@ The video at the top of this article is embedded using the iframe code below:
 
 ```
 <iframe
-    src="/app/player#[autoplay]from-url:/TypeRoof/docs/states_lib/demos/zooming.json.txt"
+    src="/TypeRoof/app/player#[autoplay]from-url:/TypeRoof/docs/states_lib/demos/zooming.json.txt"
     width="60%"
     style="aspect-ratio: 1/1"
     allowfullscreen="true"
