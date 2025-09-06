@@ -85,7 +85,7 @@ There are only two types of messages exchanged between `Adapter` and `Receiver`.
  * This message is sent from the `Receiver` to the `Adapter`.
  * It's purpose is to establish the protocol and signal readiness to receive
    `font-update` messages.
- * The `Adapter` will answer with [`font-update`](@message-type-font-update)
+ * The `Adapter` will answer with [`font-update`](#message-type-font-update)
    messages for each current font it is already aware of and then keep
    sending messages for new and updated fonts.
 
@@ -118,7 +118,7 @@ The `event,data` must be the string `"init-live-fonts"` , any other value
 is rejected.
 
 If those checks are passed the `Receiver` is subscribed. The Adapter should
-immediately send [`font-update`](@message-type-font-update) messages for
+immediately send [`font-update`](#message-type-font-update) messages for
 all known fonts and subsequently, at any time, the same message type for
 each new and updated font.
 
@@ -148,7 +148,7 @@ window.addEventListener('message', event=> {
 
  * This message is sent from the `Adapter` to the `Receiver`.
  * It's only sent after the `Receiver` subscribed to the `Adapter` with
-   the [`init-live-fonts`](@message-type-init-live-fonts) message.
+   the [`init-live-fonts`](#message-type-init-live-fonts) message.
 
 ##### The Message Format
 
