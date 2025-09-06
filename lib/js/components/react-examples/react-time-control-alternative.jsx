@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { useMetamodel } from "../react-integration.jsx";
 import "./react-time-control/react-time-control.css";
@@ -23,25 +23,20 @@ function UIReactTimeControl({ tPath, playingPath, durationPath }) {
     }, [tPath, playingPath, durationPath]),
     [{ currentT, playing, duration }, widgetBridge] =
       useMetamodel(dependencies);
-
-  const togglePlaying = useCallback(() => {
+  const togglePlaying = () => {
     widgetBridge.changeState(() => {
       const playing = widgetBridge.getEntry(playingPath);
       playing.value = !playing.value;
     });
-  }, [widgetBridge, playingPath]);
+  };
 
-  const handleSliderChange = useCallback(
-    (event) => {
-      const newT = parseFloat(event.target.value);
-      widgetBridge.changeState(() => {
-        const t = widgetBridge.getEntry(tPath);
-        t.value = newT;
-      });
-    },
-    [widgetBridge, tPath],
-  );
-
+  const handleSliderChange = (event) => {
+    const newT = parseFloat(event.target.value);
+    widgetBridge.changeState(() => {
+      const t = widgetBridge.getEntry(tPath);
+      t.value = newT;
+    });
+  };
   return (
     <div className="react-time-control">
       <div className="react-time-control__controls">

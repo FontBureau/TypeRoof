@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { useMetamodel } from "../react-integration.jsx";
 
@@ -21,25 +21,25 @@ CounterDisplay.propTypes = {
 
 function CounterControls({ counterPath }) {
   const [, widgetBridge] = useMetamodel();
-  const increment = useCallback(() => {
+  const increment = () => {
     widgetBridge.changeState(() => {
       const counter = widgetBridge.getEntry(counterPath);
       counter.value = counter.value + 1;
     });
-  }, [widgetBridge, counterPath]);
+  };
 
-  const decrement = useCallback(() => {
+  const decrement = () => {
     widgetBridge.changeState(() => {
       const counter = widgetBridge.getEntry(counterPath);
       counter.value = counter.value - 1;
     });
-  }, [widgetBridge, counterPath]);
+  };
 
-  const reset = useCallback(() => {
+  const reset = () => {
     widgetBridge.changeState(() => {
       widgetBridge.getEntry(counterPath).value = 0;
     });
-  }, [widgetBridge, counterPath]);
+  };
 
   return (
     <div className="flex justify-center space-x-4">
