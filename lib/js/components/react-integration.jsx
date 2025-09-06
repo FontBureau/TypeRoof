@@ -252,9 +252,7 @@ export function useMetamodelSimple(path) {
 
   const setValue = useCallback(
     async (newValue) =>
-      widgetBus.changeState(() => {
-        widgetBus.getEntry(path).value = newValue;
-      }),
+      widgetBus.changeState(() => (widgetBus.getEntry(path).value = newValue)),
     [widgetBus, path],
   );
 

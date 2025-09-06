@@ -50,6 +50,8 @@ export default [
       "react/jsx-indent": "off", // prettier disagrees
       "react/jsx-one-expression-per-line": "off", // prettier disagrees
       "react/jsx-max-props-per-line": "off", // prettier disagrees
+      // https://github.com/FontBureau/TypeRoof/pull/43#issuecomment-3260094773
+      "react/jsx-no-bind": "off", // alternatives are worse, e.g. useCallback
     },
   },
 ];
