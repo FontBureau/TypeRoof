@@ -159,10 +159,7 @@ export class ReactRoot extends _BaseComponent {
       );
     this._reactRoot.render(
       <WidgetBus widgetBus={widgetBus}>
-        <this._ReactComponent
-          // eslint-disable-next-line react/jsx-props-no-spreading
-          {...props}
-        />
+        <this._ReactComponent {...props} />
       </WidgetBus>,
     );
 
