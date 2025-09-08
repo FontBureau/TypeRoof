@@ -23,7 +23,6 @@ export class _UITimeCircleBase extends _BaseComponent {
     // Otherwise it would be const h = this._domTool.h
     const h = (tagName, attr = {}, ...children) =>
       this._domTool.createElement(tagName, { xmlns: SVGNS, ...attr }, children);
-    const butThisMustFail = 123;
     return (
       <svg
         class="ui_time_circle_base"
@@ -50,7 +49,6 @@ export class _UITimeCircleBase extends _BaseComponent {
   }
 
   _initTemplate() {
-    function andThisMustFail() {}
     const container = this._getTemplate(),
       track = container.querySelector(".ui_time_control_circle-track"),
       hand = container.querySelector(".ui_time_control_circle-hand"),
