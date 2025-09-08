@@ -14,22 +14,22 @@ function formatTime(time) {
 }
 
 function UIReactTimeControl({ tPath, playingPath, durationPath }) {
-  const [{ currentT, playing, duration }, widgetBridge] = useMetamodel([
+  const [{ currentT, playing, duration }, widgetBus] = useMetamodel([
     [tPath, "currentT"],
     [playingPath, "playing"],
     [durationPath, "duration"],
   ]);
   const togglePlaying = () => {
-    widgetBridge.changeState(() => {
-      const playing = widgetBridge.getEntry(playingPath);
+    widgetBus.changeState(() => {
+      const playing = widgetBus.getEntry(playingPath);
       playing.value = !playing.value;
     });
   };
 
   const handleSliderChange = (event) => {
     const newT = parseFloat(event.target.value);
-    widgetBridge.changeState(() => {
-      const t = widgetBridge.getEntry(tPath);
+    widgetBus.changeState(() => {
+      const t = widgetBus.getEntry(tPath);
       t.value = newT;
     });
   };
