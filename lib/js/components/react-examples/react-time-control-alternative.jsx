@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 import { useMetamodel } from "../react-integration.jsx";
 import "./react-time-control/react-time-control.css";

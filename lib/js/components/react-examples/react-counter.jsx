@@ -1,11 +1,9 @@
-import React, { useMemo } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 import { useMetamodel } from "../react-integration.jsx";
 
 function CounterDisplay({ counterPath }) {
-  const [{ count }] = useMetamodel([
-    [counterPath, "count"]
-  ]);
+  const [{ count }] = useMetamodel([[counterPath, "count"]]);
 
   return (
     <div>
