@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, transformWithEsbuild } from "vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,6 +9,25 @@ const __dirname = dirname(fileURLToPath(import.meta.url)),
 
 export default defineConfig({
   plugins: [
+    { // custom typeroof jsx flavor
+      name: 'vite:typeroof-jsx-plugin',
+      enforce: 'pre', // Runs this plugin before other transformations
+      async transform(code, id) {
+        if (!id.endsWith('.typeroof.jsx'))
+            return null;
+
+        // => {code: ..., map: ...}
+        return await transformWithEsbuild(code, id, {
+            loader: 'jsx',
+             // Explicitly sets 'h' as the JSX factory => we will define
+             // this in the local scope.
+            jsxFactory: 'h',
+            jsxFragment: 'Fragment',// NOT DEFINED so far
+            sourcemap: true,
+            // Add other esbuild options here if needed, like target
+        });
+      },
+    },
     viteStaticCopy({
       targets: [
         // Only copy non-JS assets as static files

@@ -1,6 +1,3 @@
-/* jshint esversion: 11, browser: true, unused:true, undef:true, laxcomma: true, laxbreak: true, devel: true */
-/* jshint -W008 */ // leading dot in decimals...
-
 
 import {
     Path
@@ -13,26 +10,6 @@ import {
 const SVGNS = 'http://www.w3.org/2000/svg';
 
 export class _UITimeCircleBase extends _BaseComponent {
-    //jshint ignore:start
-    static TEMPLATE = `<svg class="ui_time_circle_base"
-        viewBox="0 0 200 200"
-        xmlns="http://www.w3.org/2000/svg">
-    <circle class="ui_time_control_circle-track_back"
-        pointer-event="all"
-        cx="0" cy="0"
-        fill="black"
-    />
-    <path class="ui_time_control_circle-track"
-        d=""
-        fill="#333"
-    />
-    <circle class="ui_time_control_circle-hand"
-        cx="0" cy="0"
-        r="13"
-        fill="white"
-    />
-</svg>`;
-    //jshint ignore:end
     constructor(widgetBus) {
         super(widgetBus);
         this._elementCenter = {x:100, y:100};
@@ -41,8 +18,44 @@ export class _UITimeCircleBase extends _BaseComponent {
         [this.element, this._track, this._hand, this._trackBack] = this._initTemplate();
     }
 
+    _getTemplate() {
+        // It's funny, this was supposed to be the primary example of how
+        // to use .typeroof.jsx, however this template is an SVG element
+        // and thus we need a special h version that creates actual
+        // svg namespaced elements. It basically is now an advanced use
+        // case demo.
+        // Otherwise it would be const h = this._domTool.h
+        const h = (tagName, attr={}, ...children)=> this._domTool.createElement(
+                        tagName,
+                        {xmlns:SVGNS, ...attr},
+                        children
+                        );
+        const butThisMustFail = 123;
+        return (
+            <svg class="ui_time_circle_base"
+                    viewBox="0 0 200 200"
+                    xmlns="http://www.w3.org/2000/svg">
+                <circle class="ui_time_control_circle-track_back"
+                    pointer-event="all"
+                    cx="0" cy="0"
+                    fill="black"
+                />
+                <path class="ui_time_control_circle-track"
+                    d=""
+                    fill="#333"
+                />
+                <circle class="ui_time_control_circle-hand"
+                    cx="0" cy="0"
+                    r="13"
+                    fill="white"
+                />
+            </svg>
+        )
+    }
+
     _initTemplate() {
-        const container = this._domTool.createFragmentFromHTML(this.constructor.TEMPLATE).firstElementChild
+        function andThisMustFail(){}
+        const container = this._getTemplate()
           , track = container.querySelector('.ui_time_control_circle-track')
           , hand = container.querySelector('.ui_time_control_circle-hand')
           , trackBack = container.querySelector('.ui_time_control_circle-track_back')
