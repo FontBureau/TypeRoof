@@ -20,24 +20,24 @@ CounterDisplay.propTypes = {
 };
 
 function CounterControls({ counterPath }) {
-  const [, widgetBridge] = useMetamodel();
+  const [, widgetBus] = useMetamodel();
   const increment = () => {
-    widgetBridge.changeState(() => {
-      const counter = widgetBridge.getEntry(counterPath);
+    widgetBus.changeState(() => {
+      const counter = widgetBus.getEntry(counterPath);
       counter.value = counter.value + 1;
     });
   };
 
   const decrement = () => {
-    widgetBridge.changeState(() => {
-      const counter = widgetBridge.getEntry(counterPath);
+    widgetBus.changeState(() => {
+      const counter = widgetBus.getEntry(counterPath);
       counter.value = counter.value - 1;
     });
   };
 
   const reset = () => {
-    widgetBridge.changeState(() => {
-      widgetBridge.getEntry(counterPath).value = 0;
+    widgetBus.changeState(() => {
+      widgetBus.getEntry(counterPath).value = 0;
     });
   };
 
