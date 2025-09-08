@@ -14,15 +14,11 @@ function formatTime(time) {
 }
 
 function UIReactTimeControl({ tPath, playingPath, durationPath }) {
-  const dependencies = useMemo(() => {
-      return [
-        [tPath, "currentT"],
-        [playingPath, "playing"],
-        [durationPath, "duration"],
-      ];
-    }, [tPath, playingPath, durationPath]),
-    [{ currentT, playing, duration }, widgetBridge] =
-      useMetamodel(dependencies);
+  const [{ currentT, playing, duration }, widgetBridge] = useMetamodel([
+    [tPath, "currentT"],
+    [playingPath, "playing"],
+    [durationPath, "duration"],
+  ]);
   const togglePlaying = () => {
     widgetBridge.changeState(() => {
       const playing = widgetBridge.getEntry(playingPath);

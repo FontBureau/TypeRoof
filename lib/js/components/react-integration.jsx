@@ -218,7 +218,9 @@ export function useMetamodel(dependencies = []) {
     // Pass the full dependencies array to the bus and
     // return the cleanup function for useEffect.
     return widgetBus.addListener(listener, dependencies);
-  }, [widgetBus, dependencies]);
+    // unpack and flatten the dependencies definition, so it's not about
+    // the identity of the array, but only about the values.
+  }, [widgetBus, ...dependencies.flat()]);
 
   return [entries, widgetBus];
 }

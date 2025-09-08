@@ -3,10 +3,10 @@ import PropTypes from "prop-types";
 import { useMetamodel } from "../react-integration.jsx";
 
 function CounterDisplay({ counterPath }) {
-  const dependencies = useMemo(() => {
-      return [[counterPath, "count"]];
-    }, [counterPath]),
-    [{ count }] = useMetamodel(dependencies);
+  const [{ count }] = useMetamodel([
+    [counterPath, "count"]
+  ]);
+
   return (
     <div>
       <h2>Counter Display</h2>
