@@ -52,5 +52,5 @@ export default [
     rules: {
       "react/no-unknown-property": "off",
     },
-  }
+  },
 ];
