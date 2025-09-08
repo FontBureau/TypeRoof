@@ -41,9 +41,16 @@ export default [
       "no-unused-vars": [
         "warn",
         {
-          varsIgnorePattern: "React",
+          varsIgnorePattern: "React|h",
         },
       ],
     },
   },
+  {
+    // this seems sufficient yo just override rules for the .typeroof.jsx flavor
+    files: ["**/*.typeroof.jsx"],
+    rules: {
+      "react/no-unknown-property": "off",
+    },
+  }
 ];
