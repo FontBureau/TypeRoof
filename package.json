@@ -17,7 +17,7 @@
     "serve": "http-server ./_site -p 8080 -d -o /TypeRoof/shell.html",
     "dev:app": "vite",
     "dev:app:delayed": "node -e \"setTimeout(() => process.exit(0), 3000)\" && npm run dev:app",
-    "dev:doc": "eleventy --serve",
+    "dev:doc": "npm run build:app && eleventy --serve",
     "lint": "eslint .",
     "format:write": "prettier --write .",
     "format:check": "prettier --check ."

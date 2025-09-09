@@ -21,10 +21,9 @@ function* walkDirSync(relDirPath, basePath) {
     }
 }
 
+const pathPrefix = '/TypeRoof/';
 export default function (eleventyConfig) {
     // Output directory: _site
-
-    const pathPrefix = '/TypeRoof/';
 
     eleventyConfig.setIncludesDirectory("docs/_includes");
     eleventyConfig.addPlugin(eleventyNavigationPlugin);
@@ -127,3 +126,5 @@ and learn how to load states into [TypeRoof Shell](/shell).
         pathPrefix
     }
 };
+
+export const config = {pathPrefix};
