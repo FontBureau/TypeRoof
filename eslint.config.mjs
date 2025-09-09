@@ -1,4 +1,4 @@
-import eslint from '@eslint/js';
+import eslint from "@eslint/js";
 import react from "eslint-plugin-react";
 import globals from "globals";
 
