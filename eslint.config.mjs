@@ -1,3 +1,4 @@
+import eslint from '@eslint/js';
 import react from "eslint-plugin-react";
 import globals from "globals";
 
@@ -6,6 +7,7 @@ export default [
   {
     ignores: ["**/vendor/**", "_site/**", "dist/**"],
   },
+  eslint.configs.recommended,
   react.configs.flat.recommended,
   react.configs.flat["jsx-runtime"],
   {
