@@ -94,7 +94,7 @@ export const nodes = {
         alt: dom.getAttribute("alt")
       }
     }}],
-    toDOM(node) { let {src, alt, title} = node.attrs; return ["img", {src, alt, title}] }
+    toDOM(node) { const {src, alt, title} = node.attrs; return ["img", {src, alt, title}] }
   } as NodeSpec,
 
   /// A hard line break, represented in the DOM as `<br>`.
@@ -123,7 +123,7 @@ export const marks = {
     parseDOM: [{tag: "a[href]", getAttrs(dom: HTMLElement) {
       return {href: dom.getAttribute("href"), title: dom.getAttribute("title")}
     }}],
-    toDOM(node) { let {href, title} = node.attrs; return ["a", {href, title}, 0] }
+    toDOM(node) { const {href, title} = node.attrs; return ["a", {href, title}, 0] }
   } as MarkSpec,
 
   /// An emphasis mark. Rendered as an `<em>` element. Has parse rules
