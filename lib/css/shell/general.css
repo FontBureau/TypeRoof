@@ -58,7 +58,6 @@ h3,
 h4,
 h5,
 h6,
-h7,
 .heading_anchor {
   --font-size-base-unit: 1rem;
 
@@ -74,7 +73,7 @@ h7,
     calc(var(--font-size-pt-assumption) * var(--font-size-change));
 }
 
-.typeroof-ui :is(h1, h2, h3, h4, h5, h6, h7) {
+.typeroof-ui :is(h1, h2, h3, h4, h5, h6) {
   --font-size-base-unit: 0.8em;
 }
 
@@ -155,6 +154,7 @@ textarea {
 
 select,
 select::picker(select) {
+  /* stylelint-disable-next-line declaration-property-value-no-unknown */
   appearance: base-select;
 }
 
@@ -231,9 +231,7 @@ fieldset {
   min-inline-size: 0;
   margin-inline: 0;
   padding-inline: 0.2em;
-}
 
-fieldset {
   /*
      * The goal here is to create a similar distance between the borders
      * of fieldsets with legend and fieldsets without. A fieldset with
@@ -280,6 +278,7 @@ footer li::after {
   color: white;
   line-height: 0.5em; /* basically reset the 2 em font-size to 1em */
   vertical-align: middle;
+  /* stylelint-disable-next-line declaration-property-value-no-unknown */
   vertical-align: -webkit-baseline-middle;
   overflow: hidden;
 }
