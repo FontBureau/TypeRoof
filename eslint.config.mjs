@@ -46,6 +46,8 @@ export default [
           varsIgnorePattern: "React|h",
         },
       ],
+      // generators without a yield are perfectly fine and  the behavior is well defined
+      "require-yield": "off",
     },
   },
   {
