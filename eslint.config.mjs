@@ -1,6 +1,7 @@
 import eslint from "@eslint/js";
 import react from "eslint-plugin-react";
 import globals from "globals";
+import tseslint from "typescript-eslint";
 
 export default [
   // Global ignores
@@ -10,6 +11,12 @@ export default [
   eslint.configs.recommended,
   react.configs.flat.recommended,
   react.configs.flat["jsx-runtime"],
+
+  ...tseslint.configs.recommended.map((conf) => ({
+    ...conf,
+    // apply only to TypeScript files
+    files: ["**/*.{ts,tsx}"],
+  })),
   {
     // Main configuration
     files: ["**/*.{js,jsx,mjs,cjs,ts,tsx}"],
