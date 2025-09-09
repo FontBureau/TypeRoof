@@ -1,37 +1,37 @@
 :root {
-    /* Note: using \ to escape newlines works well in Chrome and Firefox
-     * but it destroys syntax highlighting in my editor. Actually, having
-     * a full stop at the end of this comment and some magic(?) number
-     * of characters in the last line restores syntax highlighting again.
-     * Note 2025/09/05: This block breaks syntax highlighting on VS Code,
-     * hence being moved to a separate file.
-     */
-    --alignment-left-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+  /* Note: using \ to escape newlines works well in Chrome and Firefox
+   * but it destroys syntax highlighting in my editor. Actually, having
+   * a full stop at the end of this comment and some magic(?) number
+   * of characters in the last line restores syntax highlighting again.
+   * Note 2025/09/05: This block breaks syntax highlighting on VS Code,
+   * hence being moved to a separate file.
+   */
+  --alignment-left-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
             <line stroke='%23CCC' x1='0' y1='2' x2='6' y2='2' stroke-width='1'/>\
             <line stroke='%23CCC' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
             <line stroke='%23CCC' x1='0' y1='6' x2='4' y2='6' stroke-width='1'/>\
         </svg>");
-    --alignment-left-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+  --alignment-left-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
             <line stroke='black' x1='0' y1='2' x2='6' y2='2' stroke-width='1'/>\
             <line stroke='black' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
             <line stroke='black' x1='0' y1='6' x2='4' y2='6' stroke-width='1'/>\
         </svg>");
-    --alignment-center-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+  --alignment-center-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
             <line stroke='%23CCC' x1='1' y1='2' x2='7' y2='2' stroke-width='1'/>\
             <line stroke='%23CCC' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
             <line stroke='%23CCC' x1='2' y1='6' x2='6' y2='6' stroke-width='1'/>\
         </svg>");
-    --alignment-center-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+  --alignment-center-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
             <line stroke='black' x1='1' y1='2' x2='7' y2='2' stroke-width='1'/>\
             <line stroke='black' x1='0' y1='4' x2='8' y2='4' stroke-width='1'/>\
             <line stroke='black' x1='2' y1='6' x2='6' y2='6' stroke-width='1'/>\
         </svg>");
-    --alignment-right-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+  --alignment-right-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
             <line stroke='%23CCC' x1='8' y1='2' x2='2' y2='2' stroke-width='1'/>\
             <line stroke='%23CCC' x1='8' y1='4' x2='0' y2='4' stroke-width='1'/>\
             <line stroke='%23CCC' x1='8' y1='6' x2='4' y2='6' stroke-width='1'/>\
         </svg>");
-    --alignment-right-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
+  --alignment-right-active-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'>\
             <line stroke='black' x1='8' y1='2' x2='2' y2='2' stroke-width='1'/>\
             <line stroke='black' x1='8' y1='4' x2='0' y2='4' stroke-width='1'/>\
             <line stroke='black' x1='8' y1='6' x2='4' y2='6' stroke-width='1'/>\
