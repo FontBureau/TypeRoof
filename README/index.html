@@ -58,54 +58,55 @@ Type Tools before the TypeRoof Shell was developed. Eventually the Shell
 will absorb all Layouts (Tools) that are present in this app and make this
 instance obsolete.</p>
 <h2><a id="how-to-build-and-run-locally-for-development" class="heading_anchor" href="#how-to-build-and-run-locally-for-development" aria-hidden="true">#</a>How to build and run locally (for development)</h2>
-<p>You don’t need to build TypeRoof, it is created using vanilla JavaScript and
-<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules">JavaScript Modules</a>. You can serve TypeRoof directly from the project root directory:</p>
-<pre class="language-sh-session"><code class="language-sh-session"><span class="token command"><span class="token shell-symbol important">#</span>  <span class="token bash language-bash">E.g. using the Python-3 <span class="token builtin class-name">builtin</span> web-server.</span></span>
-<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> python3 <span class="token parameter variable">-m</span> http.server <span class="token number">8000</span></span></span>
-<span class="token output">Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+<p>TypeRoof uses a modern development setup with <a href="https://vitejs.dev/">Vite</a> for the shell application and <a href="https://www.11ty.dev/">Eleventy</a> for documentation. The development servers are configured to work together seamlessly.</p>
+<h3><a id="prerequisites" class="heading_anchor" href="#prerequisites" aria-hidden="true">#</a>Prerequisites</h3>
+<p>You need Node.js installed. Then install the dependencies:</p>
+<pre class="language-sh-session"><code class="language-sh-session"><span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> <span class="token function">npm</span> ci</span></span></code></pre>
+<h3><a id="development-commands" class="heading_anchor" href="#development-commands" aria-hidden="true">#</a>Development Commands</h3>
+<p><strong>For full development (recommended):</strong></p>
+<pre class="language-sh-session"><code class="language-sh-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Start both shell and documentation servers</span></span>
+<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> <span class="token function">npm</span> run dev</span></span>
 
-</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Then go to: http://0.0.0.0:8000/shell.html</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Then go to: http://localhost:3000/TypeRoof/</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">- TypeRoof Shell: http://localhost:3000/TypeRoof/shell.html</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">- Documentation: http://localhost:3000/TypeRoof/docs/</span></span></code></pre>
+<p><strong>For shell development only:</strong></p>
+<pre class="language-sh-session"><code class="language-sh-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Start only the Vite development server <span class="token keyword">for</span> the shell</span></span>
+<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> <span class="token function">npm</span> run dev:app</span></span>
 
-<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">OR use https://www.npmjs.com/package/http-server <span class="token punctuation">(</span>installing globally<span class="token punctuation">)</span></span></span>
-<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> <span class="token function">npm</span> <span class="token function">install</span> <span class="token parameter variable">-g</span> http-server</span></span>
-<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> http-server</span></span>
-<span class="token output">Starting up http-server, serving ./
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Then go to: http://localhost:3000/TypeRoof/shell.html</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token punctuation">(</span>Documentation routes will show a helpful <span class="token string">"not available"</span> message<span class="token punctuation">)</span></span></span></code></pre>
+<p><strong>For documentation development only:</strong></p>
+<pre class="language-sh-session"><code class="language-sh-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Start only the Eleventy development server</span></span>
+<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> <span class="token function">npm</span> run dev:doc</span></span>
 
-http-server version: 14.1.1
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Then go to: http://localhost:8080/TypeRoof/docs/</span></span></code></pre>
+<h3><a id="legacy-development-method" class="heading_anchor" href="#legacy-development-method" aria-hidden="true">#</a>Legacy Development Method</h3>
+<p>If you prefer a simple file server approach, TypeRoof (legacy) can still be served directly:</p>
+<pre class="language-sh-session"><code class="language-sh-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Using Python</span></span><span class="token output">'s built-in server
+</span><span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> python3 <span class="token parameter variable">-m</span> http.server <span class="token number">8000</span></span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Then go to: http://localhost:8000/legacy.html</span></span>
 
-[...]
-
-Available on:
-  http://127.0.0.1:8080
-  http://192.168.178.87:8080
-
-</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Then go to: http://localhost:8080/shell</span></span>
-
-<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">OR, maybe you want to use the Eleventy built-in development server</span></span>
-<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">which</span> is ideal to <span class="token function">write</span> documentation. See the next section.</span></span></code></pre>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Using Node.js http-server <span class="token punctuation">(</span>if installed globally<span class="token punctuation">)</span></span></span>
+<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> npx http-server</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Then go to: http://localhost:8080/legacy.html</span></span></code></pre>
 <h2><a id="build-the-complete-static-site-locally" class="heading_anchor" href="#build-the-complete-static-site-locally" aria-hidden="true">#</a>Build the complete static site locally</h2>
-<p>The static web-site at <a href="https://fontbureau.github.io/TypeRoof/">https://fontbureau.github.io/TypeRoof/</a> (served via GitHub pages)
-is build using <a href="https://www.11ty.dev/">Eleventy</a>. See the <a href="https://www.11ty.dev/docs/">documentation of Eleventy</a>
-for more specific usage.</p>
-<pre class="language-sh-session"><code class="language-sh-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">You requires Node.js and must <span class="token function">install</span> the dependencies first:</span></span>
-<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> <span class="token function">npm</span> <span class="token function">install</span></span></span>
+<p>The <a href="https://fontbureau.github.io/TypeRoof/">static website</a> (served via GitHub Pages) is built using both <a href="https://vitejs.dev/">Vite</a> for the shell application and <a href="https://www.11ty.dev/">Eleventy</a> for documentation.</p>
+<h3><a id="build-commands" class="heading_anchor" href="#build-commands" aria-hidden="true">#</a>Build Commands</h3>
+<p><strong>Build everything (recommended):</strong></p>
+<pre class="language-sh-session"><code class="language-sh-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Build both shell application and documentation</span></span>
+<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> <span class="token function">npm</span> run build</span></span>
 
-<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">We use eleventy to build the static web site:</span></span>
-<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> npx @11ty/eleventy</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">The complete site will be created <span class="token keyword">in</span> the <span class="token variable"><span class="token variable">`</span>_site<span class="token variable">`</span></span> directory</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">This includes:</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">- Optimized shell application <span class="token punctuation">(</span>from Vite<span class="token punctuation">)</span></span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">- Generated documentation <span class="token punctuation">(</span>from Eleventy<span class="token punctuation">)</span></span></span></code></pre>
+<p><strong>Build individual parts:</strong></p>
+<pre class="language-sh-session"><code class="language-sh-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Build only the shell application <span class="token punctuation">(</span>creates <span class="token variable"><span class="token variable">`</span>dist/<span class="token variable">`</span></span> directory<span class="token punctuation">)</span></span></span>
+<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> <span class="token function">npm</span> run build:app</span></span>
 
-<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">The resulting site has been created <span class="token keyword">in</span> the <span class="token variable"><span class="token variable">`</span>_site<span class="token variable">`</span></span> directory.</span></span>
-
-<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">You can also use the live updating development server:</span></span>
-
-<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> npx @11ty/eleventy <span class="token parameter variable">--serve</span></span></span>
-<span class="token output">[...]
-[11ty] Copied [xxx] Wrote [xxx] files in 0.75 seconds (v3.0.0)
-[11ty] Watching…
-[11ty] Server at http://localhost:8080/
-
-</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Then go to: http://localhost:8080/shell</span></span>
-<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Or go to: http://localhost:8080/shell</span></span>
-</code></pre>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Build only the documentation <span class="token punctuation">(</span>creates <span class="token variable"><span class="token variable">`</span>_site/<span class="token variable">`</span></span> directory<span class="token punctuation">)</span></span></span>
+<span class="token command"><span class="token shell-symbol important">$</span> <span class="token bash language-bash">~/TypeRoof<span class="token operator">></span> <span class="token function">npm</span> run build:doc</span></span></code></pre>
 </div>
             </div>
             <footer>

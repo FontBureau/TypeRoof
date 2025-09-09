@@ -97,7 +97,7 @@ for this <strong>pop-up/new tab</strong> and <strong>iframe</strong>.</p>
 <li>This message is sent from the <code>Receiver</code> to the <code>Adapter</code>.</li>
 <li>It’s purpose is to establish the protocol and signal readiness to receive
 <code>font-update</code> messages.</li>
-<li>The <code>Adapter</code> will answer with <a href="@message-type-font-update"><code>font-update</code></a>
+<li>The <code>Adapter</code> will answer with <a href="#message-type-font-update"><code>font-update</code></a>
 messages for each current font it is already aware of and then keep
 sending messages for new and updated fonts.</li>
 </ul>
@@ -118,7 +118,7 @@ page itself, any other origin is rejected.</p>
 <p>The <code>event,data</code> must be the string <code>&quot;init-live-fonts&quot;</code> , any other value
 is rejected.</p>
 <p>If those checks are passed the <code>Receiver</code> is subscribed. The Adapter should
-immediately send <a href="@message-type-font-update"><code>font-update</code></a> messages for
+immediately send <a href="#message-type-font-update"><code>font-update</code></a> messages for
 all known fonts and subsequently, at any time, the same message type for
 each new and updated font.</p>
 <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> expectedOriginURL <span class="token operator">=</span> <span class="token string">'https://fontbureau.github.io'</span>
@@ -144,7 +144,7 @@ window<span class="token punctuation">.</span><span class="token function">addEv
 <ul>
 <li>This message is sent from the <code>Adapter</code> to the <code>Receiver</code>.</li>
 <li>It’s only sent after the <code>Receiver</code> subscribed to the <code>Adapter</code> with
-the <a href="@message-type-init-live-fonts"><code>init-live-fonts</code></a> message.</li>
+the <a href="#message-type-init-live-fonts"><code>init-live-fonts</code></a> message.</li>
 </ul>
 <h5><a id="the-message-format-1" class="heading_anchor" href="#the-message-format-1" aria-hidden="true">#</a>The Message Format</h5>
 <p>The message is an object with three keys <code>{type, metaData, fontBuffer}</code>;</p>
