@@ -32,6 +32,9 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
+      - name: 🧪 Run stylelint
+        run: npm run stylelint
+
       - name: 🧪 Test
         run: npm run test
 
