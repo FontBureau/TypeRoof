@@ -1263,7 +1263,12 @@ button.ui_style_patches_map-item-value {
   display: block;
 }
 
-.ui_links_map-tools > *:not(.ui_links_map-create_select) {
+.ui_links_map-tools:not(
+        /* always show for this case */
+        .ui_node_spec_to_type_spec_links_map-tools
+    )> *:not(
+        .ui_links_map-create_select
+    ) {
   display: none;
 }
 
