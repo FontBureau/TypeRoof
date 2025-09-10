@@ -8,7 +8,7 @@
     "app": "app"
   },
   "scripts": {
-    "test": "npm run lint && npm run format:check",
+    "test": "npm run lint && npm run format:check & npm run stylelint:check",
     "build": "npm run build:app && npm run build:doc",
     "dev": "concurrently \"npm run dev:doc\" \"npm run dev:app:delayed\"",
     "build:app": "vite build",
@@ -21,7 +21,8 @@
     "lint": "eslint .",
     "format:write": "prettier --write .",
     "format:check": "prettier --check .",
-    "stylelint": "stylelint **/shell/*.css --fix"
+    "stylelint:fix": "stylelint **/shell/*.css --fix",
+    "stylelint:check": "stylelint **/shell/*.css"
   },
   "keywords": [
     "typography",
