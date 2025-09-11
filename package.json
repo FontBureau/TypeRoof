@@ -21,8 +21,8 @@
     "lint": "eslint .",
     "format:write": "prettier --write .",
     "format:check": "prettier --check .",
-    "stylelint:fix": "stylelint **/shell/*.css --fix",
-    "stylelint:check": "stylelint **/shell/*.css"
+    "stylelint:fix": "stylelint . --fix",
+    "stylelint:check": "stylelint ."
   },
   "keywords": [
     "typography",

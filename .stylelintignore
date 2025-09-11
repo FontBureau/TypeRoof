@@ -1,0 +1,8 @@
+# Ignore everything by default 
+*
+
+# But don't ignore directories
+!*/
+
+# Ignore anything that's not in the shell folder
+!lib/css/shell/*.css
