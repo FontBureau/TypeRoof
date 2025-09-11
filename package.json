@@ -8,7 +8,7 @@
     "app": "app"
   },
   "scripts": {
-    "test": "npm run lint && npm run format:check & npm run stylelint:check",
+    "lint": "npm run eslint && npm run format:check & npm run stylelint:check",
     "build": "npm run build:app && npm run build:doc",
     "dev": "concurrently \"npm run dev:doc\" \"npm run dev:app:delayed\"",
     "build:app": "vite build",
@@ -18,7 +18,7 @@
     "dev:app": "vite",
     "dev:app:delayed": "node -e \"setTimeout(() => process.exit(0), 3000)\" && npm run dev:app",
     "dev:doc": "npm run build:app && eleventy --serve",
-    "lint": "eslint .",
+    "eslint": "eslint .",
     "format:write": "prettier --write .",
     "format:check": "prettier --check .",
     "stylelint:fix": "stylelint . --fix",
