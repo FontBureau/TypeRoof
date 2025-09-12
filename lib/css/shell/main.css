@@ -1524,3 +1524,9 @@ button.ui_style_patches_map-item-value {
   font-weight: 600;
   display: block;
 }
+
+.dialog-multi_select_fonts {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
