@@ -224,6 +224,13 @@ form button:hover {
   box-shadow: rgb(43 43 43 / 15%) 0 0 0.625rem;
 }
 
+menu {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+}
+
 fieldset {
   border: none;
   border-bottom: 1px solid #b7b4b0;
