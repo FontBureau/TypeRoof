@@ -1348,7 +1348,7 @@ button.ui_style_patches_map-item-value {
   padding-block: 0.35em 0.625em;
 }
 
-.ui_collapsible_mixin-closed > * {
+.ui_collapsible_mixin-closed > :not(legend) {
   display: none;
 }
 
@@ -1363,13 +1363,16 @@ button.ui_style_patches_map-item-value {
 }
 
 .ui-dialog_openers-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  list-style: none;
   margin: 0;
-  list-style: inside square;
   padding: 0;
 }
 
 .ui-dialog_openers-item-button {
-  text-decoration: none;
+  width: 100%;
 }
 
 .ui-dialog-manage_state-serialize_output {
