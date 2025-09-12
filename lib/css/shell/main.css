@@ -1373,6 +1373,7 @@ button.ui_style_patches_map-item-value {
 }
 
 .ui-dialog-manage_state-serialize_output {
+  font-family: monospace;
   white-space: pre;
   width: 80vw;
   min-height: 10em;
