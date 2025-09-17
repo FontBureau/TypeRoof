@@ -1257,6 +1257,13 @@ button.ui_style_patches_map-item-value {
   display: initial;
 }
 
+.ui_node_spec_to_type_spec_links_map-tools > * {
+  /* otherwise some are initially inline and we get a line break
+     * when we focus
+     */
+  display: block;
+}
+
 .ui_links_map-tools {
   margin-left: 0;
   margin-bottom: 0.5em;
