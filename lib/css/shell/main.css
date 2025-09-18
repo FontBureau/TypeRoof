@@ -1,6 +1,10 @@
 @import url("../fonts.css");
+@import url("./variables.css");
+@import url("./typography.css");
 @import url("./icons.css");
-@import url("./general.css");
+@import url("./elements.css");
+@import url("./layout.css");
+@import url("./docs.css");
 
 .ui_layout_select {
   display: block;
@@ -443,17 +447,17 @@ li.ui_key_moment_controller.active:not(:last-child) {
   vertical-align: -webkit-baseline-middle;
 }
 
-/* style is VERY similar to button in shell-general-layout.css */
 .drag_handle {
   display: inline-block;
-  font-size: 1.1em; /* a bit bigger to make more accessible */
-  padding: 0 0.3em;
+  font-size: 1.1em;
+  padding: 0.1em 0.25em;
   background-color: var(--background-color);
   box-shadow: rgb(43 43 43 / 8%) 0 0 0.1875rem;
   border: 1px solid #b7b4b0;
-  border-radius: 0.125rem;
+  border-radius: 0.25rem;
   color: var(--text-color);
   cursor: grab;
+  margin-right: 0.125rem;
 }
 
 .drag_handle:hover {
@@ -490,16 +494,6 @@ li.ui_key_moment_controller.active:not(:last-child) {
   content: "⌖";
   outline: 0.1em dashed grey;
   padding: 0.15em;
-}
-
-.ui_button.ui_button-remove {
-  border-radius: 50%;
-  color: darkred;
-}
-
-.ui_button-add,
-.ui_button-move {
-  font-weight: bolder;
 }
 
 .ui_document_element_typespec-receptive,
@@ -1021,14 +1015,6 @@ li.ui_key_moment_controller.active:not(:last-child) {
   padding-bottom: var(--own-padding-bottom, 0);
 }
 
-input:valid {
-  border: 1px solid green;
-}
-
-input:invalid {
-  border: 1px solid red;
-}
-
 .ui_axes_math-map-label,
 .ui_axes_math-locations_sum-label,
 .ui-axes_math-locations_sum_item-label {
@@ -1143,15 +1129,6 @@ input:invalid {
 
 .ui_style_patches_map-item-value.active {
   font-weight: 700;
-}
-
-button.ui_style_patches_map-item-value {
-  line-height: 1;
-}
-
-.ui_style_patches_map-item-value,
-.ui_style_patches_links_map-item_value {
-  padding-inline-start: 0.2em;
 }
 
 .ui_style_patches_map-item-drag_handle {
@@ -1288,17 +1265,6 @@ button.ui_style_patches_map-item-value {
 
 .ui_style_patches_map-tools {
   margin-left: 0;
-}
-
-.ui-button-input:disabled {
-  color: lightgray;
-}
-
-.ui_axes_math-map-tools :is(.ui_axes_math-axis_tag-input, .ui-button),
-.ui_base_map-tools :is(.ui_base_map-key-input, .ui-button),
-.ui_style_patches_map-tools :is(.ui_plain_select, .ui_plain_select-select) {
-  font-size: inherit;
-  padding-block: 0;
 }
 
 .ui_style_patches_map-tools .ui_base_map-key-input {

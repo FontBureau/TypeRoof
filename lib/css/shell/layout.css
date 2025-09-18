@@ -1,0 +1,106 @@
+body > .wrapper {
+  display: grid;
+  gap: var(--gap-size);
+
+  --sidbar-width: 17.375rem;
+
+  grid-template:
+    "header main" auto "sidebar main" 1fr "sidebar footer" auto / var(
+      --sidbar-width
+    )
+    calc(100vw - var(--sidbar-width) - 3 * var(--gap-size, 0));
+  height: calc(100vh - (2 * var(--gap-size, 0)));
+}
+
+body > .wrapper > header {
+  grid-area: header;
+  height: fit-content;
+}
+
+body > .wrapper > .typeroof-ui_sidebar {
+  grid-area: sidebar;
+  padding: 1rem var(--gap-size, 1rem);
+  overflow-y: auto;
+  background: var(--background-color, red);
+}
+
+body > .wrapper > .typeroof-main {
+  grid-area: main;
+  background: var(--background-color, magenta);
+  display: flex;
+  flex-direction: column;
+}
+
+/**
+ * With this configuration we can measure the size of .typeroof-layout
+ * to know how much space it has available without scrolling.
+ *
+ * Also, the controls in .typeroof-layout-before and
+ * .typeroof-layout-after will always stay visible.
+ */
+body > .wrapper > .typeroof-main > .typeroof-layout {
+  overflow: auto;
+  flex-grow: 1;
+}
+
+body > .wrapper > footer {
+  grid-area: footer;
+  height: fit-content;
+}
+
+footer,
+header {
+  background-color: #121212;
+  padding: 1rem;
+  color: #fff;
+}
+
+footer > *,
+header > * {
+  margin: 0;
+}
+
+header h1 {
+  font-size: 1.5em;
+  font-variation-settings: "opsz" 16;
+  font-weight: 300;
+}
+
+footer {
+  font-size: 0.8em;
+  font-variation-settings: "opsz" 10;
+}
+
+footer ul {
+  padding: 0;
+}
+
+footer li::after {
+  display: inline-block;
+  content: "\A0•\A0";
+  font-size: 2em;
+  color: white;
+  line-height: 0.5em; /* basically reset the 2 em font-size to 1em */
+  vertical-align: middle;
+  /* stylelint-disable-next-line declaration-property-value-no-unknown */
+  vertical-align: -webkit-baseline-middle;
+  overflow: hidden;
+}
+
+footer li:last-child::after {
+  content: none;
+}
+
+:is(footer) :is(a, a:visited, a:link) {
+  color: #fff;
+}
+
+:is(header, .sidebar, footer) :is(a, a:visited, a:link) {
+  --text-decoration: none;
+}
+
+footer li {
+  display: inline;
+  padding: 0;
+  margin: 0;
+}
