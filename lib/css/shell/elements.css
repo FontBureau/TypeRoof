@@ -1,36 +1,53 @@
-a {
-  text-decoration: underline;
-}
+/******************************************************************************
+a
+*******************************************************************************/
 
 a:link,
 a:visited {
-  color: #121212;
-}
-
-body,
-select,
-input,
-textarea {
   color: var(--text-color);
 }
 
+/******************************************************************************
+button / select / input / textarea
+*******************************************************************************/
+
+button,
 select,
 input,
 textarea {
-  background-color: var(--background-color-no-alpha, var(--background-color));
-  border: 1px solid var(--text-color);
+  border: none;
+  border-radius: 0.25rem;
+  color: var(--text-color);
   font-family: RobotoFlex, sans-serif;
+  height: 1.5rem;
+}
+
+select,
+input,
+textarea {
+  background-color: var(--background-color);
+  border: 1px solid var(--input-border-color);
   font-size: inherit;
+}
+
+/******************************************************************************
+select
+*******************************************************************************/
+
+select:not(:disabled):hover {
+  box-shadow: rgb(43 43 43 / 15%) 0 0 0.625rem;
+  border-color: var(--button-border-color-hover);
+}
+
+select:disabled {
+  border-color: var(--button-border-color-disabled);
+  color: var(--button-border-color-disabled);
 }
 
 select,
 select::picker(select) {
   /* stylelint-disable-next-line declaration-property-value-no-unknown */
   appearance: base-select;
-}
-
-select {
-  height: 1.5rem;
 }
 
 optgroup {
@@ -47,20 +64,35 @@ optgroup > legend {
   font-weight: bold;
 }
 
+/******************************************************************************
+input / textarea
+*******************************************************************************/
+
+input:focus,
+textarea:focus,
+select:active {
+  outline: 1px solid var(--input-border-color);
+}
+
 input[type="checkbox"] {
   vertical-align: middle;
 }
 
-input:valid {
-  border: 1px solid green;
+input[type="text"],
+input[type="number"] {
+  height: 1.25rem;
 }
 
 input:invalid {
-  border: 1px solid red;
+  border: 1px solid var(--color-danger);
 }
 
+/******************************************************************************
+dialog
+*******************************************************************************/
+
 dialog {
-  background-color: var(--background-color-no-alpha, var(--background-color));
+  background-color: var(--background-color);
   color: var(--text-color);
   border: var(--gap-size) solid var(--gap-color);
 }
@@ -69,8 +101,12 @@ dialog label {
   display: block;
 }
 
+/******************************************************************************
+fieldset
+*******************************************************************************/
+
 form fieldset {
-  background-color: var(--background-color-no-alpha, var(--background-color));
+  background-color: var(--background-color);
   border: var(--gap-size) solid var(--gap-color);
   margin-bottom: 1.125rem;
   padding: 0.9375rem 0.75rem;
@@ -96,31 +132,33 @@ fieldset:has(> legend) {
   margin-block: 0.5em;
 }
 
-button,
-form button {
-  background-color: var(--background-color-no-alpha, var(--background-color));
-  box-shadow: rgb(43 43 43 / 8%) 0 0 0.1875rem;
-  border: 1px solid #b7b4b0;
-  border-radius: 0.125rem;
-  color: var(--text-color);
-  display: inline-block;
-  font-size: 0.875rem;
-  font-family: RobotoFlex, sans-serif;
-  font-variation-settings: "opsz" 14;
+/******************************************************************************
+button
+*******************************************************************************/
+
+button {
+  background: #fff;
+  border: 1px solid #999;
+  font-size: 0.75rem;
+  font-variation-settings: "opsz" 12;
+  padding: 0.25em 0.75em;
   transition: all 75ms linear;
   white-space: nowrap;
-  line-height: 1.5em;
+}
+
+button:not(:disabled):hover {
+  border-color: #333;
+}
+
+button:disabled {
+  border-color: #aaa;
+  color: #666;
 }
 
 form button {
-  height: 2.625rem;
-  line-height: 2.625rem;
-  padding: 0 1em;
-}
-
-button:hover,
-form button:hover {
-  box-shadow: rgb(43 43 43 / 15%) 0 0 0.625rem;
+  font-size: 0.875rem;
+  font-variation-settings: "opsz" 14;
+  padding: 0.5em 1em;
 }
 
 menu {
@@ -131,8 +169,8 @@ menu {
 }
 
 .ui_button.ui_button-remove {
-  border-radius: 50%;
-  color: darkred;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
 }
 
 .ui_button-add,

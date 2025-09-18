@@ -18,4 +18,6 @@
   --transparency-indicator-bg-size: 10px 10px;
   --text-color: #121212;
   --text-color-disabled: #888;
+  --input-border-color: #666;
+  --color-danger: darkred;
 }
