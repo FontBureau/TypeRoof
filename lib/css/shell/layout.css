@@ -1,15 +1,17 @@
+/******************************************************************************
+wrapper
+*******************************************************************************/
+
 body > .wrapper {
   display: grid;
-  gap: var(--gap-size);
 
-  --sidbar-width: 17.375rem;
+  --sidebar-width: 20rem;
 
   grid-template:
-    "header main" auto "sidebar main" 1fr "sidebar footer" auto / var(
-      --sidbar-width
-    )
-    calc(100vw - var(--sidbar-width) - 3 * var(--gap-size, 0));
-  height: calc(100vh - (2 * var(--gap-size, 0)));
+    "header main" auto "sidebar main" 1fr "footer footer" auto
+    /
+    var(--sidebar-width) calc(100vw - var(--sidebar-width));
+  height: 100vh;
 }
 
 body > .wrapper > header {
@@ -19,16 +21,16 @@ body > .wrapper > header {
 
 body > .wrapper > .typeroof-ui_sidebar {
   grid-area: sidebar;
-  padding: 1rem var(--gap-size, 1rem);
   overflow-y: auto;
-  background: var(--background-color, red);
+  background: #eee;
 }
 
 body > .wrapper > .typeroof-main {
   grid-area: main;
-  background: var(--background-color, magenta);
+  background: var(--background-color);
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 /**
@@ -48,59 +50,47 @@ body > .wrapper > footer {
   height: fit-content;
 }
 
-footer,
+/******************************************************************************
+header / footer
+*******************************************************************************/
+
 header {
-  background-color: #121212;
-  padding: 1rem;
-  color: #fff;
+  background-color: #ccc;
+  color: var(--text-color);
+  padding: 0.6rem 1rem;
 }
 
-footer > *,
-header > * {
+footer {
+  background-color: var(--text-color);
+  color: var(--background-color);
+  padding: 0.6rem 1rem;
+}
+
+header > *,
+footer > * {
   margin: 0;
+  padding: 0;
 }
 
-header h1 {
-  font-size: 1.5em;
-  font-variation-settings: "opsz" 16;
-  font-weight: 300;
-}
-
+header h1,
 footer {
   font-size: 0.8em;
   font-variation-settings: "opsz" 10;
 }
 
+header h1 {
+  font-variation-settings:
+    "opsz" 10,
+    "wght" 1000;
+}
+
 footer ul {
-  padding: 0;
+  display: flex;
+  gap: 2em;
+  justify-content: end;
+  list-style: none;
 }
 
-footer li::after {
-  display: inline-block;
-  content: "\A0•\A0";
-  font-size: 2em;
-  color: white;
-  line-height: 0.5em; /* basically reset the 2 em font-size to 1em */
-  vertical-align: middle;
-  /* stylelint-disable-next-line declaration-property-value-no-unknown */
-  vertical-align: -webkit-baseline-middle;
-  overflow: hidden;
-}
-
-footer li:last-child::after {
-  content: none;
-}
-
-:is(footer) :is(a, a:visited, a:link) {
-  color: #fff;
-}
-
-:is(header, .sidebar, footer) :is(a, a:visited, a:link) {
-  --text-decoration: none;
-}
-
-footer li {
-  display: inline;
-  padding: 0;
-  margin: 0;
+footer :is(a:link, a:visited) {
+  color: var(--background-color);
 }

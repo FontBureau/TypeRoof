@@ -447,6 +447,10 @@ li.ui_key_moment_controller.active:not(:last-child) {
   vertical-align: -webkit-baseline-middle;
 }
 
+/******************************************************************************
+drag handle
+*******************************************************************************/
+
 .drag_handle {
   display: inline-block;
   font-size: 1.1em;
@@ -474,6 +478,8 @@ li.ui_key_moment_controller.active:not(:last-child) {
 .waste_basket_drop_target {
   display: block;
 }
+
+/**************************************************************************** */
 
 .ui_base_drop_target-main_drop_zone {
   display: inline-block;
