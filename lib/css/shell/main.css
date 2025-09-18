@@ -1150,7 +1150,7 @@ button.ui_style_patches_map-item-value {
 }
 
 .ui_style_patches_map-item-value,
-.ui_style_patches_links_map-item_value {
+.ui_links_map-item_value {
   padding-inline-start: 0.2em;
 }
 
@@ -1215,33 +1215,44 @@ button.ui_style_patches_map-item-value {
   display: none;
 }
 
-:focus-within > .ui_base_map-tools:not(.ui_style_patches_links_map-tools) > *,
+:focus-within > .ui_base_map-tools:not(.ui_links_map-tools) > *,
 .ui_style_patches_map-tools > *,
-.ui_style_patches_links_map-tools > * {
+.ui_links_map-tools > * {
   display: initial;
 }
 
-.ui_style_patches_links_map-tools {
+.ui_node_spec_to_type_spec_links_map-tools > * {
+  /* otherwise some are initially inline and we get a line break
+     * when we focus
+     */
+  display: block;
+}
+
+.ui_links_map-tools {
   margin-left: 0;
   margin-bottom: 0.5em;
   display: block;
 }
 
-.ui_style_patches_links_map-tools
-  > *:not(.ui_style_patches_links_map-create_select) {
+.ui_links_map-tools:not(
+        /* always show for this case */
+        .ui_node_spec_to_type_spec_links_map-tools
+    )> *:not(
+        .ui_links_map-create_select
+    ) {
   display: none;
 }
 
-.ui_style_patches_links_map-tools:focus-within > * {
+.ui_links_map-tools:focus-within > * {
   display: block;
 }
 
-.ui_style_patches_links_map-item {
+.ui_links_map-item {
   display: flex;
   flex-wrap: wrap;
 }
 
-.ui_style_patches_links_map-item > .ui_base_map-key {
+.ui_links_map-item > .ui_base_map-key {
   flex-grow: 1;
 
   & .ui_base_map-key-input {
@@ -1249,39 +1260,39 @@ button.ui_style_patches_map-item-value {
   }
 }
 
-.ui_style_patches_links_map-item-drag_handle {
+.ui_links_map-item-drag_handle {
   order: -1;
 }
 
-.ui_style_patches_links_map-item_value {
+.ui_links_map-item_value {
   flex-grow: 1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
 }
 
-.ui_style_patches_links_map-item_value-value_label {
+.ui_links_map-item_value-value_label {
   flex: 1 1 100%;
 }
 
-.ui_style_patches_links_map-item_value-change_input {
+.ui_links_map-item_value-change_input {
   flex: 1;
 }
 
-.ui_style_patches_links_map-item_value-change_input
-  > .ui_style_patches_links_map-item_value-change_input-input {
+.ui_links_map-item_value-change_input
+  > .ui_links_map-item_value-change_input-input {
   width: 100%;
 }
 
-.ui_style_patches_links_map-item_value-change_select,
-.ui_style_patches_links_map-item_value-change_input {
+.ui_links_map-item_value-change_select,
+.ui_links_map-item_value-change_input {
   display: none;
 }
 
-.ui_style_patches_links_map-item_value:focus-within
+.ui_links_map-item_value:focus-within
   :is(
-    .ui_style_patches_links_map-item_value-change_select,
-    .ui_style_patches_links_map-item_value-change_input
+    .ui_links_map-item_value-change_select,
+    .ui_links_map-item_value-change_input
   ) {
   display: block;
 }
@@ -1340,16 +1351,18 @@ button.ui_style_patches_map-item-value {
 
 .ui_collapsible_mixin-closed {
   border-color: transparent;
-  padding-block: 0;
 }
 
 .ui_collapsible_mixin-open {
   border-color: #b7b4b0;
-  padding-block: 0.35em 0.625em;
 }
 
 .ui_collapsible_mixin-closed > * {
   display: none;
+}
+
+.ui_collapsible_mixin > :is(legend) {
+  display: initial;
 }
 
 .ui_collapsible_mixin > :is(legend) {
@@ -1360,6 +1373,14 @@ button.ui_style_patches_map-item-value {
 
 .ui_collapsible_mixin-open > :is(legend) {
   list-style-type: disclosure-open;
+}
+
+.ui_collapsible_mixin-closed {
+  padding-block: 0;
+}
+
+.ui_collapsible_mixin-open {
+  padding-block: 0.35em 0.625em;
 }
 
 .ui-dialog_openers-items {
@@ -1519,4 +1540,8 @@ button.ui_style_patches_map-item-value {
   margin-top: 0.3em;
   font-weight: 600;
   display: block;
+}
+
+.ui_node_spec_map-item .ui_base_map-key-input {
+  width: initial;
 }
