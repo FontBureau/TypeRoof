@@ -1,0 +1,141 @@
+a {
+  text-decoration: underline;
+}
+
+a:link,
+a:visited {
+  color: #121212;
+}
+
+body,
+select,
+input,
+textarea {
+  color: var(--text-color);
+}
+
+select,
+input,
+textarea {
+  background-color: var(--background-color-no-alpha, var(--background-color));
+  border: 1px solid var(--text-color);
+  font-family: RobotoFlex, sans-serif;
+  font-size: inherit;
+}
+
+select,
+select::picker(select) {
+  /* stylelint-disable-next-line declaration-property-value-no-unknown */
+  appearance: base-select;
+}
+
+select {
+  height: 1.5rem;
+}
+
+optgroup {
+  margin: 0.5rem 0;
+}
+
+optgroup > legend,
+option {
+  height: 1.25rem;
+  padding: 0 0.75rem;
+}
+
+optgroup > legend {
+  font-weight: bold;
+}
+
+input[type="checkbox"] {
+  vertical-align: middle;
+}
+
+input:valid {
+  border: 1px solid green;
+}
+
+input:invalid {
+  border: 1px solid red;
+}
+
+dialog {
+  background-color: var(--background-color-no-alpha, var(--background-color));
+  color: var(--text-color);
+  border: var(--gap-size) solid var(--gap-color);
+}
+
+form fieldset {
+  background-color: var(--background-color-no-alpha, var(--background-color));
+  border: var(--gap-size) solid var(--gap-color);
+  margin-bottom: 1.125rem;
+  padding: 0.9375rem 0.75rem;
+}
+
+dialog label {
+  display: block;
+}
+
+button,
+form button {
+  background-color: var(--background-color-no-alpha, var(--background-color));
+  box-shadow: rgb(43 43 43 / 8%) 0 0 0.1875rem;
+  border: 1px solid #b7b4b0;
+  border-radius: 0.125rem;
+  color: var(--text-color);
+  display: inline-block;
+  font-size: 0.875rem;
+  font-family: RobotoFlex, sans-serif;
+  font-variation-settings: "opsz" 14;
+  transition: all 75ms linear;
+  white-space: nowrap;
+  line-height: 1.5em;
+}
+
+form button {
+  height: 2.625rem;
+  line-height: 2.625rem;
+  padding: 0 1em;
+}
+
+button:hover,
+form button:hover {
+  box-shadow: rgb(43 43 43 / 15%) 0 0 0.625rem;
+}
+
+menu {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+}
+
+.ui_button.ui_button-remove {
+  border-radius: 50%;
+  color: darkred;
+}
+
+.ui_button-add,
+.ui_button-move {
+  font-weight: bolder;
+}
+
+fieldset {
+  border: none;
+  border-bottom: 1px solid #b7b4b0;
+  border-radius: 0.125rem;
+  min-inline-size: 0;
+  margin-inline: 0;
+  padding-inline: 0.2em;
+
+  /*
+     * The goal here is to create a similar distance between the borders
+     * of fieldsets with legend and fieldsets without. A fieldset with
+     * legend requires less margin, as the legend pushes it down as well.
+     */
+  margin-block-start: 0.9em;
+}
+
+fieldset:has(> legend) {
+  margin-block: 0.5em;
+}

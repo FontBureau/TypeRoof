@@ -1,0 +1,128 @@
+.typeroof-docs .typeroof-ui_sidebar {
+  font-size: 0.8rem;
+}
+
+.typeroof-docs .typeroof-ui_sidebar a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.typeroof-docs .typeroof-ui_sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+:is(
+    .typeroof-docs ul.typeroof-ui_sidebar-app_links,
+    .typeroof-docs .typeroof-ui_sidebar nav li > ul
+  )
+  li::before {
+  content: "▪";
+  display: inline-block;
+  padding-right: 0.5em;
+}
+
+.typeroof-docs .typeroof-ui_sidebar nav li li > ul {
+  padding-left: 0.75em;
+}
+
+.typeroof-docs .typeroof-ui_sidebar h3 {
+  font-size: 1em;
+  margin: 0.5em 0 0.35em;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.typeroof-docs .typeroof-ui_sidebar li.active {
+  color: red;
+}
+
+.typeroof-docs .typeroof-ui_sidebar li.active li:not(.active) {
+  color: var(--text-color);
+}
+
+.typeroof-docs_content pre {
+  overflow-y: auto;
+}
+
+body.typeroof-docs > .wrapper > .typeroof-main {
+  overflow: auto;
+  container-type: inline-size;
+}
+
+.typeroof-docs_content {
+  padding: var(--gap-size);
+}
+
+.typeroof-docs_content .heading_anchor {
+  text-decoration: none;
+  color: gray;
+  font-weight: normal;
+}
+
+@container (width > 0) {
+  /* the @container query is only required to establish the cqi unit
+   * https://developer.mozilla.org/en-US/docs/Web/CSS/length#container_query_length_units
+   */
+  .typeroof-docs_content {
+    --max-width: 50rem;
+
+    /* The max rule guards the free-space to not become negative, that
+     * way the actual width of the content plus its inline padding are
+     * always available before we add margin.
+     */
+    --free-space: max(
+      0px,
+      calc(100cqi - var(--max-width) - 2 * var(--gap-size))
+    );
+
+    max-width: var(--max-width);
+
+    /* Try to balance the distance to the left side
+     * it grows with the available horizontal space
+     * but it would loose contact to the left edge when too big, so we
+     * stop growing distance at 1/3 of the content max width.
+     * It can't become negative, because --free-space will never be < 0;
+     */
+    --margin-inline-start: min(var(--free-space) * 1/3, var(--max-width) * 1/3);
+
+    margin-inline-start: var(--margin-inline-start);
+  }
+
+  .typeroof-docs_content .heading_anchor {
+    /* Because the # is painted in a light gray it creates visually a gap.
+     * For the appearance of the left border it's better to move these out,
+     * if there's space.
+     * The .8em is determined visually with Roboto Flex, it would differ
+     * for other fonts and other relative width of the #, also e.g. when
+     * e.g. the wdth axis would be used.
+     * */
+    --move-out: 0.8em;
+
+    /* if the left margin doesn't have --move-out space the calculation
+     * in the second argument of clamp(min, val, max) will be lower than
+     * 0 and thus 0; otherwise it will be between 0 and 0.8em. The
+     * round(up, valueToRound, roundingInterval) will round up to 0.8em.
+     * This means there's either enough space to fit the --move-out left
+     * to the content and then the whole value is used or there's not and
+     * then the --move-out is not applied at all, without transition in
+     * between.
+     */
+    --use-move-out: round(
+      up,
+      clamp(
+        0em,
+        var(--margin-inline-start, 0em) + var(--gap-size) - var(--move-out),
+        var(--move-out)
+      ),
+      var(--move-out)
+    );
+
+    margin-inline-start: calc(var(--use-move-out) * -1);
+  }
+}
+
+.typeroof-docs_content :is(pre, code) {
+  background-color: #eee;
+}
