@@ -115,21 +115,16 @@ form fieldset {
 fieldset {
   border: none;
   border-bottom: 1px solid #b7b4b0;
-  border-radius: 0.125rem;
-  min-inline-size: 0;
-  margin-inline: 0;
-  padding-inline: 0.2em;
-
-  /*
-     * The goal here is to create a similar distance between the borders
-     * of fieldsets with legend and fieldsets without. A fieldset with
-     * legend requires less margin, as the legend pushes it down as well.
-     */
-  margin-block-start: 0.9em;
+  margin: 0;
+  padding: 1em;
 }
 
-fieldset:has(> legend) {
-  margin-block: 0.5em;
+fieldset > legend {
+  box-sizing: border-box;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.5em 0;
+  width: 100%;
 }
 
 /******************************************************************************
