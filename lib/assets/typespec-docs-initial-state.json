@@ -1,0 +1,166 @@
+{
+  "typeSpec": {
+    "columnWidth": "53.0",
+    "baseFontSize": "14",
+    "autoOPSZ": "1",
+    "children": [
+      [
+        "0",
+        {
+          "relativeFontSize": "4.571428571",
+          "autoOPSZ": "1",
+          "axesLocations": [
+            [
+              "wght",
+              "700"
+            ]
+          ],
+          "label": "H1"
+        }
+      ],
+      [
+        "1",
+        {
+          "relativeFontSize": "1.785714286",
+          "autoOPSZ": "1",
+          "axesLocations": [
+            [
+              "wght",
+              "600"
+            ]
+          ],
+          "label": "H2"
+        }
+      ],
+      [
+        "2",
+        {
+          "relativeFontSize": "1.285714286",
+          "autoOPSZ": "1",
+          "axesLocations": [
+            [
+              "wght",
+              "550"
+            ]
+          ],
+          "label": "H3"
+        }
+      ],
+      [
+        "3",
+        {
+          "relativeFontSize": "1.285714286",
+          "autoOPSZ": "1",
+          "label": "T1",
+          "stylePatches": [
+            [
+              "italic",
+              "italic"
+            ],
+            [
+              "bold",
+              "bold"
+            ],
+            [
+              "bold italic",
+              "bold italic"
+            ]
+          ]
+        }
+      ],
+      [
+        "4",
+        {
+          "autoOPSZ": "1",
+          "label": "T2",
+          "stylePatches": [
+            [
+              "italic",
+              "italic"
+            ],
+            [
+              "bold",
+              "bold"
+            ],
+            [
+              "bold italic",
+              "bold italic"
+            ]
+          ]
+        }
+      ]
+    ],
+    "label": ""
+  },
+  "stylePatchesSource": [
+    [
+      "italic",
+      {
+        "instance": {
+          "axesLocations": [
+            [
+              "slnt",
+              {
+                "logicalValue": "min"
+              }
+            ]
+          ]
+        },
+        "stylePatchTypeKey": "SimpleStylePatch"
+      }
+    ],
+    [
+      "bold",
+      {
+        "instance": {
+          "axesLocations": [
+            [
+              "wght",
+              {
+                "logicalValue": "number",
+                "numericValue": "700"
+              }
+            ]
+          ]
+        },
+        "stylePatchTypeKey": "SimpleStylePatch"
+      }
+    ],
+    [
+      "bold italic",
+      {
+        "instance": {
+          "styles": [
+            "bold",
+            "italic"
+          ]
+        },
+        "stylePatchTypeKey": "CompositeStylePatch"
+      }
+    ]
+  ],
+  "document": {
+    "typeKey": "doc",
+    "content": [
+        {
+          "typeKey": "heading-1",
+          "content": [
+              {
+                "typeKey": "text",
+                "text": "Heading One"
+              }
+
+          ]
+        },
+        {
+          "typeKey": "heading-2",
+          "content": [
+              {
+                "typeKey": "text",
+                "text": "Heading Two"
+              }
+            ]
+        }
+      ]
+  }
+}
