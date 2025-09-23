@@ -153,11 +153,11 @@
           ]
         },
         {
-          "typeKey": "heading-2",
+          "typeKey": "paragraph",
           "content": [
               {
                 "typeKey": "text",
-                "text": "Heading Two"
+                "text": "paragraph"
               }
             ]
         }
