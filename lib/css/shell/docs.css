@@ -1,64 +1,82 @@
+/******************************************************************************
+sidebar
+*******************************************************************************/
+
 .typeroof-docs .typeroof-ui_sidebar {
-  font-size: 0.8rem;
+  font-size: 0.8em;
+  font-variation-settings: "opsz" 10;
+  padding: 1em;
 }
 
 .typeroof-docs .typeroof-ui_sidebar a {
-  text-decoration: none;
   color: inherit;
 }
 
 .typeroof-docs .typeroof-ui_sidebar ul {
   list-style: none;
+  margin: 0;
   padding: 0;
 }
 
-:is(
-    .typeroof-docs ul.typeroof-ui_sidebar-app_links,
-    .typeroof-docs .typeroof-ui_sidebar nav li > ul
-  )
-  li::before {
-  content: "▪";
+.typeroof-docs .typeroof-ui_sidebar li > a {
   display: inline-block;
-  padding-right: 0.5em;
+  padding: 0.4em 0;
 }
 
-.typeroof-docs .typeroof-ui_sidebar nav li li > ul {
-  padding-left: 0.75em;
+.typeroof-docs .typeroof-ui_sidebar li.active {
+  font-weight: 700;
+}
+
+.typeroof-docs .typeroof-ui_sidebar li.active > a {
+  text-decoration: none;
+}
+
+.typeroof-docs .typeroof-ui_sidebar li.active li:not(.active) {
+  font-weight: 400;
+}
+
+.typeroof-docs .typeroof-ui_sidebar li ul {
+  list-style: none;
+}
+
+.typeroof-docs .typeroof-ui_sidebar li ul li::before {
+  content: var(--chevron-right);
+  margin-right: 0.5em;
+}
+
+.typeroof-docs .typeroof-ui_sidebar li ul li ul {
+  margin-left: 0.5em;
+}
+
+.typeroof-docs .typeroof-ui_sidebar nav {
+  margin-bottom: 2em;
 }
 
 .typeroof-docs .typeroof-ui_sidebar h3 {
   font-size: 1em;
-  margin: 0.5em 0 0.35em;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  margin: 0;
+  margin-bottom: 0.5em;
 }
 
-.typeroof-docs .typeroof-ui_sidebar li.active {
-  color: red;
-}
-
-.typeroof-docs .typeroof-ui_sidebar li.active li:not(.active) {
-  color: var(--text-color);
-}
-
-.typeroof-docs_content pre {
-  overflow-y: auto;
-}
+/******************************************************************************
+main
+*******************************************************************************/
 
 body.typeroof-docs > .wrapper > .typeroof-main {
   overflow: auto;
   container-type: inline-size;
 }
 
-.typeroof-docs_content {
-  padding: var(--gap-size);
-}
+/******************************************************************************
+content
+*******************************************************************************/
 
 .typeroof-docs_content .heading_anchor {
-  text-decoration: none;
   color: gray;
   font-weight: normal;
+  margin-right: 0.1em;
+  text-decoration: none;
 }
 
 @container (width > 0) {
@@ -72,10 +90,7 @@ body.typeroof-docs > .wrapper > .typeroof-main {
      * way the actual width of the content plus its inline padding are
      * always available before we add margin.
      */
-    --free-space: max(
-      0px,
-      calc(100cqi - var(--max-width) - 2 * var(--gap-size))
-    );
+    --free-space: max(0px, calc(100cqi - var(--max-width)));
 
     max-width: var(--max-width);
 
@@ -98,7 +113,7 @@ body.typeroof-docs > .wrapper > .typeroof-main {
      * for other fonts and other relative width of the #, also e.g. when
      * e.g. the wdth axis would be used.
      * */
-    --move-out: 0.8em;
+    --move-out: 0.9em;
 
     /* if the left margin doesn't have --move-out space the calculation
      * in the second argument of clamp(min, val, max) will be lower than
@@ -121,8 +136,4 @@ body.typeroof-docs > .wrapper > .typeroof-main {
 
     margin-inline-start: calc(var(--use-move-out) * -1);
   }
-}
-
-.typeroof-docs_content :is(pre, code) {
-  background-color: #eee;
 }

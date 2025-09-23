@@ -81,7 +81,7 @@ export default function (eleventyConfig) {
 
     // This creates directory listings for docs/states_lib
     const libDir = 'docs/states_lib'
-   , directoryTemplate = `# Index of : {{page.url}}
+   , directoryTemplate = `# States Library{% if page.url != "/${libDir}/" %}: {{page.url | remove: "/${libDir}" | remove_last: "/" }}{% endif %}
 
 The **States Library** is a directory of states-data that one can load into [TypeRoof Shell](/shell)
 for different purposes like demos, tutorials, examples, and testing.

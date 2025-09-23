@@ -11,7 +11,7 @@ export default function (/*configData*/) {
                     .map(file=>{
                         let name;
                         if(fs.statSync(path.join(dirname, file)).isDirectory()){
-                            name = `${file}/`
+                            name = `/${file}`
                         }
                         else if(file.endsWith('.json.txt.njk')) {
                             // CAUTION:
