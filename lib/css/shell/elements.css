@@ -93,8 +93,14 @@ dialog
 
 dialog {
   background-color: var(--background-color);
+  border: 0;
+  box-shadow: rgb(0 0 0 / 70%) 0 1.5em 3em;
   color: var(--text-color);
-  border: var(--gap-size) solid var(--gap-color);
+  padding: 1.5em;
+}
+
+dialog::backdrop {
+  background-color: rgb(0 0 0 / 60%);
 }
 
 dialog label {
@@ -108,8 +114,11 @@ fieldset
 form fieldset {
   background-color: var(--background-color);
   border: var(--gap-size) solid var(--gap-color);
-  margin-bottom: 1.125rem;
-  padding: 0.9375rem 0.75rem;
+  padding: 0.75em;
+}
+
+form fieldset + fieldset {
+  margin-top: 1em;
 }
 
 fieldset {
@@ -153,6 +162,7 @@ button:disabled {
 form button {
   font-size: 0.875rem;
   font-variation-settings: "opsz" 14;
+  height: auto;
   padding: 0.5em 1em;
 }
 
