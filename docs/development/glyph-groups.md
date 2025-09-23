@@ -1,9 +1,9 @@
 ---
-title: Extend Glyph-Groups
+title: 'How To: Extend Glyph-Groups'
 eleventyNavigation:
   parent: Developer Kit
   key: Glyph-Groups
-  title: Extend Glyph-Groups
+  title: 'How To: Extend Glyph-Groups'
   order: 1
 ---
 

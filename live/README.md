@@ -1,8 +1,9 @@
 ---
-title: live/README
+title: Serve Live Font Changes to TypeRoof
 eleventyNavigation:
   parent: Developer Kit
   key: live/README
+  title: Serve Live Font Changes to TypeRoof
   order: 0.1
 ---
 

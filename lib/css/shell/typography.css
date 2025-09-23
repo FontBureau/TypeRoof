@@ -8,8 +8,7 @@ body {
 }
 
 *,
-body,
-.heading_anchor {
+body {
   --font-size-change: 1;
 }
 
@@ -25,7 +24,8 @@ h3 {
   --font-size-change: 1.4;
 }
 
-h4 {
+h4,
+.heading_anchor {
   --font-size-change: 1.17;
 }
 
