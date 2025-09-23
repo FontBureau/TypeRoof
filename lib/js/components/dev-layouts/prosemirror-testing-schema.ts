@@ -4,17 +4,27 @@
 // as a testing thing.
 import {Schema, NodeSpec, MarkSpec, DOMOutputSpec} from "prosemirror-model"
 
-const pDOM: DOMOutputSpec = ["p", 0], blockquoteDOM: DOMOutputSpec = ["blockquote", 0],
+const pDOM: DOMOutputSpec = ["p",  0], blockquoteDOM: DOMOutputSpec = ["blockquote", 0],
       hrDOM: DOMOutputSpec = ["hr"], preDOM: DOMOutputSpec = ["pre", ["code", 0]],
       brDOM: DOMOutputSpec = ["br"]
 
 /// [Specs](#model.NodeSpec) for the nodes defined in this schema.
 export const nodes = {
   /// NodeSpec The top level document node.
+
+  // NOTE: this can be hard-coded!
   doc: {
     content: "block+"
   } as NodeSpec,
 
+
+  "heading-1": {
+    content: "inline*",
+    group: "block",
+    defining: true,
+    parseDOM: [{tag: "h1"}],
+    toDOM() { return ["h1",  0] }
+  } as NodeSpec,
   /// A plain paragraph textblock. Represented in the DOM
   /// as a `<p>` element.
   paragraph: {
@@ -48,7 +58,7 @@ export const nodes = {
     content: "inline*",
     group: "block",
     defining: true,
-    parseDOM: [{tag: "h1", attrs: {level: 1}},
+    parseDOM: [/*{tag: "h1", attrs: {level: 1}},*/
                {tag: "h2", attrs: {level: 2}},
                {tag: "h3", attrs: {level: 3}},
                {tag: "h4", attrs: {level: 4}},
@@ -71,6 +81,7 @@ export const nodes = {
   } as NodeSpec,
 
   /// The text node.
+  // NOTE: this can be hard-coded
   text: {
     group: "inline"
   } as NodeSpec,
@@ -98,6 +109,7 @@ export const nodes = {
   } as NodeSpec,
 
   /// A hard line break, represented in the DOM as `<br>`.
+  // NOTE: I guess, this can be hard coded
   hard_break: {
     inline: true,
     group: "inline",
