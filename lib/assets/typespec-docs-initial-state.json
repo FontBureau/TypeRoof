@@ -142,25 +142,46 @@
   "document": {
     "typeKey": "doc",
     "content": [
-        {
-          "typeKey": "heading-1",
-          "content": [
+      {
+        "typeKey": "heading-1",
+        "content": [
+          {
+            "typeKey": "text",
+            "text": "Heading One"
+          }
+        ]
+      },
+      {
+        "typeKey": "paragraph",
+        "content": [
+          {
+            "typeKey": "text",
+            "text": "paragraph"
+          }
+        ]
+      },
+      {
+        "typeKey": "paragraph",
+        "content": [
+          {
+            "typeKey": "text",
+            "text": "with a "
+          },
+          {
+            "typeKey": "text",
+            "marks": [
               {
-                "typeKey": "text",
-                "text": "Heading One"
+                "typeKey": "strong"
               }
-
-          ]
-        },
-        {
-          "typeKey": "paragraph",
-          "content": [
-              {
-                "typeKey": "text",
-                "text": "paragraph"
-              }
-            ]
-        }
-      ]
+            ],
+            "text": "bold"
+          },
+          {
+            "typeKey": "text",
+            "text": " word"
+          }
+        ]
+      }
+    ]
   }
 }
