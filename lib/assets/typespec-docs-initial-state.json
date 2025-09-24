@@ -152,6 +152,24 @@
         ]
       },
       {
+        "typeKey": "heading",
+        "attrs": [
+          [
+            "level",
+            {
+              "type": "number",
+              "number": "3"
+            }
+          ]
+        ],
+        "content": [
+          {
+            "typeKey": "text",
+            "text": "Heading Three"
+          }
+        ]
+      },
+      {
         "typeKey": "paragraph",
         "content": [
           {
