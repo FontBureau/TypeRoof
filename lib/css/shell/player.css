@@ -1,0 +1,48 @@
+@import url("./main.css");
+
+:root {
+  overflow: hidden;
+
+  --gap-size: 0px;
+  --background-color: #121212bb;
+  --background-color-no-alpha: #121212;
+  --text-color: #fff;
+}
+
+footer,
+header {
+  background-color: var(--background-color);
+  padding: 1rem;
+  color: #fff;
+}
+
+body > .wrapper {
+  display: grid;
+  gap: var(--gap-size);
+
+  --sidebar-width: 17.375rem;
+
+  grid-template: "header free" auto "sidebar free" auto "free2 free" 1fr "footer footer" auto / var(
+      --sidebar-width
+    ) calc(100vw - var(--sidebar-width) - 3 * var(--gap-size, 0));
+  height: calc(100vh - (2 * var(--gap-size, 0)));
+  background-color: black;
+}
+
+body > .wrapper > *:not(.typeroof-main) {
+  position: relative;
+  z-index: 2;
+}
+
+.typeroof-layout {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+.wrapper:not(.visible) > *:not(.typeroof-main) {
+  visibility: hidden;
+}
