@@ -54,7 +54,7 @@ export const nodes = {
   /// should hold the number 1 to 6. Parsed and serialized as `<h1>` to
   /// `<h6>` elements.
   heading: {
-    attrs: {level: {default: 1, validate: "number"}},
+    attrs: {level: {default: 2, validate: "number"}},
     content: "inline*",
     group: "block",
     defining: true,
