@@ -152,16 +152,7 @@
         ]
       },
       {
-        "typeKey": "heading",
-        "attrs": [
-          [
-            "level",
-            {
-              "type": "number",
-              "number": "3"
-            }
-          ]
-        ],
+        "typeKey": "heading-3",
         "content": [
           {
             "typeKey": "text",
@@ -200,6 +191,48 @@
           }
         ]
       }
+    ]
+  },
+  "proseMirrorSchema": {
+    "nodes": [
+      [
+        "heading-1",
+        {
+          "content": "inline*",
+          "group": "block",
+          "tag": "h1",
+          "definingAsContext": "1",
+          "definingForContent": "1"
+        }
+      ],
+      [
+        "heading-3",
+        {
+          "content": "inline*",
+          "group": "block",
+          "tag": "h3",
+          "definingAsContext": "1",
+          "definingForContent": "1"
+        }
+      ],
+      [
+        "paragraph",
+        {
+          "content": "inline*",
+          "group": "block",
+          "tag": "p",
+          "definingAsContext": "0",
+          "definingForContent": "0"
+        }
+      ]
+    ],
+    "marks": [
+      [
+        "strong",
+        {
+          "tag": "strong"
+        }
+      ]
     ]
   }
 }
