@@ -1178,10 +1178,7 @@ number and range input
   min-width: 5.3em;
 }
 
-:is(
-  .ui_style_patches_map-item-value,
-  .ui_node_spec_map-item-value
-).active {
+:is(.ui_style_patches_map-item-value, .ui_node_spec_map-item-value).active {
   font-weight: 700;
 }
 
