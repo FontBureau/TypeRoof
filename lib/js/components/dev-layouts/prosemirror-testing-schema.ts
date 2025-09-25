@@ -126,6 +126,9 @@ export const marks = {
   /// A link. Has `href` and `title` attributes. `title`
   /// defaults to the empty string. Rendered and parsed as an `<a>`
   /// element.
+  //
+  // In the conversion from TypeSpec-Styles to Marks, somwhere things
+  // like this must be possible.
   link: {
     attrs: {
       href: {validate: "string"},
@@ -142,6 +145,7 @@ export const marks = {
   /// that also match `<i>` and `font-style: italic`.
   em: {
     parseDOM: [
+      // See comment in strong. Here maybe: enum like e.g. "parse as italic"
       {tag: "i"}, {tag: "em"},
       {style: "font-style=italic"},
       {style: "font-style=normal", clearMark: m => m.type.name == "em"}
@@ -157,6 +161,10 @@ export const marks = {
       // This works around a Google Docs misbehavior where
       // pasted content will be inexplicably wrapped in `<b>`
       // tags with a font-weight normal.
+      // TODO: we may need a way to inject something like this into
+      // our node-spec, as it is very specific and rather not something
+      // one would edit uising a UI. Instead, we could have opions/or and
+      // enum like e.g. "parse as strong"
       {tag: "b", getAttrs: (node: HTMLElement) => node.style.fontWeight != "normal" && null},
       {style: "font-weight=400", clearMark: m => m.type.name == "strong"},
       {style: "font-weight", getAttrs: (value: string) => /^(bold(er)?|[5-9]\d{2,})$/.test(value) && null},
