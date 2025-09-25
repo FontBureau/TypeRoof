@@ -22,7 +22,7 @@ body > .wrapper > header {
 body > .wrapper > .typeroof-ui_sidebar {
   grid-area: sidebar;
   overflow-y: auto;
-  background: #eee;
+  background: var(--sidebar-bg-color);
 }
 
 body > .wrapper > .typeroof-main {
