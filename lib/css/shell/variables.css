@@ -20,4 +20,11 @@
   --text-color-disabled: #888;
   --input-border-color: #666;
   --color-danger: darkred;
+  --fieldset-border-color: #b7b4b0;
+  --button-bg-color: #fff;
+  --button-border-color: #999;
+  --button-border-color-hover: #333;
+  --button-border-color-disabled: #aaa;
+  --button-text-color-disabled: #666;
+  --sidebar-bg-color: #eee;
 }

@@ -113,7 +113,7 @@ fieldset
 
 form fieldset {
   background-color: var(--background-color);
-  border: var(--gap-size) solid var(--gap-color);
+  border: var(--gap-size) solid var(--fieldset-border-color);
   padding: 0.75em;
 }
 
@@ -123,7 +123,7 @@ form fieldset + fieldset {
 
 fieldset {
   border: none;
-  border-bottom: 1px solid #b7b4b0;
+  border-bottom: 1px solid var(--fieldset-border-color);
   margin: 0;
   padding: 1em;
 }
@@ -141,8 +141,8 @@ button
 *******************************************************************************/
 
 button {
-  background: #fff;
-  border: 1px solid #999;
+  background: var(--button-bg-color);
+  border: 1px solid var(--button-border-color);
   font-size: 0.75rem;
   font-variation-settings: "opsz" 12;
   padding: 0.25em 0.75em;
@@ -151,12 +151,12 @@ button {
 }
 
 button:not(:disabled):hover {
-  border-color: #333;
+  border-color: var(--button-border-color-hover);
 }
 
 button:disabled {
-  border-color: #aaa;
-  color: #666;
+  border-color: var(--button-border-color-disabled);
+  color: var(--button-text-color-disabled);
 }
 
 form button {

@@ -53,9 +53,7 @@ button.ui_font-select {
   font-variation-settings: "opsz" 9;
 }
 
-.typeroof-ui
-  > :is(.ui_font-select, .ui_layout_select):is(label, .label)
-  > span:first-child,
+:is(.ui_font-select, .ui_layout_select):is(label, .label) > span:first-child,
 .ui_select_task_automation .ui_plain_select-label {
   display: block;
   margin: 0.5em 0 0.35em;
@@ -471,9 +469,9 @@ drag handle
   display: inline-block;
   font-size: 1.1em;
   padding: 0.1em 0.25em;
-  background-color: var(--background-color);
+  background-color: var(--button-bg-color);
   box-shadow: rgb(43 43 43 / 8%) 0 0 0.1875rem;
-  border: 1px solid #b7b4b0;
+  border: 1px solid var(--button-border-color);
   border-radius: 0.25rem;
   color: var(--text-color);
   cursor: grab;
