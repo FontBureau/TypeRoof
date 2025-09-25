@@ -1173,19 +1173,24 @@ number and range input
   width: 100%;
 }
 
-.ui_style_patches_map-item-value {
+.ui_style_patches_map-item-value,
+.ui_node_spec_map-item-value {
   min-width: 5.3em;
 }
 
-.ui_style_patches_map-item-value.active {
+:is(
+  .ui_style_patches_map-item-value,
+  .ui_node_spec_map-item-value
+).active {
   font-weight: 700;
 }
 
-button.ui_style_patches_map-item-value {
+button:is(.ui_style_patches_map-item-value, .ui_node_spec_map-item-value) {
   line-height: 1;
 }
 
 .ui_style_patches_map-item-value,
+.ui_node_spec_map-item-value,
 .ui_links_map-item_value {
   padding-inline-start: 0.2em;
 }
@@ -1251,7 +1256,7 @@ button.ui_style_patches_map-item-value {
   display: none;
 }
 
-:focus-within > .ui_base_map-tools:not(.ui_links_map-tools) > *,
+.ui_node_spec_map-tools > *,
 .ui_style_patches_map-tools > *,
 .ui_links_map-tools > * {
   display: initial;
@@ -1273,13 +1278,14 @@ button.ui_style_patches_map-item-value {
 .ui_links_map-tools:not(
         /* always show for this case */
         .ui_node_spec_to_type_spec_links_map-tools
-    )> *:not(
+    ) > *:not(
         .ui_links_map-create_select
     ) {
   display: none;
 }
 
-.ui_links_map-tools:focus-within > * {
+/* needs more specificity than the rule above */
+.ui_links_map-tools.ui_links_map-tools:focus-within > * {
   display: block;
 }
 
