@@ -7,25 +7,20 @@
 @import url("./docs.css");
 
 /******************************************************************************
-font / layout selection
+general settings (font / layout)
 *******************************************************************************/
 
-label.ui_font-select,
-.ui_layout_select {
+.general-settings label > span:first-child {
   display: block;
-  margin: 1em;
+  margin-bottom: 0.35em;
 }
 
 label.ui_font-select {
-  margin: 1em 1em 0.25em;
+  margin-bottom: 0.25em;
 }
 
 button.ui_font-select {
-  margin: 0 1em 1em;
-}
-
-.ui_layout_select {
-  margin-bottom: 2em;
+  margin-bottom: 1em;
 }
 
 /**************************************************************************** */
@@ -53,7 +48,6 @@ button.ui_font-select {
   font-variation-settings: "opsz" 9;
 }
 
-:is(.ui_font-select, .ui_layout_select):is(label, .label) > span:first-child,
 .ui_select_task_automation .ui_plain_select-label {
   display: block;
   margin: 0.5em 0 0.35em;
@@ -731,10 +725,6 @@ drag handle
 
 .number_and_range_input input[type="number"] {
   max-width: 10ex;
-}
-
-.ui_select_task_automation .ui_plain_select-label {
-  display: block;
 }
 
 .measure_box {
