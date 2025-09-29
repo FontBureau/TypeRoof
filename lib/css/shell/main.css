@@ -1642,3 +1642,15 @@ collapsible mixin
   }
 }
 /* stylelint-enable */
+
+:where(.ProseMirror, .typeroof-document) {
+  *[data-unknown-type] {
+    outline: 4px solid red;
+    font-family: RobotoFlex, sans-serif;
+    margin: 1em 0;
+
+    strong {
+      font-weight: bold;
+    }
+  }
+}
