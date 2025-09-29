@@ -1576,3 +1576,69 @@ collapsible mixin
 .ui_node_spec_map-item .ui_base_map-key-input {
   width: initial;
 }
+
+/*
+ * Reset styles for the documents:
+ * I've noted that, despite of setting font-variation-settings on e.g.
+ * <h1> or <strong> elements, in the ProseMirror document, therefore
+ * in general as well, the browser default (Firefox, Chrome)
+ * font-weight: bold; was still applied. For all our content elements,
+ * where we apply the CSS/typography it makes sense to reset the styles.
+ * However, we often use very generiv elements, so it wasn't necessary
+ * previously. Adding ".typeroof-layout" by default as well, we might
+ * at a :not() rule to make an exception possible
+ */
+
+/* stylelint-disable */
+/* prettier-ignore */
+:where(.ProseMirror, .typeroof-document, .typeroof-layout, .reset-default-css) {
+  /* http://meyerweb.com/eric/tools/css/reset/
+     v2.0 | 20110126
+     License: none (public domain)
+  */
+
+  html, body, div, span, applet, object, iframe,
+  h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+  a, abbr, acronym, address, big, cite, code,
+  del, dfn, em, img, ins, kbd, q, s, samp,
+  small, strike, strong, sub, sup, tt, var,
+  b, u, i, center,
+  dl, dt, dd, ol, ul, li,
+  fieldset, form, label, legend,
+  table, caption, tbody, tfoot, thead, tr, th, td,
+  article, aside, canvas, details, embed,
+  figure, figcaption, footer, header, hgroup,
+  menu, nav, output, ruby, section, summary,
+  time, mark, audio, video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+  }
+  /* HTML5 display-role reset for older browsers */
+  article, aside, details, figcaption, figure,
+  footer, header, hgroup, menu, nav, section {
+    display: block;
+  }
+  body {
+    line-height: 1;
+  }
+  ol, ul {
+    list-style: none;
+  }
+  blockquote, q {
+    quotes: none;
+  }
+  blockquote:before, blockquote:after,
+  q:before, q:after {
+    content: '';
+    content: none;
+  }
+  table {
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+}
+/* stylelint-enable */
