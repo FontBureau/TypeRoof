@@ -27,7 +27,26 @@ export const nodes = {
     selectable: false,
     parseDOM: [{tag: "br"}],
     toDOM() { return brDOM }
-  } as NodeSpec
+  } as NodeSpec,
+
+  // TODO: may require a unknonw-type than can contain block children as well.
+  unknown: {
+    attrs: {"unknown-type": {default: "???", validate: 'string'}},
+    content: "inline*",
+    group: "block",
+    // defining: true,
+    // NOTE: ideally we would parse this as it's originally intended type,
+    // but that is not possibly (nor does it make sense) at this point,
+    // maybe later in TypeRoof we can detect this when syncing the document
+    // case and transform it when putting it into the metamodel.
+    parseDOM: [{tag: "div[data-unknown-type]>div", getAttrs(dom: HTMLElement) {
+         return {"data-unknown-type": dom.getAttribute("data-unknown-type")};
+    }}, 0],
+    toDOM(node) { return ["div", {"data-unknown-type": node.attrs["unknown-type"]},
+            ['strong', {"class": "message"}, `UNKNOWN TYPE: ${node.attrs["unknown-type"]}`],
+            ['div', 0]] }
+  }
+
 }
 
 export const marks = {
