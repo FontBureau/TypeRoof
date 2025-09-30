@@ -1,0 +1,56 @@
+body {
+  background: var(--background-color);
+  color: var(--text-color);
+  font-family: RobotoFlex, sans-serif;
+  font-variation-settings: initial;
+  font-weight: 369;
+  margin: 0;
+}
+
+*,
+body {
+  --font-size-change: 1;
+}
+
+h1 {
+  --font-size-change: 2.5;
+}
+
+h2 {
+  --font-size-change: 1.8;
+}
+
+h3 {
+  --font-size-change: 1.4;
+}
+
+h4,
+.heading_anchor {
+  --font-size-change: 1.17;
+}
+
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.heading_anchor {
+  --font-size-base-unit: 1rem;
+
+  font-size: calc(var(--font-size-change) * var(--font-size-base-unit));
+
+  /* There's no pure CSS way to determine the actual font size in pt
+   * however, the default is 16px/12pt so I'm going to base of that
+   * Also given that the reading intent corresponds to these sizes.
+   */
+  --font-size-pt-assumption: 12;
+
+  font-variation-settings: "opsz"
+    calc(var(--font-size-pt-assumption) * var(--font-size-change));
+}
+
+.typeroof-ui :is(h1, h2, h3, h4, h5, h6) {
+  --font-size-base-unit: 0.8em;
+}

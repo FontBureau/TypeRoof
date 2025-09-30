@@ -1,0 +1,184 @@
+/******************************************************************************
+a
+*******************************************************************************/
+
+a:link,
+a:visited {
+  color: var(--text-color);
+}
+
+/******************************************************************************
+button / select / input / textarea
+*******************************************************************************/
+
+button,
+select,
+input,
+textarea {
+  border: none;
+  border-radius: 0.25rem;
+  color: var(--text-color);
+  font-family: RobotoFlex, sans-serif;
+  height: 1.5rem;
+}
+
+select,
+input,
+textarea {
+  background-color: var(--background-color);
+  border: 1px solid var(--input-border-color);
+  font-size: inherit;
+}
+
+/******************************************************************************
+select
+*******************************************************************************/
+
+select:not(:disabled):hover {
+  box-shadow: rgb(43 43 43 / 15%) 0 0 0.625rem;
+  border-color: var(--button-border-color-hover);
+}
+
+select:disabled {
+  border-color: var(--button-border-color-disabled);
+  color: var(--button-border-color-disabled);
+}
+
+select,
+select::picker(select) {
+  /* stylelint-disable-next-line declaration-property-value-no-unknown */
+  appearance: base-select;
+}
+
+optgroup {
+  margin: 0.5rem 0;
+}
+
+optgroup > legend,
+option {
+  height: 1.25rem;
+  padding: 0 0.75rem;
+}
+
+optgroup > legend {
+  font-weight: bold;
+}
+
+/******************************************************************************
+input / textarea
+*******************************************************************************/
+
+input:focus,
+textarea:focus,
+select:active {
+  outline: 1px solid var(--input-border-color);
+}
+
+input[type="checkbox"] {
+  vertical-align: middle;
+}
+
+input[type="text"],
+input[type="number"] {
+  height: 1.25rem;
+}
+
+input:invalid {
+  border: 1px solid var(--color-danger);
+}
+
+/******************************************************************************
+dialog
+*******************************************************************************/
+
+dialog {
+  background-color: var(--background-color);
+  border: 0;
+  box-shadow: rgb(0 0 0 / 70%) 0 1.5em 3em;
+  color: var(--text-color);
+  padding: 1.5em;
+}
+
+dialog::backdrop {
+  background-color: rgb(0 0 0 / 60%);
+}
+
+dialog label {
+  display: block;
+}
+
+/******************************************************************************
+fieldset
+*******************************************************************************/
+
+form fieldset {
+  background-color: var(--background-color);
+  border: var(--gap-size) solid var(--fieldset-border-color);
+  padding: 0.75em;
+}
+
+form fieldset + fieldset {
+  margin-top: 1em;
+}
+
+fieldset {
+  border: none;
+  border-bottom: 1px solid var(--fieldset-border-color);
+  margin: 0;
+  padding: 1em;
+}
+
+fieldset > legend {
+  box-sizing: border-box;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.5em 0;
+  width: 100%;
+}
+
+/******************************************************************************
+button
+*******************************************************************************/
+
+button {
+  background: var(--button-bg-color);
+  border: 1px solid var(--button-border-color);
+  font-size: 0.75rem;
+  font-variation-settings: "opsz" 12;
+  padding: 0.25em 0.75em;
+  transition: all 75ms linear;
+  white-space: nowrap;
+}
+
+button:not(:disabled):hover {
+  border-color: var(--button-border-color-hover);
+}
+
+button:disabled {
+  border-color: var(--button-border-color-disabled);
+  color: var(--button-text-color-disabled);
+}
+
+form button {
+  font-size: 0.875rem;
+  font-variation-settings: "opsz" 14;
+  height: auto;
+  padding: 0.5em 1em;
+}
+
+menu {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+}
+
+.ui_button.ui_button-remove {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.ui_button-add,
+.ui_button-move {
+  font-weight: bolder;
+}

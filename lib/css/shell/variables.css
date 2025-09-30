@@ -1,0 +1,30 @@
+:root {
+  overflow-y: auto;
+  margin: 0;
+
+  --gap-color: #dfdfdf;
+  --gap-size: 0.3rem;
+  --list-item-odd-bg: #fff;
+  --list-item-even-bg: #eee;
+  --background-color: #fff;
+  --transparency-indicator-bg-dark: #666;
+  --transparency-indicator-bg-light: #ccc;
+  --transparency-indicator-bg-image: conic-gradient(
+    var(--transparency-indicator-bg-light) 90deg,
+    var(--transparency-indicator-bg-dark) 90deg 180deg,
+    var(--transparency-indicator-bg-light) 180deg 270deg,
+    var(--transparency-indicator-bg-dark) 270deg 0deg
+  );
+  --transparency-indicator-bg-size: 10px 10px;
+  --text-color: #121212;
+  --text-color-disabled: #888;
+  --input-border-color: #666;
+  --color-danger: darkred;
+  --fieldset-border-color: #b7b4b0;
+  --button-bg-color: #fff;
+  --button-border-color: #999;
+  --button-border-color-hover: #333;
+  --button-border-color-disabled: #aaa;
+  --button-text-color-disabled: #666;
+  --sidebar-bg-color: #eee;
+}

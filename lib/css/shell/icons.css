@@ -36,4 +36,16 @@
             <line stroke='black' x1='8' y1='4' x2='0' y2='4' stroke-width='1'/>\
             <line stroke='black' x1='8' y1='6' x2='4' y2='6' stroke-width='1'/>\
         </svg>");
+  --chevron-down: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='7'>\
+            <polyline fill='none' stroke='black' stroke-width='1' points='1 1 6 6 11 1'/>\
+        </svg>");
+  --chevron-up: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='7'>\
+            <polyline fill='none' stroke='black' stroke-width='1' points='1 6 6 1 11 6'/>\
+        </svg>");
+  --chevron-right: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='7' height='12'>\
+            <polyline fill='none' stroke='black' stroke-width='1' points='1 1 6 6 1 11'/>\
+        </svg>");
+  --chevron-left: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='7' height='12'>\
+            <polyline fill='none' stroke='black' stroke-width='1' points='6 1 1 6 6 11'/>\
+        </svg>");
 }

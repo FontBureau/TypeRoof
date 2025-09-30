@@ -1,10 +1,29 @@
 @import url("../fonts.css");
+@import url("./variables.css");
+@import url("./typography.css");
 @import url("./icons.css");
-@import url("./general.css");
+@import url("./elements.css");
+@import url("./layout.css");
+@import url("./docs.css");
 
-.ui_layout_select {
+/******************************************************************************
+general settings (font / layout)
+*******************************************************************************/
+
+.general-settings label > span:first-child {
   display: block;
+  margin-bottom: 0.35em;
 }
+
+label.ui_font-select {
+  margin-bottom: 0.25em;
+}
+
+button.ui_font-select {
+  margin-bottom: 1em;
+}
+
+/**************************************************************************** */
 
 /**
  * Using .typeroof-ui as the class for containers within which the
@@ -29,20 +48,13 @@
   font-variation-settings: "opsz" 9;
 }
 
-.typeroof-ui
-  > :is(.ui_font-select, .ui_layout_select):is(label, .label)
-  > span:first-child,
 .ui_select_task_automation .ui_plain_select-label {
   display: block;
   margin: 0.5em 0 0.35em;
 }
 
-.typeroof-ui
-  > :is(.ui_font-select, .ui_layout_select):is(label, .label)
-  > span:first-child,
 .ui_select_task_automation .ui_plain_select-label,
-.ui_axes_math > label,
-fieldset > legend {
+.ui_axes_math > label {
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -443,17 +455,21 @@ li.ui_key_moment_controller.active:not(:last-child) {
   vertical-align: -webkit-baseline-middle;
 }
 
-/* style is VERY similar to button in shell-general-layout.css */
+/******************************************************************************
+drag handle
+*******************************************************************************/
+
 .drag_handle {
   display: inline-block;
-  font-size: 1.1em; /* a bit bigger to make more accessible */
-  padding: 0 0.3em;
-  background-color: var(--background-color);
+  font-size: 1.1em;
+  padding: 0.1em 0.25em;
+  background-color: var(--button-bg-color);
   box-shadow: rgb(43 43 43 / 8%) 0 0 0.1875rem;
-  border: 1px solid #b7b4b0;
-  border-radius: 0.125rem;
+  border: 1px solid var(--button-border-color);
+  border-radius: 0.25rem;
   color: var(--text-color);
   cursor: grab;
+  margin-right: 0.125rem;
 }
 
 .drag_handle:hover {
@@ -470,6 +486,8 @@ li.ui_key_moment_controller.active:not(:last-child) {
 .waste_basket_drop_target {
   display: block;
 }
+
+/**************************************************************************** */
 
 .ui_base_drop_target-main_drop_zone {
   display: inline-block;
@@ -490,16 +508,6 @@ li.ui_key_moment_controller.active:not(:last-child) {
   content: "⌖";
   outline: 0.1em dashed grey;
   padding: 0.15em;
-}
-
-.ui_button.ui_button-remove {
-  border-radius: 50%;
-  color: darkred;
-}
-
-.ui_button-add,
-.ui_button-move {
-  font-weight: bolder;
 }
 
 .ui_document_element_typespec-receptive,
@@ -717,10 +725,6 @@ li.ui_key_moment_controller.active:not(:last-child) {
 
 .number_and_range_input input[type="number"] {
   max-width: 10ex;
-}
-
-.ui_select_task_automation .ui_plain_select-label {
-  display: block;
 }
 
 .measure_box {
@@ -1021,14 +1025,6 @@ li.ui_key_moment_controller.active:not(:last-child) {
   padding-bottom: var(--own-padding-bottom, 0);
 }
 
-input:valid {
-  border: 1px solid green;
-}
-
-input:invalid {
-  border: 1px solid red;
-}
-
 .ui_axes_math-map-label,
 .ui_axes_math-locations_sum-label,
 .ui-axes_math-locations_sum_item-label {
@@ -1143,15 +1139,6 @@ input:invalid {
 
 .ui_style_patches_map-item-value.active {
   font-weight: 700;
-}
-
-button.ui_style_patches_map-item-value {
-  line-height: 1;
-}
-
-.ui_style_patches_map-item-value,
-.ui_style_patches_links_map-item_value {
-  padding-inline-start: 0.2em;
 }
 
 .ui_style_patches_map-item-drag_handle {
@@ -1290,17 +1277,6 @@ button.ui_style_patches_map-item-value {
   margin-left: 0;
 }
 
-.ui-button-input:disabled {
-  color: lightgray;
-}
-
-.ui_axes_math-map-tools :is(.ui_axes_math-axis_tag-input, .ui-button),
-.ui_base_map-tools :is(.ui_base_map-key-input, .ui-button),
-.ui_style_patches_map-tools :is(.ui_plain_select, .ui_plain_select-select) {
-  font-size: inherit;
-  padding-block: 0;
-}
-
 .ui_style_patches_map-tools .ui_base_map-key-input {
   width: 4em;
 }
@@ -1338,41 +1314,49 @@ button.ui_style_patches_map-item-value {
   width: 6em;
 }
 
+/******************************************************************************
+collapsible mixin
+*******************************************************************************/
+
 .ui_collapsible_mixin-closed {
-  border-color: transparent;
   padding-block: 0;
 }
 
-.ui_collapsible_mixin-open {
-  border-color: #b7b4b0;
-  padding-block: 0.35em 0.625em;
-}
-
-.ui_collapsible_mixin-closed > * {
+.ui_collapsible_mixin-closed > :not(legend) {
   display: none;
 }
 
-.ui_collapsible_mixin > :is(legend) {
-  display: list-item;
-  list-style-type: disclosure-closed;
-  list-style-position: inside;
+.ui_collapsible_mixin > legend {
+  display: flex;
+  justify-content: space-between;
 }
 
-.ui_collapsible_mixin-open > :is(legend) {
-  list-style-type: disclosure-open;
+.ui_collapsible_mixin > legend::after {
+  display: inline-block;
+  content: var(--chevron-down);
 }
+
+.ui_collapsible_mixin-open > legend::after {
+  content: var(--chevron-up);
+}
+
+/**************************************************************************** */
 
 .ui-dialog_openers-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  list-style: none;
   margin: 0;
-  list-style: inside square;
   padding: 0;
 }
 
 .ui-dialog_openers-item-button {
-  text-decoration: none;
+  width: 100%;
 }
 
 .ui-dialog-manage_state-serialize_output {
+  font-family: monospace;
   white-space: pre;
   width: 80vw;
   min-height: 10em;
@@ -1519,4 +1503,10 @@ button.ui_style_patches_map-item-value {
   margin-top: 0.3em;
   font-weight: 600;
   display: block;
+}
+
+.dialog-multi_select_fonts {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
 }
