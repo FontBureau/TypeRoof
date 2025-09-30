@@ -3,7 +3,7 @@
 //      (import {schema} from "prosemirror-schema-basic")
 // but us reduced to the bare minimum
 // see also ./prosemirror-testing-schema.ts which is a copy of the above
-import {SchemaSpec, NodeSpec, DOMOutputSpec} from "prosemirror-model"
+import {SchemaSpec, NodeSpec, MarkSpec, DOMOutputSpec} from "prosemirror-model"
 
 // These are the reserved/default nodes and marks, they won't be
 // re-defined by the application.
@@ -43,14 +43,26 @@ export const nodes = {
          return {"data-unknown-type": dom.getAttribute("data-unknown-type")};
     }}, 0],
     toDOM(node) { return ["div", {"data-unknown-type": node.attrs["unknown-type"]},
-            ['strong', {"class": "message"}, `UNKNOWN TYPE: ${node.attrs["unknown-type"]}`],
+            ['strong', {"class": "message"}, `UNKNOWN NODE-TYPE: ${node.attrs["unknown-type"]}`],
             ['div', 0]] }
   }
 
 }
 
 export const marks = {
-
+  'generic-style': {
+    excludes: "_",
+    attrs: {"data-style-name": {default: "", validate: 'string'}},
+    parseDOM: [
+      {
+        tag: "*[data-mark-type]",
+        getAttrs(dom: HTMLElement) {
+          return {"data-style-name": dom.getAttribute("data-mark-type")};
+        }
+      }
+    ],
+    toDOM(node) { return ["span", {"data-mark-type": node.attrs["data-style-name"]}, 0] }
+  } as MarkSpec,
 }
 
 export const schemaSpec = {nodes, marks} as SchemaSpec;
