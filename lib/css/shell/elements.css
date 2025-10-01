@@ -126,6 +126,7 @@ fieldset {
   border-bottom: 1px solid var(--fieldset-border-color);
   margin: 0;
   padding: 1em;
+  min-inline-size: 0;
 }
 
 fieldset > legend {
