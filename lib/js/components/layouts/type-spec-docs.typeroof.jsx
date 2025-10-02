@@ -139,7 +139,7 @@ import {EditorState, Plugin} from "prosemirror-state"
 import {EditorView} from "prosemirror-view"
 import {undo, redo, history} from "prosemirror-history"
 import {keymap} from "prosemirror-keymap"
-import {baseKeymap /*, toggleMark*/} from "prosemirror-commands"
+import {baseKeymap , toggleMark} from "prosemirror-commands"
 import "prosemirror-view/style/prosemirror.css"
 
 // I didn't find the rules for prosemirror, so I'm going for a small set
@@ -3689,9 +3689,10 @@ class UIDocumentTextRun extends _BaseContainerComponent {
     //     return null;
     // }
 
-    _getBestTypeSpecProperties=UIDocumentElement.prototype._getBestTypeSpecProperties;
+    _getBestTypeSpecPropertiesId=UIDocumentElement.prototype._getBestTypeSpecPropertiesId;
+
     _getBestTypeSpecPath() {
-        const typeSpecPropertiesId = this._getBestTypeSpecProperties()
+        const typeSpecPropertiesId = this._getBestTypeSpecPropertiesId()
           , typeSpecPath = typeSpecPropertiesId.slice(typeSpecPropertiesId.indexOf('@') + 1)
           ;
         return typeSpecPath;
@@ -3990,35 +3991,17 @@ class UIDocumentElement extends _BaseContainerComponent {
         });
     }
 
-    _getBestTypeSpecProperties() {
-        const currentTypeSpecLink = this.getEntry('typeSpecLink').value
-          , currentTypeSpecPath = Path.fromString(currentTypeSpecLink)
-          , format = path=>`typeSpecProperties@${path}`
+    _getBestTypeSpecPropertiesId() {
+        const typeSpecLink = this.getEntry('typeSpecLink').value
+          , protocolHandlerName = 'typeSpecProperties@'
           , protocolHandlerImplementation = this.widgetBus.getProtocolHandlerImplementation('typeSpecProperties@', null)
           ;
-        if(protocolHandlerImplementation === null)
-            throw new Error(`KEY ERROR ProtocolHandler for identifier "typeSpecProperties@" not found.`);
-
-        // getProtocolHandlerImplementation
-        let testPath = currentTypeSpecPath.parts.length === 0 || currentTypeSpecPath.parts[0] === 'children'
-                  // the initial "children" is part from typeSpecLink
-                ? this._originTypeSpecPath.append(...currentTypeSpecPath)
-                : this._originTypeSpecPath.append('children', ...currentTypeSpecPath)
-                ;
-        while(true) {
-            if(!this._originTypeSpecPath.isRootOf(testPath))
-                // We have gone to far up. This also prevents that
-                // a currentTypeSpecPath could potentially inject '..'
-                // to break out of this._originTypeSpecPath, though,
-                // the latter seems unlikely, as we parse it in here.
-                break;
-            const typeSpecPropertiesId = format(testPath);
-            if(protocolHandlerImplementation.hasRegistered(typeSpecPropertiesId))
-                return typeSpecPropertiesId;
-            // Move towards root and continue; // remove 'children' and `{key}`
-            testPath = testPath.slice(0, -2);
-        }
-        return format(this._originTypeSpecPath);
+        return _getBestTypeSpecPropertiesId(
+            typeSpecLink,
+            protocolHandlerName,
+            protocolHandlerImplementation,
+            this._originTypeSpecPath
+        );
     }
 
     _createTypeSpecStylerWrapper(typeSpecProperties) {
@@ -4041,7 +4024,7 @@ class UIDocumentElement extends _BaseContainerComponent {
     //     // if new typeSpecProperties !== old typeSpecProperties
     //     //       replace the widget
     //     //
-    //     const // typeSpecProperties = this._getBestTypeSpecProperties()
+    //     const // typeSpecProperties = this._getBestTypeSpecPropertiesId()
     //       , oldId = this._typeSpecStylerWrapper !== null
     //             ? this._widgets.indexOf(this._typeSpecStylerWrapper)
     //             : -1
@@ -4285,12 +4268,74 @@ class UIDocument extends _BaseContainerComponent {
     }
 }
 
+/* We need this a lot, as it seems, there are still some duplicates in this module! */
+function _getBestTypeSpecPropertiesId(
+        typeSpecLink,
+        protocolHandlerName /*='typeSpecProperties@'*/,
+        protocolHandlerImplementation,
+        originTypeSpecPath,
+        asPath=false) {
+    const currentTypeSpecPath = Path.fromString(typeSpecLink)
+      , format = path=>`${protocolHandlerName}${path}`
+      ;
+    if(protocolHandlerImplementation === null)
+        throw new Error(`KEY ERROR ProtocolHandler for identifier "${protocolHandlerName}" not found.`);
+
+    // getProtocolHandlerImplementation
+    let testPath = currentTypeSpecPath.parts.length === 0 || currentTypeSpecPath.parts[0] === 'children'
+              // the initial "children" is part from typeSpecLink
+            ? originTypeSpecPath.append(...currentTypeSpecPath)
+            : originTypeSpecPath.append('children', ...currentTypeSpecPath)
+            ;
+    while(true) {
+        if(!originTypeSpecPath.isRootOf(testPath))
+            // We have gone to far up. This also prevents that
+            // a currentTypeSpecPath could potentially inject '..'
+            // to break out of originTypeSpecPath, though,
+            // the latter seems unlikely, as we parse it in here.
+            break;
+        const typeSpecPropertiesId = format(testPath);
+        if(protocolHandlerImplementation.hasRegistered(typeSpecPropertiesId))
+            return asPath ? testPath : typeSpecPropertiesId;
+        // Move towards root and continue; // remove 'children' and `{key}`
+        testPath = testPath.slice(0, -2);
+    }
+    return asPath ? originTypeSpecPath : format(originTypeSpecPath);
+}
+
+/**
+ * MAYBE: requires a better name
+ *
+ * NOTE (to myself): I think going via _getBestTypeSpecPropertiesId is
+ * maybe not an ideal implementation, so far, look twice and overthink
+ * where asPath===true;
+ */
+function _getTypeSpecPropertiesIdMethod(pathOfTypes,
+                                       asPath=false,
+                                       nodeSpecToTypeSpecName='nodeSpecToTypeSpec',
+                                       protocolHandlerName='typeSpecProperties@') {
+    const nodeSpecToTypeSpec = this.getEntry(nodeSpecToTypeSpecName)
+      , typeKey = pathOfTypes.at(-1)
+      , typeSpecLink = nodeSpecToTypeSpec.get(typeKey, {value: ''}).value// => default '' would be the root TypeSpec
+      , protocolHandlerImplementation = this.widgetBus.getProtocolHandlerImplementation(protocolHandlerName, null)
+      ;
+    return _getBestTypeSpecPropertiesId(typeSpecLink,
+                protocolHandlerName,
+                protocolHandlerImplementation,
+                this._originTypeSpecPath,
+                asPath);
+}
+
 class TypeSpecSubscriptions extends _CommonContainerComponent {
     constructor(widgetBus, zones, originTypeSpecPath) {
         super(widgetBus, zones);
         this._originTypeSpecPath = originTypeSpecPath;
-        this._domObserver = null;
+        this._viewDomObserver = null;
         this._subscribers = new Map();
+
+        this._newlySubscribedMarks = new Map();
+        this._marksDomObserver = new MutationObserver(this._checkNewlySubscribedMarks.bind(this));
+        this._styleSubscribers = new Map();
     }
 
     get dependencies() {
@@ -4304,34 +4349,85 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
         return dependencies;
     }
 
-    _getBestTypeSpecProperties(typeSpecLink) {
-        const currentTypeSpecPath = Path.fromString(typeSpecLink)
-          , format = path=>`typeSpecProperties@${path}`
-          , protocolHandlerImplementation = this.widgetBus.getProtocolHandlerImplementation('typeSpecProperties@', null)
-          ;
-        if(protocolHandlerImplementation === null)
-            throw new Error(`KEY ERROR ProtocolHandler for identifier "typeSpecProperties@" not found.`);
+    _getStyleLinkPropertiesId(typeSpecProperties, styleLink) {
+        const typeSpecPath = typeSpecProperties.slice('typeSpecProperties@'.length)
+           , styleLinkPropertiesId = `styleLinkProperties@${Path.fromParts(typeSpecPath, 'stylePatches', styleLink)}`
+           , protocolHandlerImplementation = this.widgetBus.getProtocolHandlerImplementation('styleLinkProperties@', null)
+           ;
+         if(protocolHandlerImplementation === null)
+             throw new Error(`KEY ERROR ProtocolHandler for identifier "styleLinkProperties@" not found.`);
+         // check if styleLinkPropertiesId exists, otherwise return null
+         if(protocolHandlerImplementation.hasRegistered(styleLinkPropertiesId))
+             return styleLinkPropertiesId;
+         throw new Error(`KEY ERROR styleLinkPropertiesId "${styleLinkPropertiesId}" not found in styleLinkProperties@.`);
+    }
 
-        // getProtocolHandlerImplementation
-        let testPath = currentTypeSpecPath.parts.length === 0 || currentTypeSpecPath.parts[0] === 'children'
-                  // the initial "children" is part from typeSpecLink
-                ? this._originTypeSpecPath.append(...currentTypeSpecPath)
-                : this._originTypeSpecPath.append('children', ...currentTypeSpecPath)
-                ;
-        while(true) {
-            if(!this._originTypeSpecPath.isRootOf(testPath))
-                // We have gone to far up. This also prevents that
-                // a currentTypeSpecPath could potentially inject '..'
-                // to break out of this._originTypeSpecPath, though,
-                // the latter seems unlikely, as we parse it in here.
+    _createStyleStylerWrapper(styleLinkProperties, domElemment) {
+        const settings = {}
+          , dependencyMappings = [
+                [styleLinkProperties, 'properties@']
+              , ['/font', 'rootFont']
+            ]
+          , Constructor = UIDocumentStyleStyler
+          , args = [domElemment]
+          ;
+        return this._initWrapper(this._childrenWidgetBus, settings, dependencyMappings, Constructor, ...args);
+    }
+
+    _finalizeMarkSubscription(domElement, mark) {
+        const parentSubscription = this._subscribers.get(domElement.parentElement)
+            // FIXME: Should probably monitor the original typeSpec to see when the styleLinks change.
+          , styleLinkPropertiesId = this._getStyleLinkPropertiesId(parentSubscription.typeSpecProperties, mark.attrs['data-style-name'])
+          , widgetWrapper = this._createStyleStylerWrapper(styleLinkPropertiesId, domElement)
+          ;
+        // DO SOMETHING!
+        console.log(`${this}._finalizeMarkSubscription SUBSCRIPTION COMPLETE`, mark.type.name, domElement.textContent, styleLinkPropertiesId);
+        this._styleSubscribers.set(domElement, {
+            widgetWrapper
+          , mark
+          , styleLinkPropertiesId
+          , parentSubscription // FIXME!
+        });
+        this._activateWidget(widgetWrapper);
+    }
+
+    _checkNewlySubscribedMarks(mutations_) {
+        console.log(`${this}._checkNewlySubscribedMarks`, mutations_);
+        const mutations = Array.from(mutations_);
+        while(mutations.length) {
+            if(this._newlySubscribedMarks.size === 0) {
+                // NOTE: seems pointless to do:
+                //      mutations.push(...this._marksDomObserver.takeRecords());
+                // as there are no _newlySubscribedMarks regardless.
+                this._marksDomObserver.disconnect();
                 break;
-            const typeSpecPropertiesId = format(testPath);
-            if(protocolHandlerImplementation.hasRegistered(typeSpecPropertiesId))
-                return typeSpecPropertiesId;
-            // Move towards root and continue; // remove 'children' and `{key}`
-            testPath = testPath.slice(0, -2);
+            }
+            const mutationRecord = mutations.pop();
+            // FIXME: the node can also be added as a childNode, or even
+            // deeper and we would see here only the upmost added node.
+            // It looks like we would still have it here in _newlySubscribedMarks
+            // but we would not see it directly as node as it could be any
+            // of the children!
+            // It could even be quicker to iterate over all nodes in
+            // this._newlySubscribedMarks and see if we can identify their
+            // parent nodes...!
+            for(const node of mutationRecord.addedNodes) {
+                if(this._newlySubscribedMarks.has(node)) {
+                    const mark = this._newlySubscribedMarks.get(node);
+                    this._newlySubscribedMarks.delete(node);
+                    this._finalizeMarkSubscription(node, mark);
+
+                }
+            }
         }
-        return format(this._originTypeSpecPath);
+        for(const [node, mark] of this._newlySubscribedMarks) {
+            if(node.parentElement && this._subscribers.has(node.parentElement)) {
+                this._newlySubscribedMarks.delete(node);
+                this._finalizeMarkSubscription(node, mark);
+            }
+        }
+        if(this._newlySubscribedMarks.size === 0)
+            this._marksDomObserver.disconnect();
     }
 
     _createTypeSpecStylerWrapper(typeSpecProperties, domElement) {
@@ -4346,25 +4442,23 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
          return this._initWrapper(this._childrenWidgetBus, settings, dependencyMappings, Constructor, ...args);
     }
 
-    _getTypeSpecProperties(nodeSpecToTypeSpec, pathOfTypes) {
-        const typeKey = pathOfTypes.at(-1)
-          , typeSpecLink = nodeSpecToTypeSpec.get(typeKey, {value: ''}).value// => default '' would be the root TypeSpec
-          , typeSpecProperties = this._getBestTypeSpecProperties(typeSpecLink)
-          ;
-        return typeSpecProperties;
-    }
+    _getTypeSpecPropertiesId = _getTypeSpecPropertiesIdMethod;
 
     subscribe(domElement, pathOfTypes) {
-        const nodeSpecToTypeSpec = this.getEntry('nodeSpecToTypeSpec')
-          , typeSpecProperties = this._getTypeSpecProperties(nodeSpecToTypeSpec, pathOfTypes)
+        const typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes)
           , widgetWrapper = this._createTypeSpecStylerWrapper(typeSpecProperties, domElement)
           ;
-        this._widgets.push(widgetWrapper);
+
         this._subscribers.set(domElement, {
             widgetWrapper
           , pathOfTypes
           , typeSpecProperties
         });
+        this._activateWidget(widgetWrapper);
+    }
+
+    _activateWidget(widgetWrapper) {
+        this._widgets.push(widgetWrapper);
         this._createWidget(widgetWrapper);
         const _compareResult = StateComparison.createInitial(this.getEntry('/'), widgetWrapper.dependencyMapping)
           , changedMap = widgetWrapper.getChangedMapFromCompareResult(true /*requiresFullInitialUpdate*/, _compareResult)
@@ -4373,25 +4467,52 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
             this._updateDOM(()=>widgetWrapper.widget.update(changedMap));
     }
 
+    _deactivateWidget(widgetWrapper) {
+        this._destroyWidget(widgetWrapper);
+        this._widgets.splice(this._widgets.indexOf(widgetWrapper), 1);
+    }
+
     unsubscribe(domElement) {
         const subscription = this._subscribers.get(domElement);
         console.log(`${this} unsubscribe`, domElement, 'subscription', subscription);
         this._subscribers.delete(domElement);
-        this._destroyWidget(subscription.widgetWrapper);
-        this._widgets.splice(this._widgets.indexOf(subscription.widgetWrapper), 1);
+        this._deactivateWidget(subscription.widgetWrapper);
     }
 
-    subscribeMark(domElement) {
+    subscribeMark(domElement, mark) {
         // request a rendering once the view is done...
         // the element, at this point is not in the dom, one way to
         // trigger an initial update would be to create a DOMObserver
         // We need the position in the DOM to find out what the parent
         // type and thus TypeSpec is.
-        console.log(`${this} subscribeMark`, domElement, domElement.textContent);
+        console.log(`${this} subscribeMark`, domElement, mark.type.name, domElement.textContent, 'parent:', domElement.parentElement, 'this._newlySubscribedMarks.size', this._newlySubscribedMarks.size);
+
+        if(this._newlySubscribedMarks.size === 0) {
+            const observerOptions = {
+                    childList: true,
+                    subtree: true,
+                }
+              , container = this.widgetBus.getWidgetById('proseMirror').element
+              ;
+            this._marksDomObserver.observe(container, observerOptions);
+        }
+        this._newlySubscribedMarks.set(domElement, mark);
     }
 
-    unsubscribeMark(domElement){
-        console.log(`${this} unsubscribeMark`, domElement, domElement.textContent);//, 'subscription', subscription);
+    unsubscribeMark(domElement) {
+        if(this._newlySubscribedMarks.has(domElement)) {
+            this._newlySubscribedMarks.delete(domElement);
+            if(this._newlySubscribedMarks.size === 0) {
+                // const mutations = this._marksDomObserver.takeRecords();
+                this._marksDomObserver.disconnect();
+                // if (mutations.length > 0)
+                //    this._checkNewlySubscribedMarks(mutations);
+            }
+        }
+        const subscription = this._styleSubscribers.get(domElement);
+        console.log(`${this} unsubscribe`, domElement, domElement.textContent, 'subscription', subscription);
+        this._styleSubscribers.delete(domElement);
+        this._deactivateWidget(subscription.widgetWrapper);
     }
 
     initialUpdate() {
@@ -4405,9 +4526,8 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
           ;
         if(!changedMap.has('nodeSpecToTypeSpec'))
             return requiresFullInitialUpdate;
-        const nodeSpecToTypeSpec = changedMap.get('nodeSpecToTypeSpec');
         for(const [domElement, subscription] of this._subscribers) {
-             const typeSpecProperties = this._getTypeSpecProperties(nodeSpecToTypeSpec, subscription.pathOfTypes);
+             const typeSpecProperties = this._getTypeSpecPropertiesId(subscription.pathOfTypes);
              if(typeSpecProperties === subscription.typeSpecProperties)
                 // did not change
                 continue;
@@ -4432,20 +4552,42 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
      * the domObserver, prosemirror is not aware of these changes.
      */
     _updateDOM(fn) {
-        if(this._domObserver === null)
-            this._domObserver = this.widgetBus.getWidgetById('proseMirror').view.domObserver;
-        this._domObserver.stop();
+        if(this._viewDomObserver === null)
+            this._viewDomObserver = this.widgetBus.getWidgetById('proseMirror').view.domObserver;
+        this._viewDomObserver.stop();
         try {
             fn();
         }
         finally {
-            this._domObserver.start();
+            this._viewDomObserver.start();
         }
     }
 
     _update(...args) {
         this._updateDOM(()=>super._update(...args));
     }
+}
+
+
+function _getPathOfTypes(path /* { path } = resolved */, currentType=null) {
+    // path is actually a rather complex array type:
+    // path.push(node, index, start + offset).
+    // This means we can get just each index out of it and that
+    // it gives the raw indexes, compatible with the metamodel indexes.
+    // Using the node positions is however complicated, as at the
+    // time this code runs, the positions are not necessarily already
+    // synced to the metamodel document.
+    // Path of types is however all we need to resolve the TypeSpec.
+    const  pathOfTypes = []
+    // , contentIndexes = []
+    ;
+    for(let i=0, l=path.length;i<l;i+=3)
+      pathOfTypes.push(path[i].type.name);
+      // contentIndexes.push(path[i+1]);
+
+    if(currentType)
+        pathOfTypes.push(currentType);
+    return pathOfTypes;
 }
 
 class ProsemirrorNodeView {
@@ -4474,23 +4616,8 @@ class ProsemirrorNodeView {
         // we don't actually need to know the node position, but we
         // care about the TypeSpec of it and possibly of it's parents types
         const resolved = view.state.doc.resolve(getPos())
-          // path is actually a rather complex array type:
-          // path.push(node, index, start + offset).
-          // This means we can get just each index out of it and that
-          // it gives the raw indexes, compatible with the metamodel indexes.
-          // Using the node positions is however complicated, as at the
-          // time this code runs, the positions are not necessarily already
-          // synced to the metamodel document.
-          // Path of types is however all we need to resolve the TypeSpec.
-          , { path } = resolved
-          , pathOfTypes = []
-          // , contentIndexes = []
-          ;
-        for(let i=0, l=path.length;i<l;i+=3) {
-            pathOfTypes.push(path[i].type.name);
-            // contentIndexes.push(path[i+1]);
-        }
-        pathOfTypes.push(node.type.name);
+           , pathOfTypes = _getPathOfTypes(resolved.path, node.type.name)
+           ;
         widgetBus.getWidgetById('typeSpecSubscriptionsRegistry')
                  .subscribe(this._stylerDOM, pathOfTypes/*, contentIndexes*/);
     }
@@ -4521,18 +4648,20 @@ class ProsemirrorMarkView {
         // e.g. getTagForType
         const // mmNodeSpec = this.widgetBus.getLinked(node.type.schema).get('nodes').get(node.type.name)
            tag = 'span'
-         , element = widgetBus.domTool.createElement(tag, {'data-mark-type': mark.attrs['mark-style-name']})
+         , element = widgetBus.domTool.createElement(tag, {'data-style-name': mark.attrs['data-style-name']})
          ;
         this.dom = element;
         this._stylerDOM = element;
         this.contentDOM = element;
         widgetBus.getWidgetById('typeSpecSubscriptionsRegistry')
-                 .subscribeMark(this._stylerDOM);
+                 .subscribeMark(this._stylerDOM, mark);
     }
     destroy() {
         this.widgetBus.getWidgetById('typeSpecSubscriptionsRegistry').unsubscribeMark(this._stylerDOM);
     }
 }
+
+
 
 class ProseMirrorMenuView {
     constructor(widgetBus, view /*EditorView*/) {
@@ -5031,6 +5160,7 @@ class ProseMirrorContext extends _BaseContainerComponent {
                   , 'document'
                 ]
               , UIProseMirrorMenu
+              , originTypeSpecPath
             ]
           , [
                 {...proseMirrorSettings, id:'proseMirror'}
@@ -5065,21 +5195,192 @@ class ProseMirrorContext extends _BaseContainerComponent {
     }
 }
 
-class UIProseMirrorMenu extends _BaseComponent {
-    constructor(widgetBus) {
-        super(widgetBus);
+/**
+ * started this from looking at function markApplies
+ * https://github.com/ProseMirror/prosemirror-commands/blob/master/src/commands.ts
+ * not sure if it is sufiiently complete.
+ */
+function _getPathsOfTypes(doc/* :Node*/, ranges/*: readonly SelectionRange[]*/, enterAtoms/*: boolean*/, skip=Object.freeze(new FreezableSet())) {
+    const result = new Map() // try to reduce the amount of results
+      , seen = new Set();
+      ;
+    for (let i = 0; i < ranges.length; i++) {
+        const  {$from, $to} = ranges[i];
+        if($from.depth === 0 && !result.has(0))
+            // && doc.inlineContent ?????
+            result.set(0, [doc.type.name]);
+        doc.nodesBetween($from.pos, $to.pos, (node, pos) => {
+
+            if (seen.has(pos) || skip.has(node.type.name) || !enterAtoms && node.isAtom && node.isInline && pos >= $from.pos && pos + node.nodeSize <= $to.pos)
+                return;
+            const resolved = doc.resolve(pos);
+            result.set(pos, _getPathOfTypes(resolved.path, node.type.name));
+        });
     }
+    return result.values();
+}
+
+class UIProseMirrorMenu extends _BaseComponent {
+    constructor(widgetBus, originTypeSpecPath) {
+        super(widgetBus);
+        this._originTypeSpecPath = originTypeSpecPath;
+        this._buttonToStyle = new Map();
+        [this.element, this._stylesContainer] = this._initTemplate();
+    }
+
+    _getTemplate(h) {
+        return (
+            <div class="ui_prose_mirror_menu">
+            <span class="label ui_prose_mirror_menu-label">ProseMirror Menu</span>
+            <div class="ui_prose_mirror_menu-styles"></div>
+            </div>
+        );
+    }
+
+    _initTemplate() {
+        const container = this._getTemplate(this._domTool.h)
+          , stylesContainer = container.querySelector('.ui_prose_mirror_menu-styles')
+          ;
+        this._insertElement(container);
+        stylesContainer.addEventListener('click', this._stylesClickHandler.bind(this));
+        // send a command
+        // command = toggleMark(schema.marks.strong)
+        // command(this._editorView.state, this._editorView.dispatch, this._editorView)
+        return [container, stylesContainer];
+    }
+
+    _stylesClickHandler(event) {
+        if(!this._buttonToStyle.has(event.target) || !this._editorView)
+            return;
+        console.log(`${this}._stylesClickHandler`, this._buttonToStyle.get(event.target), event.target);
+        const styleName = this._buttonToStyle.get(event.target)
+          , {dispatch, state} = this._editorView
+          , markType = state.schema.marks['generic-style']
+          ;
+        toggleMark(markType, {'data-style-name': styleName}, {
+            /// Controls whether, when part of the selected range has the mark
+            /// already and part doesn't, the mark is removed (`true`, the
+            /// default) or added (`false`).
+            // removeWhenPresent?: boolean
+            /// When set to false, this will prevent the command from acting on
+            /// the content of inline nodes marked as
+            /// [atoms](#model.NodeSpec.atom) that are completely covered by a
+            /// selection range.
+            // enterInlineAtoms?: boolean
+            /// By default, this command doesn't apply to leading and trailing
+            /// whitespace in the selection. Set this to `true` to change that.
+            // includeWhitespace?: boolean
+        })(state, dispatch);
+    }
+
+    _getTypeSpecPropertiesId = _getTypeSpecPropertiesIdMethod;
+    _getTypeSpecs(state) {
+        const  {empty, $cursor, ranges} = state.selection// as TextSelection
+          , result = new Map()
+          ;
+        if (empty && !$cursor)
+            return result;
+        const pathsOfTypes = _getPathsOfTypes(state.doc, ranges, false/*enterAtoms*/
+              // we don't look at "text" directly and it seems like
+              // these paths always also produce the parent paths
+            , new Set(['text'])/* skip types*/
+        );
+        for(const pathOfTypes of pathsOfTypes) {
+            const typeSpecPath = this._getTypeSpecPropertiesId(pathOfTypes, true/*asPath*/)
+              , typeSpec = this.getEntry(typeSpecPath)
+              ;
+            result.set(typeSpec, typeSpecPath);
+        }
+        return result;
+    }
+
     updateView(view, prevState=null) {
+        // NOTE: when "prevState !== null", I don't think the view changes,
+        // however, the menu can check which commands should be active.
+        this._editorView = view;
         // when prevState is null this call comes from the constructor
         // otherwise it comes from the update method.
-        console.log(`${this}.updateView view:`, view, '\n    ',prevState === null ? 'INITIAL' : 'CONSECUTIVE', 'prevState:', prevState);
+
+        // => set { typeSpecs }
+        const typeSpecs = this._getTypeSpecs(this._editorView.state)
+          , setsOfStyles = new Map()
+            // display these
+          , allStylesSuperSet = new Set()
+            // allow these
+          , commonSubSet = new Set()
+          ;
+        for(const [typeSpec, path] of typeSpecs) {
+            const stylePatches = typeSpec.get('stylePatches');
+            console.log(`${path} :: ${typeSpec.get('label').value} STYLES:`, ...stylePatches.keys());
+            // OK so these keys are the options that we are going to present
+
+            setsOfStyles.set(typeSpec, new Set(stylePatches.keys()));
+            for(const style of stylePatches.keys())
+                allStylesSuperSet.add(style);
+        }
+        for(const style of allStylesSuperSet) {
+            if(setsOfStyles.values().every(stylesSet=>stylesSet.has(style)))
+                commonSubSet.add(style);
+        }
+
+        // Hmm, things a menu item ot activate/deactivate a mark could
+        // show:
+        //      bold: the mark is active at the current position/selection
+        //              -> click again should turn it off
+        //
+        //      active: can the mark be applied at the current position
+        //              -> it's interesting we could either apply it only
+        //                 where it is available OR everywhere and mark when a definition is missing
+        //                 -> seccond could be a ctr+click
+        //                 -> consequently ctrl would make those inactive marks active
+        //                 -> bold marks would be always active, as turning the
+        //                    mark off should be possible AND only happen where it
+        //                    active. Then, maybe it would become not-bold and inactive
+        //      visible: it seems like marks that are defined somewhere, but are not
+        //               in the current context, should not be displayed at all
+
+        // FIXME: we should define an order and keep it stable...
+        // i.e. stylePatches has an inherent order but before, the typeSpecs
+        // could have, i.e. inorder of appearance, maybe depth-first, but
+        // it's not readily accessible for us.
+        const h = this._domTool.h
+          , oldButtons = Array.from(this._buttonToStyle.keys())
+          ;
+        this._buttonToStyle.clear();
+        for(const style of allStylesSuperSet) {
+            // reusing stuff
+            const button = oldButtons.length
+                ? oldButtons.pop()
+                : (<button type="button">{style}</button>)
+                ;
+            button.disabled = !commonSubSet.has(style);
+            this._buttonToStyle.set(button, style);
+        }
+        this._stylesContainer.replaceChildren(...this._buttonToStyle.keys());
+
+        console.log(`${this}.updateView view:`, view, '\n    ',prevState === null ? 'INITIAL' : 'CONSECUTIVE', 'prevState:', prevState,
+            '\n',
+            // can be multiple, right???
+            // intuitiveley it feels correct to allow only the subset of
+            // available marks/styles to be active/available.
+            // maybe we could display the superset, but make only the
+            // subset available.
+            'The current TypeSpecs:', ...typeSpecs.entries().map(([typeSpec, path])=>`${path} :: ${typeSpec.get('label').value}`)
+            // 'The available style-links:',
+        );
+
+        // const typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes)
+        // {command: toggleMark(schema.marks.strong), dom: icon("B", "strong")},
+        //let active = command(this._editorView.state, null, this._editorView)
     }
+
     destroyView() {
+        this._editorView = null;
         // I'm not sure if we need to do anyhing in here, maybe make all
         // all menu-items inactive.
         console.log(`${this}.destroyView view`);
     }
-    update(changedMap){
+    update(changedMap) {
         console.log(`${this}.update:`,...changedMap.keys());
     }
 }
@@ -5348,7 +5649,7 @@ class TypeSpecRampController extends _BaseContainerComponent {
                 {}
               , []
               , ProseMirrorContext
-              , zones
+              , new Map([...zones, ['main', documentManagerContainer]])
                 // proseMirrorSettings
               , {zone: 'layout'}
               , originTypeSpecPath
@@ -5430,3 +5731,5 @@ export {
     TypeSpecRampModel as Model
   , TypeSpecRampController as Controller
 };
+
+
