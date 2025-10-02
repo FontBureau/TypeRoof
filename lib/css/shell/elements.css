@@ -75,6 +75,7 @@ select:active {
 }
 
 input[type="checkbox"] {
+  margin: 0;
   vertical-align: middle;
 }
 
@@ -140,6 +141,10 @@ form fieldset + fieldset {
 form fieldset > legend {
   padding: 0 0.5em;
   width: auto;
+}
+
+.typeroof-ui fieldset h3 {
+  margin: 0 0 1em;
 }
 
 /******************************************************************************
