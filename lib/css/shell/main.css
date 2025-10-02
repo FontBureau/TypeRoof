@@ -737,9 +737,35 @@ color component
   left: 0;
 }
 
-.number_and_range_input input[type="number"] {
-  max-width: 10ex;
+/******************************************************************************
+number and range input
+*******************************************************************************/
+
+.number-and-range-input {
+  align-items: center;
+  display: flex;
+  gap: 0.25em;
+  padding: 1em 0;
 }
+
+.number-and-range-input label {
+  width: 35%;
+}
+
+.number-and-range-input input[type="number"] {
+  width: 15%;
+}
+
+.number-and-range-input input[type="range"] {
+  width: 30%;
+}
+
+.number-and-range-input button {
+  margin-left: auto;
+  width: 20%;
+}
+
+/**************************************************************************** */
 
 .measure_box {
   position: absolute;
