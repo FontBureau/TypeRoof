@@ -483,11 +483,13 @@ drag handle
   cursor: grabbing;
 }
 
+/******************************************************************************
+drop targets
+*******************************************************************************/
+
 .waste_basket_drop_target {
   display: block;
 }
-
-/**************************************************************************** */
 
 .ui_base_drop_target-main_drop_zone {
   display: inline-block;
@@ -515,6 +517,10 @@ drag handle
   background: lightyellow;
   outline: 3pt solid grey;
 }
+
+/******************************************************************************
+color patch
+*******************************************************************************/
 
 .ui_color_patch {
   position: relative;
@@ -640,6 +646,10 @@ drag handle
   display: initial;
 }
 
+/******************************************************************************
+color chooser
+*******************************************************************************/
+
 .ui_color_chooser-label_toggle {
   display: list-item;
   list-style-type: disclosure-closed;
@@ -656,6 +666,10 @@ drag handle
   vertical-align: baseline;
   margin-top: 0.3em;
 }
+
+/******************************************************************************
+color component
+*******************************************************************************/
 
 .ui_color_component {
   display: grid;
