@@ -62,6 +62,13 @@ export default [
     files: ["**/*.typeroof.jsx"],
     rules: {
       "react/no-unknown-property": "off",
+      "no-unused-vars": [
+        "warn",
+        {
+          varsIgnorePattern: "h",
+          argsIgnorePattern: "h",
+        },
+      ],
     },
   },
 ];
