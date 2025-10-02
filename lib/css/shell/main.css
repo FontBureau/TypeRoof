@@ -1573,6 +1573,7 @@ collapsible mixin
   margin: 0 0 1rem;
   padding: 0;
 }
+
 .ui_node_spec_map-item .ui_base_map-key-input {
   width: initial;
 }
