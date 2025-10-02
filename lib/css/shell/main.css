@@ -679,6 +679,8 @@ color component
   grid-template-areas:
     "value-box toggle"
     "color-bar color-bar";
+  gap: 0.25em;
+  margin-bottom: 1.5em;
 }
 
 .ui_color_component > .ui_toggle_button {
@@ -686,15 +688,23 @@ color component
   justify-self: end;
 }
 
-.ui_color_component > .number-and-range-input_value-box {
+.ui_color_component > .number-and-range-color-input_value-box {
   grid-area: value-box;
 }
 
-.ui_color_component > .number-and-range-input_color-bar {
+.ui_color_component > .number-and-range-color-input_color-bar {
   grid-area: color-bar;
 }
 
-.number-and-range-input_color-bar::before {
+.ui_color_component_ranges {
+  margin: 1em 0 3em;
+}
+
+/******************************************************************************
+number and range color input
+*******************************************************************************/
+
+.number-and-range-color-input_color-bar::before {
   content: "";
   display: block;
   position: absolute;
@@ -707,14 +717,14 @@ color component
   background-image: var(--transparency-indicator-bg-image);
 }
 
-.number-and-range-input_color-bar {
+.number-and-range-color-input_color-bar {
   position: relative;
   display: flex;
   justify-content: center;
   height: 3rem;
 }
 
-.number-and-range-input_color-bar input {
+.number-and-range-color-input_color-bar input {
   width: 100%;
   width: -moz-available; /* WebKit-based browsers will ignore this. */
   width: -webkit-fill-available; /* Mozilla-based browsers will ignore this. */
@@ -723,7 +733,7 @@ color component
   z-index: 1;
 }
 
-.number-and-range-input_color-bar canvas {
+.number-and-range-color-input_color-bar canvas {
   width: var(--width, 0);
   height: var(--height, 0);
 
