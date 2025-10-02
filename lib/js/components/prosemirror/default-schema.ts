@@ -55,13 +55,13 @@ export const marks = {
     attrs: {"data-style-name": {default: "", validate: 'string'}},
     parseDOM: [
       {
-        tag: "*[data-mark-type]",
+        tag: "*[data-style-name]",
         getAttrs(dom: HTMLElement) {
-          return {"data-style-name": dom.getAttribute("data-mark-type")};
+          return {"data-style-name": dom.getAttribute("data-style-name")};
         }
       }
     ],
-    toDOM(node) { return ["span", {"data-mark-type": node.attrs["data-style-name"]}, 0] }
+    toDOM(node) {return ["span", {"data-style-name": node.attrs["data-style-name"]}, 0] }
   } as MarkSpec,
 }
 
