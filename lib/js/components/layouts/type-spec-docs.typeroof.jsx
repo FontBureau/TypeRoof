@@ -139,7 +139,7 @@ import {EditorState, Plugin} from "prosemirror-state"
 import {EditorView} from "prosemirror-view"
 import {undo, redo, history} from "prosemirror-history"
 import {keymap} from "prosemirror-keymap"
-import {baseKeymap , toggleMark} from "prosemirror-commands"
+import {baseKeymap , toggleMark, setBlockType} from "prosemirror-commands"
 import "prosemirror-view/style/prosemirror.css"
 
 // I didn't find the rules for prosemirror, so I'm going for a small set
@@ -5223,13 +5223,15 @@ class UIProseMirrorMenu extends _BaseComponent {
         super(widgetBus);
         this._originTypeSpecPath = originTypeSpecPath;
         this._buttonToStyle = new Map();
-        [this.element, this._stylesContainer] = this._initTemplate();
+        this._buttonToBlock = new Map();
+        [this.element, this._stylesContainer, this._blocksContainer] = this._initTemplate();
     }
 
     _getTemplate(h) {
         return (
             <div class="ui_prose_mirror_menu">
             <span class="label ui_prose_mirror_menu-label">ProseMirror Menu</span>
+            <div class="ui_prose_mirror_menu-blocks"></div>
             <div class="ui_prose_mirror_menu-styles"></div>
             </div>
         );
@@ -5238,13 +5240,15 @@ class UIProseMirrorMenu extends _BaseComponent {
     _initTemplate() {
         const container = this._getTemplate(this._domTool.h)
           , stylesContainer = container.querySelector('.ui_prose_mirror_menu-styles')
+          , blocksContainer = container.querySelector('.ui_prose_mirror_menu-blocks')
           ;
         this._insertElement(container);
         stylesContainer.addEventListener('click', this._stylesClickHandler.bind(this));
+        blocksContainer.addEventListener('click', this._blocksClickHandler.bind(this));
         // send a command
         // command = toggleMark(schema.marks.strong)
         // command(this._editorView.state, this._editorView.dispatch, this._editorView)
-        return [container, stylesContainer];
+        return [container, stylesContainer, blocksContainer];
     }
 
     _stylesClickHandler(event) {
@@ -5269,6 +5273,18 @@ class UIProseMirrorMenu extends _BaseComponent {
             /// whitespace in the selection. Set this to `true` to change that.
             // includeWhitespace?: boolean
         })(state, dispatch);
+    }
+
+    _blocksClickHandler(event) {
+        if(!this._buttonToBlock.has(event.target) || !this._editorView)
+            return;
+
+        const nodeTypeName = this._buttonToBlock.get(event.target)
+          , {dispatch, state} = this._editorView
+          , nodeType = state.schema.nodes[nodeTypeName];
+          ;
+        console.log(`${this}._blocksClickHandler`, this._buttonToBlock.get(event.target), event.target, 'nodeTypeName', nodeTypeName, 'nodeType', nodeType);
+        setBlockType(nodeType /*, attrs*/)(state, dispatch);
     }
 
     _getTypeSpecPropertiesId = _getTypeSpecPropertiesIdMethod;
@@ -5380,7 +5396,29 @@ class UIProseMirrorMenu extends _BaseComponent {
         console.log(`${this}.destroyView view`);
     }
     update(changedMap) {
-        console.log(`${this}.update:`,...changedMap.keys());
+        console.log(`>>>>>>>>>>>>>>>>>>>${this}.update:`,...changedMap.keys());
+
+        if(changedMap.has('nodeSpecToTypeSpec')) {
+            const nodeSpecToTypeSpec = changedMap.get('nodeSpecToTypeSpec')
+              ,  h = this._domTool.h
+              , oldButtons = Array.from(this._buttonToBlock.keys())
+              ;
+            console.log('nodeSpecToTypeSpec', ...nodeSpecToTypeSpec.keys());
+            this._buttonToBlock.clear();
+            for(const blockName of nodeSpecToTypeSpec.keys()) {
+                // reusing stuff
+                const button = oldButtons.length
+                    ? oldButtons.shift()
+                    : (<button type="button">{'initial'}</button>)
+                    ;
+                button.textContent = blockName;
+                // Would have to be decided in updateView
+                // button.disabled = !commonSubSet.has(style);
+                this._buttonToBlock.set(button, blockName);
+            }
+            this._blocksContainer.replaceChildren(...this._buttonToBlock.keys());
+        }
+
     }
 }
 
