@@ -4509,6 +4509,8 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
                 //    this._checkNewlySubscribedMarks(mutations);
             }
         }
+        if(!this._styleSubscribers.has(domElement))
+            return;
         const subscription = this._styleSubscribers.get(domElement);
         console.log(`${this} unsubscribe`, domElement, domElement.textContent, 'subscription', subscription);
         this._styleSubscribers.delete(domElement);
