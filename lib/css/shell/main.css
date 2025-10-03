@@ -585,65 +585,54 @@ color patch
   padding-left: 2em;
 }
 
+/******************************************************************************
+processed properties
+*******************************************************************************/
+
+.ui-show_processed_properties {
+  font-variation-settings: "wdth" 50;
+  margin: 1.5em 0;
+}
+
+.ui-show_processed_properties h4 {
+  background-color: #fff;
+  border: 1px solid #999;
+  margin: 0;
+  margin-top: -1px;
+  margin-bottom: -1px;
+  padding: 0.5em;
+}
+
 .ui-show_processed_properties-list {
+  background-color: #fff;
+  box-sizing: border-box;
+  display: table;
+  border-collapse: collapse;
+  margin: 0 !important;
   padding: 0;
-  list-style: inside none;
+  table-layout: fixed;
+  width: 100%;
 }
 
-.ui-show_processed_properties-item:nth-child(even) {
-  background: var(--list-item-even-bg);
+.ui-show_processed_properties-item {
+  display: table-row;
 }
 
-.ui-show_processed_properties-item:nth-child(odd) {
-  background: var(--list-item-odd-bg);
+.ui-show_processed_properties-label,
+.ui-show_processed_properties-value {
+  display: table-cell;
+  border: 1px solid #999;
+  padding: 0.5em;
+  overflow-wrap: break-word;
+}
+
+.ui-show_processed_properties-label {
+  width: 65%;
 }
 
 .ui-show_processed_properties-value {
   font-weight: bold;
-}
-
-.ui-show_processed_properties-value-color_patch {
-  display: inline-block;
-}
-
-.ui-show_processed_properties-item-type_color,
-.ui-show_processed_properties-item-type_text {
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.ui-show_processed_properties-item-type_color:hover,
-.ui-show_processed_properties-item-type_text:hover {
-  white-space: initial;
-}
-
-.ui-show_processed_properties-item-type_color:hover {
-  overflow: initial;
-}
-
-.ui-show_processed_properties-item-type_color:hover
-  .ui-show_processed_properties-value-text,
-.ui-show_processed_properties-item-type_text:hover
-  .ui-show_processed_properties-value-text {
-  display: block;
-}
-
-.ui-show_processed_properties-value-text {
-  text-overflow: ellipsis;
-  overflow: hidden;
-  max-width: 100%;
-  white-space: nowrap;
-  display: inline-block;
-  vertical-align: bottom;
-}
-
-.ui-show_processed_properties-item-type_color:hover
-  .ui-show_processed_properties-value-text,
-.ui-show_processed_properties-value-text:hover {
-  text-overflow: ellipsis;
-  overflow: initial;
-  white-space: initial;
-  display: initial;
+  width: 35%;
 }
 
 /******************************************************************************
