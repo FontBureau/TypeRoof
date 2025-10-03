@@ -23,7 +23,6 @@ import {
   , StaticNode
   , StaticTag
   , UILineOfTextInput
-  , UILineOfTextOrEmptyInput
   , DynamicTag
   , PlainSelectInput
   , WasteBasketDropTarget
@@ -38,9 +37,10 @@ import {
   , _AbstractStructModel
   , _AbstractOrderedMapModel
   , _AbstractSimpleOrEmptyModel
+  , _AbstractListModel
+  , _AbstractEnumModel
   , StringModel
   , CoherenceFunction
-  , StaticDependency
   , ForeignKey
   , topologicalSortKahn
   , FreezableMap
@@ -48,13 +48,10 @@ import {
   , deserializeSync
   , SERIALIZE_OPTIONS
   , SERIALIZE_FORMAT_OBJECT
+  , BooleanModel
+  , BooleanDefaultTrueModel
+  , StateComparison
 } from '../../metamodel.mjs';
-
-import {
-    createDynamicModel
-  , AvailableTypesModel
-  , createGenericAvailableTypes
-} from '../dynamic-types-pattern.mjs';
 
 import {
     _BaseLayoutModel
@@ -75,6 +72,7 @@ import {
 
 import {
     runion_01_lineHeight
+  , UINodeSpecToTypeSpecLinksMap
 } from '../type-spec-fundamentals.mjs';
 
 import {
@@ -90,7 +88,6 @@ import {
 
 import {
     SelectAndDragByOptions
-  , SelectAndDrag
 } from './stage-and-actors.mjs';
 
 import {
@@ -118,6 +115,7 @@ import {
 
 import {
     StringOrEmptyModel
+  , NumberOrEmptyModel
 } from '../actors/models.mjs';
 
 import {
@@ -133,99 +131,560 @@ import {
     FontSelect
 } from '../font-loading.mjs';
 
-import DEFAULT_RAMP from '../../../assets/typespec-ramp-initial-state.json' with { type: 'json' }
+import DEFAULT_STATE from '../../../assets/typespec-docs-initial-state.json' with { type: 'json' }
 
+import {schemaSpec as proseMirrorDefaultSchema} from "../prosemirror/default-schema"
+import {Schema /*, DOMParser*/} from "prosemirror-model"
+import {EditorState, Plugin} from "prosemirror-state"
+import {EditorView} from "prosemirror-view"
+import {undo, redo, history} from "prosemirror-history"
+import {keymap} from "prosemirror-keymap"
+import {baseKeymap , toggleMark, setBlockType} from "prosemirror-commands"
+import "prosemirror-view/style/prosemirror.css"
 
-const {
-        DocumentNodeModel
-      , createDocumentNode
-      // , deserializeDocumentNodeModel
-    } = createDynamicModel('DocumentNode')
-  , DocumentNodes = _AbstractOrderedMapModel.createClass('DocumentNodesModel', DocumentNodeModel)
-    // actual data modelling:
-  , StyleLinkOrEmptyModel = StringOrEmptyModel
-  , TypeSpecLinkModel = StringModel
-  , TextRunModel = _AbstractStructModel.createClass(
-        'TextRunModel'
-      , ['styleLink', StyleLinkOrEmptyModel] // Empty for default Style.
-      , ['text', StringModel]
+// I didn't find the rules for prosemirror, so I'm going for a small set
+// allowing only A-Za-z0-9_\-, maybe we can be more permissive, if required for
+// some case.
+// TODO: for all of these, there will be reserved wont be allowed, e.g.
+// because we use them in the basic Schema. Besides that, on an per use-case
+// level, we might add other reserved/disallowed names. But those rather won't
+// be on the model level, as it is creating many very similar types, so it
+// will be rather on application/behavior level (we would just not add a
+// node to the generated Schema, and inform the user).
+export function validateNodeSpecName(name) {
+    // I even allow white-space here, as I don't have so far hard restrictions.
+    // However, the empty string is not allowed.
+    if(typeof name !== 'string')
+        return [false, `NodeSpecName must be string but is typeof ${typeof name}.`];
+
+    if(name.length < 1)
+        return [false, `NodeSpecName must be at least 1 char long but name.length is ${name.length}. NodeSpecName: "${name}".`];
+
+    const regexAlpha = /^[a-zA-Z0-9_-]+$/;
+    if(!regexAlpha.test(name))
+        return [false, `NodeSpecName must only contain a-z, A-Z, 0-9, "-", and "_" but NodeSpecName is: "${name}".`];
+    return [true, null];
+}
+export const validateMarkSpecName = validateNodeSpecName
+  , validateAttributeSpecName = validateNodeSpecName
+  ;
+// A documnent model that re-creates the structures and names of the
+// prosemirror-model module closely.
+// https://prosemirror.net/docs/ref/#model
+//
+// https://prosemirror.net/docs/ref/#model.Node
+//      > This class represents a node in the tree that makes up a ProseMirror
+//      > document. So a document is an instance of Node, with children that
+//      > are also instances of Node.
+//      > Nodes are persistent data structures. Instead of changing them,
+//      > you create new ones with the content you want. Old ones keep
+//      > pointing at the old document shape. This is made cheaper by sharing
+//      > structure between the old and new data as much as possible, which
+//      > a tree shape like this (without back pointers) makes easy.
+//      > Do not directly mutate the properties of a Node object. See the
+//      > guide for more information.
+       // NOTE: the type will likeley have to be more complex, e.g. a
+       // Struct with type:Enum etc.
+const
+    // We don't do  prosemirror SchemaSpec yet, but we may need it to also
+    // capture some additional information about the marks:
+    //  https://prosemirror.net/docs/ref/#model.SchemaSpec
+    //  spec: {
+    //       nodes: OrderedMap<NodeSpec>,
+    //       marks: OrderedMap<MarkSpec>,
+    //       topNode⁠?: string
+    //  }
+    AttrValidateTypeModel = _AbstractEnumModel.createClass(
+          'AttrValidateTypeModel'
+        , ['no-validation', 'number', 'string', 'boolean', 'null', 'undefined' , 'application-specific']
+        , 'no-validation'
     )
-  , DocumentElementModel = _AbstractStructModel.createClass(
-        'DocumentElementModel'
-        // semantic type e.g. <p> <h1> - <h6>,
-        // could also be part of the typeSpec, maybe we could in here
-        // optionally override the <tag>, but typographically all decisions
-        // are made in the typeSpec system and thus the visual hierarchy/semantic
-        // is already decided there. This information though is equivalent with
-        // a block level tag, an inline-level tag would be specified in TextRunModel
-        //  by the stylePatch system, via styleLinkOrEmpty
-        // , ['styleLink', StyleLinkOrEmptyModel] // Empty for raw/default Style of the typeSpec.
-      , ['typeSpecLink', TypeSpecLinkModel]
-        // I'd rather like to attach this to the typeSpec/stylePatch system
-        // as the typographic treatment has to change with the language and
-        // script and region. e.g. different font, different space
-        // treatment etc.
-        //
-        // For example, if you use the locale fr-Arab-ER, it indicates:
-        //    Language: French (fr)
-        //    Script: Arabic (Arab)
-        //    Region: Eritrea (ER)
-        // SEE BCP 47 (Best Current Practice 47)
-        // but maybe we can also use a subset of BCP 47 as e.g.
-        // "gsw-u-sd-chzh", Zurich German, supresses Latn as script tag,
-        // and that seems odd in a highly typographic context like this.
-        //  * gsw: This is the primary language subtag, which stands for Swiss German.
-        //  * u: This indicates that the following subtags are Unicode extension subtags.
-        //  * sd: This stands for "subdivision" and is used to specify a regional subdivision.
-        //  * chzh: This denotes the Zurich subdivision within Switzerland (CH stands for Switzerland and ZH for Zurich).
-        // The tag "gsw-u-sd-chzh" specifies Swiss German as spoken in the
-        // Zurich region. The reason Latn (for Latin script) is not included
-        // is because Swiss German (gsw) is already commonly understood to
-        // be written in the Latin script, so it might be considered redundant
-        // in this context.
-        // However, if you want to include the script explicitly, you can
-        // add it like this: "gsw-Latn-u-sd-chzh". This version explicitly
-        // specifies that Swiss German is written in the Latin script in
-        // the Zurich region.
-        // , ['locale']
-        // This are childNodes like in DOM-Node/Element
-        // allowing for other DocumentElementModel or TextRunModel
-        // This means mean a DocumentElementModel is analogue to a
-        // DOM-Element.
-        // Consecutive TextRuns with the same 'styleLinkOrEmpty' should be joined
-        // and there should be no difference in their appearance. As well, empty
-        // TextRuns should get removed. See:
-        //      The normalize() method of the Node interface puts the
-        //      specified node and all of its sub-tree into a normalized
-        //      form. In a normalized sub-tree, no text nodes in the
-        //      sub-tree are empty and there are no adjacent text nodes.
-        // We have a difference though to the DOM Node.normalize method,
-        // different StyleLinks will prevent Nodes from getting merged.
-        // I'm also not sure where to run normalize, but a CoherenceFunction
-        // seems to be the ideal place so far.
-      , ['nodes', DocumentNodes]
-    )
-  , [availableDocumentNodeTypes/*, DOCUMENT_NODE_TYPE_TO_DOCUMENT_NODE_TYPE_KEY */] = createGenericAvailableTypes([
-        ['TextRun', 'Text-Run', TextRunModel]
-      , ['Element', 'Element', DocumentElementModel]
-    ])
-  , DocumentModel = _AbstractStructModel.createClass(
-        'DocumentModel'
-      , ['nodes', DocumentNodes]
-        // In this case it could be better
-        // to store the editing info in the Nodes, the manager would then
-        // have to display all nodes that are being edited
-      , ['editingNode', PathModelOrEmpty]
-        // This enables a DocumentNode to contain other DocumentNodes without
-        // circular dependency issues, as the list of availableDocumentNodeTypes
-        // is created and injected after DocumentElementModel, which requires
-        // it for it's own DocumentNodes.
-      , ... StaticDependency.createWithInternalizedDependency(
-                'availableDocumentNodeTypes'
-              , AvailableTypesModel
-              , availableDocumentNodeTypes
+  , AttrValidateModel = _AbstractStructModel.createClass(
+        'AttrValidateModel',
+        ['type', AttrValidateTypeModel]
+        // NOTE: this is a stub! might become or add a ForeignKey based
+        // implementation. But, if it is not a standard type, the implementation
+        // will be shifted to the application (from the model), and there
+        // it might be something custom. For ProseMirror it is only interesting
+        // that we can produce a function using this instruction.
+      , ['appSpecific', StringOrEmptyModel]
+      , CoherenceFunction.create(
+            ['type', 'appSpecific']
+          , function checkValues({type, appSpecific}) {
+               if(type.value === 'application-specific') {
+                    if(appSpecific.isEmpty)
+                        appSpecific.value = '';// should behave like "no-validation"
+                }
+                else
+                    appSpecific.clear();
+            }
         )
-         // only to bootstrap, until we can deserialize a ready made document.
+    )
+  , AttributeSpecModel = _AbstractStructModel.createClass(
+        'AttributeSpecModel'
+        // default⁠?: any
+        // The default value for this attribute, to use when no explicit
+        // value is provided. Attributes that have no default must be
+        // provided whenever a node or mark of a type that has them is
+        // created.
+        // TODO: StringModel is likely not sufficient.
+        // CAUTION: This should be the same type as the values AttrsMapModel of
+      , ['default', StringModel]
+        // validate⁠?: string | fn(value: any)
+        // A function or type name used to validate values of this attribute.
+        // This will be used when deserializing the attribute from JSON, and
+        // when running Node.check. When a function, it should raise an exception
+        // if the value isn't of the expected type or shape. When a string,
+        // it should be a |-separated string of primitive types ("number", "string", "boolean", "null", and "undefined"),
+        // and the library will raise an error when the value is not one of those types.
+      , ['validate', AttrValidateModel]
+    )
+  , AttributeSpecMapModel = _AbstractOrderedMapModel.createClass(
+          'AttributeSpecMapModel'
+        , AttributeSpecModel
+        , { validateKeyFn: validateAttributeSpecName }
+    )
+  , NodeSpecModel = _AbstractStructModel.createClass(
+        // https://prosemirror.net/docs/ref/#model.NodeSpec
+        'NodeSpecModel'
+        //  content⁠?: string
+        // The content expression for this node, as described in the
+        // schema guide. When not given, the node does not allow any content.⁠
+      , ['content', StringOrEmptyModel]
+        // marks⁠?: string
+        // The marks that are allowed inside of this node. May be a
+        // space-separated string referring to mark names or groups, "_"
+        // to explicitly allow all marks, or "" to disallow marks. When
+        // not given, nodes with inline content default to allowing all
+        // marks, other nodes default to not allowing marks.
+      , ['marks', StringOrEmptyModel]
+
+        // group⁠?: string
+        // The group or space-separated groups to which this node belongs,
+        // which can be referred to in the content expressions for the schema.
+      , ['group', StringOrEmptyModel]
+
+        // CAUTION: this is not part of ProseMirror model.NodeSpec
+        // TODO: This should have a validation function! E.g. look at
+        // FontAxisTagModel in type-dimension-fundamentals, that but
+        // specialized in HTML-Tags
+      ,[ 'tag', StringOrEmptyModel]
+
+        // inline⁠?: boolean
+        // Should be set to true for inline nodes. (Implied for text nodes.)
+      , ['inline', BooleanModel]
+
+        // atom⁠?: boolean
+        // Can be set to true to indicate that, though this isn't a leaf node,
+        // it doesn't have directly editable content and should be treated as a single unit in the view.
+      , ['atom', BooleanModel]
+
+        // attrs⁠?: Object<AttributeSpec>
+        // The attributes that nodes of this type get.
+      , ['attrs',  AttributeSpecMapModel]
+
+        // selectable⁠?: boolean
+        // Controls whether nodes of this type can be selected as a node selection. Defaults to true for non-text nodes.
+      , ['selectable', BooleanDefaultTrueModel]
+
+        // draggable⁠?: boolean
+        // Determines whether nodes of this type can be dragged without being selected. Defaults to false.
+      , ['draggable', BooleanModel]
+
+        // code⁠?: boolean
+        // Can be used to indicate that this node contains code, which causes some commands to behave differently.
+      , ['code', BooleanModel]
+
+        // whitespace⁠?: "pre" | "normal"
+        // Controls way whitespace in this a node is parsed. The default is "normal", which causes the DOM parser
+        // to collapse whitespace in normal mode, and normalize it (replacing newlines and such with spaces)
+        // otherwise. "pre" causes the parser to preserve spaces inside the node. When this option isn't given,
+        // but code is true, whitespace will default to "pre". Note that this option doesn't influence the way
+        // the node is rendered—that should be handled by toDOM and/or styling.
+      // , ['whitespace', ]
+
+        // definingAsContext⁠?: boolean
+        // Determines whether this node is considered an important parent node during replace operations
+        // (such as paste). Non-defining (the default) nodes get dropped when their entire content is
+        // replaced, whereas defining nodes persist and wrap the inserted content.
+      , ['definingAsContext', BooleanModel]
+
+        // definingForContent⁠?: boolean
+        // In inserted content the defining parents of the content are preserved when possible. Typically,
+        // non-default-paragraph textblock types, and possibly list items, are marked as defining.
+      , ['definingForContent', BooleanModel]
+
+        // This is more like an interface thing as the two properties before
+        // are set when this is used.
+        // defining⁠?: boolean
+        // When enabled, enables both definingAsContext and definingForContent.
+        // ['defining', BooleanModel]
+
+        // isolating⁠?: boolean
+        // When enabled (default is false), the sides of nodes of this type count as boundaries that regular
+        // editing operations, like backspacing or lifting, won't cross. An example of a node that should
+        // probably have this enabled is a table cell.
+
+      , ['isolating', BooleanModel]
+        // toDOM⁠?: fn(node: Node) → DOMOutputSpec
+        // Defines the default way a node of this type should be serialized to DOM/HTML (as used by
+        // DOMSerializer.fromSchema). Should return a DOM node or an array structure that describes one,
+        // with an optional number zero (“hole”) in it to indicate where the node's content should be inserted.
+
+        // For text nodes, the default is to create a text DOM node. Though it is possible to create a serializer
+        // where text is rendered differently, this is not supported inside the editor, so you shouldn't override
+        // that in your text node spec.
+        // CAUTION: we need to implement this dynamically
+
+        // parseDOM⁠?: readonly TagParseRule[]
+        // Associates DOM parser information with this node, which can be used by DOMParser.fromSchema to
+        // automatically derive a parser. The node field in the rules is implied (the name of this node will be
+        // filled in automatically). If you supply your own parser, you do not need to also specify parsing rules
+        // in your schema.
+        // CAUTION: we need to implement this dynamically
+
+        // toDebugString⁠?: fn(node: Node) → string
+        // Defines the default way a node of this type should be serialized to a string representation for
+        // debugging (e.g. in error messages).
+        // CAUTION: we need to implement this dynamically
+
+        // leafText⁠?: fn(node: Node) → string
+        // Defines the default way a leaf node of this type should be serialized to a string (as used by
+        // Node.textBetween and Node.textContent).
+        // CAUTION: we need to implement this dynamically
+
+        // linebreakReplacement⁠?: boolean
+        // A single inline node in a schema can be set to be a linebreak equivalent. When converting between
+        // block types that support the node and block types that don't but have whitespace set to "pre",
+        // setBlockType will convert between newline characters to or from linebreak nodes as appropriate.
+      , ['linebreakReplacement', BooleanModel]
+
+        // [string]: any
+        // Node specs may include arbitrary properties that can be read by other code via NodeType.spec.
+        // No need to implement this now here.
+    )
+  , MarkSpecModel = _AbstractStructModel.createClass(
+        // https://prosemirror.net/docs/ref/#model.MarkSpec
+        'MarkSpecModel'
+        // attrs⁠?: Object<AttributeSpec>
+        // The attributes that marks of this type get.
+      , ['attrs',  AttributeSpecMapModel]
+
+        // inclusive⁠?: boolean
+        // Whether this mark should be active when the cursor is positioned
+        // at its end (or at its start when that is also the start of
+        // the parent node). Defaults to true.
+      , ['inclusive', BooleanDefaultTrueModel]
+
+        // excludes⁠?: string
+        // Determines which other marks this mark can coexist with. Should
+        // be a space-separated strings naming other marks or groups of
+        // marks. When a mark is added to a set, all marks that it excludes
+        // are removed in the process. If the set contains any mark that
+        // excludes the new mark but is not, itself, excluded by the new
+        // mark, the mark can not be added an the set. You can use the
+        // value "_" to indicate that the mark excludes all marks in the schema.
+        //
+        // Defaults to only being exclusive with marks of the same type.
+        // You can set it to an empty string (or any string not containing
+        // the mark's own name) to allow multiple marks of a given type to
+        // coexist (as long as they have different attributes).
+      , ['excludes', StringOrEmptyModel]
+
+        // group⁠?: string
+        // The group or space-separated groups to which this mark belongs.
+      , ['group', StringOrEmptyModel]
+
+        // CAUTION: this is not part of ProseMirror model.NodeSpec
+        // TODO: This should have a validation function! E.g. look at
+        // FontAxisTagModel in type-dimension-fundamentals, that but
+        // specialized in HTML-Tags
+      , [ 'tag', StringOrEmptyModel]
+
+        // spanning⁠?: boolean
+        // Determines whether marks of this type can span multiple adjacent
+        // odes when serialized to DOM/HTML. Defaults to true.
+      , ['spanning', BooleanDefaultTrueModel]
+
+        // code⁠?: boolean
+        // Marks the content of this span as being code, which causes some
+        // commands and extensions to treat it differently.
+      , ['code', BooleanModel]
+    )
+    // The `nodes` in prosemirror SchemaSpec are defined as OrderedMap<NodeSpec>
+    // this is supposed to be one-to-one equivalent.
+  , NodeSpecMapModel = _AbstractOrderedMapModel.createClass('NodeSpecMapModel'
+        , NodeSpecModel
+        , { validateKeyFn: validateNodeSpecName }
+    )
+  , MarkSpecMapModel = _AbstractOrderedMapModel.createClass('MarkSpecMapModel'
+        , MarkSpecModel
+        , { validateKeyFn: validateMarkSpecName }
+    )
+
+    // Each Node in the NodeSpec can be linked to one TypeSpec, this includes
+    // nested TypeSpecs, i.e. children, as well.
+    // In order to make it possible to generally replace the NodeSpec to
+    // TypeSpec mapping, it's stored external to both structures. So,
+    // TypeSpec doesn't know anything about the NodeSpec and the NodeSpec
+    // doesn't know anything about the TypeSpec. Otherwise, e.g. the
+    // a Node in the NodeSpec could directly link to the TypeSpecs that
+    // applies to it, but that would bind the NodeSpec to the TypeSpec
+    //
+    // Having the nodeLink unique makes totally sense, as it's a one
+    // to many linking. Ideally the keys in this map must be keys in
+    // the nodeSpecMap, and since it's a map, keys are unique.
+    //
+    // For a ForeignKey-constraint it's only important if we e.g. would
+    // want to delete the key in here, when the node doesn't exist anymore.
+    // However, if the link persists a Node is not in the NodeSpec, despite
+    // being linked here, the Node never gets initialized and hence never.
+    // Styled, so I don't see a problem if there are dead links. It can
+    // be marked in the UI creating a TODO-like item: either create a
+    // NodeSpec, change the link, or delete the link. This means, we can
+    // replace the NodeSpec but keep the mapping and even go back without
+    // loss of information.
+    //
+    // Similarly the typeSpecLink (value) it can be a string actually,
+    // as when the linked TypeSpec disappers, we need to get a visual hint,
+    // that there's a broken link, but we don't need to delete the entry.
+    // If a node is rendered with no typeSpec, we'll mark it regardless.
+    // if it has a broken link we just add that information.
+    // the Style-Links interface in TypeSpec propertues seems very similar,
+    // it has  options for explicit NULL, custom and then for all existing
+    // style Patches
+    //    UIStylePatchesLinksMap with LinksMapKeyChangeSelect
+    //
+    // OK, so the good news is, that UIStylePatchesLinksMap exists and
+    // does pretty much what we need. The bad news is that it is very
+    // complex and deep and it will be some work to make it fit here.
+    //
+    // In that interface, the keys can be chosen freely. However, in
+    // this UI the keys should be selectable from the NodeSpec, so, that's
+    // a huge difference:
+    // Link a [Select TypeSpec or NULL/Custom] as [Select NodeSpec or Custom]
+    // The "Select NodeSpec" is not in the UIStylePatchesLinksMap.
+    //
+    // I need to look up the "relative" linking of TypeSpec as well.
+    // i.e. a child NodeSpec would be relative to it's parent Node TypeSpec
+    // when it would define ./t1 so the parent would be whatever and the
+    // child then would be ./t1 of that parent type spec. We do not really
+    // know that NodeSpec parent-child relation in this mapping, and in
+    // the NodeSpec I believe we could have different answers to which
+    // node would be a parent of which child, e.g. a NodeSpec can have
+    // multiple potential parent NodeSpecs (including itself). So this
+    // could only be answered finally within the document structure.
+    //
+    // Still, the possibility to have relative paths should create great
+    // flexibility. The question is, if we can handle this and how we
+    // input it. I.e. using the custom feature could be an option. We
+    // could select an absolute path to a typeSpec, change to custom and
+    // then make it relative from there.
+    // Eventually, to make this a good feature from a UI perspective:
+    //  1. It needs to become visible, as a relative path behind the custom
+    //     setting, it's totally hidden. It could be documentation within
+    //     the UI, at least, or some tooling, which is not initially required
+    //     though. It's more important that the feature is discoverable/
+    //     not a secret than that it has UI/tooling support.
+    //  2. Paths need to get a normalization: "./2/children/3/children/4",
+    //     should become "./2/3/4" or "/2/3/4" as the "children" particles
+    //     don't add to the actual information.
+    //  3. Keys of the typeSpecs must become editable, so we can add
+    //     meaning to the typeSpec structure/layout and so we can create
+    //     relative paths that work across typeSpecs. E.g.:
+    //           /en_US/quote/paragraph
+    //           /de_DE/quote/paragraph
+    //     within a en_US container
+    //           ./quote/paragraph
+    //    could easily be changed to a "de_DE" root by changing the parent
+    //    container.
+    // One more consideration/advanced idea. Cross-referencing of TypeSpecs
+    // is not yet supported, but a thing I think about. so we can have
+    // a headline hierarchy defined once and use it within differen
+    // (e.g. language) roots. Maybe, for this to make it work we want to
+    // introduce typeSpec layers that make it fit, but are not intended to
+    // be used as block definitions themselves. So they could be marked as
+    // "shim" typeSpec. This would exclude them from normalized paths, when
+    // resolving relative path parts like (../). It would not prevent those
+    // shims to be actually used with an absolute path though, as well as
+    // moving down a tree, they would require a pathPart, so maybe this
+    // concept needs more consideration. If we can't have them as shims,
+    // maybe we need to have a concept of "wraps", that don't introduce
+    // new path-parts.
+    //
+    // Level-1 will be absolute path mapping.
+    // Level-2 will allow relative path mapping.
+    // 1. Keep a comment around: can be level 2
+    // 2. Normalize Paths: not the most important part, can be level 3, after intial implementation
+    // 3. explicit key names: should be level 2, as relative paths don't
+    //    make much sense, if we can't give meaningful, explicit names.
+    //
+    // There could be some validation of the value strings in order to make
+    // it less likely that we don't link to an actual typeSpec, but in
+    // general, the not-found case is plannned into it.
+    // For the keys here as well, these are the same keys as in
+  , NodeSpecToTypeSpecMapModel = _AbstractOrderedMapModel.createClass('NodeSpecToTypeSpecMapModel', StringModel)
+
+    // NOTE: I'm entirely not sure if we need this as a model, as the
+    // actual Schema will be created with the original type. So far, this
+    // is the home of `nodes` and it may keep more information that will
+    // go into prosemirror, it may also keep information that is not
+    // directly in the pm Schema, but required to decide how it is created.
+  , ProseMirrorSchemaModel = _AbstractStructModel.createClass(
+        // https://prosemirror.net/docs/ref/#model.Schema
+        'ProseMirrorSchemaModel'
+        // An object mapping the schema's node names to node type objects.
+      , ['nodes', NodeSpecMapModel]
+      , ['marks', MarkSpecMapModel]
+        // A map from mark names to mark type objects.
+        // , ['marks', ...] we might likeley create these marks from other means
+        //
+        // The linebreak replacement node defined in this schema, if any.
+        // , ['linebreakReplacement', NodeType]
+        //
+        // An object for storing whatever values modules may want to compute
+        // and cache per schema. (If you want to store something in it, try
+        // to use property names unlikely to clash.)
+        // , ['cached', ]
+    )
+
+
+   // There's no better documentation for the values of attributes than
+   // the following:  https://prosemirror.net/docs/guide/#schema.attributes
+   //   > Attribute sets are represented as plain objects with a predefined
+   //   > (per node or mark) set of properties holding any JSON-serializeable
+   //   > values. To specify what attributes it allows, use the optional attrs
+   //   > field in a node or mark spec
+   // https://github.com/ProseMirror/prosemirror-model/blob/master/src/schema.ts
+   // We find:
+   //   > // An object holding the attributes of a node.
+   //   > export type Attrs = {readonly [attr: string]: any}
+   // hence, the keys are strings and the values are `any` where the guide
+   // says "JSON-serializeable".
+  , JSONTypeModel = _AbstractEnumModel.createClass(
+          'JSONTypeModel'
+        , ['object', 'array','string', 'number', 'true', 'false', 'null']
+        , 'null'
+    )
+  , JSONModel = _AbstractStructModel.createClass(
+        'JSONModel'
+      , ['type', JSONTypeModel]
+      , ['string', StringOrEmptyModel]
+      , ['number', NumberOrEmptyModel]
+      , ['object', _AbstractStructModel.WITH_SELF_REFERENCE,
+            JSONModel=>_AbstractOrderedMapModel.createClass(
+                'JSONMapModel', JSONModel,
+                {ordering: _AbstractOrderedMapModel.ORDER.KEYS_ALPHA}
+            )
+        ]
+      , ['array', _AbstractStructModel.WITH_SELF_REFERENCE,
+            JSONModel=>_AbstractListModel.createClass(
+                'JSONListModel', JSONModel
+            )
+        ]
+      , CoherenceFunction.create(
+            ['type', 'string', 'number', 'object', 'array']
+          , function checkValues({type, ...data}) {
+                if(type.value === 'string') {
+                    if(data.string.isEmpty)
+                        data.string.value = '';
+                }
+                else if(type.value === 'number') {
+                    if(data.number.isEmpty)
+                        data.number.value = 0;
+                }
+                // clean up
+                for(const [typeKey, item] of Object.entries(data)){
+                    if(type.value === typeKey)
+                        continue;
+                    if(typeKey === 'string' || typeKey === 'number')
+                        item.clear();
+                    else if(typeKey === 'object')
+                        item.arraySplice(0, Infinity);
+                    else if(typeKey === 'array')
+                        item.splice(0, Infinity)
+                    else
+                        throw new Error(`NOT IMPLEMENTED don't know how to empty ${typeKey}: ${item}`);
+                }
+            }
+        )
+    )
+  , AttrsMapModel = _AbstractOrderedMapModel.createClass(
+        'AttrsMapModel'
+      , JSONModel
+      , { validateKeyFn: validateAttributeSpecName }
+    )
+    // https://prosemirror.net/docs/ref/#model.Mark
+    // A mark is a piece of information that can be attached to a node,
+    // such as it being emphasized, in code font, or a link. It has a type
+    // and optionally a set of attributes that provide further information
+    // (such as the target of the link). Marks are created through a Schema,
+    // which controls which types exist and which attributes they have.
+  , MarkModel = _AbstractStructModel.createClass(
+        'MarkModel'
+        // The type of this mark.
+        // see NOTE about typeKey in NodeModel, it also applies here.
+      , ['typeKey', StringModel]
+        // The attributes associated with this mark.
+      , ['attrs', AttrsMapModel]
+    )
+  , MarksListModel = _AbstractListModel.createClass('MarksListModel', MarkModel)
+  , NodeModel = _AbstractStructModel.createClass(
+        'NodeModel'
+        // The type of node that this is.
+        // From https://prosemirror.net/docs/guide/
+        //     > Each node is represented by an instance of the Node class. It
+        //     > is tagged with a type, which knows the node's name, the attributes
+        //     > that are valid for it, and so on. Node types (and mark types)
+        //     > are created once per schema, and know which schema they are part of.
+        // NOTE: I implement this as a reference into into the NodeSpecMapModel
+        // so we could have the key name handy, and the resolved type
+        // or null as well. I don't see so far how the distinction
+        // NodeType <-> NodeSpec and the initialization of it would be
+        // helping in here. We'll know which schema we are part of because
+        // it will be linked into the node...
+        // parent must provide proseMirrorNodeSpecMap:NodeSpecMapModel
+        // FIXME/TODO: this could be a ForeignKey, we could then get
+        // type as a ValueLink to read directly from here. However,
+        // Metamodel thinks to detect a circular dependency, which might
+        // be fixable or was caused by improper usage. Eventually,
+        // we have to handle missing links gracefully in any case and
+        // without losing the key-name, thus, a foreign key constraint
+        // is also more complicated than just a string.
+        // , ['nodeSpecMap', new InternalizedDependency('proseMirrorNodeSpecMap', NodeSpecMapModel)]
+        // , ['typeKey', new ForeignKey('nodeSpecMap', ForeignKey.ALLOW_NULL, ForeignKey.NO_ACTION)]
+        // , ['type', new ValueLink('typeKey')]
+      , ['typeKey', StringModel]
+        // An object mapping attribute names to values. The kind of attributes
+        // allowed and required are determined by the node type.
+      , ['attrs', AttrsMapModel]
+        // The marks (things like whether it is emphasized or part of a link)
+        // applied to this node.
+      , ['marks', MarksListModel]
+        // For text nodes, this contains the node's text content.
+      , ['text', StringOrEmptyModel]
+        // Fragment
+        // => List of of NodeModel (we want to use the keys as paths)
+        // https://prosemirror.net/docs/ref/#model.Fragment
+        //      > A fragment represents a node's collection of child nodes.
+        //      > Like nodes, fragments are persistent data structures,
+        //      > and you should not mutate them or their content. Rather,
+        //      > you create new instances whenever needed. The API tries to
+        //      > make this easy.
+        // NOTE: the prosemirror docs describe more api than we add to the
+        // class, we may just implement similar functions.
+      , ['content', _AbstractStructModel.WITH_SELF_REFERENCE, NodeModel=>_AbstractListModel.createClass('FragmentModel', NodeModel)]
+        // NOTE: Skipping 'children' the difference between 'content' and
+        // 'children' is not  relevant for this case. We even implement
+        // FragmentModel as a _AbstractListModel of NodeModel which is as
+        // equivalent to this type definition of "Node[]" as it gets. I
+        // think the ProseMirror FragmentModel is just a more powerful
+        // abstraction to Node[], with more API than a simple list, and this
+        // children: Node[] can cheaply be implemented as a reference to
+        // children = node.content.content. I.e. if our FragmentModel would
+        // become a struct, we could create a Link to it's children here.
+        // A container holding the node's children.
+        // children: readonly Node[]
     )
     //  We can't create the self-reference directly
     //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
@@ -238,18 +697,23 @@ const {
         // for the actual data
       , ['stylePatchesSource', StylePatchesMapModel]
       , ['editingStylePatch', PathModelOrEmpty]
+      , ['proseMirrorSchema', ProseMirrorSchemaModel]
+      , ['editingNodeSpecPath', PathModelOrEmpty]
+      , ['nodeSpecToTypeSpec', NodeSpecToTypeSpecMapModel]
         // the root of all typeSpecs
-      , ['document', DocumentModel]
+      , ['document', NodeModel]
       , CoherenceFunction.create(
-            ['document', 'typeSpec', 'stylePatchesSource']
-          , function initTypeSpec({typeSpec, document, stylePatchesSource}) {
+            ['document', 'typeSpec', 'stylePatchesSource', 'proseMirrorSchema', 'nodeSpecToTypeSpec']
+          , function initTypeSpec({typeSpec, document, stylePatchesSource, proseMirrorSchema, nodeSpecToTypeSpec}) {
                 // if typeSpec and document are empty
-                if(document.get('nodes').size === 0 && typeSpec.get('children').size === 0
+                if(document.get('content').size === 0 && typeSpec.get('children').size === 0
                         && stylePatchesSource.size === 0) {
                     for(const [Model, target, data] of [
-                                [DocumentModel, document, DEFAULT_RAMP.document]
-                              , [TypeSpecModel, typeSpec, DEFAULT_RAMP.typeSpec]
-                              , [StylePatchesMapModel, stylePatchesSource, DEFAULT_RAMP.stylePatchesSource]
+                                [NodeModel, document, DEFAULT_STATE.document]
+                              , [TypeSpecModel, typeSpec, DEFAULT_STATE.typeSpec]
+                              , [StylePatchesMapModel, stylePatchesSource, DEFAULT_STATE.stylePatchesSource]
+                              , [ProseMirrorSchemaModel, proseMirrorSchema, DEFAULT_STATE.proseMirrorSchema]
+                              , [NodeSpecToTypeSpecMapModel, nodeSpecToTypeSpec, DEFAULT_STATE.nodeSpecToTypeSpec]
                             ]) {
                         const serializeOptions = Object.assign({}, SERIALIZE_OPTIONS, {format: SERIALIZE_FORMAT_OBJECT})
                       , newItem = deserializeSync(Model, target.dependencies, data, serializeOptions)
@@ -262,6 +726,63 @@ const {
         )
     )
   ;
+
+function fromMetaModelJSON(value) {
+    const type = value.get('type').value;
+    if(type === 'true')
+        return true;
+    else if(type === 'false')
+        return false;
+    else if (type === 'null')
+        return null
+    else if(type === 'string' || type === 'number')
+        return value.get(type).value;
+    else if(type === 'array')
+        return Array.from(value.get(type).value).map(fromMetaModelJSON);
+    else if(type === 'object')
+        return Object.fromEntries(
+            Array.from(value.get(type))
+                 .map(([key, value])=>[key, fromMetaModelJSON(value)]));
+    else
+        throw new Error(`NOT IMPLEMENTED don't know how to handle type "${type}"`);
+}
+
+function toMetaModelJSON(value, dependencies={}) {
+    const draft = JSONModel.createPrimalDraft(dependencies)
+      , type = draft.get('type')
+      , jsType = typeof value;
+      ;
+    if(value === true)
+        type.value = 'true';
+    else if(value === false)
+        type.value = 'false';
+    else if(value === null)
+        type.value = 'null';
+    else if(jsType === 'string' || jsType === 'number') {
+        type.value = jsType;
+        draft.get(jsType).value = value;
+    }
+    else if(jsType === 'object' && Array.isArray(value)) {
+         type.value = 'array';
+         draft.get('array').push(...value.map(val=>toMetaModelJSON(val, dependencies)));
+    }
+    else if(jsType === 'object') {
+        type.value = 'object';
+        draft.get('object').push(...Object.entries(value).map(([k,val])=>[k, toMetaModelJSON(val, dependencies)]));
+    }
+    else
+        throw new Error(`NOT IMPLEMENTED don't know how to handle value ${value.toString()}:${jsType}`);
+    return draft.metamorphose();
+}
+// Quick test of the above:
+// console.log(fromMetaModelJSON(toMetaModelJSON({
+//     a: [1,2,3,{b:4,c:5}],
+//     bool: true,
+//     bool2: false,
+//     num: 123.345,
+//     null: null,
+//     obj: {x: [1,2,true, false, null, {y:'YYY'}]}
+// }, {})));
 
 function _uniqueKey(keys) {
     const keysSet = new Set(keys)
@@ -782,33 +1303,6 @@ class TypeSpecTreeEditor extends _BaseTreeEditor{
     }
 }
 
-class DocumentNodeTreeEditor extends _BaseTreeEditor {
-
-    _isContainerItem(item) {
-        //return getActorTreeNodeType(actor) === getActorTreeNodeType.CONTAINER_NODE_TYPE;
-        return item.get('instance').wrapped.has('nodes');
-    }
-
-    _getContainerRelPathToChildren(){
-        // return Path.fromParts('instance', 'activeActors');
-        return Path.fromParts('instance', 'nodes');
-    }
-
-    _getItemLabel(item) {
-        const typeModel = item.get('documentNodeModel')
-           , typeLabel = typeModel.get('label').value
-           ;
-        return typeLabel;
-    }
-
-    _createItem(typeKey, dependencies) {
-        // TextRun or Element
-        // for both kinds we should create some initial content so that
-        // we can see them in the document.
-        return createDocumentNode(typeKey, dependencies);
-    }
-}
-
 class UIFontLabel extends DynamicTag {
     constructor(widgetBus, ppsRecord, tag, attr, formatter=identity, initialContent='(initializing)') {
         super(widgetBus, tag, attr, formatter, initialContent);
@@ -839,9 +1333,9 @@ const _excludesTypeSpecPPSMap = new Set([
   , 'label' // => This has a control for label.
   , 'autoOPSZ' // => UIManualAxesLocations has a control for autoOPSZ.
 ]);
-function getTypeSpecPPSMap(parentPPSRecord, TypeSpecType) {
+function getTypeSpecPPSMap(parentPPSRecord, Model) {
     const entries = [];
-    for(const [modelFieldName, modelFieldType] of TypeSpecType.fields.entries()) {
+    for(const [modelFieldName, modelFieldType] of Model.fields.entries()) {
         let prefix = GENERIC
           , fullKey = null
           , registryKey = null
@@ -876,7 +1370,57 @@ function getTypeSpecPPSMap(parentPPSRecord, TypeSpecType) {
     }
     return Object.freeze(new ProcessedPropertiesSystemMap(entries));
 }
+
+/**
+ * Not how most of the Type -> prefix mappings don't apply to
+ * NodeSpec. This method could be much simpler, however, for a general
+ * solution, it doesn't hurt to have these cases covered.
+ */
+const _excludesNodeSpecPPSMap = new Set([
+     //  an AttributeSpecMapModel: there's yet no UI and no concept to hand edit this
+    'attrs'
+]);
+function getNodeSpecPPSMap(parentPPSRecord, Model) {
+    const entries = [];
+    for(const [modelFieldName, modelFieldType] of Model.fields.entries()) {
+        let prefix = GENERIC
+          , fullKey = null
+          , registryKey = null
+          ;
+        // This case is not used, it's a stub, left over from another
+        // similar function and put into the parentPPSRecord condition
+        // which is currently called nowhere. But the goal is to find
+        // a general form for this kind of function.
+        if(parentPPSRecord)
+            fullKey = `${parentPPSRecord.propertyRoot}${modelFieldName}`;
+        if(_excludesNodeSpecPPSMap.has(modelFieldName))
+            prefix = null;
+        else if(modelFieldType === ColorModel)
+            prefix = COLOR;
+        else if (modelFieldType === LeadingAlgorithmModel)
+            prefix = LEADING;
+        else if(modelFieldName === 'axesLocations')
+            // we should use a symbol here!
+            prefix = 'axesLocations/';
+        else if(modelFieldName === 'stylePatches')
+            prefix = 'stylePatches/';
+
+        if(prefix === null)
+            // don't make a UI for this
+            continue;
+
+        const entry = [
+            modelFieldName
+          , ProcessedPropertiesSystemMap.createSimpleRecord(prefix, modelFieldName,  fullKey, registryKey)
+        ];
+        entries.push(entry);
+    }
+    return Object.freeze(new ProcessedPropertiesSystemMap(entries));
+}
+
 const TYPESPEC_PPS_MAP = getTypeSpecPPSMap(null, TypeSpecModel)
+  , NODESPEC_PPS_MAP = getNodeSpecPPSMap(null, NodeSpecModel)
+  ;
 
 // This is partially responsible to organize the inherited values as
 // is is responsible to organize the default/fallback values.
@@ -982,6 +1526,14 @@ function typeSpecGetDefaults(getLiveProperties, ppsRecord, fieldName, /*BaseMode
     }
 }
 
+/**
+ * Here's a good lesson, compared to typeSpecGetDefaults this is trivial,
+ * because we don't have liveProperties
+ */
+function nodeSpecGetDefaults(ppsRecord, fieldName, /*BaseModelType.*/modelDefaultValue=_NOTDEF) {
+    const {fullKey} = ppsRecord;
+    return _getFallback(fullKey, modelDefaultValue);
+}
 
 class TypeSpecPropertiesManager extends _CommonContainerComponent {
     // jshint ignore:start
@@ -1193,6 +1745,7 @@ class TypeSpecPropertiesManager extends _CommonContainerComponent {
           , pathOrEmpty = changedMap.has('typeSpecPath')
                 ? changedMap.get('typeSpecPath')
                 : this.getEntry('typeSpecPath')
+
            , rootPath = Path.fromString(this.widgetBus.getExternalName('rootTypeSpec'))
              // If pathOrEmpty is empty or if the currently selected
              // (via typeSpecPath) TypeSpec got deleted and it doesn't exist
@@ -1454,187 +2007,21 @@ class UIStylePatch extends _BaseContainerComponent {
     }
 }
 
-class DocumentNodeProperties extends _BaseContainerComponent {
-    constructor(widgetBus, zones/*, originTypeSpecPath*/) {
-        super(widgetBus, zones);
-        // this._originTypeSpecPath = originTypeSpecPath;
-        this._currentTypeKey = null;
-    }
-
-    _createWrappersForType(typeKey) {
-        const widgets = []
-          , settings = {
-               // document/nodes/{key}
-               rootPath: this.widgetBus.rootPath.append('instance')
-             , zone: 'local'
-            };
-        let Constructor
-          , dependencyMappings
-          , args
-          ;
-        if(typeKey === 'TextRun') {
-            // !! NEXT: select style!
-            widgets.push([
-                {...settings}
-              , [
-                    ['styleLink', 'value']
-                ]
-              , UILineOfTextOrEmptyInput
-                // getDefault:
-                //      When we toggle from Empty, what is the value?
-                //      Maybe we'll use rather a different interface then,
-                //      one that selects from the available options.
-              , ()=>''
-                // requireUpdateDefaults=(changedMap)=>{...}:
-                //      updates always  ...
-                //      Not sure if this requires a different handling.
-              , ()=>true
-              , 'Apply a Style'
-            ]);
-
-            dependencyMappings = [
-                ['text', 'value']
-            ];
-            Constructor = UILineOfTextInput;
-            args = ['Text'];
-
-        }
-        else if(typeKey === 'Element')
-            return [];
-        /* NOTE the following code was short-cutted by the case before
-         * which was written as
-         * else if(true) // === 'Element'
-         *      return [];
-         * I'm leaving it in here for a possible future review!
-        else if(typeKey === 'SimpleStylePatch') {
-            // need a handling for the font selection!
-            widgets.push([
-                {...settings}
-              , [
-                    ['/availableFonts', 'options']
-                  , 'activeFontKey'
-                ]
-              , FontSelect
-              , true
-            ]);
-
-            dependencyMappings = [];
-            Constructor = UITypeDrivenContainer;
-
-            const getLiveProperties = ()=>{
-                return null;
-                // NOTE: I don't think this case happens anymore, as
-                // typeSpecPropertiesKey no longer tries to reference
-                // the parent.
-            //    return typeSpecPropertiesKey === 'typeSpecProperties@'
-            //        ? null
-            //        : this.getEntry(typeSpecPropertiesKey)
-            //        ;
-            }
-            , getDefaults = typeSpecGetDefaults.bind(null, getLiveProperties)
-            ;
-
-            // AxesLocationsModel seems to require 'typeSpecProperties@'
-            // which causes:
-            //      Uncaught (in promise) Error: KEY ERROR not found identifier
-            //      "typeSpecProperties@/activeState/stylePatchesSource/bold/instance"
-            //      in [ProtocolHandler typeSpecProperties@]:
-            //      typeSpecProperties@/activeState/typeSpec.
-            //
-            // We could filter the TYPESPEC_PPS_MAP and try to avoid
-            // the error by not using AxesLocationsModel.
-            // console.log(`${this} TYPESPEC_PPS_MAP`, TYPESPEC_PPS_MAP);
-
-
-            // console.log(`${this} ... ${this.widgetBus.rootPath.append('instance')}`,
-            //         this.widgetBus.getEntry(this.widgetBus.rootPath.append('instance')));
-            // keys are:
-            //    "baseFontSize", "relativeFontSize", "textColor",
-            //    "backgroundColor", "autoOPSZ", "axesLocations",
-            //    "activeFontKey", "font", "installedFonts"
-
-
-            const removeItems = new Set([
-                    // 'baseFontSize' // Maybe only use in paragraph context
-                ])
-              , PPS_MAP = new ProcessedPropertiesSystemMap(
-                    Array.from(TYPESPEC_PPS_MAP.entries())
-                        .filter(([key])=>!removeItems.has(key))
-                )
-              ;
-            // keys is this are:
-            //    "columnWidth", "leading", "baseFontSize", "relativeFontSize",
-            //     "textColor", "backgroundColor", "stylePatches"
-            // minus: "axesLocations" of course
-            //
-            // The main diff to the model are:
-            //      "columnWidth", "leading"
-            // The following are expected to be missing as well:
-            //      "activeFontKey", "font", "installedFonts"
-
-            console.log(`${this} PPS_MAP`, PPS_MAP);
-
-            args = [
-                this._zones
-              , { // injectable
-                    getDefaults
-                    // Using updateDefaultsDependencies (with typeSpecProperties@) in here causes an error:
-                    //          via VideoproofController constructor initial resources: Error:
-                    //          KEY ERROR not found identifier "typeSpecProperties@/activeState/typeSpec/textColor"
-                    //          in [ProtocolHandler typeSpecProperties@]: typeSpecProperties@/activeState/typeSpec.
-                    // Maybe this key is flawed in this context?
-                  , updateDefaultsDependencies: []//updateDefaultsDependencies
-                  , genericTypeToUIElement
-                  , requireUpdateDefaults: ()=>true //
-                }
-                // FIXME: the type of the root element should be fixed
-                // to TypeSpec as well! (what does this mean?)
-              , PPS_MAP
-              //, 'Hello UITypeDrivenContainer'// label
-            ]
-        }
-        else if(typeKey === 'CompositeStylePatch') {
-            dependencyMappings = [
-                ['./styles', 'collection']
-              , [this.widgetBus.getExternalName('sourceMap'), 'sourceMap']
-            ];
-            Constructor = UICompositeStylePatch;
-            args = [this._zones]
-        }
-        */
-        else
-            throw new Error(`KEY ERROR unknown typeKey ${typeKey}.`);
-        widgets.push([settings, dependencyMappings, Constructor, ...args]);
-        return widgets.map(widget=>this._initWrapper(this._childrenWidgetBus, ...widget));
-    }
-
-    _provisionWidgets(/* compareResult */) {
-        const node = this.getEntry('.')
-          , typeKey = node.get('documentNodeTypeKey').value
-          ;
-        if(this._currentTypeKey === typeKey)
-            return new Set();
-        this._currentTypeKey = typeKey;
-        const newWrappers = this._createWrappersForType(typeKey)
-          , deleted = this._widgets.splice(0, Infinity, ...newWrappers)
-          ;
-        for(const wrapper of deleted)
-            this._destroyWidget(wrapper);
-        return super._provisionWidgets();
-    }
-}
-
-
 /**
- * FIXME: this is also kind of a repeated pattern TypeSpecPropertiesManager looks similar.
+ * FIXME: this is also kind of a repeated pattern TypeSpecPropertiesManager
+ * looks similar, however the details are a bit different because of the
+ * different addressing in TypeSpec.
+ * This version has diverged from the _BaseByPathPropertiesManager version
+ * in type-spec-ramp. It makes typeKeyName optional, so, in that case
+ * the type is disregarded. And the name became more generic.
  */
-class _BaseByPathPropertiesManager extends _CommonContainerComponent {
+class _BaseByPathContainerComponent extends _CommonContainerComponent {
     initialUpdate = _BaseDynamicCollectionContainerComponent.prototype.initialUpdate;
     constructor(widgetBus, _zones
                 , className
                 , pathEntryName
                 , childrenMapEntryName
-                , typeKeyName
+                , typeKeyName=null
             ) {
         const localZoneElement = widgetBus.domTool.createElement('div', {'class': className})
           , zones = new Map([..._zones, ['local', localZoneElement]])
@@ -1676,7 +2063,9 @@ class _BaseByPathPropertiesManager extends _CommonContainerComponent {
                   // for long paths currently.
                 ? getEntry(childrenMap, pathOrEmpty.value, null)
                 : null
-           , typeKey = item === null ? null : item.get(this._typeKeyName).value
+           , typeKey = item === null || this._typeKeyName === null
+                    ? null
+                    : item.get(this._typeKeyName).value
            , typeChanged = this._currentTypeKey !== typeKey
            , rebuild = changedMap.has(this._pathEntryName) || typeChanged
            ;
@@ -1742,13 +2131,13 @@ class _BaseByPathPropertiesManager extends _CommonContainerComponent {
     }
 }
 
-class StylePatchPropertiesManager extends _BaseByPathPropertiesManager {
+class StylePatchPropertiesManager extends _BaseByPathContainerComponent {
     constructor(widgetBus, _zones) {
         super(widgetBus, _zones
             , 'ui_style_patch-properties_manager' // className
             , 'stylePatchPath' // pathEntryName
             , 'childrenOrderedMap' // childrenMapEntryName
-            , 'stylePatchTypeKey' // typeKeyName
+            , 'stylePatchTypeKey' // typeKeyName=null
         );
     }
 
@@ -1804,13 +2193,13 @@ class StylePatchPropertiesManager extends _BaseByPathPropertiesManager {
     }
 }
 
-class DocumentNodePropertiesManager extends _BaseByPathPropertiesManager {
+class NodeSpecPropertiesManager extends _BaseByPathContainerComponent {
     constructor(widgetBus, _zones) {
         super(widgetBus, _zones
-            , 'ui_document_node-properties_manager' // className
-            , 'editingNodePath' // pathEntryName
+            , 'ui_node_spec-properties_manager' // className
+            , 'nodeSpecPath' // pathEntryName
             , 'childrenOrderedMap' // childrenMapEntryName
-            , 'documentNodeTypeKey' // typeKeyName
+            , null // typeKeyName=null
         );
     }
 
@@ -1821,23 +2210,15 @@ class DocumentNodePropertiesManager extends _BaseByPathPropertiesManager {
               , StaticTag
               , 'span'
               , {}
-              , '(Select a Document-Node)'
+              , '(Select a NodeSpec)'
             ]
         ];
         // this._initWrapper(this._childrenWidgetBus, settings, dependencyMappings, Constructor, ...args);
         return widgets.map(widgetArgs=>this._initWrapper(this._childrenWidgetBus, ...widgetArgs));
     }
 
-    _createItemWrappers(editingNodePath, item) {
-        const TypeClass = item.constructor;
-        if(TypeClass !== DocumentNodeModel)
-            // NOTE: This check is not strictly required, it's
-            // a sanity check to confirm.
-            throw new Error(`TYPE ERROR expected DocumentNodeModel at path ${editingNodePath} but instead got ${TypeClass.name}.`);
-
-        const typeKey = item.get(this._typeKeyName).value
-          , typeModel = item.get('documentNodeModel')
-          , typeLabel = typeModel.get('label').value
+    _createItemWrappers(path) {
+        const key = path.parts.at(-1)
           , widgets = [
             [
                 {
@@ -1847,23 +2228,37 @@ class DocumentNodePropertiesManager extends _BaseByPathPropertiesManager {
               , StaticTag
               , 'h3'
               , {}
-              , `${typeKey} = ${typeLabel}`
-            ]
-          , [
-                {
-                    rootPath: editingNodePath
-                  , zone: 'local'
-                }
-              , []
-              , DocumentNodeProperties
-              , this._zones
-              , editingNodePath
+              , `NodeSpec: ${key}`
             ]
         ];
-        // this._initWrapper(this._childrenWidgetBus, settings, dependencyMappings, Constructor, ...args);
+
+        const injectable = {
+                getDefaults: nodeSpecGetDefaults
+                // Using updateDefaultsDependencies (with typeSpecProperties@) in here causes an error:
+                //          via VideoproofController constructor initial resources: Error:
+                //          KEY ERROR not found identifier "typeSpecProperties@/activeState/typeSpec/textColor"
+                //          in [ProtocolHandler typeSpecProperties@]: typeSpecProperties@/activeState/typeSpec.
+                // Maybe this key is flawed in this context?
+              , updateDefaultsDependencies: []//updateDefaultsDependencies
+              , genericTypeToUIElement // ??
+              , requireUpdateDefaults: ()=>true //
+            }
+          ;
+        widgets.push([
+            {
+                    rootPath: path
+                  , zone: 'local'
+            }
+          , []
+          , UITypeDrivenContainer
+          , this._zones
+          , injectable
+          , NODESPEC_PPS_MAP
+        ]);
         return widgets.map(widgetArgs=>this._initWrapper(this._childrenWidgetBus, ...widgetArgs));
     }
 }
+
 
 class SimpleSelect extends _BaseComponent {
     constructor(widgetBus, label, items, changeHandler=null) {
@@ -1877,7 +2272,7 @@ class SimpleSelect extends _BaseComponent {
 }
 
 
-class StylePatcheButton extends DynamicTag {
+class MapSelectButton extends DynamicTag {
     constructor(widgetBus, tag, attr, eventListeners,...restArgs){
         super(widgetBus, tag, attr, ...restArgs);
         for(const eventListener of eventListeners)
@@ -1887,7 +2282,7 @@ class StylePatcheButton extends DynamicTag {
     _setActive(pathEntry) {
         let shouldBeActive = false;
         if(!pathEntry.isEmpty) {
-            const myKey = this.widgetBus.rootPath.parts.at(-2) // .../{key}/instance
+            const myKey = this.widgetBus.rootPath.parts.at(-1) // .../{key}
               , path = pathEntry.value
               , selectedKey = path.parts.at(-1) // ./key
               ;
@@ -1898,8 +2293,8 @@ class StylePatcheButton extends DynamicTag {
 
     update(changedMap) {
         super.update(changedMap);
-        if(changedMap.has('stylePatchPath')) {
-            const pathEntry = changedMap.get('stylePatchPath');
+        if(changedMap.has('activePath')) {
+            const pathEntry = changedMap.get('activePath');
             this._setActive(pathEntry);
         }
 
@@ -1914,7 +2309,7 @@ class UIStylePatchesMap extends _UIBaseMap {
     static BASE_CLASSES = [...super.BASE_CLASSES, super.ROOT_CLASS]
     static TYPE_CLASS_PART = null;
     static VISUAL_ORDER_STRATEGY = _UIBaseMap.VISUAL_ORDER_STRATEGY_NATURAL;
-    static KEY_ADD_BUTTON_LABEL = 'Add style patch';
+    static KEY_ADD_BUTTON_LABEL = 'add style patch';
     static KEY_DATA_TRANSFER_TYPE = DATA_TRANSFER_TYPES.TYPE_SPEC_STYLE_PATCH_PATH;
 
     _validateKeyString(key) {
@@ -1946,18 +2341,18 @@ class UIStylePatchesMap extends _UIBaseMap {
     _createWrapperValue(keyId, key) {
         const childWidgetBus = this._childrenWidgetBus
           , settings = {
-                relativeRootPath: Path.fromParts('.', key, 'instance')
+                relativeRootPath: Path.fromParts('.', key)
               , zone: keyId // required to check if widgetWrapper.host === host
             }
           , dependencyMappings = [
-                    ['../stylePatchTypeKey', 'data']
-                  , [this.widgetBus.getExternalName('stylePatchPath'), 'stylePatchPath']
+                    ['./stylePatchTypeKey', 'data']
+                  , [this.widgetBus.getExternalName('stylePatchPath'), 'activePath']
                 ]
              // Should be a really simple item maybe displaying the label
              // Maybe we could edit the label.
              // But rather it is just to select, on click and to display
              // as selected, e.g. bold label
-          , Constructor = StylePatcheButton
+          , Constructor = MapSelectButton
           , args = [
                 // Want this to be a Button.
                 'button', {'class': 'ui_style_patches_map-item-value'}
@@ -2014,6 +2409,78 @@ class UIStylePatchesMap extends _UIBaseMap {
     }
 }
 
+// based on a copy of UIStylePatchesMap
+class UINodeSpecMap extends _UIBaseMap {
+    static ROOT_CLASS = `ui_node_spec_map`
+    static BASE_CLASSES = [...super.BASE_CLASSES, super.ROOT_CLASS]
+    static TYPE_CLASS_PART = null;
+    static VISUAL_ORDER_STRATEGY = _UIBaseMap.VISUAL_ORDER_STRATEGY_NATURAL;
+    static KEY_ADD_BUTTON_LABEL = 'create';
+    static KEY_DATA_TRANSFER_TYPE = DATA_TRANSFER_TYPES.PROSEMIROOR_NODE_SPEC_PATH;
+
+
+    get _initialWidgets() {
+        const wasteBasket = [
+                {zone: 'local'}
+              , [
+                    ['.', 'rootCollection']
+                ]
+              , WasteBasketDropTarget
+              , 'Delete NodeSpec'
+              , ''
+              , [
+                    this.constructor.KEY_DATA_TRANSFER_TYPE
+                ]
+            ];
+        const widgets = super._initialWidgets;
+        widgets.splice(Infinity, 0, wasteBasket);
+        return widgets;
+    }
+
+    // Uses this.MapModel.validateKey i.e. validateNodeSpecName
+
+    // Same pattern as in UIStylePatchesMap, it has the button to select
+    // the item to edit. we need that!
+    _createWrapperValue(keyId, key) {
+        const childWidgetBus = this._childrenWidgetBus
+          , settings = {
+                relativeRootPath: Path.fromParts('.', key)
+              , zone: keyId // required to check if widgetWrapper.host === host
+            }
+          , dependencyMappings = [
+                    // ['../stylePatchTypeKey', 'data']
+                    [this.widgetBus.getExternalName('nodeSpecPath'), 'activePath']
+                ]
+          , Constructor = MapSelectButton
+          , args = [
+                // Want this to be a Button.
+                'button', {'class': 'ui_node_spec_map-item-value'}
+              , [
+                    ['click', (/*event*/)=>this._onClickHandler(key)]
+                ]
+              , identity
+              , 'Edit' // initialContent
+            ]
+          ;
+        return this._initWrapper(childWidgetBus, settings, dependencyMappings, Constructor, ...args);
+    }
+
+    _onClickHandler(key) {
+        this._changeState(()=>{
+            const path = Path.fromParts('.', key)
+              , selected = this.getEntry('nodeSpecPath')
+            ;
+            // this is a toggle
+            if(!selected.isEmpty && selected.value.equals(path))
+                selected.clear();
+            else
+                selected.value = path;
+        });
+    }
+    // _createKeyValue(childrenOrderedMap): not required as super does:
+    // childrenOrderedMap.constructor.Model.createPrimalDraft(childrenOrderedMap.dependencies)
+    // and that is sufficient so far.
+}
 
 /**
  * Note: this kind of replaces DependentValue of Animanion as
@@ -2095,11 +2562,19 @@ export class LocalScopeTypeSpecnion {
         const resolveOrder = topologicalSortKahn(noDepsSet, requirementsMap, dependantsMap)
             // don't modify rawPropertyMap in here!
           , resultMap = new Map(rawPropertyMap)
+          , seen = new Set()
           ;
         for(const propertyName of resolveOrder) {
-            if(!syntheticProperties.has(propertyName))
+            if(!syntheticProperties.has(propertyName) || seen.has(propertyName))
                 // all properties will end up in resolveOrder
                 continue;
+            // NOTE: topologicalSortKahn sometimes has duplicates, after
+            // they got resolved once, it should be fine, resolving them
+            // twice leads to an error. My case was setting 'axislocations/slnt'
+            // on the root TypeSpec. I'm not sure now why it appears multiple
+            // times in resolveOrder, it would be good to see the original
+            // reason for that and eliminate it.
+            seen.add(propertyName);
             const synthProp = resultMap.get(propertyName)
               , args = []
               ;
@@ -3171,8 +3646,9 @@ class UIDocumentTextRun extends _BaseContainerComponent {
             [
                 {}
               , [
-                    'styleLink', 'text'
-                  , [this.widgetBus.getExternalName('typeSpecLink') ,'typeSpecLink']
+                //    'styleLink',
+                'text'
+                  //, [this.widgetBus.getExternalName('typeSpecLink') ,'typeSpecLink']
                 ]
               , GenericUpdater
               , this._updateNode.bind(this)
@@ -3193,30 +3669,31 @@ class UIDocumentTextRun extends _BaseContainerComponent {
         }
     }
 
-    _getStyleLinkProperties() {
-        // => StyleLinkLivePropertiesPath
-        const styleLinkItem = this.getEntry('styleLink');
-        if(styleLinkItem.isEmpty)
-            return null;
-        const styleLink = styleLinkItem.value
-            // this should be the same as in the parent DocumentElement
-            // I wonder if I could pass this down. However, it can change,
-            // and this way we update on change!
-          , typeSpecPath = this._getBestTypeSpecPath()
-          , styleLinkPropertiesId = `styleLinkProperties@${Path.fromParts(typeSpecPath, 'stylePatches', styleLink)}`
-          , protocolHandlerImplementation = this.widgetBus.getProtocolHandlerImplementation('styleLinkProperties@', null)
-          ;
-        if(protocolHandlerImplementation === null)
-            throw new Error(`KEY ERROR ProtocolHandler for identifier "styleLinkProperties@" not found.`);
-        // check if styleLinkPropertiesId exists, otherwise return null
-        if(protocolHandlerImplementation.hasRegistered(styleLinkPropertiesId))
-            return styleLinkPropertiesId;
-        return null;
-    }
+    // _getStyleLinkProperties() {
+    //     // => StyleLinkLivePropertiesPath
+    //     const styleLinkItem = this.getEntry('styleLink');
+    //     if(styleLinkItem.isEmpty)
+    //         return null;
+    //     const styleLink = styleLinkItem.value
+    //         // this should be the same as in the parent DocumentElement
+    //         // I wonder if I could pass this down. However, it can change,
+    //         // and this way we update on change!
+    //       , typeSpecPath = this._getBestTypeSpecPath()
+    //       , styleLinkPropertiesId = `styleLinkProperties@${Path.fromParts(typeSpecPath, 'stylePatches', styleLink)}`
+    //       , protocolHandlerImplementation = this.widgetBus.getProtocolHandlerImplementation('styleLinkProperties@', null)
+    //       ;
+    //     if(protocolHandlerImplementation === null)
+    //         throw new Error(`KEY ERROR ProtocolHandler for identifier "styleLinkProperties@" not found.`);
+    //     // check if styleLinkPropertiesId exists, otherwise return null
+    //     if(protocolHandlerImplementation.hasRegistered(styleLinkPropertiesId))
+    //         return styleLinkPropertiesId;
+    //     return null;
+    // }
 
-    _getBestTypeSpecProperties=UIDocumentElement.prototype._getBestTypeSpecProperties;
+    _getBestTypeSpecPropertiesId=UIDocumentElement.prototype._getBestTypeSpecPropertiesId;
+
     _getBestTypeSpecPath() {
-        const typeSpecPropertiesId = this._getBestTypeSpecProperties()
+        const typeSpecPropertiesId = this._getBestTypeSpecPropertiesId()
           , typeSpecPath = typeSpecPropertiesId.slice(typeSpecPropertiesId.indexOf('@') + 1)
           ;
         return typeSpecPath;
@@ -3271,33 +3748,33 @@ class UIDocumentTextRun extends _BaseContainerComponent {
         return this._initWrapper(this._childrenWidgetBus, settings, dependencyMappings, Constructor, ...args);
     }
 
-    _provisionWidgets(/* compareResult */) {
-        const styleLinkProperties = this._getStyleLinkProperties()
-          , oldId = this._stylerWrapper !== null
-                ? this._widgets.indexOf(this._stylerWrapper)
-                : -1
-          ;
-
-        if(oldId === -1) {
-            // inital
-            this._stylerWrapper = this._createStylerWrapper(styleLinkProperties);
-            if(this._stylerWrapper !== null)
-                this._widgets.splice(0, 0, this._stylerWrapper);
-        }
-        else {
-            const oldWrapper = this._widgets[oldId];
-            if(oldWrapper.dependencyReverseMapping.get('styleLinkProperties@') !== styleLinkProperties) {
-                const newWrapper = this._createStylerWrapper(styleLinkProperties);
-                if(newWrapper === null)
-                    this._widgets.splice(oldId, 1);
-                else
-                    this._widgets.splice(oldId, 1, newWrapper);
-                oldWrapper.destroy();
-                this._stylerWrapper = newWrapper;
-            }
-        }
-        return super._provisionWidgets();
-    }
+    // _provisionWidgets(/* compareResult */) {
+    //     const styleLinkProperties = this._getStyleLinkProperties()
+    //       , oldId = this._stylerWrapper !== null
+    //             ? this._widgets.indexOf(this._stylerWrapper)
+    //             : -1
+    //       ;
+    //
+    //     if(oldId === -1) {
+    //         // inital
+    //         this._stylerWrapper = this._createStylerWrapper(styleLinkProperties);
+    //         if(this._stylerWrapper !== null)
+    //             this._widgets.splice(0, 0, this._stylerWrapper);
+    //     }
+    //     else {
+    //         const oldWrapper = this._widgets[oldId];
+    //         if(oldWrapper.dependencyReverseMapping.get('styleLinkProperties@') !== styleLinkProperties) {
+    //             const newWrapper = this._createStylerWrapper(styleLinkProperties);
+    //             if(newWrapper === null)
+    //                 this._widgets.splice(oldId, 1);
+    //             else
+    //                 this._widgets.splice(oldId, 1, newWrapper);
+    //             oldWrapper.destroy();
+    //             this._stylerWrapper = newWrapper;
+    //         }
+    //     }
+    //     return super._provisionWidgets();
+    // }
 }
 
 export class UIDocumentElementTypeSpecDropTarget extends _BaseDropTarget {
@@ -3474,25 +3951,26 @@ class UIDocumentElement extends _BaseContainerComponent {
 
         super(widgetBus, zones);
         this.node = localContainer;
+        localContainer.addEventListener('click', this._handleClick.bind(this));
         this.nodesElement = localContainer;
         this.widgetBus.insertDocumentNode(this.node);
 
         this._originTypeSpecPath = originTypeSpecPath;
         this._typeSpecStylerWrapper = null;
         const widgets = [
+            // [
+            //     {}
+            //   , [
+            //         'typeSpecLink'
+            //     ]
+            //   , UIDocumentElementTypeSpecDropTarget
+            //   , [DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_PATH]
+            //   , this.node // CAUTION REQUIRES UPDATE IF NODE CHANGES
+            // ]
             [
                 {}
               , [
-                    'typeSpecLink'
-                ]
-              , UIDocumentElementTypeSpecDropTarget
-              , [DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_PATH]
-              , this.node // CAUTION REQUIRES UPDATE IF NODE CHANGES
-            ]
-          , [
-                {}
-              , [
-                    ['nodes', 'collection']
+                    ['./content', 'collection']
                 ]
               , UIDocumentNodes
               , this._zones
@@ -3503,35 +3981,28 @@ class UIDocumentElement extends _BaseContainerComponent {
         this._initWidgets(widgets);
     }
 
-    _getBestTypeSpecProperties() {
-        const currentTypeSpecLink = this.getEntry('typeSpecLink').value
-          , currentTypeSpecPath = Path.fromString(currentTypeSpecLink)
-          , format = path=>`typeSpecProperties@${path}`
+    // Just a transformation of the metamodel document, to
+    // see the synchronization of the prosemirror document in action.
+    _handleClick(/*event*/) {
+        this._changeState(()=>{
+            const parent = this.getEntry(this.widgetBus.rootPath.parent)// a 'content' list
+              , key = this.widgetBus.rootPath.parts.at(-1)
+              , self = parent.get(key)
+            parent.splice(key, 0, self);// insert self, i.e. as a copy.
+        });
+    }
+
+    _getBestTypeSpecPropertiesId() {
+        const typeSpecLink = this.getEntry('typeSpecLink').value
+          , protocolHandlerName = 'typeSpecProperties@'
           , protocolHandlerImplementation = this.widgetBus.getProtocolHandlerImplementation('typeSpecProperties@', null)
           ;
-        if(protocolHandlerImplementation === null)
-            throw new Error(`KEY ERROR ProtocolHandler for identifier "typeSpecProperties@" not found.`);
-
-        // getProtocolHandlerImplementation
-        let testPath = currentTypeSpecPath.parts.length === 0 || currentTypeSpecPath.parts[0] === 'children'
-                  // the initial "children" is part from typeSpecLink
-                ? this._originTypeSpecPath.append(...currentTypeSpecPath)
-                : this._originTypeSpecPath.append('children', ...currentTypeSpecPath)
-                ;
-        while(true) {
-            if(!this._originTypeSpecPath.isRootOf(testPath))
-                // We have gone to far up. This also prevents that
-                // a currentTypeSpecPath could potentially inject '..'
-                // to break out of this._originTypeSpecPath, though,
-                // the latter seems unlikely, as we parse it in here.
-                break;
-            const typeSpecPropertiesId = format(testPath);
-            if(protocolHandlerImplementation.hasRegistered(typeSpecPropertiesId))
-                return typeSpecPropertiesId;
-            // Move towards root and continue; // remove 'children' and `{key}`
-            testPath = testPath.slice(0, -2);
-        }
-        return format(this._originTypeSpecPath);
+        return _getBestTypeSpecPropertiesId(
+            typeSpecLink,
+            protocolHandlerName,
+            protocolHandlerImplementation,
+            this._originTypeSpecPath
+        );
     }
 
     _createTypeSpecStylerWrapper(typeSpecProperties) {
@@ -3546,35 +4017,35 @@ class UIDocumentElement extends _BaseContainerComponent {
          return this._initWrapper(this._childrenWidgetBus, settings, dependencyMappings, Constructor, ...args);
     }
 
-    _provisionWidgets(/* compareResult */) {
-        // if typeSpecLink has changed or if typeSpecProperties@ of id: 'type-spec-styler' does not exist
-        //       get an existing typeSpecProperties@ for the new value
-        //       existing means got back to root. originTypeSpecPath will exist
-        //
-        // if new typeSpecProperties !== old typeSpecProperties
-        //       replace the widget
-        //
-        const typeSpecProperties = this._getBestTypeSpecProperties()
-          , oldId = this._typeSpecStylerWrapper !== null
-                ? this._widgets.indexOf(this._typeSpecStylerWrapper)
-                : -1
-          ;
-        if(oldId === -1) {
-            // inital
-            this._typeSpecStylerWrapper = this._createTypeSpecStylerWrapper(typeSpecProperties);
-            this._widgets.splice(0, 0, this._typeSpecStylerWrapper);
-        }
-        else {
-            const oldWrapper = this._widgets[oldId];
-            if(oldWrapper.dependencyReverseMapping.get('typeSpecProperties@') !== typeSpecProperties) {
-                const newWrapper = this._createTypeSpecStylerWrapper(typeSpecProperties);
-                this._widgets.splice(oldId, 1, newWrapper);
-                oldWrapper.destroy()
-                this._typeSpecStylerWrapper = newWrapper;
-            }
-        }
-        return super._provisionWidgets();
-    }
+    // _provisionWidgets(/* compareResult */) {
+    //     // if typeSpecLink has changed or if typeSpecProperties@ of id: 'type-spec-styler' does not exist
+    //     //       get an existing typeSpecProperties@ for the new value
+    //     //       existing means got back to root. originTypeSpecPath will exist
+    //     //
+    //     // if new typeSpecProperties !== old typeSpecProperties
+    //     //       replace the widget
+    //     //
+    //     const // typeSpecProperties = this._getBestTypeSpecPropertiesId()
+    //       , oldId = this._typeSpecStylerWrapper !== null
+    //             ? this._widgets.indexOf(this._typeSpecStylerWrapper)
+    //             : -1
+    //       ;
+    //     if(oldId === -1) {
+    //         // inital
+    //         this._typeSpecStylerWrapper = this._createTypeSpecStylerWrapper(typeSpecProperties);
+    //         this._widgets.splice(0, 0, this._typeSpecStylerWrapper);
+    //     }
+    //     else {
+    //         const oldWrapper = this._widgets[oldId];
+    //         if(oldWrapper.dependencyReverseMapping.get('typeSpecProperties@') !== typeSpecProperties) {
+    //             const newWrapper = this._createTypeSpecStylerWrapper(typeSpecProperties);
+    //             this._widgets.splice(oldId, 1, newWrapper);
+    //             oldWrapper.destroy()
+    //             this._typeSpecStylerWrapper = newWrapper;
+    //         }
+    //     }
+    //     return super._provisionWidgets();
+    // }
 }
 
 class UIDocumentNode extends _BaseContainerComponent {
@@ -3586,29 +4057,26 @@ class UIDocumentNode extends _BaseContainerComponent {
 
     _createWrapperForType(typeKey) {
         const settings = {
-               rootPath: Path.fromParts('.', 'instance')
+               rootPath: Path.fromParts('.')
              , id: 'contentWidget'
             };
         let Constructor
           , dependencyMappings
           ;
-        if(typeKey === 'Element') {
+        if(typeKey === 'text') {
             dependencyMappings = [
-                'typeSpecLink'
-              , 'nodes'
-            ];
-            Constructor = UIDocumentElement;
-        }
-        else if(typeKey === 'TextRun') {
-            dependencyMappings = [
-                'styleLink'
-              , 'text'
-              , [this.widgetBus.rootPath.append('..', '..', 'typeSpecLink').toString(), 'typeSpecLink']
+                'text'
             ];
             Constructor = UIDocumentTextRun;
         }
-        else
-            throw new Error(`KEY ERROR unknown typeKey ${typeKey}.`);
+        else {// if(typeKey === 'Element') {
+            dependencyMappings = [
+                ['./content', 'nodes']
+            ];
+            Constructor = UIDocumentElement;
+        }
+        //else
+        //    throw new Error(`KEY ERROR unknown typeKey: "${typeKey}".`);
 
         const args = [this._zones, this._originTypeSpecPath]
           , childWidgetBus = this._childrenWidgetBus
@@ -3620,7 +4088,7 @@ class UIDocumentNode extends _BaseContainerComponent {
         const nodes = this.getEntry(this.widgetBus.rootPath.parent)
           , key = this.widgetBus.rootPath.parts.at(-1)
           , node = nodes.get(key)
-          , typeKey = node.get('documentNodeTypeKey').value
+          , typeKey = node.get('typeKey').value
           ;
 
         if(this._currentTypeKey === typeKey)
@@ -3675,12 +4143,24 @@ class UIDocumentNodes extends _BaseDynamicMapContainerComponent {
      */
     _insertIntoSlot(collection, nodeKey, node) {
         const getNodeByIndex = i=>{
-            const key = collection.keyOfIndex(i)
+
+            const key = collection instanceof _AbstractListModel
+                    ? `${i}`
+                    : collection.keyOfIndex(i)
               , nodeWidgetWrapper = this._keyToWidget.get(key)
               ;
             return nodeWidgetWrapper.widget.getWidgetWrapperById('contentWidget', null)?.widget?.node;
         }
-        const keyIndex = collection.indexOfKey(nodeKey);
+        let keyIndex;
+        if(collection instanceof _AbstractListModel) {
+            const [index, message] = collection.keyToIndex(nodeKey);
+            if(index === null)
+                throw new Error(message);
+            keyIndex = index;
+        }
+        else
+            keyIndex = collection.indexOfKey(nodeKey);
+
         if(keyIndex < 0)
             throw new Error(`NOT FOUND ERROR don't know where to insert `
                 + `${nodeKey} as it was not found in collection (${keyIndex}).`);
@@ -3777,7 +4257,7 @@ class UIDocument extends _BaseContainerComponent {
             [
                 {}
               , [
-                    ['nodes', 'collection']
+                    ['content', 'collection']
                 ]
               , UIDocumentNodes
               , this._zones
@@ -3786,6 +4266,1160 @@ class UIDocument extends _BaseContainerComponent {
             ]
         ];
         this._initWidgets(widgets);
+    }
+}
+
+/* We need this a lot, as it seems, there are still some duplicates in this module! */
+function _getBestTypeSpecPropertiesId(
+        typeSpecLink,
+        protocolHandlerName /*='typeSpecProperties@'*/,
+        protocolHandlerImplementation,
+        originTypeSpecPath,
+        asPath=false) {
+    const currentTypeSpecPath = Path.fromString(typeSpecLink)
+      , format = path=>`${protocolHandlerName}${path}`
+      ;
+    if(protocolHandlerImplementation === null)
+        throw new Error(`KEY ERROR ProtocolHandler for identifier "${protocolHandlerName}" not found.`);
+
+    // getProtocolHandlerImplementation
+    let testPath = currentTypeSpecPath.parts.length === 0 || currentTypeSpecPath.parts[0] === 'children'
+              // the initial "children" is part from typeSpecLink
+            ? originTypeSpecPath.append(...currentTypeSpecPath)
+            : originTypeSpecPath.append('children', ...currentTypeSpecPath)
+            ;
+    while(true) {
+        if(!originTypeSpecPath.isRootOf(testPath))
+            // We have gone to far up. This also prevents that
+            // a currentTypeSpecPath could potentially inject '..'
+            // to break out of originTypeSpecPath, though,
+            // the latter seems unlikely, as we parse it in here.
+            break;
+        const typeSpecPropertiesId = format(testPath);
+        if(protocolHandlerImplementation.hasRegistered(typeSpecPropertiesId))
+            return asPath ? testPath : typeSpecPropertiesId;
+        // Move towards root and continue; // remove 'children' and `{key}`
+        testPath = testPath.slice(0, -2);
+    }
+    return asPath ? originTypeSpecPath : format(originTypeSpecPath);
+}
+
+/**
+ * MAYBE: requires a better name
+ *
+ * NOTE (to myself): I think going via _getBestTypeSpecPropertiesId is
+ * maybe not an ideal implementation, so far, look twice and overthink
+ * where asPath===true;
+ */
+function _getTypeSpecPropertiesIdMethod(pathOfTypes,
+                                       asPath=false,
+                                       nodeSpecToTypeSpecName='nodeSpecToTypeSpec',
+                                       protocolHandlerName='typeSpecProperties@') {
+    const nodeSpecToTypeSpec = this.getEntry(nodeSpecToTypeSpecName)
+      , typeKey = pathOfTypes.at(-1)
+      , typeSpecLink = nodeSpecToTypeSpec.get(typeKey, {value: ''}).value// => default '' would be the root TypeSpec
+      , protocolHandlerImplementation = this.widgetBus.getProtocolHandlerImplementation(protocolHandlerName, null)
+      ;
+    return _getBestTypeSpecPropertiesId(typeSpecLink,
+                protocolHandlerName,
+                protocolHandlerImplementation,
+                this._originTypeSpecPath,
+                asPath);
+}
+
+class TypeSpecSubscriptions extends _CommonContainerComponent {
+    constructor(widgetBus, zones, originTypeSpecPath) {
+        super(widgetBus, zones);
+        this._originTypeSpecPath = originTypeSpecPath;
+        this._viewDomObserver = null;
+        this._subscribers = new Map();
+
+        this._newlySubscribedMarks = new Map();
+        this._marksDomObserver = new MutationObserver(this._checkNewlySubscribedMarks.bind(this));
+        this._styleSubscribers = new Map();
+    }
+
+    get dependencies() {
+        const dependencies = super.dependencies;
+        dependencies.add(this.widgetBus.getExternalName('nodeSpecToTypeSpec'));
+        return dependencies;
+    }
+    get modelDependencies() {
+        const dependencies = super.modelDependencies;
+        dependencies.add(this.widgetBus.getExternalName('nodeSpecToTypeSpec'));
+        return dependencies;
+    }
+
+    _getStyleLinkPropertiesId(typeSpecProperties, styleLink) {
+        const typeSpecPath = typeSpecProperties.slice('typeSpecProperties@'.length)
+           , styleLinkPropertiesId = `styleLinkProperties@${Path.fromParts(typeSpecPath, 'stylePatches', styleLink)}`
+           , protocolHandlerImplementation = this.widgetBus.getProtocolHandlerImplementation('styleLinkProperties@', null)
+           ;
+         if(protocolHandlerImplementation === null)
+             throw new Error(`KEY ERROR ProtocolHandler for identifier "styleLinkProperties@" not found.`);
+         // check if styleLinkPropertiesId exists, otherwise return null
+         if(protocolHandlerImplementation.hasRegistered(styleLinkPropertiesId))
+             return styleLinkPropertiesId;
+         throw new Error(`KEY ERROR styleLinkPropertiesId "${styleLinkPropertiesId}" not found in styleLinkProperties@.`);
+    }
+
+    _createStyleStylerWrapper(styleLinkProperties, domElemment) {
+        const settings = {}
+          , dependencyMappings = [
+                [styleLinkProperties, 'properties@']
+              , ['/font', 'rootFont']
+            ]
+          , Constructor = UIDocumentStyleStyler
+          , args = [domElemment]
+          ;
+        return this._initWrapper(this._childrenWidgetBus, settings, dependencyMappings, Constructor, ...args);
+    }
+
+    _finalizeMarkSubscription(domElement, mark) {
+        const parentSubscription = this._subscribers.get(domElement.parentElement)
+            // FIXME: Should probably monitor the original typeSpec to see when the styleLinks change.
+          , styleLinkPropertiesId = this._getStyleLinkPropertiesId(parentSubscription.typeSpecProperties, mark.attrs['data-style-name'])
+          , widgetWrapper = this._createStyleStylerWrapper(styleLinkPropertiesId, domElement)
+          ;
+        // DO SOMETHING!
+        console.log(`${this}._finalizeMarkSubscription SUBSCRIPTION COMPLETE`, mark.type.name, domElement.textContent, styleLinkPropertiesId);
+        this._styleSubscribers.set(domElement, {
+            widgetWrapper
+          , mark
+          , styleLinkPropertiesId
+          , parentSubscription // FIXME!
+        });
+        this._activateWidget(widgetWrapper);
+    }
+
+    _checkNewlySubscribedMarks(mutations_) {
+        console.log(`${this}._checkNewlySubscribedMarks`, mutations_);
+        const mutations = Array.from(mutations_);
+        while(mutations.length) {
+            if(this._newlySubscribedMarks.size === 0) {
+                // NOTE: seems pointless to do:
+                //      mutations.push(...this._marksDomObserver.takeRecords());
+                // as there are no _newlySubscribedMarks regardless.
+                this._marksDomObserver.disconnect();
+                break;
+            }
+            const mutationRecord = mutations.pop();
+            // FIXME: the node can also be added as a childNode, or even
+            // deeper and we would see here only the upmost added node.
+            // It looks like we would still have it here in _newlySubscribedMarks
+            // but we would not see it directly as node as it could be any
+            // of the children!
+            // It could even be quicker to iterate over all nodes in
+            // this._newlySubscribedMarks and see if we can identify their
+            // parent nodes...!
+            for(const node of mutationRecord.addedNodes) {
+                if(this._newlySubscribedMarks.has(node)) {
+                    const mark = this._newlySubscribedMarks.get(node);
+                    this._newlySubscribedMarks.delete(node);
+                    this._finalizeMarkSubscription(node, mark);
+
+                }
+            }
+        }
+        for(const [node, mark] of this._newlySubscribedMarks) {
+            if(node.parentElement && this._subscribers.has(node.parentElement)) {
+                this._newlySubscribedMarks.delete(node);
+                this._finalizeMarkSubscription(node, mark);
+            }
+        }
+        if(this._newlySubscribedMarks.size === 0)
+            this._marksDomObserver.disconnect();
+    }
+
+    _createTypeSpecStylerWrapper(typeSpecProperties, domElement) {
+        const settings = {}
+          , dependencyMappings = [
+                [typeSpecProperties, 'properties@']
+              , ['/font', 'rootFont']
+            ]
+          , Constructor = UIDocumentTypeSpecStyler
+          , args = [domElement]
+          ;
+         return this._initWrapper(this._childrenWidgetBus, settings, dependencyMappings, Constructor, ...args);
+    }
+
+    _getTypeSpecPropertiesId = _getTypeSpecPropertiesIdMethod;
+
+    subscribe(domElement, pathOfTypes) {
+        const typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes)
+          , widgetWrapper = this._createTypeSpecStylerWrapper(typeSpecProperties, domElement)
+          ;
+
+        this._subscribers.set(domElement, {
+            widgetWrapper
+          , pathOfTypes
+          , typeSpecProperties
+        });
+        this._activateWidget(widgetWrapper);
+    }
+
+    _activateWidget(widgetWrapper) {
+        this._widgets.push(widgetWrapper);
+        this._createWidget(widgetWrapper);
+        const _compareResult = StateComparison.createInitial(this.getEntry('/'), widgetWrapper.dependencyMapping)
+          , changedMap = widgetWrapper.getChangedMapFromCompareResult(true /*requiresFullInitialUpdate*/, _compareResult)
+          ;
+        if(changedMap.size)
+            this._updateDOM(()=>widgetWrapper.widget.update(changedMap));
+    }
+
+    _deactivateWidget(widgetWrapper) {
+        this._destroyWidget(widgetWrapper);
+        this._widgets.splice(this._widgets.indexOf(widgetWrapper), 1);
+    }
+
+    unsubscribe(domElement) {
+        const subscription = this._subscribers.get(domElement);
+        console.log(`${this} unsubscribe`, domElement, 'subscription', subscription);
+        this._subscribers.delete(domElement);
+        this._deactivateWidget(subscription.widgetWrapper);
+    }
+
+    subscribeMark(domElement, mark) {
+        // request a rendering once the view is done...
+        // the element, at this point is not in the dom, one way to
+        // trigger an initial update would be to create a DOMObserver
+        // We need the position in the DOM to find out what the parent
+        // type and thus TypeSpec is.
+        console.log(`${this} subscribeMark`, domElement, mark.type.name, domElement.textContent, 'parent:', domElement.parentElement, 'this._newlySubscribedMarks.size', this._newlySubscribedMarks.size);
+
+        if(this._newlySubscribedMarks.size === 0) {
+            const observerOptions = {
+                    childList: true,
+                    subtree: true,
+                }
+              , container = this.widgetBus.getWidgetById('proseMirror').element
+              ;
+            this._marksDomObserver.observe(container, observerOptions);
+        }
+        this._newlySubscribedMarks.set(domElement, mark);
+    }
+
+    unsubscribeMark(domElement) {
+        if(this._newlySubscribedMarks.has(domElement)) {
+            this._newlySubscribedMarks.delete(domElement);
+            if(this._newlySubscribedMarks.size === 0) {
+                // const mutations = this._marksDomObserver.takeRecords();
+                this._marksDomObserver.disconnect();
+                // if (mutations.length > 0)
+                //    this._checkNewlySubscribedMarks(mutations);
+            }
+        }
+        if(!this._styleSubscribers.has(domElement))
+            return;
+        const subscription = this._styleSubscribers.get(domElement);
+        console.log(`${this} unsubscribeMark`, domElement, domElement.textContent, 'subscription', subscription);
+        this._styleSubscribers.delete(domElement);
+        this._deactivateWidget(subscription.widgetWrapper);
+    }
+
+    initialUpdate() {
+        /*nothing to do*/
+        /* All widgets are added later in the lifecycle of this compoment.*/
+    }
+
+    _provisionWidgets(compareResult) {
+        const requiresFullInitialUpdate = new Set()
+          , changedMap = this._getChangedMapFromCompareResult(compareResult)
+          ;
+        if(!changedMap.has('nodeSpecToTypeSpec'))
+            return requiresFullInitialUpdate;
+        for(const [domElement, subscription] of this._subscribers) {
+             const typeSpecProperties = this._getTypeSpecPropertiesId(subscription.pathOfTypes);
+             if(typeSpecProperties === subscription.typeSpecProperties)
+                // did not change
+                continue;
+
+            const widgetWrapper = this._createTypeSpecStylerWrapper(typeSpecProperties, domElement);
+            this._destroyWidget(subscription.widgetWrapper);
+            this._widgets.splice(this._widgets.indexOf(subscription.widgetWrapper), 1, widgetWrapper);
+            this._createWidget(widgetWrapper);
+            subscription.typeSpecProperties = typeSpecProperties;
+            subscription.widgetWrapper = widgetWrapper;
+            requiresFullInitialUpdate.add(widgetWrapper);
+        }
+        return requiresFullInitialUpdate;
+    }
+
+    /**
+     * This method is called updateDOM, but it's mainly intended to be
+     * called when the styles get updated due to changes in the TypeSpec.
+     * It's a performance optimization, otherwise, ProseMirror would
+     * re-initiate all NodeViews when we change the style attributes,
+     * which is a lot of overhead and absolutely not needed. by stopping
+     * the domObserver, prosemirror is not aware of these changes.
+     */
+    _updateDOM(fn) {
+        if(this._viewDomObserver === null)
+            this._viewDomObserver = this.widgetBus.getWidgetById('proseMirror').view.domObserver;
+        this._viewDomObserver.stop();
+        try {
+            fn();
+        }
+        finally {
+            this._viewDomObserver.start();
+        }
+    }
+
+    _update(...args) {
+        this._updateDOM(()=>super._update(...args));
+    }
+}
+
+
+function _getPathOfTypes(path /* { path } = resolved */, currentType=null) {
+    // path is actually a rather complex array type:
+    // path.push(node, index, start + offset).
+    // This means we can get just each index out of it and that
+    // it gives the raw indexes, compatible with the metamodel indexes.
+    // Using the node positions is however complicated, as at the
+    // time this code runs, the positions are not necessarily already
+    // synced to the metamodel document.
+    // Path of types is however all we need to resolve the TypeSpec.
+    const  pathOfTypes = []
+    // , contentIndexes = []
+    ;
+    for(let i=0, l=path.length;i<l;i+=3)
+      pathOfTypes.push(path[i].type.name);
+      // contentIndexes.push(path[i+1]);
+
+    if(currentType)
+        pathOfTypes.push(currentType);
+    return pathOfTypes;
+}
+
+class ProsemirrorNodeView {
+    // the args are from https://prosemirror.net/docs/ref/#view.NodeViewConstructor
+    // type NodeViewConstructor = fn(
+    //     node: Node,
+    //     view: EditorView,
+    //     getPos: fn() → number | undefined,
+    //     decorations: readonly Decoration[],
+    //     innerDecorations: DecorationSource
+    // ) → NodeView
+    constructor(widgetBus, node, view, getPos) {
+        this.widgetBus = widgetBus;
+        // TODO: a more direct API in widgetBus for this wouldn't hurt
+        // e.g. getTagForType
+        const mmNodeSpec = this.widgetBus.getLinked(node.type.schema).get('nodes').get(node.type.name)
+         , tag = mmNodeSpec.get('tag').value
+         , element = widgetBus.domTool.createElement(tag, {'data-node-type': node.type.name})
+         ;
+        this.dom = element;
+        this._stylerDOM = element;
+        this.contentDOM = element;
+
+        // https://prosemirror.net/docs/ref/#model.ResolvedPos
+        // https://prosemirror.net/docs/ref/#model.Node.resolve
+        // we don't actually need to know the node position, but we
+        // care about the TypeSpec of it and possibly of it's parents types
+        const resolved = view.state.doc.resolve(getPos())
+           , pathOfTypes = _getPathOfTypes(resolved.path, node.type.name)
+           ;
+        widgetBus.getWidgetById('typeSpecSubscriptionsRegistry')
+                 .subscribe(this._stylerDOM, pathOfTypes/*, contentIndexes*/);
+    }
+
+    // // I dont't think implementing `update` is required so far.
+    // update(node, ...args) {
+    //     console.log(`${this.constructor.name} update`, node.type.name, 'other args:', ...args, 'this.dom.textContent:', this.dom.textContent);
+    //     // if (node.content.size > 0) this.dom.classList.remove("empty")
+    //     // else this.dom.classList.add("empty")
+    //     return true;
+    // }
+    destroy() {
+        this.widgetBus.getWidgetById('typeSpecSubscriptionsRegistry').unsubscribe(this._stylerDOM);
+    }
+}
+
+class ProsemirrorMarkView {
+    // https://prosemirror.net/docs/ref/#view.MarkViewConstructor
+    // type MarkViewConstructor = fn(
+    //     mark: Mark,
+    //     view: EditorView,
+    //     inline: boolean
+    // ) → MarkView
+    // The function types used to create mark views.
+    constructor(widgetBus, mark/*, view, inline*/) {
+        this.widgetBus = widgetBus;
+        // TODO: a more direct API in widgetBus for this wouldn't hurt
+        // e.g. getTagForType
+        const // mmNodeSpec = this.widgetBus.getLinked(node.type.schema).get('nodes').get(node.type.name)
+           tag = 'span'
+         , element = widgetBus.domTool.createElement(tag, {'data-style-name': mark.attrs['data-style-name']})
+         ;
+        this.dom = element;
+        this._stylerDOM = element;
+        this.contentDOM = element;
+        widgetBus.getWidgetById('typeSpecSubscriptionsRegistry')
+                 .subscribeMark(this._stylerDOM, mark);
+    }
+    destroy() {
+        this.widgetBus.getWidgetById('typeSpecSubscriptionsRegistry').unsubscribeMark(this._stylerDOM);
+    }
+}
+
+
+
+class ProseMirrorMenuView {
+    constructor(widgetBus, view /*EditorView*/) {
+        this.widgetBus = widgetBus;
+        this.widgetBus.getWidgetById('proseMirrorMenu').updateView(view);
+    }
+    update(view /*EditorView*/, prevState /*:EditorState*/) {
+        this.widgetBus.getWidgetById('proseMirrorMenu').updateView(view, prevState);
+    }
+    destroy() {
+        this.widgetBus.getWidgetById('proseMirrorMenu').destroyView();
+    }
+}
+
+function mapSetBiDirectional(map, valA, valB) {
+    map.set(valA, valB);
+    map.set(valB, valA);
+}
+
+class ProseMirror extends _BaseComponent {
+    //jshint ignore:start
+    static TEMPLATE = `<div class="prosemirror-host"></div>`;
+    //jshint ignore:end
+    constructor(widgetBus) {
+        super(widgetBus);
+        // The cache is bi-directional, meaning that both mappings will be
+        // set: proseMirrorNode -> metamodelNode and metamodelNode ->
+        // proseMirrorNode, using mapSetBiDirectional. Since there's always
+        // a one to one relationship, a single map is sufficient.
+        this._nodesCache = new WeakMap();
+
+        this._childrenWidgetBus = Object.assign(
+            Object.create(widgetBus) // don't copy, inherit ...
+             // By the time this gets called, the link is already established.
+             // TODO: could fail on a cache-miss, as it would be bad if
+             // the assertion above is not true!
+          , { getLinked: item=>this._nodesCache.get(item) }
+        );
+
+        this._createGenericNodeView = (...args)=>new ProsemirrorNodeView(this._childrenWidgetBus, ...args);
+        this._createGenericMarkView = (...args)=>new ProsemirrorMarkView(this._childrenWidgetBus, ...args);
+        [this.element, this.view] = this.initTemplate();
+    }
+
+    _menuPlugin() {
+        return new Plugin({// pluginSpec
+            // => PluginView {
+            //      update⁠?: fn(view: EditorView, prevState: EditorState)
+            //      destroy⁠?: fn()
+            //}
+            view:(editorView)=>new ProseMirrorMenuView(this._childrenWidgetBus, editorView)
+        });
+    }
+
+    _initProseMirrorView(element) {
+        const initialSchema = {
+                nodes : {
+                    ...proseMirrorDefaultSchema.nodes
+                    // This is initially required but we're not going to use
+                    // it. the requirement comes from
+                    // doc.content = 'block+'
+                  , 'generic-bloc': {
+                        content: 'inline*'
+                      , group: 'block'
+                      , toDOM: ()=>['div', 0]
+                    }
+                }
+              , marks: {...proseMirrorDefaultSchema.marks}
+            }
+          , schema = new Schema(initialSchema)
+          , state = EditorState.create({
+                schema:schema
+              , plugins: [
+                    history()
+                  , keymap({"Mod-z": undo, "Mod-y": redo
+                    //    , "Mod-b": toggleMark(proseMirrorTestingSchema.marks.strong)
+                    //    , "Mod-B": toggleMark(proseMirrorTestingSchema.marks.strong)
+                    })
+                  , keymap(baseKeymap)
+                  , this._menuPlugin()
+                ]
+              , doc: schema.topNodeType.createAndFill()
+            })
+          , view = new EditorView(element, {
+                state
+              , dispatchTransaction: this._prosemirrorDispatchTranscation.bind(this)
+              , markViews: {
+                    'generic-style': this._createGenericMarkView
+                }
+            })
+          ;
+        return view;
+    }
+
+    initTemplate() {
+        const frag = this._domTool.createFragmentFromHTML(this.constructor.TEMPLATE)
+          , element = frag.firstElementChild
+          ;
+        this._insertElement(element);
+        const view = this._initProseMirrorView(element);
+        return [element, view];
+    }
+
+    _createProseMirrorSchema(proseMirrorSchema) {
+        const schemaSpec = {
+                nodes: {...proseMirrorDefaultSchema.nodes}
+              , marks: {...proseMirrorDefaultSchema.marks}
+            }
+          ;
+        for(const[name, nodeSpec] of proseMirrorSchema.get('nodes')) {
+            if(name in proseMirrorDefaultSchema.nodes){
+                console.warn(`PROSEMIRROR NODE_SPEC: attempt to override reserved node name ${name}, SKIPPING.`);
+                continue;
+            }
+            const newNode = {}
+            for(const [key, value] of nodeSpec) {
+                if(key === 'attrs') {
+                    console.log(`PROSEMIRROR SKIPPING nodeSpec property "${key}" in dynamic schema definition`);
+                    continue
+                }
+                if(value.isEmpty)
+                    continue
+                if(key === 'tag')
+                    continue;
+                // => for 1:1 mappings
+                newNode[key] = value.value;
+            }
+
+            const tag = nodeSpec.get('tag');
+            if(tag.isEmpty || tag.value === '') {
+                console.warn(`PROSEMIRROR NODE_SPEC: node does not define a tag, node name "${name}"`)
+            }
+            else {
+                // NOTE: this does not at all control any collisions of
+                // tag names! E.g. when two nodes use the tag-name p
+                newNode.parseDOM = [{tag: tag.value}];
+                newNode.toDOM = () => { return [tag.value,  0] };
+            }
+            schemaSpec.nodes[name] = newNode;
+        }
+
+        // CAUTION: this is a stub marks will be handled very differently, likely!
+        // In this case it would be better to just ignore any defined marks.
+        for(const[name, markSpec] of proseMirrorSchema.get('marks')) {
+            if(name in proseMirrorDefaultSchema.marks) {
+                console.warn(`PROSEMIRROR MARK_SPEC: attempt to override reserved mark name ${name}, SKIPPING.`);
+                continue;
+            }
+            const newMark = {};
+            for(const [key, value] of markSpec) {
+                if(key === 'attrs') {
+                    console.log(`PROSEMIRROR SKIPPING markSpec property "${key}" in dynamic schema definition`);
+                    continue
+                }
+                if(value.isEmpty)
+                    continue
+                if(key === 'tag')
+                    continue;
+                // => for 1:1 mappings
+                newMark[key] = value.value;
+            }
+            const tag = markSpec.get('tag');
+            if(tag.isEmpty || tag.value === '') {
+                console.warn(`PROSEMIRROR MARK_SPEC: mark does not define a tag, mark name: "${name}"`)
+            }
+            else {
+                // NOTE: this does not at all control any collisions of
+                // tag names! E.g. when two nodes use the tag-name p
+                newMark.parseDOM = [{tag: tag.value}];
+                newMark.toDOM = () => { return [tag.value,  0] };
+            }
+            schemaSpec.marks[name] = newMark;
+        }
+        return new Schema(schemaSpec);
+    }
+
+    _rawCreateMetamodelNode(cacheMap/* null or a map*/, pmNode, dependencies) {
+        const draft = NodeModel.createPrimalDraft(dependencies)
+          , typeName = pmNode.type.name === 'unknown' && 'unknown-type' in pmNode.attrs
+              ? pmNode.attrs['unknown-type']
+              : pmNode.type.name
+          ;
+        draft.get('typeKey').value = typeName;
+        if(pmNode.type.name === 'text') {
+            draft.get('text').value = pmNode.text;
+        }
+        else {
+            const contentDraft = draft.get('content');
+            for (let i=0,l=pmNode.content.childCount; i<l; i++) {
+                const pmChildNode = pmNode.content.child(i);
+                contentDraft.push(this._createMetamodelNode(cacheMap, pmChildNode, dependencies));
+            }
+        }
+
+        const marksDraft = draft.get('marks');
+        for(const mark of pmNode.marks) {
+            const markDraft = marksDraft.constructor.Model.createPrimalDraft(dependencies);
+            markDraft.get('typeKey').value = mark.type.name;
+            const attrsDraft = markDraft.get('attrs');
+            for(const [name, value] of Object.entries(mark.attrs)) {
+                attrsDraft.set(name, toMetaModelJSON(value, dependencies));
+            }
+            marksDraft.push(markDraft);
+        }
+        const attrsDraft = draft.get('attrs');
+        for(const [name, value] of Object.entries(pmNode.attrs)) {
+            if(pmNode.type.name === 'unknown' && name === 'unknown-type'
+                    && typeName !== 'unknown')
+                // Only skip this value if we actually transferred it
+                // to the type of the node (typeName).
+                continue;
+            attrsDraft.set(name, toMetaModelJSON(value, dependencies));
+        }
+        const immutableNode = draft.metamorphose();
+        return immutableNode;
+    }
+
+    _rawCreateProseMirrorNode(cacheMap/* null or a map*/, metamodelNode, schema) {
+        const type = metamodelNode.get('typeKey').value;
+        let newNode;
+
+        const marks = []
+        for(const [, mmMark] of metamodelNode.get('marks')) {
+            // schema.mark(type: string | MarkType, attrs⁠?: Attrs) → Mark
+            // Create a mark with the given type and attributes.
+            const mmAttrs = mmMark.get('attrs');
+            let attrs = null;
+            if(mmAttrs.size) {
+                attrs = {};
+                for(const [name, value] of mmAttrs)
+                    attrs[name] = fromMetaModelJSON(value);
+            }
+            const mark = schema.mark(mmMark.get('typeKey').value, attrs);
+            marks.push(mark);
+        }
+
+        if(type === 'text') {
+            let text = metamodelNode.get('text');
+            if(text.isEmpty || text.value.lenght === 0){
+                // This could could be handled by a CoherenceFunction function,
+                // cleaning up the node before creation.
+                // TODO: I'm undecided how to handle this, however, it
+                // would be much nicer if this method could always return
+                // something workable.
+                throw new Error(`${this} text can't be empty`);
+                // console.error(`${this} text can't be empty`);
+                // text = {value: '<<Cannot be empty!!!>>'};
+            }
+
+            // https://prosemirror.net/docs/ref/#model.Schema.text
+            // text(text: string, marks⁠?: readonly Mark[]) → Node
+            // Create a text node in the schema. Empty text nodes are not allowed.
+            newNode = schema.text(text.value, marks);
+        }
+        else {
+            const mmContent = metamodelNode.get('content')
+              , content = []
+              ;
+            for(const [/*index*/, mmChildNode] of mmContent) {
+                const child = this._createProseMirrorNode(cacheMap, mmChildNode, schema);
+                content.push(child);
+            }
+            // https://prosemirror.net/docs/ref/#model.Schema.node
+            //  node(
+            //      type: string | NodeType,
+            //      attrs⁠?: Attrs | null = null,
+            //      content⁠?: Fragment | Node | readonly Node[],
+            //      marks⁠?: readonly Mark[]
+            //  ) → Node
+            // Create a node in this schema. The type may be a string or
+            // a NodeType instance. Attributes will be extended with defaults,
+            // content may be a Fragment, null, a Node, or an array of nodes.
+
+            // NOTE: if the type is unknown to the schema, I think we should
+            // create an on-the-fly placeholder that can represent the node
+            // and gives a clear message, that the type is missing.
+            // We'll see how feasible that will be!
+
+            const  mmAttrs = metamodelNode.get('attrs');
+            let attrs = null;
+            if(mmAttrs.size) {
+                attrs = {};
+                for(const [name, value] of mmAttrs) {
+                    attrs[name] = fromMetaModelJSON(value);
+                }
+            }
+
+            // An alternative would be to create a type on the fly,
+            // but that would require to update the schema, which at
+            // this point is a bit late. We could pre-detect missing
+            // node types as well, but we would have to do it on each
+            // update. I think this route has the least impact.
+            // However, we have a problem as we cannot have a node
+            // allowing both: inline and block content!
+            let pmTypeName = type;
+            if(!(type in schema.nodes)) {
+                //schema.node(type)
+                pmTypeName = 'unknown';
+                // caution: this attr should not be put into the metamodel!
+                if(attrs === null)
+                    attrs = {};
+                attrs['unknown-type'] = type;
+            }
+
+            newNode = schema.node(pmTypeName, attrs, content, marks);
+        }
+        return newNode;
+    }
+
+    /**
+     * If caching is to be used inject cache here, i.e. use this._nodesCache
+     * or maybe a new Map() to cache internal node creation, the latter
+     * is likely not a very good optimization as document would have to
+     * contain a lot of identical nodes for it to speed things up.
+     * The former, however, is crucial to keep the identity of the
+     * metamodel <-> prosemirror nodes in sync.
+     */
+    _createMetamodelNode(cacheMap/* null or a map*/, pmNode, dependencies) {
+        if(cacheMap !== null && cacheMap.has(pmNode))
+            return cacheMap.get(pmNode);
+
+        const immutableNode = this._rawCreateMetamodelNode(cacheMap, pmNode, dependencies);
+
+        if(cacheMap !== null)
+            mapSetBiDirectional(cacheMap, pmNode, immutableNode);
+        return immutableNode;
+    }
+
+    /**
+     * If caching is to be used inject cache here, i.e. use this._nodesCache
+     * or maybe a new Map() to cache internal node creation, the latter
+     * is likely not a very good optimization as document would have to
+     * contain a lot of identical nodes for it to speed things up.
+     * The former, however, is crucial to keep the identity of the
+     * metamodel <-> prosemirror nodes in sync.
+     */
+    _createProseMirrorNode(cacheMap/* null or a map*/, metamodelNode, schema) {
+        if(cacheMap !== null && cacheMap.has(metamodelNode))
+            return cacheMap.get(metamodelNode);
+
+        const newNode = this._rawCreateProseMirrorNode(cacheMap, metamodelNode, schema);
+
+        if(cacheMap !== null)
+            mapSetBiDirectional(cacheMap, metamodelNode, newNode);
+        return newNode;
+    }
+
+    _prosemirrorDispatchTranscation(transaction) {
+        console.log(`${this} DISPATCH_TRANSACTION size went from`, transaction.before.content.size,
+                "to", transaction.doc.content.size,'\ntransaction:', transaction);
+
+        const newState = this.view.state.apply(transaction);
+        const document = this.getEntry('document'); // => immutableDoc
+        this.view.updateState(newState);
+        const pmDocNode = this._nodesCache.get(document);
+        if(pmDocNode === this.view.state.doc) {
+            // nothing to do
+            console.log(`${this} DISPATCH_TRANSACTION: nothing to do`);
+        }
+        else {
+            console.log(`${this} DISPATCH_TRANSACTION: update metamodel document with view.state.doc...`);
+            // update/sync metamodel document with view.state.doc
+            // eventually:
+            this._changeState(()=>{
+                const documentDraft = this.getEntry('document')
+                  , pmDoc = this.view.state.doc
+                    // creating the doc will also create all the child nodes.
+                  , immutableDoc = this._createMetamodelNode(this._nodesCache, pmDoc, documentDraft.oldState.dependencies)
+                  , documentPath = Path.fromString(this.widgetBus.getExternalName('document'))
+                  , documentParentDraft = this.getEntry(documentPath.parent)
+                  , dokumentKey = documentPath.parts.at(-1)
+                  ;
+                documentParentDraft.set(dokumentKey, immutableDoc);
+                this._nodesCache.set(immutableDoc, this.view.state.doc);
+                mapSetBiDirectional(this._nodesCache, immutableDoc, this.view.state.doc);
+            });
+        }
+    }
+
+    update (changedMap) {
+        console.log(`${this}.UPDATE(changedMap:${Array.from(changedMap.keys).join(', ')})`, changedMap);
+        // Map(5) { stylePatchesSource → {…}, typeSpec → {…}, proseMirrorSchema → {…}, nodeSpecToTypeSpec → {…}, document → {…} }
+
+        const newConfigItems = [];
+        let schema = this.view.state.schema;
+        const newProps = {};
+        if(changedMap.has('proseMirrorSchema')) {
+            const proseMirrorSchema = changedMap.get('proseMirrorSchema');
+            schema = this._createProseMirrorSchema(proseMirrorSchema);
+            newConfigItems.push(['schema', schema]);
+            const oldNodeViews = this.view.props.nodeViews || {}
+              , schemaNodes  = proseMirrorSchema.get('nodes')
+              ;
+            for(const nodeName of schemaNodes.keys()) {
+                //
+                //, nodeViews: {
+                //        '*': (...args/* node, view, getPos */)=>new ProsemirrorNodeView(this.widgetBus, ...args)
+                //    }
+                if(nodeName in oldNodeViews)
+                    // Nothing to do
+                    continue;
+
+                // this node requires a new nodeView
+                if(!('nodeViews' in newProps)) {
+                    newProps.nodeViews = {};
+                    for(const [nodeName, nodeView] of Object.entries(oldNodeViews)) {
+                        // Filter out removed nodeViews.
+                        if(!schemaNodes.has(nodeName))
+                            continue;
+                        // Copy still required
+                        newProps.nodeViews[nodeName] = nodeView;
+                    }
+                }
+                newProps.nodeViews[nodeName] = this._createGenericNodeView;
+            }
+
+            // NOTE: it is required to rebuild all of the proseMirror doc
+            // using the new Schema, as it's referenced. The docs somewhere
+            // recommend to rebuild via JSON serialization, but we can use
+            // the document updating code below. Maybe dropping the
+            // this._nodesCache;
+            this._nodesCache = new WeakMap();
+            mapSetBiDirectional(this._nodesCache, schema, proseMirrorSchema);
+        }
+        // it looks like document has to change...
+        const document = changedMap.has('document')
+                ? changedMap.get('document')
+                : this.getEntry('document')
+                ;
+        // IMPORTANT: a pm-node as well as a metamodel-node
+        // can be used multiple times. Hence, the position of the node
+        // in the document can't be stored this way. It simply can
+        // have multiple adresses. More importantly for us here is
+        // however, that a node identity can stay in-tact over multiple
+        // generations, i.e. a node might change but its siblings stay
+        // the same.
+
+        // This is basically one lookup in this._nodesCache if nothing
+        // is to do.
+
+        const newDoc = this._createProseMirrorNode(this._nodesCache, document, schema);
+
+        if(newDoc !== this.view.state.doc) {
+            console.log(`${this}UPDATE: update view.state.doc with  metamodel document...`);
+            // update view.state.doc with newDoc which is in sync
+            // with the metamodel document
+            newConfigItems.push(['doc', newDoc]);
+            // update doc in the chache, we just changed it with the transactions.
+            mapSetBiDirectional(this._nodesCache, document, newDoc);
+        }
+        else {
+            // nothing to do;
+            // this happens when document was changed via dispatchTransaction
+            // and is already linked to state.doc.
+            // I expect this to be the case most of the time, as
+            // the metamodel document is updated in dispatchTransaction
+            // when the editor causes the changes.
+            console.error(`${this}UPDATE: newDoc - nothing to do`);
+        }
+        if(newConfigItems.length) {
+            console.log(`${this}UPDATE: newConfigItems ${newConfigItems.length} `, ...Array.from(zip(...newConfigItems))[0]);
+            const oldConfig = Object.fromEntries(['schema', 'doc', 'selection',
+                'storedMarks', 'plugins'].map(key=>[key, this.view.state[key]]))
+              , newConfig = Object.fromEntries(newConfigItems)
+              , config = Object.assign({}, oldConfig, newConfig)
+              , state = EditorState.create(config)
+              ;
+            // setProps(props: Partial<DirectEditorProps>)
+            // Update the view by updating existing props object with the
+            // object given as argument. Equivalent to
+            // view.update(Object.assign({}, view.props, props)).
+            newProps.state = state;
+            this.view.setProps(newProps);
+        }
+        else {
+            console.error(`${this}UPDATE: newConfigItems - nothing to do`);
+        }
+    }
+}
+
+class ProseMirrorContext extends _BaseContainerComponent {
+    constructor(widgetBus, zones, proseMirrorSettings/* e.g. {zone:'layout'}*/
+            , originTypeSpecPath, menuSettings/* e.g. {zone:'main'}*/) {
+        super(widgetBus, zones, [
+              [// IMPORTANT: must be before ProseMirror
+                {...menuSettings, id: 'proseMirrorMenu'}
+              , [
+                    'stylePatchesSource'
+                  , 'typeSpec'
+                  , 'proseMirrorSchema'
+                  , 'nodeSpecToTypeSpec'
+                  , 'document'
+                ]
+              , UIProseMirrorMenu
+              , originTypeSpecPath
+            ]
+          , [
+                {...proseMirrorSettings, id:'proseMirror'}
+              , [
+                    'stylePatchesSource'
+                  , 'typeSpec'
+                  , 'proseMirrorSchema'
+                  , 'nodeSpecToTypeSpec'
+                  , 'document'
+                ]
+              , ProseMirror
+            ]
+            // My feeling is that there might be unnecessary invocation
+            // of dom updates... i.e. when prosemirror initializes a node
+            // and then directly after when the update reaches this component.
+            // Maybe, it's possible to then skip the unnecessary update.
+            //
+            // At least, when prosemirror updates first, we potentially
+            // don't update nodes in here that Prosemirror then deletes
+            // so, this should come after ProseMirror, and ideally only
+            // applying updates to the rest, where it is required still.
+          , [
+                {id: 'typeSpecSubscriptionsRegistry'}
+              , [
+                    'nodeSpecToTypeSpec'
+                ]
+              , TypeSpecSubscriptions
+              , zones
+              , originTypeSpecPath
+            ]
+        ]);
+    }
+}
+
+/**
+ * started this from looking at function markApplies
+ * https://github.com/ProseMirror/prosemirror-commands/blob/master/src/commands.ts
+ * not sure if it is sufiiently complete.
+ */
+function _getPathsOfTypes(doc/* :Node*/, ranges/*: readonly SelectionRange[]*/, enterAtoms/*: boolean*/, skip=Object.freeze(new FreezableSet())) {
+    const result = new Map() // try to reduce the amount of results
+      , seen = new Set();
+      ;
+    for (let i = 0; i < ranges.length; i++) {
+        const  {$from, $to} = ranges[i];
+        if($from.depth === 0 && !result.has(0))
+            // && doc.inlineContent ?????
+            result.set(0, [doc.type.name]);
+        doc.nodesBetween($from.pos, $to.pos, (node, pos) => {
+
+            if (seen.has(pos) || skip.has(node.type.name) || !enterAtoms && node.isAtom && node.isInline && pos >= $from.pos && pos + node.nodeSize <= $to.pos)
+                return;
+            const resolved = doc.resolve(pos);
+            result.set(pos, _getPathOfTypes(resolved.path, node.type.name));
+        });
+    }
+    return result.values();
+}
+
+class UIProseMirrorMenu extends _BaseComponent {
+    constructor(widgetBus, originTypeSpecPath) {
+        super(widgetBus);
+        this._originTypeSpecPath = originTypeSpecPath;
+        this._buttonToStyle = new Map();
+        this._buttonToBlock = new Map();
+        [this.element, this._stylesContainer, this._blocksContainer] = this._initTemplate();
+    }
+
+    _getTemplate(h) {
+        return (
+            <div class="ui_prose_mirror_menu">
+            <span class="label ui_prose_mirror_menu-label">ProseMirror Menu</span>
+            <div class="ui_prose_mirror_menu-blocks"></div>
+            <div class="ui_prose_mirror_menu-styles"></div>
+            </div>
+        );
+    }
+
+    _initTemplate() {
+        const container = this._getTemplate(this._domTool.h)
+          , stylesContainer = container.querySelector('.ui_prose_mirror_menu-styles')
+          , blocksContainer = container.querySelector('.ui_prose_mirror_menu-blocks')
+          ;
+        this._insertElement(container);
+        stylesContainer.addEventListener('click', this._stylesClickHandler.bind(this));
+        blocksContainer.addEventListener('click', this._blocksClickHandler.bind(this));
+        // send a command
+        // command = toggleMark(schema.marks.strong)
+        // command(this._editorView.state, this._editorView.dispatch, this._editorView)
+        return [container, stylesContainer, blocksContainer];
+    }
+
+    _stylesClickHandler(event) {
+        if(!this._buttonToStyle.has(event.target) || !this._editorView)
+            return;
+        console.log(`${this}._stylesClickHandler`, this._buttonToStyle.get(event.target), event.target);
+        const styleName = this._buttonToStyle.get(event.target)
+          , {dispatch, state} = this._editorView
+          , markType = state.schema.marks['generic-style']
+          ;
+        toggleMark(markType, {'data-style-name': styleName}, {
+            /// Controls whether, when part of the selected range has the mark
+            /// already and part doesn't, the mark is removed (`true`, the
+            /// default) or added (`false`).
+            // removeWhenPresent?: boolean
+            /// When set to false, this will prevent the command from acting on
+            /// the content of inline nodes marked as
+            /// [atoms](#model.NodeSpec.atom) that are completely covered by a
+            /// selection range.
+            // enterInlineAtoms?: boolean
+            /// By default, this command doesn't apply to leading and trailing
+            /// whitespace in the selection. Set this to `true` to change that.
+            // includeWhitespace?: boolean
+        })(state, dispatch);
+    }
+
+    _blocksClickHandler(event) {
+        if(!this._buttonToBlock.has(event.target) || !this._editorView)
+            return;
+
+        const nodeTypeName = this._buttonToBlock.get(event.target)
+          , {dispatch, state} = this._editorView
+          , nodeType = state.schema.nodes[nodeTypeName];
+          ;
+        console.log(`${this}._blocksClickHandler`, this._buttonToBlock.get(event.target), event.target, 'nodeTypeName', nodeTypeName, 'nodeType', nodeType);
+        setBlockType(nodeType /*, attrs*/)(state, dispatch);
+    }
+
+    _getTypeSpecPropertiesId = _getTypeSpecPropertiesIdMethod;
+    _getTypeSpecs(state) {
+        const  {empty, $cursor, ranges} = state.selection// as TextSelection
+          , result = new Map()
+          ;
+        if (empty && !$cursor)
+            return result;
+        const pathsOfTypes = _getPathsOfTypes(state.doc, ranges, false/*enterAtoms*/
+              // we don't look at "text" directly and it seems like
+              // these paths always also produce the parent paths
+            , new Set(['text'])/* skip types*/
+        );
+        for(const pathOfTypes of pathsOfTypes) {
+            const typeSpecPath = this._getTypeSpecPropertiesId(pathOfTypes, true/*asPath*/)
+              , typeSpec = this.getEntry(typeSpecPath)
+              ;
+            result.set(typeSpec, typeSpecPath);
+        }
+        return result;
+    }
+
+    updateView(view, prevState=null) {
+        // NOTE: when "prevState !== null", I don't think the view changes,
+        // however, the menu can check which commands should be active.
+        this._editorView = view;
+        // when prevState is null this call comes from the constructor
+        // otherwise it comes from the update method.
+
+        // => set { typeSpecs }
+        const typeSpecs = this._getTypeSpecs(this._editorView.state)
+          , setsOfStyles = new Map()
+            // display these
+          , allStylesSuperSet = new Set()
+            // allow these
+          , commonSubSet = new Set()
+          ;
+        for(const [typeSpec, path] of typeSpecs) {
+            const stylePatches = typeSpec.get('stylePatches');
+            console.log(`${path} :: ${typeSpec.get('label').value} STYLES:`, ...stylePatches.keys());
+            // OK so these keys are the options that we are going to present
+
+            setsOfStyles.set(typeSpec, new Set(stylePatches.keys()));
+            for(const style of stylePatches.keys())
+                allStylesSuperSet.add(style);
+        }
+        for(const style of allStylesSuperSet) {
+            if(setsOfStyles.values().every(stylesSet=>stylesSet.has(style)))
+                commonSubSet.add(style);
+        }
+
+        // Hmm, things a menu item ot activate/deactivate a mark could
+        // show:
+        //      bold: the mark is active at the current position/selection
+        //              -> click again should turn it off
+        //
+        //      active: can the mark be applied at the current position
+        //              -> it's interesting we could either apply it only
+        //                 where it is available OR everywhere and mark when a definition is missing
+        //                 -> seccond could be a ctr+click
+        //                 -> consequently ctrl would make those inactive marks active
+        //                 -> bold marks would be always active, as turning the
+        //                    mark off should be possible AND only happen where it
+        //                    active. Then, maybe it would become not-bold and inactive
+        //      visible: it seems like marks that are defined somewhere, but are not
+        //               in the current context, should not be displayed at all
+
+        // FIXME: we should define an order and keep it stable...
+        // i.e. stylePatches has an inherent order but before, the typeSpecs
+        // could have, i.e. inorder of appearance, maybe depth-first, but
+        // it's not readily accessible for us.
+        const h = this._domTool.h
+          , oldButtons = Array.from(this._buttonToStyle.keys())
+          ;
+        this._buttonToStyle.clear();
+        for(const style of Array.from(allStylesSuperSet).toSorted()) {
+            // reusing stuff
+            const button = oldButtons.length
+                ? oldButtons.pop()
+                : (<button type="button">{'initial'}</button>)
+                ;
+            button.textContent = style;
+            button.disabled = !commonSubSet.has(style);
+            this._buttonToStyle.set(button, style);
+        }
+        this._stylesContainer.replaceChildren(...this._buttonToStyle.keys());
+
+        console.log(`${this}.updateView view:`, view, '\n    ',prevState === null ? 'INITIAL' : 'CONSECUTIVE', 'prevState:', prevState,
+            '\n',
+            // can be multiple, right???
+            // intuitiveley it feels correct to allow only the subset of
+            // available marks/styles to be active/available.
+            // maybe we could display the superset, but make only the
+            // subset available.
+            'The current TypeSpecs:', ...typeSpecs.entries().map(([typeSpec, path])=>`${path} :: ${typeSpec.get('label').value}`)
+            // 'The available style-links:',
+        );
+
+        // const typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes)
+        // {command: toggleMark(schema.marks.strong), dom: icon("B", "strong")},
+        //let active = command(this._editorView.state, null, this._editorView)
+    }
+
+    destroyView() {
+        this._editorView = null;
+        // I'm not sure if we need to do anyhing in here, maybe make all
+        // all menu-items inactive.
+        console.log(`${this}.destroyView view`);
+    }
+    update(changedMap) {
+        console.log(`>>>>>>>>>>>>>>>>>>>${this}.update:`,...changedMap.keys());
+
+        if(changedMap.has('nodeSpecToTypeSpec')) {
+            const nodeSpecToTypeSpec = changedMap.get('nodeSpecToTypeSpec')
+              ,  h = this._domTool.h
+              , oldButtons = Array.from(this._buttonToBlock.keys())
+              ;
+            console.log('nodeSpecToTypeSpec', ...nodeSpecToTypeSpec.keys());
+            this._buttonToBlock.clear();
+            for(const blockName of nodeSpecToTypeSpec.keys()) {
+                // reusing stuff
+                const button = oldButtons.length
+                    ? oldButtons.shift()
+                    : (<button type="button">{'initial'}</button>)
+                    ;
+                button.textContent = blockName;
+                // Would have to be decided in updateView
+                // button.disabled = !commonSubSet.has(style);
+                this._buttonToBlock.set(button, blockName);
+            }
+            this._blocksContainer.replaceChildren(...this._buttonToBlock.keys());
+        }
+
     }
 }
 
@@ -3871,7 +5505,7 @@ class TypeSpecRampController extends _BaseContainerComponent {
         collapsibleMixin(typeSpecManagerContainer, 'legend');
         collapsibleMixin(propertiesManagerContainer, 'legend');
         collapsibleMixin(stylePatchesManagerContainer, 'legend');
-        collapsibleMixin(documentManagerContainer,  'legend');
+        collapsibleMixin(documentManagerContainer,  'legend', true);
 
         const typeSpecDefaultsMap = _getTypeSpecDefaultsMap(widgetBus.getEntry(originTypeSpecPath).dependencies);
 
@@ -4050,6 +5684,17 @@ class TypeSpecRampController extends _BaseContainerComponent {
               , originTypeSpecPath
             ]
           , [
+                {}
+              , []
+              , ProseMirrorContext
+              , new Map([...zones, ['main', documentManagerContainer]])
+                // proseMirrorSettings
+              , {zone: 'layout'}
+              , originTypeSpecPath
+                // menuSettings
+              , {zone: 'main'}
+            ]
+          , [
                 {zone: 'document-manager'}
               , []
               , StaticTag
@@ -4058,63 +5703,50 @@ class TypeSpecRampController extends _BaseContainerComponent {
               , 'Document Manager'
             ]
           , [
-                {
-                    zone: 'document-manager'
-                  , relativeRootPath: Path.fromParts('.','document')
-                }
+                {zone: 'document-manager'}
               , [
-                    ['availableDocumentNodeTypes', 'sourceTypes']
+                    ['./proseMirrorSchema/nodes', 'childrenOrderedMap']
+                  , ['editingNodeSpecPath', 'nodeSpecPath']
                 ]
-              , SelectAndDrag
-              , 'Create'
-              , 'drag and drop into Document Manager.'
-              , function setDragDataFN(dataTransfer, selectedValue) {
-                    dataTransfer.setData(DATA_TRANSFER_TYPES.TYPE_SPEC_DOCUMENT_NODE_CREATE, `${selectedValue}`);
-                    dataTransfer.setData('text/plain', `[TypeRoof ${DATA_TRANSFER_TYPES.DOCUMENT_NODE_CREATE}: ${selectedValue}]`);
-                }
-            ]
-          , [
-                {
-                      zone: 'document-manager'
-                    , relativeRootPath: Path.fromParts('.','document')
-                }
-              , [
-                    ['nodes', 'activeActors']
-                  , ['editingNode', 'editingActor']
-                ]
-              , DocumentNodeTreeEditor
-              , { // dataTransferTypes
-                    PATH: DATA_TRANSFER_TYPES.TYPE_SPEC_DOCUMENT_NODE_PATH
-                  , CREATE: DATA_TRANSFER_TYPES.TYPE_SPEC_DOCUMENT_NODE_CREATE
-                }
-            ]
-          , [
-                {
-                    zone: 'document-manager'
-                  , relativeRootPath: Path.fromParts('.','document')
-                }
-              , [
-                    ['nodes', 'rootCollection']
-                ]
-              , WasteBasketDropTarget
-              , 'Delete'
-              , ''//'drag and drop into trash-bin.'
-              , [
-                    DATA_TRANSFER_TYPES.TYPE_SPEC_DOCUMENT_NODE_PATH
-                ]
-            ]
-          , [
-                {
-                    zone: 'document-manager'
-                }
-              , [
-                    ['./document/nodes', 'childrenOrderedMap']
-                  //, ['typeSpec/children', 'children']
-                  //, ['typeSpec', 'rootTypeSpec']
-                  , ['./document/editingNode', 'editingNodePath']
-                ]
-              , DocumentNodePropertiesManager
+              , UINodeSpecMap
               , new Map([...zones, ['main', documentManagerContainer]])
+              , [] // eventHandlers
+              , 'NodeSpec-Map'
+              , true // dragEntries (dragAndDrop)
+            ]
+          , [
+                {
+                    zone: 'document-manager'
+                }
+              , [
+                    ['./proseMirrorSchema/nodes', 'childrenOrderedMap']
+                  , ['editingNodeSpecPath', 'nodeSpecPath']
+                ]
+              , NodeSpecPropertiesManager
+              , new Map([...zones, ['main', documentManagerContainer]])
+            ]
+          , [
+                {zone: 'document-manager'}
+              , [
+                    ['./nodeSpecToTypeSpec', 'childrenOrderedMap']
+                    // In this configuration we map "NodeSpec to TypeSpec"
+                    // The directionality is not necessarily obvious, but
+                    // NodeSpec is the key as a nodeSpec can only have one
+                    // TypeSpec, TypeSpec is the value as we can have multiple
+                    // NodeSpecs use the same TypeSpec.
+                    // However, the "TypeSpec" is called the "source", so
+                    // source and target may not be the right words.
+                    // sourceMap is inherited from UIStylePatchesLinksMap
+                    // maybe we need to change that in here.
+                  , ['./typeSpec', 'sourceMap'] // these are the values of the map
+                  , ['./proseMirrorSchema/nodes', 'targetMap'] // these are the keys of the map
+                ]
+                // based on UIStylePatchesLinksMap
+              , UINodeSpecToTypeSpecLinksMap
+              , new Map([...zones, ['main', documentManagerContainer]])
+              , [] // eventHandlers
+              , 'NodeSpec to TypeSpec'
+              , true // dragEntries (dragAndDrop)
             ]
         ];
         this._initWidgets(widgets);
@@ -4137,3 +5769,5 @@ export {
     TypeSpecRampModel as Model
   , TypeSpecRampController as Controller
 };
+
+
