@@ -139,6 +139,29 @@
       }
     ]
   ],
+
+  "nodeSpecToTypeSpec": [
+    [
+      "heading-1",
+      "/children/0"
+    ],
+    [
+      "heading-2",
+      "/children/1"
+    ],
+    [
+      "heading-3",
+      "/children/2"
+    ],
+    [
+      "paragraph",
+      "/children/3"
+    ],
+    [
+      "paragraph-2",
+      "/children/4"
+    ]
+  ],
   "document": {
     "typeKey": "doc",
     "content": [
@@ -148,6 +171,15 @@
           {
             "typeKey": "text",
             "text": "Heading One"
+          }
+        ]
+      },
+      {
+        "typeKey": "heading-2",
+        "content": [
+          {
+            "typeKey": "text",
+            "text": "Heading Two"
           }
         ]
       },
@@ -165,29 +197,316 @@
         "content": [
           {
             "typeKey": "text",
-            "text": "paragraph"
-          }
-        ]
-      },
-      {
-        "typeKey": "paragraph",
-        "content": [
-          {
-            "typeKey": "text",
-            "text": "with a "
+            "text": "Intro text leads reader into the article by the nose, with grace and dignity and a little pithy charm. "
           },
           {
             "typeKey": "text",
             "marks": [
               {
-                "typeKey": "strong"
+                "typeKey": "generic-style",
+                "attrs": [
+                  [
+                    "data-style-name",
+                    {
+                      "type": "string",
+                      "string": "bold"
+                    }
+                  ]
+                ]
               }
             ],
-            "text": "bold"
+            "text": "Typeface"
           },
           {
             "typeKey": "text",
-            "text": " word"
+            "text": " has changed to the "
+          },
+          {
+            "typeKey": "text",
+            "marks": [
+              {
+                "typeKey": "generic-style",
+                "attrs": [
+                  [
+                    "data-style-name",
+                    {
+                      "type": "string",
+                      "string": "italic"
+                    }
+                  ]
+                ]
+              }
+            ],
+            "text": "appropriate"
+          },
+          {
+            "typeKey": "text",
+            "text": " optical size by the miracle of modern "
+          },
+          {
+            "typeKey": "text",
+            "marks": [
+              {
+                "typeKey": "generic-style",
+                "attrs": [
+                  [
+                    "data-style-name",
+                    {
+                      "type": "string",
+                      "string": "bold italic"
+                    }
+                  ]
+                ]
+              }
+            ],
+            "text": "typography"
+          },
+          {
+            "typeKey": "text",
+            "text": "."
+          }
+        ]
+      },
+      {
+        "typeKey": "paragraph-2",
+        "content": [
+          {
+            "typeKey": "text",
+            "text": "Johannes Gutenberg’s work on the "
+          },
+          {
+            "typeKey": "text",
+            "marks": [
+              {
+                "typeKey": "generic-style",
+                "attrs": [
+                  [
+                    "data-style-name",
+                    {
+                      "type": "string",
+                      "string": "bold"
+                    }
+                  ]
+                ]
+              }
+            ],
+            "text": "printing press"
+          },
+          {
+            "typeKey": "text",
+            "text": " began in approximately 1436 when he partnered with Andreas Heilmann, owner of a "
+          },
+          {
+            "typeKey": "text",
+            "marks": [
+              {
+                "typeKey": "generic-style",
+                "attrs": [
+                  [
+                    "data-style-name",
+                    {
+                      "type": "string",
+                      "string": "italic"
+                    }
+                  ]
+                ]
+              }
+            ],
+            "text": "paper mill"
+          },
+          {
+            "typeKey": "text",
+            "text": ". Having previously worked as a "
+          },
+          {
+            "typeKey": "text",
+            "marks": [
+              {
+                "typeKey": "generic-style",
+                "attrs": [
+                  [
+                    "data-style-name",
+                    {
+                      "type": "string",
+                      "string": "bold italic"
+                    }
+                  ]
+                ]
+              }
+            ],
+            "text": "goldsmith"
+          },
+          {
+            "typeKey": "text",
+            "text": ", Gutenberg made skillful use of the knowledge of metals he had learned as a craftsman. He was the first to make type from an alloy of lead, tin, and antimony, which was critical for producing durable type that produced high-quality printed books and proved to be much better suited for printing than all other known materials."
+          }
+        ]
+      },
+      {
+        "typeKey": "paragraph-2",
+        "content": [
+          {
+            "typeKey": "text",
+            "text": "Επειδη δε κοινη το των "
+          },
+          {
+            "typeKey": "text",
+            "marks": [
+              {
+                "typeKey": "generic-style",
+                "attrs": [
+                  [
+                    "data-style-name",
+                    {
+                      "type": "string",
+                      "string": "bold"
+                    }
+                  ]
+                ]
+              }
+            ],
+            "text": "Αρκαδων εθνος"
+          },
+          {
+            "typeKey": "text",
+            "text": " εχει τινα παρα πασι τοις "
+          },
+          {
+            "typeKey": "text",
+            "marks": [
+              {
+                "typeKey": "generic-style",
+                "attrs": [
+                  [
+                    "data-style-name",
+                    {
+                      "type": "string",
+                      "string": "italic"
+                    }
+                  ]
+                ]
+              }
+            ],
+            "text": "Ελλησιν"
+          },
+          {
+            "typeKey": "text",
+            "text": " επ αρετη φημην, ου μονον δια ρην εν τοις ηθεσι και βιοις φιλοξενιαν και φιλανθρωπιαν, "
+          },
+          {
+            "typeKey": "text",
+            "marks": [
+              {
+                "typeKey": "generic-style",
+                "attrs": [
+                  [
+                    "data-style-name",
+                    {
+                      "type": "string",
+                      "string": "bold italic"
+                    }
+                  ]
+                ]
+              }
+            ],
+            "text": "μαλιστα δε δια την εις το θειον ευσεβειαν,"
+          },
+          {
+            "typeKey": "text",
+            "text": " αξιον βραχυ διαπορησαι περι της Κυναιθεων αγριοτητος, πως οντες ομολογουμενως Αρκαδες τοσουτο κατ εκεινους τοθς καιπους διηνεγκαν των αλλων Ελληνων ωμοτητι και παρανομια. δοκαυσι δε μοι, διοτι τα καλως υπο των αρχαιων επινενοημενα και φυσικως συντεθεωρημενα περι παντας τους κατοικουντας την Αρκαδιαν, ταυτα δη πρωτοι και μονοι Αρκαδων εγκατελιπον. μουσικην γαρ, την γ αληθως μουσικην, πασι μεν ανθρωποις οφελος ασκειν Αρκασι δε και αναγκαιον. ου γαρ ηγητεον μουσικην, ως Εφορος φησιν εν τω προοιμιω της ολης προγματειας, ουδαμως αρμοζοντα λογον αυτω πιψας, επ απατη και γοητεια παραισηχθαι τοις ανθρωποις, ουδε τους παλαιοθς Κρητων και Λακεδαιμονιων αυλον και ρυθμον εις τον πολεμον αντι σαλπιγγος εικη νομιστεον εισαγαγειν, ουδε τους πρωτους Αρκαδων εις την ολην πολιτειαν την μοθσικην παραλαβειν επι τοσουτον ωστε μη μονον παισιν ουσιν, αλλα ακι νεανισκοις γενομενοις εως τριακοντ ετων κατ αναγκην ουντροφον ποιειν αυτην, ταλλα τοις βιοις οντας αυστηροτατους."
+          }
+        ]
+      },
+      {
+        "typeKey": "paragraph-2",
+        "content": [
+          {
+            "typeKey": "text",
+            "text": "В глубоких и темных водах "
+          },
+          {
+            "typeKey": "text",
+            "marks": [
+              {
+                "typeKey": "generic-style",
+                "attrs": [
+                  [
+                    "data-style-name",
+                    {
+                      "type": "string",
+                      "string": "bold"
+                    }
+                  ]
+                ]
+              }
+            ],
+            "text": "Антарктики"
+          },
+          {
+            "typeKey": "text",
+            "text": " ученые обнаружили "
+          },
+          {
+            "typeKey": "text",
+            "marks": [
+              {
+                "typeKey": "generic-style",
+                "attrs": [
+                  [
+                    "data-style-name",
+                    {
+                      "type": "string",
+                      "string": "italic"
+                    }
+                  ]
+                ]
+              }
+            ],
+            "text": "невероятное"
+          },
+          {
+            "typeKey": "text",
+            "text": " изобилие до сих пор неизвестных видов морской жизни. "
+          },
+          {
+            "typeKey": "text",
+            "marks": [
+              {
+                "typeKey": "generic-style",
+                "attrs": [
+                  [
+                    "data-style-name",
+                    {
+                      "type": "string",
+                      "string": "bold italic"
+                    }
+                  ]
+                ]
+              }
+            ],
+            "text": "Исследователи"
+          },
+          {
+            "typeKey": "text",
+            "text": " открыли более 700 новых видов морских существ в морях, которые раньше считались слишком неблагоприятными для существования большого биологического разнообразия. Эти темные воды буквально кишат стаями хищных губок, свободноплавающих червей, ракообразных и моллюсков. Доклад о новых видах фауны был опубликован в журнале Nature. “То, что раньше считалось пустой бездной, на поверку оказалось динамичной, меняющейся и биологически богатой средой”, - сказала одна из соавторов документа, морской биолог Британского общества исследования Антарктики доктор Кэтрин Линс. “Находка этой сокровищницы морской живности - наш первый шаг на пути к пониманию сложного взаимоотношения глубоких океанов и распределения морской жизни”, - добавила она. Науке это пока неизвестно. Исследование антарктических вод было проведено в рамках проекта Andeep, изучающего биологическое разнообразие глубоководного антарктического дна. Один из ранее неизвестных ракообразных (Cylindrarcturus), найденных в Антарктитке Исследователи не ожидали обнаружить такого разнобразия морской жизни Проект призван заполнить “вакуум знаний” о фауне, населяющей самые глубокие воды Южного океана."
+          }
+        ]
+      },
+      {
+        "typeKey": "paragraph-2",
+        "content": [
+          {
+            "typeKey": "text",
+            "text": "我的征途是星辰大海 \"My Conquest is the Sea of Stars\", a famous sentence in Legend Of The Galactic Heroes"
+          }
+        ]
+      },
+      {
+        "typeKey": "paragraph-2",
+        "content": [
+          {
+            "typeKey": "text",
+            "text": "很久很久以前，在一个遥远的星系 \"A long time ago in a galaxy far, far away\", a famous sentence in Star Wars"
           }
         ]
       }
@@ -201,6 +520,16 @@
           "content": "inline*",
           "group": "block",
           "tag": "h1",
+          "definingAsContext": "1",
+          "definingForContent": "1"
+        }
+      ],
+      [
+        "heading-2",
+        {
+          "content": "inline*",
+          "group": "block",
+          "tag": "h2",
           "definingAsContext": "1",
           "definingForContent": "1"
         }
@@ -220,9 +549,15 @@
         {
           "content": "inline*",
           "group": "block",
-          "tag": "p",
-          "definingAsContext": "0",
-          "definingForContent": "0"
+          "tag": "p"
+        }
+      ],
+      [
+        "paragraph-2",
+        {
+          "content": "inline*",
+          "group": "block",
+          "tag": "p"
         }
       ]
     ],

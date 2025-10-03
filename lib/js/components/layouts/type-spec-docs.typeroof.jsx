@@ -703,8 +703,8 @@ const
         // the root of all typeSpecs
       , ['document', NodeModel]
       , CoherenceFunction.create(
-            ['document', 'typeSpec', 'stylePatchesSource', 'proseMirrorSchema']
-          , function initTypeSpec({typeSpec, document, stylePatchesSource, proseMirrorSchema}) {
+            ['document', 'typeSpec', 'stylePatchesSource', 'proseMirrorSchema', 'nodeSpecToTypeSpec']
+          , function initTypeSpec({typeSpec, document, stylePatchesSource, proseMirrorSchema, nodeSpecToTypeSpec}) {
                 // if typeSpec and document are empty
                 if(document.get('content').size === 0 && typeSpec.get('children').size === 0
                         && stylePatchesSource.size === 0) {
@@ -713,6 +713,7 @@ const
                               , [TypeSpecModel, typeSpec, DEFAULT_STATE.typeSpec]
                               , [StylePatchesMapModel, stylePatchesSource, DEFAULT_STATE.stylePatchesSource]
                               , [ProseMirrorSchemaModel, proseMirrorSchema, DEFAULT_STATE.proseMirrorSchema]
+                              , [NodeSpecToTypeSpecMapModel, nodeSpecToTypeSpec, DEFAULT_STATE.nodeSpecToTypeSpec]
                             ]) {
                         const serializeOptions = Object.assign({}, SERIALIZE_OPTIONS, {format: SERIALIZE_FORMAT_OBJECT})
                       , newItem = deserializeSync(Model, target.dependencies, data, serializeOptions)
