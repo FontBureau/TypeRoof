@@ -5349,12 +5349,13 @@ class UIProseMirrorMenu extends _BaseComponent {
           , oldButtons = Array.from(this._buttonToStyle.keys())
           ;
         this._buttonToStyle.clear();
-        for(const style of allStylesSuperSet) {
+        for(const style of Array.from(allStylesSuperSet).toSorted()) {
             // reusing stuff
             const button = oldButtons.length
                 ? oldButtons.pop()
-                : (<button type="button">{style}</button>)
+                : (<button type="button">{'initial'}</button>)
                 ;
+            button.textContent = style;
             button.disabled = !commonSubSet.has(style);
             this._buttonToStyle.set(button, style);
         }
