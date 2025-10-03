@@ -225,12 +225,6 @@ li.ui_key_moment_controller.active:not(:last-child) {
   stroke-width: 5;
 }
 
-:root {
-  --indicator-padding: 0.2em;
-  --drop-indicator-color: #333;
-  --indentation-width: 0.7em;
-}
-
 .stage-manager_actors > ol:empty::before {
   content: "(empty: drop actor here)";
 }
