@@ -18,6 +18,9 @@
   --transparency-indicator-bg-size: 10px 10px;
   --text-color: #121212;
   --text-color-disabled: #888;
+  --indicator-padding: 0.2em;
+  --drop-indicator-color: #333;
+  --indentation-width: 0.7em;
   --input-border-color: #666;
   --color-danger: darkred;
   --fieldset-border-color: #b7b4b0;
