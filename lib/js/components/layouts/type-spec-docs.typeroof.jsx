@@ -4512,7 +4512,7 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
         if(!this._styleSubscribers.has(domElement))
             return;
         const subscription = this._styleSubscribers.get(domElement);
-        console.log(`${this} unsubscribe`, domElement, domElement.textContent, 'subscription', subscription);
+        console.log(`${this} unsubscribeMark`, domElement, domElement.textContent, 'subscription', subscription);
         this._styleSubscribers.delete(domElement);
         this._deactivateWidget(subscription.widgetWrapper);
     }
@@ -4846,7 +4846,6 @@ class ProseMirror extends _BaseComponent {
               ? pmNode.attrs['unknown-type']
               : pmNode.type.name
           ;
-
         draft.get('typeKey').value = typeName;
         if(pmNode.type.name === 'text') {
             draft.get('text').value = pmNode.text;
@@ -4863,23 +4862,20 @@ class ProseMirror extends _BaseComponent {
         for(const mark of pmNode.marks) {
             const markDraft = marksDraft.constructor.Model.createPrimalDraft(dependencies);
             markDraft.get('typeKey').value = mark.type.name;
-            if(mark.attrs && mark.attrs.length) {
-                const attrsDraft = markDraft.get('attrs');
-                for(const [name, value] of Object.entries(mark.attrs))
-                    attrsDraft.set(name, toMetaModelJSON(value, dependencies));
+            const attrsDraft = markDraft.get('attrs');
+            for(const [name, value] of Object.entries(mark.attrs)) {
+                attrsDraft.set(name, toMetaModelJSON(value, dependencies));
             }
             marksDraft.push(markDraft);
         }
-        if(pmNode.attrs && pmNode.attrs.length) {
-            const attrsDraft = draft.get('attrs');
-            for(const [name, value] of Object.entries(pmNode.attrs)) {
-                if(pmNode.type.name === 'unknown' && name === 'unknown-type'
-                        && typeName !== 'unknown')
-                    // Only skip this value if we actually transferred it
-                    // to the type of the node (typeName).
-                    continue;
-                attrsDraft.set(name, toMetaModelJSON(value, dependencies));
-            }
+        const attrsDraft = draft.get('attrs');
+        for(const [name, value] of Object.entries(pmNode.attrs)) {
+            if(pmNode.type.name === 'unknown' && name === 'unknown-type'
+                    && typeName !== 'unknown')
+                // Only skip this value if we actually transferred it
+                // to the type of the node (typeName).
+                continue;
+            attrsDraft.set(name, toMetaModelJSON(value, dependencies));
         }
         const immutableNode = draft.metamorphose();
         return immutableNode;
