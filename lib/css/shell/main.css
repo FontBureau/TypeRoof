@@ -490,38 +490,33 @@ drag handle
 }
 
 /******************************************************************************
-drop targets
+drop target
 *******************************************************************************/
 
-.waste_basket_drop_target {
-  display: block;
-}
-
-.ui_base_drop_target-main_drop_zone {
-  display: inline-block;
+.ui_base_drop_target {
+  border: 1px dashed darkred;
+  border-radius: 5px;
+  color: darkred;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75em;
+  margin: 1em 0;
+  padding: 0.25em;
 }
 
 .ui_base_drop_target-main_drop_zone::after {
   content: "";
-  font-size: 1.2em;
-  padding: 0.2em;
-  display: inline-block;
 }
 
 .waste_basket_drop_target-main_drop_zone::after {
   content: "🗑️";
 }
 
-.ui_document_segment_typespec-main_drop_zone::after {
-  content: "⌖";
-  outline: 0.1em dashed grey;
-  padding: 0.15em;
-}
-
 .ui_document_element_typespec-receptive,
-.waste_basket_drop_target-receptive .waste_basket_drop_target-main_drop_zone {
-  background: lightyellow;
-  outline: 3pt solid grey;
+.waste_basket_drop_target-receptive {
+  background: #fff;
+  border-style: solid;
 }
 
 /******************************************************************************
