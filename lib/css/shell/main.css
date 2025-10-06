@@ -1483,23 +1483,6 @@ collapsible mixin
   padding: 0.2em;
 }
 
-.typeroof-document {
-  margin-left: 2em;
-}
-
-.typeroof-document-element {
-  line-height: var(--line-height);
-}
-
-/* FIXME: this is temporary, margins need to be
- * a property. However, using the line-height of
- * the element AFTER as the gap-size is a good
- * enough for now runion/automation approach.
- */
-.typeroof-document-element:not(:first-child) {
-  margin-top: var(--line-height);
-}
-
 .ui_type_tools_grid-row {
   display: table-row;
 }
@@ -1649,9 +1632,22 @@ collapsible mixin
     outline: 4px solid red;
     font-family: RobotoFlex, sans-serif;
     margin: 1em 0;
+  }
+}
 
-    strong {
-      font-weight: bold;
-    }
+:is(.ProseMirror, .typeroof-document) {
+  margin-left: 2em;
+
+  * {
+    line-height: var(--line-height);
+  }
+
+/* FIXME: this is temporary, margins need to be
+ * a property. However, using the line-height of
+ * the element AFTER as the gap-size is a good
+ * enough for now runion/automation approach.
+ */
+  > *:not(:first-child) {
+  margin-top: var(--line-height);
   }
 }
