@@ -3636,11 +3636,12 @@ class GenericUpdater extends _BaseComponent {
 // maybe only to receive updates?
 //     styleLinkProperties@
 class UIDocumentTextRun extends _BaseContainerComponent {
-    constructor(widgetBus, zones, originTypeSpecPath) {
+    constructor(widgetBus, zones, originTypeSpecPath, documentRootPath) {
         super(widgetBus, zones);
         this.node = this._domTool.createTextNode('(initializing)');
         this.widgetBus.insertDocumentNode(this.node);
         this._originTypeSpecPath = originTypeSpecPath;
+        this._documentRootPath = documentRootPath;
         this._stylerWrapper = null;
         const widgets = [
             [
@@ -3944,18 +3945,31 @@ class UIDocumentTypeSpecStyler extends _BaseComponent {
 // Interesting how/if insertElement plays along.
 
 class UIDocumentElement extends _BaseContainerComponent {
-    constructor(widgetBus, _zones, originTypeSpecPath, baseClass='typeroof-document-element') {
-        const localContainer = widgetBus.domTool.createElement('div', {'class': `${baseClass}`})
-          , zones = new Map([..._zones, ['local', localContainer]])
-          ;
-
+    constructor(widgetBus, _zones, originTypeSpecPath, documentRootPath, baseClass='typeroof-document-element') {
+        const zones = new Map(_zones);
         super(widgetBus, zones);
+
+        // figure out the ta of the element
+        const current = this.getEntry('.')
+          , typeKey = current.get('typeKey').value
+          , nodeSpecMap = this.getEntry('nodeSpec')
+          ;
+        let tag = 'div';// default
+        if(nodeSpecMap.has(typeKey)) {
+            // FIXME: must update when this.typeKey or nodeSpec[typeKey] changes!
+            const nodeSpec = nodeSpecMap.get(typeKey);
+            tag = nodeSpec.get('tag', {value: tag}).value
+        }
+        const localContainer = widgetBus.domTool.createElement(tag, {'class': `${baseClass}`});
+        zones.set('local', localContainer)
+
         this.node = localContainer;
         localContainer.addEventListener('click', this._handleClick.bind(this));
         this.nodesElement = localContainer;
         this.widgetBus.insertDocumentNode(this.node);
 
         this._originTypeSpecPath = originTypeSpecPath;
+        this._documentRootPath = documentRootPath;
         this._typeSpecStylerWrapper = null;
         const widgets = [
             // [
@@ -3976,6 +3990,7 @@ class UIDocumentElement extends _BaseContainerComponent {
               , this._zones
               , this.nodesElement
               , originTypeSpecPath
+              , documentRootPath
             ]
         ];
         this._initWidgets(widgets);
@@ -3992,18 +4007,7 @@ class UIDocumentElement extends _BaseContainerComponent {
         });
     }
 
-    _getBestTypeSpecPropertiesId() {
-        const typeSpecLink = this.getEntry('typeSpecLink').value
-          , protocolHandlerName = 'typeSpecProperties@'
-          , protocolHandlerImplementation = this.widgetBus.getProtocolHandlerImplementation('typeSpecProperties@', null)
-          ;
-        return _getBestTypeSpecPropertiesId(
-            typeSpecLink,
-            protocolHandlerName,
-            protocolHandlerImplementation,
-            this._originTypeSpecPath
-        );
-    }
+    _getTypeSpecPropertiesId = _getTypeSpecPropertiesIdMethod;
 
     _createTypeSpecStylerWrapper(typeSpecProperties) {
         const settings = {}
@@ -4017,41 +4021,55 @@ class UIDocumentElement extends _BaseContainerComponent {
          return this._initWrapper(this._childrenWidgetBus, settings, dependencyMappings, Constructor, ...args);
     }
 
-    // _provisionWidgets(/* compareResult */) {
-    //     // if typeSpecLink has changed or if typeSpecProperties@ of id: 'type-spec-styler' does not exist
-    //     //       get an existing typeSpecProperties@ for the new value
-    //     //       existing means got back to root. originTypeSpecPath will exist
-    //     //
-    //     // if new typeSpecProperties !== old typeSpecProperties
-    //     //       replace the widget
-    //     //
-    //     const // typeSpecProperties = this._getBestTypeSpecPropertiesId()
-    //       , oldId = this._typeSpecStylerWrapper !== null
-    //             ? this._widgets.indexOf(this._typeSpecStylerWrapper)
-    //             : -1
-    //       ;
-    //     if(oldId === -1) {
-    //         // inital
-    //         this._typeSpecStylerWrapper = this._createTypeSpecStylerWrapper(typeSpecProperties);
-    //         this._widgets.splice(0, 0, this._typeSpecStylerWrapper);
-    //     }
-    //     else {
-    //         const oldWrapper = this._widgets[oldId];
-    //         if(oldWrapper.dependencyReverseMapping.get('typeSpecProperties@') !== typeSpecProperties) {
-    //             const newWrapper = this._createTypeSpecStylerWrapper(typeSpecProperties);
-    //             this._widgets.splice(oldId, 1, newWrapper);
-    //             oldWrapper.destroy()
-    //             this._typeSpecStylerWrapper = newWrapper;
-    //         }
-    //     }
-    //     return super._provisionWidgets();
-    // }
+    _getPathOfTypes() {
+        const pathOfTypes = [];
+        let currentPath = this.widgetBus.rootPath
+        do {
+            const current = this.getEntry(currentPath);
+            pathOfTypes.unshift(current.get('typeKey').value);
+            currentPath = currentPath.parent.parent;
+        }
+        while(currentPath.startsWith(this._documentRootPath));
+        return pathOfTypes;
+    }
+
+    _provisionWidgets(/* compareResult */) {
+        // if typeSpecLink has changed or if typeSpecProperties@ of id: 'type-spec-styler' does not exist
+        //       get an existing typeSpecProperties@ for the new value
+        //       existing means got back to root. originTypeSpecPath will exist
+        //
+        // if new typeSpecProperties !== old typeSpecProperties
+        //       replace the widget
+        //
+        const pathOfTypes = this._getPathOfTypes()
+          , typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes)
+          , oldId = this._typeSpecStylerWrapper !== null
+                ? this._widgets.indexOf(this._typeSpecStylerWrapper)
+                : -1
+          ;
+        if(oldId === -1) {
+            // inital
+            this._typeSpecStylerWrapper = this._createTypeSpecStylerWrapper(typeSpecProperties);
+            this._widgets.splice(0, 0, this._typeSpecStylerWrapper);
+        }
+        else {
+            const oldWrapper = this._widgets[oldId];
+            if(oldWrapper.dependencyReverseMapping.get('typeSpecProperties@') !== typeSpecProperties) {
+                const newWrapper = this._createTypeSpecStylerWrapper(typeSpecProperties);
+                this._widgets.splice(oldId, 1, newWrapper);
+                oldWrapper.destroy()
+                this._typeSpecStylerWrapper = newWrapper;
+            }
+        }
+        return super._provisionWidgets();
+    }
 }
 
 class UIDocumentNode extends _BaseContainerComponent {
-    constructor(widgetBus, zones, originTypeSpecPath) {
+    constructor(widgetBus, zones, originTypeSpecPath, documentRootPath) {
         super(widgetBus, zones);
         this._originTypeSpecPath = originTypeSpecPath;
+        this._documentRootPath = documentRootPath;
         this._currentTypeKey = null;
     }
 
@@ -4072,13 +4090,15 @@ class UIDocumentNode extends _BaseContainerComponent {
         else {// if(typeKey === 'Element') {
             dependencyMappings = [
                 ['./content', 'nodes']
+              , [this.widgetBus.getExternalName('nodeSpec'), 'nodeSpec']
+              , [this.widgetBus.getExternalName('nodeSpecToTypeSpec'), 'nodeSpecToTypeSpec']
             ];
             Constructor = UIDocumentElement;
         }
         //else
         //    throw new Error(`KEY ERROR unknown typeKey: "${typeKey}".`);
 
-        const args = [this._zones, this._originTypeSpecPath]
+        const args = [this._zones, this._originTypeSpecPath, this._documentRootPath]
           , childWidgetBus = this._childrenWidgetBus
           ;
         return this._initWrapper(childWidgetBus, settings, dependencyMappings, Constructor, ...args);
@@ -4110,11 +4130,12 @@ class UIDocumentNode extends _BaseContainerComponent {
 class UIDocumentNodes extends _BaseDynamicMapContainerComponent {
     // important here, as we use the value of each entry in the path
     // of the stylePatchProperties@
-    constructor(widgetBus, zones, nodesElement, originTypeSpecPath) {
+    constructor(widgetBus, zones, nodesElement, originTypeSpecPath, documentRootPath) {
         super(widgetBus, zones);
         this._nodesElement = nodesElement;
         this._nodeSlots = new Map();
         this._originTypeSpecPath = originTypeSpecPath;
+        this._documentRootPath = documentRootPath;
 
         // If I could/would override childWidgetBus.insertElement here, it
         // should be possible to improve management
@@ -4237,9 +4258,11 @@ class UIDocumentNodes extends _BaseDynamicMapContainerComponent {
             }
           , dependencyMappings = [
                 [this.widgetBus.getExternalName('collection'), 'collection']
+              , [this.widgetBus.getExternalName('nodeSpec'), 'nodeSpec']
+              , [this.widgetBus.getExternalName('nodeSpecToTypeSpec'), 'nodeSpecToTypeSpec']
             ]
           , Constructor = UIDocumentNode
-          , args = [this._zones, this._originTypeSpecPath]
+          , args = [this._zones, this._originTypeSpecPath, this._documentRootPath]
           , childWidgetBus = Object.create(this._childrenWidgetBus) // inherit
           ;
         childWidgetBus.nodeKey = key;
@@ -4258,11 +4281,14 @@ class UIDocument extends _BaseContainerComponent {
                 {}
               , [
                     ['content', 'collection']
+                  , [this.widgetBus.getExternalName('nodeSpec'), 'nodeSpec']
+                  , [this.widgetBus.getExternalName('nodeSpecToTypeSpec'), 'nodeSpecToTypeSpec']
                 ]
               , UIDocumentNodes
               , this._zones
               , this.nodesElement
               , originTypeSpecPath
+              , this.widgetBus.rootPath// documentRootPath
             ]
         ];
         this._initWidgets(widgets);
@@ -5678,7 +5704,10 @@ class TypeSpecRampController extends _BaseContainerComponent {
                     zone: 'layout'
                   , relativeRootPath: Path.fromParts('.','document')
                 }
-              , []
+              , [
+                      ['../proseMirrorSchema/nodes', 'nodeSpec']
+                    , ['../nodeSpecToTypeSpec', 'nodeSpecToTypeSpec']
+                ]
               , UIDocument
               , zones
               , originTypeSpecPath
