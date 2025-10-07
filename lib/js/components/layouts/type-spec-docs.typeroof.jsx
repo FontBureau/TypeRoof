@@ -3996,7 +3996,7 @@ class UIDocumentElement extends _BaseContainerComponent {
         zones.set('local', localContainer)
 
         this.node = localContainer;
-        localContainer.addEventListener('click', this._handleClick.bind(this));
+        // localContainer.addEventListener('click', this._handleClick.bind(this));
         this.nodesElement = localContainer;
         this.widgetBus.insertDocumentNode(this.node);
 
@@ -4032,14 +4032,14 @@ class UIDocumentElement extends _BaseContainerComponent {
 
     // Just a transformation of the metamodel document, to
     // see the synchronization of the prosemirror document in action.
-    _handleClick(/*event*/) {
-        this._changeState(()=>{
-            const parent = this.getEntry(this.widgetBus.rootPath.parent)// a 'content' list
-              , key = this.widgetBus.rootPath.parts.at(-1)
-              , self = parent.get(key)
-            parent.splice(key, 0, self);// insert self, i.e. as a copy.
-        });
-    }
+    // _handleClick(/*event*/) {
+    //     this._changeState(()=>{
+    //         const parent = this.getEntry(this.widgetBus.rootPath.parent)// a 'content' list
+    //           , key = this.widgetBus.rootPath.parts.at(-1)
+    //           , self = parent.get(key)
+    //         parent.splice(key, 0, self);// insert self, i.e. as a copy.
+    //     });
+    // }
 
     _getTypeSpecPropertiesId = _getTypeSpecPropertiesIdMethod;
 
@@ -4306,7 +4306,9 @@ class UIDocumentNodes extends _BaseDynamicMapContainerComponent {
     }
 }
 
-class UIDocument extends _BaseContainerComponent {
+// Currently unused, but the way to render a document equivalent
+// to the rendering of ProseMirror, without ProseMirror
+export class UIDocument extends _BaseContainerComponent {
     constructor(widgetBus, zones, originTypeSpecPath, baseClass='typeroof-document') {
         const documentContainer = widgetBus.domTool.createElement('article', {'class': baseClass});
         widgetBus.insertElement(documentContainer);
@@ -5732,19 +5734,19 @@ class TypeSpecRampController extends _BaseContainerComponent {
               , StylePatchPropertiesManager
               , new Map([...zones, ['main', stylePatchesManagerContainer]])
             ]
-          , [
-                {
-                    zone: 'layout'
-                  , relativeRootPath: Path.fromParts('.','document')
-                }
-              , [
-                      ['../proseMirrorSchema/nodes', 'nodeSpec']
-                    , ['../nodeSpecToTypeSpec', 'nodeSpecToTypeSpec']
-                ]
-              , UIDocument
-              , zones
-              , originTypeSpecPath
-            ]
+        //  , [
+        //        {
+        //            zone: 'layout'
+        //          , relativeRootPath: Path.fromParts('.','document')
+        //        }
+        //      , [
+        //              ['../proseMirrorSchema/nodes', 'nodeSpec']
+        //            , ['../nodeSpecToTypeSpec', 'nodeSpecToTypeSpec']
+        //        ]
+        //      , UIDocument
+        //      , zones
+        //      , originTypeSpecPath
+        //    ]
           , [
                 {}
               , []
