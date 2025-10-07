@@ -3665,7 +3665,7 @@ class UIDocumentTextRun extends _BaseContainerComponent {
               ;
             if(this.node.nodeType === Node.TEXT_NODE)
                 this.node.data = text;
-            else // it's an elements
+            else // it's an element
                 this.node.textContent = text;
         }
     }
@@ -3691,14 +3691,8 @@ class UIDocumentTextRun extends _BaseContainerComponent {
     //     return null;
     // }
 
-    _getBestTypeSpecPropertiesId=UIDocumentElement.prototype._getBestTypeSpecPropertiesId;
-
-    _getBestTypeSpecPath() {
-        const typeSpecPropertiesId = this._getBestTypeSpecPropertiesId()
-          , typeSpecPath = typeSpecPropertiesId.slice(typeSpecPropertiesId.indexOf('@') + 1)
-          ;
-        return typeSpecPath;
-    }
+    _getTypeSpecPropertiesId = _getTypeSpecPropertiesIdMethod;
+    _getPathOfTypes = UIDocumentElement.prototype._getPathOfTypes;
 
     _swapNode(newNode) {
         if(this.node.parentElement)
@@ -3713,14 +3707,16 @@ class UIDocumentTextRun extends _BaseContainerComponent {
         this._swapNode(textNode);
     }
 
-    _setNodeToElement() {
+    _setNodeToElement(styleName) {
         const text =  this.getEntry('text').value
           , element = this._domTool.createElement('span', {}, text);
           ;
+        if(styleName !== null)
+            element.setAttribute('data-style-name', styleName);
         this._swapNode(element);
     }
 
-    _createStylerWrapper(styleLinkProperties) {
+    _createStylerWrapper(styleLinkProperties, styleName=null) {
         const {Node} = this._domTool.window;
         if(styleLinkProperties === null) {
             // node to textNode
@@ -3735,7 +3731,7 @@ class UIDocumentTextRun extends _BaseContainerComponent {
         // ALSO: the tag will probably become determined via the style...
         // a callback from the styler could do the trick!
         if(this.node.nodeType !== Node.ELEMENT_NODE)
-            this._setNodeToElement();
+            this._setNodeToElement(styleName);
 
         // node to element
         const settings = {}
@@ -3749,33 +3745,69 @@ class UIDocumentTextRun extends _BaseContainerComponent {
         return this._initWrapper(this._childrenWidgetBus, settings, dependencyMappings, Constructor, ...args);
     }
 
-    // _provisionWidgets(/* compareResult */) {
-    //     const styleLinkProperties = this._getStyleLinkProperties()
-    //       , oldId = this._stylerWrapper !== null
-    //             ? this._widgets.indexOf(this._stylerWrapper)
-    //             : -1
-    //       ;
-    //
-    //     if(oldId === -1) {
-    //         // inital
-    //         this._stylerWrapper = this._createStylerWrapper(styleLinkProperties);
-    //         if(this._stylerWrapper !== null)
-    //             this._widgets.splice(0, 0, this._stylerWrapper);
-    //     }
-    //     else {
-    //         const oldWrapper = this._widgets[oldId];
-    //         if(oldWrapper.dependencyReverseMapping.get('styleLinkProperties@') !== styleLinkProperties) {
-    //             const newWrapper = this._createStylerWrapper(styleLinkProperties);
-    //             if(newWrapper === null)
-    //                 this._widgets.splice(oldId, 1);
-    //             else
-    //                 this._widgets.splice(oldId, 1, newWrapper);
-    //             oldWrapper.destroy();
-    //             this._stylerWrapper = newWrapper;
-    //         }
-    //     }
-    //     return super._provisionWidgets();
-    // }
+    _getStyleLinkPropertiesId(typeSpecPropertiesPath, styleLink) {
+        const styleLinkPropertiesId = `styleLinkProperties@${typeSpecPropertiesPath.append('stylePatches', styleLink)}`
+           , protocolHandlerImplementation = this.widgetBus.getProtocolHandlerImplementation('styleLinkProperties@', null)
+           ;
+         if(protocolHandlerImplementation === null)
+             throw new Error(`KEY ERROR ProtocolHandler for identifier "styleLinkProperties@" not found.`);
+         // check if styleLinkPropertiesId exists, otherwise return null
+         if(protocolHandlerImplementation.hasRegistered(styleLinkPropertiesId))
+             return styleLinkPropertiesId;
+        return null;
+        // throw new Error(`KEY ERROR styleLinkPropertiesId "${styleLinkPropertiesId}" not found in styleLinkProperties@.`);
+    }
+
+    _getStyleName(node) {
+        const marksList = node.get('marks');
+        for(const mark of marksList.value) {
+            const markType = mark.get('typeKey').value
+            if(markType !== 'generic-style')
+                continue;
+            const attrs = mark.get('attrs');
+            if(!attrs.has('data-style-name'))
+                continue;
+            const styleNameAttr = attrs.get('data-style-name');
+            if(styleNameAttr.get('type').value !== 'string')
+                continue;
+            return styleNameAttr.get('string').value
+        }
+        return null;
+    }
+
+     _provisionWidgets(...args/* compareResult */) {
+              // 0, -1: don't include the current "text" type
+        const pathOfTypes = this._getPathOfTypes(this.widgetBus.rootPath).slice(0, -1)
+          , typeSpecPropertiesPath = this._getTypeSpecPropertiesId(pathOfTypes, true/*asPath*/)
+          , node = this.getEntry('.')
+          , styleName = this._getStyleName(node)
+          , styleLinkPropertiesId = styleName === null
+                ? null
+                : this._getStyleLinkPropertiesId(typeSpecPropertiesPath, styleName)
+          ,  oldId = this._stylerWrapper !== null
+                ? this._widgets.indexOf(this._stylerWrapper)
+                : -1
+          ;
+        if(oldId === -1) {
+            // inital
+            this._stylerWrapper = this._createStylerWrapper(styleLinkPropertiesId, styleName);
+            if(this._stylerWrapper !== null)
+                this._widgets.splice(0, 0, this._stylerWrapper);
+        }
+        else {
+            const oldWrapper = this._widgets[oldId];
+            if(oldWrapper.dependencyReverseMapping.get('styleLinkProperties@') !== styleLinkPropertiesId) {
+                const newWrapper = this._createStylerWrapper(styleLinkPropertiesId, styleName);
+                if(newWrapper === null)
+                    this._widgets.splice(oldId, 1);
+                else
+                    this._widgets.splice(oldId, 1, newWrapper);
+                oldWrapper.destroy();
+                this._stylerWrapper = newWrapper;
+            }
+        }
+        return super._provisionWidgets(...args);
+    }
 }
 
 export class UIDocumentElementTypeSpecDropTarget extends _BaseDropTarget {
@@ -3985,6 +4017,8 @@ class UIDocumentElement extends _BaseContainerComponent {
                 {}
               , [
                     ['./content', 'collection']
+                  , [this.widgetBus.getExternalName('nodeSpec'), 'nodeSpec']
+                  , [this.widgetBus.getExternalName('nodeSpecToTypeSpec'), 'nodeSpecToTypeSpec']
                 ]
               , UIDocumentNodes
               , this._zones
@@ -4021,9 +4055,9 @@ class UIDocumentElement extends _BaseContainerComponent {
          return this._initWrapper(this._childrenWidgetBus, settings, dependencyMappings, Constructor, ...args);
     }
 
-    _getPathOfTypes() {
+    _getPathOfTypes(localPath) {
         const pathOfTypes = [];
-        let currentPath = this.widgetBus.rootPath
+        let currentPath = localPath;
         do {
             const current = this.getEntry(currentPath);
             pathOfTypes.unshift(current.get('typeKey').value);
@@ -4041,7 +4075,7 @@ class UIDocumentElement extends _BaseContainerComponent {
         // if new typeSpecProperties !== old typeSpecProperties
         //       replace the widget
         //
-        const pathOfTypes = this._getPathOfTypes()
+        const pathOfTypes = this._getPathOfTypes(this.widgetBus.rootPath)
           , typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes)
           , oldId = this._typeSpecStylerWrapper !== null
                 ? this._widgets.indexOf(this._typeSpecStylerWrapper)
@@ -4084,6 +4118,8 @@ class UIDocumentNode extends _BaseContainerComponent {
         if(typeKey === 'text') {
             dependencyMappings = [
                 'text'
+              , [this.widgetBus.getExternalName('nodeSpec'), 'nodeSpec']
+              , [this.widgetBus.getExternalName('nodeSpecToTypeSpec'), 'nodeSpecToTypeSpec']
             ];
             Constructor = UIDocumentTextRun;
         }
@@ -4408,7 +4444,6 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
           , widgetWrapper = this._createStyleStylerWrapper(styleLinkPropertiesId, domElement)
           ;
         // DO SOMETHING!
-        console.log(`${this}._finalizeMarkSubscription SUBSCRIPTION COMPLETE`, mark.type.name, domElement.textContent, styleLinkPropertiesId);
         this._styleSubscribers.set(domElement, {
             widgetWrapper
           , mark
@@ -4512,8 +4547,6 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
         // trigger an initial update would be to create a DOMObserver
         // We need the position in the DOM to find out what the parent
         // type and thus TypeSpec is.
-        console.log(`${this} subscribeMark`, domElement, mark.type.name, domElement.textContent, 'parent:', domElement.parentElement, 'this._newlySubscribedMarks.size', this._newlySubscribedMarks.size);
-
         if(this._newlySubscribedMarks.size === 0) {
             const observerOptions = {
                     childList: true,
