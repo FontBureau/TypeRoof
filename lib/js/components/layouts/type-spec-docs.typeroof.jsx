@@ -3735,11 +3735,15 @@ class UIDocumentTextRun extends _BaseContainerComponent {
 
         // node to element
         const settings = {}
-          , dependencyMappings = [
-                [styleLinkProperties, 'properties@']
-              , ['/font', 'rootFont']
-            ]
-          , Constructor = UIDocumentStyleStyler
+          , dependencyMappings = styleLinkProperties === null
+                  ? []
+                  : [
+                        [styleLinkProperties, 'properties@']
+                      , ['/font', 'rootFont']
+                    ]
+          , Constructor = styleLinkProperties === null
+                ? UIDocumentUnkownStyleStyler
+                : UIDocumentStyleStyler
           , args = [this.node]
           ;
         return this._initWrapper(this._childrenWidgetBus, settings, dependencyMappings, Constructor, ...args);
@@ -3837,13 +3841,25 @@ export class UIDocumentElementTypeSpecDropTarget extends _BaseDropTarget {
     }
 }
 
-
-
+class UIDocumentUnkownStyleStyler extends  _BaseComponent {
+    _CLASS = 'unknown-style';
+    constructor(widgetBus, element) {
+        super(widgetBus);
+        this.element = element;
+        this.element.classList.add(this._CLASS);
+    }
+    destroy() {
+        this.element.classList.remove(this._CLASS);
+    }
+}
 
 class UIDocumentStyleStyler extends _BaseComponent {
     constructor(widgetBus, element) {
         super(widgetBus);
         this.element = element;
+    }
+    destroy() {
+        this.element.style = '';
     }
     update(changedMap) {
         const propertiesData = [
@@ -4395,7 +4411,6 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
     constructor(widgetBus, zones, originTypeSpecPath) {
         super(widgetBus, zones);
         this._originTypeSpecPath = originTypeSpecPath;
-        this._viewDomObserver = null;
         this._subscribers = new Map();
 
         this._newlySubscribedMarks = new Map();
@@ -4424,39 +4439,61 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
          // check if styleLinkPropertiesId exists, otherwise return null
          if(protocolHandlerImplementation.hasRegistered(styleLinkPropertiesId))
              return styleLinkPropertiesId;
-         throw new Error(`KEY ERROR styleLinkPropertiesId "${styleLinkPropertiesId}" not found in styleLinkProperties@.`);
+        return null
+        // throw new Error(`KEY ERROR styleLinkPropertiesId "${styleLinkPropertiesId}" not found in styleLinkProperties@.`);
     }
 
     _createStyleStylerWrapper(styleLinkProperties, domElemment) {
         const settings = {}
-          , dependencyMappings = [
-                [styleLinkProperties, 'properties@']
-              , ['/font', 'rootFont']
-            ]
-          , Constructor = UIDocumentStyleStyler
+          , dependencyMappings = styleLinkProperties === null
+                  ? []
+                  : [
+                        [styleLinkProperties, 'properties@']
+                      , ['/font', 'rootFont']
+                    ]
+          , Constructor = styleLinkProperties === null
+                ? UIDocumentUnkownStyleStyler
+                : UIDocumentStyleStyler
           , args = [domElemment]
           ;
         return this._initWrapper(this._childrenWidgetBus, settings, dependencyMappings, Constructor, ...args);
     }
 
-    _finalizeMarkSubscription(domElement, mark) {
-        const parentSubscription = this._subscribers.get(domElement.parentElement)
-            // FIXME: Should probably monitor the original typeSpec to see when the styleLinks change.
-          , styleLinkPropertiesId = this._getStyleLinkPropertiesId(parentSubscription.typeSpecProperties, mark.attrs['data-style-name'])
-          , widgetWrapper = this._createStyleStylerWrapper(styleLinkPropertiesId, domElement)
+    _createStyleSubscription(domElement, parentSubscription, mark, styleLinkPropertiesId=null) {
+              // if styleLinkPropertiesId === null
+        const widgetWrapper = this._createStyleStylerWrapper(styleLinkPropertiesId, domElement)
           ;
-        // DO SOMETHING!
-        this._styleSubscribers.set(domElement, {
+        return {
             widgetWrapper
           , mark
           , styleLinkPropertiesId
-          , parentSubscription // FIXME!
-        });
-        this._activateWidget(widgetWrapper);
+          , parentSubscription // only used in _unregisterStyleSubscription
+        };
+    }
+
+    _registerStyleSubscription(domElement, parentSubscription, styleSubscription) {
+        this._styleSubscribers.set(domElement, styleSubscription);
+        parentSubscription.styles.add(domElement);
+    }
+
+    _unregisterStyleSubscription(domElement) {
+        if(!this._styleSubscribers.has(domElement))
+            return;
+        const { parentSubscription } = this._styleSubscribers.get(domElement);
+        this._styleSubscribers.delete(domElement);
+        parentSubscription.styles.delete(domElement);
+    }
+
+    _finalizeMarkSubscription(domElement, mark) {
+        const parentSubscription = this._subscribers.get(domElement.parentElement)
+          , styleLinkPropertiesId = this._getStyleLinkPropertiesId(parentSubscription.typeSpecProperties, mark.attrs['data-style-name'])
+          , styleSubscription = this._createStyleSubscription(domElement, parentSubscription, mark, styleLinkPropertiesId)
+          ;
+        this._registerStyleSubscription(domElement, parentSubscription, styleSubscription);
+        this._updateDOM(()=>this._activateWidget(styleSubscription.widgetWrapper));
     }
 
     _checkNewlySubscribedMarks(mutations_) {
-        console.log(`${this}._checkNewlySubscribedMarks`, mutations_);
         const mutations = Array.from(mutations_);
         while(mutations.length) {
             if(this._newlySubscribedMarks.size === 0) {
@@ -4480,7 +4517,6 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
                     const mark = this._newlySubscribedMarks.get(node);
                     this._newlySubscribedMarks.delete(node);
                     this._finalizeMarkSubscription(node, mark);
-
                 }
             }
         }
@@ -4517,8 +4553,9 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
             widgetWrapper
           , pathOfTypes
           , typeSpecProperties
+          , styles: new Set()
         });
-        this._activateWidget(widgetWrapper);
+         this._updateDOM(()=>this._activateWidget(widgetWrapper));
     }
 
     _activateWidget(widgetWrapper) {
@@ -4528,7 +4565,7 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
           , changedMap = widgetWrapper.getChangedMapFromCompareResult(true /*requiresFullInitialUpdate*/, _compareResult)
           ;
         if(changedMap.size)
-            this._updateDOM(()=>widgetWrapper.widget.update(changedMap));
+            widgetWrapper.widget.update(changedMap);
     }
 
     _deactivateWidget(widgetWrapper) {
@@ -4538,9 +4575,29 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
 
     unsubscribe(domElement) {
         const subscription = this._subscribers.get(domElement);
-        console.log(`${this} unsubscribe`, domElement, 'subscription', subscription);
         this._subscribers.delete(domElement);
-        this._deactivateWidget(subscription.widgetWrapper);
+        this._updateDOM(()=>this._deactivateWidget(subscription.widgetWrapper));
+
+        // Edge-Case:
+        // When a node-type is changed e.g. from "paragraph-1" to "heading-3",
+        // it's interesting that the `subscribe` of heading-3 is called before
+        // the unsubscribe of the domElement of the "paragraph-1" node.
+        // When paragraph-1 is finally unsubscribed, it's marks are still
+        // contained in the element, although, they will get re-used.
+        for(const styleDOMElement of subscription.styles) {
+            const { mark } = this._styleSubscribers.get(styleDOMElement);
+            // clean up
+            this.unsubscribeMark(styleDOMElement);
+            // re-subscribe
+            // This puts the mark into this._newlySubscribedMarks, where
+            // it waits for _checkNewlySubscribedMarks via the MutationObserver.
+            // However, we don't know yet, if the styleDOMElement is going
+            // to be moved to a new node! `unsubscribeMark` is aware of
+            // this._newlySubscribedMarks and if this mark actually gets
+            // unsubscribed via ProseMirror mirror eventually,
+            // this._newlySubscribedMarks will get cleaned up.
+            this.subscribeMark(styleDOMElement, mark);
+        }
     }
 
     subscribeMark(domElement, mark) {
@@ -4574,9 +4631,8 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
         if(!this._styleSubscribers.has(domElement))
             return;
         const subscription = this._styleSubscribers.get(domElement);
-        console.log(`${this} unsubscribeMark`, domElement, domElement.textContent, 'subscription', subscription);
-        this._styleSubscribers.delete(domElement);
-        this._deactivateWidget(subscription.widgetWrapper);
+        this._unregisterStyleSubscription(domElement);
+        this._updateDOM(()=>this._deactivateWidget(subscription.widgetWrapper));
     }
 
     initialUpdate() {
@@ -4588,8 +4644,14 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
         const requiresFullInitialUpdate = new Set()
           , changedMap = this._getChangedMapFromCompareResult(compareResult)
           ;
-        if(!changedMap.has('nodeSpecToTypeSpec'))
+        if(!changedMap.has('nodeSpecToTypeSpec') && !changedMap.has('typeSpec'))
             return requiresFullInitialUpdate;
+
+        // Here are some edge-cases we need to cover here:
+        // - When a used typeSpec e.g. get's move. here doc/paragraph-2
+        //   to docs/paragraph-1/paragraph-2
+        // - When a used stylePatches link e.g. "italic" is renamed e.g. to "italicx"
+        const requiresUpdate = new Map();
         for(const [domElement, subscription] of this._subscribers) {
              const typeSpecProperties = this._getTypeSpecPropertiesId(subscription.pathOfTypes);
              if(typeSpecProperties === subscription.typeSpecProperties)
@@ -4603,6 +4665,39 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
             subscription.typeSpecProperties = typeSpecProperties;
             subscription.widgetWrapper = widgetWrapper;
             requiresFullInitialUpdate.add(widgetWrapper);
+
+            for(const styleDOMElement of Array.from(subscription.styles)) {
+                const oldStyleSubscription = this._styleSubscribers.get(styleDOMElement)
+                  , styleLinkPropertiesId = this._getStyleLinkPropertiesId(subscription.typeSpecProperties, oldStyleSubscription.mark.attrs['data-style-name'])
+                  ;
+                requiresUpdate.set(styleDOMElement, [subscription, oldStyleSubscription, styleLinkPropertiesId]);
+            }
+        }
+        // look for required updates in the rest of the this._styleSubscribers
+        for(const [styleDOMElement, styleSubscription] of this._styleSubscribers) {
+            if(requiresUpdate.has(styleDOMElement))
+                continue
+            const { parentSubscription, mark } = styleSubscription
+              , styleLinkPropertiesId = this._getStyleLinkPropertiesId(parentSubscription.typeSpecProperties, mark.attrs['data-style-name'])
+              ;
+            if(styleLinkPropertiesId === styleSubscription.styleLinkPropertiesId)
+                continue;
+             requiresUpdate.set(styleDOMElement, [parentSubscription, styleSubscription, styleLinkPropertiesId]);
+        }
+
+        for(const [styleDOMElement,  [parentSubscription, oldStyleSubscription, styleLinkPropertiesId]] of requiresUpdate) {
+            const styleSubscription = this._createStyleSubscription(styleDOMElement, parentSubscription, oldStyleSubscription.mark, styleLinkPropertiesId)
+               , { widgetWrapper } = styleSubscription
+               ;
+            this._destroyWidget(oldStyleSubscription.widgetWrapper);
+            this._widgets.splice(this._widgets.indexOf(oldStyleSubscription.widgetWrapper), 1, widgetWrapper);
+            this._createWidget(widgetWrapper);
+            requiresFullInitialUpdate.add(widgetWrapper);
+            // unregister not required, as _registerStyleSubscription will reset all used fields
+            // this._unregisterStyleSubscription(styleDOMElement, parentSubscription)
+            //              this._styleSubscribers.set(domElement, styleSubscription);
+            //              parentSubscription.styles.add(domElement);
+            this._registerStyleSubscription(styleDOMElement, parentSubscription, styleSubscription);
         }
         return requiresFullInitialUpdate;
     }
@@ -4615,20 +4710,26 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
      * which is a lot of overhead and absolutely not needed. by stopping
      * the domObserver, prosemirror is not aware of these changes.
      */
+     _viewDomObserver = null;
+     _updateDOMContext = false;
     _updateDOM(fn) {
         if(this._viewDomObserver === null)
             this._viewDomObserver = this.widgetBus.getWidgetById('proseMirror').view.domObserver;
+        if(this._viewDomObserverIsStoppped)
+             return fn();
         this._viewDomObserver.stop();
+        this._updateDOMContext = true;
         try {
-            fn();
+            return fn();
         }
         finally {
             this._viewDomObserver.start();
+            this._updateDOMContext = false;
         }
     }
 
-    _update(...args) {
-        this._updateDOM(()=>super._update(...args));
+    update(...args) {
+        this._updateDOM(()=>super.update(...args));
     }
 }
 
@@ -5246,6 +5347,7 @@ class ProseMirrorContext extends _BaseContainerComponent {
                 {id: 'typeSpecSubscriptionsRegistry'}
               , [
                     'nodeSpecToTypeSpec'
+                  , 'typeSpec'
                 ]
               , TypeSpecSubscriptions
               , zones
