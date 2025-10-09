@@ -1633,6 +1633,23 @@ collapsible mixin
     font-family: RobotoFlex, sans-serif;
     margin: 1em 0;
   }
+
+  .unknown-style {
+    font-family: RobotoFlex, sans-serif;
+    color: black;
+    background: deeppink;
+    text-decoration-style: solid;
+    text-decoration-thickness: 1.5pt;
+    text-decoration-color: deeppink;
+    text-decoration-skip-ink: none;
+    text-decoration-line: underline;
+  }
+
+  .unknown-style::before {
+    content: " (UNKOWN STYLE: " attr(data-style-name) ") ";
+    color: black;
+    background: white;
+  }
 }
 
 :is(.ProseMirror, .typeroof-document) {
@@ -1648,6 +1665,6 @@ collapsible mixin
  * enough for now runion/automation approach.
  */
   > *:not(:first-child) {
-  margin-top: var(--line-height);
+    margin-top: var(--line-height);
   }
 }
