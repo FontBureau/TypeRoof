@@ -5443,8 +5443,8 @@ class UIProseMirrorMenu extends _BaseComponent {
           , blocksContainer = container.querySelector('.ui_prose_mirror_menu-blocks')
           ;
         this._insertElement(container);
-        stylesContainer.addEventListener('click', this._stylesClickHandler.bind(this));
-        blocksContainer.addEventListener('click', this._blocksClickHandler.bind(this));
+        stylesContainer.addEventListener('pointerdown', this._stylesClickHandler.bind(this));
+        blocksContainer.addEventListener('pointerdown', this._blocksClickHandler.bind(this));
         // send a command
         // command = toggleMark(schema.marks.strong)
         // command(this._editorView.state, this._editorView.dispatch, this._editorView)
@@ -5454,6 +5454,8 @@ class UIProseMirrorMenu extends _BaseComponent {
     _stylesClickHandler(event) {
         if(!this._buttonToStyle.has(event.target) || !this._editorView)
             return;
+        event.preventDefault();
+        this._editorView.focus();// important to keep the selection alive
         console.log(`${this}._stylesClickHandler`, this._buttonToStyle.get(event.target), event.target);
         const styleName = this._buttonToStyle.get(event.target)
           , {dispatch, state} = this._editorView
@@ -5478,7 +5480,8 @@ class UIProseMirrorMenu extends _BaseComponent {
     _blocksClickHandler(event) {
         if(!this._buttonToBlock.has(event.target) || !this._editorView)
             return;
-
+        event.preventDefault();
+        this._editorView.focus();// important to keep the selection alive
         const nodeTypeName = this._buttonToBlock.get(event.target)
           , {dispatch, state} = this._editorView
           , nodeType = state.schema.nodes[nodeTypeName];
