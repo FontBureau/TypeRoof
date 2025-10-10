@@ -4613,9 +4613,13 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
                     childList: true,
                     subtree: true,
                 }
-              , container = this.widgetBus.getWidgetById('proseMirror').element
+              , proseMirrorComponent = this.widgetBus.getWidgetById('proseMirror', null)
               ;
-            this._marksDomObserver.observe(container, observerOptions);
+            if(proseMirrorComponent === null)
+                // This case happens during destroy, when "proseMirror"
+                // does already not exist anymore.
+                return;
+            this._marksDomObserver.observe(proseMirrorComponent.element, observerOptions);
         }
         this._newlySubscribedMarks.set(domElement, mark);
     }
@@ -4797,7 +4801,7 @@ class ProsemirrorNodeView {
     //     return true;
     // }
     destroy() {
-        this.widgetBus.getWidgetById('typeSpecSubscriptionsRegistry').unsubscribe(this._stylerDOM);
+        this.widgetBus.getWidgetById('typeSpecSubscriptionsRegistry', null)?.unsubscribe(this._stylerDOM);
     }
 }
 
@@ -4839,7 +4843,7 @@ class ProseMirrorMenuView {
         this.widgetBus.getWidgetById('proseMirrorMenu').updateView(view, prevState);
     }
     destroy() {
-        this.widgetBus.getWidgetById('proseMirrorMenu').destroyView();
+        this.widgetBus.getWidgetById('proseMirrorMenu', null)?.destroyView();
     }
 }
 
@@ -4881,6 +4885,11 @@ class ProseMirror extends _BaseComponent {
             //}
             view:(editorView)=>new ProseMirrorMenuView(this._childrenWidgetBus, editorView)
         });
+    }
+
+    destroy() {
+        if(this.view && !this.view.isDestroyed)
+            this.view.destroy();
     }
 
     _initProseMirrorView(element) {
