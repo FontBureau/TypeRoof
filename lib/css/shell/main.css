@@ -200,10 +200,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
 
 .stage-manager_actors ol {
   list-style: none;
-  padding-inline-start: 0;
-}
-
-.stage-manager_actors > ol {
+  margin: 0;
   padding-inline-start: 0;
 }
 
@@ -223,12 +220,6 @@ li.ui_key_moment_controller.active:not(:last-child) {
 .ui_actor_time_control_circle
   :is(.ui_time_control_circle-track, .ui_time_control_circle-hand) {
   stroke-width: 5;
-}
-
-:root {
-  --indicator-padding: 0.2em;
-  --drop-indicator-color: #333;
-  --indentation-width: 0.7em;
 }
 
 .stage-manager_actors > ol:empty::before {
@@ -303,21 +294,42 @@ li.ui_key_moment_controller.active:not(:last-child) {
   background: var(--list-item-even-bg);
 }
 
-.stage-manager_actors li:last-child > ol {
-  /* Only for layer (container) items
-     * This way there's a drop zone to insert the drop after the li.
-     */
-  padding-bottom: 0.1em;
+/******************************************************************************
+stage manager actors (document manager)
+*******************************************************************************/
+
+.stage-manager_actors {
+  border: 1px solid #999;
+  margin: 1em 0;
 }
 
 .stage-manager_actors li {
-  padding: calc(var(--indicator-padding) * 0.5) 0;
+  padding: var(--indicator-padding) 0;
 }
 
 .stage-manager_actors li > :first-child {
   margin-inline-start: calc(
-    var(--indentation-width, 1em) * var(--structural-depth, 0)
+    var(--indentation-width, 1em) * var(--structural-depth, 0) + 0.25em
   );
+}
+
+.stage-manager_actors li:last-child > ol {
+  /* Only for layer (container) items
+   * This way there's a drop zone to insert the drop after the li.
+   */
+  padding-bottom: 0.1em;
+}
+
+.stage-manager_actors li > * {
+  vertical-align: middle;
+  /* stylelint-disable-next-line declaration-property-value-no-unknown */
+  vertical-align: -webkit-baseline-middle;
+}
+
+.stage-manager_actors button {
+  background: none;
+  border: 0;
+  padding: 0 0.5em;
 }
 
 :is(
@@ -449,12 +461,6 @@ li.ui_key_moment_controller.active:not(:last-child) {
   padding: 0;
 }
 
-.stage-manager_actors li > * {
-  vertical-align: middle;
-  /* stylelint-disable-next-line declaration-property-value-no-unknown */
-  vertical-align: -webkit-baseline-middle;
-}
-
 /******************************************************************************
 drag handle
 *******************************************************************************/
@@ -462,7 +468,7 @@ drag handle
 .drag_handle {
   display: inline-block;
   font-size: 1.1em;
-  padding: 0.1em 0.25em;
+  padding: 0.05em 0.25em;
   background-color: var(--button-bg-color);
   box-shadow: rgb(43 43 43 / 8%) 0 0 0.1875rem;
   border: 1px solid var(--button-border-color);
@@ -483,38 +489,39 @@ drag handle
   cursor: grabbing;
 }
 
-.waste_basket_drop_target {
-  display: block;
-}
+/******************************************************************************
+drop target
+*******************************************************************************/
 
-/**************************************************************************** */
-
-.ui_base_drop_target-main_drop_zone {
-  display: inline-block;
+.ui_base_drop_target {
+  border: 1px dashed darkred;
+  border-radius: 5px;
+  color: darkred;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75em;
+  margin: 1em 0;
+  padding: 0.25em;
 }
 
 .ui_base_drop_target-main_drop_zone::after {
   content: "";
-  font-size: 1.2em;
-  padding: 0.2em;
-  display: inline-block;
 }
 
 .waste_basket_drop_target-main_drop_zone::after {
   content: "🗑️";
 }
 
-.ui_document_segment_typespec-main_drop_zone::after {
-  content: "⌖";
-  outline: 0.1em dashed grey;
-  padding: 0.15em;
+.ui_document_element_typespec-receptive,
+.waste_basket_drop_target-receptive {
+  background: #fff;
+  border-style: solid;
 }
 
-.ui_document_element_typespec-receptive,
-.waste_basket_drop_target-receptive .waste_basket_drop_target-main_drop_zone {
-  background: lightyellow;
-  outline: 3pt solid grey;
-}
+/******************************************************************************
+color patch
+*******************************************************************************/
 
 .ui_color_patch {
   position: relative;
@@ -579,66 +586,59 @@ drag handle
   padding-left: 2em;
 }
 
+/******************************************************************************
+processed properties
+*******************************************************************************/
+
+.ui-show_processed_properties {
+  font-variation-settings: "wdth" 50;
+  margin: 1.5em 0;
+}
+
+.ui-show_processed_properties h4 {
+  background-color: #fff;
+  border: 1px solid #999;
+  margin: 0;
+  margin-top: -1px;
+  margin-bottom: -1px;
+  padding: 0.5em;
+}
+
 .ui-show_processed_properties-list {
+  background-color: #fff;
+  box-sizing: border-box;
+  display: table;
+  border-collapse: collapse;
+  margin: 0 !important;
   padding: 0;
-  list-style: inside none;
+  table-layout: fixed;
+  width: 100%;
 }
 
-.ui-show_processed_properties-item:nth-child(even) {
-  background: var(--list-item-even-bg);
+.ui-show_processed_properties-item {
+  display: table-row;
 }
 
-.ui-show_processed_properties-item:nth-child(odd) {
-  background: var(--list-item-odd-bg);
+.ui-show_processed_properties-label,
+.ui-show_processed_properties-value {
+  display: table-cell;
+  border: 1px solid #999;
+  padding: 0.5em;
+  overflow-wrap: break-word;
+}
+
+.ui-show_processed_properties-label {
+  width: 65%;
 }
 
 .ui-show_processed_properties-value {
   font-weight: bold;
+  width: 35%;
 }
 
-.ui-show_processed_properties-value-color_patch {
-  display: inline-block;
-}
-
-.ui-show_processed_properties-item-type_color,
-.ui-show_processed_properties-item-type_text {
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.ui-show_processed_properties-item-type_color:hover,
-.ui-show_processed_properties-item-type_text:hover {
-  white-space: initial;
-}
-
-.ui-show_processed_properties-item-type_color:hover {
-  overflow: initial;
-}
-
-.ui-show_processed_properties-item-type_color:hover
-  .ui-show_processed_properties-value-text,
-.ui-show_processed_properties-item-type_text:hover
-  .ui-show_processed_properties-value-text {
-  display: block;
-}
-
-.ui-show_processed_properties-value-text {
-  text-overflow: ellipsis;
-  overflow: hidden;
-  max-width: 100%;
-  white-space: nowrap;
-  display: inline-block;
-  vertical-align: bottom;
-}
-
-.ui-show_processed_properties-item-type_color:hover
-  .ui-show_processed_properties-value-text,
-.ui-show_processed_properties-value-text:hover {
-  text-overflow: ellipsis;
-  overflow: initial;
-  white-space: initial;
-  display: initial;
-}
+/******************************************************************************
+color chooser
+*******************************************************************************/
 
 .ui_color_chooser-label_toggle {
   display: list-item;
@@ -657,6 +657,10 @@ drag handle
   margin-top: 0.3em;
 }
 
+/******************************************************************************
+color component
+*******************************************************************************/
+
 .ui_color_component {
   display: grid;
   grid-template-columns: auto auto;
@@ -665,6 +669,8 @@ drag handle
   grid-template-areas:
     "value-box toggle"
     "color-bar color-bar";
+  gap: 0.25em;
+  margin-bottom: 1.5em;
 }
 
 .ui_color_component > .ui_toggle_button {
@@ -672,15 +678,23 @@ drag handle
   justify-self: end;
 }
 
-.ui_color_component > .number-and-range-input_value-box {
+.ui_color_component > .number-and-range-color-input_value-box {
   grid-area: value-box;
 }
 
-.ui_color_component > .number-and-range-input_color-bar {
+.ui_color_component > .number-and-range-color-input_color-bar {
   grid-area: color-bar;
 }
 
-.number-and-range-input_color-bar::before {
+.ui_color_component_ranges {
+  margin: 1em 0 3em;
+}
+
+/******************************************************************************
+number and range color input
+*******************************************************************************/
+
+.number-and-range-color-input_color-bar::before {
   content: "";
   display: block;
   position: absolute;
@@ -693,14 +707,14 @@ drag handle
   background-image: var(--transparency-indicator-bg-image);
 }
 
-.number-and-range-input_color-bar {
+.number-and-range-color-input_color-bar {
   position: relative;
   display: flex;
   justify-content: center;
   height: 3rem;
 }
 
-.number-and-range-input_color-bar input {
+.number-and-range-color-input_color-bar input {
   width: 100%;
   width: -moz-available; /* WebKit-based browsers will ignore this. */
   width: -webkit-fill-available; /* Mozilla-based browsers will ignore this. */
@@ -709,7 +723,7 @@ drag handle
   z-index: 1;
 }
 
-.number-and-range-input_color-bar canvas {
+.number-and-range-color-input_color-bar canvas {
   width: var(--width, 0);
   height: var(--height, 0);
 
@@ -723,9 +737,35 @@ drag handle
   left: 0;
 }
 
-.number_and_range_input input[type="number"] {
-  max-width: 10ex;
+/******************************************************************************
+number and range input
+*******************************************************************************/
+
+.number-and-range-input {
+  align-items: center;
+  display: flex;
+  gap: 0.25em;
+  padding: 1em 0;
 }
+
+.number-and-range-input label {
+  width: 35%;
+}
+
+.number-and-range-input input[type="number"] {
+  width: 15%;
+}
+
+.number-and-range-input input[type="range"] {
+  width: 30%;
+}
+
+.number-and-range-input button {
+  margin-left: auto;
+  width: 20%;
+}
+
+/**************************************************************************** */
 
 .measure_box {
   position: absolute;
