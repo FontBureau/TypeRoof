@@ -139,7 +139,9 @@ import {EditorState, Plugin} from "prosemirror-state"
 import {EditorView} from "prosemirror-view"
 import {undo, redo, history} from "prosemirror-history"
 import {keymap} from "prosemirror-keymap"
-import {baseKeymap , toggleMark, setBlockType} from "prosemirror-commands"
+import {baseKeymap , toggleMark, setBlockType,
+        chainCommands, newlineInCode, createParagraphNear, liftEmptyBlock,
+        splitBlockAs} from "prosemirror-commands"
 import "prosemirror-view/style/prosemirror.css"
 
 // I didn't find the rules for prosemirror, so I'm going for a small set
@@ -4897,6 +4899,33 @@ class ProseMirror extends _BaseComponent {
               , marks: {...proseMirrorDefaultSchema.marks}
             }
           , schema = new Schema(initialSchema)
+            // FIXME: splitBlockAs without a funcction as argument is the
+            // same as the default splitBlock. However, I leave this in here
+            // because this is the door to a feature where we could define
+            // which block is inserted after another block, when we press
+            // "Enter" at the end of a block. Currently, the first block
+            // that is appliable in the NodeSpec-Map is used, e.g. if
+            // "heading-1" is at the top, that will be created.
+            // It would be cool, to optionally, and dynamically via the UI,
+            // define e.g. the follow-up block of 'heading-1' is 'paragraph-1'
+            // and the follow-up block of 'paragraph-1' is 'paragraph-2',
+            // making the writing and editing experience more fluid.
+            // Ideally, an author of a document would be able to do this,
+            // but having it as the author of the nodeSpec is not too
+            // bad either, and in the beginning, these roles won't be
+            // separated by the tool. Later maybe there's a writing
+            // tool which doesn't allow changing the nodeSpec.
+          , mySplitBlock = splitBlockAs(
+            // Leaving this a s a quick way back into the topic...
+            //node => {
+            //  console.log('splitBlock node:', node);
+            //  return {type: node.type/*.schema.nodes['heading-3']*//*, attrs: {level: 2}*/}
+            //}
+            )
+          , typeRoofKeymap = Object.assign({}, baseKeymap, {
+                // original implementation is in prosemirror-commands
+                "Enter": chainCommands(newlineInCode, createParagraphNear, liftEmptyBlock, mySplitBlock),
+            })
           , state = EditorState.create({
                 schema:schema
               , plugins: [
@@ -4905,7 +4934,7 @@ class ProseMirror extends _BaseComponent {
                     //    , "Mod-b": toggleMark(proseMirrorTestingSchema.marks.strong)
                     //    , "Mod-B": toggleMark(proseMirrorTestingSchema.marks.strong)
                     })
-                  , keymap(baseKeymap)
+                  , keymap(typeRoofKeymap)
                   , this._menuPlugin()
                 ]
               , doc: schema.topNodeType.createAndFill()
@@ -4932,8 +4961,8 @@ class ProseMirror extends _BaseComponent {
 
     _createProseMirrorSchema(proseMirrorSchema) {
         const schemaSpec = {
-                nodes: {...proseMirrorDefaultSchema.nodes}
-              , marks: {...proseMirrorDefaultSchema.marks}
+                nodes: {/*later: ...proseMirrorDefaultSchema.nodes*/}
+              , marks: {/*later:...proseMirrorDefaultSchema.marks*/}
             }
           ;
         for(const[name, nodeSpec] of proseMirrorSchema.get('nodes')) {
@@ -4967,6 +4996,12 @@ class ProseMirror extends _BaseComponent {
             }
             schemaSpec.nodes[name] = newNode;
         }
+        // Adding the proseMirrorDefaultSchema nodes after our nodes.
+        // This way, the default node, e.g., when splitting (using the "Enter" key),
+        // will not be "unknown", but the first in our definition.
+        // However, we won't be able to override the defaults either,
+        // can also be regarded as a feature.
+        Object.assign(schemaSpec.nodes, proseMirrorDefaultSchema.nodes);
 
         // CAUTION: this is a stub marks will be handled very differently, likely!
         // In this case it would be better to just ignore any defined marks.
@@ -5000,6 +5035,7 @@ class ProseMirror extends _BaseComponent {
             }
             schemaSpec.marks[name] = newMark;
         }
+        Object.assign(schemaSpec.marks, proseMirrorDefaultSchema.marks);
         return new Schema(schemaSpec);
     }
 

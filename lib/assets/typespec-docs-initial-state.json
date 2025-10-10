@@ -139,7 +139,6 @@
       }
     ]
   ],
-
   "nodeSpecToTypeSpec": [
     [
       "heading-1",
@@ -514,6 +513,14 @@
   },
   "proseMirrorSchema": {
     "nodes": [
+            [
+        "paragraph-2",
+        {
+          "content": "inline*",
+          "group": "block",
+          "tag": "p"
+        }
+      ],
       [
         "heading-1",
         {
@@ -546,14 +553,6 @@
       ],
       [
         "paragraph",
-        {
-          "content": "inline*",
-          "group": "block",
-          "tag": "p"
-        }
-      ],
-      [
-        "paragraph-2",
         {
           "content": "inline*",
           "group": "block",
