@@ -1561,12 +1561,21 @@ collapsible mixin
   width: initial;
 }
 
+.ui_prose_mirror_menu-container > *{
+  display: inline;
+}
+
+.ui_prose_mirror_menu-container > .typeroof-ui-label:after{
+  content: ' ';
+}
+
 .ui_prose_mirror_menu-blocks, .ui_prose_mirror_menu-styles {
   button.active {
     color: white;
     background: black;
     font-variation-settings: "opsz" 12, "GRAD" 150;
   }
+
   button.active:disabled {
     background: darkgrey;
   }

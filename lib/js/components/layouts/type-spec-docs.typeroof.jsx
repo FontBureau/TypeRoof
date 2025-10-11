@@ -5471,9 +5471,14 @@ class UIProseMirrorMenu extends _BaseComponent {
     _getTemplate(h) {
         return (
             <div class="ui_prose_mirror_menu">
-            <span class="label ui_prose_mirror_menu-label">ProseMirror Menu</span>
-            <div class="ui_prose_mirror_menu-blocks"></div>
-            <div class="ui_prose_mirror_menu-styles"></div>
+                <div class="ui_prose_mirror_menu-container ui_prose_mirror_menu-container-blocks">
+                    <span class="typeroof-ui-label">Nodes:</span>
+                    <div class="ui_prose_mirror_menu-blocks"></div>
+                </div>
+                <div class="ui_prose_mirror_menu-container ui_prose_mirror_menu-container-styles">
+                    <span class="typeroof-ui-label">Styles:</span>
+                    <div class="ui_prose_mirror_menu-styles"></div>
+                </div>
             </div>
         );
     }
