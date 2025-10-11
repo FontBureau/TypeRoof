@@ -5405,7 +5405,7 @@ class ProseMirrorContext extends _BaseContainerComponent {
 /**
  * started this from looking at function markApplies
  * https://github.com/ProseMirror/prosemirror-commands/blob/master/src/commands.ts
- * not sure if it is sufiiently complete.
+ * not sure if it is sufficiently complete.
  */
 function _getPathsOfTypes(doc/* :Node*/, ranges/*: readonly SelectionRange[]*/, enterAtoms/*: boolean*/, skip=Object.freeze(new FreezableSet())) {
     const result = new Map() // try to reduce the amount of results
@@ -5417,14 +5417,46 @@ function _getPathsOfTypes(doc/* :Node*/, ranges/*: readonly SelectionRange[]*/, 
             // && doc.inlineContent ?????
             result.set(0, [doc.type.name]);
         doc.nodesBetween($from.pos, $to.pos, (node, pos) => {
-
-            if (seen.has(pos) || skip.has(node.type.name) || !enterAtoms && node.isAtom && node.isInline && pos >= $from.pos && pos + node.nodeSize <= $to.pos)
+            if (seen.has(pos) || skip.has(node.type.name)
+                    || !enterAtoms && node.isAtom
+                                   && node.isInline
+                                   && pos >= $from.pos
+                                   && pos + node.nodeSize <= $to.pos)
                 return;
             const resolved = doc.resolve(pos);
             result.set(pos, _getPathOfTypes(resolved.path, node.type.name));
         });
     }
     return result.values();
+}
+
+
+function _addMark(map, mark) {
+    if(!map.has(mark.type))
+        map.set(mark.type, new Set())
+    if('data-style-name' in mark.attrs)
+        map.get(mark.type).add(mark.attrs['data-style-name']);
+}
+function getActiveNodesAndMarks(editorState) {
+    const {from, $from, to, empty} = editorState.selection
+      , activeMarks = new Map()
+      , activeNodes = new Set()
+      , result = [activeNodes, activeMarks]
+      , addMark = mark=>_addMark(activeMarks, mark)
+      ;
+    if (empty) {
+        (editorState.storedMarks || $from.marks()).forEach(addMark);
+        if($from.parent)
+            // Could also use `$to.parent` but it seems to be the same in this case.
+            activeNodes.add($from.parent.type);
+        return result;
+    }
+    if (to > from)
+        editorState.doc.nodesBetween(from, to, node => {
+            node.marks.forEach(addMark);
+            activeNodes.add(node.type);
+        })
+    return result;
 }
 
 class UIProseMirrorMenu extends _BaseComponent {
@@ -5465,7 +5497,8 @@ class UIProseMirrorMenu extends _BaseComponent {
             return;
         event.preventDefault();
         this._editorView.focus();// important to keep the selection alive
-        console.log(`${this}._stylesClickHandler`, this._buttonToStyle.get(event.target), event.target);
+        if(event.target.disabled)
+            return;
         const styleName = this._buttonToStyle.get(event.target)
           , {dispatch, state} = this._editorView
           , markType = state.schema.marks['generic-style']
@@ -5491,11 +5524,12 @@ class UIProseMirrorMenu extends _BaseComponent {
             return;
         event.preventDefault();
         this._editorView.focus();// important to keep the selection alive
+        if(event.target.disabled)
+            return;
         const nodeTypeName = this._buttonToBlock.get(event.target)
           , {dispatch, state} = this._editorView
           , nodeType = state.schema.nodes[nodeTypeName];
           ;
-        console.log(`${this}._blocksClickHandler`, this._buttonToBlock.get(event.target), event.target, 'nodeTypeName', nodeTypeName, 'nodeType', nodeType);
         setBlockType(nodeType /*, attrs*/)(state, dispatch);
     }
 
@@ -5523,12 +5557,13 @@ class UIProseMirrorMenu extends _BaseComponent {
     updateView(view, prevState=null) {
         // NOTE: when "prevState !== null", I don't think the view changes,
         // however, the menu can check which commands should be active.
-        this._editorView = view;
+        this._editorView = view
+        const state = this._editorView.state
         // when prevState is null this call comes from the constructor
         // otherwise it comes from the update method.
 
         // => set { typeSpecs }
-        const typeSpecs = this._getTypeSpecs(this._editorView.state)
+          , typeSpecs = this._getTypeSpecs(state)
           , setsOfStyles = new Map()
             // display these
           , allStylesSuperSet = new Set()
@@ -5549,7 +5584,7 @@ class UIProseMirrorMenu extends _BaseComponent {
                 commonSubSet.add(style);
         }
 
-        // Hmm, things a menu item ot activate/deactivate a mark could
+        // Hmm, things a menu item to activate/deactivate a mark could
         // show:
         //      bold: the mark is active at the current position/selection
         //              -> click again should turn it off
@@ -5557,7 +5592,7 @@ class UIProseMirrorMenu extends _BaseComponent {
         //      active: can the mark be applied at the current position
         //              -> it's interesting we could either apply it only
         //                 where it is available OR everywhere and mark when a definition is missing
-        //                 -> seccond could be a ctr+click
+        //                 -> second could be a ctr+click
         //                 -> consequently ctrl would make those inactive marks active
         //                 -> bold marks would be always active, as turning the
         //                    mark off should be possible AND only happen where it
@@ -5567,23 +5602,34 @@ class UIProseMirrorMenu extends _BaseComponent {
 
         // FIXME: we should define an order and keep it stable...
         // i.e. stylePatches has an inherent order but before, the typeSpecs
-        // could have, i.e. inorder of appearance, maybe depth-first, but
+        // could have, i.e. in order of appearance, maybe depth-first, but
         // it's not readily accessible for us.
-        const h = this._domTool.h
+
+        const [activeNodes, activeMarks] = getActiveNodesAndMarks(state)
+          , genericStyleMark = state.schema.marks['generic-style']
+          , activeStyles = activeMarks.get(genericStyleMark) || new Set()
+          , h = this._domTool.h
           , oldButtons = Array.from(this._buttonToStyle.keys())
           ;
         this._buttonToStyle.clear();
-        for(const style of Array.from(allStylesSuperSet).toSorted()) {
+        for(const styleName of Array.from(allStylesSuperSet).toSorted()) {
             // reusing stuff
             const button = oldButtons.length
                 ? oldButtons.pop()
                 : (<button type="button">{'initial'}</button>)
                 ;
-            button.textContent = style;
-            button.disabled = !commonSubSet.has(style);
-            this._buttonToStyle.set(button, style);
+            button.textContent = styleName;
+            button.disabled = !commonSubSet.has(styleName);
+            button.classList[activeStyles.has(styleName)? 'add' : 'remove']('active');
+            this._buttonToStyle.set(button, styleName);
         }
         this._stylesContainer.replaceChildren(...this._buttonToStyle.keys());
+
+
+        for(const [button, nodeTypeName] of this._buttonToBlock) {
+            const nodeType = state.schema.nodes[nodeTypeName];
+            button.classList[activeNodes.has(nodeType)? 'add' : 'remove']('active');
+        }
 
         console.log(`${this}.updateView view:`, view, '\n    ',prevState === null ? 'INITIAL' : 'CONSECUTIVE', 'prevState:', prevState,
             '\n',
@@ -5598,7 +5644,7 @@ class UIProseMirrorMenu extends _BaseComponent {
 
         // const typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes)
         // {command: toggleMark(schema.marks.strong), dom: icon("B", "strong")},
-        //let active = command(this._editorView.state, null, this._editorView)
+        //let active = command(state, null, this._editorView)
     }
 
     destroyView() {
@@ -5629,8 +5675,10 @@ class UIProseMirrorMenu extends _BaseComponent {
                 this._buttonToBlock.set(button, blockName);
             }
             this._blocksContainer.replaceChildren(...this._buttonToBlock.keys());
+            if(this._editorView)
+                // mark butttons as active.
+                this.updateView(this._editorView);
         }
-
     }
 }
 
