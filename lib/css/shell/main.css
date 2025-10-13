@@ -1561,19 +1561,22 @@ collapsible mixin
   width: initial;
 }
 
-.ui_prose_mirror_menu-container > *{
+.ui_prose_mirror_menu-container > * {
   display: inline;
 }
 
-.ui_prose_mirror_menu-container > .typeroof-ui-label:after{
-  content: ' ';
+.ui_prose_mirror_menu-container > .typeroof-ui-label::after {
+  content: " ";
 }
 
-.ui_prose_mirror_menu-blocks, .ui_prose_mirror_menu-styles {
+.ui_prose_mirror_menu-blocks,
+.ui_prose_mirror_menu-styles {
   button.active {
     color: white;
     background: black;
-    font-variation-settings: "opsz" 12, "GRAD" 150;
+    font-variation-settings:
+      "opsz" 12,
+      "GRAD" 150;
   }
 
   button.active:disabled {
@@ -1679,7 +1682,7 @@ collapsible mixin
     line-height: var(--line-height);
   }
 
-/* FIXME: this is temporary, margins need to be
+  /* FIXME: this is temporary, margins need to be
  * a property. However, using the line-height of
  * the element AFTER as the gap-size is a good
  * enough for now runion/automation approach.
