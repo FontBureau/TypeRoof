@@ -5443,7 +5443,7 @@ class ProseMirror extends _BaseComponent {
       const newNode = {};
       for (const [key, value] of nodeSpec) {
         if (key === "attrs") {
-          console.log(
+          console.warn(
             `PROSEMIRROR SKIPPING nodeSpec property "${key}" in dynamic schema definition`,
           );
           continue;
@@ -5488,7 +5488,7 @@ class ProseMirror extends _BaseComponent {
       const newMark = {};
       for (const [key, value] of markSpec) {
         if (key === "attrs") {
-          console.log(
+          console.warn(
             `PROSEMIRROR SKIPPING markSpec property "${key}" in dynamic schema definition`,
           );
           continue;
@@ -5705,14 +5705,14 @@ class ProseMirror extends _BaseComponent {
   }
 
   _prosemirrorDispatchTranscation(transaction) {
-    console.log(
-      `${this} DISPATCH_TRANSACTION size went from`,
-      transaction.before.content.size,
-      "to",
-      transaction.doc.content.size,
-      "\ntransaction:",
-      transaction,
-    );
+    // console.log(
+    //   `${this} DISPATCH_TRANSACTION size went from`,
+    //   transaction.before.content.size,
+    //   "to",
+    //   transaction.doc.content.size,
+    //   "\ntransaction:",
+    //   transaction,
+    // );
 
     const newState = this.view.state.apply(transaction);
     const document = this.getEntry("document"); // => immutableDoc
@@ -5720,11 +5720,11 @@ class ProseMirror extends _BaseComponent {
     const pmDocNode = this._nodesCache.get(document);
     if (pmDocNode === this.view.state.doc) {
       // nothing to do
-      console.log(`${this} DISPATCH_TRANSACTION: nothing to do`);
+      // console.log(`${this} DISPATCH_TRANSACTION: nothing to do`);
     } else {
-      console.log(
-        `${this} DISPATCH_TRANSACTION: update metamodel document with view.state.doc...`,
-      );
+      // console.log(
+      //   `${this} DISPATCH_TRANSACTION: update metamodel document with view.state.doc...`,
+      // );
       // update/sync metamodel document with view.state.doc
       // eventually:
       this._changeState(() => {
@@ -5753,10 +5753,10 @@ class ProseMirror extends _BaseComponent {
   }
 
   update(changedMap) {
-    console.log(
-      `${this}.UPDATE(changedMap:${Array.from(changedMap.keys).join(", ")})`,
-      changedMap,
-    );
+    // console.log(
+    //   `${this}.UPDATE(changedMap:${Array.from(changedMap.keys).join(", ")})`,
+    //   changedMap,
+    // );
     // Map(5) { stylePatchesSource → {…}, typeSpec → {…}, proseMirrorSchema → {…}, nodeSpecToTypeSpec → {…}, document → {…} }
 
     const newConfigItems = [];
@@ -5820,9 +5820,9 @@ class ProseMirror extends _BaseComponent {
     );
 
     if (newDoc !== this.view.state.doc) {
-      console.log(
-        `${this}UPDATE: update view.state.doc with  metamodel document...`,
-      );
+      // console.log(
+      //    `${this}UPDATE: update view.state.doc with  metamodel document...`,
+      // );
       // update view.state.doc with newDoc which is in sync
       // with the metamodel document
       newConfigItems.push(["doc", newDoc]);
@@ -5835,13 +5835,13 @@ class ProseMirror extends _BaseComponent {
       // I expect this to be the case most of the time, as
       // the metamodel document is updated in dispatchTransaction
       // when the editor causes the changes.
-      console.error(`${this}UPDATE: newDoc - nothing to do`);
+      // console.warn(`${this}UPDATE: newDoc - nothing to do`);
     }
     if (newConfigItems.length) {
-      console.log(
-        `${this}UPDATE: newConfigItems ${newConfigItems.length} `,
-        ...Array.from(zip(...newConfigItems))[0],
-      );
+      // console.log(
+      //   `${this}UPDATE: newConfigItems ${newConfigItems.length} `,
+      //   ...Array.from(zip(...newConfigItems))[0],
+      // );
       const oldConfig = Object.fromEntries(
           ["schema", "doc", "selection", "storedMarks", "plugins"].map(
             (key) => [key, this.view.state[key]],
@@ -5856,9 +5856,10 @@ class ProseMirror extends _BaseComponent {
       // view.update(Object.assign({}, view.props, props)).
       newProps.state = state;
       this.view.setProps(newProps);
-    } else {
-      console.error(`${this}UPDATE: newConfigItems - nothing to do`);
     }
+    //else {
+    //  console.warn(`${this}UPDATE: newConfigItems - nothing to do`);
+    // }
   }
 }
 
@@ -6084,7 +6085,7 @@ class UIProseMirrorMenu extends _BaseComponent {
     return result;
   }
 
-  updateView(view, prevState = null) {
+  updateView(view /*, prevState = null*/) {
     // NOTE: when "prevState !== null", I don't think the view changes,
     // however, the menu can check which commands should be active.
     this._editorView = view;
@@ -6101,10 +6102,10 @@ class UIProseMirrorMenu extends _BaseComponent {
       commonSubSet = new Set();
     for (const [typeSpec, path] of typeSpecs) {
       const stylePatches = typeSpec.get("stylePatches");
-      console.log(
-        `${path} :: ${typeSpec.get("label").value} STYLES:`,
-        ...stylePatches.keys(),
-      );
+      // console.log(
+      //   `${path} :: ${typeSpec.get("label").value} STYLES:`,
+      //   ...stylePatches.keys(),
+      // );
       // OK so these keys are the options that we are going to present
 
       setsOfStyles.set(typeSpec, new Set(stylePatches.keys()));
@@ -6163,25 +6164,25 @@ class UIProseMirrorMenu extends _BaseComponent {
       button.classList[activeNodes.has(nodeType) ? "add" : "remove"]("active");
     }
 
-    console.log(
-      `${this}.updateView view:`,
-      view,
-      "\n    ",
-      prevState === null ? "INITIAL" : "CONSECUTIVE",
-      "prevState:",
-      prevState,
-      "\n",
-      // can be multiple, right???
-      // intuitiveley it feels correct to allow only the subset of
-      // available marks/styles to be active/available.
-      // maybe we could display the superset, but make only the
-      // subset available.
-      "The current TypeSpecs:",
-      ...typeSpecs
-        .entries()
-        .map(([typeSpec, path]) => `${path} :: ${typeSpec.get("label").value}`),
-      // 'The available style-links:',
-    );
+    // console.log(
+    //   `${this}.updateView view:`,
+    //   view,
+    //   "\n    ",
+    //   prevState === null ? "INITIAL" : "CONSECUTIVE",
+    //   "prevState:",
+    //   prevState,
+    //   "\n",
+    //   // can be multiple, right???
+    //   // intuitiveley it feels correct to allow only the subset of
+    //   // available marks/styles to be active/available.
+    //   // maybe we could display the superset, but make only the
+    //   // subset available.
+    //   "The current TypeSpecs:",
+    //   ...typeSpecs
+    //     .entries()
+    //     .map(([typeSpec, path]) => `${path} :: ${typeSpec.get("label").value}`),
+    //   // 'The available style-links:',
+    // );
 
     // const typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes)
     // {command: toggleMark(schema.marks.strong), dom: icon("B", "strong")},
@@ -6189,19 +6190,19 @@ class UIProseMirrorMenu extends _BaseComponent {
   }
 
   destroyView() {
-    this._editorView = null;
     // I'm not sure if we need to do anyhing in here, maybe make all
     // all menu-items inactive.
-    console.log(`${this}.destroyView view`);
+    this._editorView = null;
+    // console.log(`${this}.destroyView view`);
   }
   update(changedMap) {
-    console.log(`>>>>>>>>>>>>>>>>>>>${this}.update:`, ...changedMap.keys());
+    // console.log(`>>>>>>>>>>>>>>>>>>>${this}.update:`, ...changedMap.keys());
 
     if (changedMap.has("nodeSpecToTypeSpec")) {
       const nodeSpecToTypeSpec = changedMap.get("nodeSpecToTypeSpec"),
         h = this._domTool.h,
         oldButtons = Array.from(this._buttonToBlock.keys());
-      console.log("nodeSpecToTypeSpec", ...nodeSpecToTypeSpec.keys());
+      // console.log("nodeSpecToTypeSpec", ...nodeSpecToTypeSpec.keys());
       this._buttonToBlock.clear();
       for (const blockName of nodeSpecToTypeSpec.keys()) {
         // reusing stuff
