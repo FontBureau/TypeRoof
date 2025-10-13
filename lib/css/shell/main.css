@@ -1561,6 +1561,18 @@ collapsible mixin
   width: initial;
 }
 
+.ui_prose_mirror_menu {
+  /* The amount of style buttons can change quickly when using
+   * the cursor to navigate the document. This leads to the UI in the
+   * sidebar "jumping" around, creating a instable feeling. I don't think
+   * a fixed height is necessarily the best solution here, however,
+   * it resolves the wobbling issue. The size is selected to
+   * allow around 4 rows of buttons (blocks and styles) before scrolling.
+   */
+  height: 7.5em;
+  overflow: auto;
+}
+
 .ui_prose_mirror_menu-container > * {
   display: inline;
 }
