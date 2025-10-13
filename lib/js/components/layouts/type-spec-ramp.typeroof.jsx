@@ -115,7 +115,7 @@ import {
 
 import { FontSelect } from "../font-loading.mjs";
 
-import DEFAULT_STATE from "../../../assets/typespec-docs-initial-state.json" with { type: "json" };
+import DEFAULT_STATE from "../../../assets/typespec-ramp-initial-state.json" with { type: "json" };
 
 import { schemaSpec as proseMirrorDefaultSchema } from "../prosemirror/default-schema";
 import { Schema /*, DOMParser*/ } from "prosemirror-model";
