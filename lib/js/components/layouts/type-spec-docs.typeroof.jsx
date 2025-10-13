@@ -5743,11 +5743,13 @@ class TypeSpecRampController extends _BaseContainerComponent {
           , propertiesManagerContainer = widgetBus.domTool.createElement('fieldset', {'class': 'properties-manager'})
           , stylePatchesManagerContainer = widgetBus.domTool.createElement('fieldset', {'class': 'style_patches-manager'})
           , documentManagerContainer = widgetBus.domTool.createElement('fieldset', {'class': 'document-manager'})
+          , nodeSpecManagerContainer = widgetBus.domTool.createElement('fieldset', {'class': 'node_spec-manager'})
           , zones = new Map([..._zones
                 , ['type_spec-manager', typeSpecManagerContainer]
                 , ['properties-manager', propertiesManagerContainer]
                 , ['style_patches-manager', stylePatchesManagerContainer]
                 , ['document-manager', documentManagerContainer]
+                , ['node_spec-manager', nodeSpecManagerContainer]
                 ])
           , typeSpecRelativePath = Path.fromParts('.','typeSpec')
           , originTypeSpecPath = widgetBus.rootPath.append(...typeSpecRelativePath);
@@ -5769,7 +5771,7 @@ class TypeSpecRampController extends _BaseContainerComponent {
         collapsibleMixin(typeSpecManagerContainer, 'legend');
         collapsibleMixin(propertiesManagerContainer, 'legend');
         collapsibleMixin(stylePatchesManagerContainer, 'legend');
-        collapsibleMixin(documentManagerContainer,  'legend', true);
+        collapsibleMixin(nodeSpecManagerContainer,  'legend');
 
         const typeSpecDefaultsMap = _getTypeSpecDefaultsMap(widgetBus.getEntry(originTypeSpecPath).dependencies);
 
@@ -5802,6 +5804,12 @@ class TypeSpecRampController extends _BaseContainerComponent {
                 {zone: 'main'}
               , []
               , StaticNode
+              , documentManagerContainer
+            ]
+          , [
+                {zone: 'main'}
+              , []
+              , StaticNode
               , stylePatchesManagerContainer
             ]
           , [
@@ -5820,7 +5828,7 @@ class TypeSpecRampController extends _BaseContainerComponent {
                 {zone: 'main'}
               , []
               , StaticNode
-              , documentManagerContainer
+              , nodeSpecManagerContainer
             ]
           , [
                 {zone: 'type_spec-manager'}
@@ -5962,38 +5970,38 @@ class TypeSpecRampController extends _BaseContainerComponent {
               , {zone: 'main'}
             ]
           , [
-                {zone: 'document-manager'}
+                {zone: 'node_spec-manager'}
               , []
               , StaticTag
               , 'legend'
               , {}
-              , 'Document Manager'
+              , 'NodeSpec Manager'
             ]
           , [
-                {zone: 'document-manager'}
+                {zone: 'node_spec-manager'}
               , [
                     ['./proseMirrorSchema/nodes', 'childrenOrderedMap']
                   , ['editingNodeSpecPath', 'nodeSpecPath']
                 ]
               , UINodeSpecMap
-              , new Map([...zones, ['main', documentManagerContainer]])
+              , new Map([...zones, ['main', nodeSpecManagerContainer]])
               , [] // eventHandlers
               , 'NodeSpec-Map'
               , true // dragEntries (dragAndDrop)
             ]
           , [
                 {
-                    zone: 'document-manager'
+                    zone: 'node_spec-manager'
                 }
               , [
                     ['./proseMirrorSchema/nodes', 'childrenOrderedMap']
                   , ['editingNodeSpecPath', 'nodeSpecPath']
                 ]
               , NodeSpecPropertiesManager
-              , new Map([...zones, ['main', documentManagerContainer]])
+              , new Map([...zones, ['main', nodeSpecManagerContainer]])
             ]
           , [
-                {zone: 'document-manager'}
+                {zone: 'node_spec-manager'}
               , [
                     ['./nodeSpecToTypeSpec', 'childrenOrderedMap']
                     // In this configuration we map "NodeSpec to TypeSpec"
@@ -6010,7 +6018,7 @@ class TypeSpecRampController extends _BaseContainerComponent {
                 ]
                 // based on UIStylePatchesLinksMap
               , UINodeSpecToTypeSpecLinksMap
-              , new Map([...zones, ['main', documentManagerContainer]])
+              , new Map([...zones, ['main', nodeSpecManagerContainer]])
               , [] // eventHandlers
               , 'NodeSpec to TypeSpec'
               , true // dragEntries (dragAndDrop)
