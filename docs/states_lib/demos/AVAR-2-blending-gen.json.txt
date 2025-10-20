@@ -1246,5 +1246,5 @@
     "height": "720"
   },
   "activeLayoutKey": "StageAndActors",
-  "activeFontKey": "from-url Roboto Delta Regular Version_3-000"
+  "activeFontKey": "from-url Roboto Delta Roman Version_3-000"
 }
