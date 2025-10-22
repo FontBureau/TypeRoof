@@ -6373,14 +6373,14 @@ class TypeSpecRampController extends _BaseContainerComponent {
         { zone: "main" },
         [],
         Collapsible,
-        "Styles Manager",
+        "Styles",
         stylePatchesManagerContainer,
       ],
       [
         { zone: "main" },
         [],
         Collapsible,
-        "TypeSpec Manager",
+        "TypeSpecs",
         typeSpecManagerContainer,
       ],
       [
@@ -6510,7 +6510,7 @@ class TypeSpecRampController extends _BaseContainerComponent {
         { zone: "main" },
         [],
         Collapsible,
-        "NodeSpec Manager",
+        "NodeSpecs",
         nodeSpecManagerContainer,
       ],
       [
