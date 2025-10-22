@@ -10,17 +10,31 @@
 general settings (font / layout)
 *******************************************************************************/
 
-.general-settings label > span:first-child {
-  display: block;
-  margin-bottom: 0.35em;
+.general-settings {
+  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+  padding: 1em;
 }
 
-label.ui_font-select {
-  margin-bottom: 0.25em;
+.general-settings label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
 }
 
 button.ui_font-select {
   margin-bottom: 1em;
+}
+
+/******************************************************************************
+document manager
+*******************************************************************************/
+
+.document-manager {
+  border-top: 1px solid var(--fieldset-border-color);
+  padding: 1em;
 }
 
 /**************************************************************************** */
@@ -76,6 +90,8 @@ button.ui_font-select {
 }
 
 .ui_time_control_circle {
+  display: block;
+  margin: 0 auto;
   touch-action: none;
   width: 200px;
   height: 200px;
@@ -1368,11 +1384,6 @@ button:is(.ui_style_patches_map-item-value, .ui_node_spec_map-item-value) {
   margin-block-start: 0;
 }
 
-.ui_time_control.ui_collapsible_mixin-open .ui_time_control_circle {
-  display: block;
-  margin: 0 auto;
-}
-
 .ui_time_control .ui_time_control-duration input {
   width: 6em;
 }
@@ -1541,6 +1552,20 @@ collapsible
      */
 }
 
+/******************************************************************************
+dimension sequence
+*******************************************************************************/
+
+.ui-dimension_sequence {
+  border-top: 1px solid var(--fieldset-border-color);
+  border-bottom: 1px solid var(--fieldset-border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  margin-bottom: -1px;
+  padding: 0.5em 0;
+}
+
 .ui-dimension_sequence .typeroof-ui-label {
   margin-inline-end: 0.5em;
 }
@@ -1559,6 +1584,8 @@ collapsible
   font-weight: 600;
   display: block;
 }
+
+/**************************************************************************** */
 
 .dialog-multi_select_fonts {
   list-style: none;
