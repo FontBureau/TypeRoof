@@ -1378,29 +1378,38 @@ button:is(.ui_style_patches_map-item-value, .ui_node_spec_map-item-value) {
 }
 
 /******************************************************************************
-collapsible mixin
+collapsible
 *******************************************************************************/
 
-.ui_collapsible_mixin-closed {
-  padding-block: 0;
+.ui_collapsible {
+  border-top: 1px solid var(--fieldset-border-color);
+  border-bottom: 1px solid var(--fieldset-border-color);
+  margin-bottom: -1px;
 }
 
-.ui_collapsible_mixin-closed > :not(legend) {
-  display: none;
-}
-
-.ui_collapsible_mixin > legend {
+.ui_collapsible-toggler {
   display: flex;
   justify-content: space-between;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.5em 1em;
 }
 
-.ui_collapsible_mixin > legend::after {
+.ui_collapsible-toggler::after {
   display: inline-block;
   content: var(--chevron-down);
 }
 
-.ui_collapsible_mixin-open > legend::after {
+.ui_collapsible-opened > .ui_collapsible-toggler::after {
   content: var(--chevron-up);
+}
+
+.ui_collapsible-contents {
+  padding: 1em;
+}
+
+.ui_collapsible-closed > .ui_collapsible-contents {
+  display: none;
 }
 
 /**************************************************************************** */
