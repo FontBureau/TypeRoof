@@ -69,6 +69,7 @@ export default [
           argsIgnorePattern: "h",
         },
       ],
+      "react/jsx-key": "off",
     },
   },
 ];

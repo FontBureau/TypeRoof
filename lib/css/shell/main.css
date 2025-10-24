@@ -1703,3 +1703,7 @@ collapsible mixin
     margin-top: var(--line-height);
   }
 }
+
+.ui_opentype_features_chooser-select-select {
+  max-width: 100%;
+}
