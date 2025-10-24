@@ -16,7 +16,7 @@ import {
 } from "../basics.mjs";
 
 import {
-  collapsibleMixin,
+  Collapsible,
   StaticNode,
   StaticTag,
   UILineOfTextInput,
@@ -6292,21 +6292,19 @@ class TypeSpecRampController extends _BaseContainerComponent {
     // BUT: we may need a mechanism to handle typeSpec inheritance!
     // widgetBus.wrapper.setProtocolHandlerImplementation(
     //    ...SimpleProtocolHandler.create('animationProperties@'));
-    const typeSpecManagerContainer = widgetBus.domTool.createElement(
-        "fieldset",
-        { class: "type_spec-manager" },
-      ),
-      propertiesManagerContainer = widgetBus.domTool.createElement("fieldset", {
+    const typeSpecManagerContainer = widgetBus.domTool.createElement("div", {
+        class: "type_spec-manager",
+      }),
+      propertiesManagerContainer = widgetBus.domTool.createElement("div", {
         class: "properties-manager",
       }),
-      stylePatchesManagerContainer = widgetBus.domTool.createElement(
-        "fieldset",
-        { class: "style_patches-manager" },
-      ),
-      documentManagerContainer = widgetBus.domTool.createElement("fieldset", {
+      stylePatchesManagerContainer = widgetBus.domTool.createElement("div", {
+        class: "style_patches-manager",
+      }),
+      documentManagerContainer = widgetBus.domTool.createElement("div", {
         class: "document-manager",
       }),
-      nodeSpecManagerContainer = widgetBus.domTool.createElement("fieldset", {
+      nodeSpecManagerContainer = widgetBus.domTool.createElement("div", {
         class: "node_spec-manager",
       }),
       zones = new Map([
@@ -6337,11 +6335,6 @@ class TypeSpecRampController extends _BaseContainerComponent {
     );
     // widgetBus.insertElement(stageManagerContainer);
     super(widgetBus, zones);
-
-    collapsibleMixin(typeSpecManagerContainer, "legend");
-    collapsibleMixin(propertiesManagerContainer, "legend");
-    collapsibleMixin(stylePatchesManagerContainer, "legend");
-    collapsibleMixin(nodeSpecManagerContainer, "legend");
 
     const typeSpecDefaultsMap = _getTypeSpecDefaultsMap(
       widgetBus.getEntry(originTypeSpecPath).dependencies,
@@ -6376,17 +6369,19 @@ class TypeSpecRampController extends _BaseContainerComponent {
         typeSpecDefaultsMap,
       ],
       [{ zone: "main" }, [], StaticNode, documentManagerContainer],
-      [{ zone: "main" }, [], StaticNode, stylePatchesManagerContainer],
-      [{ zone: "main" }, [], StaticNode, typeSpecManagerContainer],
-      [{ zone: "main" }, [], StaticNode, propertiesManagerContainer],
-      [{ zone: "main" }, [], StaticNode, nodeSpecManagerContainer],
       [
-        { zone: "type_spec-manager" },
+        { zone: "main" },
         [],
-        StaticTag,
-        "legend",
-        {},
-        "TypeSpec Manager",
+        Collapsible,
+        "Styles",
+        stylePatchesManagerContainer,
+      ],
+      [
+        { zone: "main" },
+        [],
+        Collapsible,
+        "TypeSpecs",
+        typeSpecManagerContainer,
       ],
       [
         {
@@ -6429,12 +6424,11 @@ class TypeSpecRampController extends _BaseContainerComponent {
         [DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_PATH],
       ],
       [
-        { zone: "properties-manager" },
+        { zone: "main" },
         [],
-        StaticTag,
-        "legend",
-        {},
+        Collapsible,
         "TypeSpec Properties",
+        propertiesManagerContainer,
       ],
       [
         {},
@@ -6445,14 +6439,6 @@ class TypeSpecRampController extends _BaseContainerComponent {
         ],
         TypeSpecPropertiesManager,
         new Map([...zones, ["main", propertiesManagerContainer]]),
-      ],
-      [
-        { zone: "style_patches-manager" },
-        [],
-        StaticTag,
-        "legend",
-        {},
-        "Styles Manager",
       ],
       [
         {
@@ -6521,12 +6507,11 @@ class TypeSpecRampController extends _BaseContainerComponent {
         { zone: "main" },
       ],
       [
-        { zone: "node_spec-manager" },
+        { zone: "main" },
         [],
-        StaticTag,
-        "legend",
-        {},
-        "NodeSpec Manager",
+        Collapsible,
+        "NodeSpecs",
+        nodeSpecManagerContainer,
       ],
       [
         { zone: "node_spec-manager" },

@@ -113,38 +113,18 @@ fieldset
 *******************************************************************************/
 
 fieldset {
-  border: none;
-  border-bottom: 1px solid var(--fieldset-border-color);
-  margin: 0;
-  padding: 1em;
-  min-inline-size: 0;
-}
-
-fieldset > legend {
-  box-sizing: border-box;
-  cursor: pointer;
-  font-weight: 600;
-  padding: 0.5em 0;
-  width: 100%;
-}
-
-form fieldset {
   background-color: var(--background-color);
   border: var(--gap-size) solid var(--fieldset-border-color);
   padding: 0.75em;
 }
 
-form fieldset + fieldset {
+fieldset + fieldset {
   margin-top: 1em;
 }
 
-form fieldset > legend {
+fieldset > legend {
   padding: 0 0.5em;
   width: auto;
-}
-
-.typeroof-ui fieldset h3 {
-  margin: 0 0 1em;
 }
 
 /******************************************************************************
