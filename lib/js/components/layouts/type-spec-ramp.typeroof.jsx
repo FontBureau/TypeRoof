@@ -115,6 +115,7 @@ import {
 
 import { FontSelect } from "../font-loading.mjs";
 
+import { UIOTFeaturesChooser } from "../ui-opentype-features.typeroof.jsx";
 import DEFAULT_STATE from "../../../assets/typespec-ramp-initial-state.json" with { type: "json" };
 
 import { schemaSpec as proseMirrorDefaultSchema } from "../prosemirror/default-schema";
@@ -1771,6 +1772,19 @@ class TypeSpecPropertiesManager extends _CommonContainerComponent {
       //      how to group or separate them
       //      NOTE however, the color-picker may be a nice example
       //      for existing grouping behavior.
+      [
+        {
+          rootPath: typeSpecPath,
+          zone: "main",
+        },
+        [
+          ["/font", "rootFont"],
+          ["typeSpecProperties@", "properties@"],
+        ],
+        UIOTFeaturesChooser,
+        this._zones,
+        ProcessedPropertiesSystemMap.createSimpleRecord(SPECIFIC, "font"),
+      ],
       [
         { rootPath: typeSpecPath, zone: "main" },
         [],
