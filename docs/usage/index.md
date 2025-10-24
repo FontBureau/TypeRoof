@@ -84,7 +84,7 @@ https://www.youtube.com/watch?v=5AY1KnkSOcI
 
 ## Layout: Stage and Actors
 
-The concepts of actors on a stage, "Key-Moments", and inheritance of
+The concepts of actors on a stage, "Key Moments", and inheritance of
 property values are central to the animation capabilities of TypeRoof
 Shell. The Layout "Stage and Actors" represents a unified interface that
 exposes all possibilities under that structure; meanwhile, a Layout like
@@ -99,7 +99,7 @@ iterations will improve this.
 
 In this lesson, we create a simple animation of one "Line of Text" actor
 from the ground up, step by step, and learn the basics of working with
-Key-Moments.
+Key Moments.
 
 #### Required Links:
 
@@ -131,13 +131,13 @@ traversing from its "Regular" style to its "Mayhem" style.
 
 ### Lesson 06: Property Propagation and Inheritance
 
-The value of a property can be set explicitly at any Key-Moment. If it's
-not set directly in a Key-Moment, but in one or more Key Moments in the
-same actor, the value is defined by those Key-Moments. A property that is
+The value of a property can be set explicitly at any Key Moment. If it's
+not set directly in a Key Moment, but in one or more Key Moments in the
+same actor, the value is defined by those Key Moments. A property that is
 set explicitly by only one Key Moment in the entire local timeline of an
 actor has that value throughout the whole timeline and is not affected by
-possible other Key-Moments that don't set that property explicitly. At
-least two Key-Moments in the same timeline must set an explicit value to
+possible other Key Moments that don't set that property explicitly. At
+least two Key Moments in the same timeline must set an explicit value to
 animate a property. A property not defined in a local actor timeline
 inherits its value from a parent actor timeline if defined there. Parent
 actors are container types, like the "Layer" or the root container "Stage."
