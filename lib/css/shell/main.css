@@ -1743,3 +1743,30 @@ dimension sequence
 .ui_opentype_features_chooser-select-select {
   max-width: 100%;
 }
+
+.ui_boolean_ot_feature {
+  & .ui_boolean_ot_feature-label-content::before {
+    content: "[";
+  }
+
+  &:where(.is-in-font) .ui_boolean_ot_feature-label-content::before {
+    content: "";
+  }
+
+  & .ui_boolean_ot_feature-label-content::after {
+    content: "]*";
+  }
+
+  &:where(.is-default-value) .ui_boolean_ot_feature-label-content::after {
+    content: "]";
+  }
+
+  &:where(.is-in-font) .ui_boolean_ot_feature-label-content::after {
+    content: "*";
+  }
+
+  &:where(.is-in-font.is-default-value)
+    .ui_boolean_ot_feature-label-content::after {
+    content: "";
+  }
+}
