@@ -1,87 +1,20 @@
-import { _BaseComponent, _BaseContainerComponent } from "./basics.mjs";
+import { Path } from "../metamodel.mjs";
+
+import {
+  _BaseComponent,
+  _BaseContainerComponent,
+  _BaseDynamicMapContainerComponent,
+  HANDLE_CHANGED_AS_NEW,
+} from "./basics.mjs";
 
 import { GenericSelect, StaticNode } from "./generic.mjs";
 
 import { OTFeatureInfo } from "../ot-feature-info.mjs";
 
-// TODO: we need a Model
-// It's likely a map: [featureTag]=>[FeatureSetting] and for most cases
-// FeatureSetting is a Boolean.Need to look at specific casses (AALT/ Access all Alternates)???
-
-function getFeatureInfo(font = null, featuresInfo = OTFeatureInfo.ui) {
-  const fontFeatures = new Map(),
-    _getNewFeature = (otFeatureTag) => ({
-      tables: new Set(),
-      langSys: new Set(),
-      info: featuresInfo[otFeatureTag],
-      uiName: null,
-      inFont: false,
-    }),
-    _setFeaturesFromFont = (
-      tableTag,
-      tableFeatures,
-      langSys,
-      featureIndexes,
-    ) => {
-      for (const idx of featureIndexes) {
-        const { tag: otFeatureTag, feature } = tableFeatures[idx];
-        if (!fontFeatures.has(otFeatureTag)) continue;
-        const featureData = fontFeatures.get(otFeatureTag);
-        featureData.inFont = true;
-        featureData.tables.add(tableTag);
-        featureData.langSys.add(langSys);
-        if (
-          (featureData.uiName === null && otFeatureTag.startsWith("ss")) ||
-          otFeatureTag.startsWith("cv")
-        ) {
-          featureData.uiName = _getUINameFromFeature(feature, null);
-        }
-      }
-    };
-  // This reproduces the order in OTFeatureInfo.
-  for (const otFeatureTag of Object.keys(featuresInfo))
-    fontFeatures.set(otFeatureTag, _getNewFeature(otFeatureTag));
-
-  if (!font) return fontFeatures;
-
-  const otjsFontObject = font.fontObject;
-  for (const tableTag of ["GSUB", "GPOS"]) {
-    const openTypeJSTableTag = tableTag.toLowerCase();
-    if (
-      !(openTypeJSTableTag in otjsFontObject.tables) ||
-      !otjsFontObject.tables[openTypeJSTableTag].scripts
-    )
-      continue;
-    const table = otjsFontObject.tables[openTypeJSTableTag],
-      scripts = table.scripts;
-    for (const scriptEntry of scripts) {
-      const script = scriptEntry.script,
-        scriptTag = scriptEntry.tag;
-      if (script.defaultLangSys) {
-        const langTag = "Default",
-          langSys = script.defaultLangSys;
-        _setFeaturesFromFont(
-          tableTag,
-          table.features,
-          [scriptTag, langTag].join(":"),
-          langSys.featureIndexes,
-        );
-      }
-      if (script.langSysRecords) {
-        for (const { tag: langTag, langSys } of script.langSysRecords) {
-          _setFeaturesFromFont(
-            tableTag,
-            table.features,
-            [scriptTag, langTag].join(":"),
-            langSys.featureIndexes,
-          );
-        }
-      }
-      continue;
-    }
-  }
-  return fontFeatures;
-}
+import {
+  ProcessedPropertiesSystemMap,
+  SPECIFIC,
+} from "./registered-properties-definitions.mjs";
 
 /* We have a list of all known features, but not all of these features
  * are set, they can as well be unset, and be inherited or just have the
@@ -104,6 +37,8 @@ class UIOTFeaturesSetSelect extends GenericSelect {
     labelContent,
     ppsRecordFont,
     allowNull = [],
+    getDefaults,
+    requireUpdateDefaults,
   ) {
     // optionGetLabel=null (key, value)=>label
     // allowNull=[]
@@ -124,6 +59,8 @@ class UIOTFeaturesSetSelect extends GenericSelect {
     this._ppsRecord = ppsRecordFont;
     [this._allowNull = false] = allowNull;
     this._optionsFilter = this.constructor.OPTION_FILTERS.IN_FONT;
+    this._getDefaults = getDefaults;
+    this._requireUpdateDefaults = requireUpdateDefaults;
   }
 
   /* Override via constructor. */
@@ -133,9 +70,9 @@ class UIOTFeaturesSetSelect extends GenericSelect {
     if (typeof value === "string")
       // for the null/placeholder option
       return value;
-    return value.inFont
-      ? `${key} – ${value.uiName || value.info.friendlyName}`
-      : `[${key}] – ${value.uiName || value.info.friendlyName}`;
+    return key in this._font.features
+      ? `${key} – ${this._font.features[key].bestName}`
+      : `[${key}] – ${value.friendlyName}`;
   }
 
   _optionGetGroup(value) {
@@ -143,23 +80,13 @@ class UIOTFeaturesSetSelect extends GenericSelect {
     if (value === null)
       // for the null/placeholder option
       return super._optionGetGroup();
-    const group = OTFeatureInfo.groups.get(value.info.group);
+    const group = OTFeatureInfo.groups.get(value.group);
     if (!group) throw new Error(`KEY ERROR group "${value.group}" not found`);
-    return [value.info.group, group.label, group.index];
-  }
-
-  _getFeatures() {
-    if (!this._featuesCache || this._featuesCache.font !== this._font) {
-      this._featuesCache = {
-        font: this._font,
-        features: getFeatureInfo(this._font),
-      };
-    }
-    return this._featuesCache.features;
+    return [value.group, group.label, group.index];
   }
 
   *_optionsGen(/*font*/) {
-    yield* this._getFeatures();
+    yield* Object.entries(OTFeatureInfo.ui);
   }
 
   async _changeSelectedValueHandler(/*event*/) {
@@ -169,35 +96,35 @@ class UIOTFeaturesSetSelect extends GenericSelect {
 
   _getIsHiddenFn() {
     if (this._optionsFilter === this.constructor.OPTION_FILTERS.IN_FONT) {
-      const features = this._getFeatures();
-      return (value) => {
-        return features.has(value) ? !features.get(value).inFont : false;
-      };
-    } else if (this._optionsFilter === this.constructor.OPTION_FILTERS.ALL)
+      return (value) => value !== "[_NULL_]" && !(value in this._font.features);
+    } else if (this._optionsFilter === this.constructor.OPTION_FILTERS.ALL) {
       return null;
+    }
     throw new Error(
       `NOT IMPLEMENTED for optionsFilter: "${this._optionsFilter}" known values: ${Object.values(this.constructor.OPTION_FILTERS).join(", ")}`,
     );
   }
 
   update(changedMap) {
-    console.log(`${this}.update changedMap:`, ...changedMap.keys());
-    // if(changed.has('options'))
-    //     this._updateOptions(changed.get('options'));
-    // if(changed.has('value'))
-    //     this._updateValue(changed.get('value'));
-    if (changedMap.has("rootFont") || changedMap.has("properties@")) {
-      const propertyValuesMap = (
-          changedMap.has("properties@")
-            ? changedMap.get("properties@")
-            : this.getEntry("properties@")
-        ).typeSpecnion.getProperties(),
-        font = propertyValuesMap.has(this._ppsRecord.fullKey)
-          ? propertyValuesMap.get(this._ppsRecord.fullKey)
-          : // rootFont can't be ForeignKey.NULL
-            this.getEntry("rootFont").value;
-      this._updateOptions(font);
+    let updateRestrictions = false;
+    if (changedMap.has("collection")) {
+      const collection = changedMap.get("collection");
+      this._isDisabledFn = (tag) => collection.has(tag);
+      updateRestrictions = true;
     }
+
+    const requireUpdateDefaults = this._requireUpdateDefaults(changedMap);
+    if (changedMap.has("rootFont") || requireUpdateDefaults) {
+      let font;
+      if (requireUpdateDefaults) {
+        const maybeFont = this._getDefaults(this._ppsRecord, "font", false);
+        if (maybeFont) font = maybeFont;
+      }
+      if (!font)
+        // rootFont can't (must not) be ForeignKey.NULL
+        font = this.getEntry("rootFont").value;
+      this._updateOptions(font);
+    } else if (updateRestrictions) this._updateRestrictions();
   }
 
   _updateRestrictions() {
@@ -231,13 +158,13 @@ class UIOTFeaturesSetSelect extends GenericSelect {
 
   _updateOptions(font, ...args) {
     this._font = font;
+    // will update via _optionsGen
     super._updateOptions(font, ...args);
     if (this._select.selectedIndex === -1) {
       this._select.options[0].selected = true;
     }
     this._isHiddenFn = this._getIsHiddenFn();
     this._updateRestrictions();
-    console.log(`${this}`, this);
   }
 
   /* NOTE: this can be done outside of the update function as the
@@ -249,353 +176,265 @@ class UIOTFeaturesSetSelect extends GenericSelect {
     this._isHiddenFn = this._getIsHiddenFn();
     this._updateRestrictions();
   }
-
-  //_updateOptions(availableOptions=null) {
-  //    //super._updateOptions(availableOptions);
-  //
-  //    // If selected value is no longer in options.
-  //    // if(availableOptions !== null && this._select.selectedIndex === -1) {
-  //    //     // select first option
-  //    //     this._select.options[0].selected = true;
-  //    //     // trigger change
-  //    //     // CAN'T DO THIS as this is within a change cycle
-  //    //     //but in this special case we can call directly...
-  //    //     this._changeSelectedValueHandler();
-  //    // }
-  //}
 }
 
-function _setsEqual(setA, setB) {
-  if (setA === setB) {
-    return true;
-  }
-  if (setA.size !== setB.size) {
-    return false;
-  }
-  for (const item of setA) {
-    if (!setB.has(item)) return false;
-  }
-  return true;
-}
-
-// FIXME should be included in the fontObject
-function _getUINameFromFeature(feature, defaultVal) {
-  const uiLabelNameEntry = feature.uiName || feature.featUiLabelName || {};
-  for (const platform of [
-    "unicode",
-    "windows",
-    "macintosh",
-    ...Object.keys(uiLabelNameEntry),
-  ]) {
-    if (!(platform in uiLabelNameEntry)) continue;
-    const platformEntry = uiLabelNameEntry[platform];
-    for (const lang of ["en", ...Object.keys(platformEntry)]) {
-      if (lang in platformEntry) return platformEntry[lang];
-    }
-  }
-  if (defaultVal !== undefined) return defaultVal;
-  throw new Error(`KEY ERROR can't find UI-Name in feature`);
-}
-
-export class UIActiveOTFeatures extends _BaseComponent {
-  constructor(widgetBus, ppsRecord) {
+export class UIBooleanOTFeature extends _BaseComponent {
+  constructor(
+    widgetBus,
+    tagName,
+    ppsRecord,
+    getDefaults,
+    requireUpdateDefaults,
+  ) {
     super(widgetBus);
+    [this.element, this._label, this._friendlyName, this._input] =
+      this._initTemplate(tagName);
+    this._tagName = tagName;
     this._ppsRecord = ppsRecord;
-    this._featureInputToInfo = null;
-    this._features = new Map();
-    this._nonDefaultFeatures = new Set();
-    [this.container, this._childrenContainer, this._currentFontLabel] =
-      this._initTemplate();
+    this._getDefaults = getDefaults;
+    this._requireUpdateDefaults = requireUpdateDefaults;
   }
-
   _getTemplate(h) {
     return (
-      <div class="ot_features_chooser">
-        <span class="ot_features_chooser-current_font">(not set)</span>
-        <div class="ot_features_chooser-children_container"></div>
+      <div class="ui_boolean_ot_feature">
+        <label>
+          <input class="ui_boolean_ot_feature-input" type="checkbox" />{" "}
+          <strong class="ui_boolean_ot_feature-label-content">
+            (not initialized)
+          </strong>{" "}
+          –{" "}
+          <span class="ui_boolean_ot_feature-friendly_name">
+            (not initialized)
+          </span>{" "}
+          <button class="ui_boolean_ot_feature-remove">remove 🗑️</button>
+        </label>
       </div>
     );
   }
-
-  _initTemplate() {
-    const container = this._getTemplate(this._domTool.h),
-      current_font = container.querySelector(
-        ".ot_features_chooser-current_font",
+  _initTemplate(tagName) {
+    const element = this._getTemplate(this._domTool.h),
+      label = element.querySelector(".ui_boolean_ot_feature-label-content"),
+      friendlyName = element.querySelector(
+        ".ui_boolean_ot_feature-friendly_name",
       ),
-      childrenContainer = container.querySelector(
-        ".ot_features_chooser-children_container",
-      );
-    this._insertElement(container);
-    childrenContainer.addEventListener("change", (e) => {
-      this._onFeatureChange(e.target);
-    });
-    return [container, childrenContainer, current_font];
-  }
+      input = element.querySelector(".ui_boolean_ot_feature-input"),
+      remove = element.querySelector(".ui_boolean_ot_feature-remove");
 
-  _setLabelState() {
-    this.container.classList[this._nonDefaultFeatures.size ? "add" : "remove"](
-      "non_default",
+    label.textContent = tagName;
+    input.addEventListener(
+      "change",
+      this._changeStateHandler(this._changeValueHandler.bind(this)),
     );
+    remove.addEventListener(
+      "click",
+      this._changeStateHandler(this._deleteValueHandler.bind(this)),
+    );
+
+    this._insertElement(element);
+    return [element, label, friendlyName, input];
+  }
+  _changeValueHandler() {
+    this.getEntry("value").value = this._input.checked;
+  }
+  _deleteValueHandler() {
+    const collectionPath = Path.fromString(
+      this.widgetBus.getExternalName("value"),
+    ).parent;
+    this.getEntry(collectionPath).delete(this._tagName);
   }
 
-  _setInputState(tag) {
-    const { input } = this._features.get(tag);
-    if (!input) return;
-    input.checked = this._isChecked(tag);
-    const isDefault = this.constructor.getUIDefault(tag) === input.checked;
-    input.parentElement.classList[isDefault ? "remove" : "add"]("non_default");
-  }
+  _setFont(font = null) {
+    const tag = this._tagName,
+      feature =
+        font !== null && tag in font.features ? font.features[tag] : null,
+      isInFontClass = "is-in-font";
+    this._friendlyName.textContent = feature
+      ? feature.bestName
+      : OTFeatureInfo.all[tag].friendlyName;
+    this.element.classList[feature ? "add" : "remove"](isInFontClass);
 
-  _setValue(newTagsArray) {
-    // => boolean changed
-    const newTags = new Set(newTagsArray),
-      oldTags = this._nonDefaultFeatures;
-    if (this._features.size) {
-      // We can set a value before _features are known, but when
-      // features are known, value must be compatible.
-      for (const tag of newTags) {
-        if (!this._features.has(tag)) newTags.delete(tag);
-      }
-    }
-
-    this._nonDefaultFeatures = newTags;
-    const changed = !_setsEqual(oldTags, this._nonDefaultFeatures); // => bool changed
-
-    if (changed) {
-      for (const tag of this._features.keys()) {
-        this._setInputState(tag);
-      }
-      this._setLabelState();
-    }
-    return changed;
-  }
-
-  // Basically this._inputs[0].value is the model state location.
-  get value() {
-    return [...this._nonDefaultFeatures];
-  }
-  set value(val) {
-    this._setValue(val);
-  }
-
-  // FIXME:!!!
-  _onFeatureChange(featureInputElement) {
-    const tag = this._featureInputToTag.get(featureInputElement),
-      defaultChecked = this.constructor.getUIDefault(tag),
-      isDefault = defaultChecked === featureInputElement.checked;
-    if (!isDefault) this._nonDefaultFeatures.add(tag);
-    else this._nonDefaultFeatures.delete(tag);
-
-    this._setInputState(tag);
-    this._setLabelState();
-  }
-
-  static getUIDefault(tag) {
-    return tag in OTFeatureInfo.all ? OTFeatureInfo.all[tag].uiBoolean : null;
-  }
-
-  static isChecked(tag, isDefault) {
-    const defaultChecked = this.getUIDefault(tag);
-    return isDefault ? defaultChecked : !defaultChecked;
-  }
-
-  _isChecked(tag) {
-    return this.constructor.isChecked(tag, !this._nonDefaultFeatures.has(tag));
-  }
-
-  _makeOptions(features) {
-    this._domTool.clear(this._childrenContainer);
-    this._featureInputToTag = new Map();
-    this._features.clear();
-    const tags = [...features.keys()].sort(),
-      h = this._domTool.h,
-      groups = new Map(),
-      getGroup = (groupName) => {
-        if (groups.has(groupName)) return groups.get(groupName)[1];
-        const info = OTFeatureInfo.groups.get(groupName),
-          elem = (
-            <div class="ot_features_chooser-group {`ot_features_chooser-group-{groupName.toLowerCase()}`}">
-              <strong>{info.label}</strong>
-              <div class="ot_features_chooser-group-items"></div>
-            </div>
-          ),
-          itemsElem = elem.querySelector(".ot_features_chooser-group-items");
-        groups.set(groupName, [elem, itemsElem]);
-        return itemsElem;
-      };
-
-    for (const tag of tags) {
-      const feature = features.get(tag),
-        { uiBoolean: defaultChecked, friendlyName } = feature.info,
-        fontUIName = feature.uiName;
-      if (defaultChecked === null) {
-        // These features usually don't work with a simple on/off
-        // user interface and need to be treated differently.
-        continue;
-      }
-
-      const defaultSetting = defaultChecked ? "on" : "off",
-        info = `"${tag} (tables: ${[...feature.tables].join(", ")}): ${fontUIName || friendlyName}; default: ${defaultSetting}"`,
-        tagString = tag,
-        tagItem = feature.tables.size ? (
-          // tag is in current font
-          <strong>{tagString}</strong>
-        ) : (
-          // tag is not in font
-          `[${tagString}]`
-        ),
-        elem = (
-          <label title={info}>
-            <input type="checkbox" value={tag} /> {tagItem}{" "}
-            {fontUIName || friendlyName}
-          </label>
-        ),
-        input = elem.querySelector("input");
-      this._featureInputToTag.set(input, tag);
-      this._features.set(tag, { input });
-      this._setInputState(tag);
-
-      getGroup(feature.info.group).append(elem, <br />);
-    }
-
-    // keep order of the groups
-    for (const groupName of OTFeatureInfo.groups.keys()) {
-      if (groups.has(groupName))
-        this._childrenContainer.append(groups.get(groupName)[0]);
-    }
-    this._setLabelState();
-  }
-
-  getFeatures(font) {
-    const otjsFontObject = font.fontObject,
-      fontFeatures = new Map(),
-      _getFeatures = (tableTag, tableFeatures, langSys, featureIndexes) => {
-        for (const idx of featureIndexes) {
-          const { tag: otFeatureTag, feature } = tableFeatures[idx];
-          if (!fontFeatures.has(otFeatureTag)) {
-            fontFeatures.set(otFeatureTag, {
-              tables: new Set(),
-              langSys: new Set(),
-              info: OTFeatureInfo.all[otFeatureTag],
-              uiName: null,
-            });
-          }
-          const featureData = fontFeatures.get(otFeatureTag);
-          featureData.tables.add(tableTag);
-          featureData.langSys.add(langSys);
-          if (
-            (featureData.uiName === null && otFeatureTag.startsWith("ss")) ||
-            otFeatureTag.startsWith("cv")
-          ) {
-            featureData.uiName = _getUINameFromFeature(feature, null);
-          }
-        }
-      };
-    for (const [otFeatureTag, info] of Object.entries(OTFeatureInfo.all)) {
-      fontFeatures.set(otFeatureTag, {
-        tables: new Set(),
-        langSys: new Set(),
-        info: info,
-        uiName: null,
-      });
-    }
-    for (const tableTag of ["GSUB", "GPOS"]) {
-      const openTypeJSTableTag = tableTag.toLowerCase();
-      if (
-        !(openTypeJSTableTag in otjsFontObject.tables) ||
-        !otjsFontObject.tables[openTypeJSTableTag].scripts
-      )
-        continue;
-      const table = otjsFontObject.tables[openTypeJSTableTag],
-        scripts = table.scripts;
-      for (const scriptEntry of scripts) {
-        const script = scriptEntry.script,
-          scriptTag = scriptEntry.tag;
-        if (script.defaultLangSys) {
-          const langTag = "Default",
-            langSys = script.defaultLangSys;
-          _getFeatures(
-            tableTag,
-            table.features,
-            [scriptTag, langTag].join(":"),
-            langSys.featureIndexes,
-          );
-        }
-        if (script.langSysRecords) {
-          for (const { tag: langTag, langSys } of script.langSysRecords) {
-            _getFeatures(
-              tableTag,
-              table.features,
-              [scriptTag, langTag].join(":"),
-              langSys.featureIndexes,
-            );
-          }
-        }
-        continue;
-      }
-    }
-    return fontFeatures;
-  }
-
-  setFont(font) {
-    const features = this.getFeatures(font);
-    this._makeOptions(features);
-
-    // clean up the actual value
-    for (const feaureTag of this._nonDefaultFeatures) {
-      if (!this._features.has(feaureTag))
-        this._nonDefaultFeatures.delete(feaureTag);
-    }
+    const joiner = " – ",
+      title = this.element.getAttribute("title").split(joiner);
+    title.splice(
+      1,
+      title.length > 1 ? 1 : 0,
+      feature ? "is in font" : "[is not in font]",
+    );
+    this.element.setAttribute("title", title.join(joiner));
   }
 
   update(changedMap) {
-    console.log(`${this}.update changedMap:`, ...changedMap);
-    if (changedMap.has("rootFont") || changedMap.has("properties@")) {
-      const propertyValuesMap = (
-          changedMap.has("properties@")
-            ? changedMap.get("properties@")
-            : this.getEntry("properties@")
-        ).typeSpecnion.getProperties(),
-        font = propertyValuesMap.has(this._ppsRecord.fullKey)
-          ? propertyValuesMap.get(this._ppsRecord.fullKey)
-          : // rootFont can't be ForeignKey.NULL
-            this.getEntry("rootFont").value;
-
-      console.log(
-        `${this} propertyValuesMap.keys():`,
-        ...propertyValuesMap.keys(),
-        "\n    font:",
-        font,
+    // font = changedMap.get('font')
+    // changedMap.get('value').value
+    // ...
+    if (changedMap.has("value")) {
+      this._input.checked = changedMap.get("value").value;
+      const tag = this._tagName,
+        isDefaultValueClass = "is-default-value",
+        isDefaultValue =
+          OTFeatureInfo.all[tag].uiBoolean === this._input.checked,
+        tooltip = isDefaultValue ? "is the default" : "*is not the default";
+      this.element.classList[isDefaultValue ? "add" : "remove"](
+        isDefaultValueClass,
       );
-      // FIXME: used to be defined as:
-      // const inherited = // this.getEntry("font") === ForeignKey.NULL;
-      this._currentFontLabel.textContent = `${font.fullName}`;
-      this.setFont(font);
+      this.element.setAttribute("title", tooltip);
+    }
+    let font = null;
+    const requireUpdateDefaults = this._requireUpdateDefaults(changedMap);
+    if (changedMap.has("rootFont") || requireUpdateDefaults) {
+      if (requireUpdateDefaults) {
+        const maybeFont = this._getDefaults(this._ppsRecord, "font", false);
+        if (maybeFont) font = maybeFont;
+      } else if (changedMap.has("rootFont"))
+        font = changedMap.get("rootFont").value;
+    }
+    if (!font) {
+      // rootFont can't (must not) be ForeignKey.NULL
+      font = this.getEntry("rootFont").value;
+    }
+    this._setFont(font);
+  }
+}
+
+class UIActiveOTFeatures extends _BaseDynamicMapContainerComponent {
+  // important here, as we use the value of each entry in the path
+  // of the stylePatchProperties@
+  [HANDLE_CHANGED_AS_NEW] = true;
+  constructor(
+    widgetBus,
+    _zones,
+    ppsRecord,
+    getDefaults,
+    requireUpdateDefaults,
+    updateDefaultsDependencies,
+  ) {
+    const contentElement = widgetBus.domTool.createElement("div", {
+        class: "ui_ot_active_features",
+      }),
+      zones = new Map([..._zones, ["local", contentElement]]);
+    super(widgetBus, zones);
+    this._groups = new Map();
+    this._insertElement(contentElement);
+    this._ppsRecord = ppsRecord;
+    this._getDefaults = getDefaults;
+    this._requireUpdateDefaults = requireUpdateDefaults;
+    this._updateDefaultsDependencies = updateDefaultsDependencies;
+  }
+
+  _getZone(tagName) {
+    const tagInfo = OTFeatureInfo.all[tagName],
+      zone = `group-${tagInfo.group}`,
+      groupInfo = OTFeatureInfo.groups.get(tagInfo.group);
+    if (!this._groups.has(zone)) {
+      const h = this._domTool.h,
+        classes = `ui_ot_active_features-group ui_ot_active_features-group_${tagInfo.group}`,
+        zoneOuterElement = (
+          <div class={classes}>
+            <h4>{groupInfo.label}</h4>
+            <div class="ui_ot_active_features-group-items"></div>
+          </div>
+        ),
+        zoneInnerElement = zoneOuterElement.querySelector(
+          ".ui_ot_active_features-group-items",
+        );
+      this._groups.set(zone, {
+        inner: zoneInnerElement,
+        outer: zoneOuterElement,
+        info: groupInfo,
+      });
+    }
+    const group = this._groups.get(zone);
+    if (!this._zones.has(zone)) {
+      this._zones.set(zone, group.inner);
+      // Insert at corret position! Use: groupInfo.index!
+      let before = null,
+        after = null;
+      for (const group_ of this._groups.values()) {
+        if (group === group_) continue;
+        if (group_.info.index <= group.info.index) {
+          if (!before || before.info.index <= group_.info.index)
+            before = group_;
+        } else if (!before && group_.info.index > group.info.index) {
+          if (!after || after.info.index > group_.info.index) after = group_;
+        }
+      }
+      // FIXME: also remove again, after update, if still empty
+      if (before) this._domTool.insertAfter(group.outer, before.outer);
+      else if (after) this._domTool.insertBefore(group.outer, after.outer);
+      else this._zones.get("local").append(group.outer);
+    }
+    return zone;
+  }
+
+  _cleanUpGroups() {
+    for (const [zone, group] of this._groups) {
+      if (group.inner.children.length === 0) {
+        this._zones.delete(zone);
+        group.outer.remove();
+        this._groups.delete(zone);
+      }
     }
   }
 
-  // static applyFeatures(container, nonDefaultTags) {
-  //     const features = [];
-  //     for(const featureTag of new Set(nonDefaultTags)) {
-  //         const checked = this.isChecked(featureTag, false/* here all are non-default */);
-  //         features.push(`"${featureTag}" ${checked ? 'on' : 'off'}`);
-  //     }
-  //     if(features.length)
-  //         container.style.setProperty('font-feature-settings', features.join(', '));
-  //     else
-  //         container.style.removeProperty('font-feature-settings');
-  // }
-  //
-  // applyFeatures(container) {
-  //     this.constructor.applyFeatures(container, this._nonDefaultFeatures);
-  // }
+  _update(...args) {
+    const result = super._update(...args);
+    this._cleanUpGroups();
+    return result;
+  }
+
+  /**
+   * return => [settings, dependencyMappings, Constructor, ...args];
+   */
+  _getWidgetSetup(rootPath) {
+    const [collection, tagName] = rootPath.parts.slice(-2),
+      zone = this._getZone(tagName);
+    return [
+      {
+        // rootPath: rootPath.parent,
+        zone,
+      },
+      [
+        [`./${collection}/${tagName}`, "value"],
+        ["/font", "rootFont"],
+        ...this._updateDefaultsDependencies,
+      ],
+      UIBooleanOTFeature,
+      tagName,
+      this._ppsRecord,
+      this._getDefaults,
+      this._requireUpdateDefaults,
+    ];
+  }
+  _createWrapper(rootPath) {
+    const childWidgetBus = this._childrenWidgetBus,
+      // , args = [this._zones]
+      [settings, dependencyMappings, Constructor, ...args] =
+        this._getWidgetSetup(rootPath);
+    return this._initWrapper(
+      childWidgetBus,
+      settings,
+      dependencyMappings,
+      Constructor,
+      ...args,
+    );
+  }
 }
 
 export class UIOTFeaturesChooser extends _BaseContainerComponent {
-  constructor(widgetBus, _zones, ppsRecordFont) {
+  constructor(
+    widgetBus,
+    _zones,
+    getDefaults,
+    requireUpdateDefaults,
+    updateDefaultsDependencies,
+  ) {
     const h = widgetBus.domTool.h,
       localMain = <div class="ui_opentype_features_chooser"></div>,
-      zones = new Map([..._zones, ["main", localMain]]);
+      zones = new Map([..._zones, ["main", localMain]]),
+      ppsRecordFont = ProcessedPropertiesSystemMap.createSimpleRecord(
+        SPECIFIC,
+        "font",
+      );
     widgetBus.insertElement(localMain);
     super(widgetBus, zones, [
       [
@@ -630,13 +469,16 @@ export class UIOTFeaturesChooser extends _BaseContainerComponent {
         { zone: "main", id: "features-select" },
         [
           [widgetBus.getExternalName("rootFont"), "rootFont"],
-          [widgetBus.getExternalName("properties@"), "properties@"],
+          [widgetBus.getExternalName("openTypeFeatures"), "collection"],
+          ...updateDefaultsDependencies,
         ],
         UIOTFeaturesSetSelect,
         "ui_opentype_features_chooser-select", // baseClass
         null,
         ppsRecordFont,
         [true, "Select a feature to add…"], // allowNull
+        getDefaults,
+        requireUpdateDefaults,
       ],
       [
         { zone: "main" },
@@ -653,12 +495,13 @@ export class UIOTFeaturesChooser extends _BaseContainerComponent {
         {
           zone: "main",
         },
-        [
-          [widgetBus.getExternalName("rootFont"), "rootFont"],
-          [widgetBus.getExternalName("properties@"), "properties@"],
-        ],
+        [[widgetBus.getExternalName("openTypeFeatures"), "collection"]],
         UIActiveOTFeatures,
+        zones,
         ppsRecordFont,
+        getDefaults,
+        requireUpdateDefaults,
+        updateDefaultsDependencies,
       ],
     ]);
   }
@@ -667,7 +510,16 @@ export class UIOTFeaturesChooser extends _BaseContainerComponent {
   }
   _addFeatureHandler(/*e*/) {
     const selectUI = this.getWidgetById("features-select"),
-      value = selectUI.value;
-    console.log(`${this}._addFeatureHandler value:`, value);
+      tag = selectUI.value;
+    if (tag === null) return;
+    this._changeState(() => {
+      const openTypeFeatures = this.getEntry("openTypeFeatures");
+      if (openTypeFeatures.has(tag)) return;
+      const value = openTypeFeatures.constructor.Model.createPrimalDraft(
+        openTypeFeatures.dependencies,
+      );
+      value.value = OTFeatureInfo.all[tag].uiBoolean;
+      openTypeFeatures.set(tag, value);
+    });
   }
 }

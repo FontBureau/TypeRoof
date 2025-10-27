@@ -98,6 +98,7 @@ import {
   GENERIC,
   SPECIFIC,
   LEADING,
+  OPENTYPE_FEATURES,
   getPropertiesBroomWagonGen,
   ProcessedPropertiesSystemMap,
 } from "../registered-properties-definitions.mjs";
@@ -1427,6 +1428,7 @@ function getTypeSpecPPSMap(parentPPSRecord, Model) {
       // we should use a symbol here!
       prefix = "axesLocations/";
     else if (modelFieldName === "stylePatches") prefix = "stylePatches/";
+    else if (modelFieldName === "openTypeFeatures") prefix = OPENTYPE_FEATURES;
 
     if (prefix === null)
       // don't make a UI for this
@@ -1474,6 +1476,7 @@ function getNodeSpecPPSMap(parentPPSRecord, Model) {
       // we should use a symbol here!
       prefix = "axesLocations/";
     else if (modelFieldName === "stylePatches") prefix = "stylePatches/";
+    else if (modelFieldName === "openTypeFeatures") prefix = OPENTYPE_FEATURES;
 
     if (prefix === null)
       // don't make a UI for this
@@ -1573,8 +1576,12 @@ function typeSpecGetDefaults(
     return _getFallback(fullKey, modelDefaultValue);
   }
   // These requests come via UIManualAxisLocations:
-  else if (ppsRecord.prefix === "axesLocations/") {
+  else if (
+    ppsRecord.prefix === "axesLocations/" ||
+    ppsRecord.prefix === OPENTYPE_FEATURES
+  ) {
     // 'axesLocations/'. 'YTFI', '738'
+    // 'opentype-feature/'. 'kern', false
     const key = `${ppsRecord.prefix}${fieldName}`,
       result = propertyValues.has(key)
         ? propertyValues.get(key)
@@ -1597,6 +1604,11 @@ function typeSpecGetDefaults(
     if (propertyValues.has(fullKey)) return propertyValues.get(fullKey);
     return _getFallback(fullKey, modelDefaultValue);
   }
+}
+
+function getRequireUpdateDefaultsFn(updateDefaultsNames) {
+  return (changedMap) =>
+    Array.from(changedMap.keys()).some((name) => updateDefaultsNames.has(name));
 }
 
 /**
@@ -1673,6 +1685,7 @@ class TypeSpecPropertiesManager extends _CommonContainerComponent {
       //      [typeSpecPropertiesKey, 'typeSpecProperties@']
       //  ]
       //, _updateDefaultsNames = new Set(Array.from(zip(...updateDefaultsDependencies))[1])
+      updateDefaultsDependencies = [[typeSpecPropertiesKey, "properties@"]],
       requireUpdateDefaults = (/*changedMap*/) => {
         // FIXME: in this context, this method seems broken!
         // for once, it contains e.g. `value` as key in changedMap
@@ -1773,19 +1786,6 @@ class TypeSpecPropertiesManager extends _CommonContainerComponent {
       //      NOTE however, the color-picker may be a nice example
       //      for existing grouping behavior.
       [
-        {
-          rootPath: typeSpecPath,
-          zone: "main",
-        },
-        [
-          ["/font", "rootFont"],
-          ["typeSpecProperties@", "properties@"],
-        ],
-        UIOTFeaturesChooser,
-        this._zones,
-        ProcessedPropertiesSystemMap.createSimpleRecord(SPECIFIC, "font"),
-      ],
-      [
         { rootPath: typeSpecPath, zone: "main" },
         [],
         UITypeDrivenContainer,
@@ -1799,9 +1799,10 @@ class TypeSpecPropertiesManager extends _CommonContainerComponent {
           //          KEY ERROR not found identifier "typeSpecProperties@/activeState/typeSpec/textColor"
           //          in [ProtocolHandler typeSpecProperties@]: typeSpecProperties@/activeState/typeSpec.
           // Maybe this key is flawed in this context?
-          updateDefaultsDependencies: [], //updateDefaultsDependencies
+          updateDefaultsDependencies,
           genericTypeToUIElement,
           requireUpdateDefaults,
+          // 'properties@': ['typeSpecProperties@', 'properties@']
         },
         // FIXME: the type of the root element should be fixed
         // to TypeSpecModel as well!
@@ -1992,45 +1993,73 @@ class UIStylePatch extends _BaseContainerComponent {
           //        : this.getEntry(typeSpecPropertiesKey)
           //        ;
         },
-        getDefaults = typeSpecGetDefaults.bind(null, getLiveProperties);
-      // AxesLocationsModel seems to require 'typeSpecProperties@'
-      // which causes:
-      //      Uncaught (in promise) Error: KEY ERROR not found identifier
-      //      "typeSpecProperties@/activeState/stylePatchesSource/bold/instance"
-      //      in [ProtocolHandler typeSpecProperties@]:
-      //      typeSpecProperties@/activeState/typeSpec.
-      //
-      // We could filter the TYPESPEC_PPS_MAP and try to avoid
-      // the error by not using AxesLocationsModel.
-      //console.log(`${this} TYPESPEC_PPS_MAP`, TYPESPEC_PPS_MAP);
+        getDefaults = (ppsRecord, fieldName, modelDefaultValue) => {
+          if (ppsRecord.fullKey === `${SPECIFIC}font`) {
+            const activeFontKey = this.getEntry(
+              settings.rootPath.append("activeFontKey"),
+            ); //.append('activeFontKey'));
+            if (activeFontKey.value !== ForeignKey.NULL) {
+              const installedFonts = this.getEntry("/installedFonts");
+              return installedFonts.get(activeFontKey.value).value;
+            }
+          }
+          return typeSpecGetDefaults(
+            getLiveProperties,
+            ppsRecord,
+            fieldName,
+            modelDefaultValue,
+          );
+        },
+        // AxesLocationsModel seems to require 'typeSpecProperties@'
+        // which causes:
+        //      Uncaught (in promise) Error: KEY ERROR not found identifier
+        //      "typeSpecProperties@/activeState/stylePatchesSource/bold/instance"
+        //      in [ProtocolHandler typeSpecProperties@]:
+        //      typeSpecProperties@/activeState/typeSpec.
+        //
+        // We could filter the TYPESPEC_PPS_MAP and try to avoid
+        // the error by not using AxesLocationsModel.
+        //console.log(`${this} TYPESPEC_PPS_MAP`, TYPESPEC_PPS_MAP);
 
-      // console.log(`${this} ... ${this.widgetBus.rootPath.append('instance')}`,
-      //         this.widgetBus.getEntry(this.widgetBus.rootPath.append('instance')));
-      // keys are:
-      //    "baseFontSize", "relativeFontSize", "textColor",
-      //    "backgroundColor", "autoOPSZ", "axesLocations",
-      //    "activeFontKey", "font", "installedFonts"
+        // console.log(`${this} ... ${this.widgetBus.rootPath.append('instance')}`,
+        //         this.widgetBus.getEntry(this.widgetBus.rootPath.append('instance')));
+        // keys are:
+        //    "baseFontSize", "relativeFontSize", "textColor",
+        //    "backgroundColor", "autoOPSZ", "axesLocations",
+        //    "activeFontKey", "font", "installedFonts"
 
-      const removeItems = new Set([
+        removeItems = new Set([
           // 'baseFontSize' // Maybe only use in paragraph context
         ]),
         PPS_MAP = new ProcessedPropertiesSystemMap(
           Array.from(TYPESPEC_PPS_MAP.entries()).filter(
             ([key]) => !removeItems.has(key),
           ),
-        );
-      // keys is this are:
-      //    "columnWidth", "leading", "baseFontSize", "relativeFontSize",
-      //     "textColor", "backgroundColor", "stylePatches"
-      // minus: "axesLocations" of course
-      //
-      // The main diff to the model are:
-      //      "columnWidth", "leading"
-      // The following are expected to be missing as well:
-      //      "activeFontKey", "font", "installedFonts"
+        ),
+        // keys is this are:
+        //    "columnWidth", "leading", "baseFontSize", "relativeFontSize",
+        //     "textColor", "backgroundColor", "stylePatches"
+        // minus: "axesLocations" of course
+        //
+        // The main diff to the model are:
+        //      "columnWidth", "leading"
+        // The following are expected to be missing as well:
+        //      "activeFontKey", "font", "installedFonts"
 
-      // console.log(`${this} PPS_MAP`, PPS_MAP);
-
+        // console.log(`${this} PPS_MAP`, PPS_MAP);
+        updateDefaultsDependencies = [
+          // FIXME: here a fundamental flaw of the concept becomes apparent:
+          // font is only required for the OpenType-Features UI, but via this
+          // mechanism, the dependency is also injected into the ColorChooser
+          // UI. if we use "./font" as external name, the ColorChooser fails
+          // with a key error, as it doesn't have a font property. Using the
+          // absolute path fixes the symptom, howver, ColorChooser is now
+          // still loaded with the font dependency, which it doesn't have!
+          [
+            `${this.widgetBus.rootPath.append("instance/activeFontKey")}`,
+            "activeFontKey",
+          ],
+        ];
       args = [
         this._zones,
         {
@@ -2041,9 +2070,15 @@ class UIStylePatch extends _BaseContainerComponent {
           //          KEY ERROR not found identifier "typeSpecProperties@/activeState/typeSpec/textColor"
           //          in [ProtocolHandler typeSpecProperties@]: typeSpecProperties@/activeState/typeSpec.
           // Maybe this key is flawed in this context?
-          updateDefaultsDependencies: [], //updateDefaultsDependencies
+          updateDefaultsDependencies,
           genericTypeToUIElement,
-          requireUpdateDefaults: () => true, //
+          requireUpdateDefaults: getRequireUpdateDefaultsFn(
+            new Set(
+              updateDefaultsDependencies.map((item) =>
+                typeof item === "string" ? item : item.at(-1),
+              ),
+            ),
+          ),
         },
         // FIXME: the type of the root element should be fixed
         // to TypeSpec as well! (what does this mean?)
@@ -3211,6 +3246,16 @@ export function* axisLocationsGen(
   }
 }
 
+function* openTypeFeaturesGen(
+  outerTypespecnionAPI,
+  hostInstance /* here a TypeSpecModel */,
+) {
+  const openTypeFeatures = hostInstance.get("openTypeFeatures");
+  for (const [featureTag, featureValue] of openTypeFeatures) {
+    yield [`${OPENTYPE_FEATURES}${featureTag}`, featureValue.value];
+  }
+}
+
 function calculateFontAxisValueSynthetic(axisTag, logiVal, font) {
   const axisRanges = font.axisRanges;
   if (!(axisTag in axisRanges))
@@ -3310,6 +3355,7 @@ const REGISTERED_GENERIC_TYPESPEC_FIELDS = Object.freeze(
     baseFontSizeGen,
     fontSizeGen, // must come before axisLocationsGen
     axisLocationsGen,
+    openTypeFeaturesGen,
     getPropertiesBroomWagonGen(GENERIC, REGISTERED_GENERIC_TYPESPEC_FIELDS),
     leadingGen,
   ]),
@@ -3336,6 +3382,7 @@ const REGISTERED_GENERIC_TYPESPEC_FIELDS = Object.freeze(
     // which need resolution when the font is aussured to be known
     // i.e. where this patch and the typeSpec get mixed.
     axisMathLocationsGen,
+    openTypeFeaturesGen,
     getPropertiesBroomWagonGen(
       GENERIC,
       _GENERIC_STYLEPATCH_FIELDS,
@@ -6245,6 +6292,7 @@ const _skipPrefix = new Set([
   // the caller may know a default value, but it may also not know, there's
   // no guarantee!
   "axesLocations/",
+  OPENTYPE_FEATURES,
   // "font" is really the only case of this so far, there could
   // be the document font as a default maybe, as it cannot be not
   // set at all, hence it also must be loaded and available.
