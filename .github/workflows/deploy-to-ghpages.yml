@@ -1,46 +1,46 @@
 name: Deploy to GitHub Pages
 
 on:
-  workflow_dispatch:
-  push:
-  pull_request:
+    workflow_dispatch:
+    push:
+    pull_request:
 
 jobs:
-  deploy:
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: write
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: "true"
+    deploy:
+        runs-on: ubuntu-22.04
+        permissions:
+            contents: write
+        concurrency:
+            group: ${{ github.workflow }}-${{ github.ref }}
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  submodules: "true"
 
-      - name: ⚙️ Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
+            - name: ⚙️ Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version-file: ".nvmrc"
+                  cache: "npm"
 
-      - name: 💾 Persist Eleventy .cache
-        uses: actions/cache@v4
-        with:
-          path: ./.cache
-          key: ${{ runner.os }}-eleventy-fetch-cache
+            - name: 💾 Persist Eleventy .cache
+              uses: actions/cache@v4
+              with:
+                  path: ./.cache
+                  key: ${{ runner.os }}-eleventy-fetch-cache
 
-      - name: 📦 Install dependencies
-        run: npm ci
+            - name: 📦 Install dependencies
+              run: npm ci
 
-      - name: 🧪 Run linters & formatters
-        run: npm run lint
+            - name: 🧪 Run linters & formatters
+              run: npm run lint
 
-      - name: 📚 Build documentation & application
-        run: npm run build
+            - name: 📚 Build documentation & application
+              run: npm run build
 
-      - name: 🚀 Deploy
-        uses: peaceiris/actions-gh-pages@v4
-        if: github.ref == 'refs/heads/main'
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./_site
+            - name: 🚀 Deploy
+              uses: peaceiris/actions-gh-pages@v4
+              if: github.ref == 'refs/heads/main'
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  publish_dir: ./_site

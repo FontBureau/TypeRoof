@@ -3,60 +3,60 @@ sidebar
 *******************************************************************************/
 
 .typeroof-docs .typeroof-ui_sidebar {
-  font-size: 0.8em;
-  font-variation-settings: "opsz" 10;
-  padding: 1em;
+    font-size: 0.8em;
+    font-variation-settings: "opsz" 10;
+    padding: 1em;
 }
 
 .typeroof-docs .typeroof-ui_sidebar a {
-  color: inherit;
+    color: inherit;
 }
 
 .typeroof-docs .typeroof-ui_sidebar ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
 
 .typeroof-docs .typeroof-ui_sidebar li > a {
-  display: inline-block;
-  padding: 0.4em 0;
+    display: inline-block;
+    padding: 0.4em 0;
 }
 
 .typeroof-docs .typeroof-ui_sidebar li.active {
-  font-weight: 700;
+    font-weight: 700;
 }
 
 .typeroof-docs .typeroof-ui_sidebar li.active > a {
-  text-decoration: none;
+    text-decoration: none;
 }
 
 .typeroof-docs .typeroof-ui_sidebar li.active li:not(.active) {
-  font-weight: 400;
+    font-weight: 400;
 }
 
 .typeroof-docs .typeroof-ui_sidebar li ul {
-  list-style: none;
+    list-style: none;
 }
 
 .typeroof-docs .typeroof-ui_sidebar li ul li::before {
-  content: var(--chevron-right);
-  margin-right: 0.5em;
+    content: var(--chevron-right);
+    margin-right: 0.5em;
 }
 
 .typeroof-docs .typeroof-ui_sidebar li ul li ul {
-  margin-left: 0.5em;
+    margin-left: 0.5em;
 }
 
 .typeroof-docs .typeroof-ui_sidebar nav {
-  margin-bottom: 2em;
+    margin-bottom: 2em;
 }
 
 .typeroof-docs .typeroof-ui_sidebar h3 {
-  font-size: 1em;
-  font-weight: 600;
-  margin: 0;
-  margin-bottom: 0.5em;
+    font-size: 1em;
+    font-weight: 600;
+    margin: 0;
+    margin-bottom: 0.5em;
 }
 
 /******************************************************************************
@@ -64,8 +64,8 @@ main
 *******************************************************************************/
 
 body.typeroof-docs > .wrapper > .typeroof-main {
-  overflow: auto;
-  container-type: inline-size;
+    overflow: auto;
+    container-type: inline-size;
 }
 
 /******************************************************************************
@@ -73,49 +73,52 @@ content
 *******************************************************************************/
 
 .typeroof-docs_content .heading_anchor {
-  color: gray;
-  font-weight: normal;
-  margin-right: 0.1em;
-  text-decoration: none;
+    color: gray;
+    font-weight: normal;
+    margin-right: 0.1em;
+    text-decoration: none;
 }
 
 @container (width > 0) {
-  /* the @container query is only required to establish the cqi unit
+    /* the @container query is only required to establish the cqi unit
    * https://developer.mozilla.org/en-US/docs/Web/CSS/length#container_query_length_units
    */
-  .typeroof-docs_content {
-    --max-width: 50rem;
+    .typeroof-docs_content {
+        --max-width: 50rem;
 
-    /* The max rule guards the free-space to not become negative, that
+        /* The max rule guards the free-space to not become negative, that
      * way the actual width of the content plus its inline padding are
      * always available before we add margin.
      */
-    --free-space: max(0px, calc(100cqi - var(--max-width)));
+        --free-space: max(0px, calc(100cqi - var(--max-width)));
 
-    max-width: var(--max-width);
+        max-width: var(--max-width);
 
-    /* Try to balance the distance to the left side
+        /* Try to balance the distance to the left side
      * it grows with the available horizontal space
      * but it would loose contact to the left edge when too big, so we
      * stop growing distance at 1/3 of the content max width.
      * It can't become negative, because --free-space will never be < 0;
      */
-    --margin-inline-start: min(var(--free-space) * 1/3, var(--max-width) * 1/3);
+        --margin-inline-start: min(
+            var(--free-space) * 1/3,
+            var(--max-width) * 1/3
+        );
 
-    margin-inline-start: var(--margin-inline-start);
-  }
+        margin-inline-start: var(--margin-inline-start);
+    }
 
-  .typeroof-docs_content .heading_anchor {
-    /* Because the # is painted in a light gray it creates visually a gap.
+    .typeroof-docs_content .heading_anchor {
+        /* Because the # is painted in a light gray it creates visually a gap.
      * For the appearance of the left border it's better to move these out,
      * if there's space.
      * The .8em is determined visually with Roboto Flex, it would differ
      * for other fonts and other relative width of the #, also e.g. when
      * e.g. the wdth axis would be used.
      * */
-    --move-out: 0.9em;
+        --move-out: 0.9em;
 
-    /* if the left margin doesn't have --move-out space the calculation
+        /* if the left margin doesn't have --move-out space the calculation
      * in the second argument of clamp(min, val, max) will be lower than
      * 0 and thus 0; otherwise it will be between 0 and 0.8em. The
      * round(up, valueToRound, roundingInterval) will round up to 0.8em.
@@ -124,16 +127,17 @@ content
      * then the --move-out is not applied at all, without transition in
      * between.
      */
-    --use-move-out: round(
-      up,
-      clamp(
-        0em,
-        var(--margin-inline-start, 0em) + var(--gap-size) - var(--move-out),
-        var(--move-out)
-      ),
-      var(--move-out)
-    );
+        --use-move-out: round(
+            up,
+            clamp(
+                0em,
+                var(--margin-inline-start, 0em) + var(--gap-size) -
+                    var(--move-out),
+                var(--move-out)
+            ),
+            var(--move-out)
+        );
 
-    margin-inline-start: calc(var(--use-move-out) * -1);
-  }
+        margin-inline-start: calc(var(--use-move-out) * -1);
+    }
 }

@@ -3,34 +3,34 @@ wrapper
 *******************************************************************************/
 
 body > .wrapper {
-  display: grid;
+    display: grid;
 
-  --sidebar-width: 20rem;
+    --sidebar-width: 20rem;
 
-  grid-template:
-    "header main" auto "sidebar main" 1fr "footer footer" auto
-    /
-    var(--sidebar-width) calc(100vw - var(--sidebar-width));
-  height: 100vh;
+    grid-template:
+        "header main" auto "sidebar main" 1fr "footer footer" auto
+        /
+        var(--sidebar-width) calc(100vw - var(--sidebar-width));
+    height: 100vh;
 }
 
 body > .wrapper > header {
-  grid-area: header;
-  height: fit-content;
+    grid-area: header;
+    height: fit-content;
 }
 
 body > .wrapper > .typeroof-ui_sidebar {
-  grid-area: sidebar;
-  overflow-y: auto;
-  background: var(--sidebar-bg-color);
+    grid-area: sidebar;
+    overflow-y: auto;
+    background: var(--sidebar-bg-color);
 }
 
 body > .wrapper > .typeroof-main {
-  grid-area: main;
-  background: var(--background-color);
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
+    grid-area: main;
+    background: var(--background-color);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
 }
 
 /**
@@ -41,13 +41,13 @@ body > .wrapper > .typeroof-main {
  * .typeroof-layout-after will always stay visible.
  */
 body > .wrapper > .typeroof-main > .typeroof-layout {
-  overflow: auto;
-  flex-grow: 1;
+    overflow: auto;
+    flex-grow: 1;
 }
 
 body > .wrapper > footer {
-  grid-area: footer;
-  height: fit-content;
+    grid-area: footer;
+    height: fit-content;
 }
 
 /******************************************************************************
@@ -55,42 +55,42 @@ header / footer
 *******************************************************************************/
 
 header {
-  background-color: #ccc;
-  color: var(--text-color);
-  padding: 0.6rem 1rem;
+    background-color: #ccc;
+    color: var(--text-color);
+    padding: 0.6rem 1rem;
 }
 
 footer {
-  background-color: var(--text-color);
-  color: var(--background-color);
-  padding: 0.6rem 1rem;
+    background-color: var(--text-color);
+    color: var(--background-color);
+    padding: 0.6rem 1rem;
 }
 
 header > *,
 footer > * {
-  margin: 0;
-  padding: 0;
+    margin: 0;
+    padding: 0;
 }
 
 header h1,
 footer {
-  font-size: 0.8em;
-  font-variation-settings: "opsz" 10;
+    font-size: 0.8em;
+    font-variation-settings: "opsz" 10;
 }
 
 header h1 {
-  font-variation-settings:
-    "opsz" 10,
-    "wght" 1000;
+    font-variation-settings:
+        "opsz" 10,
+        "wght" 1000;
 }
 
 footer ul {
-  display: flex;
-  gap: 2em;
-  justify-content: end;
-  list-style: none;
+    display: flex;
+    gap: 2em;
+    justify-content: end;
+    list-style: none;
 }
 
 footer :is(a:link, a:visited) {
-  color: var(--background-color);
+    color: var(--background-color);
 }
