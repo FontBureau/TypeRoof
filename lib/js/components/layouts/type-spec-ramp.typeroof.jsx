@@ -3246,7 +3246,7 @@ export function* axisLocationsGen(
   }
 }
 
-function* openTypeFeaturesGen(
+export function* openTypeFeaturesGen(
   outerTypespecnionAPI,
   hostInstance /* here a TypeSpecModel */,
 ) {
