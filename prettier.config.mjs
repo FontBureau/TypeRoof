@@ -1,5 +1,5 @@
 export default {
-  "tabWidth": 2,
+  "tabWidth": 4,
   "useTabs": false,
   "trailingComma": "all"
 }
