@@ -1,171 +1,171 @@
 name: Update (Font) Assets
 env:
-  LOG_FILE_NAME: logs.txt
+    LOG_FILE_NAME: logs.txt
 on:
-  workflow_dispatch:
-  schedule:
-    # '*' is a special character in YAML so you have to quote this string
-    # run at minute 35 past hour 0 and 12, every day
-    # i.e.:  0:35 am and 12:35 pm
-    - cron: "35 0,12 * * *"
+    workflow_dispatch:
+    schedule:
+        # '*' is a special character in YAML so you have to quote this string
+        # run at minute 35 past hour 0 and 12, every day
+        # i.e.:  0:35 am and 12:35 pm
+        - cron: "35 0,12 * * *"
 jobs:
-  pull-files:
-    runs-on: ubuntu-latest
-    env:
-      FILES_WORK_DIR: .files
-      FILES_RESULT_DIR: .result
-    strategy:
-      matrix:
-        FILES_SPEC:
-          - repo: googlefonts/roboto-delta
-            unique_path: roboto-delta-vf
-            files:
-              - [
-                  fonts/LGCAlpha/RobotoDelta-Roman-VF.ttf,
-                  lib/assets/fonts/RobotoDelta-Roman-VF.woff2,
-                ]
-              - [
-                  fonts/LGCAlpha/RobotoDelta-Italic-VF.ttf,
-                  lib/assets/fonts/RobotoDelta-Italic-VF.woff2,
-                ]
-          - repo: googlefonts/amstelvar-avar2
-            unique_path: amstelvar-avar2
-            files:
-              - [
-                  Fonts/AmstelvarA2-Roman_avar2.ttf,
-                  lib/assets/fonts/AmstelvarA2-Roman_avar2.woff2,
-                ]
-              - [
-                  Fonts/AmstelvarA2-Italic_avar2.ttf,
-                  lib/assets/fonts/AmstelvarA2-Italic_avar2.woff2,
-                ]
-          - repo: google/fonts
-            unique_path: googlefonts
-            files:
-              - [
-                  "ofl/robotoflex/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].ttf",
-                  "lib/assets/fonts/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].woff2",
-                ]
-              - [
-                  "ofl/roboto/Roboto[wdth,wght].ttf",
-                  "lib/assets/fonts/Roboto[wdth,wght].woff2",
-                ]
-              - [
-                  "ofl/roboto/Roboto-Italic[wdth,wght].ttf",
-                  "lib/assets/fonts/Roboto-Italic[wdth,wght].woff2",
-                ]
-    steps:
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        # https://github.com/marketplace/actions/cache-apt-packages
-        with:
-          packages: tree woff2 # woff2 contains woff2_compress: https://launchpad.net/ubuntu/jammy/+package/woff2
-          version: 1.0
-      - name: Checkout source
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ matrix.FILES_SPEC.repo }}
-          #  must be a unique name to prevent clashes maybe also just matrix.FILES_SPEC.repo if it has user/repo form
-          path: ${{ matrix.FILES_SPEC.unique_path }}
-          # otherwise we don't get proper commit hashes for the logs
-          fetch-depth: 0
-      - name: Woff2 and copy files
-        shell: bash
+    pull-files:
+        runs-on: ubuntu-latest
         env:
-          FILES: ${{ toJson(matrix.FILES_SPEC.files) }}
-          SOURCE_REPO: ${{ matrix.FILES_SPEC.unique_path }}
-        run: |
-          echo "FILES: $FILES"
-          LENGTH=$(echo $FILES | jq length)
-          echo "total: $LENGTH"
-          mkdir -p $FILES_RESULT_DIR;
-          LOG_FILE=$FILES_RESULT_DIR/$LOG_FILE_NAME
-          echo Repo: ${{ matrix.FILES_SPEC.repo }} at $(git --git-dir $SOURCE_REPO/.git log -1 --pretty=format:"%h %s") >> $LOG_FILE
-          process_file() {
-            TARGET_FILE=$FILES_RESULT_DIR/$2
-            mkdir -p $(dirname $TARGET_FILE)
-            FULLNAME=$SOURCE_REPO/$1
-            echo " * "Source: $1 at $(git --git-dir $SOURCE_REPO/.git log -n 1 --pretty=format:"%h %s" -- $1) Target: $2 >> $LOG_FILE
-            FILENAME=$(basename -- "$FULLNAME")
-            EXTENSION="${FILENAME##*.}"
-            if [[ $EXTENSION == "ttf" ]];
-            then
-              mkdir -p $FILES_WORK_DIR
-              FILESTEM="${FILENAME%.*}"
-              cp $FULLNAME $FILES_WORK_DIR/$FILENAME
-              woff2_compress $FILES_WORK_DIR/$FILENAME
-              cp $FILES_WORK_DIR/$FILESTEM.woff2 $TARGET_FILE
-            else
-              # don't do anything to the files
-              cp $FULLNAME $TARGET_FILE
-            fi
-          }
-          # loop through $FILES and extract files with jq
-          for (( i=0; i < $LENGTH; ++i ))
-          do
-            # CAUTION spaces/quotes will be problematic with -r
-            SOURCE_FILE=$(echo $FILES | jq -r ".[$i][0]")
-            TARGET_FILE=$(echo $FILES | jq -r ".[$i][1]")
-            echo "FILE#$i SOURCE: $SOURCE_FILE TARGET: $TARGET_FILE"
-            process_file $SOURCE_FILE $TARGET_FILE
-          done
-          cat $LOG_FILE
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.FILES_SPEC.unique_path }}
-          path: ${{ env.FILES_RESULT_DIR }}
-          include-hidden-files: true
-  push-results:
-    runs-on: ubuntu-latest
-    needs: pull-files
-    env:
-      ARTEFACTS_DIR: .artefacts
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/download-artifact@v4
-        with:
-          path: ${{ env.ARTEFACTS_DIR }}
-      - name: Copy artefacts to target
-        shell: bash
+            FILES_WORK_DIR: .files
+            FILES_RESULT_DIR: .result
+        strategy:
+            matrix:
+                FILES_SPEC:
+                    - repo: googlefonts/roboto-delta
+                      unique_path: roboto-delta-vf
+                      files:
+                          - [
+                                fonts/LGCAlpha/RobotoDelta-Roman-VF.ttf,
+                                lib/assets/fonts/RobotoDelta-Roman-VF.woff2,
+                            ]
+                          - [
+                                fonts/LGCAlpha/RobotoDelta-Italic-VF.ttf,
+                                lib/assets/fonts/RobotoDelta-Italic-VF.woff2,
+                            ]
+                    - repo: googlefonts/amstelvar-avar2
+                      unique_path: amstelvar-avar2
+                      files:
+                          - [
+                                Fonts/AmstelvarA2-Roman_avar2.ttf,
+                                lib/assets/fonts/AmstelvarA2-Roman_avar2.woff2,
+                            ]
+                          - [
+                                Fonts/AmstelvarA2-Italic_avar2.ttf,
+                                lib/assets/fonts/AmstelvarA2-Italic_avar2.woff2,
+                            ]
+                    - repo: google/fonts
+                      unique_path: googlefonts
+                      files:
+                          - [
+                                "ofl/robotoflex/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].ttf",
+                                "lib/assets/fonts/RobotoFlex[GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght].woff2",
+                            ]
+                          - [
+                                "ofl/roboto/Roboto[wdth,wght].ttf",
+                                "lib/assets/fonts/Roboto[wdth,wght].woff2",
+                            ]
+                          - [
+                                "ofl/roboto/Roboto-Italic[wdth,wght].ttf",
+                                "lib/assets/fonts/Roboto-Italic[wdth,wght].woff2",
+                            ]
+        steps:
+            - uses: awalsh128/cache-apt-pkgs-action@latest
+              # https://github.com/marketplace/actions/cache-apt-packages
+              with:
+                  packages: tree woff2 # woff2 contains woff2_compress: https://launchpad.net/ubuntu/jammy/+package/woff2
+                  version: 1.0
+            - name: Checkout source
+              uses: actions/checkout@v4
+              with:
+                  repository: ${{ matrix.FILES_SPEC.repo }}
+                  #  must be a unique name to prevent clashes maybe also just matrix.FILES_SPEC.repo if it has user/repo form
+                  path: ${{ matrix.FILES_SPEC.unique_path }}
+                  # otherwise we don't get proper commit hashes for the logs
+                  fetch-depth: 0
+            - name: Woff2 and copy files
+              shell: bash
+              env:
+                  FILES: ${{ toJson(matrix.FILES_SPEC.files) }}
+                  SOURCE_REPO: ${{ matrix.FILES_SPEC.unique_path }}
+              run: |
+                  echo "FILES: $FILES"
+                  LENGTH=$(echo $FILES | jq length)
+                  echo "total: $LENGTH"
+                  mkdir -p $FILES_RESULT_DIR;
+                  LOG_FILE=$FILES_RESULT_DIR/$LOG_FILE_NAME
+                  echo Repo: ${{ matrix.FILES_SPEC.repo }} at $(git --git-dir $SOURCE_REPO/.git log -1 --pretty=format:"%h %s") >> $LOG_FILE
+                  process_file() {
+                    TARGET_FILE=$FILES_RESULT_DIR/$2
+                    mkdir -p $(dirname $TARGET_FILE)
+                    FULLNAME=$SOURCE_REPO/$1
+                    echo " * "Source: $1 at $(git --git-dir $SOURCE_REPO/.git log -n 1 --pretty=format:"%h %s" -- $1) Target: $2 >> $LOG_FILE
+                    FILENAME=$(basename -- "$FULLNAME")
+                    EXTENSION="${FILENAME##*.}"
+                    if [[ $EXTENSION == "ttf" ]];
+                    then
+                      mkdir -p $FILES_WORK_DIR
+                      FILESTEM="${FILENAME%.*}"
+                      cp $FULLNAME $FILES_WORK_DIR/$FILENAME
+                      woff2_compress $FILES_WORK_DIR/$FILENAME
+                      cp $FILES_WORK_DIR/$FILESTEM.woff2 $TARGET_FILE
+                    else
+                      # don't do anything to the files
+                      cp $FULLNAME $TARGET_FILE
+                    fi
+                  }
+                  # loop through $FILES and extract files with jq
+                  for (( i=0; i < $LENGTH; ++i ))
+                  do
+                    # CAUTION spaces/quotes will be problematic with -r
+                    SOURCE_FILE=$(echo $FILES | jq -r ".[$i][0]")
+                    TARGET_FILE=$(echo $FILES | jq -r ".[$i][1]")
+                    echo "FILE#$i SOURCE: $SOURCE_FILE TARGET: $TARGET_FILE"
+                    process_file $SOURCE_FILE $TARGET_FILE
+                  done
+                  cat $LOG_FILE
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: ${{ matrix.FILES_SPEC.unique_path }}
+                  path: ${{ env.FILES_RESULT_DIR }}
+                  include-hidden-files: true
+    push-results:
+        runs-on: ubuntu-latest
+        needs: pull-files
         env:
-          FILES: ${{ toJson(matrix.FILES_SPEC.files) }}
-        run: |
-          echo "[workflow] update fonts" >> $LOG_FILE_NAME
-          echo "" >> $LOG_FILE_NAME
-          copy_file () {
-            if [[ "$(basename $1)" == $LOG_FILE_NAME ]];
-            then
-              echo "got log file: $1"
-              cat $1 >> $LOG_FILE_NAME
-            else
-              TARGET_FILE=`echo $1 | sed 's|'$ARTEFACTS_DIR'/[^/]*/||'`;
-              echo "copy file $TARGET_FILE from ARTEFACTS_DIR: $ARTEFACTS_DIR";
-              mkdir -p $(dirname $TARGET_FILE)
-              cp $1 $TARGET_FILE
-              git add $TARGET_FILE
-            fi
-          }
-          export -f copy_file
-          export ARTEFACTS_DIR
-          # find may fail if there is no ARTEFACTS_DIR because there were no artifacts
-          mkdir -p $ARTEFACTS_DIR
-          find $ARTEFACTS_DIR -type f -exec bash -c 'copy_file "$0"' {} \;
-      - name: Commit files and push
-        run: |
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          # a line of a changed and staged fike starts with "M " with --porcelain
-          CHANGED_FILES=$(git status --porcelain | grep  '^M *' | wc -l)
-          if (( $CHANGED_FILES > 0 ));
-          then
-            echo "git commit ..."
-            git commit -F $LOG_FILE_NAME
-            echo "git show ..."
-            git show
-            echo "git push ..."
-            git push
-          else
-            echo "Nothing to do."
-          fi
+            ARTEFACTS_DIR: .artefacts
+        steps:
+            - name: Checkout source
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+            - uses: actions/download-artifact@v4
+              with:
+                  path: ${{ env.ARTEFACTS_DIR }}
+            - name: Copy artefacts to target
+              shell: bash
+              env:
+                  FILES: ${{ toJson(matrix.FILES_SPEC.files) }}
+              run: |
+                  echo "[workflow] update fonts" >> $LOG_FILE_NAME
+                  echo "" >> $LOG_FILE_NAME
+                  copy_file () {
+                    if [[ "$(basename $1)" == $LOG_FILE_NAME ]];
+                    then
+                      echo "got log file: $1"
+                      cat $1 >> $LOG_FILE_NAME
+                    else
+                      TARGET_FILE=`echo $1 | sed 's|'$ARTEFACTS_DIR'/[^/]*/||'`;
+                      echo "copy file $TARGET_FILE from ARTEFACTS_DIR: $ARTEFACTS_DIR";
+                      mkdir -p $(dirname $TARGET_FILE)
+                      cp $1 $TARGET_FILE
+                      git add $TARGET_FILE
+                    fi
+                  }
+                  export -f copy_file
+                  export ARTEFACTS_DIR
+                  # find may fail if there is no ARTEFACTS_DIR because there were no artifacts
+                  mkdir -p $ARTEFACTS_DIR
+                  find $ARTEFACTS_DIR -type f -exec bash -c 'copy_file "$0"' {} \;
+            - name: Commit files and push
+              run: |
+                  git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git config --local user.name "github-actions[bot]"
+                  # a line of a changed and staged fike starts with "M " with --porcelain
+                  CHANGED_FILES=$(git status --porcelain | grep  '^M *' | wc -l)
+                  if (( $CHANGED_FILES > 0 ));
+                  then
+                    echo "git commit ..."
+                    git commit -F $LOG_FILE_NAME
+                    echo "git show ..."
+                    git show
+                    echo "git push ..."
+                    git push
+                  else
+                    echo "Nothing to do."
+                  fi
