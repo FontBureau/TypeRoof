@@ -115,6 +115,7 @@ import {
 } from "../actors/properties-util.mjs";
 
 import { FontSelect } from "../font-loading.mjs";
+import { HTMLString } from "../../domTool.mjs";
 
 import { UIOTFeaturesChooser } from "../ui-opentype-features.typeroof.jsx";
 import DEFAULT_STATE from "../../../assets/typespec-ramp-initial-state.json" with { type: "json" };
@@ -1242,7 +1243,9 @@ class _BaseTreeEditor extends _BaseComponent {
                 dragHandleElement = this._domTool.createElement(
                     "span",
                     { class: "drag_handle" },
-                    "✥",
+                    new HTMLString(
+                        '<span class="material-symbols-outlined">drag_pan</span>',
+                    ),
                 ),
                 // used to check:  isLayerItem = getEntry(actor , Path.fromParts('actorTypeModel', 'typeClass')).value === LayerActorModel
                 isContainerItem = this._isContainerItem(actor),
