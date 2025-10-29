@@ -7,6 +7,19 @@
 @import url("./docs.css");
 
 /******************************************************************************
+material symbols
+*******************************************************************************/
+
+.material-symbols-outlined {
+    font-size: 18px !important;
+    font-variation-settings:
+        "FILL" 0,
+        "wght" 400,
+        "GRAD" 0,
+        "opsz" 20;
+}
+
+/******************************************************************************
 general settings (font / layout)
 *******************************************************************************/
 
@@ -482,9 +495,11 @@ drag handle
 *******************************************************************************/
 
 .drag_handle {
-    display: inline-block;
-    font-size: 1.1em;
-    padding: 0.05em 0.25em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.2rem;
+    height: 1.2rem;
     background-color: var(--button-bg-color);
     box-shadow: rgb(43 43 43 / 8%) 0 0 0.1875rem;
     border: 1px solid var(--button-border-color);
@@ -492,6 +507,10 @@ drag handle
     color: var(--text-color);
     cursor: grab;
     margin-right: 0.125rem;
+}
+
+.drag_handle > span {
+    font-size: 14px !important;
 }
 
 .drag_handle:hover {
@@ -516,7 +535,7 @@ drop target
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.75em;
+    gap: 0.5em;
     margin: 1em 0;
     padding: 0.25em;
 }
@@ -1172,7 +1191,7 @@ number and range input
 }
 
 :is(.ui_axes_math-map-item, .ui_base_map-item)
-    > :is(.ui_axes_math-axis_tag, .ui_base_map-key, .drag_handle) {
+    > :is(.ui_axes_math-axis_tag, .ui_base_map-key) {
     display: inline-block;
     padding-right: var(--padding-horizontal);
 }
