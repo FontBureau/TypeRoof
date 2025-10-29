@@ -199,11 +199,6 @@ document manager
     font-weight: 700;
 }
 
-.key_moments_controls .key_moments_controls-insert_moment::before {
-    content: "⎀ ";
-    line-height: 1em;
-}
-
 ol.ui_zone-key_moments_main {
     padding: 0;
     list-style: inside square;
@@ -542,10 +537,13 @@ drop target
 
 .ui_base_drop_target-main_drop_zone::after {
     content: "";
+    /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
+    font-family: "Material Symbols Outlined";
+    font-size: 18px;
 }
 
 .waste_basket_drop_target-main_drop_zone::after {
-    content: "🗑️";
+    content: "\e872";
 }
 
 .ui_document_element_typespec-receptive,
