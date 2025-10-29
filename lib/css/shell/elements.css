@@ -135,9 +135,13 @@ button {
     background: var(--button-bg-color);
     border: 1px solid var(--button-border-color);
     cursor: pointer;
+    display: inline-flex;
+    gap: 0.1em;
+    align-items: center;
+    justify-content: center;
     font-size: 0.75rem;
     font-variation-settings: "opsz" 12;
-    padding: 0.25em 0.75em;
+    padding: 0.25em 0.5em;
     transition: all 75ms linear;
     white-space: nowrap;
 }
@@ -165,12 +169,13 @@ menu {
     padding: 0;
 }
 
+.ui_button.ui_button-add,
+.ui_button.ui_button-move,
+.ui_button.ui_button-remove {
+    padding: 0.25em;
+}
+
 .ui_button.ui_button-remove {
     border-color: var(--color-danger);
     color: var(--color-danger);
-}
-
-.ui_button-add,
-.ui_button-move {
-    font-weight: bolder;
 }
