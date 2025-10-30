@@ -5,19 +5,19 @@ override variables
 *******************************************************************************/
 
 :root {
-  overflow: hidden;
+    overflow: hidden;
 
-  --gap-size: 0;
-  --background-color: #121212;
-  --text-color: #fff;
-  --input-border-color: #ccc;
-  --fieldset-border-color: #666;
-  --button-bg-color: #000;
-  --button-border-color: #ccc;
-  --button-border-color-hover: #fff;
-  --button-border-color-disabled: #666;
-  --button-text-color-disabled: #666;
-  --sidebar-bg-color: #121212bb;
+    --gap-size: 0;
+    --background-color: #121212;
+    --text-color: #fff;
+    --input-border-color: #ccc;
+    --fieldset-border-color: #666;
+    --button-bg-color: #000;
+    --button-border-color: #ccc;
+    --button-border-color-hover: #fff;
+    --button-border-color-disabled: #666;
+    --button-text-color-disabled: #666;
+    --sidebar-bg-color: #121212bb;
 }
 
 /******************************************************************************
@@ -26,19 +26,19 @@ header / footer
 
 header,
 footer {
-  color: var(--text-color);
+    color: var(--text-color);
 }
 
 header {
-  background-color: #333b;
+    background-color: #333b;
 }
 
 footer {
-  background-color: var(--sidebar-bg-color);
+    background-color: var(--sidebar-bg-color);
 }
 
 footer :is(a:link, a:visited) {
-  color: var(--text-color);
+    color: var(--text-color);
 }
 
 /******************************************************************************
@@ -46,34 +46,34 @@ wrapper
 *******************************************************************************/
 
 body > .wrapper {
-  background-color: black;
-  display: grid;
+    background-color: black;
+    display: grid;
 
-  --sidebar-width: 20rem;
+    --sidebar-width: 20rem;
 
-  grid-template:
-    "header free" auto "sidebar free" auto "free2 free" 1fr "footer footer" auto
-    /
-    var(--sidebar-width) calc(100vw - var(--sidebar-width));
-  height: 100vh;
+    grid-template:
+        "header free" auto "sidebar free" auto "free2 free" 1fr "footer footer" auto
+        /
+        var(--sidebar-width) calc(100vw - var(--sidebar-width));
+    height: 100vh;
 }
 
 body > .wrapper > *:not(.typeroof-main) {
-  position: relative;
-  z-index: 2;
+    position: relative;
+    z-index: 2;
 }
 
 .typeroof-layout {
-  position: absolute;
-  z-index: 1;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
 }
 
 .wrapper:not(.visible) > *:not(.typeroof-main) {
-  visibility: hidden;
+    visibility: hidden;
 }
 
 /******************************************************************************
@@ -81,10 +81,10 @@ etc
 *******************************************************************************/
 
 label.ui_font-select {
-  margin-bottom: 1em;
+    margin-bottom: 1em;
 }
 
 .ui_collapsible_mixin > legend::after,
 .ui_collapsible_mixin-open > legend::after {
-  filter: invert(100%);
+    filter: invert(100%);
 }
