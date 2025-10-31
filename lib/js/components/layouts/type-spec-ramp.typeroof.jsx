@@ -3,6 +3,8 @@
 
 import { identity, zip } from "../../util.mjs";
 
+import { require } from "../dependency-injection.mjs";
+
 import {
     _BaseComponent,
     _BaseContainerComponent,
@@ -17,6 +19,7 @@ import {
 
 import {
     Collapsible,
+    CollapsibleContainer,
     StaticNode,
     StaticTag,
     UILineOfTextInput,
@@ -6572,12 +6575,6 @@ class TypeSpecRampController extends _BaseContainerComponent {
                     class: "properties-manager",
                 },
             ),
-            stylePatchesManagerContainer = widgetBus.domTool.createElement(
-                "div",
-                {
-                    class: "style_patches-manager",
-                },
-            ),
             documentManagerContainer = widgetBus.domTool.createElement("div", {
                 class: "document-manager",
             }),
@@ -6588,7 +6585,6 @@ class TypeSpecRampController extends _BaseContainerComponent {
                 ..._zones,
                 ["type_spec-manager", typeSpecManagerContainer],
                 ["properties-manager", propertiesManagerContainer],
-                ["style_patches-manager", stylePatchesManagerContainer],
                 ["document-manager", documentManagerContainer],
                 ["node_spec-manager", nodeSpecManagerContainer],
             ]),
@@ -6653,9 +6649,65 @@ class TypeSpecRampController extends _BaseContainerComponent {
             [
                 { zone: "main" },
                 [],
-                Collapsible,
+                CollapsibleContainer,
+                zones,
                 "Styles",
-                stylePatchesManagerContainer,
+                "style_patches-manager",
+                [
+                    // widgets
+                    [
+                        {
+                            zone: "main",
+                            relativeRootPath: Path.fromParts(
+                                ".",
+                                "stylePatchesSource",
+                            ),
+                        },
+                        [
+                            [".", "childrenOrderedMap"],
+                            ["../editingStylePatch", "stylePatchPath"],
+                        ],
+                        UIStylePatchesMap, // search for e.g. UIAxesMathLocation in videoproof-array-v2.mjs
+                        zones,
+                        [], // eventHandlers
+                        null, // label 'Style Patches'
+                        true, // dragAndDrop
+                    ],
+                    [
+                        {
+                            zone: "main",
+                        },
+                        [["typeSpec/children", "rootCollection"]],
+                        WasteBasketDropTarget,
+                        "Delete",
+                        "", //'drag and drop into trash-bin.'
+                        [
+                            DATA_TRANSFER_TYPES.TYPE_SPEC_STYLE_PATCH_PATH,
+                            DATA_TRANSFER_TYPES.TYPE_SPEC_STYLE_PATCH_LINK_PATH,
+                            // to delete the axesLocations values coming from UIAxesMathLocation
+                            DATA_TRANSFER_TYPES.AXESMATH_LOCATION_VALUE_PATH,
+                        ],
+                    ],
+                    [
+                        {
+                            zone: "main",
+                            relativeRootPath: Path.fromParts(
+                                ".",
+                                "stylePatchesSource",
+                            ),
+                        },
+                        [
+                            [".", "childrenOrderedMap"],
+                            ["../editingStylePatch", "stylePatchPath"],
+                        ],
+                        StylePatchPropertiesManager,
+                        // This is hard! the zones of the parent are not yet created
+                        // should at this point just somehow get the parent zones
+                        // injected!
+                        // used to be: new Map([...zones, ["main", stylePatchesManagerContainer]]),
+                        require("zones"),
+                    ],
+                ],
             ],
             [
                 { zone: "main" },
@@ -6720,48 +6772,6 @@ class TypeSpecRampController extends _BaseContainerComponent {
                 ],
                 TypeSpecPropertiesManager,
                 new Map([...zones, ["main", propertiesManagerContainer]]),
-            ],
-            [
-                {
-                    zone: "style_patches-manager",
-                    relativeRootPath: Path.fromParts(".", "stylePatchesSource"),
-                },
-                [
-                    [".", "childrenOrderedMap"],
-                    ["../editingStylePatch", "stylePatchPath"],
-                ],
-                UIStylePatchesMap, // search for e.g. UIAxesMathLocation in videoproof-array-v2.mjs
-                zones,
-                [], // eventHandlers
-                null, // label 'Style Patches'
-                true, // dragAndDrop
-            ],
-            [
-                {
-                    zone: "style_patches-manager",
-                },
-                [["typeSpec/children", "rootCollection"]],
-                WasteBasketDropTarget,
-                "Delete",
-                "", //'drag and drop into trash-bin.'
-                [
-                    DATA_TRANSFER_TYPES.TYPE_SPEC_STYLE_PATCH_PATH,
-                    DATA_TRANSFER_TYPES.TYPE_SPEC_STYLE_PATCH_LINK_PATH,
-                    // to delete the axesLocations values coming from UIAxesMathLocation
-                    DATA_TRANSFER_TYPES.AXESMATH_LOCATION_VALUE_PATH,
-                ],
-            ],
-            [
-                {
-                    zone: "style_patches-manager",
-                    relativeRootPath: Path.fromParts(".", "stylePatchesSource"),
-                },
-                [
-                    [".", "childrenOrderedMap"],
-                    ["../editingStylePatch", "stylePatchPath"],
-                ],
-                StylePatchPropertiesManager,
-                new Map([...zones, ["main", stylePatchesManagerContainer]]),
             ],
             //  , [
             //        {
