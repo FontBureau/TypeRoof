@@ -6705,7 +6705,7 @@ class TypeSpecRampController extends _BaseContainerComponent {
                         // should at this point just somehow get the parent zones
                         // injected!
                         // used to be: new Map([...zones, ["main", stylePatchesManagerContainer]]),
-                        require("zones"),
+                        require("raw:zones"),
                     ],
                 ],
             ],
