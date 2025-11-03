@@ -919,6 +919,10 @@ number and range input
     padding: var(--gap-size) 0;
 }
 
+.typeroof-layout-before > .ui_videoproof.ui-parameters-display {
+    margin: var(--gap-size);
+}
+
 .ui_videoproof_array_layers-item .ui_button {
     float: right;
 }
