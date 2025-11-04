@@ -1532,6 +1532,13 @@ collapsible
     display: table-row;
 }
 
+.ui_type_tools_grid-cell-parameters {
+    font-family: monospace !important;
+    font-size: 12pt;
+    font-variation-settings: "opsz" 10;
+    color: var(--parameters-label-color);
+}
+
 /*
 .ui_type_tools_grid-row:nth-child(even) {
     background: #eee;
