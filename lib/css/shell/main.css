@@ -1526,6 +1526,8 @@ collapsible
 
 .ui_type_tools_grid_layout {
     padding: var(--gap-size);
+    min-height: 100%;
+    min-width: fit-content;
 }
 
 .ui_type_tools_grid-row {
@@ -1558,7 +1560,10 @@ collapsible
     padding-top: 2rem;
     padding-bottom: var(--gap-size);
     position: sticky;
-    top: 0;
+    /* nice effect where we can see the table actually scroll past
+     * the caption in the gap.
+     */
+    top: var(--gap-size);
 }
 
 .ui_type_tools_grid-labels-caption,
@@ -1591,9 +1596,13 @@ collapsible
 .ui_type_tools_grid-labels-caption-y
     ~ *
     .ui_type_tools_grid-labels-data:first-child {
-    vertical-align: middle;
+    vertical-align: baseline; /* or maybe top? */
     position: sticky;
-    left: 0;
+
+    /* nice effect where we can see the table actually scroll past
+     * the caption in the gap.
+     */
+    left: var(--gap-size);
 
     /* make space for the Y label and have it share the background */
     padding-left: 2rem;
