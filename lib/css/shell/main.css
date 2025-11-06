@@ -920,7 +920,7 @@ number and range input
 }
 
 .typeroof-layout-before > .ui_videoproof.ui-parameters-display {
-    margin: var(--gap-size);
+    padding: var(--gap-size);
 }
 
 .ui_videoproof_array_layers-item .ui_button {
@@ -952,8 +952,14 @@ number and range input
 }
 
 .typeroof-layout > .actor_renderer-videoproof_array_v2 {
-    /* To make sure the outline of the cell boxes is visible at the top */
-    margin-top: var(--gap-size);
+    /* To make sure the outline of the cell boxes is visible at the top
+     * At the same time, it's good when we don't see the gap between this
+     * and the .typeroof-layout-before element, hence prefering padding
+     * over margin. This way, when there's a background, there's no
+     * white gap.
+     */
+    padding-top: var(--gap-size);
+    min-height: calc(100% - var(--gap-size));
 }
 
 .actor_renderer-videoproof_array_v2-zone {
@@ -1534,14 +1540,38 @@ collapsible
     display: table-row;
 }
 
-
-.ui_type_tools_grid-cell-parameters {
+.ui_type_tools_grid-cell-parameters,
+.ui-parameters-display /* as used with video-proof-array-v2 */ {
     font-family: monospace !important;
     font-weight: bolder;
     font-size: 12pt;
     font-variation-settings: "opsz" 12;
-    color: var(--parametersLabelHighContrastTextColor, var(--parameters-label-color));
-    margin-bottom: .3em;
+    color: var(
+        --parameters-label-high-contrast-text-color,
+        var(--parameters-label-color)
+    );
+
+    strong {
+        font-weight: inherit;
+    }
+}
+
+.ui_type_tools_grid-cell-parameters {
+    margin-bottom: 0.3em;
+}
+
+/* as used with video-proof-array-v2 */
+
+/* draw a box after the font name to illustrate text-color and fill-color */
+.ui-parameters-display_layer::before {
+    /* This is U+25A0: BLACK SQUARE and it is supposed to be rendered using
+     * color, to illustrate the color of the font of that layer
+     */
+    content: " ■ ";
+    margin-right: 0.3em;
+    white-space: pre;
+    color: var(--cell-text-color);
+    background-color: var(--cell-background-color);
 }
 
 .ui_type_tools_grid-labels-caption {
@@ -1560,6 +1590,7 @@ collapsible
     padding-top: 2rem;
     padding-bottom: var(--gap-size);
     position: sticky;
+
     /* nice effect where we can see the table actually scroll past
      * the caption in the gap.
      */
@@ -1575,13 +1606,16 @@ collapsible
 /* paddings after the caption elements
  * .ui_type_tools_grid-labels-data mark the captions.
  */
-.ui_type_tools_grid-row.ui_type_tools_grid-labels-data + .ui_type_tools_grid-row > .ui_type_tools_grid-cell{
+.ui_type_tools_grid-row.ui_type_tools_grid-labels-data
+    + .ui_type_tools_grid-row
+    > .ui_type_tools_grid-cell {
     padding-top: var(--gap-size);
 }
-.ui_type_tools_grid-cell.ui_type_tools_grid-labels-data + .ui_type_tools_grid-cell {
+
+.ui_type_tools_grid-cell.ui_type_tools_grid-labels-data
+    + .ui_type_tools_grid-cell {
     padding-left: var(--gap-size);
 }
-
 
 .ui_type_tools_grid-labels-caption-y .ui_type_tools_grid-labels-caption-cell {
     writing-mode: tb-rl;
