@@ -1032,7 +1032,9 @@ number and range input
 
 .ui_alignment input + .ui_alignment-radio_icon {
     display: block;
-    font-size: inherit;
+    /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
+    font-family: "Material Symbols Outlined";
+    font-size: 2rem;
     width: 3em;
     height: 3em;
     background: no-repeat;
@@ -1040,11 +1042,13 @@ number and range input
     background-position: center center;
     margin: 0 auto;
     background-color: white;
+    color: #ccc;
     position: absolute;
     z-index: 1;
 }
 
 .ui_alignment label.ui_alignment-radio_label {
+    cursor: pointer;
     display: inline-block;
     vertical-align: text-top;
     position: relative;
@@ -1058,36 +1062,8 @@ number and range input
     z-index: 0;
 }
 
-.ui_alignment input.ui_alignment-left + .ui_alignment-radio_icon {
-    background-image: var(--alignment-left-icon);
-}
-
-.ui_alignment input.ui_alignment-left:checked + .ui_alignment-radio_icon {
-    background-image: var(--alignment-left-active-icon);
-}
-
-.ui_alignment input.ui_alignment-center + .ui_alignment-radio_icon {
-    background-image: var(--alignment-center-icon);
-}
-
-.ui_alignment input.ui_alignment-center:checked + .ui_alignment-radio_icon {
-    background-image: var(--alignment-center-active-icon);
-}
-
-.ui_alignment input.ui_alignment-right + .ui_alignment-radio_icon {
-    background-image: var(--alignment-right-icon);
-}
-
-.ui_alignment input.ui_alignment-right:checked + .ui_alignment-radio_icon {
-    background-image: var(--alignment-right-active-icon);
-}
-
-.ui_alignment input.ui_alignment-justify + .ui_alignment-radio_icon {
-    background-image: var(--alignment-justify-icon);
-}
-
-.ui_alignment input.ui_alignment-justify:checked + .ui_alignment-radio_icon {
-    background-image: var(--alignment-justify-active-icon);
+.ui_alignment input:checked + .ui_alignment-radio_icon {
+    color: black;
 }
 
 .ui_axes_math-locations_sum-items {
@@ -1426,6 +1402,7 @@ collapsible
 
 .ui_collapsible-toggler {
     display: flex;
+    align-items: center;
     justify-content: space-between;
     cursor: pointer;
     font-weight: 600;
@@ -1433,12 +1410,16 @@ collapsible
 }
 
 .ui_collapsible-toggler::after {
-    display: inline-block;
-    content: var(--chevron-down);
+    /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
+    font-family: "Material Symbols Outlined";
+    font-size: 1.3rem;
+    font-variation-settings: "wght" 200;
+    line-height: 0.8rem;
+    content: "\e313";
 }
 
 .ui_collapsible-opened > .ui_collapsible-toggler::after {
-    content: var(--chevron-up);
+    content: "\e316";
 }
 
 .ui_collapsible-contents {
