@@ -1535,9 +1535,10 @@ collapsible
 
 .ui_type_tools_grid-cell-parameters {
     font-family: monospace !important;
+    font-weight: bolder;
     font-size: 12pt;
-    font-variation-settings: "opsz" 10;
-    color: var(--parameters-label-color);
+    font-variation-settings: "opsz" 12;
+    color: var(--parametersLabelHighContrastTextColor, var(--parameters-label-color));
     margin-bottom: .3em;
 }
 
