@@ -43,6 +43,7 @@ body > .wrapper > .typeroof-main {
 body > .wrapper > .typeroof-main > .typeroof-layout {
     overflow: auto;
     flex-grow: 1;
+
     /* Otherwise the browser may start to navigate history back
      * when we scroll after the end of the container was reached.
      */
