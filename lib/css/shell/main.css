@@ -505,7 +505,7 @@ drag handle
 }
 
 .drag_handle > span {
-    font-size: 14px !important;
+    font-size: 0.875rem !important;
 }
 
 .drag_handle:hover {
@@ -539,7 +539,7 @@ drop target
     content: "";
     /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
     font-family: "Material Symbols Outlined";
-    font-size: 18px;
+    font-size: 1.125rem;
 }
 
 .waste_basket_drop_target-main_drop_zone::after {
