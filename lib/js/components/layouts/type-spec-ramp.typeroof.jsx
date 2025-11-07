@@ -26,6 +26,8 @@ import {
     _BaseDropTarget,
 } from "../generic.mjs";
 
+import { createIcon } from "../icons.mjs";
+
 import {
     PathModelOrEmpty,
     Path,
@@ -115,7 +117,6 @@ import {
 } from "../actors/properties-util.mjs";
 
 import { FontSelect } from "../font-loading.mjs";
-import { createIcon } from "../../domTool.mjs";
 
 import { UIOTFeaturesChooser } from "../ui-opentype-features.typeroof.jsx";
 import DEFAULT_STATE from "../../../assets/typespec-ramp-initial-state.json" with { type: "json" };
