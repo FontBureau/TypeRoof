@@ -4492,9 +4492,9 @@ class UIDocumentTypeSpecStyler extends _BaseComponent {
 
         if (changedMap.has("properties@")) {
             // , getDefault = property => [true, _getRegisteredPropertySetup(property).default]
-            const innerColorPropertiesMap = [["colors/textColor", "color"]],
+            const innerColorPropertiesMap = [[`${COLOR}textColor`, "color"]],
                 outerColorPropertiesMap = [
-                    ["colors/backgroundColor", "background-color"],
+                    [`${COLOR}backgroundColor`, "background-color"],
                 ],
                 getDefault = (property) => {
                     return [true, getRegisteredPropertySetup(property).default];
@@ -4542,8 +4542,42 @@ class UIDocumentTypeSpecStyler extends _BaseComponent {
     }
 }
 
+class ProseMirrorGeneralDocumentStyler extends _BaseComponent {
+    update(changedMap) {
+        const element = this.widgetBus.getWidgetById("proseMirror").element;
+        const propertyValuesMap = (
+            changedMap.has("properties@")
+                ? changedMap.get("properties@")
+                : this.getEntry("properties@")
+        ).typeSpecnion.getProperties();
+
+        if (changedMap.has("properties@")) {
+            const outerColorPropertiesMap = [
+                    [`${COLOR}backgroundColor`, "background-color"],
+                ],
+                getDefault = (property) => {
+                    return [true, getRegisteredPropertySetup(property).default];
+                };
+            actorApplyCSSColors(
+                element,
+                propertyValuesMap,
+                getDefault,
+                outerColorPropertiesMap,
+            );
+            // NOTE: apply paddings (use padding instead of margins)
+            // especially left and top, but ideally also right and bottom
+            // This is because we don't apply styles directly to the actual
+            // document element, but rather to the parent of that. (.prosemirror-host)
+            // i.e the element in here is a lot like the outerElement.
+            //
+            // NOTE: it could be worth to try to treat the actual .ProseMirror
+            // document like the innerElement.
+        }
+    }
+}
+
 class UIParametersDisplay extends _BaseComponent {
-    constructor(widgetBus, _zones, extraClasses = [], customArgs = []) {
+    constructor(widgetBus, extraClasses = [], customArgs = []) {
         const classes = ["ui-parameters-display", ...extraClasses],
             fontElement = widgetBus.domTool.createElement("div", {
                 class: "ui-parameters-font",
@@ -4557,11 +4591,10 @@ class UIParametersDisplay extends _BaseComponent {
                 "div",
                 { class: classes.join(" ") },
                 [fontElement, parametersElement],
-            ),
-            zones = new Map([..._zones, ["main", localElement]]);
+            );
         parametersElement;
         widgetBus.insertElement(localElement);
-        super(widgetBus, zones);
+        super(widgetBus);
         this._element = localElement;
         this._parametersElement = parametersElement;
         this._fontElement = fontElement;
@@ -4681,7 +4714,6 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                     [widgetBus.getExternalName("rootFont"), "rootFont"],
                 ],
                 UIParametersDisplay,
-                zones,
                 ["ui_type_spec_ramp"],
             ],
         ]);
@@ -6393,6 +6425,16 @@ class ProseMirrorContext extends _BaseContainerComponent {
                 TypeSpecSubscriptions,
                 zones,
                 originTypeSpecPath,
+            ],
+            [
+                {},
+                [
+                    [
+                        `typeSpecProperties@${originTypeSpecPath.toString()}`,
+                        "properties@",
+                    ],
+                ],
+                ProseMirrorGeneralDocumentStyler,
             ],
         ]);
     }
