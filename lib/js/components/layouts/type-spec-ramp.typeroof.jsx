@@ -17,13 +17,13 @@ import {
 
 import {
     Collapsible,
-    StaticNode,
     StaticTag,
     UILineOfTextInput,
     DynamicTag,
     PlainSelectInput,
     WasteBasketDropTarget,
     _BaseDropTarget,
+    UICheckboxInput,
 } from "../generic.mjs";
 
 import { createIcon } from "../icons.mjs";
@@ -732,6 +732,7 @@ const // We don't do  prosemirror SchemaSpec yet, but we may need it to also
         ["nodeSpecToTypeSpec", NodeSpecToTypeSpecMapModel],
         // the root of all typeSpecs
         ["document", NodeModel],
+        ["showParameters", BooleanDefaultTrueModel],
         CoherenceFunction.create(
             [
                 "document",
@@ -4575,12 +4576,6 @@ class UIParametersDisplay extends _BaseComponent {
         ).typeSpecnion.getProperties();
 
         if (changedMap.has("properties@")) {
-            console.log(
-                `${this}.update changedMap.has('properties@') propertyValuesMap:`,
-                propertyValuesMap,
-                "this._parametersElement",
-                this._parametersElement,
-            );
             renderAxesParameterDisplay(
                 this._parametersElement,
                 propertyValuesMap,
@@ -4677,7 +4672,10 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                 structuralElements.outer,
             ],
             [
-                { zone: "outer" },
+                {
+                    zone: "outer",
+                    activationTest: () => this.getEntry("showParameters").value,
+                },
                 [
                     [widgetBus.getExternalName("properties@"), "properties@"],
                     [widgetBus.getExternalName("rootFont"), "rootFont"],
@@ -5366,6 +5364,7 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
             dependencyMappings = [
                 [typeSpecProperties, "properties@"],
                 ["/font", "rootFont"],
+                ["showParameters"],
             ],
             Constructor = UIDocumentNodeOutfitter,
             args = [this._zones, structuralElements];
@@ -6805,19 +6804,29 @@ class TypeSpecRampController extends _BaseContainerComponent {
                     class: "style_patches-manager",
                 },
             ),
-            documentManagerContainer = widgetBus.domTool.createElement("div", {
-                class: "document-manager",
-            }),
             nodeSpecManagerContainer = widgetBus.domTool.createElement("div", {
                 class: "node_spec-manager",
             }),
+            // To have this first within editorManagerContainer.
+            proseMirrorEditorMenuContainer = widgetBus.domTool.createElement(
+                "div",
+                { class: "editor-manager-prosemirror" },
+            ),
+            editorManagerContainer = widgetBus.domTool.createElement(
+                "div",
+                {
+                    class: "editor-manager",
+                },
+                proseMirrorEditorMenuContainer,
+            ),
             zones = new Map([
                 ..._zones,
                 ["type_spec-manager", typeSpecManagerContainer],
                 ["properties-manager", propertiesManagerContainer],
                 ["style_patches-manager", stylePatchesManagerContainer],
-                ["document-manager", documentManagerContainer],
                 ["node_spec-manager", nodeSpecManagerContainer],
+                ["editor-manager", editorManagerContainer],
+                ["prose-mirror-editor-menu", proseMirrorEditorMenuContainer],
             ]),
             typeSpecRelativePath = Path.fromParts(".", "typeSpec"),
             originTypeSpecPath = widgetBus.rootPath.append(
@@ -6876,7 +6885,14 @@ class TypeSpecRampController extends _BaseContainerComponent {
                 isInheritingPropertyFn,
                 typeSpecDefaultsMap,
             ],
-            [{ zone: "main" }, [], StaticNode, documentManagerContainer],
+            [
+                { zone: "main" },
+                [],
+                Collapsible,
+                "Editor",
+                editorManagerContainer,
+                true,
+            ],
             [
                 { zone: "main" },
                 [],
@@ -7007,12 +7023,19 @@ class TypeSpecRampController extends _BaseContainerComponent {
                 {},
                 [],
                 ProseMirrorContext,
-                new Map([...zones, ["main", documentManagerContainer]]),
+                zones,
                 // proseMirrorSettings
                 { zone: "layout" },
                 originTypeSpecPath,
                 // menuSettings
-                { zone: "main" },
+                { zone: "prose-mirror-editor-menu" },
+            ],
+            [
+                { zone: "editor-manager" },
+                [["showParameters", "value"]],
+                UICheckboxInput,
+                "show-parameters", // classToken
+                getRegisteredPropertySetup(`${GENERIC}showParameters`).label, //label
             ],
             [
                 { zone: "main" },
