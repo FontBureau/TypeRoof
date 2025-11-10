@@ -26,6 +26,8 @@ import {
     _BaseDropTarget,
 } from "../generic.mjs";
 
+import { createIcon } from "../icons.mjs";
+
 import {
     PathModelOrEmpty,
     Path,
@@ -1242,7 +1244,7 @@ class _BaseTreeEditor extends _BaseComponent {
                 dragHandleElement = this._domTool.createElement(
                     "span",
                     { class: "drag_handle" },
-                    "✥",
+                    createIcon("drag_pan"),
                 ),
                 // used to check:  isLayerItem = getEntry(actor , Path.fromParts('actorTypeModel', 'typeClass')).value === LayerActorModel
                 isContainerItem = this._isContainerItem(actor),

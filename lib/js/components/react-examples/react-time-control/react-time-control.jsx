@@ -40,7 +40,10 @@ function UIReactTimeControl() {
                     onClick={handlePlayPauseClick}
                     type="button"
                 >
-                    {isPlaying ? "⏸ Pause" : "▶ Play"}
+                    <span className="material-symbols-outlined">
+                        {isPlaying ? "pause" : "play_arrow"}
+                    </span>{" "}
+                    {isPlaying ? "Pause" : "Play"}
                 </button>
 
                 <span className="react-time-control__time-display">

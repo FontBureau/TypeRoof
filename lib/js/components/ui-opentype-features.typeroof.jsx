@@ -226,7 +226,7 @@ export class UIBooleanOTFeature extends _BaseComponent {
                         class="ui_boolean_ot_feature-remove ui_button ui_button-remove"
                         title="remove"
                     >
-                        ✖
+                        <span class="material-symbols-outlined">delete</span>
                     </button>
                 </label>
             </div>
