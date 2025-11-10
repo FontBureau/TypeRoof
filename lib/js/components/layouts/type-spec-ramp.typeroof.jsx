@@ -4590,7 +4590,12 @@ class UIParametersDisplay extends _BaseComponent {
             ),
             localElement = widgetBus.domTool.createElement(
                 "div",
-                { class: classes.join(" ") },
+                {
+                    class: classes.join(" "),
+                    // This is super important to not interfere with
+                    // cursor positioning of the browser and ProseMirror
+                    contenteditable: "false",
+                },
                 [fontElement, parametersElement],
             );
         parametersElement;
