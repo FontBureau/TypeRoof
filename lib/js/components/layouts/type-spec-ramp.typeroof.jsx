@@ -17,13 +17,13 @@ import {
 
 import {
     Collapsible,
-    StaticNode,
     StaticTag,
     UILineOfTextInput,
     DynamicTag,
     PlainSelectInput,
     WasteBasketDropTarget,
     _BaseDropTarget,
+    UICheckboxInput,
 } from "../generic.mjs";
 
 import { createIcon } from "../icons.mjs";
@@ -77,7 +77,14 @@ import {
     getColorFromPropertyValuesMap,
     colorsGen,
     culoriToColor,
+    enhanceContrast,
 } from "../color.mjs";
+
+import {
+    converter as culoriConverter,
+    formatCss as culoriFormatCss,
+    blend,
+} from "../../vendor/culori/bundled/culori.mjs";
 
 import { DATA_TRANSFER_TYPES } from "../data-transfer-types.mjs";
 
@@ -138,6 +145,8 @@ import {
     splitBlockAs,
 } from "prosemirror-commands";
 import "prosemirror-view/style/prosemirror.css";
+
+import { renderAxesParameterDisplay } from "../axes-parameters.mjs";
 
 // I didn't find the rules for prosemirror, so I'm going for a small set
 // allowing only A-Za-z0-9_\-, maybe we can be more permissive, if required for
@@ -724,6 +733,7 @@ const // We don't do  prosemirror SchemaSpec yet, but we may need it to also
         ["nodeSpecToTypeSpec", NodeSpecToTypeSpecMapModel],
         // the root of all typeSpecs
         ["document", NodeModel],
+        ["showParameters", BooleanModel],
         CoherenceFunction.create(
             [
                 "document",
@@ -4389,13 +4399,35 @@ class UIDocumentStyleStyler extends _BaseComponent {
     }
 }
 
+function _typeSpecGetFontMethod(changedMap, propertyValuesMap) {
+    const fontPPSRecord = ProcessedPropertiesSystemMap.createSimpleRecord(
+        SPECIFIC,
+        "font",
+    );
+    const font = propertyValuesMap.has(fontPPSRecord.fullKey)
+        ? propertyValuesMap.get(fontPPSRecord.fullKey)
+        : // rootFont can't be ForeignKey.NULL
+          this.getEntry("rootFont").value;
+    return font;
+}
+/**
+ * innerElement and outerElement may be the same, but e.g. for
+ * the display of parameters information in ProseMirror, we have
+ * an inner element, which content is controlled by ProseMirror and an
+ * outer element, which contains the inner elemenent, but also other
+ * elements such as the parameters containing element. Some properties
+ * conceptually belong to the inner element, such as font-paramters,
+ * and some belong to the outer element, such as background-color and
+ * margins.
+ */
 class UIDocumentTypeSpecStyler extends _BaseComponent {
-    constructor(widgetBus, element) {
+    constructor(widgetBus, innerElement, outerElement) {
         super(widgetBus);
-        this.element = element;
+        this.innerElement = innerElement;
+        this.outerElement = outerElement;
     }
     update(changedMap) {
-        const propertiesData = [
+        const innerPropertiesData = [
                 ["generic/textAlign", "text-align", ""],
                 ["generic/direction", "direction", ""],
                 // it's more complex, should get basefontSize and multiply with that
@@ -4421,6 +4453,9 @@ class UIDocumentTypeSpecStyler extends _BaseComponent {
                         );
                     },
                 ],
+            ],
+            outerPropertiesData = [
+                // using this to define a margin-top
                 [`${LEADING}leading/line-height-em`, "--line-height", "em"],
             ],
             propertyValuesMap = (
@@ -4432,25 +4467,25 @@ class UIDocumentTypeSpecStyler extends _BaseComponent {
         if (changedMap.has("rootFont") || changedMap.has("properties@")) {
             // This also triggers when font changes in a parent trickle
             // down, so these properties should always be set correctly.
-            const fontPPSRecord =
-                ProcessedPropertiesSystemMap.createSimpleRecord(
-                    SPECIFIC,
-                    "font",
-                );
-            const font = propertyValuesMap.has(fontPPSRecord.fullKey)
-                ? propertyValuesMap.get(fontPPSRecord.fullKey)
-                : // rootFont can't be ForeignKey.NULL
-                  this.getEntry("rootFont").value;
-            this.element.style.setProperty("font-family", `"${font.fullName}"`);
-            this.element.style.setProperty(
+            const font = _typeSpecGetFontMethod.call(
+                this,
+                changedMap,
+                propertyValuesMap,
+            );
+            this.innerElement.style.setProperty(
+                "font-family",
+                `"${font.fullName}"`,
+            );
+
+            this.innerElement.style.setProperty(
                 "--units-per-em",
                 `${font.fontObject.unitsPerEm}`,
             );
-            this.element.style.setProperty(
+            this.innerElement.style.setProperty(
                 "--ascender",
                 `${font.fontObject.ascender}`,
             );
-            this.element.style.setProperty(
+            this.innerElement.style.setProperty(
                 "--descender",
                 `${font.fontObject.descender}`,
             );
@@ -4458,20 +4493,28 @@ class UIDocumentTypeSpecStyler extends _BaseComponent {
 
         if (changedMap.has("properties@")) {
             // , getDefault = property => [true, _getRegisteredPropertySetup(property).default]
-            const colorPropertiesMap = [
-                    ["colors/backgroundColor", "background-color"],
-                    ["colors/textColor", "color"],
+            const innerColorPropertiesMap = [[`${COLOR}textColor`, "color"]],
+                outerColorPropertiesMap = [
+                    [`${COLOR}backgroundColor`, "background-color"],
                 ],
                 getDefault = (property) => {
                     return [true, getRegisteredPropertySetup(property).default];
                 };
             // console.log(`${this}.update propertyValuesMap ...`, ...propertyValuesMap.keys(), '!', propertyValuesMap);
             actorApplyCSSColors(
-                this.element,
+                this.innerElement,
                 propertyValuesMap,
                 getDefault,
-                colorPropertiesMap,
+                innerColorPropertiesMap,
             );
+
+            actorApplyCSSColors(
+                this.outerElement,
+                propertyValuesMap,
+                getDefault,
+                outerColorPropertiesMap,
+            );
+
             //  set properties to sample...
             // console.log(`${this.constructor.name}.update propertyValuesMap:`, ...propertyValuesMap);
             // Everything below can basically go only into this blog, as there
@@ -4481,13 +4524,236 @@ class UIDocumentTypeSpecStyler extends _BaseComponent {
             // FIXME: also properties that are not explicitly set in here
             // should have a value!
             actorApplyCssProperties(
-                this.element,
+                this.innerElement,
                 propertyValuesMap,
                 getDefault,
-                propertiesData,
+                innerPropertiesData,
             );
-            setTypographicPropertiesToSample(this.element, propertyValuesMap);
+            actorApplyCssProperties(
+                this.outerElement,
+                propertyValuesMap,
+                getDefault,
+                outerPropertiesData,
+            );
+            setTypographicPropertiesToSample(
+                this.innerElement,
+                propertyValuesMap,
+                true, // skipFontSize: we need it in outerElement!
+            );
+
+            // putting font-size on the outer element, that way, we can use
+            // EM also on the outer element.
+            const fontSizeName = `${GENERIC}fontSize`;
+            if (propertyValuesMap.has(fontSizeName))
+                this.outerElement.style.setProperty(
+                    "font-size",
+                    `${propertyValuesMap.get(fontSizeName)}pt`,
+                );
+            else this.outerElement.style.removeProperty("font-size");
         }
+    }
+}
+
+class ProseMirrorGeneralDocumentStyler extends _BaseComponent {
+    update(changedMap) {
+        const element = this.widgetBus.getWidgetById("proseMirror").element;
+        const propertyValuesMap = (
+            changedMap.has("properties@")
+                ? changedMap.get("properties@")
+                : this.getEntry("properties@")
+        ).typeSpecnion.getProperties();
+
+        if (changedMap.has("properties@")) {
+            const outerColorPropertiesMap = [
+                    [`${COLOR}backgroundColor`, "background-color"],
+                ],
+                getDefault = (property) => {
+                    return [true, getRegisteredPropertySetup(property).default];
+                };
+            actorApplyCSSColors(
+                element,
+                propertyValuesMap,
+                getDefault,
+                outerColorPropertiesMap,
+            );
+            // NOTE: apply paddings (use padding instead of margins)
+            // especially left and top, but ideally also right and bottom
+            // This is because we don't apply styles directly to the actual
+            // document element, but rather to the parent of that. (.prosemirror-host)
+            // i.e the element in here is a lot like the outerElement.
+            //
+            // NOTE: it could be worth to try to treat the actual .ProseMirror
+            // document like the innerElement.
+        }
+    }
+}
+
+class UIParametersDisplay extends _BaseComponent {
+    constructor(widgetBus, extraClasses = [], customArgs = []) {
+        const classes = ["ui-parameters-display", ...extraClasses],
+            fontElement = widgetBus.domTool.createElement("div", {
+                class: "ui-parameters-font",
+            }),
+            parametersElement = widgetBus.domTool.createElement(
+                "div",
+                { class: "ui-parameters-display_values" },
+                "(insert parametrs here)",
+            ),
+            localElement = widgetBus.domTool.createElement(
+                "div",
+                {
+                    class: classes.join(" "),
+                    // This is super important to not interfere with
+                    // cursor positioning of the browser and ProseMirror
+                    contenteditable: "false",
+                },
+                [fontElement, parametersElement],
+            );
+        parametersElement;
+        widgetBus.insertElement(localElement);
+        super(widgetBus);
+        this._element = localElement;
+        this._parametersElement = parametersElement;
+        this._fontElement = fontElement;
+        this._customArgs = customArgs;
+    }
+
+    update(changedMap) {
+        const typeSpecnion = (
+                changedMap.has("properties@")
+                    ? changedMap.get("properties@")
+                    : this.getEntry("properties@")
+            ).typeSpecnion,
+            propertyValuesMap = typeSpecnion.getProperties();
+
+        if (changedMap.has("properties@")) {
+            renderAxesParameterDisplay(
+                this._parametersElement,
+                propertyValuesMap,
+            );
+            // To get the backgroundColor, let's do the full blending of
+            // all background colors that could be relevant here. This means,
+            // we also resolve the alpha channels and, as a first, we need to
+            // get the background colors of all parents typeSpecs.
+            //
+            // NOTE: I'm not sure this is correct but currently it is,
+            // following the typeSpecs does not necessarily resolve the
+            // actual layers the node is in. So this may require a second
+            // look, once we have the means and an example of a more complex
+            // documents.
+            // This is also interesting as the background colors are not
+            // inheritend ("eigen-properties").
+            const backgroundColorPropertyName = `${COLOR}backgroundColor`,
+                getDefault = (property) => {
+                    return [true, getRegisteredPropertySetup(property).default];
+                },
+                defaultBackgroundColor = getDefault(
+                    backgroundColorPropertyName,
+                )[1];
+
+            // first color is on top
+            const colors = [];
+            {
+                let currentTypeSpecnion = { parentTypeSpecnion: typeSpecnion };
+                do {
+                    currentTypeSpecnion =
+                        currentTypeSpecnion.parentTypeSpecnion;
+                    const propertyValuesMap =
+                            currentTypeSpecnion.getProperties(),
+                        [backgroundColor] = getColorFromPropertyValuesMap(
+                            backgroundColorPropertyName,
+                            propertyValuesMap,
+                            [defaultBackgroundColor],
+                        );
+                    if (backgroundColor !== null) colors.push(backgroundColor);
+                } while (currentTypeSpecnion.parentTypeSpecnion !== null);
+                // add white as bottom color.
+                colors.push({ mode: "rgb", r: 1, g: 1, b: 1 });
+            }
+            colors.reverse();
+            const backgroundColor = blend(colors, "normal"),
+                // Try to get this from CSS, it is defined like:
+                //      `:root {--parameters-label-color: #09f;}`
+                computedStyle = this._domTool.constructor.getComputedStyle(
+                    this._element,
+                ),
+                cssParametersLabelColor = computedStyle.getPropertyValue(
+                    "--parameters-label-color",
+                ),
+                fallbackTextColor = {
+                    mode: "oklch",
+                    l: 0.669,
+                    c: 0.18368,
+                    h: 248.8066,
+                }, // oklch(0.669 0.18368 248.8066) // #09f
+                labelTextColor =
+                    (cssParametersLabelColor !== "" &&
+                        culoriConverter("oklch")(cssParametersLabelColor)) ||
+                    fallbackTextColor,
+                // TODO: check if background has changed before calculating etc.
+                // but that requires caching the last value...
+                enhancedContrastColor =
+                    backgroundColor !== null
+                        ? enhanceContrast(labelTextColor, backgroundColor)
+                        : null;
+            if (enhancedContrastColor)
+                this._element.style.setProperty(
+                    "--parameters-label-high-contrast-text-color",
+                    culoriFormatCss(enhancedContrastColor),
+                );
+            else
+                // unset, will fall-back to whatever CSS defines
+                this._element.style.removeProperty(
+                    "--parameters-label-high-contrast-text-color",
+                );
+        }
+        if (changedMap.has("rootFont") || changedMap.has("properties@")) {
+            // This also triggers when font changes in a parent trickle
+            // down, so these properties should always be set correctly.
+            const font = _typeSpecGetFontMethod.call(
+                this,
+                changedMap,
+                propertyValuesMap,
+            );
+            this._fontElement.textContent = font.nameVersion;
+        }
+    }
+}
+
+class UIDocumentNodeOutfitter extends _BaseContainerComponent {
+    constructor(widgetBus, _zones, structuralElements) {
+        // If structuralElements.outer === structuralElements.inner
+        // the contents of outer must be purely managed by prosemirror
+        // and hence it would be plainly wrong to create a zone for
+        // another widget to use.
+        const zones =
+            structuralElements.outer !== structuralElements.inner
+                ? new Map([..._zones, ["outer", structuralElements.outer]])
+                : _zones;
+        super(widgetBus, zones, [
+            [
+                {},
+                [
+                    [widgetBus.getExternalName("properties@"), "properties@"],
+                    [widgetBus.getExternalName("rootFont"), "rootFont"],
+                ],
+                UIDocumentTypeSpecStyler,
+                structuralElements.inner,
+                structuralElements.outer,
+            ],
+            [
+                {
+                    zone: "outer",
+                    activationTest: () => this.getEntry("showParameters").value,
+                },
+                [
+                    [widgetBus.getExternalName("properties@"), "properties@"],
+                    [widgetBus.getExternalName("rootFont"), "rootFont"],
+                ],
+                UIParametersDisplay,
+                ["ui_type_spec_ramp"],
+            ],
+        ]);
     }
 }
 
@@ -4584,7 +4850,7 @@ class UIDocumentElement extends _BaseContainerComponent {
                 ["/font", "rootFont"],
             ],
             Constructor = UIDocumentTypeSpecStyler,
-            args = [this.node];
+            args = [this.node, this.node];
         return this._initWrapper(
             this._childrenWidgetBus,
             settings,
@@ -5158,14 +5424,19 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
             this._marksDomObserver.disconnect();
     }
 
-    _createTypeSpecStylerWrapper(typeSpecProperties, domElement) {
+    _createTypeSpecStylerWrapper(
+        typeSpecProperties,
+        domElement,
+        structuralElements,
+    ) {
         const settings = {},
             dependencyMappings = [
                 [typeSpecProperties, "properties@"],
                 ["/font", "rootFont"],
+                ["showParameters"],
             ],
-            Constructor = UIDocumentTypeSpecStyler,
-            args = [domElement];
+            Constructor = UIDocumentNodeOutfitter,
+            args = [this._zones, structuralElements];
         return this._initWrapper(
             this._childrenWidgetBus,
             settings,
@@ -5177,16 +5448,18 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
 
     _getTypeSpecPropertiesId = _getTypeSpecPropertiesIdMethod;
 
-    subscribe(domElement, pathOfTypes) {
+    subscribe(domElement, pathOfTypes, structuralElements) {
         const typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes),
             widgetWrapper = this._createTypeSpecStylerWrapper(
                 typeSpecProperties,
                 domElement,
+                structuralElements,
             );
         this._subscribers.set(domElement, {
             widgetWrapper,
             pathOfTypes,
             typeSpecProperties,
+            structuralElements,
             styles: new Set(),
         });
         this._updateDOM(() => this._activateWidget(widgetWrapper));
@@ -5196,14 +5469,15 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
         this._widgets.push(widgetWrapper);
         this._createWidget(widgetWrapper);
         const _compareResult = StateComparison.createInitial(
-                this.getEntry("/"),
-                widgetWrapper.dependencyMapping,
-            ),
-            changedMap = widgetWrapper.getChangedMapFromCompareResult(
-                true /*requiresFullInitialUpdate*/,
-                _compareResult,
-            );
-        if (changedMap.size) widgetWrapper.widget.update(changedMap);
+            this.getEntry("/"),
+            widgetWrapper.dependencyMapping,
+        );
+        this.constructor.updateWidget(
+            widgetWrapper,
+            _compareResult,
+            true,
+            true,
+        );
     }
 
     _deactivateWidget(widgetWrapper) {
@@ -5315,6 +5589,7 @@ class TypeSpecSubscriptions extends _CommonContainerComponent {
             const widgetWrapper = this._createTypeSpecStylerWrapper(
                 typeSpecProperties,
                 domElement,
+                subscription.structuralElements,
             );
             this._destroyWidget(subscription.widgetWrapper);
             this._widgets.splice(
@@ -5464,10 +5739,24 @@ class ProsemirrorNodeView {
             element = widgetBus.domTool.createElement(tag, {
                 "data-node-type": node.type.name,
             });
+        // The outer DOM node that represents the document node.
         this.dom = element;
-        this._stylerDOM = element;
-        this.contentDOM = element;
 
+        const contentElement = widgetBus.domTool.createElement("div");
+        element.append(contentElement);
+        // For the subscription it is important that this element is
+        // the same as the contentDOM, the element that will be the parent
+        // of the marks.
+        this._stylerDOM = contentElement;
+        // The DOM node that should hold the node's content
+        // this is probably only required when this._stylerDOM != this.dom
+        // this is also part of the ProseMiror API
+        this.contentDOM = contentElement;
+        const structuralElements = {
+            // required to style e.g. the margins between paragraphs
+            outer: this.dom,
+            inner: this._stylerDOM,
+        };
         // https://prosemirror.net/docs/ref/#model.ResolvedPos
         // https://prosemirror.net/docs/ref/#model.Node.resolve
         // we don't actually need to know the node position, but we
@@ -5476,7 +5765,11 @@ class ProsemirrorNodeView {
             pathOfTypes = _getPathOfTypes(resolved.path, node.type.name);
         widgetBus
             .getWidgetById("typeSpecSubscriptionsRegistry")
-            .subscribe(this._stylerDOM, pathOfTypes /*, contentIndexes*/);
+            .subscribe(
+                this._stylerDOM,
+                pathOfTypes,
+                structuralElements /*, contentIndexes*/,
+            );
     }
 
     // // I dont't think implementing `update` is required so far.
@@ -6170,6 +6463,16 @@ class ProseMirrorContext extends _BaseContainerComponent {
                 zones,
                 originTypeSpecPath,
             ],
+            [
+                {},
+                [
+                    [
+                        `typeSpecProperties@${originTypeSpecPath.toString()}`,
+                        "properties@",
+                    ],
+                ],
+                ProseMirrorGeneralDocumentStyler,
+            ],
         ]);
     }
 }
@@ -6580,19 +6883,29 @@ class TypeSpecRampController extends _BaseContainerComponent {
                     class: "style_patches-manager",
                 },
             ),
-            documentManagerContainer = widgetBus.domTool.createElement("div", {
-                class: "document-manager",
-            }),
             nodeSpecManagerContainer = widgetBus.domTool.createElement("div", {
                 class: "node_spec-manager",
             }),
+            // To have this first within editorManagerContainer.
+            proseMirrorEditorMenuContainer = widgetBus.domTool.createElement(
+                "div",
+                { class: "editor-manager-prosemirror" },
+            ),
+            editorManagerContainer = widgetBus.domTool.createElement(
+                "div",
+                {
+                    class: "editor-manager",
+                },
+                proseMirrorEditorMenuContainer,
+            ),
             zones = new Map([
                 ..._zones,
                 ["type_spec-manager", typeSpecManagerContainer],
                 ["properties-manager", propertiesManagerContainer],
                 ["style_patches-manager", stylePatchesManagerContainer],
-                ["document-manager", documentManagerContainer],
                 ["node_spec-manager", nodeSpecManagerContainer],
+                ["editor-manager", editorManagerContainer],
+                ["prose-mirror-editor-menu", proseMirrorEditorMenuContainer],
             ]),
             typeSpecRelativePath = Path.fromParts(".", "typeSpec"),
             originTypeSpecPath = widgetBus.rootPath.append(
@@ -6651,7 +6964,14 @@ class TypeSpecRampController extends _BaseContainerComponent {
                 isInheritingPropertyFn,
                 typeSpecDefaultsMap,
             ],
-            [{ zone: "main" }, [], StaticNode, documentManagerContainer],
+            [
+                { zone: "main" },
+                [],
+                Collapsible,
+                "Editor",
+                editorManagerContainer,
+                true,
+            ],
             [
                 { zone: "main" },
                 [],
@@ -6782,12 +7102,19 @@ class TypeSpecRampController extends _BaseContainerComponent {
                 {},
                 [],
                 ProseMirrorContext,
-                new Map([...zones, ["main", documentManagerContainer]]),
+                zones,
                 // proseMirrorSettings
                 { zone: "layout" },
                 originTypeSpecPath,
                 // menuSettings
-                { zone: "main" },
+                { zone: "prose-mirror-editor-menu" },
+            ],
+            [
+                { zone: "editor-manager" },
+                [["showParameters", "value"]],
+                UICheckboxInput,
+                "show-parameters", // classToken
+                getRegisteredPropertySetup(`${GENERIC}showParameters`).label, //label
             ],
             [
                 { zone: "main" },
