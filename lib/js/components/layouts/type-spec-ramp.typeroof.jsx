@@ -83,6 +83,7 @@ import {
 import {
     converter as culoriConverter,
     formatCss as culoriFormatCss,
+    blend,
 } from "../../vendor/culori/bundled/culori.mjs";
 
 import { DATA_TRANSFER_TYPES } from "../data-transfer-types.mjs";
@@ -4602,26 +4603,59 @@ class UIParametersDisplay extends _BaseComponent {
     }
 
     update(changedMap) {
-        const propertyValuesMap = (
-            changedMap.has("properties@")
-                ? changedMap.get("properties@")
-                : this.getEntry("properties@")
-        ).typeSpecnion.getProperties();
+        const typeSpecnion = (
+                changedMap.has("properties@")
+                    ? changedMap.get("properties@")
+                    : this.getEntry("properties@")
+            ).typeSpecnion,
+            propertyValuesMap = typeSpecnion.getProperties();
 
         if (changedMap.has("properties@")) {
             renderAxesParameterDisplay(
                 this._parametersElement,
                 propertyValuesMap,
             );
+            // To get the backgroundColor, let's do the full blending of
+            // all background colors that could be relevant here. This means,
+            // we also resolve the alpha channels and, as a first, we need to
+            // get the background colors of all parents typeSpecs.
+            //
+            // NOTE: I'm not sure this is correct but currently it is,
+            // following the typeSpecs does not necessarily resolve the
+            // actual layers the node is in. So this may require a second
+            // look, once we have the means and an example of a more complex
+            // documents.
+            // This is also interesting as the background colors are not
+            // inheritend ("eigen-properties").
             const backgroundColorPropertyName = `${COLOR}backgroundColor`,
                 getDefault = (property) => {
                     return [true, getRegisteredPropertySetup(property).default];
                 },
-                [backgroundColor] = getColorFromPropertyValuesMap(
+                defaultBackgroundColor = getDefault(
                     backgroundColorPropertyName,
-                    propertyValuesMap,
-                    [getDefault(backgroundColorPropertyName)[1]],
-                ),
+                )[1];
+
+            // first color is on top
+            const colors = [];
+            {
+                let currentTypeSpecnion = { parentTypeSpecnion: typeSpecnion };
+                do {
+                    currentTypeSpecnion =
+                        currentTypeSpecnion.parentTypeSpecnion;
+                    const propertyValuesMap =
+                            currentTypeSpecnion.getProperties(),
+                        [backgroundColor] = getColorFromPropertyValuesMap(
+                            backgroundColorPropertyName,
+                            propertyValuesMap,
+                            [defaultBackgroundColor],
+                        );
+                    if (backgroundColor !== null) colors.push(backgroundColor);
+                } while (currentTypeSpecnion.parentTypeSpecnion !== null);
+                // add white as bottom color.
+                colors.push({ mode: "rgb", r: 1, g: 1, b: 1 });
+            }
+            colors.reverse();
+            const backgroundColor = blend(colors, "normal"),
                 // Try to get this from CSS, it is defined like:
                 //      `:root {--parameters-label-color: #09f;}`
                 computedStyle = this._domTool.constructor.getComputedStyle(
@@ -4656,19 +4690,6 @@ class UIParametersDisplay extends _BaseComponent {
                 this._element.style.removeProperty(
                     "--parameters-label-high-contrast-text-color",
                 );
-
-            // This was required for the Videoproof-Array but is likely
-            // not going to be required in here!
-            const colorPropertiesMap = [
-                [backgroundColorPropertyName, "background-color"],
-                // , [`${COLOR}textColor`, 'color']
-            ];
-            actorApplyCSSColors(
-                this._element,
-                propertyValuesMap,
-                getDefault,
-                colorPropertiesMap,
-            );
         }
         if (changedMap.has("rootFont") || changedMap.has("properties@")) {
             // This also triggers when font changes in a parent trickle
