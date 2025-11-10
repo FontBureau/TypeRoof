@@ -1774,6 +1774,10 @@ dimension sequence
  * at a :not() rule to make an exception possible
  */
 
+[contenteditable]:focus {
+    outline: 0 solid transparent;
+}
+
 /* stylelint-disable */
 /* prettier-ignore */
 :where(.ProseMirror, .typeroof-document, .typeroof-layout, .reset-default-css) {
