@@ -733,7 +733,7 @@ const // We don't do  prosemirror SchemaSpec yet, but we may need it to also
         ["nodeSpecToTypeSpec", NodeSpecToTypeSpecMapModel],
         // the root of all typeSpecs
         ["document", NodeModel],
-        ["showParameters", BooleanDefaultTrueModel],
+        ["showParameters", BooleanModel],
         CoherenceFunction.create(
             [
                 "document",
