@@ -4538,7 +4538,18 @@ class UIDocumentTypeSpecStyler extends _BaseComponent {
             setTypographicPropertiesToSample(
                 this.innerElement,
                 propertyValuesMap,
+                true, // skipFontSize: we need it in outerElement!
             );
+
+            // putting font-size on the outer element, that way, we can use
+            // EM also on the outer element.
+            const fontSizeName = `${GENERIC}fontSize`;
+            if (propertyValuesMap.has(fontSizeName))
+                this.outerElement.style.setProperty(
+                    "font-size",
+                    `${propertyValuesMap.get(fontSizeName)}pt`,
+                );
+            else this.outerElement.style.removeProperty("font-size");
         }
     }
 }
