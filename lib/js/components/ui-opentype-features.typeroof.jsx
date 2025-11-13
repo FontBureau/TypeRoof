@@ -469,6 +469,7 @@ export class UIOTFeaturesChooser extends _BaseContainerComponent {
                 "font",
             );
         widgetBus.insertElement(localMain);
+        /* eslint-disable react/jsx-key */
         super(widgetBus, zones, [
             [
                 { zone: "main" },
@@ -545,6 +546,7 @@ export class UIOTFeaturesChooser extends _BaseContainerComponent {
                 updateDefaultsDependencies,
             ],
         ]);
+        /* eslint-enable react/jsx-key */
     }
     _changeSelectFilter(value) {
         this.getWidgetById("features-select").setOptionsFilter(value);
