@@ -1205,7 +1205,7 @@ select and drag
 
 .ui_style_patches_map-item-value,
 .ui_node_spec_map-item-value {
-    min-width: 5.3em;
+    min-width: 5em;
 }
 
 :is(.ui_style_patches_map-item-value, .ui_node_spec_map-item-value).active {
