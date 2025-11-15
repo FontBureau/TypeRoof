@@ -113,9 +113,7 @@ import {
     ProcessedPropertiesSystemMap,
 } from "../registered-properties-definitions.mjs";
 
-import {
-    LanguageTagModel
-} from "../language-tags-models.mjs";
+import { LanguageTagModel } from "../language-tags-models.mjs";
 
 import { StringOrEmptyModel, NumberOrEmptyModel } from "../actors/models.mjs";
 
@@ -126,6 +124,7 @@ import {
     //, DYNAMIC_MARKER
     //, cssPositioningHorizontalPropertyExpander
     setTypographicPropertiesToSample,
+    setLanguageTag,
 } from "../actors/properties-util.mjs";
 
 import { FontSelect } from "../font-loading.mjs";
@@ -3400,20 +3399,21 @@ export function* openTypeFeaturesGen(
     }
 }
 
-
 function createLanguageTag(language, script, region) {
     const parts = [];
-    if(!language)
-        return null;
+    if (!language) return null;
     parts.push(language);
-    if(script) {
-        const LanguageSubtagModel = LanguageTagModel.get('language').Model
+    if (script) {
+        const LanguageSubtagModel = LanguageTagModel.get("language").Model;
         const languageInfo = LanguageSubtagModel.fullData.get(language);
-        if(!('Suppress-script' in languageInfo) || languageInfo['Suppress-script'] !== script)
-          parts.push(script);
+        if (
+            !("Suppress-script" in languageInfo) ||
+            languageInfo["Suppress-script"] !== script
+        )
+            parts.push(script);
     }
-    if(region) parts.push(region);
-    return parts.join('-');
+    if (region) parts.push(region);
+    return parts.join("-");
 }
 
 function* languageTagGen(
@@ -3424,31 +3424,27 @@ function* languageTagGen(
     let hasLocalEntry = false;
     for (const [subTag, subTagValue] of languageTag) {
         const path = `${LANGUAGE}${subTag}`;
-        if(subTagValue.isEmpty) {
-          if(!outerTypespecnionAPI.hasParentProtperty(path))
-              // Yield null to at least create some value in the local
-              // liveProperties, for `${LANGUAGE}lang` (createLanguageTag)
-              // to not fail. Basically this creates a kind of optional,
-              // not set, arguments. null will also not be inherited.
-              yield [path, null];
+        if (subTagValue.isEmpty) {
+            if (!outerTypespecnionAPI.hasParentProtperty(path))
+                // Yield null to at least create some value in the local
+                // liveProperties, for `${LANGUAGE}lang` (createLanguageTag)
+                // to not fail. Basically this creates a kind of optional,
+                // not set, arguments. null will also not be inherited.
+                yield [path, null];
             continue;
         }
         hasLocalEntry = true;
         yield [path, subTagValue.value];
     }
-    if(hasLocalEntry) {
+    if (hasLocalEntry) {
         // Only if lang has local changes (we assume each local value to
         // be a change, even if the value is equal), we yield it, otherwise
         // the expection is that an upper element applies the attribute and
         // the languageTag is inherited (by the means of the DOM).
-        const args = LanguageTagModel.fields.keys().map(key=>`${LANGUAGE}${key}`);
-        yield [
-            `${LANGUAGE}lang`,
-            new SyntheticValue(
-                createLanguageTag,
-                args,
-            ),
-        ];
+        const args = LanguageTagModel.fields
+            .keys()
+            .map((key) => `${LANGUAGE}${key}`);
+        yield [`${LANGUAGE}lang`, new SyntheticValue(createLanguageTag, args)];
     }
 }
 
@@ -3552,6 +3548,7 @@ const REGISTERED_GENERIC_TYPESPEC_FIELDS = Object.freeze(
         fontSizeGen, // must come before axisLocationsGen
         axisLocationsGen,
         openTypeFeaturesGen,
+        languageTagGen,
         getPropertiesBroomWagonGen(GENERIC, REGISTERED_GENERIC_TYPESPEC_FIELDS),
         leadingGen,
     ]),
@@ -3579,6 +3576,7 @@ const REGISTERED_GENERIC_TYPESPEC_FIELDS = Object.freeze(
         // i.e. where this patch and the typeSpec get mixed.
         axisMathLocationsGen,
         openTypeFeaturesGen,
+        languageTagGen,
         getPropertiesBroomWagonGen(
             GENERIC,
             _GENERIC_STYLEPATCH_FIELDS,
@@ -4455,6 +4453,7 @@ class UIDocumentStyleStyler extends _BaseComponent {
                 propertiesData,
             );
             setTypographicPropertiesToSample(this.element, propertyValuesMap);
+            setLanguageTag(this.element, propertyValuesMap);
         }
     }
 }
@@ -4600,6 +4599,7 @@ class UIDocumentTypeSpecStyler extends _BaseComponent {
                 propertyValuesMap,
                 true, // skipFontSize: we need it in outerElement!
             );
+            setLanguageTag(this.outerElement, propertyValuesMap);
 
             // putting font-size on the outer element, that way, we can use
             // EM also on the outer element.
@@ -4636,6 +4636,7 @@ class ProseMirrorGeneralDocumentStyler extends _BaseComponent {
                 getDefault,
                 outerColorPropertiesMap,
             );
+            setLanguageTag(element, propertyValuesMap);
             // NOTE: apply paddings (use padding instead of margins)
             // especially left and top, but ideally also right and bottom
             // This is because we don't apply styles directly to the actual
@@ -4650,6 +4651,8 @@ class ProseMirrorGeneralDocumentStyler extends _BaseComponent {
 
 class UIParametersDisplay extends _BaseComponent {
     constructor(widgetBus, extraClasses = [], customArgs = []) {
+        // FIXME: depending on the type of the outer node, this might
+        // better create <span> than <div> elements!
         const classes = ["ui-parameters-display", ...extraClasses],
             fontElement = widgetBus.domTool.createElement("div", {
                 class: "ui-parameters-font",
@@ -4666,6 +4669,12 @@ class UIParametersDisplay extends _BaseComponent {
                     // This is super important to not interfere with
                     // cursor positioning of the browser and ProseMirror
                     contenteditable: "false",
+                    // Since this lives within the structre of the document
+                    // it would inherit the lang of the document, but, that's
+                    // not necessarily correct. Until we internationalize
+                    // the UI, it's save to assume that this has English
+                    // content.
+                    lang: "en",
                 },
                 [fontElement, parametersElement],
             );
@@ -5802,6 +5811,8 @@ class ProsemirrorNodeView {
         // The outer DOM node that represents the document node.
         this.dom = element;
 
+        // FIXME: depending on the type of the outer node, this might
+        // better be a span.
         const contentElement = widgetBus.domTool.createElement("div");
         element.append(contentElement);
         // For the subscription it is important that this element is
