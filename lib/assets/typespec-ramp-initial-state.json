@@ -1,6 +1,9 @@
 {
   "typeSpec": {
     "columnWidth": "53.0",
+    "languageTag": {
+      "language": "en"
+    },
     "baseFontSize": "14",
     "autoOPSZ": "1",
     "children": [
