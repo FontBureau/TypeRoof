@@ -40,8 +40,14 @@ sidebar
 }
 
 .typeroof-docs .typeroof-ui_sidebar li ul li::before {
-    content: var(--chevron-right);
-    margin-right: 0.5em;
+    /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
+    font-family: "Material Symbols Outlined";
+    font-size: 1.4rem;
+    font-variation-settings: "wght" 200;
+    content: "\e5cc";
+    line-height: 0.8rem;
+    margin-left: -0.3em;
+    vertical-align: middle;
 }
 
 .typeroof-docs .typeroof-ui_sidebar li ul li ul {
