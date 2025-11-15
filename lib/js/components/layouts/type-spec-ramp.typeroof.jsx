@@ -108,9 +108,14 @@ import {
     SPECIFIC,
     LEADING,
     OPENTYPE_FEATURES,
+    LANGUAGE,
     getPropertiesBroomWagonGen,
     ProcessedPropertiesSystemMap,
 } from "../registered-properties-definitions.mjs";
+
+import {
+    LanguageTagModel
+} from "../language-tags-models.mjs";
 
 import { StringOrEmptyModel, NumberOrEmptyModel } from "../actors/models.mjs";
 
@@ -1487,6 +1492,7 @@ function getTypeSpecPPSMap(parentPPSRecord, Model) {
         if (_excludesTypeSpecPPSMap.has(modelFieldName)) prefix = null;
         else if (modelFieldType === ColorModel) prefix = COLOR;
         else if (modelFieldType === LeadingAlgorithmModel) prefix = LEADING;
+        else if (modelFieldType === LanguageTagModel) prefix = LANGUAGE;
         else if (modelFieldName === "axesLocations")
             // we should use a symbol here!
             prefix = "axesLocations/";
@@ -1536,6 +1542,7 @@ function getNodeSpecPPSMap(parentPPSRecord, Model) {
         if (_excludesNodeSpecPPSMap.has(modelFieldName)) prefix = null;
         else if (modelFieldType === ColorModel) prefix = COLOR;
         else if (modelFieldType === LeadingAlgorithmModel) prefix = LEADING;
+        else if (modelFieldType === LanguageTagModel) prefix = LANGUAGE;
         else if (modelFieldName === "axesLocations")
             // we should use a symbol here!
             prefix = "axesLocations/";
@@ -1645,7 +1652,8 @@ function typeSpecGetDefaults(
     // These requests come via UIManualAxisLocations:
     else if (
         ppsRecord.prefix === "axesLocations/" ||
-        ppsRecord.prefix === OPENTYPE_FEATURES
+        ppsRecord.prefix === OPENTYPE_FEATURES ||
+        ppsRecord.prefix === LANGUAGE
     ) {
         // 'axesLocations/'. 'YTFI', '738'
         // 'opentype-feature/'. 'kern', false
@@ -3389,6 +3397,58 @@ export function* openTypeFeaturesGen(
     const openTypeFeatures = hostInstance.get("openTypeFeatures");
     for (const [featureTag, featureValue] of openTypeFeatures) {
         yield [`${OPENTYPE_FEATURES}${featureTag}`, featureValue.value];
+    }
+}
+
+
+function createLanguageTag(language, script, region) {
+    const parts = [];
+    if(!language)
+        return null;
+    parts.push(language);
+    if(script) {
+        const LanguageSubtagModel = LanguageTagModel.get('language').Model
+        const languageInfo = LanguageSubtagModel.fullData.get(language);
+        if(!('Suppress-script' in languageInfo) || languageInfo['Suppress-script'] !== script)
+          parts.push(script);
+    }
+    if(region) parts.push(region);
+    return parts.join('-');
+}
+
+function* languageTagGen(
+    outerTypespecnionAPI,
+    hostInstance /* here a TypeSpecModel */,
+) {
+    const languageTag = hostInstance.get("languageTag");
+    let hasLocalEntry = false;
+    for (const [subTag, subTagValue] of languageTag) {
+        const path = `${LANGUAGE}${subTag}`;
+        if(subTagValue.isEmpty) {
+          if(!outerTypespecnionAPI.hasParentProtperty(path))
+              // Yield null to at least create some value in the local
+              // liveProperties, for `${LANGUAGE}lang` (createLanguageTag)
+              // to not fail. Basically this creates a kind of optional,
+              // not set, arguments. null will also not be inherited.
+              yield [path, null];
+            continue;
+        }
+        hasLocalEntry = true;
+        yield [path, subTagValue.value];
+    }
+    if(hasLocalEntry) {
+        // Only if lang has local changes (we assume each local value to
+        // be a change, even if the value is equal), we yield it, otherwise
+        // the expection is that an upper element applies the attribute and
+        // the languageTag is inherited (by the means of the DOM).
+        const args = LanguageTagModel.fields.keys().map(key=>`${LANGUAGE}${key}`);
+        yield [
+            `${LANGUAGE}lang`,
+            new SyntheticValue(
+                createLanguageTag,
+                args,
+            ),
+        ];
     }
 }
 
@@ -6804,6 +6864,7 @@ const _skipPrefix = new Set([
     // no guarantee!
     "axesLocations/",
     OPENTYPE_FEATURES,
+    LANGUAGE,
     // "font" is really the only case of this so far, there could
     // be the document font as a default maybe, as it cannot be not
     // set at all, hence it also must be loaded and available.
