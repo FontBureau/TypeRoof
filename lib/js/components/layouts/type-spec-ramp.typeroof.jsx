@@ -113,7 +113,7 @@ import {
     ProcessedPropertiesSystemMap,
 } from "../registered-properties-definitions.mjs";
 
-import { LanguageTagModel } from "../language-tags-models.mjs";
+import { LanguageTagModel, createLanguageTag, setLanguageTag } from "../language-tags-models.mjs";
 
 import { StringOrEmptyModel, NumberOrEmptyModel } from "../actors/models.mjs";
 
@@ -124,7 +124,6 @@ import {
     //, DYNAMIC_MARKER
     //, cssPositioningHorizontalPropertyExpander
     setTypographicPropertiesToSample,
-    setLanguageTag,
 } from "../actors/properties-util.mjs";
 
 import { FontSelect } from "../font-loading.mjs";
@@ -3397,23 +3396,6 @@ export function* openTypeFeaturesGen(
     for (const [featureTag, featureValue] of openTypeFeatures) {
         yield [`${OPENTYPE_FEATURES}${featureTag}`, featureValue.value];
     }
-}
-
-function createLanguageTag(language, script, region) {
-    const parts = [];
-    if (!language) return null;
-    parts.push(language);
-    if (script) {
-        const LanguageSubtagModel = LanguageTagModel.get("language").Model;
-        const languageInfo = LanguageSubtagModel.fullData.get(language);
-        if (
-            !("Suppress-script" in languageInfo) ||
-            languageInfo["Suppress-script"] !== script
-        )
-            parts.push(script);
-    }
-    if (region) parts.push(region);
-    return parts.join("-");
 }
 
 function* languageTagGen(
