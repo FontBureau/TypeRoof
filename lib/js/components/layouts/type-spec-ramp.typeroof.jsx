@@ -113,7 +113,11 @@ import {
     ProcessedPropertiesSystemMap,
 } from "../registered-properties-definitions.mjs";
 
-import { LanguageTagModel, createLanguageTag, setLanguageTag } from "../language-tags-models.mjs";
+import {
+    LanguageTagModel,
+    createLanguageTag,
+    setLanguageTag,
+} from "../language-tags-models.mjs";
 
 import { StringOrEmptyModel, NumberOrEmptyModel } from "../actors/models.mjs";
 
@@ -3398,7 +3402,7 @@ export function* openTypeFeaturesGen(
     }
 }
 
-function* languageTagGen(
+export function* languageTagGen(
     outerTypespecnionAPI,
     hostInstance /* here a TypeSpecModel */,
 ) {
