@@ -117,7 +117,7 @@ import {
     LanguageTagModel,
     createLanguageTag,
     setLanguageTag,
-} from "../language-tags-models.mjs";
+} from "../language-tags.mjs";
 
 import { StringOrEmptyModel, NumberOrEmptyModel } from "../actors/models.mjs";
 
