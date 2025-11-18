@@ -191,22 +191,18 @@ export const language = new LanguageSubtagRegistryMap(rawDataLanguage),
 //  maxlength="8" <- TODO
 //  size="10" <- TODO
 
-function _createDataList(domTool, subtagRegistryMap) {
-    const dataList = domTool.createElement("datalist");
+function _createDataList({ h }, subtagRegistryMap) {
+    const dataList = <datalist />;
     for (const tag of subtagRegistryMap.keys()) {
         const { Description = [] } = subtagRegistryMap.get(tag, "Description"),
             label = `${tag}: ${Description.join(" - ")}`,
-            option = domTool.createElement("option", { value: tag, label });
+            option = <option value={tag} label={label} />;
         dataList.append(option);
     }
     return dataList;
 }
 
 export class UILanguageInput extends _BaseComponent {
-    static TEMPLATE = `<div class="ui_language_subtag_input">
-    <label><!-- insert: label -->
-    <input type='text'/></label>
-</div>`;
     constructor(
         widgetBus,
         data /* a language subtagRegistryMap*/,
@@ -226,14 +222,23 @@ export class UILanguageInput extends _BaseComponent {
             );
     }
 
+    static getTemplate(h, labelText, classes = []) {
+        return (
+            <div class={"ui_language_subtag_input " + classes.join(" ")}>
+                <label>
+                    {labelText} <input type="text" />
+                </label>
+            </div>
+        );
+    }
+
     _initTemplate(label, classes = []) {
-        const container = this._domTool.createFragmentFromHTML(
-                this.constructor.TEMPLATE,
-            ).firstElementChild,
+        const container = this.constructor.getTemplate(
+                this._domTool.h,
+                label,
+                classes,
+            ),
             input = container.querySelector("input");
-        if (Array.isArray(classes) && classes.length) {
-            for (const class_ of classes) container.classList.add(class_);
-        }
         input.setAttribute("list", this._getDataListId());
         // don't use the maxlength/minlength attributes as they
         // limit how the datalist can be searched.
@@ -243,7 +248,7 @@ export class UILanguageInput extends _BaseComponent {
             Math.max(
                 this._data.uiHints.minlength,
                 Math.min(10, this._data.uiHints.maxlength),
-            ) + 1,
+            ) + 2,
         );
         input.addEventListener("input", (/*event*/) => {
             if (!this._data.has(input.value) && input.value !== "") return;
@@ -259,12 +264,6 @@ export class UILanguageInput extends _BaseComponent {
             input.value = value.isEmpty ? "" : value.value;
         });
 
-        if (label)
-            this._domTool.insertAtMarkerComment(
-                container,
-                "insert: label",
-                label,
-            );
         this._insertElement(container);
         return [container, input];
     }
@@ -280,10 +279,6 @@ export class UILanguageInput extends _BaseComponent {
 }
 
 class UILanguageTagInfo extends _BaseComponent {
-    static TEMPLATE = `<div class="ui_language_subtag_info">
-    <label></label>
-    <dl class="ui_language_subtag_info-list"></dl>
-</div>`;
     constructor(
         widgetBus,
         data /* a language subtagRegistryMap*/,
@@ -295,31 +290,37 @@ class UILanguageTagInfo extends _BaseComponent {
         [this.element, this._info] = this._initTemplate(label, classes);
     }
 
+    static getTemplate(h, labelText, classes = []) {
+        return (
+            <div class={"ui_language_subtag_info " + classes.join(" ")}>
+                <label>{labelText}</label>
+                <dl class="ui_language_subtag_info-list"></dl>
+            </div>
+        );
+    }
     _initTemplate(label, classes = []) {
-        const container = this._domTool.createFragmentFromHTML(
-                this.constructor.TEMPLATE,
-            ).firstElementChild,
-            labelElement = container.querySelector("label"),
+        const container = this.constructor.getTemplate(
+                this._domTool.h,
+                label,
+                classes,
+            ),
             info = container.querySelector(".ui_language_subtag_info-list");
-        if (Array.isArray(classes) && classes.length) {
-            for (const class_ of classes) container.classList.add(class_);
-        }
-        labelElement.textContent = label;
         this._insertElement(container);
         return [container, info];
     }
 
     _makeInfo(tag) {
-        const elements = [];
+        const elements = [],
+            { h } = this._domTool;
         for (const [key, value] of [
             ["Tag", tag],
             ...Object.entries(this._data.get(tag)),
         ]) {
             elements.push(
-                this._domTool.createElement("dt", {}, key),
-                ...(Array.isArray(value) ? value : [value]).map((v) =>
-                    this._domTool.createElement("dd", {}, v),
-                ),
+                <dt>{key}</dt>,
+                ...(Array.isArray(value) ? value : [value]).map((v) => (
+                    <dd>{v}</dd>
+                )),
             );
         }
         return elements;
@@ -336,47 +337,43 @@ class UILanguageTagInfo extends _BaseComponent {
 
 export class UILanguageTag extends _BaseContainerComponent {
     constructor(widgetBus, _zones) {
-        const info = widgetBus.domTool.createElement(
-                "div",
-                { class: "ui-language_tag-info" },
-                [
-                    widgetBus.domTool.createElement(
-                        "h4",
-                        {},
-                        "Language Tag Info",
-                    ),
-                    widgetBus.domTool.createElement(
-                        "a",
-                        {
-                            class: "external-link",
-                            href: "https://www.w3.org/International/questions/qa-choosing-language-tags",
-                            target: "_blank",
-                        },
-                        "Help: Choosing a Language Tag",
-                    ),
-                    widgetBus.domTool.createElement(
-                        "a",
-                        {
-                            class: "external-link",
-                            href: "https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry",
-                            target: "_blank",
-                        },
-                        "Data: based on the IANA Language Subtag Registry",
-                    ),
-                ],
+        const { h } = widgetBus.domTool,
+            infoTarget = <div></div>,
+            info = (
+                <div class="ui-language_tag-info">
+                    <h4>Language Tag Info</h4>
+                    {infoTarget}
+                    <hr />• Help:{" "}
+                    <a
+                        class="external-link"
+                        href="https://www.w3.org/International/questions/qa-choosing-language-tags"
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        Choosing a Language Tag
+                    </a>
+                    <br />• Data is based on the{" "}
+                    <a
+                        class="external-link"
+                        href="https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry"
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        IANA Language Subtag Registry
+                    </a>
+                    <br />
+                </div>
             ),
-            element = widgetBus.domTool.createElement(
-                "div",
-                { class: "ui-language_tag" },
-                [
-                    widgetBus.domTool.createElement(
-                        "h3",
-                        { class: "ui-language_tag-label" },
-                        "Language",
-                    ),
-                ],
+            element = (
+                <div class="ui-language_tag">
+                    <h3 class="ui-language_tag-label">Language</h3>
+                </div>
             ),
-            zones = new Map([..._zones, ["main", element], ["info", info]]);
+            zones = new Map([
+                ..._zones,
+                ["main", element],
+                ["info", infoTarget],
+            ]);
         widgetBus.insertElement(element);
         super(widgetBus, zones, [
             ...Array.from(LanguageTagModel.fields).map(
