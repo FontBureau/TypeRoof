@@ -1898,10 +1898,6 @@ dimension sequence
 .ui-language_tag-info {
     background: white;
     padding: 0.3em;
-
-    a {
-        display: block;
-    }
 }
 
 .ui_language_subtag_info {
@@ -1922,7 +1918,7 @@ dimension sequence
         font-weight: bolder;
     }
 
-    dd ~ dt::before {
+    dd + dt::before {
         display: block;
         content: "";
     }
@@ -1936,7 +1932,7 @@ dimension sequence
         content: " ";
     }
 
-    dd ~ dd::before {
+    dd + dd::before {
         content: ", ";
     }
 }
