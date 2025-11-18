@@ -1894,3 +1894,45 @@ dimension sequence
         content: "";
     }
 }
+
+.ui-language_tag-info {
+    background: white;
+    padding: 0.3em;
+}
+
+.ui_language_subtag_info {
+    label {
+        font-weight: bolder;
+    }
+}
+
+.ui_language_subtag_info ~ .ui_language_subtag_info {
+    padding-block-start: 1.3em;
+}
+
+.ui_language_subtag_info-list {
+    margin: 0;
+
+    dt {
+        display: inline;
+        font-weight: bolder;
+    }
+
+    dd + dt::before {
+        display: block;
+        content: "";
+    }
+
+    dd {
+        display: inline;
+        margin-inline-start: 0;
+    }
+
+    dd::before {
+        content: " ";
+    }
+
+    dd + dd::before {
+        content: ", ";
+    }
+}
