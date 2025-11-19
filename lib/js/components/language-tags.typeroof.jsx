@@ -302,7 +302,7 @@ class UILanguageTagInfo extends _BaseComponent {
     static getTemplate(h, labelText, classes = []) {
         return (
             <div class={"ui_language_subtag_info " + classes.join(" ")}>
-                <label>{labelText}</label>
+                <strong>{labelText}:</strong>
                 <dl class="ui_language_subtag_info-list"></dl>
             </div>
         );
