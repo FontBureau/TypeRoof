@@ -6,7 +6,11 @@ import {
 
 import { LANGUAGE } from "./registered-properties-definitions.mjs";
 
-import { _BaseContainerComponent, _BaseComponent } from "./basics.mjs";
+import {
+    _BaseContainerComponent,
+    _BaseComponent,
+    connectLabelWithInput,
+} from "./basics.mjs";
 
 import { StaticNode } from "./generic.mjs";
 
@@ -226,7 +230,7 @@ export class UILanguageInput extends _BaseComponent {
         return (
             <div class={"ui_language_subtag_input " + classes.join(" ")}>
                 <label>
-                    {labelText} <input type="text" />
+                    <span>{labelText}</span> <input type="text" />
                 </label>
             </div>
         );
@@ -263,6 +267,11 @@ export class UILanguageInput extends _BaseComponent {
             const value = this.getEntry("value");
             input.value = value.isEmpty ? "" : value.value;
         });
+        connectLabelWithInput(
+            this.widgetBus,
+            container.querySelector("label"),
+            input,
+        );
 
         this._insertElement(container);
         return [container, input];
