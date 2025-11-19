@@ -1902,12 +1902,6 @@ dimension sequence
     padding: 0.3em;
 }
 
-.ui_language_subtag_info {
-    label {
-        font-weight: bolder;
-    }
-}
-
 .ui_language_subtag_info ~ .ui_language_subtag_info {
     padding-block-start: 1.3em;
 }
@@ -1918,6 +1912,10 @@ dimension sequence
     dt {
         display: inline;
         font-weight: bolder;
+    }
+
+    dt::after {
+        content: ":";
     }
 
     dd + dt::before {
