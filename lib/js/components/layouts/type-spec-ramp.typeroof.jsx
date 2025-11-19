@@ -65,6 +65,7 @@ import {
     deserializeLeadingAlgorithmModel,
     availableStylePatchTypes,
     availableStylePatchesShortLabel,
+    deserializeManualMarginsModel,
 } from "../type-spec-models.mjs";
 
 import {
@@ -3434,6 +3435,44 @@ export function* languageTagGen(
     }
 }
 
+function createMargin(value, unit, baseFontSize, fontSize, lineHeightEm) {
+    if (value === null || unit === null) return null;
+    if (unit === "lineHeight") return `${value * lineHeightEm * fontSize}pt`;
+    if (unit === "em") return `${value * fontSize}pt`;
+    if (unit === "baseEm") return `${value * baseFontSize}pt`;
+    // e.g. unit === 'pt'
+    return `${value}${unit}`;
+}
+
+function* marginsGen(
+    outerTypespecnionAPI,
+    hostInstance /* here a TypeSpecModel */,
+) {
+    const blockMargins = hostInstance.get(`blockMargins`),
+        basePath = `${GENERIC}blockMargins/`;
+    for (const [targetName /*start or end*/, margin] of blockMargins) {
+        const targetPath = `${basePath}${targetName}`; // no trailing slash!!
+        for (const [itemName, itemValue] /* unit or value */ of margin) {
+            const path = `${targetPath}/${itemName}`; // generic/blockMargins/start/unit
+            if (itemValue.isEmpty) {
+                if (!outerTypespecnionAPI.hasParentProtperty(path))
+                    // same rationale as in languageTagGen
+                    yield [path, null];
+                continue;
+            }
+            yield [path, itemValue.value];
+        }
+        const args = [
+            `${targetPath}/value`,
+            `${targetPath}/unit`,
+            `${GENERIC}baseFontSize`,
+            `${GENERIC}fontSize`,
+            `${LEADING}leading/line-height-em`,
+        ];
+        yield [`${targetPath}`, new SyntheticValue(createMargin, args)];
+    }
+}
+
 function calculateFontAxisValueSynthetic(axisTag, logiVal, font) {
     const axisRanges = font.axisRanges;
     if (!(axisTag in axisRanges))
@@ -3535,6 +3574,7 @@ const REGISTERED_GENERIC_TYPESPEC_FIELDS = Object.freeze(
         axisLocationsGen,
         openTypeFeaturesGen,
         languageTagGen,
+        marginsGen, // not inline
         getPropertiesBroomWagonGen(GENERIC, REGISTERED_GENERIC_TYPESPEC_FIELDS),
         leadingGen,
     ]),
@@ -4502,6 +4542,8 @@ class UIDocumentTypeSpecStyler extends _BaseComponent {
             outerPropertiesData = [
                 // using this to define a margin-top
                 [`${LEADING}leading/line-height-em`, "--line-height", "em"],
+                [`${GENERIC}blockMargins/start`, "--margin-block-start", ""],
+                [`${GENERIC}blockMargins/end`, "--margin-block-end", ""],
             ],
             propertyValuesMap = (
                 changedMap.has("properties@")
@@ -4543,6 +4585,10 @@ class UIDocumentTypeSpecStyler extends _BaseComponent {
                     [`${COLOR}backgroundColor`, "background-color"],
                 ],
                 getDefault = (property) => {
+                    if (property.startsWith(`${GENERIC}blockMargins/`)) {
+                        // FIXME: this is a hack!
+                        return [true, 0];
+                    }
                     return [true, getRegisteredPropertySetup(property).default];
                 };
             // console.log(`${this}.update propertyValuesMap ...`, ...propertyValuesMap.keys(), '!', propertyValuesMap);
@@ -6869,11 +6915,15 @@ const _skipPrefix = new Set([
     // not yet thought through
     "stylePatches/",
 ]);
+const _skipFullKey = new Set([
+    // `${GENERIC}blockMargins`
+]);
 function _getTypeSpecDefaultsMap(typeSpecDependencies) {
     const defaultTypeSpec = (() => {
             const draft = TypeSpecModel.createPrimalDraft(typeSpecDependencies);
             for (const [fieldName, ppsRecord] of TYPESPEC_PPS_MAP) {
                 if (_skipPrefix.has(ppsRecord.prefix)) continue;
+                if (_skipFullKey.has(ppsRecord.fullKey)) continue;
                 if (ppsRecord.prefix == COLOR) {
                     const defaultValue = typeSpecGetDefaults(
                             () => null,
@@ -6893,6 +6943,17 @@ function _getTypeSpecDefaultsMap(typeSpecDependencies) {
                             defaultValue,
                         );
                     draft.set(fieldName, leading);
+                } else if (ppsRecord.fullKey === `${GENERIC}blockMargins`) {
+                    const defaultValue = typeSpecGetDefaults(
+                            () => null,
+                            ppsRecord,
+                            fieldName,
+                        ),
+                        margins = deserializeManualMarginsModel(
+                            draft.dependencies,
+                            defaultValue,
+                        );
+                    draft.set(fieldName, margins);
                 } else {
                     const defaultValue = typeSpecGetDefaults(
                         () => null,

@@ -771,30 +771,32 @@ number and range color input
 
 /******************************************************************************
 number and range input
+ui plain select
 *******************************************************************************/
 
-.number-and-range-input {
+.number-and-range-input,
+.ui_plain_select {
     align-items: center;
     display: flex;
     gap: 0.25em;
     padding: 1em 0;
-}
 
-.number-and-range-input label {
-    width: 35%;
-}
+    label {
+        width: 35%;
+    }
 
-.number-and-range-input input[type="number"] {
-    width: 15%;
-}
+    input[type="number"] {
+        width: 15%;
+    }
 
-.number-and-range-input input[type="range"] {
-    width: 30%;
-}
+    input[type="range"] {
+        width: 30%;
+    }
 
-.number-and-range-input button {
-    margin-left: auto;
-    width: 20%;
+    button {
+        margin-left: auto;
+        width: 20%;
+    }
 }
 
 /******************************************************************************
@@ -1822,6 +1824,11 @@ dimension sequence
 }
 /* stylelint-enable */
 
+.prosemirror-host {
+    /* so the background color fills the entire layout */
+    min-height: 100%;
+}
+
 :where(.ProseMirror, .typeroof-document) {
     *[data-unknown-type] {
         outline: 4px solid red;
@@ -1852,6 +1859,9 @@ dimension sequence
 
     * {
         line-height: var(--line-height);
+
+        /* FIXME: not functioning in Firefox, requires workaround! */
+        text-box: trim-start text;
     }
 
     /* FIXME: this is temporary, margins need to be
@@ -1860,7 +1870,11 @@ dimension sequence
  * enough for now runion/automation approach.
  */
     > *:not(:first-child) {
-        margin-top: var(--line-height);
+        margin-block-start: var(--margin-block-start, 0);
+    }
+
+    > *:not(:last-child) {
+        margin-block-end: var(--margin-block-end, 0);
     }
 }
 
@@ -1900,12 +1914,6 @@ dimension sequence
     padding: 0.3em;
 }
 
-.ui_language_subtag_info {
-    label {
-        font-weight: bolder;
-    }
-}
-
 .ui_language_subtag_info ~ .ui_language_subtag_info {
     padding-block-start: 1.3em;
 }
@@ -1916,6 +1924,10 @@ dimension sequence
     dt {
         display: inline;
         font-weight: bolder;
+    }
+
+    dt::after {
+        content: ":";
     }
 
     dd + dt::before {
