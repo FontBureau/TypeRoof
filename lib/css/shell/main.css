@@ -1824,6 +1824,11 @@ dimension sequence
 }
 /* stylelint-enable */
 
+.prosemirror-host {
+    /* so the background color fills the entire layout */
+    min-height: 100%;
+}
+
 :where(.ProseMirror, .typeroof-document) {
     *[data-unknown-type] {
         outline: 4px solid red;
@@ -1854,6 +1859,9 @@ dimension sequence
 
     * {
         line-height: var(--line-height);
+
+        /* FIXME: not functioning in Firefox, requires workaround! */
+        text-box: trim-start text;
     }
 
     /* FIXME: this is temporary, margins need to be
@@ -1862,7 +1870,11 @@ dimension sequence
  * enough for now runion/automation approach.
  */
     > *:not(:first-child) {
-        margin-top: var(--line-height);
+        margin-block-start: var(--margin-block-start, 0);
+    }
+
+    > *:not(:last-child) {
+        margin-block-end: var(--margin-block-end, 0);
     }
 }
 
