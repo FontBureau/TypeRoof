@@ -771,30 +771,32 @@ number and range color input
 
 /******************************************************************************
 number and range input
+ui plain select
 *******************************************************************************/
 
-.number-and-range-input {
+.number-and-range-input,
+.ui_plain_select {
     align-items: center;
     display: flex;
     gap: 0.25em;
     padding: 1em 0;
-}
 
-.number-and-range-input label {
-    width: 35%;
-}
+    label {
+        width: 35%;
+    }
 
-.number-and-range-input input[type="number"] {
-    width: 15%;
-}
+    input[type="number"] {
+        width: 15%;
+    }
 
-.number-and-range-input input[type="range"] {
-    width: 30%;
-}
+    input[type="range"] {
+        width: 30%;
+    }
 
-.number-and-range-input button {
-    margin-left: auto;
-    width: 20%;
+    button {
+        margin-left: auto;
+        width: 20%;
+    }
 }
 
 /******************************************************************************
