@@ -30,6 +30,13 @@ textarea {
     font-size: inherit;
 }
 
+select:disabled,
+input:disabled,
+textarea:disabled {
+    border-color: var(--button-border-color-disabled);
+    color: var(--button-border-color-disabled);
+}
+
 /******************************************************************************
 select
 *******************************************************************************/
@@ -37,11 +44,6 @@ select
 select:not(:disabled):hover {
     box-shadow: rgb(43 43 43 / 15%) 0 0 0.625rem;
     border-color: var(--button-border-color-hover);
-}
-
-select:disabled {
-    border-color: var(--button-border-color-disabled);
-    color: var(--button-border-color-disabled);
 }
 
 select,
