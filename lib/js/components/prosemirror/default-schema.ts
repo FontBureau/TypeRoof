@@ -6,7 +6,7 @@
 import {SchemaSpec, NodeSpec, MarkSpec, DOMOutputSpec} from "prosemirror-model"
 
 // These are the reserved/default nodes and marks, they won't be
-// re-defined by the application.
+// redefined by the application.
 
 const brDOM: DOMOutputSpec = ["br"];
 
