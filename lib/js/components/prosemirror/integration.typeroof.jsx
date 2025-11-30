@@ -55,8 +55,9 @@ class ProsemirrorNodeView {
     //     decorations: readonly Decoration[],
     //     innerDecorations: DecorationSource
     // ) → NodeView
-    constructor(widgetBus, node, view, getPos) {
+    constructor(widgetBus, subscriptionsId, node, view, getPos) {
         this.widgetBus = widgetBus;
+        this._subscriptionsId = subscriptionsId;
         // TODO: a more direct API in widgetBus for this wouldn't hurt
         // e.g. getTagForType
         const mmNodeSpec = this.widgetBus
@@ -82,6 +83,12 @@ class ProsemirrorNodeView {
         // this is probably only required when this._stylerDOM != this.dom
         // this is also part of the ProseMiror API
         this.contentDOM = contentElement;
+        const subscriptionsWidget = widgetBus.getWidgetById(
+            this._subscriptionsId,
+            null,
+        );
+        if (subscriptionsWidget === null) return;
+        // else: we have a subscriptions widget, hence, we can subscribe...
         const structuralElements = {
             // required to style e.g. the margins between paragraphs
             outer: this.dom,
@@ -93,13 +100,11 @@ class ProsemirrorNodeView {
         // care about the TypeSpec of it and possibly of it's parents types
         const resolved = view.state.doc.resolve(getPos()),
             pathOfTypes = getPathOfTypes(resolved.path, node.type.name);
-        widgetBus
-            .getWidgetById("typeSpecSubscriptionsRegistry")
-            .subscribe(
-                this._stylerDOM,
-                pathOfTypes,
-                structuralElements /*, contentIndexes*/,
-            );
+        subscriptionsWidget.subscribe(
+            this._stylerDOM,
+            pathOfTypes,
+            structuralElements /*, contentIndexes*/,
+        );
     }
 
     // // I dont't think implementing `update` is required so far.
@@ -111,7 +116,7 @@ class ProsemirrorNodeView {
     // }
     destroy() {
         this.widgetBus
-            .getWidgetById("typeSpecSubscriptionsRegistry", null)
+            .getWidgetById(this._subscriptionsId, null)
             ?.unsubscribe(this._stylerDOM);
     }
 }
@@ -124,8 +129,9 @@ class ProsemirrorMarkView {
     //     inline: boolean
     // ) → MarkView
     // The function types used to create mark views.
-    constructor(widgetBus, mark /*, view, inline*/) {
+    constructor(widgetBus, subscriptionsId, mark /*, view, inline*/) {
         this.widgetBus = widgetBus;
+        this._subscriptionsId = subscriptionsId;
         // TODO: a more direct API in widgetBus for this wouldn't hurt
         // e.g. getTagForType
         const // mmNodeSpec = this.widgetBus.getLinked(node.type.schema).get('nodes').get(node.type.name)
@@ -136,29 +142,32 @@ class ProsemirrorMarkView {
         this.dom = element;
         this._stylerDOM = element;
         this.contentDOM = element;
-        widgetBus
-            .getWidgetById("typeSpecSubscriptionsRegistry")
-            .subscribeMark(this._stylerDOM, mark);
+
+        const subscriptionsWidget = widgetBus.getWidgetById(
+            this._subscriptionsId,
+            null,
+        );
+        if (subscriptionsWidget === null) return;
+        subscriptionsWidget.subscribeMark(this._stylerDOM, mark);
     }
     destroy() {
         this.widgetBus
-            .getWidgetById("typeSpecSubscriptionsRegistry")
-            .unsubscribeMark(this._stylerDOM);
+            .getWidgetById(this._subscriptionsId, null)
+            ?.unsubscribeMark(this._stylerDOM);
     }
 }
 
 class ProseMirrorMenuView {
-    constructor(widgetBus, view /*EditorView*/) {
+    constructor(widgetBus, view /*EditorView*/, menuID) {
         this.widgetBus = widgetBus;
-        this.widgetBus.getWidgetById("proseMirrorMenu").updateView(view);
+        this.menuID = menuID;
+        this.widgetBus.getWidgetById(this.menuID).updateView(view);
     }
     update(view /*EditorView*/, prevState /*:EditorState*/) {
-        this.widgetBus
-            .getWidgetById("proseMirrorMenu")
-            .updateView(view, prevState);
+        this.widgetBus.getWidgetById(this.menuID).updateView(view, prevState);
     }
     destroy() {
-        this.widgetBus.getWidgetById("proseMirrorMenu", null)?.destroyView();
+        this.widgetBus.getWidgetById(this.menuID, null)?.destroyView();
     }
 }
 
@@ -171,8 +180,9 @@ export class ProseMirror extends _BaseComponent {
     //jshint ignore:start
     static TEMPLATE = `<div class="prosemirror-host"></div>`;
     //jshint ignore:end
-    constructor(widgetBus) {
+    constructor(widgetBus, idMap = {}) {
         super(widgetBus);
+        this._idMap = idMap;
         // The cache is bi-directional, meaning that both mappings will be
         // set: proseMirrorNode -> metamodelNode and metamodelNode ->
         // proseMirrorNode, using mapSetBiDirectional. Since there's always
@@ -188,9 +198,17 @@ export class ProseMirror extends _BaseComponent {
         );
 
         this._createGenericNodeView = (...args) =>
-            new ProsemirrorNodeView(this._childrenWidgetBus, ...args);
+            new ProsemirrorNodeView(
+                this._childrenWidgetBus,
+                this._idMap.subscriptions,
+                ...args,
+            );
         this._createGenericMarkView = (...args) =>
-            new ProsemirrorMarkView(this._childrenWidgetBus, ...args);
+            new ProsemirrorMarkView(
+                this._childrenWidgetBus,
+                this._idMap.subscriptions,
+                ...args,
+            );
         [this.element, this.view] = this.initTemplate();
     }
 
@@ -202,7 +220,11 @@ export class ProseMirror extends _BaseComponent {
             //      destroy⁠?: fn()
             //}
             view: (editorView) =>
-                new ProseMirrorMenuView(this._childrenWidgetBus, editorView),
+                new ProseMirrorMenuView(
+                    this._childrenWidgetBus,
+                    editorView,
+                    this._idMap.menu,
+                ),
         });
     }
 
@@ -268,7 +290,7 @@ export class ProseMirror extends _BaseComponent {
                         //    , "Mod-B": toggleMark(proseMirrorTestingSchema.marks.strong)
                     }),
                     keymap(typeRoofKeymap),
-                    this._menuPlugin(),
+                    ...("menu" in this._idMap ? [this._menuPlugin()] : []),
                 ],
                 doc: schema.topNodeType.createAndFill(),
             }),

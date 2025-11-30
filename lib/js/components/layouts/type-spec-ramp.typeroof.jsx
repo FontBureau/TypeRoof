@@ -4221,6 +4221,12 @@ export class UIDocument extends _BaseContainerComponent {
  * to work and to interact.
  */
 class ProseMirrorContext extends _BaseContainerComponent {
+    static ID_MAP = Object.freeze({
+        menu: "proseMirrorMenu",
+        proseMirror: "proseMirror",
+        subscriptions: "typeSpecSubscriptionsRegistry",
+    });
+
     constructor(
         widgetBus,
         zones,
@@ -4231,27 +4237,22 @@ class ProseMirrorContext extends _BaseContainerComponent {
         super(widgetBus, zones, [
             [
                 // IMPORTANT: must be before ProseMirror
-                { ...menuSettings, id: "proseMirrorMenu" },
+                { ...menuSettings, id: new.target.ID_MAP.menu },
                 [
-                    "stylePatchesSource",
-                    "typeSpec",
-                    "proseMirrorSchema",
+                    // "stylePatchesSource",
+                    // "typeSpec",
+                    // "proseMirrorSchema",
                     "nodeSpecToTypeSpec",
-                    "document",
+                    // "document",
                 ],
                 UIProseMirrorMenu,
                 originTypeSpecPath,
             ],
             [
-                { ...proseMirrorSettings, id: "proseMirror" },
-                [
-                    "stylePatchesSource",
-                    "typeSpec",
-                    "proseMirrorSchema",
-                    "nodeSpecToTypeSpec",
-                    "document",
-                ],
+                { ...proseMirrorSettings, id: new.target.ID_MAP.proseMirror },
+                ["proseMirrorSchema", "document"],
                 ProseMirror,
+                new.target.ID_MAP,
             ],
             // My feeling is that there might be unnecessary invocation
             // of dom updates... i.e. when prosemirror initializes a node
@@ -4263,7 +4264,7 @@ class ProseMirrorContext extends _BaseContainerComponent {
             // so, this should come after ProseMirror, and ideally only
             // applying updates to the rest, where it is required still.
             [
-                { id: "typeSpecSubscriptionsRegistry" },
+                { id: new.target.ID_MAP.subscriptions },
                 ["nodeSpecToTypeSpec", "typeSpec"],
                 TypeSpecSubscriptions,
                 zones,
