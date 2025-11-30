@@ -239,7 +239,7 @@ export class ProseMirror extends _BaseComponent {
                     // This is initially required but we're not going to use
                     // it. the requirement comes from
                     // doc.content = 'block+'
-                    "generic-bloc": {
+                    "generic-block": {
                         content: "inline*",
                         group: "block",
                         toDOM: () => ["div", 0],
@@ -248,7 +248,7 @@ export class ProseMirror extends _BaseComponent {
                 marks: { ...proseMirrorDefaultSchema.marks },
             },
             schema = new Schema(initialSchema),
-            // FIXME: splitBlockAs without a funcction as argument is the
+            // FIXME: splitBlockAs without a function as argument is the
             // same as the default splitBlock. However, I leave this in here
             // because this is the door to a feature where we could define
             // which block is inserted after another block, when we press
