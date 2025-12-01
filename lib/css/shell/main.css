@@ -253,6 +253,48 @@ li.ui_key_moment_controller.active:not(:last-child) {
     content: "(empty: drop item here)";
 }
 
+/******************************************************************************
+base map items
+*******************************************************************************/
+
+.ui_base_map-items {
+    background-color: #fff;
+}
+
+.ui_base_map-item {
+    display: flex;
+    align-items: center;
+    border: 1px solid #999;
+    margin-bottom: -1px;
+    padding: 0.5em;
+
+    > .ui_base_map-key {
+        flex-grow: 1;
+
+        > .ui_base_map-key-input {
+            width: 100%;
+        }
+    }
+
+    > button {
+        line-height: 1;
+    }
+
+    > [class*="_map-item-value"] {
+        min-width: 5em;
+
+        &.active {
+            font-weight: 700;
+        }
+    }
+
+    > [class*="_map-item-drag_handle"] {
+        order: -1;
+    }
+}
+
+/**************************************************************************** */
+
 .ui_axes_math-locations_sum-items:empty::before,
 .ui_base_list-items:empty::before,
 .ui_base_map-items:empty::before {
@@ -291,14 +333,10 @@ li.ui_key_moment_controller.active:not(:last-child) {
 }
 
 /* FIXME: make alternating perhaps? */
-.ui_base_map,
-.ui_base_map > *,
 .ui_axes_math-locations_sum,
 .ui_axes_math-locations_sum > *,
 .ui_base_list-items,
-.ui_base_list-items > *,
-.ui_base_map-item,
-.ui_base_map-item > * {
+.ui_base_list-items > * {
     --background-base-color: var(--list-item-odd-bg);
 
     background: var(--list-item-odd-bg);
@@ -1156,20 +1194,19 @@ select and drag
     width: calc(5 * 0.75em);
 }
 
-/* this coulde be handled as above with focus-within and <output>,
+/* this could be handled as above with focus-within and <output>,
  * the styling would be easier, especially the typography
  */
 .ui_base_map-item .ui_base_map-key-input {
     border: none;
     text-align: left;
-    background: #eee;
+    background: transparent;
 
     /* body text setup, it's hard to inherit for <input> */
     font-family: RobotoFlex, sans-serif;
     font-variation-settings: "opsz" 12;
     font-size: inherit;
     font-weight: 600;
-    width: 3em;
 }
 
 :is(ol, ul).ui_base_map-items {
@@ -1189,41 +1226,6 @@ select and drag
     > :is(.ui_axes_math-axis_tag, .ui_base_map-key) {
     display: inline-block;
     padding-right: var(--padding-horizontal);
-}
-
-.ui_style_patches_map-item {
-    display: flex;
-}
-
-.ui_style_patches_map .ui_base_map-key {
-    flex-grow: 1;
-}
-
-.ui_style_patches_map-item .ui_base_map-key-input {
-    width: 100%;
-}
-
-.ui_style_patches_map-item-value,
-.ui_node_spec_map-item-value {
-    min-width: 5em;
-}
-
-:is(.ui_style_patches_map-item-value, .ui_node_spec_map-item-value).active {
-    font-weight: 700;
-}
-
-button:is(.ui_style_patches_map-item-value, .ui_node_spec_map-item-value) {
-    line-height: 1;
-}
-
-.ui_style_patches_map-item-value,
-.ui_node_spec_map-item-value,
-.ui_links_map-item_value {
-    padding-inline-start: 0.2em;
-}
-
-.ui_style_patches_map-item-drag_handle {
-    order: -10;
 }
 
 .ui_axes_math-map-item .ui-axes_math-location_values {
@@ -1316,25 +1318,8 @@ button:is(.ui_style_patches_map-item-value, .ui_node_spec_map-item-value) {
     display: block;
 }
 
-.ui_links_map-item {
-    display: flex;
-    flex-wrap: wrap;
-}
-
-.ui_links_map-item > .ui_base_map-key {
-    flex-grow: 1;
-
-    & .ui_base_map-key-input {
-        width: 100%;
-    }
-}
-
-.ui_links_map-item-drag_handle {
-    order: -1;
-}
-
 .ui_links_map-item_value {
-    flex-grow: 1;
+    flex-basis: 10em;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -1713,10 +1698,6 @@ dimension sequence
     list-style: none;
     margin: 0 0 1rem;
     padding: 0;
-}
-
-.ui_node_spec_map-item .ui_base_map-key-input {
-    width: initial;
 }
 
 .ui_prose_mirror_menu {
