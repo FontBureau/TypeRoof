@@ -659,6 +659,11 @@ export class ProseMirror extends _BaseComponent {
         const newConfigItems = [];
         let schema = this.view.state.schema;
         const newProps = {};
+        // CAUTION: proseMirrorSchema is treated like an optional dependency
+        // some simple ProseMirror instances in here don't require it.
+        // Hence, it should not hurt if it's not configured as a dependency
+        // This is a bit subtle, but it works, so far, niceley.
+        // TODO: A more explicit handling would be good!
         if (changedMap.has("proseMirrorSchema")) {
             const proseMirrorSchema = changedMap.get("proseMirrorSchema");
             schema = this._createProseMirrorSchema(proseMirrorSchema);
