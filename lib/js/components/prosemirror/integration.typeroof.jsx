@@ -20,6 +20,7 @@ import {
     createParagraphNear,
     liftEmptyBlock,
     splitBlockAs,
+    exitCode,
 } from "prosemirror-commands";
 import "prosemirror-view/style/prosemirror.css";
 
@@ -271,11 +272,20 @@ export function createProseMirrorSchemaFromMetaModel(
     return new Schema(schemaSpec);
 }
 
+// Is this a Mac? Test used in proseMirror examples/sources e.g. in
+// https://github.com/ProseMirror/prosemirror-example-setup
+const mac =
+    typeof navigator != "undefined" ? /Mac/.test(navigator.platform) : false;
+
 export class ProseMirror extends _BaseComponent {
     //jshint ignore:start
     static TEMPLATE = `<div class="prosemirror-host"></div>`;
     //jshint ignore:end
-    constructor(widgetBus, /*SchemaSpec: */ proseMirrorDefaultSchema, idMap = {}) {
+    constructor(
+        widgetBus,
+        /*SchemaSpec: */ proseMirrorDefaultSchema,
+        idMap = {},
+    ) {
         super(widgetBus);
         this._idMap = idMap;
         this._proseMirrorDefaultSchema = proseMirrorDefaultSchema;
@@ -356,6 +366,47 @@ export class ProseMirror extends _BaseComponent {
             //  console.log('splitBlock node:', node);
             //  return {type: node.type/*.schema.nodes['heading-3']*//*, attrs: {level: 2}*/}
             //}
+            configureBr = () => {
+                const keyMap = {};
+                // The node named "hard_break" codes this behavior, this is purely
+                // bound to the name, there's no detail about the implementation of
+                // hard_break, however, in the proseMirror sources, the implementation
+                // is given, and that is assumed here.
+                //
+                // The actual node type is only available in the final schema
+                // hence we check again in the actual command if hard_break
+                // is there and fail hard if not.
+                const name = "hard_break";
+                if (name in this._proseMirrorDefaultSchema.nodes) {
+                    const brCommand = chainCommands(
+                        exitCode,
+                        (state, dispatch) => {
+                            const br = state.schema.nodes[name];
+                            if (!br)
+                                throw new Error(
+                                    `ASSUMPTION FAILED the node type ${name} ` +
+                                        `is expected to be available in the schema.`,
+                                );
+                            // NOTE: a way to fail gracefully would be to
+                            // return false, then nothing happens or the
+                            // input could be taken up by a following
+                            // command, but this is currently not expected,
+                            // and a hard fail forces for more discipline.
+                            // return false;
+                            dispatch(
+                                state.tr
+                                    .replaceSelectionWith(br.create())
+                                    .scrollIntoView(),
+                            );
+                            return true;
+                        },
+                    );
+                    keyMap["Mod-Enter"] = brCommand;
+                    keyMap["Shift-Enter"] = brCommand;
+                    if (mac) keyMap["Ctrl-Enter"] = brCommand;
+                }
+                return keyMap;
+            },
             typeRoofKeymap = Object.assign({}, baseKeymap, {
                 // original implementation is in prosemirror-commands
                 Enter: chainCommands(
@@ -364,6 +415,7 @@ export class ProseMirror extends _BaseComponent {
                     liftEmptyBlock,
                     mySplitBlock,
                 ),
+                ...configureBr(),
             }),
             state = EditorState.create({
                 schema: schema,
