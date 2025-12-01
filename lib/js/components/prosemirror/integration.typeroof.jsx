@@ -176,6 +176,102 @@ function mapSetBiDirectional(map, valA, valB) {
     map.set(valB, valA);
 }
 
+export function createProseMirrorSchemaFromMetaModel(
+    /*SchemaSpec: */ proseMirrorDefaultSchema,
+    /*ProseMirrorSchemaModel*/ proseMirrorSchema,
+) {
+    const schemaSpec = {
+        nodes: {
+            /*later: ...proseMirrorDefaultSchema.nodes*/
+        },
+        marks: {
+            /*later:...proseMirrorDefaultSchema.marks*/
+        },
+    };
+    for (const [name, nodeSpec] of proseMirrorSchema.get("nodes")) {
+        if (name in proseMirrorDefaultSchema.nodes) {
+            console.warn(
+                `PROSEMIRROR NODE_SPEC: attempt to override reserved node name ${name}, SKIPPING.`,
+            );
+            continue;
+        }
+        const newNode = {};
+        for (const [key, value] of nodeSpec) {
+            if (key === "attrs") {
+                console.warn(
+                    `PROSEMIRROR SKIPPING nodeSpec property "${key}" in dynamic schema definition`,
+                );
+                continue;
+            }
+            if (value.isEmpty) continue;
+            if (key === "tag") continue;
+            // => for 1:1 mappings
+            newNode[key] = value.value;
+        }
+
+        const tag = nodeSpec.get("tag");
+        if (tag.isEmpty || tag.value === "") {
+            console.warn(
+                `PROSEMIRROR NODE_SPEC: node does not define a tag, node name "${name}"`,
+            );
+        } else {
+            // NOTE: this does not at all control any collisions of
+            // tag names! E.g. when two nodes use the tag-name p
+            newNode.parseDOM = [{ tag: tag.value }];
+            newNode.toDOM = () => {
+                return [tag.value, 0];
+            };
+        }
+        schemaSpec.nodes[name] = newNode;
+    }
+    // Adding the proseMirrorDefaultSchema nodes after our nodes.
+    // This way, the default node, e.g., when splitting (using the "Enter" key),
+    // will not be "unknown", but the first in our definition.
+    // However, we won't be able to override the defaults either,
+    // can also be regarded as a feature.
+    Object.assign(schemaSpec.nodes, proseMirrorDefaultSchema.nodes);
+
+    // CAUTION: this is a stub marks will be handled very differently, likely!
+    // In this case it would be better to just ignore any defined marks.
+    for (const [name, markSpec] of proseMirrorSchema.get("marks")) {
+        if (name in proseMirrorDefaultSchema.marks) {
+            console.warn(
+                `PROSEMIRROR MARK_SPEC: attempt to override reserved mark name ${name}, SKIPPING.`,
+            );
+            continue;
+        }
+        const newMark = {};
+        for (const [key, value] of markSpec) {
+            if (key === "attrs") {
+                console.warn(
+                    `PROSEMIRROR SKIPPING markSpec property "${key}" in dynamic schema definition`,
+                );
+                continue;
+            }
+            if (value.isEmpty) continue;
+            if (key === "tag") continue;
+            // => for 1:1 mappings
+            newMark[key] = value.value;
+        }
+        const tag = markSpec.get("tag");
+        if (tag.isEmpty || tag.value === "") {
+            console.warn(
+                `PROSEMIRROR MARK_SPEC: mark does not define a tag, mark name: "${name}"`,
+            );
+        } else {
+            // NOTE: this does not at all control any collisions of
+            // tag names! E.g. when two nodes use the tag-name p
+            newMark.parseDOM = [{ tag: tag.value }];
+            newMark.toDOM = () => {
+                return [tag.value, 0];
+            };
+        }
+        schemaSpec.marks[name] = newMark;
+    }
+    Object.assign(schemaSpec.marks, proseMirrorDefaultSchema.marks);
+    return new Schema(schemaSpec);
+}
+
 export class ProseMirror extends _BaseComponent {
     //jshint ignore:start
     static TEMPLATE = `<div class="prosemirror-host"></div>`;
@@ -183,6 +279,7 @@ export class ProseMirror extends _BaseComponent {
     constructor(widgetBus, idMap = {}) {
         super(widgetBus);
         this._idMap = idMap;
+        this._proseMirrorDefaultSchema = proseMirrorDefaultSchema;
         // The cache is bi-directional, meaning that both mappings will be
         // set: proseMirrorNode -> metamodelNode and metamodelNode ->
         // proseMirrorNode, using mapSetBiDirectional. Since there's always
@@ -234,18 +331,8 @@ export class ProseMirror extends _BaseComponent {
 
     _initProseMirrorView(element) {
         const initialSchema = {
-                nodes: {
-                    ...proseMirrorDefaultSchema.nodes,
-                    // This is initially required but we're not going to use
-                    // it. the requirement comes from
-                    // doc.content = 'block+'
-                    "generic-block": {
-                        content: "inline*",
-                        group: "block",
-                        toDOM: () => ["div", 0],
-                    },
-                },
-                marks: { ...proseMirrorDefaultSchema.marks },
+                nodes: { ...this._proseMirrorDefaultSchema.nodes },
+                marks: { ...this._proseMirrorDefaultSchema.marks },
             },
             schema = new Schema(initialSchema),
             // FIXME: splitBlockAs without a function as argument is the
@@ -313,99 +400,6 @@ export class ProseMirror extends _BaseComponent {
         this._insertElement(element);
         const view = this._initProseMirrorView(element);
         return [element, view];
-    }
-
-    _createProseMirrorSchema(proseMirrorSchema) {
-        const schemaSpec = {
-            nodes: {
-                /*later: ...proseMirrorDefaultSchema.nodes*/
-            },
-            marks: {
-                /*later:...proseMirrorDefaultSchema.marks*/
-            },
-        };
-        for (const [name, nodeSpec] of proseMirrorSchema.get("nodes")) {
-            if (name in proseMirrorDefaultSchema.nodes) {
-                console.warn(
-                    `PROSEMIRROR NODE_SPEC: attempt to override reserved node name ${name}, SKIPPING.`,
-                );
-                continue;
-            }
-            const newNode = {};
-            for (const [key, value] of nodeSpec) {
-                if (key === "attrs") {
-                    console.warn(
-                        `PROSEMIRROR SKIPPING nodeSpec property "${key}" in dynamic schema definition`,
-                    );
-                    continue;
-                }
-                if (value.isEmpty) continue;
-                if (key === "tag") continue;
-                // => for 1:1 mappings
-                newNode[key] = value.value;
-            }
-
-            const tag = nodeSpec.get("tag");
-            if (tag.isEmpty || tag.value === "") {
-                console.warn(
-                    `PROSEMIRROR NODE_SPEC: node does not define a tag, node name "${name}"`,
-                );
-            } else {
-                // NOTE: this does not at all control any collisions of
-                // tag names! E.g. when two nodes use the tag-name p
-                newNode.parseDOM = [{ tag: tag.value }];
-                newNode.toDOM = () => {
-                    return [tag.value, 0];
-                };
-            }
-            schemaSpec.nodes[name] = newNode;
-        }
-        // Adding the proseMirrorDefaultSchema nodes after our nodes.
-        // This way, the default node, e.g., when splitting (using the "Enter" key),
-        // will not be "unknown", but the first in our definition.
-        // However, we won't be able to override the defaults either,
-        // can also be regarded as a feature.
-        Object.assign(schemaSpec.nodes, proseMirrorDefaultSchema.nodes);
-
-        // CAUTION: this is a stub marks will be handled very differently, likely!
-        // In this case it would be better to just ignore any defined marks.
-        for (const [name, markSpec] of proseMirrorSchema.get("marks")) {
-            if (name in proseMirrorDefaultSchema.marks) {
-                console.warn(
-                    `PROSEMIRROR MARK_SPEC: attempt to override reserved mark name ${name}, SKIPPING.`,
-                );
-                continue;
-            }
-            const newMark = {};
-            for (const [key, value] of markSpec) {
-                if (key === "attrs") {
-                    console.warn(
-                        `PROSEMIRROR SKIPPING markSpec property "${key}" in dynamic schema definition`,
-                    );
-                    continue;
-                }
-                if (value.isEmpty) continue;
-                if (key === "tag") continue;
-                // => for 1:1 mappings
-                newMark[key] = value.value;
-            }
-            const tag = markSpec.get("tag");
-            if (tag.isEmpty || tag.value === "") {
-                console.warn(
-                    `PROSEMIRROR MARK_SPEC: mark does not define a tag, mark name: "${name}"`,
-                );
-            } else {
-                // NOTE: this does not at all control any collisions of
-                // tag names! E.g. when two nodes use the tag-name p
-                newMark.parseDOM = [{ tag: tag.value }];
-                newMark.toDOM = () => {
-                    return [tag.value, 0];
-                };
-            }
-            schemaSpec.marks[name] = newMark;
-        }
-        Object.assign(schemaSpec.marks, proseMirrorDefaultSchema.marks);
-        return new Schema(schemaSpec);
     }
 
     _rawCreateMetamodelNode(cacheMap /* null or a map*/, pmNode, dependencies) {
@@ -666,7 +660,10 @@ export class ProseMirror extends _BaseComponent {
         // TODO: A more explicit handling would be good!
         if (changedMap.has("proseMirrorSchema")) {
             const proseMirrorSchema = changedMap.get("proseMirrorSchema");
-            schema = this._createProseMirrorSchema(proseMirrorSchema);
+            schema = createProseMirrorSchemaFromMetaModel(
+                this._proseMirrorDefaultSchema,
+                proseMirrorSchema,
+            );
             newConfigItems.push(["schema", schema]);
             const oldNodeViews = this.view.props.nodeViews || {},
                 schemaNodes = proseMirrorSchema.get("nodes");
