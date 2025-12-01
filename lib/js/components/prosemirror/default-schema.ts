@@ -46,7 +46,6 @@ export const nodes = {
             ['strong', {"class": "message"}, `UNKNOWN NODE-TYPE: ${node.attrs["unknown-type"]}`],
             ['div', 0]] }
   }
-
 }
 
 export const marks = {

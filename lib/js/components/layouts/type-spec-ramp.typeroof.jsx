@@ -4252,6 +4252,7 @@ class ProseMirrorContext extends _BaseContainerComponent {
                 { ...proseMirrorSettings, id: new.target.ID_MAP.proseMirror },
                 ["proseMirrorSchema", "document"],
                 ProseMirror,
+                proseMirrorDefaultSchema,
                 new.target.ID_MAP,
             ],
             // My feeling is that there might be unnecessary invocation

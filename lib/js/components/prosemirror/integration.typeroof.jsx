@@ -8,7 +8,6 @@ import {
 
 import { _BaseComponent } from "../basics.mjs";
 
-import { schemaSpec as proseMirrorDefaultSchema } from "./default-schema";
 import { Schema /*, DOMParser*/ } from "prosemirror-model";
 import { EditorState, Plugin } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
@@ -276,7 +275,7 @@ export class ProseMirror extends _BaseComponent {
     //jshint ignore:start
     static TEMPLATE = `<div class="prosemirror-host"></div>`;
     //jshint ignore:end
-    constructor(widgetBus, idMap = {}) {
+    constructor(widgetBus, /*SchemaSpec: */ proseMirrorDefaultSchema, idMap = {}) {
         super(widgetBus);
         this._idMap = idMap;
         this._proseMirrorDefaultSchema = proseMirrorDefaultSchema;
