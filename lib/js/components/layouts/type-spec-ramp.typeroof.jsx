@@ -64,7 +64,6 @@ import {
     LeadingAlgorithmModel,
     deserializeLeadingAlgorithmModel,
     availableStylePatchTypes,
-    availableStylePatchesShortLabel,
     deserializeManualMarginsModel,
 } from "../type-spec-models.mjs";
 
@@ -2521,7 +2520,7 @@ class UIStylePatchesMap extends _UIBaseMap {
     static BASE_CLASSES = [...super.BASE_CLASSES, super.ROOT_CLASS];
     static TYPE_CLASS_PART = null;
     static VISUAL_ORDER_STRATEGY = _UIBaseMap.VISUAL_ORDER_STRATEGY_NATURAL;
-    static KEY_ADD_BUTTON_LABEL = "add style patch";
+    static KEY_ADD_BUTTON_LABEL = "add style";
     static KEY_DATA_TRANSFER_TYPE =
         DATA_TRANSFER_TYPES.TYPE_SPEC_STYLE_PATCH_PATH;
 
@@ -2572,15 +2571,7 @@ class UIStylePatchesMap extends _UIBaseMap {
                 "button",
                 { class: "ui_style_patches_map-item-value" },
                 [["click", (/*event*/) => this._onClickHandler(key)]],
-                function (typeKey) {
-                    const typeLabel = availableStylePatchesShortLabel.has(
-                        typeKey,
-                    )
-                        ? availableStylePatchesShortLabel.get(typeKey)
-                        : availableStylePatchTypes.get(typeKey).get("label")
-                              .value;
-                    return `${typeLabel} Edit`;
-                },
+                () => "Edit",
             ];
         return this._initWrapper(
             childWidgetBus,
