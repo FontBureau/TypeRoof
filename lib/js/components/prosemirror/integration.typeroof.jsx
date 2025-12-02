@@ -594,7 +594,6 @@ export class ProseMirror extends _BaseComponent {
                 if (attrs === null) attrs = {};
                 attrs["unknown-type"] = type;
             }
-
             newNode = schema.node(pmTypeName, attrs, content, marks);
         }
         return newNode;

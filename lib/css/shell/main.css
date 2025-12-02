@@ -1622,7 +1622,6 @@ collapsible
 
 .ui_type_tools_grid-cell {
     display: table-cell;
-    white-space: pre;
 
     /* Not sure if this produces typographically correct lines
      * is the line height still correct? It seems like the trimmed value
@@ -1835,6 +1834,9 @@ dimension sequence
     }
 }
 
+/* NOTE: the .ProseMirror is very generic as it's coming from
+ * the ProseMirror class, we should not use it this specifically.
+ */
 :is(.ProseMirror, .typeroof-document) {
     margin-left: 2em;
 
@@ -1856,6 +1858,18 @@ dimension sequence
 
     > *:not(:last-child) {
         margin-block-end: var(--margin-block-end, 0);
+    }
+}
+
+.ui_type_tools_grid-cell :is(.ProseMirror, .typeroof-document) {
+    /* this is a very simple editor instance */
+    margin-left: 0;
+
+    --line-height: 1.3em; /* should be a property */
+    --margin-block-start: calc(var(--line-height) * 0.5);
+
+    > *:not(:first-child) {
+        margin-block-start: var(--margin-block-start, 0);
     }
 }
 
