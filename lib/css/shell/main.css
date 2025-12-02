@@ -1884,8 +1884,22 @@ dimension sequence
     /* this is a very simple editor instance */
     margin-left: 0;
 
-    --line-height: 1.3em; /* should be a property */
-    --margin-block-start: calc(var(--line-height) * 0.5);
+    --line-height: 1em; /* should be a property */
+    --margin-block-start: 0; /* calc(var(--line-height) * 0.5); should also be a property */
+    > * {
+        /* In this configuration, I'm looking to make the
+         * paragraph and hard-break having the same leading. As people
+         * will rather expect "Enter" to just create a single line break
+         * not a gap, and they rather won't be aware of Shift+Enter to
+         * insert a hard-break. In order to make the leading even, we
+         * can't use the text-box-trim.
+         */
+        text-box: none;
+    }
+
+    > *:first-child {
+        text-box: trim-start text;
+    }
 
     > *:not(:first-child) {
         margin-block-start: var(--margin-block-start, 0);
