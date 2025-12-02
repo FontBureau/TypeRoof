@@ -1,4 +1,4 @@
-import { StateComparison } from "../metamodel.mjs";
+import { StateComparison } from "../metamodel.ts";
 import {
     _BaseComponent,
     UPDATE_STRATEGY,

@@ -2,7 +2,7 @@ import {
     _AbstractStructModel,
     _AbstractEnumModel,
     _AbstractSimpleOrEmptyModel,
-} from "../metamodel.mjs";
+} from "../metamodel.ts";
 
 import { LANGUAGE } from "./registered-properties-definitions.mjs";
 
