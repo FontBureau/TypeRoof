@@ -58,6 +58,13 @@ export default [
         },
     },
     {
+        files: ["**/*.{ts,tsx}"],
+        rules: {
+            "no-unused-vars": "off",
+            "@typescript-eslint/no-unused-vars": "error",
+        },
+    },
+    {
         // this seems sufficient yo just override rules for the .typeroof.jsx flavor
         files: ["**/*.typeroof.jsx"],
         rules: {
