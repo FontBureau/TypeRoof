@@ -4,8 +4,18 @@
 
 const _NOTDEF = Symbol("_NOTDEF");
 
+// FIXME/TODO: type can be anything that _AbstractStruct.get would return
+// Also as Proxies!
+type ValueMap = Record<string, unknown>;
+type CoherenceFn = (valueMap: ValueMap) => void;
+
 export class CoherenceFunction {
-    constructor(dependencies, fn /*(valueMap)*/) {
+    // Use the definite assignment assertion '!'
+    // This tells TypeScript the property WILL be initialized in the constructor.
+    public readonly name!: string;
+    public readonly fn!: CoherenceFn;
+    public readonly dependencies!: FreezableSet<string>;
+    constructor(dependencies: string[], fn: CoherenceFn /*(valueMap)*/) {
         Object.defineProperties(this, {
             dependencies: {
                 value: Object.freeze(new FreezableSet(dependencies)),
@@ -16,14 +26,17 @@ export class CoherenceFunction {
         Object.freeze(this);
     }
 
-    static create(...args) {
-        const instance = new this(...args);
+    static create(
+        dependencies: string[],
+        fn: CoherenceFn,
+    ): [string, CoherenceFunction] {
+        const instance = new this(dependencies, fn);
         return [instance.name, instance];
     }
 
     // This way it goes nicely into the struct definition without
     // having to repeat the name!
-    get nameItem() {
+    get nameItem(): [string, CoherenceFunction] {
         return [this.name, this];
     }
 
@@ -37,115 +50,257 @@ export class CoherenceFunction {
 // proof either (e.g. via prototype pollution), if that is a concern, an
 // object with an internal map as storage and the same interface as Map
 // is better.
-export class FreezableMap extends Map {
-    set(...args) {
+export class FreezableMap<K, V> extends Map<K, V> {
+    public set(key: K, value: V): this {
         if (Object.isFrozen(this)) return this;
-        return super.set(...args);
+        return super.set(key, value);
     }
-    delete(...args) {
+    public delete(key: K): boolean {
         if (Object.isFrozen(this)) return false;
-        return super.delete(...args);
+        return super.delete(key);
     }
-    clear() {
+    public clear(): void {
         if (Object.isFrozen(this)) return;
         return super.clear();
     }
 }
 
-export class FreezableSet extends Set {
-    add(...args) {
-        if (Object.isFrozen(this)) return this;
-        return super.add(...args);
+export class FreezableSet<T> extends Set<T> {
+    public add(value: T): this {
+        if (Object.isFrozen(this)) {
+            return this;
+        }
+        return super.add(value);
     }
-    delete(...args) {
-        if (Object.isFrozen(this)) return false;
-        return super.delete(...args);
+    public delete(value: T): boolean {
+        if (Object.isFrozen(this)) {
+            return false;
+        }
+        return super.delete(value);
     }
-    clear() {
-        if (Object.isFrozen(this)) return;
+    public clear(): void {
+        if (Object.isFrozen(this)) {
+            return;
+        }
         return super.clear();
     }
 }
 
-export function sort_alpha(a, b) {
+export function sort_alpha(a: string, b: string): number {
     return a.localeCompare(b, undefined, { sensitivity: "base" });
 }
 
 // Similar to Array.prototype.map
 // The map() method creates a new array populated with the results of
 // calling a provided function on every element in the iterable.
-function iterMap(iterable, callbackFn, thisArg = null) {
-    const result = [];
+function iterMap<T, U, I extends Iterable<T>>(
+    iterable: I,
+    callbackFn: (this: unknown, element: T, iterable: I) => U,
+    thisArg: unknown = null,
+): U[] {
+    const result: U[] = [];
+    // The type 'T' is inferred here from the generic constraints
     for (const element of iterable) {
-        // The reason not to pass index/i (as in Array.prototype.map)
-        // is that access by index is likeley not supported by
-        // the iterable.
+        // The callback function is called using .call() to bind the 'thisArg'
+        // 'this: unknown' is used in the callbackFn type to represent the bound 'thisArg'.
         result.push(callbackFn.call(thisArg, element, iterable));
     }
     return result;
 }
-function iterFilter(iterable, callbackFn, thisArg = null) {
-    const result = [];
+
+export function iterFilter<T, I extends Iterable<T>>(
+    iterable: I,
+    callbackFn: (this: unknown, element: T, iterable: I) => boolean,
+    thisArg: unknown = null,
+): T[] {
+    const result: T[] = [];
+    // The type 'T' is inferred here from the generic constraints
     for (const element of iterable) {
-        if (callbackFn.call(thisArg, element, iterable)) result.push(element);
+        // The callback function is called using .call() to bind the 'thisArg'
+        if (callbackFn.call(thisArg, element, iterable)) {
+            // Since the element is pushed only if the filter passes,
+            // the result array maintains the type 'T'.
+            result.push(element);
+        }
     }
     return result;
 }
 
-function populateSet(s, iterable) {
-    for (const item of iterable) s.add(item);
+/**
+ * Defines a type for any object that has an 'add' method suitable for a Set-like structure.
+ *
+ * @template T The type of the element to be added.
+ */
+export type AddableSet<T> = {
+    add(value: T): unknown; // The return value can be anything (e.g., 'this' or void)
+};
+
+/**
+ * Adds all elements from an iterable into an existing object that has an 'add' method.
+ *
+ * @template T The type of elements in the structure and the iterable.
+ * @template S The type of the target structure, which must have an 'add' method.
+ *
+ * @param s The target Set-like object to populate (must have an 'add' method).
+ * @param iterable The source iterable object (e.g., Array, Set, Generator).
+ */
+function populateSet<T, S extends AddableSet<T>>(
+    s: S,
+    iterable: Iterable<T>,
+): void {
+    // The type 'T' is inferred from the generic constraints
+    for (const item of iterable) {
+        s.add(item);
+    }
 }
 
-function populateArray(a, iterable) {
-    for (const item of iterable) a.push(item);
-}
+/**
+ * Defines a type for any object that has a 'push' method suitable for an Array-like structure.
+ *
+ * @template T The type of the element to be pushed.
+ */
+export type PushableArray<T> = {
+    // The push method accepts elements of type T and returns a number (the new length)
+    push(...items: T[]): number;
+};
 
+/**
+ * Adds all elements from an iterable into an existing object that has a 'push' method.
+ *
+ * @template T The type of elements in the structure and the iterable.
+ * @template A The type of the target structure, which must have a 'push' method.
+ *
+ * @param a The target Array-like object to populate (must have a 'push' method).
+ * @param iterable The source iterable object (e.g., Set, Generator, another Array).
+ */
+export function populateArray<T, A extends PushableArray<T>>(
+    a: A,
+    iterable: Iterable<T>,
+): void {
+    // The type 'T' is inferred from the generic constraints
+    for (const item of iterable) {
+        // Now 'a' is guaranteed to have the 'push' method for items of type T
+        a.push(item);
+    }
+}
 // Can be used/shared by default instead of creating new empty sets
 // as dependencies.
 export const EMPTY_SET = Object.freeze(new FreezableSet());
 
 // The serialize implementation is expected to live here
-export const SERIALIZE = Symbol("SERIALIZE"),
-    DESERIALIZE = Symbol("DESERIALIZE"),
-    SERIALIZE_FORMAT_JSON = Symbol("SERIALIZE_FORMAT_JSON"),
-    SERIALIZE_FORMAT_OBJECT = Symbol("SERIALIZE_FORMAT_OBJECT"),
-    SERIALIZE_FORMAT_URL = Symbol("SERIALIZE_FORMAT_URL"),
-    GENERATED_DATA = Symbol.for("GENERATED_DATA"),
-    SERIALIZE_OPTIONS = Object.freeze({
-        // NOTE: there are three styles:
-        //   - A list with possibly empty slots: structStoreKeys=false
-        //   - A list with [key, value] pairs: structStoreKeys=true, structAsDict=false
-        //   - A dictionary: structStoreKeys=true, structAsDict=true
-        // The list version can be made the most compact, especially if
-        // empty slots are cumulated or when (zip) compression is used
-        // When used as JSON, dictionary is by far the most readable and
-        // probably the nicest for human editing, however, ordered map types
-        // can't use dictionaries as order may be screwed up depending on
-        // the keys.
-        structStoreKeys: true,
-        structAsDict: true, // only if structStoreKeys is true
-        format: SERIALIZE_FORMAT_JSON,
-        earlyExitOnError: false,
-        checkResults: false,
-        // set to falsy or an empty set to included GENERATED_DATA
-        // e.g. for debugging
-        skipDataMarkers: new Set([GENERATED_DATA]),
-        // TODO: if JSON is the target, numeric values could be stored as
-        // numbers instead of strings, making human editing nicer.
-    });
+export const SERIALIZE: unique symbol = Symbol("SERIALIZE"),
+    DESERIALIZE: unique symbol = Symbol("DESERIALIZE"),
+    SERIALIZE_FORMAT_JSON: unique symbol = Symbol("SERIALIZE_FORMAT_JSON"),
+    SERIALIZE_FORMAT_OBJECT: unique symbol = Symbol("SERIALIZE_FORMAT_OBJECT"),
+    SERIALIZE_FORMAT_URL: unique symbol = Symbol("SERIALIZE_FORMAT_URL"),
+    GENERATED_DATA: unique symbol = Symbol.for("GENERATED_DATA");
 
-function _skipSerialize(item, options) {
-    if (!options.skipDataMarkers) return false;
-    for (const marker of options.skipDataMarkers) {
-        if (Object.hasOwn(item, marker)) return true;
+export interface SerializationOptions {
+    /**
+     * Controls how property keys are stored for structs (true: store keys).
+     */
+    structStoreKeys: boolean;
+
+    /**
+     * If structStoreKeys is true, controls whether the output is a dictionary (true) or a list of [key, value] pairs (false).
+     */
+    structAsDict: boolean;
+
+    /**
+     * Specifies the target output format.
+     */
+    format:
+        | typeof SERIALIZE_FORMAT_JSON
+        | typeof SERIALIZE_FORMAT_OBJECT
+        | typeof SERIALIZE_FORMAT_URL;
+
+    /**
+     * If true, stops processing immediately upon encountering any error.
+     */
+    earlyExitOnError: boolean;
+
+    /**
+     * If true, performs checks on the results after serialization/deserialization.
+     */
+    checkResults: boolean;
+
+    /**
+     * A Set containing data marker symbols. If any symbol in this set exists as a key
+     * on an object, that object's serialization is skipped.
+     */
+    skipDataMarkers: Set<symbol>;
+}
+
+export const SERIALIZE_OPTIONS: Readonly<SerializationOptions> = Object.freeze({
+    // NOTE: there are three styles:
+    //   - A list with possibly empty slots: structStoreKeys=false
+    //   - A list with [key, value] pairs: structStoreKeys=true, structAsDict=false
+    //   - A dictionary: structStoreKeys=true, structAsDict=true
+    // The list version can be made the most compact, especially if
+    // empty slots are cumulated or when (zip) compression is used
+    // When used as JSON, dictionary is by far the most readable and
+    // probably the nicest for human editing, however, ordered map types
+    // can't use dictionaries as order may be screwed up depending on
+    // the keys.
+    structStoreKeys: true,
+    structAsDict: true, // only if structStoreKeys is true
+    format: SERIALIZE_FORMAT_JSON,
+    earlyExitOnError: false,
+    checkResults: false,
+    // The Set holds symbols that should trigger skipping.
+    // set to falsy or an empty set to included GENERATED_DATA
+    // e.g. for debugging
+    skipDataMarkers: new Set([GENERATED_DATA]),
+    // TODO: if JSON is the target, numeric values could be stored as
+    // numbers instead of strings, making human editing nicer.
+});
+
+/**
+ * Determines if a given item should be skipped during serialization based on
+ * the presence of specific 'skip data markers' (Symbols) in the options.
+ *
+ * @param item The object to check for skip markers.
+ * @param options The serialization options.
+ * @returns true if serialization should be skipped, false otherwise.
+ */
+function _skipSerialize(
+    item: _BaseModel,
+    options: SerializationOptions,
+): boolean {
+    const { skipDataMarkers } = options;
+
+    // Check for falsy or empty set
+    if (!skipDataMarkers || skipDataMarkers.size === 0) {
+        return false;
     }
+
+    // Iterate over the symbols in the Set
+    for (const marker of skipDataMarkers) {
+        // Use Object.hasOwn, which correctly checks for symbol properties as well.
+        if (Object.hasOwn(item, marker)) {
+            return true;
+        }
+    }
+
     return false;
 }
 
-function _serializeErrorsPrependKey(key, errors) {
-    const newErrors = [];
+type ErrorPathPart = string | number;
+
+// Define the type for a serialized error array
+type SerializedError = [
+    path: ErrorPathPart[],
+    message: Error | string | unknown,
+    ...more: any[], // eslint-disable-line @typescript-eslint/no-explicit-any
+];
+
+function _serializeErrorsPrependKey(
+    key: string,
+    errors: SerializedError[],
+): SerializedError[] {
+    const newErrors: SerializedError[] = [];
     for (const [path, message, ...more] of errors) {
-        const newPath = [key];
+        const newPath: ErrorPathPart[] = [key];
         for (const pathPart of path) newPath.push(pathPart);
         newErrors.push([newPath, message, ...more]);
     }
@@ -154,30 +309,56 @@ function _serializeErrorsPrependKey(key, errors) {
 
 // FOR a URL serialization we pack using encodeURIComponent and unpack
 // using decodeURIComponent.
+type TSerializedData = unknown;
+type TSerializedInput = unknown;
 
-function _safeSerialize(modelInstance, options) {
+type SerializationSuccessResult = [errors: [], data: TSerializedData];
+type SerializationFailureResult = [errors: SerializedError[], data: null];
+type SerializationResult =
+    | SerializationSuccessResult
+    | SerializationFailureResult;
+
+// Define the interface for a model that can be serialized.
+// It requires the method keyed by the SERIALIZE symbol.
+interface SerializableModel {
+    [SERIALIZE](options: SerializationOptions): SerializationResult;
+}
+
+// --- TypeScript Function ---
+
+function _safeSerialize(
+    modelInstance: SerializableModel, // Type using the interface
+    options: SerializationOptions, // Type using the provided interface
+): SerializationResult {
     try {
+        // We trust the implementation returns a value conforming to SerializationResult.
         return modelInstance[SERIALIZE](options);
     } catch (error) {
-        const errors = [];
+        // If an *unexpected error* occurs during serialization (e.g., an exception thrown),
+        // we catch it and package it into the failure tuple format.
+        const errors: SerializedError[] = [];
+
+        // Structure the error: [[], error]
         errors.push([
-            [
-                /*path*/
-            ],
-            error,
+            [], // Empty path array (since the error is at the root level of the instance)
+            error, // The error object caught
         ]);
+
+        // Return the failure tuple: [errors array, null data]
         return [errors, null];
     }
 }
 
 function serializeItem(
-    modelInstance:_BaseModel,
-    options = SERIALIZE_OPTIONS,
-) {
+    modelInstance: _BaseModel,
+    options: SerializationOptions = SERIALIZE_OPTIONS,
+): SerializationResult {
     const isContainer = modelInstance instanceof _BaseContainerModel,
-        [errors, value] = _safeSerialize(modelInstance, options),
-        resultErrors = [...errors];
-    if (errors.length && options.earlyExitOnError) return [resultErrors, value];
+        result: SerializationResult = _safeSerialize(modelInstance, options),
+        [errors, value] = result;
+
+    if (errors.length && options.earlyExitOnError) return result;
+    const resultErrors = [...errors];
     if (options.checkResults) {
         if (isContainer) {
             if (!Array.isArray(value))
@@ -202,17 +383,24 @@ function serializeItem(
             ]);
         }
     }
-    return [resultErrors, value];
+    return [resultErrors, value] as SerializationResult;
 }
 
-export function deserializeGen(
-    Model,
-    dependencies,
-    serializedData,
-    options = SERIALIZE_OPTIONS,
-) {
+type DependenciesMap = Record<string, unknown>;
+
+export function deserializeGen<T extends _BaseModel>(
+    Model: DeserializableModelConstructor<T>,
+    dependencies: DependenciesMap,
+    serializedData: TSerializedInput,
+    options: SerializationOptions = SERIALIZE_OPTIONS,
+): Generator<ResourceRequirement, T, unknown> {
     let serializedValue;
     if (options.format === SERIALIZE_FORMAT_JSON) {
+        if (typeof serializedData !== "string") {
+            throw new TypeError(
+                "JSON format requires serializedData to be a string.",
+            );
+        }
         serializedValue = JSON.parse(serializedData);
     } else if (options.format === SERIALIZE_FORMAT_OBJECT) {
         serializedValue = serializedData;
@@ -223,22 +411,25 @@ export function deserializeGen(
     // => gen
     return Model.createPrimalStateGen(dependencies, serializedValue, options);
 }
-export async function deserialize(
-    asyncResolve,
-    Model,
-    dependencies,
-    serializedString,
-    options = SERIALIZE_OPTIONS,
+
+type AsyncResolver = (requirement: ResourceRequirement) => Promise<unknown>;
+
+export async function deserialize<T extends _BaseModel>(
+    asyncResolve: AsyncResolver,
+    Model: DeserializableModelConstructor<T>,
+    dependencies: DependenciesMap,
+    serializedData: TSerializedInput,
+    options: SerializationOptions = SERIALIZE_OPTIONS,
 ) {
-    const gen = deserializeGen(Model, dependencies, serializedString, options);
+    const gen = deserializeGen(Model, dependencies, serializedData, options);
     return await driveResolveGenAsync(asyncResolve, gen);
 }
 
-export function deserializeSync(
-    Model,
-    dependencies,
-    serializedString,
-    options = SERIALIZE_OPTIONS,
+export function deserializeSync<T extends _BaseModel>(
+    Model: DeserializableModelConstructor<T>,
+    dependencies: DependenciesMap,
+    serializedString: TSerializedInput,
+    options: SerializationOptions = SERIALIZE_OPTIONS,
 ) {
     const gen = deserializeGen(Model, dependencies, serializedString, options);
     return driveResolverGenSyncFailing(gen);
@@ -266,8 +457,8 @@ export function deserializeSync(
 // EMPTY values should be empty slots in their arrays.
 // We need a way to detect empty string vs EMPTY
 export function serialize(
-    modelInstance:_BaseModel,
-    options = SERIALIZE_OPTIONS,
+    modelInstance: _BaseModel,
+    options: SerializationOptions = SERIALIZE_OPTIONS,
 ) {
     const [resultErrors, intermediateValue] = serializeItem(
         modelInstance,
@@ -287,7 +478,94 @@ export function serialize(
     );
 }
 
-export class _BaseModel {
+const OLD_STATE = Symbol("OLD_STATE"),
+    _IS_DRAFT_MARKER = Symbol("_IS_DRAFT_MARKER"),
+    _PRIMARY_SERIALIZED_VALUE = Symbol("_PRIMARY_SERIALIZED_VALUE"),
+    _DEFERRED_DEPENDENCIES = Symbol("_DEFERRED_DEPENDENCIES"),
+    WITH_SELF_REFERENCE = Symbol("WITH_SELF_REFERENCE"),
+    DEBUG = false;
+
+// Define the interface that any _BaseModel Constructor MUST implement
+interface DeserializableModelConstructor<T extends _BaseModel> {
+    // Constructor Signature (Must be able to create an instance of T)
+    // new (...args: any[]): T;
+
+    // Enforce the Static Generator Method Signature (NO 'static' keyword here)
+    // The generator yields some dependency type (PrimalStateGenYield)
+    // and must return the final concrete model instance (T).
+    createPrimalStateGen(
+        dependencies: DependenciesMap,
+        serializedValue: TSerializedInput,
+        options: SerializationOptions,
+    ): Generator<ResourceRequirement, T, unknown>;
+
+    createPrimalState(
+        dependencies: DependenciesMap,
+        // Allow null default value
+        serializedValue: TSerializedInput | null,
+        options: SerializationOptions,
+    ): T;
+}
+
+interface ConstructableBaseDraft<T extends _BaseModel> {
+    new (oldState: T): T; // Constructor signature expecting an instance of the class
+}
+
+/**
+ * Contract for a constructor (class) used by _BaseSimpleModel
+ * to create a Primal State Draft. It requires the serialization arguments.
+ */
+interface ConstructableBaseSimpleDraft<T extends _BaseSimpleModel> {
+    new (
+        oldState: T | null | undefined,
+        serializedValue: TSerializedInput | null,
+        options: SerializationOptions,
+    ): T;
+}
+
+interface ConstructableBaseContainerDraft<T extends _BaseSimpleModel> {
+    new (
+        oldState: T | null | undefined,
+        dependencies: DependenciesMap | typeof _DEFERRED_DEPENDENCIES,
+        serializedValue: TSerializedInput | null,
+        options: SerializationOptions,
+    ): T;
+}
+
+/*
+public static *createPrimalStateGen<T extends _BaseModel>(
+        dependencies: DependenciesMap,
+        // Add type and default value
+        serializedValue: TSerializedInput | null = null,
+        // Add type and default value
+        serializeOptions: SerializationOptions = SERIALIZE_OPTIONS,
+    ): Generator<PrimalStateGenYield, T, unknown> {
+
+        // Inside a static method, 'this' refers to the class constructor (MyModel)
+        const instance = new this(
+                null,
+                _DEFERRED_DEPENDENCIES,
+                serializedValue,
+                serializeOptions,
+            ),
+            // The generator returned by metamorphoseGen
+            gen = instance.metamorphoseGen(dependencies);
+
+        // 'yield*' delegates control to the inner generator (gen).
+        // The return value of 'gen' (which is the T instance) becomes the
+        // final return value of this static generator.
+        return yield* gen;
+    }
+*/
+
+// Define the static method type signature
+type CreatePrimalState<T extends _BaseModel> = (
+    dependencies: DependenciesMap,
+    serializedValue: TSerializedInput | null, // Allow null default
+    options: SerializationOptions,
+) => T;
+
+export abstract class _BaseModel {
     /**
      * Lifecycle Protocol API:
      *
@@ -299,7 +577,16 @@ export class _BaseModel {
      * metamorphose(...) => an immutable
      *
      */
-    constructor(oldState:_BaseModel|null = null) {
+
+    /**
+     * The previous, immutable state of the object.
+     * It is optional as it will be deleted when this object is metamorphosed
+     * into an immutable.
+     */
+    public readonly [OLD_STATE]?: _BaseModel | null; // | undefined Made optional with '?'
+    public readonly [_IS_DRAFT_MARKER]!: boolean;
+
+    constructor(oldState: _BaseModel | null = null) {
         if (oldState && oldState.constructor !== this.constructor)
             throw new Error(
                 `TYPE ERROR: oldState must have the same constructor as this ${this}.`,
@@ -317,20 +604,17 @@ export class _BaseModel {
         return EMPTY_SET;
     }
 
-    static createPrimalState(/*dependencies, serializedValue=null, serializeOptions=SERIALIZE_OPTIONS*/) {
-        throw new Error(`NOT IMPLEMENTED createPrimalState in ${this}.`);
-    }
-
-    static *createPrimalStateGen() {
-        throw new Error(`NOT IMPLEMENTED createPrimalStateGen in ${this}.`);
-    }
-
     getDraft() {
         if (this.isDraft)
             throw new Error(
                 `LIFECYCLE ERROR ${this} must be in immutable mode to get a draft for it.`,
             );
-        return new this.constructor(this);
+        const CTOR = this.constructor;
+        // Assert the constructor type: Tell TypeScript that CTOR is constructable
+        // and that it takes an argument of 'this' (the current instance).
+        const DraftConstructor =
+            CTOR as unknown as ConstructableBaseDraft<this>;
+        return new DraftConstructor(this);
     }
 
     get oldState() {
@@ -341,17 +625,41 @@ export class _BaseModel {
         return this[OLD_STATE];
     }
 
-    static createPrimalDraft(dependencies, ...args) {
-        return this.createPrimalState(dependencies, ...args).getDraft();
+    // Implementation for createPrimalDraft
+    public static createPrimalDraft(
+        dependencies: DependenciesMap,
+        serializedValue: TSerializedInput | null = null,
+        options: SerializationOptions = SERIALIZE_OPTIONS,
+    ): _BaseModel {
+        // Return type is the instance type (this)
+        // 'this' inside a static method refers to the class constructor.
+        // We assert 'this' has the createPrimalState method.
+        const Constructor = this as unknown as {
+            createPrimalState: CreatePrimalState<_BaseModel>;
+        };
+
+        // This call is now valid based on the assertion above.
+        const primalState = Constructor.createPrimalState(
+            dependencies,
+            serializedValue,
+            options,
+        );
+        // Ensure the returned object has the getDraft method
+        // The result must still be asserted to have getDraft() for type safety
+        // since getDraft() is an instance method.
+        const draftableState = primalState as _BaseModel & {
+            getDraft(): _BaseModel;
+        };
+        return draftableState.getDraft();
     }
 
-    get isDraft() {
+    get isDraft(): boolean {
         return this[_IS_DRAFT_MARKER];
     }
 
-    *metamorphoseGen() {
-        throw new Error(`NOT IMPLEMENTED metamorphose in ${this}.`);
-    }
+    public abstract metamorphoseGen(
+        dependencies?: DependenciesMap,
+    ): Generator<ResourceRequirement, this, unknown>;
 
     /**
      * old style interface
@@ -361,18 +669,14 @@ export class _BaseModel {
      * load missing resources (e.g. fonts), a more sophisticated approach
      * is required.
      */
-    metamorphose(...dependencies) {
-        const gen = this.metamorphoseGen(...dependencies);
+    metamorphose(dependencies?: DependenciesMap) {
+        const gen = this.metamorphoseGen(dependencies);
         return driveResolverGenSyncFailing(gen);
     }
 
     // qualifiedKey => can distinguish between alias/shortcut and
     // absolut entry. e.g. "@firstChild" vs ".0"
-    get(qualifiedKey) {
-        throw new Error(
-            `NOT IMPLEMENTED get (of "${qualifiedKey}") in ${this}.`,
-        );
-    }
+    public abstract get(key?: string | number): unknown;
 
     // Each model will have to define this.
     get value() {
@@ -389,73 +693,89 @@ export class _BaseModel {
         throw new Error(`NOT IMPLEMENTED toObject in ${this}.`);
     }
 
-    fromRawValue(raw) {
-        // static on the class!
-        if (!("fromRawValue" in this.constructor))
-            throw new Error(
-                `NOT IMPLEMENTED static fromRawValue in ${this.constructor}.`,
-            );
-        return this.constructor.fromRawValue(raw);
-    }
+    public abstract [SERIALIZE](
+        options: SerializationOptions,
+    ): SerializationResult;
 
-    [SERIALIZE](/*SerializeOptions: options*/) {
-        throw new Error(`NOT IMPLEMENTED [SERIALIZE] in ${this}.`);
-    }
-
-    [DESERIALIZE](/*serializedValue, SerializeOptions: options*/) {
-        throw new Error(`NOT IMPLEMENTED [DESERIALIZE] in ${this}.`);
-    }
+    public abstract [DESERIALIZE](
+        serializedValue: TSerializedInput,
+        options: SerializationOptions,
+    ): void;
 }
 
 // This is to mark simple values in contrast to Container values
 // as _BaseContainerModel is also a _BaseModel, _BaseModel
 // is not ideal to make that distiction.
-export class _BaseSimpleModel extends _BaseModel {
+export abstract class _BaseSimpleModel extends _BaseModel {
     // PASS
     // TODO: "SimpleModel" general API requirements should move here
 
     /**
-     * old style interface
+     * @static
+     * old style interface: Creates an immutable "primal state" instance directly.
      */
     static createPrimalState(
-        _ /*dependencies=null*/,
-        serializedValue = null,
-        serializeOptions = SERIALIZE_OPTIONS,
-    ) {
-        return new this(null, serializedValue, serializeOptions);
+        // ignore dependencies for a SimpleModel, but must accept them for the contract
+        _dependencies: DependenciesMap | null,
+        serializedValue: TSerializedInput | null = null,
+        options: SerializationOptions = SERIALIZE_OPTIONS,
+    ): InstanceType<typeof this> {
+        // Assert the constructor (this) implements the required signature for primal state creation
+        const Constructor = this as unknown as ConstructableBaseSimpleDraft<
+            InstanceType<typeof this>
+        >;
+        return new Constructor(null, serializedValue, options);
     }
 
     /**
-     * So far, there are no dependencies in the _BaseSimpleModel types
-     * hence this behaves just like createPrimalState, however, it
-     * returns a generator.
+     * @static
+     * So far, there are no dependencies in the _BaseSimpleModel types, hence this
+     * returns an instance immediately via the generator protocol.
+     * This method satisfies the abstract static contract from SerializableModelConstructor.
      *
-     * So, with this, within a metamorphoseGen, we can call:
+     * With this, within a metamorphoseGen, we can call:
      * instance = yield *Model.createPrimalStateGen(dependencies, serializedValue=null, serializeOptions=SERIALIZE_OPTIONS)
      */
     static *createPrimalStateGen(
-        _ /*dependencies=null*/,
-        serializedValue = null,
-        serializeOptions = SERIALIZE_OPTIONS,
-    ) {
+        // ignore dependencies for a SimpleModel, but must accept them for the contract
+        _dependencies: DependenciesMap | null,
+        serializedValue: TSerializedInput | null = null,
+        options: SerializationOptions = SERIALIZE_OPTIONS,
+    ): Generator<ResourceRequirement, InstanceType<typeof this>, unknown> {
         //
-        return this.createPrimalState(null, serializedValue, serializeOptions);
+        return this.createPrimalState(null, serializedValue, options);
     }
 }
 
+type KeyedSerializedValue = [string | number, TSerializedData | null];
+type SingleSerializedValue = TSerializedData | null;
+
 function _serializeContainer(
-    containerItem,
-    presenceIsInformation,
-    keepKeys,
-    options = SERIALIZE_OPTIONS,
-) {
-    const resultErrors = [],
-        resultValues = [];
+    containerItem: _BaseContainerModel,
+    presenceIsInformation: boolean,
+    keepKeys: boolean,
+    options: SerializationOptions = SERIALIZE_OPTIONS,
+): SerializationResult {
+    // Initialize with specific types
+    const resultErrors: SerializedError[] = [];
+
+    // resultValues holds either raw serialized data, null, or a [key, value] tuple.
+    const resultValues: (SingleSerializedValue | KeyedSerializedValue)[] = [];
+
     for (const [key, childItem] of containerItem) {
         // _skipSerialize skips generated data
-        const [errors, serializedValue] = _skipSerialize(childItem, options)
-            ? [[], null]
-            : serializeItem(childItem, options);
+        const skipSerialize = _skipSerialize(childItem, options);
+        let errors: SerializedError[];
+        let serializedValue: TSerializedData | null;
+
+        if (skipSerialize) {
+            errors = [];
+            serializedValue = null;
+        } else {
+            // Assume serializeItem returns a SerializationResult [errors, serializedValue]
+            [errors, serializedValue] = serializeItem(childItem, options);
+        }
+
         resultErrors.push(..._serializeErrorsPrependKey(key, errors));
         if (errors.length && options.earlyExitOnError) break;
 
@@ -487,19 +807,26 @@ function _serializeContainer(
                 keepKeys ? [key, serializedValue] : serializedValue,
             );
     }
-    return [resultErrors, resultValues.length ? resultValues : null];
+    return [
+        resultErrors,
+        resultValues.length ? resultValues : null,
+    ] as SerializationResult;
 }
 
-export class _BaseContainerModel extends _BaseModel {
+export abstract class _BaseContainerModel extends _BaseModel {
     /**
      * old style interface
      */
     static createPrimalState(
-        dependencies,
-        serializedValue = null,
-        serializeOptions = SERIALIZE_OPTIONS,
-    ) {
-        return new this(null, dependencies, serializedValue, serializeOptions);
+        dependencies: DependenciesMap,
+        serializedValue: TSerializedInput | null = null,
+        options: SerializationOptions = SERIALIZE_OPTIONS,
+    ): InstanceType<typeof this> {
+        // Assert the constructor (this) implements the required signature for primal state creation
+        const Constructor = this as unknown as ConstructableBaseContainerDraft<
+            InstanceType<typeof this>
+        >;
+        return new Constructor(null, dependencies, serializedValue, options);
     }
 
     /**
@@ -511,51 +838,51 @@ export class _BaseContainerModel extends _BaseModel {
      * await driveResolveGenAsync(asyncResolve, gen)
      */
     static *createPrimalStateGen(
-        dependencies,
-        serializedValue = null,
-        serializeOptions = SERIALIZE_OPTIONS,
-    ) {
-        const instance = new this(
+        // ignore dependencies for a SimpleModel, but must accept them for the contract
+        dependencies: DependenciesMap,
+        serializedValue: TSerializedInput | null = null,
+        options: SerializationOptions = SERIALIZE_OPTIONS,
+    ): Generator<ResourceRequirement, InstanceType<typeof this>, unknown> {
+        const Constructor = this as unknown as ConstructableBaseContainerDraft<
+            InstanceType<typeof this>
+        >;
+        const instance = new Constructor(
                 null,
                 _DEFERRED_DEPENDENCIES,
                 serializedValue,
-                serializeOptions,
+                options,
             ),
             gen = instance.metamorphoseGen(dependencies);
-        return yield* gen; // => instance OR oldState
+        return yield* gen;
     }
 
-    *[Symbol.iterator]() {
-        yield* this.value.entries();
-    }
-    get(/*key*/) {
-        // jshint unused: vars
-        throw new Error(`NOT IMPLEMENTED get(key) in ${this}.`);
-    }
-    set(/*key, entry*/) {
-        // jshint unused: vars
-        throw new Error(`NOT IMPLEMENTED get(key) in ${this}.`);
-    }
+    /**
+     * @abstract
+     * Forces subclasses to implement the standard key-value iterable protocol.
+     */
+    public abstract [Symbol.iterator](): Generator<
+        [string, _BaseModel],
+        void,
+        unknown
+    >;
 
-    hasOwn(key) {
-        throw new Error(`NOT IMPLEMENTED hasOwn(key) in ${this} for "${key}".`);
-    }
-    ownKeys() {
-        throw new Error(`NOT IMPLEMENTED ownKeys() in ${this}.`);
-    }
+    public abstract get(key: string): _BaseModel;
+    public abstract set(key: string, entry: _BaseModel): void;
+    public abstract hasOwn(key: string): boolean;
+    public abstract ownKeys(): string[];
     // override if ownership and available keys differ
-    has(key) {
+    has(key: string): boolean {
         return this.hasOwn(key);
     }
     // override if ownership and available keys differ
-    keys() {
+    keys(): string[] {
         return this.ownKeys();
     }
-    *entries() {
+    *entries(): Generator<[string, _BaseModel], void, unknown> {
         yield* this;
     }
     // override if ownership and available keys differ
-    *allEntries() {
+    *allEntries(): Generator<[string, _BaseModel], void, unknown> {
         yield* this.entries();
     }
 }
@@ -611,7 +938,12 @@ export class ForeignKey {
     static CUSTOM = FOREIGN_KEY_CUSTOM;
     // jshint ignore: end
 
-    constructor(targetName, nullConstraint, defaultConstraint, ...config) {
+    constructor(
+        targetName: string,
+        nullConstraint,
+        defaultConstraint,
+        ...config
+    ) {
         Object.defineProperty(this, "NULL", {
             value: this.constructor.NULL,
         });
@@ -1730,33 +2062,36 @@ export function driveResolverGenSyncFailing(gen) {
     return driveResolverGenSync(failingResourceResolve, gen);
 }
 
-export async function driveResolveGenAsync(asyncResolve, gen) {
+export async function driveResolveGenAsync<R>(
+    asyncResolve: (requirement: ResourceRequirement) => Promise<unknown>,
+    gen: Generator<ResourceRequirement, R, unknown>,
+) {
     // OK so this is the driving protocol of the metamorphoseGen.
     // It can't be directly in createPrimalStateAsync, as that req
 
     // gen = Model.createPrimalStateGen(...) or draft.metamorphoseGen(...)
     // can't send a value on first iteration
-    let result,
-        sendInto = undefined; // initial sendInto is ignored anyways
+    let result: IteratorResult<ResourceRequirement, R>,
+        sendInto: unknown = undefined; // initial sendInto is ignored anyways
     do {
         result = gen.next(sendInto);
         sendInto = undefined; // don't send same value again
+
+        if (result.done) {
+            // If done, exit the loop and the function
+            break;
+        }
+
         if (result.value instanceof ResourceRequirement)
             sendInto = await asyncResolve(result.value);
-        else if (!result.done)
+        else
             throw new Error(
                 `VALUE ERROR Don't know how to handle genereator result with value {result.value}`,
             );
-    } while (!result.done);
+    } while (true); // eslint-disable-line no-constant-condition
     return result.value;
 }
 
-const OLD_STATE = Symbol("OLD_STATE"),
-    _IS_DRAFT_MARKER = Symbol("_IS_DRAFT_MARKER"),
-    _PRIMARY_SERIALIZED_VALUE = Symbol("_PRIMARY_SERIALIZED_VALUE"),
-    _DEFERRED_DEPENDENCIES = Symbol("_DEFERRED_DEPENDENCIES"),
-    WITH_SELF_REFERENCE = Symbol("WITH_SELF_REFERENCE"),
-    DEBUG = false;
 export class _AbstractStructModel extends _BaseContainerModel {
     static WITH_SELF_REFERENCE = WITH_SELF_REFERENCE;
     static has(key) {
@@ -5124,7 +5459,7 @@ export class _AbstractGenericModel extends _BaseSimpleModel {
     }
 
     constructor(
-        oldState:_AbstractGenericModel|null = null,
+        oldState: _AbstractGenericModel | null = null,
         serializedValue = null,
         serializeOptions = SERIALIZE_OPTIONS,
     ) {
@@ -5254,7 +5589,7 @@ export class _AbstractGenericModel extends _BaseSimpleModel {
             );
             return [];
         }
-        return super[DESERIALIZE](serializedValue, options);
+        super[DESERIALIZE](serializedValue, options);
     }
 }
 
