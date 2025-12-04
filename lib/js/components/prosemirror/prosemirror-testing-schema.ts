@@ -2,7 +2,8 @@
 //      https://raw.githubusercontent.com/ProseMirror/prosemirror-schema-basic/refs/heads/master/src/schema-basic.ts
 //      (import {schema} from "prosemirror-schema-basic")
 // as a testing thing.
-import { Schema, NodeSpec, MarkSpec, DOMOutputSpec } from "prosemirror-model";
+import type { NodeSpec, MarkSpec, DOMOutputSpec } from "prosemirror-model";
+import { Schema } from "prosemirror-model";
 
 const pDOM: DOMOutputSpec = ["p", 0],
     blockquoteDOM: DOMOutputSpec = ["blockquote", 0],

@@ -40,5 +40,12 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-  }
+  },
+  "include": [
+    "lib/js"
+  ],
+  "exclude": [
+    "node_modules",
+    "lib/js/vendor",
+  ]
 }

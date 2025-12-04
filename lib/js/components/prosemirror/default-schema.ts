@@ -3,7 +3,7 @@
 //      (import {schema} from "prosemirror-schema-basic")
 // but us reduced to the bare minimum
 // see also ./prosemirror-testing-schema.ts which is a copy of the above
-import {
+import type {
     SchemaSpec,
     NodeSpec,
     MarkSpec,
