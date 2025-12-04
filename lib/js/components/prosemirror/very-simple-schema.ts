@@ -1,4 +1,4 @@
-import { SchemaSpec, NodeSpec, DOMOutputSpec } from "prosemirror-model";
+import type { SchemaSpec, NodeSpec, DOMOutputSpec } from "prosemirror-model";
 import { schemaSpec as defaultSchemaSpec } from "./default-schema";
 
 const pDOM: DOMOutputSpec = ["p", 0];
