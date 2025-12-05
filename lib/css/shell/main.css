@@ -19,25 +19,41 @@ material symbols
 }
 
 /******************************************************************************
-general settings (font / layout)
+fonts manager
 *******************************************************************************/
 
-.general-settings {
-    align-items: start;
-    display: flex;
-    flex-direction: column;
+.fonts-manager {
+    display: grid;
+    grid-template-areas: "select select" "add manage";
     gap: 0.25em;
     padding: 1em;
+
+    > label {
+        grid-area: select;
+    }
+
+    > ul {
+        margin: 0 !important;
+    }
 }
 
-.general-settings label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25em;
+.ui_font-select_select {
+    width: 100%;
 }
 
-button.ui_font-select {
-    margin-bottom: 1em;
+/******************************************************************************
+layout select
+*******************************************************************************/
+
+.ui_layout_select {
+    select {
+        font-size: 1.2em;
+        height: auto;
+
+        &::picker(select) {
+            font-size: 0.8rem;
+        }
+    }
 }
 
 /******************************************************************************
@@ -225,14 +241,6 @@ li.ui_key_moment_controller.active:not(:last-child) {
     list-style: none;
     margin: 0;
     padding-inline-start: 0;
-}
-
-.ui_font-select {
-    display: block;
-}
-
-.ui_font-select_select {
-    max-width: 15em;
 }
 
 .ui_actor_time_control_circle {
