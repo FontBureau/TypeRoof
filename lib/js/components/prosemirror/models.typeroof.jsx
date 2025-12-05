@@ -10,7 +10,7 @@ import {
     topologicalSortKahn,
     BooleanModel,
     BooleanDefaultTrueModel,
-} from "../../metamodel.mjs";
+} from "../../metamodel.ts";
 
 import { StringOrEmptyModel, NumberOrEmptyModel } from "../actors/models.mjs";
 
