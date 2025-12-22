@@ -3,29 +3,22 @@ wrapper
 *******************************************************************************/
 
 body > .wrapper {
-    display: grid;
-
     --sidebar-width: 20rem;
 
+    display: grid;
     grid-template:
-        "header main" auto "sidebar main" 1fr "footer footer" auto
-        /
+        "sidebar main" 1fr /
         var(--sidebar-width) calc(100vw - var(--sidebar-width));
     height: 100vh;
 }
 
-body > .wrapper > header {
-    grid-area: header;
-    height: fit-content;
-}
-
-body > .wrapper > .typeroof-ui_sidebar {
+.typeroof-ui_sidebar {
     grid-area: sidebar;
     overflow-y: auto;
     background: var(--sidebar-bg-color);
 }
 
-body > .wrapper > .typeroof-main {
+.typeroof-main {
     grid-area: main;
     background: var(--background-color);
     display: flex;
@@ -40,7 +33,7 @@ body > .wrapper > .typeroof-main {
  * Also, the controls in .typeroof-layout-before and
  * .typeroof-layout-after will always stay visible.
  */
-body > .wrapper > .typeroof-main > .typeroof-layout {
+.typeroof-main > .typeroof-layout {
     overflow: auto;
     flex-grow: 1;
 
@@ -50,52 +43,71 @@ body > .wrapper > .typeroof-main > .typeroof-layout {
     overscroll-behavior-x: contain;
 }
 
-body > .wrapper > footer {
-    grid-area: footer;
-    height: fit-content;
-}
-
 /******************************************************************************
-header / footer
+app menu
 *******************************************************************************/
 
-header {
-    background-color: #ccc;
-    color: var(--text-color);
-    padding: 0.6rem 1rem;
-}
-
-footer {
-    background-color: var(--text-color);
-    color: var(--background-color);
-    padding: 0.6rem 1rem;
-}
-
-header > *,
-footer > * {
-    margin: 0;
-    padding: 0;
-}
-
-header h1,
-footer {
-    font-size: 0.8em;
-    font-variation-settings: "opsz" 10;
-}
-
-header h1 {
-    font-variation-settings:
-        "opsz" 10,
-        "wght" 1000;
-}
-
-footer ul {
+.typeroof-app-menu {
     display: flex;
-    gap: 2em;
-    justify-content: end;
-    list-style: none;
-}
+    align-items: center;
+    gap: 0.5em;
+    padding: 1em;
 
-footer :is(a:link, a:visited) {
-    color: var(--background-color);
+    > :last-child {
+        margin-left: auto;
+    }
+
+    > button {
+        background: none;
+        border: 0;
+        padding: 0;
+    }
+
+    > h1 {
+        font-size: 1em;
+        font-variation-settings: "opsz" 10;
+        font-weight: 1000;
+    }
+
+    > menu {
+        display: none;
+        position: absolute;
+        top: 3em;
+        left: 1em;
+        background-color: var(--button-bg-color);
+        border: 1px solid var(--input-border-color);
+        box-shadow: 0 4px 10px rgb(0 0 0 / 25%);
+        padding: 0.5em;
+
+        ul,
+        li {
+            list-style: none;
+            margin: 0 !important;
+            padding: 0;
+        }
+
+        a,
+        button {
+            background: none;
+            border: 0;
+            border-radius: 0;
+            display: block;
+            font-size: 1em;
+            height: auto;
+            padding: 0.5em;
+            padding-right: 1.5em;
+            text-align: left;
+            text-decoration: none;
+
+            &:hover {
+                background-color: #eee;
+            }
+        }
+    }
+
+    &.opened {
+        > menu {
+            display: block;
+        }
+    }
 }
