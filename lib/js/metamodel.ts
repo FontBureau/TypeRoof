@@ -1233,7 +1233,12 @@ export class ValueLink extends _BaseLink {
 }
 
 export class FallBackValue {
-    constructor(primaryName, fallBackName, Model) {
+    public readonly Model!: any;
+    public readonly primaryName!: string;
+    public readonly fallBackName!: string;
+    public readonly dependencies!: FreezableSet<string>;
+
+    constructor(primaryName: string, fallBackName: string, Model: any) {
         Object.defineProperty(this, "Model", {
             value: Model,
         });
@@ -1259,7 +1264,11 @@ export class FallBackValue {
  * , ['activeLayoutKey', new ForeignKey('availableLayouts', ForeignKey.NOT_NULL, ForeignKey.SET_DEFAULT_FIRST)]
  */
 export class InternalizedDependency {
-    constructor(dependencyName, Model) {
+    public readonly Model!: any;
+    public readonly dependencyName!: string;
+    public readonly dependencies!: FreezableSet<string>;
+
+    constructor(dependencyName: string, Model: any) {
         Object.defineProperty(this, "Model", {
             value: Model,
         });
@@ -1280,7 +1289,11 @@ export class InternalizedDependency {
 
 // ['availableActorTypes', new StaticDependency('availableActorTypes', availableActorTypes)]
 export class StaticDependency {
-    constructor(dependencyName, state, Model = _NOTDEF) {
+    public readonly dependencyName!: string;
+    public readonly state!: _BaseModel;
+    public readonly Model?: any;
+
+    constructor(dependencyName: string, state: any, Model: any = _NOTDEF) {
         Object.defineProperty(this, "dependencyName", {
             value: dependencyName,
         });
@@ -1352,8 +1365,8 @@ export class StaticDependency {
      * )
      */
     static createWithInternalizedDependency(
-        dependencyName,
-        ...args /* localName?, Model, state */
+        dependencyName: string,
+        ...args: any[] /* localName?, Model, state */
     ) {
         const [localName, Model, state] =
             typeof args[0] === "string"
@@ -1402,7 +1415,7 @@ function getLast<T, D>(
 
 // Set has no well defined order, we can just remove any item.
 // Would be different with an explicitly "OrderedSet".
-function setPop(s) {
+function setPop(s: Set<any>): any {
     let item;
     // we now know one item, can stop the iterator immediately!
     for (item of s) break;
@@ -1410,7 +1423,7 @@ function setPop(s) {
     return item;
 }
 
-function _mapGetOrInit(map, name, init) {
+function _mapGetOrInit(map: Map<any, any>, name: any, init: () => any) {
     let result = map.get(name);
     if (result === undefined) {
         result = init();
@@ -1420,8 +1433,8 @@ function _mapGetOrInit(map, name, init) {
 }
 
 // CAUTION noDepsSet and dependantsMap will be changed!
-export function topologicalSortKahn(noDepsSet, requirementsMap, dependantsMap) {
-    const topoList = []; // L ← Empty list that will contain the sorted elements (a topologically sorted order)
+export function topologicalSortKahn(noDepsSet: Set<any>, requirementsMap: Map<any, any>, dependantsMap: Map<any, any>) {
+    const topoList: any[] = []; // L ← Empty list that will contain the sorted elements (a topologically sorted order)
     // noDepsSet: S ← Set of all nodes with no incoming edge
 
     // console.log('topologicalSortKahn noDepsSet', noDepsSet);
@@ -1472,13 +1485,13 @@ function* allKeys(...withKeys) {
 }
 
 function getTopologicallySortedInitOrder(
-    coherenceFunctions,
-    fields,
-    foreignKeys,
-    links,
-    internalizedDependencies,
-    fallBackValues,
-    externalDependencies,
+    coherenceFunctions: any,
+    fields: any,
+    foreignKeys: any,
+    links: any,
+    internalizedDependencies: any,
+    fallBackValues: any,
+    externalDependencies: any,
 ) {
     // links depend on their link.keyName
     // keys depend on their key.targetName
@@ -1554,7 +1567,7 @@ const IMMUTABLE_WRITE_ERROR = Symbol("IMMUTABLE_WRITE_ERROR"),
  * it's likely not required;
  * Esecially if item is already a draft, we should not wrap it.
  */
-function _requiresPotentialWriteProxy(item) {
+function _requiresPotentialWriteProxy(item: any) {
     if (!(item instanceof _BaseModel)) return false;
     // _BaseSimpleModel or _BaseContainerModel
     if (item.isDraft) return false;
@@ -1589,11 +1602,11 @@ function _requiresPotentialWriteProxy(item) {
  * Hence, these functions seem to be the best compromise:
  */
 
-function _markError(symbol, error, data = null) {
+function _markError(symbol: symbol, error: any, data: any = null) {
     error[symbol] = data || true;
     return error;
 }
-function _isMarkedError(symbol, error) {
+function _isMarkedError(symbol: symbol, error: any) {
     return Object.hasOwn(error, symbol);
 }
 
@@ -1681,16 +1694,22 @@ export const isImmutableWriteError = _isMarkedError.bind(
 // exported for debugging!
 export class _PotentialWriteProxy {
     // jshint ignore: start
-    static IS_PROXY = Symbol("_POTENTIAL_WRITE_PROXY_IS_PROXY");
-    static GET_IMMUTABLE = Symbol("_POTENTIAL_WRITE_PROXY_GET_IMMUTABLE");
-    static GET_DRAFT = Symbol("_POTENTIAL_WRITE_PROXY_GET_DRAFT");
-    static GET = Symbol("_POTENTIAL_WRITE_PROXY_GET");
+    static IS_PROXY: unique symbol = Symbol("_POTENTIAL_WRITE_PROXY_IS_PROXY");
+    static GET_IMMUTABLE: unique symbol = Symbol("_POTENTIAL_WRITE_PROXY_GET_IMMUTABLE");
+    static GET_DRAFT: unique symbol = Symbol("_POTENTIAL_WRITE_PROXY_GET_DRAFT");
+    static GET: unique symbol = Symbol("_POTENTIAL_WRITE_PROXY_GET");
     // jshint ignore: end
 
-    static isProxy(maybeProxy) {
+    public immutable: _BaseModel;
+    public parent: _BaseModel;
+    public key: string | number | null;
+    public draft: _BaseModel | null;
+    public proxy: _BaseModel;
+
+    static isProxy(maybeProxy: any) {
         return (maybeProxy && maybeProxy[this.IS_PROXY]) || false;
     }
-    static create(parent, immutable, key = null) {
+    static create(parent: any, immutable: any, key: string | number | null = null) {
         // FIXME ?? could return immutable[_POTENTIAL_WRITE_PROXY_GET_IMMUTABLE]
         // WHY WOULD THIS HAPPEN?
         if (_PotentialWriteProxy.isProxy(immutable)) return immutable;
@@ -1711,7 +1730,7 @@ export class _PotentialWriteProxy {
         if (_PotentialWriteProxy.isProxy(parent)) {
             if (
                 immutable !==
-                parent[_PotentialWriteProxy.GET_IMMUTABLE].get(key)
+                (parent as any)[_PotentialWriteProxy.GET_IMMUTABLE].get(key)
             ) {
                 // This is a bit wild, however, see the comment at the
                 // bottom of _handlerGet for when this would be triggered.
@@ -1762,7 +1781,7 @@ export class _PotentialWriteProxy {
                 // assert targetFn === fn
                 // so, unlikely/seldom that we use a getter on it, maybe for
                 // fn.name ... but event that unlikely required!
-                if (prop === _PotentialWriteProxy._IS_PROXY) return true;
+                if (prop === _PotentialWriteProxy.IS_PROXY) return true;
                 if (prop === _PotentialWriteProxy.GET) return targetFn;
                 return Reflect.get(targetFn, prop, receiver);
             },
@@ -1896,16 +1915,16 @@ export class _PotentialWriteProxy {
             set: this._handlerSet.bind(this),
         });
         // This way the actual instance (this) PotentialWriteProxy remains hidden!
-        return this.proxy;
+        return this.proxy as any;
     }
-    hasDraft() {
+    hasDraft(): boolean {
         if (this.draft !== null) return true;
         if (this.key !== null)
-            return this.parent[_HAS_DRAFT_FOR_OLD_STATE_KEY](this.key); // assert(this.parent.isDraft)
-        else return this.parent[_HAS_DRAFT_FOR_PROXY](this.proxy);
+            return (this.parent as any)[_HAS_DRAFT_FOR_OLD_STATE_KEY](this.key); // assert(this.parent.isDraft)
+        else return (this.parent as any)[_HAS_DRAFT_FOR_PROXY](this.proxy);
     }
     // Called when a mutating function (set, delete) triggers ImmutableWriteError!
-    getDraft() {
+    getDraft(): _BaseModel | null {
         if (this.draft !== null) return this.draft;
         // This depends a lot on the parents nature.
         // was the proxy created from within the draft parent?
@@ -2031,7 +2050,7 @@ export class _PotentialWriteProxy {
     }
 }
 
-export function unwrapPotentialWriteProxy(maybeProxy, type = null) {
+export function unwrapPotentialWriteProxy(maybeProxy: any, type: string | null = null) {
     if (!_PotentialWriteProxy.isProxy(maybeProxy)) return maybeProxy;
     if (type === "immutable")
         // Returns immutable
@@ -2046,7 +2065,7 @@ export function unwrapPotentialWriteProxy(maybeProxy, type = null) {
 
 // generic helper in metamorphose
 // obj A and obj B must have the same own-entries with a strictly equal type.
-export function objectEntriesAreEqual(depObjA, depObjB) {
+export function objectEntriesAreEqual(depObjA: any, depObjB: any) {
     // FIXME: maybe fail if prototypes are not equal.
     const keysA = Object.keys(depObjA),
         keysB = Object.keys(depObjB);
@@ -2060,12 +2079,12 @@ export function objectEntriesAreEqual(depObjA, depObjB) {
 
 // generic helper in metamorphose
 export function collectDependencies(
-    dependencyNamesSet,
-    updatedDependencies,
-    oldStateDependencies = null,
-    staticDependencies = null,
+    dependencyNamesSet: any,
+    updatedDependencies: any,
+    oldStateDependencies: any = null,
+    staticDependencies: any = null,
 ) {
-    const dependenciesData = Object.fromEntries(
+    const dependenciesData: any = Object.fromEntries(
         [
             // preload OLD STATE
             ...Object.entries(oldStateDependencies || {}),
@@ -2137,7 +2156,7 @@ export function failingResourceResolve(resourceRequirement) {
     );
 }
 
-export function driveResolverGenSync(syncResolve, gen) {
+export function driveResolverGenSync(syncResolve: any, gen: any) {
     let result,
         sendInto = undefined;
     do {
@@ -2153,7 +2172,7 @@ export function driveResolverGenSync(syncResolve, gen) {
     return result.value;
 }
 
-export function driveResolverGenSyncFailing(gen) {
+export function driveResolverGenSyncFailing(gen: any) {
     return driveResolverGenSync(failingResourceResolve, gen);
 }
 
@@ -5591,7 +5610,7 @@ export class _AbstractGenericModel extends _BaseSimpleModel {
         return this.validateFN(value);
     }
 
-    *metamorphoseGen() {
+    *metamorphoseGen(dependencies: any = null) {
         if (!this.isDraft)
             throw new Error(
                 `LIFECYCLE ERROR ${this} must be in draft mode to metamorphose.`,
@@ -5772,7 +5791,7 @@ export class _AbstractEnumModel extends _BaseSimpleModel {
         }
     }
 
-    *metamorphoseGen() {
+    *metamorphoseGen(dependencies: any = null) {
         if (!this.isDraft)
             throw new Error(
                 `LIFECYCLE ERROR ${this} must be in draft mode to metamorphose.`,
@@ -5846,13 +5865,18 @@ export class _AbstractEnumModel extends _BaseSimpleModel {
     }
 }
 
+export interface SimpleOrEmptyModelStatic {
+    Model: any;
+    _EMPTY: symbol;
+}
+
 export class _AbstractSimpleOrEmptyModel extends _BaseSimpleModel {
     static _EMPTY = Symbol("_EMPTY");
-    static Model: _BaseSimpleModel;
+    static Model: any;
     static createClass(
-        Model: _BaseSimpleModel,
+        Model: any,
         className: string | null = null,
-    ) {
+    ): typeof _AbstractSimpleOrEmptyModel & SimpleOrEmptyModelStatic {
         // If we are using a naming convention, I expect 'Model' at the
         // end so createClass(NumberModel) => NumbeOrEmptyModel
 
@@ -5902,7 +5926,7 @@ export class _AbstractSimpleOrEmptyModel extends _BaseSimpleModel {
         }
     }
 
-    *metamorphoseGen() {
+    *metamorphoseGen(dependencies: any = null) {
         if (!this.isDraft)
             throw new Error(
                 `LIFECYCLE ERROR ${this} must be in draft mode to metamorphose.`,
@@ -6258,7 +6282,7 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
         }
     }
 
-    *metamorphoseGen() {
+    *metamorphoseGen(dependencies: any = null) {
         if (!this.isDraft)
             throw new Error(
                 `LIFECYCLE ERROR ${this} must be in draft mode to metamorphose.`,
