@@ -100,7 +100,7 @@ app menu
             text-decoration: none;
 
             &:hover {
-                background-color: #eee;
+                background-color: var(--menu-button-bg-color-hover);
             }
         }
     }
