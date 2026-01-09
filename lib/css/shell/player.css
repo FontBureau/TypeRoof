@@ -17,6 +17,7 @@ override variables
     --button-border-color-hover: #fff;
     --button-border-color-disabled: #666;
     --button-text-color-disabled: #666;
+    --menu-button-bg-color-hover: #333;
     --sidebar-bg-color: #121212bb;
 }
 
