@@ -1,4 +1,4 @@
-import { Path } from "../../metamodel.mjs";
+import { Path } from "../../metamodel.ts";
 
 import {
     NodeModel,

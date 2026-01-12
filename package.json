@@ -22,7 +22,8 @@
     "format:write": "prettier --write .",
     "format:check": "prettier --check .",
     "stylelint:fix": "stylelint . --fix",
-    "stylelint:check": "stylelint ."
+    "stylelint:check": "stylelint .",
+    "typecheck": "tscw --noEmit --pretty false --project ./tsconfig.json"
   },
   "keywords": [
     "typography",
@@ -63,7 +64,8 @@
     "puppeteer": "^24.17.0",
     "stylelint": "^16.23.1",
     "stylelint-config-standard": "^39.0.0",
-    "typescript": "^5.9.2",
+    "tscw-config": "^1.1.2",
+    "typescript": "^5.9.3",
     "typescript-eslint": "^8.43.0",
     "vite": "^5.0.0",
     "vite-plugin-static-copy": "^3.1.0"

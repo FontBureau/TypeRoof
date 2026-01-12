@@ -1,4 +1,4 @@
-import { Path, StateComparison, FreezableSet } from "../../metamodel.mjs";
+import { Path, StateComparison, FreezableSet } from "../../metamodel.ts";
 
 import {
     _CommonContainerComponent,
