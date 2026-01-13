@@ -17,46 +17,13 @@ override variables
     --button-border-color-hover: #fff;
     --button-border-color-disabled: #666;
     --button-text-color-disabled: #666;
+    --menu-button-bg-color-hover: #333;
     --sidebar-bg-color: #121212bb;
-}
-
-/******************************************************************************
-header / footer
-*******************************************************************************/
-
-header,
-footer {
-    color: var(--text-color);
-}
-
-header {
-    background-color: #333b;
-}
-
-footer {
-    background-color: var(--sidebar-bg-color);
-}
-
-footer :is(a:link, a:visited) {
-    color: var(--text-color);
 }
 
 /******************************************************************************
 wrapper
 *******************************************************************************/
-
-body > .wrapper {
-    background-color: black;
-    display: grid;
-
-    --sidebar-width: 20rem;
-
-    grid-template:
-        "header free" auto "sidebar free" auto "free2 free" 1fr "footer footer" auto
-        /
-        var(--sidebar-width) calc(100vw - var(--sidebar-width));
-    height: 100vh;
-}
 
 body > .wrapper > *:not(.typeroof-main) {
     position: relative;
@@ -80,11 +47,7 @@ body > .wrapper > *:not(.typeroof-main) {
 etc
 *******************************************************************************/
 
-label.ui_font-select {
-    margin-bottom: 1em;
-}
-
-.ui_collapsible_mixin > legend::after,
-.ui_collapsible_mixin-open > legend::after {
-    filter: invert(100%);
+.general-settings {
+    border-top: 1px solid var(--fieldset-border-color);
+    padding: 1em;
 }
