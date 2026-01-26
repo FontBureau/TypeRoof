@@ -27,7 +27,6 @@ fonts manager
 }
 
 .fonts-manager-list {
-    list-style: none;
     margin: 0 0 0.5em !important;
     padding: 0;
     background-color: var(--background-color);
@@ -35,14 +34,26 @@ fonts manager
     max-height: 15rem;
     overflow-y: scroll;
 
-    > li {
-        background-color: var(--list-item-even-bg);
+    > div {
+        font-size: 0.9em;
+        font-weight: 700;
+        padding: 0.5em 0.75em;
+    }
+
+    ul {
+        list-style: none;
+        margin: 0 !important;
+        padding: 0;
+    }
+
+    li {
+        background-color: var(--list-item-odd-bg);
         display: flex;
         align-items: center;
         justify-content: space-between;
 
         &:nth-child(odd) {
-            background-color: var(--list-item-odd-bg);
+            background-color: var(--list-item-even-bg);
         }
 
         &.selected {
