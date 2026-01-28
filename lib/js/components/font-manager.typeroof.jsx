@@ -72,6 +72,11 @@ export class UIManageFonts extends _BaseComponent {
     }
 
     update(changedMap) {
+        console.log(
+            ">>> UIManageFonts update",
+            changedMap,
+            this.getEntry("availableFonts"),
+        );
         if (changedMap.has("availableFonts")) {
             const availableFonts = Array.from(changedMap.get("availableFonts"));
             const includedItems = availableFonts
