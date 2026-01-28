@@ -4,15 +4,6 @@ const isIncludedFont = (data) => data[1].value.origin.type === "from-url";
 const isLocalFont = (data) => data[1].value.origin.type === "from-file";
 
 export class UIManageFonts extends _BaseComponent {
-    static TEMPLATE = `
-        <div class="fonts-manager-list">
-            <div>Included fonts</div>
-            <ul class="fonts-manager-included"></ul>
-            <div>Your local fonts</div>
-            <ul class="fonts-manager-local"></ul>
-        </div>
-    `;
-
     constructor(widgetBus) {
         super(widgetBus);
         this.createListItem = this.createListItem.bind(this);
@@ -32,56 +23,52 @@ export class UIManageFonts extends _BaseComponent {
     }
 
     _initTemplate() {
-        const element = this._domTool.createFragmentFromHTML(
-                this.constructor.TEMPLATE,
-            ).firstElementChild,
-            includedList = element.querySelector(".fonts-manager-included"),
-            localList = element.querySelector(".fonts-manager-local");
+        const h = this._domTool.h,
+            includedList = <ul class="fonts-manager-included"></ul>,
+            localList = <ul class="fonts-manager-local"></ul>,
+            element = (
+                <div class="fonts-manager-list">
+                    <div>Included fonts</div>
+                    {includedList}
+                    <div>Your local fonts</div>
+                    {localList}
+                </div>
+            );
 
         this._insertElement(element);
         return [element, includedList, localList];
     }
 
     createListItem(data) {
-        const [key, { value: font }] = data;
-        const button = this._domTool.createElement("button", null, [
-                font.serializationNameParticles[0],
-                this._domTool.createElement("br"),
-                this._domTool.createElement(
-                    "span",
-                    { class: "version" },
-                    font.serializationNameParticles[1],
-                ),
-            ]),
-            deleteIcon = this._domTool.createElement(
-                "span",
-                {
-                    class: "material-symbols-outlined",
-                },
-                "delete",
-            ),
-            deleteButton = this._domTool.createElement(
-                "button",
-                null,
-                deleteIcon,
-            ),
-            li = this._domTool.createElement(
-                "li",
-                {
-                    "data-key": key,
-                },
-                [button, font.origin.type === "from-file" ? deleteButton : ""],
-            );
-        button.addEventListener("click", () => {
-            this.widgetBus.changeState(() => {
-                this.widgetBus.getEntry("activeFontKey").value = key;
-            });
-        });
+        const h = this._domTool.h,
+            [key, { value: font }] = data,
+            onClickButton = () => {
+                this.widgetBus.changeState(() => {
+                    this.widgetBus.getEntry("activeFontKey").value = key;
+                });
+            },
+            onClickDelete = () => {
+                this._removeFonts([font.fullName]);
+            };
+        return (
+            <li data-key={key}>
+                <button onClick={onClickButton}>
+                    {font.serializationNameParticles[0]}
+                    <br />
+                    <span class="version">
+                        {font.serializationNameParticles[1]}
+                    </span>
+                </button>
+                {font.origin.type === "from-file" ? (
+                    <button onClick={onClickDelete}>
+                        <span class="material-symbols-outlined">delete</span>
+                    </button>
+                ) : (
+                    ""
+                )}
+            </li>
+        );
         // FIXME removing a font works, but it's not triggering a state update
-        deleteIcon.addEventListener("click", async () => {
-            await this._removeFonts([font.fullName]);
-        });
-        return li;
     }
 
     update(changedMap) {
