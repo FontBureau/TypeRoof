@@ -85,6 +85,8 @@ export class UIManageFonts extends _BaseComponent {
             const localItems = availableFonts
                 .filter(isLocalFont)
                 .map(this.createListItem);
+            this._domTool.clear(this._includedList);
+            this._domTool.clear(this._localList);
             this._includedList.append(...includedItems);
             this._localList.append(...localItems);
         }
