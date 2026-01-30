@@ -68,7 +68,6 @@ export class UIManageFonts extends _BaseComponent {
                 )}
             </li>
         );
-        // FIXME removing a font works, but it's not triggering a state update
     }
 
     update(changedMap) {
