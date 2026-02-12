@@ -102,6 +102,8 @@ export class UIManageFonts extends _BaseComponent {
         const installedFonts = Array.from(this.getEntry("installedFonts"));
         const activeFontKey = this.getEntry("activeFontKey").value;
 
+        const scrollPosition = this.element.scrollTop;
+
         const includedItems = availableFonts
             .filter(isIncludedFont)
             .map((data) => this._createListItem(data, activeFontKey));
@@ -122,7 +124,15 @@ export class UIManageFonts extends _BaseComponent {
 
         this._localLabel.hidden = localItems.length === 0;
 
-        // FIXME try to preserve scroll position when updating
+        if (
+            changedMap.has("activeFontKey") &&
+            changedMap.has("availableFonts")
+        ) {
+            const activeItem = this.element.querySelector(".selected");
+            activeItem?.scrollIntoView({ block: "nearest" });
+        } else {
+            this.element.scrollTop = scrollPosition;
+        }
         // FIXME order local fonts alphabetically
     }
 }
