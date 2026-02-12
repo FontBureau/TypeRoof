@@ -133,6 +133,5 @@ export class UIManageFonts extends _BaseComponent {
         } else {
             this.element.scrollTop = scrollPosition;
         }
-        // FIXME order local fonts alphabetically
     }
 }
