@@ -98,8 +98,8 @@ export class UIManageFonts extends _BaseComponent {
 
     update(changedMap) {
         console.log("UIManageFonts.update", changedMap);
-        const availableFonts = Array.from(this.getEntry("availableFonts"));
-        const installedFonts = Array.from(this.getEntry("installedFonts"));
+        const availableFonts = this.getEntry("availableFonts").value;
+        const installedFonts = this.getEntry("installedFonts").value;
         const activeFontKey = this.getEntry("activeFontKey").value;
 
         const scrollPosition = this.element.scrollTop;
