@@ -10,6 +10,7 @@ import {
     _BaseContainerComponent,
     _BaseComponent,
     connectLabelWithInput,
+    setupTooltip,
 } from "./basics.mjs";
 
 import { StaticNode } from "./generic.mjs";
@@ -215,7 +216,8 @@ export class UILanguageInput extends _BaseComponent {
     ) {
         super(widgetBus);
         this._data = data;
-        [this.element, this._input] = this._initTemplate(label, classes);
+        [this.element, this._input, this._info, this._list] =
+            this._initTemplate(label, classes);
     }
 
     _getDataListId() {
@@ -230,8 +232,15 @@ export class UILanguageInput extends _BaseComponent {
         return (
             <div class={"ui_language_subtag_input " + classes.join(" ")}>
                 <label>
-                    <span>{labelText}</span> <input type="text" />
+                    <span>{labelText}</span>
                 </label>
+                <input type="text" />
+                <div class="ui_tooltip_trigger">
+                    <span class="material-symbols-outlined">info</span>
+                </div>
+                <div class="ui_tooltip" popover="hint">
+                    <dl class="ui_language_subtag_info-list"></dl>
+                </div>
             </div>
         );
     }
@@ -242,7 +251,10 @@ export class UILanguageInput extends _BaseComponent {
                 label,
                 classes,
             ),
-            input = container.querySelector("input");
+            input = container.querySelector("input"),
+            list = container.querySelector(".ui_language_subtag_info-list"),
+            info = container.querySelector(".ui_tooltip_trigger");
+        setupTooltip(container);
         input.setAttribute("list", this._getDataListId());
         // don't use the maxlength/minlength attributes as they
         // limit how the datalist can be searched.
@@ -274,48 +286,7 @@ export class UILanguageInput extends _BaseComponent {
         );
 
         this._insertElement(container);
-        return [container, input];
-    }
-
-    update(changedMap) {
-        if (changedMap.has("value")) {
-            const value = changedMap.get("value");
-            if (this._domTool.document.activeElement !== this._input)
-                // else: has focus i.e. we control the value
-                this._input.value = value.isEmpty ? "" : value.value;
-        }
-    }
-}
-
-class UILanguageTagInfo extends _BaseComponent {
-    constructor(
-        widgetBus,
-        data /* a language subtagRegistryMap*/,
-        label,
-        classes,
-    ) {
-        super(widgetBus);
-        this._data = data;
-        [this.element, this._info] = this._initTemplate(label, classes);
-    }
-
-    static getTemplate(h, labelText, classes = []) {
-        return (
-            <div class={"ui_language_subtag_info " + classes.join(" ")}>
-                <strong>{labelText}:</strong>
-                <dl class="ui_language_subtag_info-list"></dl>
-            </div>
-        );
-    }
-    _initTemplate(label, classes = []) {
-        const container = this.constructor.getTemplate(
-                this._domTool.h,
-                label,
-                classes,
-            ),
-            info = container.querySelector(".ui_language_subtag_info-list");
-        this._insertElement(container);
-        return [container, info];
+        return [container, input, info, list];
     }
 
     _makeInfo(tag) {
@@ -334,12 +305,21 @@ class UILanguageTagInfo extends _BaseComponent {
         }
         return elements;
     }
+
     update(changedMap) {
         if (changedMap.has("value")) {
-            this._domTool.clear(this._info);
+            this._domTool.clear(this._list);
             const value = changedMap.get("value");
-            if (!value.isEmpty)
-                this._info.append(...this._makeInfo(value.value));
+            if (this._domTool.document.activeElement !== this._input) {
+                // else: has focus i.e. we control the value
+                this._input.value = value.isEmpty ? "" : value.value;
+            }
+            if (value.isEmpty) {
+                this._info.hidden = true;
+            } else {
+                this._info.hidden = false;
+                this._list.append(...this._makeInfo(value.value));
+            }
         }
     }
 }
@@ -400,26 +380,6 @@ export class UILanguageTag extends _BaseContainerComponent {
                 },
             ),
             [{ zone: "main" }, [], StaticNode, info],
-            ...Array.from(LanguageTagModel.fields).map(
-                ([subTag, { Model: SubTagModel }]) => {
-                    return [
-                        {
-                            zone: "info",
-                            activationTest: () =>
-                                !widgetBus.getEntry(
-                                    widgetBus.rootPath.append(subTag),
-                                ).isEmpty,
-                        },
-                        [
-                            [subTag, "value"], //  require('settings:internalPropertyName', 'value')
-                        ],
-                        UILanguageTagInfo,
-                        SubTagModel.fullData,
-                        `${subTag[0].toUpperCase()}${subTag.slice(1)}`, //  require('label')
-                        [`UI_language_subtag_info-${subTag}`], // require('classes')
-                    ];
-                },
-            ),
         ]);
     }
 }

@@ -32,4 +32,6 @@
     --menu-button-bg-color-hover: #eee;
     --sidebar-bg-color: #eee;
     --parameters-label-color: #09f; /* blue is the color of engineering */
+    --tooltip-bg-color: #000c;
+    --tooltip-text-color: #fff;
 }

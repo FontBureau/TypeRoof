@@ -1968,6 +1968,21 @@ dimension sequence
     padding: 0.3em;
 }
 
+.ui_language_subtag_input {
+    align-items: center;
+    display: flex;
+    gap: var(--gap-size);
+    padding: 0.25em 0;
+
+    > label {
+        width: 25%;
+    }
+
+    > input {
+        width: 20%;
+    }
+}
+
 .ui_language_subtag_info ~ .ui_language_subtag_info {
     padding-block-start: 1.3em;
 }
@@ -2002,3 +2017,26 @@ dimension sequence
         content: ", ";
     }
 }
+
+/******************************************************************************
+tooltips
+*******************************************************************************/
+
+.ui_tooltip_trigger {
+    cursor: pointer;
+}
+
+.ui_tooltip {
+    inset: unset;
+    position: absolute;
+    /* stylelint-disable-next-line declaration-property-value-no-unknown */
+    align-self: anchor-center;
+    left: calc(anchor(right) + 5px);
+    margin: 0;
+    padding: 1em;
+    background-color: var(--tooltip-bg-color);
+    border: 0;
+    color: var(--tooltip-text-color);
+}
+
+/**************************************************************************** */
