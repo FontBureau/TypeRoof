@@ -8,6 +8,8 @@ override variables
     overflow: hidden;
 
     --gap-size: 0;
+    --list-item-odd-bg: #121212;
+    --list-item-even-bg: #333;
     --background-color: #121212;
     --text-color: #fff;
     --input-border-color: #ccc;
