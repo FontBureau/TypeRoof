@@ -44,7 +44,7 @@ import {
     SERIALIZE_OPTIONS,
     SERIALIZE_FORMAT_OBJECT,
     BooleanModel,
-} from "../../metamodel.ts";
+} from "../../metamodel.mjs";
 
 import { _BaseLayoutModel } from "../main-model.mjs";
 
