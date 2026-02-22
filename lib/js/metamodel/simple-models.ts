@@ -1,5 +1,7 @@
 import { _AbstractGenericModel } from './generic-model.ts';
 import { _AbstractNumberModel } from './number-model.ts';
+import { _AbstractSimpleOrEmptyModel } from './simple-or-empty-model.ts';
+import { Path } from './path.ts';
 
 export const AnyModel = _AbstractGenericModel.createClass("AnyModel"),
     IntegerModel = _AbstractNumberModel.createClass("IntegerModel", {
@@ -108,3 +110,31 @@ export const StringModel = _AbstractGenericModel.createClass("StringModel", {
             return serializedString;
         },
     });
+
+export const PathModel = _AbstractGenericModel.createClass("PathModel", {
+        sanitizeFN: function (rawValue) {
+            if (typeof rawValue === "string")
+                return [Path.fromString(rawValue), null];
+            // let validateFN catch this
+            return [rawValue, null];
+        },
+        validateFN: function (value) {
+            // must be a Path
+            if (value instanceof Path) return [true, null];
+            return [
+                false,
+                `Value must be an instance of Path but is not: ` +
+                    `"${value?.toString() || value}" (typeof: ${typeof value}; ` +
+                    `constructor name: ${value?.constructor.name}).`,
+            ];
+        },
+        serializeFN: function (value /*, options=SERIALIZE_OPTIONS*/) {
+            return value.toString();
+        },
+        deserializeFN: function (
+            serializedString /*, options=SERIALIZE_OPTIONS*/,
+        ) {
+            return Path.fromString(serializedString);
+        },
+    });
+export const PathModelOrEmpty = _AbstractSimpleOrEmptyModel.createClass(PathModel);
