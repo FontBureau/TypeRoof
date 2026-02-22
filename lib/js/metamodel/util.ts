@@ -2,6 +2,7 @@ export const _NOTDEF = Symbol("_NOTDEF");
 export type NotDef = typeof _NOTDEF;
 export type DefaultProvided<D> = Exclude<D, NotDef>;
 
+export const PATH_SEPARATOR = "/";
 
 /**
  * Building blocks and helper functions to define a Model.
