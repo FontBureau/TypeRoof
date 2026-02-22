@@ -1,4 +1,8 @@
 import { _BaseModel, OLD_STATE, isImmutableWriteError } from './base-model.ts';
+import {
+    IS_PROXY, GET_IMMUTABLE, GET_DRAFT, GET,
+    isProxy, unwrapPotentialWriteProxy,
+} from './util.ts';
 
 /**
  * Protocol symbol: implemented by model types that wrap another model
@@ -96,16 +100,14 @@ function _requiresPotentialWriteProxy(item) {
 
 // exported for debugging!
 export class _PotentialWriteProxy {
+    // Re-attached from util.ts for backward compatibility.
     // jshint ignore: start
-    static IS_PROXY = Symbol("_POTENTIAL_WRITE_PROXY_IS_PROXY");
-    static GET_IMMUTABLE = Symbol("_POTENTIAL_WRITE_PROXY_GET_IMMUTABLE");
-    static GET_DRAFT = Symbol("_POTENTIAL_WRITE_PROXY_GET_DRAFT");
-    static GET = Symbol("_POTENTIAL_WRITE_PROXY_GET");
+    static IS_PROXY = IS_PROXY;
+    static GET_IMMUTABLE = GET_IMMUTABLE;
+    static GET_DRAFT = GET_DRAFT;
+    static GET = GET;
     // jshint ignore: end
-
-    static isProxy(maybeProxy) {
-        return (maybeProxy && maybeProxy[this.IS_PROXY]) || false;
-    }
+    static isProxy = isProxy;
     static create(parent, immutable, key = null) {
         // FIXME ?? could return immutable[_POTENTIAL_WRITE_PROXY_GET_IMMUTABLE]
         // WHY WOULD THIS HAPPEN?
@@ -447,15 +449,5 @@ export class _PotentialWriteProxy {
     }
 }
 
-export function unwrapPotentialWriteProxy(maybeProxy, type = null) {
-    if (!_PotentialWriteProxy.isProxy(maybeProxy)) return maybeProxy;
-    if (type === "immutable")
-        // Returns immutable
-        return maybeProxy[_PotentialWriteProxy.GET_IMMUTABLE];
-    if (type === "draft")
-        // Returns the draft that is associated with the proxy,
-        // if it already exists otherwise undefined.
-        return maybeProxy[_PotentialWriteProxy.GET_DRAFT];
-    // Returns the draft, if it already exists otherwise the immutable.
-    return maybeProxy[_PotentialWriteProxy.GET];
-}
+// Re-exported from util.ts for backward compatibility.
+export { unwrapPotentialWriteProxy };

@@ -105,6 +105,28 @@ export function populateArray<T, A extends PushableArray<T>>(
     }
 }
 
+// Proxy protocol symbols and functions
+// These are the fundamental building blocks for the PotentialWriteProxy
+// protocol. They are defined here so that any module can check/unwrap
+// proxies without depending on potential-write-proxy.ts.
+export const IS_PROXY = Symbol("_POTENTIAL_WRITE_PROXY_IS_PROXY");
+export const GET_IMMUTABLE = Symbol("_POTENTIAL_WRITE_PROXY_GET_IMMUTABLE");
+export const GET_DRAFT = Symbol("_POTENTIAL_WRITE_PROXY_GET_DRAFT");
+export const GET = Symbol("_POTENTIAL_WRITE_PROXY_GET");
+
+export function isProxy(maybeProxy) {
+    return (maybeProxy && maybeProxy[IS_PROXY]) || false;
+}
+
+export function unwrapPotentialWriteProxy(maybeProxy, type = null) {
+    if (!isProxy(maybeProxy)) return maybeProxy;
+    if (type === "immutable")
+        return maybeProxy[GET_IMMUTABLE];
+    if (type === "draft")
+        return maybeProxy[GET_DRAFT];
+    return maybeProxy[GET];
+}
+
 // generic helper in metamorphose
 // obj A and obj B must have the same own-entries with a strictly equal type.
 export function objectEntriesAreEqual(depObjA, depObjB) {
@@ -117,4 +139,62 @@ export function objectEntriesAreEqual(depObjA, depObjB) {
         if (depObjA[key] !== depObjB[key]) return false;
     }
     return true;
+}
+
+export function collectDependencies(
+    dependencyNamesSet,
+    updatedDependencies,
+    oldStateDependencies = null,
+    staticDependencies = null,
+) {
+    const dependenciesData = Object.fromEntries(
+        [
+            // preload OLD STATE
+            ...Object.entries(oldStateDependencies || {}),
+            // add dependencies argument
+            ...Object.entries(updatedDependencies || {}),
+            // There are not more dependencies in the object than we know.
+            // It's not an error as the caller could reuse dependencies object
+            // this way, but we don't want to persist dependencies we don't
+            // know or need.
+        ].filter(([key]) => dependencyNamesSet.has(key)),
+    );
+
+    {
+        // Check if all dependencies are provided.
+        // It would possible to rewrite external dependency names
+        // to internal ones (aliases) here in an attempt to make
+        // a child fit into a parent it wasn't exactly designed for.
+        // Putting this comment here, to not forget, if dependencyNamesSet
+        // were a Map (insideName => outSideName) (not a set) the rewriting
+        // could also be done from outside by the initializing parent.
+        // Putting this thought here to keep it around.
+        const missing = new Set();
+        for (const key of dependencyNamesSet.keys()) {
+            if (!Object.hasOwn(dependenciesData, key)) missing.add(key);
+        }
+        if (missing.size !== 0)
+            throw new Error(
+                `VALUE ERROR missing dependencies: ${[...missing].join(", ")}`,
+            );
+        // Could add type checks for dependencies as well
+        // e.g. if dependencyNamesSet were a Map (name=>Type)
+    }
+
+    if (staticDependencies !== null) {
+        for (const [key, staticDependency] of staticDependencies)
+            dependenciesData[key] = staticDependency.state;
+    }
+
+    // In async metamorphose it happens that we get PotentialWriteProxies
+    // but we don't want to use them as dependencies, hence the unwrapping.
+    for (const key of Object.keys(dependenciesData)) {
+        const value = dependenciesData[key];
+        if (isProxy(value))
+            dependenciesData[key] = unwrapPotentialWriteProxy(value);
+    }
+    // More possible checks on dependencies:
+    //  * Ensure all dependencies are immutable (and of a corresponding type).
+    Object.freeze(dependenciesData);
+    return dependenciesData;
 }

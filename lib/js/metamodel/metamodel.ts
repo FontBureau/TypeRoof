@@ -57,9 +57,12 @@ import {
     iterMap,
     sort_alpha,
     objectEntriesAreEqual,
+    collectDependencies,
+    isProxy,
+    unwrapPotentialWriteProxy,
 } from './util.ts';
 
-export { objectEntriesAreEqual };
+export { objectEntriesAreEqual, collectDependencies };
 
 import {
     ForeignKey
@@ -117,7 +120,6 @@ import {
     _GET_DRAFT_FOR_PROXY,
     _GET_DRAFT_FOR_OLD_STATE_KEY,
     _PotentialWriteProxy,
-    unwrapPotentialWriteProxy,
 } from './potential-write-proxy.ts';
 export {
     IS_WRAPPER_TYPE,
@@ -129,63 +131,7 @@ const WITH_SELF_REFERENCE = Symbol("WITH_SELF_REFERENCE"),
     DEBUG = false;
 
 // generic helper in metamorphose
-export function collectDependencies(
-    dependencyNamesSet,
-    updatedDependencies,
-    oldStateDependencies = null,
-    staticDependencies = null,
-) {
-    const dependenciesData = Object.fromEntries(
-        [
-            // preload OLD STATE
-            ...Object.entries(oldStateDependencies || {}),
-            // add dependencies argument
-            ...Object.entries(updatedDependencies || {}),
-            // There are not more dependencies in the object than we know.
-            // It's not an error as the caller could reuse dependencies object
-            // this way, but we don't want to persist dependencies we don't
-            // know or need.
-        ].filter(([key]) => dependencyNamesSet.has(key)),
-    );
 
-    {
-        // Check if all dependencies are provided.
-        // It would possible to rewrite external dependency names
-        // to internal ones (aliases) here in an attempt to make
-        // a child fit into a parent it wasn't exactly designed for.
-        // Putting this comment here, to not forget, if dependencyNamesSet
-        // were a Map (insideName => outSideName) (not a set) the rewriting
-        // could also be done from outside by the initializing parent.
-        // Putting this thought here to keep it around.
-        const missing = new Set();
-        for (const key of dependencyNamesSet.keys()) {
-            if (!Object.hasOwn(dependenciesData, key)) missing.add(key);
-        }
-        if (missing.size !== 0)
-            throw new Error(
-                `VALUE ERROR missing dependencies: ${[...missing].join(", ")}`,
-            );
-        // Could add type checks for dependencies as well
-        // e.g. if dependencyNamesSet were a Map (name=>Type)
-    }
-
-    if (staticDependencies !== null) {
-        for (const [key, staticDependency] of staticDependencies)
-            dependenciesData[key] = staticDependency.state;
-    }
-
-    // In async metamorphose it happens that we get PotentialWriteProxies
-    // but we don't want to use them as dependencies, hence the unwrapping.
-    for (const key of Object.keys(dependenciesData)) {
-        const value = dependenciesData[key];
-        if (_PotentialWriteProxy.isProxy(value))
-            dependenciesData[key] = unwrapPotentialWriteProxy(value);
-    }
-    // More possible checks on dependencies:
-    //  * Ensure all dependencies are immutable (and of a corresponding type).
-    Object.freeze(dependenciesData);
-    return dependenciesData;
-}
 
 export class _AbstractStructModel extends _BaseContainerModel {
     static WITH_SELF_REFERENCE = WITH_SELF_REFERENCE;
