@@ -104,3 +104,17 @@ export function populateArray<T, A extends PushableArray<T>>(
         a.push(item);
     }
 }
+
+// generic helper in metamorphose
+// obj A and obj B must have the same own-entries with a strictly equal type.
+export function objectEntriesAreEqual(depObjA, depObjB) {
+    // FIXME: maybe fail if prototypes are not equal.
+    const keysA = Object.keys(depObjA),
+        keysB = Object.keys(depObjB);
+    if (keysA.length !== keysB.length) return false;
+    for (const key of keysA) {
+        if (!keysB.includes(key)) return false;
+        if (depObjA[key] !== depObjB[key]) return false;
+    }
+    return true;
+}
