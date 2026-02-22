@@ -8,6 +8,7 @@ import type {
     NodeSpec,
     MarkSpec,
     DOMOutputSpec,
+    Node
 } from "prosemirror-model";
 
 // These are the reserved/default nodes and marks, they won't be
@@ -58,7 +59,7 @@ export const nodes = {
             },
             0,
         ],
-        toDOM(node) {
+        toDOM(node: Node) {
             return [
                 "div",
                 { "data-unknown-type": node.attrs["unknown-type"] },
@@ -70,7 +71,7 @@ export const nodes = {
                 ["div", 0],
             ];
         },
-    },
+    } as NodeSpec,
 };
 
 export const marks = {

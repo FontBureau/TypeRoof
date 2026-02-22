@@ -3,12 +3,14 @@ import { schemaSpec as defaultSchemaSpec } from "./default-schema";
 
 const pDOM: DOMOutputSpec = ["p", 0];
 
+const defaultSchemaSpecNodes = defaultSchemaSpec.nodes as { [key: string]: NodeSpec };
+
 export const nodes = {
-    doc: defaultSchemaSpec.nodes.doc,
-    text: defaultSchemaSpec.nodes.text,
-    hard_break: defaultSchemaSpec.nodes.hard_break,
+    doc: defaultSchemaSpecNodes.doc,
+    text: defaultSchemaSpecNodes.text,
+    hard_break: defaultSchemaSpecNodes.hard_break,
     /// A plain paragraph textblock. Represented in the DOM
-    /// as a `<p>` element.
+    /// as a <p> element.
     paragraph: {
         content: "inline*",
         group: "block",
