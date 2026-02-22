@@ -167,16 +167,17 @@ export type CreatePrimalState<T extends _BaseModel> = (
 ) => T;
 
 export class ResourceRequirement {
-    constructor(...description) {
+    public description: unknown[];
+    constructor(...description: unknown[]) {
         this.description = description;
     }
     toString() {
-        return `[${this.constructor.name} with description: ${this.description.map((item) => item && item.toString()).join(", ")}]`;
+        return `[${this.constructor.name} with description: ${this.description.map((item: unknown) => item && (item as {toString(): string}).toString()).join(", ")}]`;
     }
 }
 
 
-export function driveResolverGenSync(syncResolve, gen) {
+export function driveResolverGenSync(syncResolve: (requirement: ResourceRequirement) => unknown, gen: Generator<ResourceRequirement, unknown, unknown>) {
     let result,
         sendInto = undefined;
     do {
@@ -249,11 +250,11 @@ export async function driveResolveGenAsync<R>(
  * Hence, these functions seem to be the best compromise:
  */
 
-function _markError(symbol, error, data = null) {
-    error[symbol] = data || true;
+function _markError(symbol: symbol, error: Error, data: unknown = null) {
+    (error as unknown as Record<symbol, unknown>)[symbol] = data || true;
     return error;
 }
-function _isMarkedError(symbol, error) {
+function _isMarkedError(symbol: symbol, error: Error) {
     return Object.hasOwn(error, symbol);
 }
 
@@ -284,10 +285,10 @@ export const isImmutableWriteError = _isMarkedError.bind(
         DELIBERATE_RESOURCE_RESOLVE_ERROR,
     );
 
-export function failingResourceResolve(resourceRequirement) {
+export function failingResourceResolve(resourceRequirement: ResourceRequirement) {
     // detect with isDeliberateResourceResolveError
-    throw new deliberateResourceResolveError(
-        Error(
+    throw deliberateResourceResolveError(
+        new Error(
             `FAILING DELIBERATELY ` +
                 `failingResourceResolve with resource requirement: ` +
                 `${resourceRequirement}`,
@@ -295,7 +296,7 @@ export function failingResourceResolve(resourceRequirement) {
     );
 }
 
-export function driveResolverGenSyncFailing(gen) {
+export function driveResolverGenSyncFailing(gen: Generator<ResourceRequirement, unknown, unknown>) {
     return driveResolverGenSync(failingResourceResolve, gen);
 }
 
