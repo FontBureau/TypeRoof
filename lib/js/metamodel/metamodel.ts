@@ -9,9 +9,8 @@ import {
     _DEFERRED_DEPENDENCIES,
     SERIALIZE_OPTIONS,
     ResourceRequirement,
-    SERIALIZE_FORMAT_JSON,
     SERIALIZE_FORMAT_OBJECT,
-    driveResolverGenSyncFailing,
+    driveResolveGenAsync,
     isDeliberateResourceResolveError,
     SERIALIZE,
     DESERIALIZE,
@@ -24,12 +23,6 @@ import {
     _serializeContainer,
 } from './base-model.ts';
 
-import type {
-    DependenciesMap,
-    TSerializedInput,
-    SerializationOptions
-} from './basemodel.ts';
-
 // These are the exports from ./base-model.ts that are used beyond this
 // file. I would prefer it, if users would import them directly.
 // NOTE: don't "pollute" this export statement with exports that are
@@ -40,6 +33,7 @@ export {
     ResourceRequirement,
     keyConstraintError,
     SERIALIZE_OPTIONS,
+    driveResolveGenAsync,
     isDeliberateResourceResolveError,
     isDraftKeyError,
     _BaseContainerModel,
@@ -72,122 +66,22 @@ export {
     ForeignKey
 }
 
-export function deserializeGen<T extends _BaseModel>(
-    Model: DeserializableModelConstructor<T>,
-    dependencies: DependenciesMap,
-    serializedData: TSerializedInput,
-    options: SerializationOptions = SERIALIZE_OPTIONS,
-): Generator<ResourceRequirement, T, unknown> {
-    let serializedValue;
-    if (options.format === SERIALIZE_FORMAT_JSON) {
-        if (typeof serializedData !== "string") {
-            throw new TypeError(
-                "JSON format requires serializedData to be a string.",
-            );
-        }
-        serializedValue = JSON.parse(serializedData);
-    } else if (options.format === SERIALIZE_FORMAT_OBJECT) {
-        serializedValue = serializedData;
-    } else
-        throw new Error(
-            `UNKNOWN FORMAT OPTION deserialize ${options.format.toString()}`,
-        );
-    // => gen
-    return Model.createPrimalStateGen(dependencies, serializedValue, options);
+import {
+    _PRIMARY_SERIALIZED_VALUE,
+    deserializeGen,
+    serialize,
+    deserializeSync,
+} from './serialization.ts';
+
+export {
+    deserializeGen,
+    serialize,
+    deserializeSync
 }
 
-type AsyncResolver = (requirement: ResourceRequirement) => Promise<unknown>;
-
-export async function deserialize<T extends _BaseModel>(
-    asyncResolve: AsyncResolver,
-    Model: DeserializableModelConstructor<T>,
-    dependencies: DependenciesMap,
-    serializedData: TSerializedInput,
-    options: SerializationOptions = SERIALIZE_OPTIONS,
-) {
-    const gen = deserializeGen(Model, dependencies, serializedData, options);
-    return await driveResolveGenAsync(asyncResolve, gen);
-}
-
-export function deserializeSync<T extends _BaseModel>(
-    Model: DeserializableModelConstructor<T>,
-    dependencies: DependenciesMap,
-    serializedString: TSerializedInput,
-    options: SerializationOptions = SERIALIZE_OPTIONS,
-) {
-    const gen = deserializeGen(Model, dependencies, serializedString, options);
-    return driveResolverGenSyncFailing(gen);
-}
-
-// I'm undecided with the interface!
-// [SERIALIZE] could be a common entry point and the
-// sub-classes could implement their own serialization which is called
-// by this.
-// OR the other way around:
-// serialize would be the common entry point an subclasses would
-// implement [SERIALIZE]
-// FIXME: We should handle errors graceful, therefore report
-// a failure and collect all failures, if not a fail early response
-// is expected.
-// It would be cool, if, despite of the size strategy, the return
-// value of serialize would be a String or an Array. For Map/Dict
-// types an Array of [key, value] entries.
-// A simple Object could also be OK, but [key, value] pairs
-// in an array are more explicit in preserving order (however,
-// objects do so as well usually, it's just not as strictly required).
-// For numbers, a string is preferred, as i.e. toFixed returns
-// a string and that is used. We ¡know! the type of the values
-// and can determine how to interpret them.
-// EMPTY values should be empty slots in their arrays.
-// We need a way to detect empty string vs EMPTY
-export function serialize(
-    modelInstance: _BaseModel,
-    options: SerializationOptions = SERIALIZE_OPTIONS,
-) {
-    const [resultErrors, intermediateValue] = serializeItem(
-        modelInstance,
-        options,
-    );
-    if (options.format === SERIALIZE_FORMAT_JSON)
-        return [
-            resultErrors,
-            // NOTE: even with indentation (pretty printing), this doesn't
-            // look particular pretty.
-            JSON.stringify(intermediateValue, null, 2),
-        ];
-    else if (options.format === SERIALIZE_FORMAT_OBJECT)
-        return [resultErrors, intermediateValue];
-    throw new Error(
-        `UNKNOWN FORMAT OPTION serialize ${options.format.toString()}`,
-    );
-}
-
-
-const _PRIMARY_SERIALIZED_VALUE = Symbol("_PRIMARY_SERIALIZED_VALUE"),
-    WITH_SELF_REFERENCE = Symbol("WITH_SELF_REFERENCE"),
+const WITH_SELF_REFERENCE = Symbol("WITH_SELF_REFERENCE"),
     DEBUG = false;
 
-// Define the interface that any _BaseModel Constructor MUST implement
-interface DeserializableModelConstructor<T extends _BaseModel> {
-    // Constructor Signature (Must be able to create an instance of T)
-    // new (...args: any[]): T;
-
-    // Enforce the Static Generator Method Signature (NO 'static' keyword here)
-    // The generator yields some dependency type (PrimalStateGenYield)
-    // and must return the final concrete model instance (T).
-    createPrimalStateGen(
-        dependencies: DependenciesMap,
-        serializedValue: TSerializedInput,
-        options: SerializationOptions,
-    ): Generator<ResourceRequirement, T, unknown>;
-
-    createPrimalState(
-        dependencies: DependenciesMap,
-        // Allow null default value
-        serializedValue: TSerializedInput | null,
-        options: SerializationOptions,
-    ): T;
-}
 
 export class _BaseLink {
     public readonly keyName!: string;
@@ -1018,36 +912,6 @@ export function collectDependencies(
     //  * Ensure all dependencies are immutable (and of a corresponding type).
     Object.freeze(dependenciesData);
     return dependenciesData;
-}
-
-export async function driveResolveGenAsync<R>(
-    asyncResolve: (requirement: ResourceRequirement) => Promise<unknown>,
-    gen: Generator<ResourceRequirement, R, unknown>,
-) {
-    // OK so this is the driving protocol of the metamorphoseGen.
-    // It can't be directly in createPrimalStateAsync, as that req
-
-    // gen = Model.createPrimalStateGen(...) or draft.metamorphoseGen(...)
-    // can't send a value on first iteration
-    let result: IteratorResult<ResourceRequirement, R>,
-        sendInto: unknown = undefined; // initial sendInto is ignored anyways
-    do {
-        result = gen.next(sendInto);
-        sendInto = undefined; // don't send same value again
-
-        if (result.done) {
-            // If done, exit the loop and the function
-            break;
-        }
-
-        if (result.value instanceof ResourceRequirement)
-            sendInto = await asyncResolve(result.value);
-        else
-            throw new Error(
-                `VALUE ERROR Don't know how to handle genereator result with value {result.value}`,
-            );
-    } while (true); // eslint-disable-line no-constant-condition
-    return result.value;
 }
 
 export class _AbstractStructModel extends _BaseContainerModel {

@@ -192,6 +192,36 @@ export function driveResolverGenSync(syncResolve, gen) {
     return result.value;
 }
 
+export async function driveResolveGenAsync<R>(
+    asyncResolve: (requirement: ResourceRequirement) => Promise<unknown>,
+    gen: Generator<ResourceRequirement, R, unknown>,
+) {
+    // OK so this is the driving protocol of the metamorphoseGen.
+    // It can't be directly in createPrimalStateAsync, as that req
+
+    // gen = Model.createPrimalStateGen(...) or draft.metamorphoseGen(...)
+    // can't send a value on first iteration
+    let result: IteratorResult<ResourceRequirement, R>,
+        sendInto: unknown = undefined; // initial sendInto is ignored anyways
+    do {
+        result = gen.next(sendInto);
+        sendInto = undefined; // don't send same value again
+
+        if (result.done) {
+            // If done, exit the loop and the function
+            break;
+        }
+
+        if (result.value instanceof ResourceRequirement)
+            sendInto = await asyncResolve(result.value);
+        else
+            throw new Error(
+                `VALUE ERROR Don't know how to handle genereator result with value {result.value}`,
+            );
+    } while (true); // eslint-disable-line no-constant-condition
+    return result.value;
+}
+
 /**
  * usage: throw immutableWriteError(new Error(`My Message`));
  *
