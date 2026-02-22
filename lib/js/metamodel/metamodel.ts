@@ -52,9 +52,10 @@ import {
     collectDependencies,
     unwrapPotentialWriteProxy,
     PATH_SEPARATOR,
+    IS_WRAPPER_TYPE,
 } from './util.ts';
 
-export { objectEntriesAreEqual, collectDependencies };
+export { objectEntriesAreEqual, collectDependencies};
 
 import {
     ForeignKey
@@ -102,7 +103,6 @@ export {
 };
 
 import {
-    IS_WRAPPER_TYPE,
     _LOCAL_PROXIES,
     _HAS_DRAFT_FOR_PROXY,
     _HAS_DRAFT_FOR_OLD_STATE_KEY,
@@ -111,7 +111,6 @@ import {
     _PotentialWriteProxy,
 } from './potential-write-proxy.ts';
 export {
-    IS_WRAPPER_TYPE,
     _PotentialWriteProxy,
     unwrapPotentialWriteProxy,
 };

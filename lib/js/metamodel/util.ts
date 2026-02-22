@@ -114,6 +114,7 @@ export const IS_PROXY = Symbol("_POTENTIAL_WRITE_PROXY_IS_PROXY");
 export const GET_IMMUTABLE = Symbol("_POTENTIAL_WRITE_PROXY_GET_IMMUTABLE");
 export const GET_DRAFT = Symbol("_POTENTIAL_WRITE_PROXY_GET_DRAFT");
 export const GET = Symbol("_POTENTIAL_WRITE_PROXY_GET");
+export const IS_WRAPPER_TYPE = Symbol("IS_WRAPPER_TYPE");
 
 export function isProxy(maybeProxy) {
     return (maybeProxy && maybeProxy[IS_PROXY]) || false;

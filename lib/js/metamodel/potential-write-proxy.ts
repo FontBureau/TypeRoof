@@ -1,15 +1,9 @@
 import { _BaseModel, OLD_STATE, isImmutableWriteError } from './base-model.ts';
 import {
     IS_PROXY, GET_IMMUTABLE, GET_DRAFT, GET,
+    IS_WRAPPER_TYPE,
     isProxy, unwrapPotentialWriteProxy,
 } from './util.ts';
-
-/**
- * Protocol symbol: implemented by model types that wrap another model
- * (e.g. _AbstractDynamicStructModel). The proxy uses this to decide
- * whether to proxy the wrapped child directly.
- */
-export const IS_WRAPPER_TYPE = Symbol("IS_WRAPPER_TYPE");
 
     // FIXME: rename to  _HAS_DRAFT_FOR_POTENTIAL_WRITE_PROXY, ...?
 export const _LOCAL_PROXIES = Symbol("_LOCAL_PROXIES"),
