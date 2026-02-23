@@ -133,7 +133,10 @@ export function unwrapPotentialWriteProxy<T>(
 
 // generic helper in metamorphose
 // obj A and obj B must have the same own-entries with a strictly equal type.
-export function objectEntriesAreEqual(depObjA, depObjB) {
+export function objectEntriesAreEqual(
+    depObjA: Record<string, unknown>,
+    depObjB: Record<string, unknown>,
+): boolean {
     // FIXME: maybe fail if prototypes are not equal.
     const keysA = Object.keys(depObjA),
         keysB = Object.keys(depObjB);
@@ -145,12 +148,16 @@ export function objectEntriesAreEqual(depObjA, depObjB) {
     return true;
 }
 
+interface StaticDependencyLike {
+    state: unknown;
+}
+
 export function collectDependencies(
-    dependencyNamesSet,
-    updatedDependencies,
-    oldStateDependencies = null,
-    staticDependencies = null,
-) {
+    dependencyNamesSet: Set<string>,
+    updatedDependencies: Record<string, unknown> | null | undefined,
+    oldStateDependencies: Record<string, unknown> | null = null,
+    staticDependencies: Map<string, StaticDependencyLike> | null = null,
+): Readonly<Record<string, unknown>> {
     const dependenciesData = Object.fromEntries(
         [
             // preload OLD STATE
@@ -173,7 +180,7 @@ export function collectDependencies(
         // were a Map (insideName => outSideName) (not a set) the rewriting
         // could also be done from outside by the initializing parent.
         // Putting this thought here to keep it around.
-        const missing = new Set();
+        const missing = new Set<string>();
         for (const key of dependencyNamesSet.keys()) {
             if (!Object.hasOwn(dependenciesData, key)) missing.add(key);
         }
