@@ -6,6 +6,10 @@ import {
     immutableWriteError,
     SERIALIZE,
     DESERIALIZE,
+    type SerializationOptions,
+    type SerializationResult,
+    type TSerializedInput,
+    type ResourceRequirement,
 } from './base-model.ts';
 
 import {
@@ -13,11 +17,19 @@ import {
 } from './serialization.ts';
 
 export class _AbstractEnumModel extends _BaseSimpleModel {
+    // Instance properties set via Object.defineProperty
+    declare _value: string;
+    declare [_PRIMARY_SERIALIZED_VALUE]?: [TSerializedInput, SerializationOptions];
+
+    // Static properties set by createClass on subclasses
+    static enumItems: readonly string[];
+    static defaultValue: string;
+
     static createClass(
-        className,
-        enumItems,
-        defaultValue,
-        attachStaticProperties,
+        className: string,
+        enumItems: Iterable<string>,
+        defaultValue: string,
+        attachStaticProperties?: Record<string, PropertyDescriptor>,
     ) {
         // This way the local enumItems_ can reference the same element,
         // if it is an array. The freeze, however, is necessary to
@@ -45,42 +57,42 @@ export class _AbstractEnumModel extends _BaseSimpleModel {
                 // jshint ignore: end
             },
         };
+        const Model = result[className]!;
         // TODO: This is a nice way to extend the class statics while
         // still being able to Object.freeze the class. It cold be a
         // general API for all _BaseModels but I'm not implementing it
         // everywhere right now as I still consider it experimental.
 
         if (attachStaticProperties) {
-            for (const [name, definition] of Object.entries(
-                attachStaticProperties,
-            )) {
-                if (Object.hasOwn(result[className], name))
+            for (const [name, definition] of Object.entries(attachStaticProperties)) {
+                if (Object.hasOwn(Model, name))
                     // Tested this case with:
                     //      attachStaticProperties = {defaultValue: {value: 'testing'}}
                     // and it triggered the Error.
                     throw new Error(
-                        `VALUE ERROR can't attachs static property "${name}," it's already defined.`,
+                        `VALUE ERROR can't attach static property "${name}," it's already defined.`,
                     );
-                Object.defineProperty(result[className], name, definition);
+                Object.defineProperty(Model, name, definition);
             }
         }
-        Object.freeze(result[className]);
-        return result[className];
+        Object.freeze(Model);
+        return Model;
     }
 
     constructor(
-        oldState = null,
-        serializedValue = null,
-        serializeOptions = SERIALIZE_OPTIONS,
+        oldState: _AbstractEnumModel | null = null,
+        serializedValue: TSerializedInput | null = null,
+        serializeOptions: SerializationOptions = SERIALIZE_OPTIONS,
     ) {
-        super(oldState);
+        super(oldState as _BaseSimpleModel | null);
+        const ctor = this.constructor as typeof _AbstractEnumModel;
 
         // A primal state will have a value of or defaultValue or undefined.
         Object.defineProperty(this, "_value", {
             value:
                 this[OLD_STATE] === null
-                    ? this.constructor.defaultValue
-                    : this[OLD_STATE].value,
+                    ? ctor.defaultValue
+                    : (this[OLD_STATE] as unknown as _AbstractEnumModel).value,
             configurable: true,
             writable: true,
         });
@@ -92,26 +104,26 @@ export class _AbstractEnumModel extends _BaseSimpleModel {
                     serializedValue,
                     serializeOptions,
                 ];
-            return this.metamorphose();
+            return this.metamorphose() as this;
         }
     }
 
-    *metamorphoseGen() {
+    *metamorphoseGen(): Generator<ResourceRequirement, this, unknown> {
         if (!this.isDraft)
             throw new Error(
                 `LIFECYCLE ERROR ${this} must be in draft mode to metamorphose.`,
             );
         // compare
-        if (this[OLD_STATE] && this[OLD_STATE].value === this._value)
+        if (this[OLD_STATE] && (this[OLD_STATE] as unknown as _AbstractEnumModel).value === this._value)
             // Has NOT changed!
-            return this[OLD_STATE];
+            return this[OLD_STATE] as unknown as this;
 
         // Has changed!
-        delete this[OLD_STATE];
+        delete (this as {[OLD_STATE]?: unknown})[OLD_STATE];
         if (this[_PRIMARY_SERIALIZED_VALUE])
-            this[DESERIALIZE](...this[_PRIMARY_SERIALIZED_VALUE]);
+            this[DESERIALIZE](...(this[_PRIMARY_SERIALIZED_VALUE] as [TSerializedInput, SerializationOptions]));
         // Don't keep this
-        delete this[_PRIMARY_SERIALIZED_VALUE];
+        delete (this as {[_PRIMARY_SERIALIZED_VALUE]?: unknown})[_PRIMARY_SERIALIZED_VALUE];
         Object.defineProperty(this, "_value", {
             // Not freezing/changing this._value as it is considered "outside"
             // of the metamodel realm i.e. it's not a _BaseModel or part of
@@ -132,15 +144,15 @@ export class _AbstractEnumModel extends _BaseSimpleModel {
         return this;
     }
 
-    get value() {
+    get value(): string {
         return this._value;
     }
 
-    set value(value) {
+    set value(value: string) {
         this.set(value);
     }
 
-    set(value) {
+    set(value: string): void {
         if (!this.isDraft)
             // required: so this can be turned into a draft on demand
             throw immutableWriteError(
@@ -149,8 +161,8 @@ export class _AbstractEnumModel extends _BaseSimpleModel {
                         `${this} is immutable, not a draft, can't set value.`,
                 ),
             );
-
-        if (!this.constructor.enumItems.includes(value))
+        const ctor = this.constructor as typeof _AbstractEnumModel;
+        if (!ctor.enumItems.includes(value))
             throw new Error(
                 `VALIDATION ERROR ${this}: "${value}" is not a valid member value.`,
             );
@@ -161,11 +173,10 @@ export class _AbstractEnumModel extends _BaseSimpleModel {
         return this.value;
     }
 
-    [SERIALIZE](/*options=SERIALIZE_OPTIONS*/) {
+    [SERIALIZE](_options: SerializationOptions = SERIALIZE_OPTIONS): SerializationResult {
         return [[], `${this.value}`];
     }
-    [DESERIALIZE](serializedValue /*, options=SERIALIZE_OPTIONS*/) {
-        this.value = serializedValue;
-        return [];
+    [DESERIALIZE](serializedValue: TSerializedInput, _options: SerializationOptions = SERIALIZE_OPTIONS): void {
+        this.value = serializedValue as string;
     }
 }

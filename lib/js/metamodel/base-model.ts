@@ -432,7 +432,7 @@ export abstract class _BaseModel {
     public abstract get(key?: string | number): unknown;
 
     // Each model will have to define this.
-    get value() {
+    get value(): unknown {
         throw new Error(`NOT IMPLEMENTED get value in ${this}.`);
     }
 
