@@ -102,7 +102,15 @@ export class _PotentialWriteProxy {
     static GET = GET;
     // jshint ignore: end
     static isProxy = isProxy;
-    static create(parent, immutable, key = null) {
+
+    // Instance properties set in constructor
+    declare immutable: _BaseModel;
+    declare parent: _BaseModel;
+    declare key: string | null;
+    declare draft: _BaseModel | null;
+    declare proxy: _BaseModel;
+
+    static create(parent: _BaseModel, immutable: _BaseModel, key: string | null = null): _BaseModel {
         // FIXME ?? could return immutable[_POTENTIAL_WRITE_PROXY_GET_IMMUTABLE]
         // WHY WOULD THIS HAPPEN?
         if (_PotentialWriteProxy.isProxy(immutable)) return immutable;
@@ -113,17 +121,18 @@ export class _PotentialWriteProxy {
         // Do not proxy and trap the wrapped type, parent takes over
         // that role. The wrapped child is not proxified as the wrapper
         // takes care of all the duties.
+        const parentAny = parent as unknown as Record<string | symbol, unknown>;
         if (
-            parent[IS_WRAPPER_TYPE] &&
-            immutable instanceof parent.WrappedType &&
-            unwrapPotentialWriteProxy(parent).wrapped === immutable
+            parentAny[IS_WRAPPER_TYPE] &&
+            immutable instanceof (parentAny.WrappedType as new (...args: unknown[]) => _BaseModel) &&
+            (unwrapPotentialWriteProxy(parent) as unknown as Record<string, unknown>).wrapped === immutable
         )
             return immutable;
 
         if (_PotentialWriteProxy.isProxy(parent)) {
             if (
                 immutable !==
-                parent[_PotentialWriteProxy.GET_IMMUTABLE].get(key)
+                (parentAny[_PotentialWriteProxy.GET_IMMUTABLE] as _BaseModel).get(key!)
             ) {
                 // This is a bit wild, however, see the comment at the
                 // bottom of _handlerGet for when this would be triggered.
@@ -132,14 +141,14 @@ export class _PotentialWriteProxy {
                 );
             }
 
-            if (!parent.hasOwn(key))
+            if (!(parentAny.hasOwn as (k: string) => boolean)(key!))
                 // parent won't create a draft for this
                 return immutable;
 
             // We must not return a proxy if the respective draft already exists
-            if (parent[_HAS_DRAFT_FOR_OLD_STATE_KEY](key))
+            if ((parentAny[_HAS_DRAFT_FOR_OLD_STATE_KEY] as (k: string | null) => boolean)(key))
                 // This is the reason why this check cant be in the _PotentialWriteProxy constructor
-                return parent[_GET_DRAFT_FOR_OLD_STATE_KEY](key);
+                return (parentAny[_GET_DRAFT_FOR_OLD_STATE_KEY] as (k: string | null) => _BaseModel)(key);
 
             // Parent is not a draft, hence it's a proxy of an immutable
             // and thus we got to go via key!
@@ -154,7 +163,7 @@ export class _PotentialWriteProxy {
         );
     }
 
-    createMethodProxy(fnName, fn) {
+    createMethodProxy(fnName: string, fn: Function): Function {
         if (_PotentialWriteProxy.isProxy(fn)) {
             // I don't actually think this case happens, but if it does, it
             // will be interesting to observe the case!
@@ -169,16 +178,18 @@ export class _PotentialWriteProxy {
         const getterAPIs = new Set([
             "get" /* possibly 'slice', but requires attention below? */,
         ]);
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const self = this;
         const handler = {
-            get: function (targetFn, prop, receiver) {
+            get: function (targetFn: Function, prop: string | symbol, receiver: unknown): unknown {
                 // assert targetFn === fn
                 // so, unlikely/seldom that we use a getter on it, maybe for
                 // fn.name ... but event that unlikely required!
-                if (prop === _PotentialWriteProxy._IS_PROXY) return true;
+                if (prop === _PotentialWriteProxy.IS_PROXY) return true;
                 if (prop === _PotentialWriteProxy.GET) return targetFn;
                 return Reflect.get(targetFn, prop, receiver);
             },
-            apply: function (targetFn, thisArgument, argumentsList) {
+            apply: function (targetFn: Function, thisArgument: _BaseModel, argumentsList: unknown[]): unknown {
                 // assert targetFn === fn
                 // Could be a setter or getter method!
                 // There won't be a confused setter that also acts as a getter
@@ -192,20 +203,20 @@ export class _PotentialWriteProxy {
                 //      doesn't return anything that must be proxified on the way
                 //      out, much more, proxy connections are broken up by splice.
                 // NOTE: "slice" would be like get
-                const draftOrThis = this.hasDraft()
-                    ? this.getDraft()
+                const draftOrThis = self.hasDraft()
+                    ? self.getDraft()
                     : thisArgument;
-                let result;
+                let result: unknown;
                 try {
                     result = Reflect.apply(
                         targetFn,
                         draftOrThis,
                         argumentsList,
                     );
-                } catch (error) {
-                    if (isImmutableWriteError(error)) {
+                } catch (error: unknown) {
+                    if (isImmutableWriteError(error as Error)) {
                         // This is mutating, called on an immmutable!
-                        const draft = this.getDraft();
+                        const draft: _BaseModel = self.getDraft();
                         return Reflect.apply(targetFn, draft, argumentsList);
                     } else throw error;
                 }
@@ -234,7 +245,7 @@ export class _PotentialWriteProxy {
                         `UNKOWN GETTER API don't know how to get arguments for method "${fnName}" ` +
                             `from parent ${thisArgument} arguments: ${argumentsList.join(", ")}.`,
                     );
-                const key = argumentsList[0];
+                const key = argumentsList[0] as string;
                 // assert:
                 // if(result !== thisArgument[fnName](key)) {
                 //     throw new Error(`KEY FINDING ERROR don't know how to get key for ${result} `
@@ -273,7 +284,7 @@ export class _PotentialWriteProxy {
                 // if(!this[_LOCAL_PROXIES].byProxy.has(proxy))
                 //     return false;
 
-                return this.getPotentialWriteProxy(key, result);
+                return self.getPotentialWriteProxy(key, result as _BaseModel);
             },
         };
         return new Proxy(fn, {
@@ -282,14 +293,14 @@ export class _PotentialWriteProxy {
         });
     }
 
-    constructor(parent, immutable, key = null) {
+    constructor(parent: _BaseModel, immutable: _BaseModel, key: string | null = null) {
         this.immutable = immutable;
         this.parent = parent;
         if (
             key !== null &&
             (!_PotentialWriteProxy.isProxy(parent) ||
                 // get would also raise Key Error
-                parent[_PotentialWriteProxy.GET_IMMUTABLE].get(key) !==
+                ((parent as unknown as Record<symbol, _BaseModel>)[_PotentialWriteProxy.GET_IMMUTABLE])!.get(key!) !==
                     immutable)
         )
             throw new Error(
@@ -312,19 +323,21 @@ export class _PotentialWriteProxy {
         // is honest (returns `this`). The static `create` factory now returns
         // `.proxy` — which is the only public entry point.
     }
-    hasDraft() {
+    hasDraft(): boolean {
         if (this.draft !== null) return true;
+        const p = this.parent as unknown as Record<string | symbol, unknown>;
         if (this.key !== null)
-            return this.parent[_HAS_DRAFT_FOR_OLD_STATE_KEY](this.key); // assert(this.parent.isDraft)
-        else return this.parent[_HAS_DRAFT_FOR_PROXY](this.proxy);
+            return (p[_HAS_DRAFT_FOR_OLD_STATE_KEY] as (k: string) => boolean)(this.key); // assert(this.parent.isDraft)
+        else return (p[_HAS_DRAFT_FOR_PROXY] as (proxy: _BaseModel) => boolean)(this.proxy);
     }
     // Called when a mutating function (set, delete) triggers ImmutableWriteError!
-    getDraft() {
+    getDraft(): _BaseModel {
         if (this.draft !== null) return this.draft;
         // This depends a lot on the parents nature.
         // was the proxy created from within the draft parent?
         // i.e. parent is a draft
-        let draft = false;
+        const p = this.parent as unknown as Record<string | symbol, unknown>;
+        let draft: _BaseModel | false = false;
         if (this.key !== null)
             // was the proxy created from a proxy of an immutable
             // i.e. parent is a proxy
@@ -332,10 +345,10 @@ export class _PotentialWriteProxy {
             // actually => immutable.getDraftFor(this.key); will trigger itself ImmutableWriteError
             // but we can use parent[_POTENTIAL_WRITE_PROXY_GET]getDraftFor(this.key);
             // which will trigger or not!
-            draft = this.parent[_GET_DRAFT_FOR_OLD_STATE_KEY](this.key);
+            draft = (p[_GET_DRAFT_FOR_OLD_STATE_KEY] as (k: string) => _BaseModel | false)(this.key);
         else if (this.parent.isDraft)
             // => may have changed if parent[_IS_POTENTIAL_WRITE_PROXY]
-            draft = this.parent[_GET_DRAFT_FOR_PROXY](this.proxy);
+            draft = (p[_GET_DRAFT_FOR_PROXY] as (proxy: _BaseModel) => _BaseModel | false)(this.proxy);
 
         // if(! parent ) => disconnected = true! always
         // let disconnected = false;
@@ -370,15 +383,15 @@ export class _PotentialWriteProxy {
         return this.draft;
     }
 
-    getPotentialWriteProxy(key, item) {
+    getPotentialWriteProxy(key: string, item: _BaseModel): _BaseModel {
         // Must use this.proxy as parent here, in order to trigger
         // the isImmutableWriteError trap.
         // NOTE: assert item === this.immutable.get('key')
 
         // _PotentialWriteProxy.create:
-        return this.constructor.create(this.proxy, item, key);
+        return (this.constructor as typeof _PotentialWriteProxy).create(this.proxy, item, key);
     }
-    _handlerGet(target, prop, receiver) {
+    _handlerGet(target: _BaseModel, prop: string | symbol, receiver: unknown): unknown {
         // assert target === immutable
         if (prop === _PotentialWriteProxy.IS_PROXY) return true;
         if (prop === _PotentialWriteProxy.GET_IMMUTABLE) return this.immutable;
@@ -391,15 +404,16 @@ export class _PotentialWriteProxy {
         // this way getting i.e. the prop 'length' from this will not
         // query the old immutable after e.g. a _AbstractList.push(...)
         // Possibly, there are other subtle bugs like this.
+        const r = receiver as Record<symbol, unknown>;
         const receiver_ =
-                (receiver[_PotentialWriteProxy.IS_PROXY] &&
-                    receiver[_PotentialWriteProxy.GET_DRAFT]) ||
+                (r[_PotentialWriteProxy.IS_PROXY] &&
+                    r[_PotentialWriteProxy.GET_DRAFT]) ||
                 receiver,
             result = Reflect.get(target, prop, receiver_);
         if (typeof result === "function") {
             // TODO: return proxy to trap function call
             //       and possibly catch the isImmutableWriteError
-            return this.createMethodProxy(prop, result);
+            return this.createMethodProxy(prop as string, result);
         }
 
         // FIXME: not sure about this!
@@ -423,21 +437,21 @@ export class _PotentialWriteProxy {
     }
     // set case is just for completeness, I don't think it's yet actually
     // used, but it could.
-    _handlerSet(target, propertyKey, value, receiver) {
+    _handlerSet(target: _BaseModel, propertyKey: string, value: unknown, receiver: unknown): boolean {
         // assert target === immutable
         const draftOrTarget = this.hasDraft() ? this.getDraft() : target;
         try {
-            return Reflect.set(draftOrTarget, propertyKey, value, receiver);
-        } catch (error) {
-            if (isImmutableWriteError(error)) {
+            return Reflect.set(draftOrTarget as object, propertyKey, value, receiver);
+        } catch (error: unknown) {
+            if (isImmutableWriteError(error as Error)) {
                 // === trying to write to immutable
                 // this detects the write, everything else may as well
                 // be any read, even of un-important values or of unrelated
                 // calculations etc.
-                const draft = this.getDraft();
+                const draft = this.getDraft() as object;
                 // Leaving out receiver, don't think it's relevant here,
                 // but I could be wrong!
-                return Reflect.set(draft, propertyKey, value /*, receiver*/);
+                return Reflect.set(draft, propertyKey, value);
             }
             // re-raise, not our business!
             throw error;

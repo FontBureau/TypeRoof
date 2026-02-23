@@ -33,7 +33,7 @@ export class Path {
      * relative, and if it is '' the part is explicitly absolute
      * otherwise we don't know in here.
      */
-    static sanitize(...rawPathParts) {
+    static sanitize(...rawPathParts: (string | number)[]) {
         const pathParts = rawPathParts
                 .map((part) =>
                     typeof part !== "number"
@@ -100,31 +100,32 @@ export class Path {
         }
         return cleanParts;
     }
-    static stringSanitize(str) {
+    static stringSanitize(str: string): string {
         return this.fromString(str).toString();
     }
-    constructor(...pathParts) {
-        const [firstPart, ...parts] = this.constructor.sanitize(...pathParts),
-            // this.constructor.PARENT is not interesting in here as it
+    constructor(...pathParts: (string | number)[]) {
+        const ctor = this.constructor as typeof Path;
+        const [firstPart, ...parts] = ctor.sanitize(...pathParts),
+            // ctor.PARENT is not interesting in here as it
             // won't change serialisation
             explicitAnchoring =
-                firstPart === this.constructor.ROOT ||
-                firstPart === this.constructor.RELATIVE
+                firstPart === ctor.ROOT ||
+                firstPart === ctor.RELATIVE
                     ? firstPart
                     : null;
         if (pathParts.length && explicitAnchoring === null)
             // that's a regular part
-            parts.unshift(firstPart);
+            parts.unshift(firstPart!);
         Object.defineProperty(this, "explicitAnchoring", {
             value: explicitAnchoring,
             enumerable: true,
         });
         Object.defineProperty(this, "isExplicitlyRelative", {
-            value: explicitAnchoring === this.constructor.RELATIVE,
+            value: explicitAnchoring === ctor.RELATIVE,
             enumerable: true,
         });
         Object.defineProperty(this, "isExplicitlyAbsolute", {
-            value: explicitAnchoring === this.constructor.ROOT,
+            value: explicitAnchoring === ctor.ROOT,
             enumerable: true,
         });
 
@@ -133,57 +134,58 @@ export class Path {
             enumerable: true,
         });
     }
-    static fromParts(...pathParts) {
+    static fromParts(...pathParts: (string | number)[]): Path {
         return new this(...pathParts);
     }
-    static fromString(pathString) {
+    static fromString(pathString: string): Path {
         const splitted =
             pathString === "" ? [] : pathString.split(this.SEPARATOR);
         return this.fromParts(...splitted);
     }
-    fromString(pathString) {
-        return this.constructor.fromString(pathString);
+    fromString(pathString: string): Path {
+        return (this.constructor as typeof Path).fromString(pathString);
     }
-    fromParts(...pathParts) {
-        return this.constructor.fromParts(...pathParts);
+    fromParts(...pathParts: (string | number)[]): Path {
+        return (this.constructor as typeof Path).fromParts(...pathParts);
     }
-    toString(defaultAnchoring = null /*ROOT || RELATIVE || null */) {
+    toString(defaultAnchoring: string | null = null /*ROOT || RELATIVE || null */): string {
+        const ctor = this.constructor as typeof Path;
         if (
             defaultAnchoring !== null &&
-            defaultAnchoring !== this.constructor.RELATIVE &&
-            defaultAnchoring !== this.constructor.ROOT
+            defaultAnchoring !== ctor.RELATIVE &&
+            defaultAnchoring !== ctor.ROOT
         )
             throw new Error(
                 `TYPE ERROR defaultAnchoring must be either null, ` +
-                    `${this.constructor.name}.RELATIVE or ` +
-                    `${this.constructor.name}.ROOT but it is: "${defaultAnchoring}".`,
+                    `${ctor.name}.RELATIVE or ` +
+                    `${ctor.name}.ROOT but it is: "${defaultAnchoring}".`,
             );
         const anchoring =
             this.explicitAnchoring === null
                 ? defaultAnchoring
                 : this.explicitAnchoring;
         if (anchoring === null)
-            return this.parts.join(this.constructor.SEPARATOR);
+            return this.parts.join(ctor.SEPARATOR);
         if (this.parts.length === null) return anchoring;
         return [
-            anchoring === this.constructor.SEPARATOR ? "" : anchoring,
+            anchoring === ctor.SEPARATOR ? "" : anchoring,
             ...this.parts,
-        ].join(this.constructor.SEPARATOR);
+        ].join(ctor.SEPARATOR);
     }
     *[Symbol.iterator]() {
         if (this.explicitAnchoring !== null) yield this.explicitAnchoring;
         yield* this.parts;
     }
-    appendString(pathString) {
+    appendString(pathString: string): Path {
         return this.append(...this.fromString(pathString).parts);
     }
-    append(...pathParts) {
+    append(...pathParts: (string | number)[]): Path {
         return this.fromParts(...this, ...pathParts);
     }
     get isBase() {
         return this.parts.length === 0;
     }
-    slice(from, to) {
+    slice(from: number, to?: number): Path {
         return this.fromParts(
             this.explicitAnchoring || "",
             ...this.parts.slice(from, to),
@@ -194,7 +196,7 @@ export class Path {
             throw new Error("Can't get parent path is a base path.");
         return this.slice(0, -1);
     }
-    startsWith(rootPath) {
+    startsWith(rootPath: Path): boolean {
         const parts = [...this];
         for (const part of rootPath) {
             if (parts.shift() !== part) return false;
@@ -202,14 +204,14 @@ export class Path {
         // Each part of rootPath is at the beginning of this;
         return true;
     }
-    isRootOf(pathOrString) {
+    isRootOf(pathOrString: Path | string): boolean {
         const path =
             typeof pathOrString === "string"
                 ? Path.fromString(pathOrString)
                 : pathOrString;
         return path.startsWith(this);
     }
-    equals(pathOrString) {
+    equals(pathOrString: Path | string): boolean {
         if (pathOrString === this) return true;
         const path =
             typeof pathOrString === "string"
@@ -217,7 +219,7 @@ export class Path {
                 : pathOrString;
         return path.startsWith(this) && this.startsWith(path);
     }
-    toRelative(rootPath) {
+    toRelative(rootPath: Path): Path {
         if (!this.startsWith(rootPath))
             throw new Error(
                 `VALUE ERROR ${this.constructor.name}.toRelative ` +
