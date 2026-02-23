@@ -8,6 +8,11 @@ export class Path {
     static PARENT = "..";
     // jshint ignore: end
 
+    declare readonly parts: readonly string[];
+    declare readonly explicitAnchoring: string | null;
+    declare readonly isExplicitlyRelative: boolean;
+    declare readonly isExplicitlyAbsolute: boolean;
+
     /* Without actually knowing the model structure, the save
      * way to do this is to remove single dot path parts and
      * reduce consecutive slashes into single slashes.

@@ -142,12 +142,12 @@ import { Path } from './path.ts';
 export { Path };
 
 import {
-    IS_CONTAINER, getAllPathsAndValues, _getEntry, getDraftEntry,
+    IS_CONTAINER, getAllPathsAndValues, getDraftEntry,
     getEntry, getValue, _getAllEntries, getModel,
     applyTo, pushEntry, popEntry, spliceEntry, deleteEntry,
 } from './accessors.ts';
 export {
-    IS_CONTAINER, getAllPathsAndValues, _getEntry, getDraftEntry,
+    IS_CONTAINER, getAllPathsAndValues, getDraftEntry,
     getEntry, getValue, _getAllEntries, getModel,
     applyTo, pushEntry, popEntry, spliceEntry, deleteEntry,
 };
