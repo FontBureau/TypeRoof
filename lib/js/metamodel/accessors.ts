@@ -36,12 +36,7 @@ function _getEntry(
                     throw new Error(
                         `VALUE ERROR container has no method "${fnName}" at "${part}" in path: ${pathInstance.toString()}.`,
                     );
-                const result = fn(part);
-                if (!(result instanceof _BaseModel))
-                    throw new Error(
-                        `VALUE ERROR expected _BaseModel at "${part}" in path: ${pathInstance.toString()}, got ${typeof result}.`,
-                    );
-                return result;
+                return fn.call(accum, part) as _BaseModel;
             },
             state,
         );
