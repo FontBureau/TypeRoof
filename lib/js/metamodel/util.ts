@@ -116,17 +116,19 @@ export const GET_DRAFT = Symbol("_POTENTIAL_WRITE_PROXY_GET_DRAFT");
 export const GET = Symbol("_POTENTIAL_WRITE_PROXY_GET");
 export const IS_WRAPPER_TYPE = Symbol("IS_WRAPPER_TYPE");
 
-export function isProxy(maybeProxy) {
-    return (maybeProxy && maybeProxy[IS_PROXY]) || false;
+export function isProxy(maybeProxy: unknown): boolean {
+    return (!!maybeProxy && !!(maybeProxy as Record<symbol, unknown>)[IS_PROXY]) || false;
 }
 
-export function unwrapPotentialWriteProxy(maybeProxy, type = null) {
-    if (!isProxy(maybeProxy)) return maybeProxy;
-    if (type === "immutable")
-        return maybeProxy[GET_IMMUTABLE];
-    if (type === "draft")
-        return maybeProxy[GET_DRAFT];
-    return maybeProxy[GET];
+export function unwrapPotentialWriteProxy<T>(
+    maybeProxy: Record<symbol, T> | T,
+    type: "immutable" | "draft" | null = null,
+): T {
+    if (!isProxy(maybeProxy)) return maybeProxy as T;
+    const proxy = maybeProxy as Record<symbol, T>;
+    if (type === "immutable") return proxy[GET_IMMUTABLE];
+    if (type === "draft") return proxy[GET_DRAFT];
+    return proxy[GET];
 }
 
 // generic helper in metamorphose
