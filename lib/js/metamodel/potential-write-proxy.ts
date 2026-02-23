@@ -21,7 +21,7 @@ export const _LOCAL_PROXIES = Symbol("_LOCAL_PROXIES"),
  * it's likely not required;
  * Esecially if item is already a draft, we should not wrap it.
  */
-function _requiresPotentialWriteProxy(item) {
+function _requiresPotentialWriteProxy(item: unknown): item is _BaseModel {
     if (!(item instanceof _BaseModel)) return false;
     // _BaseSimpleModel or _BaseContainerModel
     if (item.isDraft) return false;
@@ -143,11 +143,11 @@ export class _PotentialWriteProxy {
 
             // Parent is not a draft, hence it's a proxy of an immutable
             // and thus we got to go via key!
-            return new _PotentialWriteProxy(parent, immutable, key);
+            return new _PotentialWriteProxy(parent, immutable, key).proxy;
         }
         // can call without the parent.hasDraftFor check
         // as it must get called from within parent in this case!
-        if (parent.isDraft) return new _PotentialWriteProxy(parent, immutable);
+        if (parent.isDraft) return new _PotentialWriteProxy(parent, immutable).proxy;
 
         throw new Error(
             `TYPE ERROR parent must be a draft or a potential write proxy of an immutable.`,
@@ -307,8 +307,10 @@ export class _PotentialWriteProxy {
             get: this._handlerGet.bind(this),
             set: this._handlerSet.bind(this),
         });
-        // This way the actual instance (this) PotentialWriteProxy remains hidden!
-        return this.proxy;
+        // NOTE: The proxy used to be returned from the constructor directly
+        // (`return this.proxy;`). This was refactored so that the constructor
+        // is honest (returns `this`). The static `create` factory now returns
+        // `.proxy` — which is the only public entry point.
     }
     hasDraft() {
         if (this.draft !== null) return true;
