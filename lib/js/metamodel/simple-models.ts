@@ -1,7 +1,13 @@
-import { _AbstractGenericModel } from './generic-model.ts';
-import { _AbstractNumberModel } from './number-model.ts';
+import { _AbstractGenericModel, type GenericModelSetup } from './generic-model.ts';
+import { _AbstractNumberModel, type NumberModelSetup } from './number-model.ts';
 import { _AbstractSimpleOrEmptyModel } from './simple-or-empty-model.ts';
 import { Path } from './path.ts';
+import { SERIALIZE, DESERIALIZE, OLD_STATE, _IS_DRAFT_MARKER } from './base-model.ts';
+import { _PRIMARY_SERIALIZED_VALUE } from './serialization.ts';
+
+// Re-export so TypeScript can name these in declaration output
+export { SERIALIZE, DESERIALIZE, OLD_STATE, _IS_DRAFT_MARKER, _PRIMARY_SERIALIZED_VALUE };
+export type { GenericModelSetup, NumberModelSetup };
 
 export const AnyModel = _AbstractGenericModel.createClass("AnyModel"),
     IntegerModel = _AbstractNumberModel.createClass("IntegerModel", {

@@ -23,7 +23,7 @@ import {
 type NumberValidateFN = (value: number) => [boolean, string | null];
 type NumberSanitizeFN = (value: number) => [number | null, string | null];
 
-interface NumberModelSetup {
+export interface NumberModelSetup {
     min?: number;
     max?: number;
     toFixedDigits?: number;

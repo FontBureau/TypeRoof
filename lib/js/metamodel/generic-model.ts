@@ -25,7 +25,7 @@ type GenericSanitizeFN = (value: unknown) => [unknown, string | null];
 type GenericSerializeFN = (value: unknown, options: SerializationOptions) => TSerializedInput;
 type GenericDeserializeFN = (serializedValue: TSerializedInput, options: SerializationOptions) => unknown;
 
-interface GenericModelSetup {
+export interface GenericModelSetup {
     sanitizeFN?: GenericSanitizeFN;
     validateFN?: GenericValidateFN;
     defaultValue?: unknown;

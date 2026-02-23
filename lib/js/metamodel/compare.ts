@@ -310,9 +310,9 @@ export function* rawCompare(oldState: _BaseModel, newState: _BaseModel): Generat
         // oldState is narrowed by instanceof above, newState shares constructor (checked earlier)
         const newList = newState as _AbstractListModel;
         for (const [newKey, newEntry] of newList) {
-            const [newIndex /*message*/] = newList.keyToIndex(newKey) as [number, string];
+            const [newIndex /*message*/] = newList.keyToIndex(newKey) as unknown as [number, string];
             if (newOrder[newIndex] !== undefined) continue;
-            if (oldState.has(newIndex) && oldState.get(newIndex) === newEntry)
+            if (oldState.has(String(newIndex)) && oldState.get(String(newIndex)) === newEntry)
                 newOrder[newIndex] = [EQUALS];
             else
                 // Not found in oldState, filling empty slots in newOrder
@@ -351,8 +351,8 @@ export function* rawCompare(oldState: _BaseModel, newState: _BaseModel): Generat
             }
             if (status === CHANGED) {
                 // There's already an item at that index, so we compare:
-                const oldEntry = oldState.get(index),
-                    newEntry = newList.get(index);
+                const oldEntry = oldState.get(String(index)),
+                    newEntry = newList.get(String(index));
                 for (const [result, data, ...pathParts] of rawCompare(
                     oldEntry,
                     newEntry,

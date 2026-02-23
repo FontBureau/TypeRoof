@@ -71,7 +71,7 @@ export function topologicalSortKahn(
     return topoList;
 }
 
-interface HasDependencies {
+export interface HasDependencies {
     dependencies: Iterable<string> & { size: number };
 }
 
