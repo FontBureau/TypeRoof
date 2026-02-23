@@ -1,6 +1,7 @@
 import { _AbstractGenericModel } from './generic-model.ts';
 import { _AbstractNumberModel } from './number-model.ts';
 import { _AbstractSimpleOrEmptyModel } from './simple-or-empty-model.ts';
+import { _BaseSimpleModel } from './base-model.ts';
 import { Path } from './path.ts';
 
 export const AnyModel = _AbstractGenericModel.createClass("AnyModel"),
@@ -40,7 +41,7 @@ export const AnyModel = _AbstractGenericModel.createClass("AnyModel"),
             serializedString /*, options=SERIALIZE_OPTIONS*/,
         ) {
             const falseSet = new Set(["", "0", "false", "False", "FALSE"]);
-            return !falseSet.has(serializedString);
+            return !falseSet.has(serializedString as string);
         },
     });
 /**
@@ -81,14 +82,14 @@ Object.defineProperties(BooleanDefaultTrueModel, {
 });
 Object.freeze(BooleanDefaultTrueModel);
 export const StringModel = _AbstractGenericModel.createClass("StringModel", {
-        sanitizeFN: function (rawValue) {
+        sanitizeFN: function (rawValue: unknown) {
             if (typeof rawValue === "string") return [rawValue, null];
             try {
-                return [`${rawValue.toString()}`, null];
-            } catch (error) {
+                return [`${(rawValue as {toString(): string}).toString()}`, null];
+            } catch (error: unknown) {
                 return [
                     null,
-                    `Can't stringify rawValue with message: ${error.message}`,
+                    `Can't stringify rawValue with message: ${(error as Error).message}`,
                 ];
             }
         },
@@ -128,13 +129,15 @@ export const PathModel = _AbstractGenericModel.createClass("PathModel", {
                     `constructor name: ${value?.constructor.name}).`,
             ];
         },
-        serializeFN: function (value /*, options=SERIALIZE_OPTIONS*/) {
-            return value.toString();
+        serializeFN: function (value: unknown /*, options=SERIALIZE_OPTIONS*/) {
+            return (value as Path).toString();
         },
         deserializeFN: function (
             serializedString /*, options=SERIALIZE_OPTIONS*/,
         ) {
-            return Path.fromString(serializedString);
+            return Path.fromString(serializedString as string);
         },
     });
-export const PathModelOrEmpty = _AbstractSimpleOrEmptyModel.createClass(PathModel);
+export const PathModelOrEmpty = _AbstractSimpleOrEmptyModel.createClass(
+    PathModel as unknown as _BaseSimpleModel,
+);
