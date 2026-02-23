@@ -42,7 +42,11 @@ export class ValueLink extends _BaseLink {
 }
 
 export class FallBackValue {
-    constructor(primaryName, fallBackName, Model) {
+    declare public readonly Model: typeof _BaseModel;
+    declare public readonly primaryName: string;
+    declare public readonly fallBackName: string;
+    declare public readonly dependencies: FreezableSet<string>;
+    constructor(primaryName: string, fallBackName: string, Model: typeof _BaseModel) {
         Object.defineProperty(this, "Model", {
             value: Model,
         });
@@ -68,7 +72,10 @@ export class FallBackValue {
  * , ['activeLayoutKey', new ForeignKey('availableLayouts', ForeignKey.NOT_NULL, ForeignKey.SET_DEFAULT_FIRST)]
  */
 export class InternalizedDependency {
-    constructor(dependencyName, Model) {
+    declare public readonly Model: typeof _BaseModel;
+    declare public readonly dependencyName: string;
+    declare public readonly dependencies: FreezableSet<string>;
+    constructor(dependencyName: string, Model: typeof _BaseModel) {
         Object.defineProperty(this, "Model", {
             value: Model,
         });
@@ -89,17 +96,20 @@ export class InternalizedDependency {
 
 // ['availableActorTypes', new StaticDependency('availableActorTypes', availableActorTypes)]
 export class StaticDependency {
-    constructor(dependencyName, state, Model = _NOTDEF) {
+    declare public readonly dependencyName: string;
+    declare public readonly state: _BaseModel;
+    declare public readonly Model: typeof _BaseModel | undefined;
+    constructor(dependencyName: string, state: unknown, Model: typeof _BaseModel | symbol = _NOTDEF) {
         Object.defineProperty(this, "dependencyName", {
             value: dependencyName,
         });
         if (!(state instanceof _BaseModel))
             throw new Error(
-                `TYPE ERROR state (${state.toString()}) must be a _BaseModel in ${this}.`,
+                `TYPE ERROR state (${state}) must be a _BaseModel in ${this}.`,
             );
         if (state.isDraft)
             throw new Error(
-                `VALUE ERROR state (${state.toString()}) must be immutable, but it is a draft in ${this}.`,
+                `VALUE ERROR state (${state}) must be immutable, but it is a draft in ${this}.`,
             );
         Object.defineProperty(this, "state", {
             value: state,
@@ -110,10 +120,10 @@ export class StaticDependency {
         // state must be an instance of it.
         // Also, for the static function createWithInternalizedDependency
         // Model is required.
-        if (Model !== _NOTDEF) {
+        if (typeof Model === "function") {
             if (!(state instanceof Model))
                 throw new Error(
-                    `TYPE ERROR state (${state.toString()}) must be a ${Model.name} in ${this}.`,
+                    `TYPE ERROR state (${state}) must be a ${Model.name} in ${this}.`,
                 );
             Object.defineProperty(this, "Model", {
                 value: Model,
@@ -161,15 +171,26 @@ export class StaticDependency {
      * )
      */
     static createWithInternalizedDependency(
-        dependencyName,
-        ...args /* localName?, Model, state */
-    ) {
+        dependencyName: string,
+        localName: string,
+        Model: typeof _BaseModel,
+        state: _BaseModel,
+    ): [StaticDependency, [string, InternalizedDependency]];
+    static createWithInternalizedDependency(
+        dependencyName: string,
+        Model: typeof _BaseModel,
+        state: _BaseModel,
+    ): [StaticDependency, [string, InternalizedDependency]];
+    static createWithInternalizedDependency(
+        dependencyName: string,
+        ...args: unknown[]
+    ): [StaticDependency, [string, InternalizedDependency]] {
         const [localName, Model, state] =
             typeof args[0] === "string"
                 ? // called with four arguments
-                  args
+                  args as [string, typeof _BaseModel, _BaseModel]
                 : // called with three arguments
-                  [dependencyName, ...args]; // localName === dependencyName
+                  [dependencyName, ...args] as [string, typeof _BaseModel, _BaseModel];
         return [
             new this(dependencyName, state, Model),
             [localName, new InternalizedDependency(dependencyName, Model)],
