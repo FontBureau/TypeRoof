@@ -1,7 +1,6 @@
 import { _AbstractGenericModel } from './generic-model.ts';
 import { _AbstractNumberModel } from './number-model.ts';
 import { _AbstractSimpleOrEmptyModel } from './simple-or-empty-model.ts';
-import { _BaseSimpleModel } from './base-model.ts';
 import { Path } from './path.ts';
 
 export const AnyModel = _AbstractGenericModel.createClass("AnyModel"),
@@ -138,6 +137,4 @@ export const PathModel = _AbstractGenericModel.createClass("PathModel", {
             return Path.fromString(serializedString as string);
         },
     });
-export const PathModelOrEmpty = _AbstractSimpleOrEmptyModel.createClass(
-    PathModel as unknown as _BaseSimpleModel,
-);
+export const PathModelOrEmpty = _AbstractSimpleOrEmptyModel.createClass(PathModel);
