@@ -48,23 +48,28 @@ import { getEntry, getAllPathsAndValues } from './accessors.ts';
 // in the array but has another index.
 
 class CompareStatus {
-    constructor(name) {
+    declare readonly name: string;
+    constructor(name: string) {
         this.name = name;
         Object.freeze(this);
     }
-    toString() {
+    toString(): string {
         return `[compare ${this.name}]`;
     }
 }
-export const COMPARE_STATUSES = Object.freeze(
+export const COMPARE_STATUSES: Readonly<Record<"EQUALS" | "CHANGED" | "NEW" | "DELETED" | "MOVED" | "LIST_NEW_ORDER", CompareStatus>> = Object.freeze(
     Object.fromEntries(
         ["EQUALS", "CHANGED", "NEW", "DELETED", "MOVED", "LIST_NEW_ORDER"].map(
             (name) => [name, new CompareStatus(name)],
         ),
     ),
-);
+) as Record<"EQUALS" | "CHANGED" | "NEW" | "DELETED" | "MOVED" | "LIST_NEW_ORDER", CompareStatus>;
 
-export function* rawCompare(oldState, newState) {
+type NewOrderData = readonly (readonly [CompareStatus, ...number[]])[];
+type CompareResultEntry = [CompareStatus, NewOrderData | null, ...string[]];
+type ComparisonEntry = [CompareStatus, NewOrderData | null, Path];
+
+export function* rawCompare(oldState: _BaseModel, newState: _BaseModel): Generator<CompareResultEntry> {
     if (!(oldState instanceof _BaseModel) || !(newState instanceof _BaseModel))
         throw new Error(
             `TYPE ERROR oldState ${oldState} and ` +
@@ -97,7 +102,7 @@ export function* rawCompare(oldState, newState) {
 
     if (
         oldState instanceof _AbstractDynamicStructModel &&
-        oldState.WrappedType !== newState.WrappedType
+        oldState.WrappedType !== (newState as _AbstractDynamicStructModel).WrappedType
     ) {
         // This could maybe be a stronger indicator about the change of Type
         // as it requires a changed interface. Using NEW.
@@ -123,8 +128,9 @@ export function* rawCompare(oldState, newState) {
     ) {
         // both states are expected to have the same key
 
+        const newContainer = newState as _AbstractStructModel | _AbstractDynamicStructModel;
         for (const [key, oldEntry] of oldState.allEntries()) {
-            const newEntry = newState.get(key);
+            const newEntry = newContainer.get(key);
 
             // FIXME: require more generic handling of possibly null entries
             //        however, currently it only applies to ForeignKey related
@@ -245,9 +251,9 @@ export function* rawCompare(oldState, newState) {
         // Let's say they are consumend one by one! If oldState had two
         // entries of a kind and newState has three: []
 
-        const newOrder = [],
+        const newOrder: [CompareStatus, ...number[]][] = [],
             //  , seen = new Map()
-            oldFoundIndexes = new Set();
+            oldFoundIndexes = new Set<number>();
         // for(const [oldIndex, oldEntry] of oldState) {
         //     const startIndex = seen.get(newEntry)
         //       , newIndex = newState.value.indexOf(oldEntry, startIndex)
@@ -301,8 +307,10 @@ export function* rawCompare(oldState, newState) {
         //     // there's a entry of newState in oldState at oldIndex
         //     oldFoundIndexes.add(oldIndex);
         // }
-        for (const [newKey, newEntry] of newState) {
-            const [newIndex /*message*/] = newState.keyToIndex(newKey);
+        // oldState is narrowed by instanceof above, newState shares constructor (checked earlier)
+        const newList = newState as _AbstractListModel;
+        for (const [newKey, newEntry] of newList) {
+            const [newIndex /*message*/] = newList.keyToIndex(newKey) as [number, string];
             if (newOrder[newIndex] !== undefined) continue;
             if (oldState.has(newIndex) && oldState.get(newIndex) === newEntry)
                 newOrder[newIndex] = [EQUALS];
@@ -344,7 +352,7 @@ export function* rawCompare(oldState, newState) {
             if (status === CHANGED) {
                 // There's already an item at that index, so we compare:
                 const oldEntry = oldState.get(index),
-                    newEntry = newState.get(index);
+                    newEntry = newList.get(index);
                 for (const [result, data, ...pathParts] of rawCompare(
                     oldEntry,
                     newEntry,
@@ -366,10 +374,12 @@ export function* rawCompare(oldState, newState) {
         oldState instanceof _AbstractOrderedMapModel
         /* || oldState instanceof _AbstractMapModel*/
     ) {
+        // oldState is narrowed by instanceof above, newState shares constructor (checked earlier)
+        const newMap = newState as _AbstractOrderedMapModel;
         for (const [key /*oldEntry*/] of oldState) {
-            if (!newState.has(key)) yield [DELETED, null, key];
+            if (!newMap.has(key)) yield [DELETED, null, key];
         }
-        for (const [key, newEntry] of newState) {
+        for (const [key, newEntry] of newMap) {
             if (!oldState.has(key)) {
                 yield [NEW, null, key];
                 continue;
@@ -397,14 +407,21 @@ export function* rawCompare(oldState, newState) {
     throw new Error(`VALUE ERROR Don't know how to compare ${oldState}`);
 }
 
-export function* compare(oldState, newState) {
+export function* compare(oldState: _BaseModel, newState: _BaseModel): Generator<ComparisonEntry> {
     for (const [status, data, ...pathParts] of rawCompare(oldState, newState))
         yield [status, data, Path.fromParts("/", ...pathParts)];
 }
 
 export class StateComparison {
     static COMPARE_STATUSES = COMPARE_STATUSES; // jshint ignore:line
-    constructor(oldState, newState) {
+
+    declare readonly oldState: _BaseModel | null;
+    declare readonly newState: _BaseModel;
+    declare readonly compareResult: readonly ComparisonEntry[];
+    declare private _compareDetailsMap: FreezableMap<string, Map<CompareStatus, unknown>> | null;
+    declare private _rootChangedMap: FreezableMap<string, _BaseModel> | null;
+
+    constructor(oldState: _BaseModel | null, newState: _BaseModel) {
         Object.defineProperties(this, {
             oldState: {
                 value: oldState,
@@ -426,14 +443,14 @@ export class StateComparison {
         this._rootChangedMap = null;
     }
     static createInitial(
-        newState,
-        dependencies = null,
-        anchoring = Path.ROOT /* null || Path.ROOT || Path.RELATIVE */,
-    ) {
+        newState: _BaseModel,
+        dependencies: Map<string, string> | null = null,
+        anchoring: string = Path.ROOT /* null || Path.ROOT || Path.RELATIVE */,
+    ): InitialStateComparison {
         return new InitialStateComparison(newState, dependencies, anchoring);
     }
 
-    map(fn) {
+    map<T>(fn: (entry: ComparisonEntry) => T): T[] {
         return this.compareResult.map(fn);
     }
     *[Symbol.iterator]() {
@@ -444,7 +461,7 @@ export class StateComparison {
         for (const [status, data, path] of this) {
             if (status === COMPARE_STATUSES.LIST_NEW_ORDER) {
                 console.log(`    ${status}: ${path} ;;`);
-                for (const [i, [st, ...val]] of data.entries())
+                for (const [i, [st, ...val]] of data!.entries())
                     console.log(`        #${i} ${st} data:`, ...val, ";;");
             } else
                 console.log(
@@ -462,7 +479,7 @@ export class StateComparison {
             const path = pathInstance.toString();
             if (!compareDetailsMap.has(path))
                 compareDetailsMap.set(path, new Map());
-            compareDetailsMap.get(path).set(status, data);
+            (compareDetailsMap.get(path) as Map<CompareStatus, unknown>).set(status, data);
         }
         Object.defineProperty(this, "_compareDetailsMap", {
             value: Object.freeze(compareDetailsMap),
@@ -505,21 +522,21 @@ export class StateComparison {
         }
         return changedMap;
     }
-    getChangedMap(dependenciesMap = null, toLocal = true) {
+    getChangedMap(dependenciesMap: Map<string, string> | null = null, toLocal: boolean = true): FreezableMap<string, _BaseModel> {
         if (this._rootChangedMap === null)
             Object.defineProperty(this, "_rootChangedMap", {
                 value: Object.freeze(this._getRootChangedMap()),
             });
-        if (dependenciesMap === null) return this._rootChangedMap;
-        const filteredChangedMap = new FreezableMap();
+        if (dependenciesMap === null) return this._rootChangedMap!;
+        const filteredChangedMap = new FreezableMap<string, _BaseModel>();
         for (const [rootPath, localPath] of dependenciesMap.entries()) {
-            if (!this._rootChangedMap.has(rootPath)) continue;
+            if (!this._rootChangedMap!.has(rootPath)) continue;
             filteredChangedMap.set(
                 toLocal ? localPath : rootPath,
-                this._rootChangedMap.get(rootPath),
+                this._rootChangedMap!.get(rootPath) as _BaseModel,
             );
         }
-        return Object.freeze(filteredChangedMap);
+        return Object.freeze(filteredChangedMap) as FreezableMap<string, _BaseModel>;
     }
 
     get isInitial() {
@@ -530,9 +547,9 @@ export class StateComparison {
 // Not exported, accessed via StateComparison.createInitial(...)
 class InitialStateComparison extends StateComparison {
     constructor(
-        newState,
-        dependencies = null,
-        anchoring = Path.ROOT /* null || Path.ROOT || Path.RELATIVE */,
+        newState: _BaseModel,
+        dependencies: Map<string, string> | null = null,
+        anchoring: string = Path.ROOT /* null || Path.ROOT || Path.RELATIVE */,
     ) {
         super(null, newState);
         const compareResultEntries = [],
@@ -542,10 +559,10 @@ class InitialStateComparison extends StateComparison {
                     : // This way it's not guaranteed that the paths do exist
                       // in newState, but it is very quick and only creates
                       // entries for the required dependencies.
-                      Array.from(dependencies.keys()).map(
+                      Array.from(dependencies!.keys()).map(
                           Path.fromString,
                           Path,
-                      );
+                      ) as Path[];
         for (const pathInstance of paths)
             compareResultEntries.push([
                 COMPARE_STATUSES.NEW,
@@ -559,7 +576,7 @@ class InitialStateComparison extends StateComparison {
         });
     }
 
-    _getPathsFromState(state, anchoring = null) {
+    _getPathsFromState(state: _BaseModel, anchoring: string | null = null): Path[] {
         const paths = [];
         for (const [, /*value*/ ...parts] of getAllPathsAndValues(state)) {
             const path =
