@@ -137,8 +137,8 @@ export function* rawCompare(oldState: _BaseModel, newState: _BaseModel): Generat
             //        entries (ValueLink) anyways
 
             // see _getLink
-            const oldIsNull = oldEntry === ForeignKey.NULL,
-                newIsNull = newEntry === ForeignKey.NULL;
+            const oldIsNull = (oldEntry as unknown) === ForeignKey.NULL,
+                newIsNull = (newEntry as unknown) === ForeignKey.NULL;
             if (oldIsNull && !newIsNull) {
                 yield [NEW, null, key];
                 continue;

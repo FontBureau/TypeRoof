@@ -1,14 +1,20 @@
+import type { FreezableMap, FreezableSet } from './base-model.ts';
+import type { CoherenceFunction } from './coherence-function.ts';
+import type { ForeignKey } from './foreign-key.ts';
+import type { _BaseLink, InternalizedDependency, FallBackValue } from './links.ts';
+import type { _BaseModel } from './base-model.ts';
+
 // Set has no well defined order, we can just remove any item.
 // Would be different with an explicitly "OrderedSet".
-function setPop(s) {
-    let item;
+function setPop<T>(s: Set<T>): T {
+    let item: T | undefined;
     // we now know one item, can stop the iterator immediately!
     for (item of s) break;
-    s.delete(item);
-    return item;
+    s.delete(item!);
+    return item!;
 }
 
-function _mapGetOrInit(map, name, init) {
+function _mapGetOrInit<K, V>(map: Map<K, V>, name: K, init: () => V): V {
     let result = map.get(name);
     if (result === undefined) {
         result = init();
@@ -18,8 +24,12 @@ function _mapGetOrInit(map, name, init) {
 }
 
 // CAUTION noDepsSet and dependantsMap will be changed!
-export function topologicalSortKahn(noDepsSet, requirementsMap, dependantsMap) {
-    const topoList = []; // L ← Empty list that will contain the sorted elements (a topologically sorted order)
+export function topologicalSortKahn(
+    noDepsSet: Set<string>,
+    requirementsMap: Map<string, string[]>,
+    dependantsMap: Map<string, Set<string>>,
+): string[] {
+    const topoList: string[] = []; // L ← Empty list that will contain the sorted elements (a topologically sorted order)
     // noDepsSet: S ← Set of all nodes with no incoming edge
 
     // console.log('topologicalSortKahn noDepsSet', noDepsSet);
@@ -33,9 +43,9 @@ export function topologicalSortKahn(noDepsSet, requirementsMap, dependantsMap) {
         topoList.push(name); // add n to L
         // console.log(`topologicalSortKahn get name "${name}"`, 'requirementsMap.get(name)', requirementsMap.get(name));
         if (!requirementsMap.has(name)) continue;
-        for (const nodeM of requirementsMap.get(name)) {
+        for (const nodeM of requirementsMap.get(name)!) {
             // for each node m with an edge e from n to m do
-            const dependencies = dependantsMap.get(nodeM);
+            const dependencies = dependantsMap.get(nodeM)!;
             dependencies.delete(name); // remove edge e from the graph
             if (dependencies.size === 0) {
                 //if m has no other incoming edges then
@@ -61,23 +71,27 @@ export function topologicalSortKahn(noDepsSet, requirementsMap, dependantsMap) {
     return topoList;
 }
 
-export function* allEntries(...withEntries) {
+interface HasDependencies {
+    dependencies: Iterable<string> & { size: number };
+}
+
+export function* allEntries(...withEntries: Map<string, HasDependencies>[]): Generator<[string, HasDependencies]> {
     for (const item of withEntries) yield* item.entries();
 }
 
-function* allKeys(...withKeys) {
+function* allKeys(...withKeys: { keys(): Iterable<string> }[]): Generator<string> {
     for (const item of withKeys) yield* item.keys();
 }
 
 export function getTopologicallySortedInitOrder(
-    coherenceFunctions,
-    fields,
-    foreignKeys,
-    links,
-    internalizedDependencies,
-    fallBackValues,
-    externalDependencies,
-) {
+    coherenceFunctions: FreezableMap<string, CoherenceFunction>,
+    fields: FreezableMap<string, typeof _BaseModel>,
+    foreignKeys: FreezableMap<string, ForeignKey>,
+    links: FreezableMap<string, _BaseLink>,
+    internalizedDependencies: FreezableMap<string, InternalizedDependency>,
+    fallBackValues: FreezableMap<string, FallBackValue>,
+    externalDependencies: FreezableSet<string>,
+): string[] {
     // links depend on their link.keyName
     // keys depend on their key.targetName
     // fields depend on their field.dependencies

@@ -126,9 +126,9 @@ export function unwrapPotentialWriteProxy<T>(
 ): T {
     if (!isProxy(maybeProxy)) return maybeProxy as T;
     const proxy = maybeProxy as Record<symbol, T>;
-    if (type === "immutable") return proxy[GET_IMMUTABLE];
-    if (type === "draft") return proxy[GET_DRAFT];
-    return proxy[GET];
+    if (type === "immutable") return proxy[GET_IMMUTABLE] as T;
+    if (type === "draft") return proxy[GET_DRAFT] as T;
+    return proxy[GET] as T;
 }
 
 // generic helper in metamorphose

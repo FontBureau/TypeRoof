@@ -1,13 +1,20 @@
 import {
     _BaseContainerModel,
+    _BaseModel,
     FreezableSet,
     OLD_STATE,
     _IS_DRAFT_MARKER,
     _DEFERRED_DEPENDENCIES,
     SERIALIZE_OPTIONS,
     SERIALIZE,
+    DESERIALIZE,
     immutableWriteError,
     serializeItem,
+    type DependenciesMap,
+    type ResourceRequirement,
+    type SerializationOptions,
+    type SerializationResult,
+    type TSerializedInput,
 } from './base-model.ts';
 
 import {
@@ -42,7 +49,26 @@ import { _AbstractStructModel } from './struct-model.ts';
 // is currently used to detect if the element can be traversed.
 //
 // Maybe better: _AbstractDynamicStructWrappingModel
+// Reuse LocalProxies shape from struct-model
+interface LocalProxies {
+    byProxy: Map<unknown, string>;
+    byKey: Map<string, unknown>;
+    changedBySetter: Set<string>;
+}
+
 export class _AbstractDynamicStructModel extends _BaseContainerModel {
+    // Static properties set by createClass
+    static BaseType: typeof _AbstractStructModel | null;
+    static availableTypesDependencyName: string | null;
+    static modelDependencyName: string;
+    static dependenciesNames: FreezableSet<string>;
+
+    // Instance properties set via Object.defineProperty
+    declare _value: _AbstractStructModel | null;
+    // dependencies is set via Object.defineProperty in constructor, overriding base accessor
+    declare [_LOCAL_PROXIES]: LocalProxies;
+    declare [_PRIMARY_SERIALIZED_VALUE]?: [TSerializedInput, SerializationOptions];
+
     // Protocol: marks this as a wrapper type for _PotentialWriteProxy
     get [IS_WRAPPER_TYPE]() { return true; }
 
@@ -57,16 +83,16 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
     static createClass(
         className: string,
         BaseTypeOrAvailableTypesMapDependencyName:
-            | _AbstractStructModel
+            | typeof _AbstractStructModel
             | string /* a Base Model/Type */,
         // To get the actual ModelClass/Constructor from the dependencies.
-        modelDependencyName,
-        dependenciesNames,
+        modelDependencyName: string,
+        dependenciesNames: Iterable<string>,
     ) {
         // this way name will naturally become class.name.
-        let BaseType: _AbstractStructModel | null = null,
+        let BaseType: typeof _AbstractStructModel | null = null,
             availableTypesDependencyName: string | null = null;
-        const availableTypesDependencyNameInject = [];
+        const availableTypesDependencyNameInject: string[] = [];
         if (typeof BaseTypeOrAvailableTypesMapDependencyName === "string") {
             availableTypesDependencyNameInject.push(
                 BaseTypeOrAvailableTypesMapDependencyName,
@@ -78,7 +104,7 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
         const result = {
             [className]: class extends this {
                 // jshint ignore: start
-                static BaseType: _AbstractStructModel | null = BaseType;
+                static BaseType: typeof _AbstractStructModel | null = BaseType;
                 static availableTypesDependencyName: string | null =
                     availableTypesDependencyName;
                 static modelDependencyName = modelDependencyName;
@@ -98,13 +124,13 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
     }
 
     constructor(
-        oldState = null,
-        dependencies = null,
-        serializedValue = null,
-        serializeOptions = SERIALIZE_OPTIONS,
+        oldState: _AbstractDynamicStructModel | null = null,
+        dependencies: DependenciesMap | null = null,
+        serializedValue: TSerializedInput | null = null,
+        serializeOptions: SerializationOptions = SERIALIZE_OPTIONS,
     ) {
         // Must call first to be able to use with this.constructor.name.
-        super(oldState);
+        super(oldState as _BaseModel | null);
         if (oldState === null && dependencies === null)
             throw new Error(
                 `TYPE ERROR either oldState or dependencies are required in ${this.constructor.name}.`,
@@ -127,7 +153,7 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
         Object.defineProperty(this, "_value", {
             // _value is only null in primal state pre-metamorphose
             value:
-                this[OLD_STATE] !== null && this[OLD_STATE].hasWrapped
+                this[OLD_STATE] !== null && (this[OLD_STATE] as unknown as _AbstractDynamicStructModel).hasWrapped
                     ? // As a draft for two reasons:
                       // 1) It's quicker and simple, otherwise, this
                       //    would have to implement all of the protential
@@ -141,16 +167,16 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
                       //    and in that case, the draft created here
                       //    doesn't go through metamorphosis/checking
                       //    and hence it is not really costly.
-                      this[OLD_STATE].wrapped.getDraft()
+                      (this[OLD_STATE] as unknown as _AbstractDynamicStructModel).wrapped.getDraft()
                     : null,
             configurable: true,
         });
         Object.defineProperty(this, "dependencies", {
             get: () => {
-                if (this[OLD_STATE] === null)
+                if (this[OLD_STATE] == null)
                     throw new Error("Primal State has no dependencies yet!");
                 // In draft-mode, this[OLD_STATE] has the dependencies.
-                return this[OLD_STATE].dependencies;
+                return this[OLD_STATE]!.dependencies;
             },
             configurable: true,
         });
@@ -178,14 +204,15 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
             // if there was an OLD_STATE and there was no change
             // but since this is a constructor it MUST return a new
             // object (when called with `new`).
-            if (dependencies !== _DEFERRED_DEPENDENCIES)
-                return this.metamorphose(dependencies);
+            if ((dependencies as unknown) !== _DEFERRED_DEPENDENCIES)
+                return this.metamorphose(dependencies) as this;
         }
     }
 
-    *#_metamorphoseGen(dependencies = {}) {
+    *#_metamorphoseGen(dependencies: DependenciesMap = {}): Generator<ResourceRequirement, this, unknown> {
+        const ctor = this.constructor as typeof _AbstractDynamicStructModel;
         const dependenciesData = collectDependencies(
-            this.constructor.dependencies,
+            ctor.dependencies,
             dependencies,
             this[OLD_STATE]?.dependencies,
         );
@@ -196,27 +223,27 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
         });
 
         const dependenciesAreEqual =
-            this[OLD_STATE] !== null &&
+            this[OLD_STATE] != null &&
             objectEntriesAreEqual(
-                this[OLD_STATE].dependencies,
+                this[OLD_STATE]!.dependencies,
                 this.dependencies,
             );
 
         // shortcut
         if (
             dependenciesAreEqual && // includes that there's an old state
-            this[OLD_STATE].wrapped === this._value
+            (this[OLD_STATE] as unknown as _AbstractDynamicStructModel).wrapped === this._value
         )
             // Has NOT changed!
-            return this[OLD_STATE];
-        const childDependencies = this.WrappedType
+            return this[OLD_STATE] as unknown as this;
+        const childDependencies: DependenciesMap = this.WrappedType
             ? Object.fromEntries(
-                  iterMap(this.WrappedType.dependencies, (key) => {
-                      if (this.dependencies[key] === undefined)
+                  iterMap(this.WrappedType!.dependencies, (key: string) => {
+                      if (this.dependencies[key as keyof typeof this.dependencies] === undefined)
                           throw new Error(
-                              `VALUE ERROR in ${this} WrappedType "${this.WrappedType.name}" dependency "${key}" is undefined.`,
+                              `VALUE ERROR in ${this} WrappedType "${this.WrappedType!.name}" dependency "${key}" is undefined.`,
                           );
-                      return [key, this.dependencies[key]];
+                      return [key, (this.dependencies as Record<string, unknown>)[key]];
                   }),
               )
             : {};
@@ -247,7 +274,7 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
             if (this._value)
                 console.warn(
                     `${this} overriding wrapped value from ${this._value} ` +
-                        `to WrappedType ${(this.WrappedType && this.WrappedType.name) || this.WrappedType}. ` +
+                        `to WrappedType ${(this.WrappedType && this.WrappedType!.name) || this.WrappedType}. ` +
                         `Is a draft: ${this._value.isDraft} `,
                 );
             Object.defineProperty(this, "_value", {
@@ -257,7 +284,7 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
                           ...(this[_PRIMARY_SERIALIZED_VALUE] || []),
                       )
                     : null,
-                configureable: true,
+                configurable: true,
             });
         } else {
             Object.defineProperty(this, "_value", {
@@ -271,13 +298,13 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
                             .getDraft()
                             .metamorphoseGen(childDependencies)
                       : this._value,
-                configureable: true,
+                configurable: true,
             });
         }
         // Don't keep this
-        delete this[_PRIMARY_SERIALIZED_VALUE];
-        if (dependenciesAreEqual && this[OLD_STATE].wrapped === this._value)
-            return this[OLD_STATE];
+        delete (this as Record<symbol, unknown>)[_PRIMARY_SERIALIZED_VALUE];
+        if (dependenciesAreEqual && (this[OLD_STATE] as unknown as _AbstractDynamicStructModel).wrapped === this._value)
+            return this[OLD_STATE] as unknown as this;
         return this;
     }
 
@@ -287,7 +314,7 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
             writable: false,
             configurable: false,
         });
-        delete this[OLD_STATE];
+        delete (this as Record<symbol, unknown>)[OLD_STATE];
         Object.defineProperty(this, "_value", {
             value: this._value,
             writable: false,
@@ -297,14 +324,14 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
             value: false,
             configurable: false,
         });
-        delete this[_LOCAL_PROXIES];
+        delete (this as Record<symbol, unknown>)[_LOCAL_PROXIES];
         Object.freeze(this);
     }
     #_metamorphoseCleanUp() {
         // Let's see if this is sufficient! this._value may be metamorphosed
         // after all and also this.WrappedType could change this._value.
         // I'm not sure if this will work out all the time.
-        delete this.dependencies;
+        delete (this as Record<string, unknown>).dependencies;
     }
     // FIXME: feels like this must funnel dependencies into
     // the this._value draft
@@ -318,12 +345,12 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
     // OR, we have the app inject the actual layout state as a dependency
     // kind of moving the problem out of scope (not too happy with that
     // would be cool one level deeper in the ApplicationModel struct.)
-    *metamorphoseGen(dependencies = {}) {
+    *metamorphoseGen(dependencies: DependenciesMap = {}): Generator<ResourceRequirement, this, unknown> {
         if (!this.isDraft)
             throw new Error(
                 `LIFECYCLE ERROR ${this} must be in draft mode to metamorphose.`,
             );
-        let result;
+        let result: this = undefined!;
         try {
             result = yield* this.#_metamorphoseGen(dependencies);
         } finally {
@@ -353,26 +380,26 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
         return this._value;
     }
 
-    get WrappedType() {
-        if (
-            this.dependencies[this.constructor.modelDependencyName] ===
-            ForeignKey.NULL
-        )
+    get WrappedType(): typeof _AbstractStructModel | null {
+        const ctor = this.constructor as typeof _AbstractDynamicStructModel;
+        const dep = (this.dependencies as Record<string, unknown>)[ctor.modelDependencyName];
+        if (dep === ForeignKey.NULL)
             return null;
         // FIXME: 'typeClass' is an implementation detail of the linked
         // struct. There should be either a way to configure this or a
         // way to ensure the linked model implements that interface,
         // like e.g. a trait/mixin that can be checked.
-        return this.dependencies[this.constructor.modelDependencyName].get(
+        return (dep as _BaseContainerModel).get(
             "typeClass",
-        ).value;
+        ).value as typeof _AbstractStructModel;
     }
 
-    get availableTypes() {
-        return this.dependencies[this.constructor.availableTypesDependencyName];
+    get availableTypes(): _BaseContainerModel {
+        const ctor = this.constructor as typeof _AbstractDynamicStructModel;
+        return (this.dependencies as Record<string, unknown>)[ctor.availableTypesDependencyName!] as _BaseContainerModel;
     }
 
-    set wrapped(state) {
+    set wrapped(state: _AbstractStructModel) {
         if (!this.isDraft)
             // required: so this can be turned into a draft on demand
             throw immutableWriteError(
@@ -384,11 +411,12 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
 
         // This is a paradigm shift! The type must be however be in the
         // availableTypes
-        if (this.constructor.availableTypesDependencyName !== null) {
+        const ctor = this.constructor as typeof _AbstractDynamicStructModel;
+        if (ctor.availableTypesDependencyName !== null) {
             let found = false;
-            const typeNames = [];
+            const typeNames: string[] = [];
             for (const [, /*key*/ item] of this.availableTypes) {
-                const typeClass = item.get("typeClass").value;
+                const typeClass = (item as _BaseContainerModel).get("typeClass").value as typeof _AbstractStructModel;
                 typeNames.push(typeClass.name);
                 if (typeClass === state.constructor) {
                     found = true;
@@ -402,12 +430,12 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
                 );
         }
         if (
-            this.constructor.BaseType !== null &&
-            !(state instanceof this.constructor.BaseType)
+            ctor.BaseType !== null &&
+            !(state instanceof ctor.BaseType)
         )
             throw new Error(
                 `TYPE ERROR ${this} expects an instance of ` +
-                    `"${this.constructor.BaseType.name}" but state item is "${state}".`,
+                    `"${ctor.BaseType.name}" but state item is "${state}".`,
             );
 
         // Actually, we know the concrete type that is injected with
@@ -415,7 +443,7 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
         if (state.constructor !== this.WrappedType && this.WrappedType !== null)
             throw new Error(
                 `TYPE ERROR ${this} expects a direct instance of ` +
-                    `"${(this.WrappedType && this.WrappedType.name) || this.WrappedType}" but state item is "${state}".`,
+                    `"${(this.WrappedType && this.WrappedType!.name) || this.WrappedType}" but state item is "${state}".`,
             );
 
         // Could set immutable state as well, but it may also collide
@@ -424,10 +452,10 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
         //   the constructor comment.
         // - have the user put state into draft mode explicitly before,
         //   calling this, otherwise fail on write.
-        const draft = state.isDraft ? state : state.toDraft();
+        const draft = state.isDraft ? state : state.getDraft();
         Object.defineProperty(this, "_value", {
             value: draft,
-            configureable: true,
+            configurable: true,
         });
     }
 
@@ -441,14 +469,14 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
      * hasDraftFor and getDraftFor are likely only a required interfaces
      * for _BaseContainerModel.
      */
-    [_HAS_DRAFT_FOR_PROXY](proxy) {
+    [_HAS_DRAFT_FOR_PROXY](proxy: unknown): boolean {
         if (!this.isDraft) return false;
 
         if (!this[_LOCAL_PROXIES].byProxy.has(proxy))
             // the proxy is disconnected
             return false;
 
-        const key = this[_LOCAL_PROXIES].byProxy.get(proxy),
+        const key = this[_LOCAL_PROXIES].byProxy.get(proxy)!,
             // MAY NOT BE A DRAFT AT THIS MOMENT!
             item = this.get(key);
         if (!item || !item.isDraft) return false;
@@ -457,7 +485,7 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
         return true;
     }
 
-    [_HAS_DRAFT_FOR_OLD_STATE_KEY](key) {
+    [_HAS_DRAFT_FOR_OLD_STATE_KEY](key: string): boolean {
         if (!this.isDraft) return false;
         // this implies that if this is a draft all items in
         // this._value must be drafts as well! But do we know?
@@ -479,7 +507,7 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
 
     // called from the perspective of a proxy that was created when this
     // was still an immutable.
-    [_GET_DRAFT_FOR_OLD_STATE_KEY](key) {
+    [_GET_DRAFT_FOR_OLD_STATE_KEY](key: string): _BaseModel | false {
         if (!this.isDraft)
             // required: so this can be turned into a draft on demand
             throw immutableWriteError(
@@ -506,16 +534,16 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
             // created directly for [OLD_STATE] entries.
             return false;
 
-        const item = this.has(key)
+        const item = (this.has(key)
             ? this.get(key) // => assert item.isDraft
             : // expect OLD_STATE to exist!
-              this[OLD_STATE].get(key); // item is not a draft
+              this[OLD_STATE]!.get(key)) as _BaseModel; // item is not a draft
         if (item.isDraft)
             // Since it was not changedBySetter this must be the original
             // draft for the item at OLD_STATE
             return item;
-        const draft = unwrapPotentialWriteProxy(item).getDraft();
-        this.set(key, draft);
+        const draft = (unwrapPotentialWriteProxy(item) as _BaseModel).getDraft();
+        this.set(key, draft as _BaseModel);
         return draft;
     }
     /**
@@ -528,7 +556,7 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
      * Returns a draft for key otherwise.
      * this is likely only for _BaseContainerModel
      */
-    [_GET_DRAFT_FOR_PROXY](proxy) {
+    [_GET_DRAFT_FOR_PROXY](proxy: unknown): _BaseModel | false {
         // TODO: check if key exists! Else KEY ERROR ${key}
         if (!this.isDraft)
             throw immutableWriteError(
@@ -542,68 +570,72 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
             // proxy is disconnected
             return false;
 
-        const key = this[_LOCAL_PROXIES].byProxy.get(proxy),
-            item = this.has(key) ? this.get(key) : this[OLD_STATE].get(key);
+        const key = this[_LOCAL_PROXIES].byProxy.get(proxy)!,
+            item = (this.has(key) ? this.get(key) : this[OLD_STATE]!.get(key)) as _BaseModel;
         // MAY NOT BE A DRAFT AT THIS MOMENT! => via set(key, immutable)...
         // in that case were going to replace the item in this._value with
         // its draft.
         if (item.isDraft)
             // We own the proxy, so the draft is from here.
             return item;
-        const draft = unwrapPotentialWriteProxy(item).getDraft();
-        this.set(key, draft);
+        const draft = (unwrapPotentialWriteProxy(item) as _BaseModel).getDraft();
+        this.set(key, draft as _BaseModel);
         return draft;
     }
 
-    *[Symbol.iterator]() {
+    *[Symbol.iterator](): Generator<[string, _BaseModel], void, unknown> {
         if (!this.hasWrapped) return;
         yield* this.wrapped.entries();
     }
-    getDraftFor(key, defaultReturn = _NOTDEF) {
-        return this.wrapped.getDraftFor(key, defaultReturn);
+    getDraftFor(key: string, defaultReturn: unknown = _NOTDEF): _BaseModel {
+        return this.wrapped.getDraftFor(key, defaultReturn) as _BaseModel;
     }
-    get(key, defaultReturn = _NOTDEF) {
-        return this.wrapped.get(key, defaultReturn);
+    get(key: string, defaultReturn: unknown = _NOTDEF): _BaseModel {
+        return this.wrapped.get(key, defaultReturn) as _BaseModel;
     }
-    set(key, entry) {
+    set(key: string, entry: _BaseModel): void {
         return this.wrapped.set(key, entry);
     }
 
-    hasOwn(key) {
+    hasOwn(key: string): boolean {
         return this.wrapped.hasOwn(key);
     }
-    ownKeys() {
+    ownKeys(): string[] {
         return this.wrapped.ownKeys();
     }
     // override if ownership and available keys differ
-    has(key) {
+    has(key: string): boolean {
         return this.wrapped.has(key);
     }
     // override if ownership and available keys differ
-    keys() {
+    keys(): string[] {
         return this.wrapped.keys();
     }
 
-    *entries() {
+    *entries(): Generator<[string, _BaseModel], void, unknown> {
         if (!this.hasWrapped) return;
         yield* this.wrapped.entries();
     }
 
-    *allEntries() {
+    *allEntries(): Generator<[string, _BaseModel], void, unknown> {
         if (!this.hasWrapped) return;
         yield* this.wrapped.allEntries();
     }
 
-    get size() {
+    get size(): number {
         return this.wrapped.size;
     }
 
-    [SERIALIZE](options = SERIALIZE_OPTIONS) {
-        if (this.hasWrapped) return serializeItem(this.wrapped, options);
+    [SERIALIZE](options: SerializationOptions = SERIALIZE_OPTIONS): SerializationResult {
+        if (this.hasWrapped) return serializeItem(this.wrapped as unknown as _BaseModel, options);
         else
             // FIXME: how to differentiate between no type an an empty/all default type?
             // I guess the parent has to know!
-            return [[], null];
+            return [[], null] as SerializationResult;
+    }
+
+    [DESERIALIZE](_serializedValue: TSerializedInput, _options: SerializationOptions): void {
+        throw new Error(`NOT IMPLEMENTED [DESERIALIZE] for ${this.constructor.name}: struct models use constructor deserialization.`);
     }
 }
 
