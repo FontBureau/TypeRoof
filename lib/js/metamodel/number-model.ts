@@ -6,6 +6,10 @@ import {
     immutableWriteError,
     SERIALIZE,
     DESERIALIZE,
+    type SerializationOptions,
+    type SerializationResult,
+    type TSerializedInput,
+    type ResourceRequirement,
 } from './base-model.ts';
 
 import {
@@ -16,21 +20,46 @@ import {
     _PRIMARY_SERIALIZED_VALUE,
 } from './serialization.ts';
 
+type NumberValidateFN = (value: number) => [boolean, string | null];
+type NumberSanitizeFN = (value: number) => [number | null, string | null];
+
+interface NumberModelSetup {
+    min?: number;
+    max?: number;
+    toFixedDigits?: number;
+    defaultValue?: number;
+    validateFN?: NumberValidateFN;
+    sanitizeFN?: NumberSanitizeFN;
+    sanitzeByDefault?: boolean;
+}
+
 export class _AbstractNumberModel extends _BaseSimpleModel {
-    static createClass(className: string, setup = {}) {
-        // numeric or _NOTDEF
-        setup = {
-            min: _NOTDEF,
-            max: _NOTDEF,
-            toFixedDigits: _NOTDEF,
-            defaultValue: _NOTDEF,
-            validateFN: _NOTDEF,
-            sanitizeFN: _NOTDEF,
-            sanitzeByDefault: true,
+    // Instance properties set via Object.defineProperty
+    declare _value: number;
+    declare [_PRIMARY_SERIALIZED_VALUE]?: [TSerializedInput, SerializationOptions];
+
+    // Static properties set by createClass on subclasses
+    static minVal: number | null;
+    static maxVal: number | null;
+    static toFixedDigits: number | null;
+    static defaultValue: number | null;
+    static sanitizeFN: NumberSanitizeFN | null;
+    static validateFN: NumberValidateFN | null;
+    static sanitzeByDefault: boolean;
+
+    static createClass(className: string, setup: NumberModelSetup = {}) {
+        const config = {
+            min: _NOTDEF as typeof _NOTDEF | number,
+            max: _NOTDEF as typeof _NOTDEF | number,
+            toFixedDigits: _NOTDEF as typeof _NOTDEF | number,
+            defaultValue: _NOTDEF as typeof _NOTDEF | number,
+            validateFN: _NOTDEF as typeof _NOTDEF | NumberValidateFN,
+            sanitizeFN: _NOTDEF as typeof _NOTDEF | NumberSanitizeFN,
+            sanitzeByDefault: true as boolean,
             ...setup,
         };
-        for (const name of ["min", "max", "toFixedDigits", "defaultValue"]) {
-            const setupValue = setup[name];
+        for (const name of ["min", "max", "toFixedDigits", "defaultValue"] as const) {
+            const setupValue = config[name];
             if (setupValue === _NOTDEF) continue;
             const [isNumeric, message] = this.isNumeric(setupValue);
             if (!isNumeric)
@@ -39,104 +68,105 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
                 );
         }
         // numeric or _NOTDEF
-        if (setup.toFixedDigits !== _NOTDEF) {
+        if (config.toFixedDigits !== _NOTDEF) {
             if (
-                !Number.isSafeInteger(setup.toFixedDigits) ||
-                setup.toFixedDigits < 0 ||
-                setup.toFixedDigits > 100
+                !Number.isSafeInteger(config.toFixedDigits) ||
+                config.toFixedDigits < 0 ||
+                config.toFixedDigits > 100
             )
                 throw new Error(
                     `${this}.createClass ${className} setup value ` +
-                        `"toFixedDigits" is not an integer between 0 and 100 (inclusive): ${setup.toFixedDigits}`,
+                        `"toFixedDigits" is not an integer between 0 and 100 (inclusive): ${config.toFixedDigits}`,
                 );
 
-            for (const name of ["min", "max", "defaultValue"]) {
-                const setupValue = setup[name];
+            for (const name of ["min", "max", "defaultValue"] as const) {
+                const setupValue = config[name];
                 if (setupValue === _NOTDEF) continue;
                 const fixedVal = parseFloat(
-                    setupValue.toFixed(setup.toFixedDigits),
+                    (setupValue as number).toFixed(config.toFixedDigits),
                 );
                 if (fixedVal !== setupValue)
                     throw new Error(
                         `${this}.createClass ${className} setup value "${name}" ` +
-                            `(setupValue) is not stable in toFixed(${setup.toFixedDigits}) conversion: ` +
-                            `"${setupValue.toFixed(setup.toFixedDigits)}" ${fixedVal}`,
+                            `(setupValue) is not stable in toFixed(${config.toFixedDigits}) conversion: ` +
+                            `"${(setupValue as number).toFixed(config.toFixedDigits)}" ${fixedVal}`,
                     );
             }
         }
-        if (setup.defaultValue !== _NOTDEF) {
+        if (config.defaultValue !== _NOTDEF) {
             // TODO: could be an inclusive min and an exclusive min, default is now inclusive
             const fixedDefault =
-                setup.toFixedDigits !== _NOTDEF
+                config.toFixedDigits !== _NOTDEF
                     ? parseFloat(
-                          setup.defaultValue.toFixed(setup.toFixedDigits),
+                          (config.defaultValue as number).toFixed(config.toFixedDigits),
                       )
-                    : setup.defaultValue;
-            if (setup.min !== _NOTDEF && fixedDefault < setup.min)
+                    : config.defaultValue;
+            if (config.min !== _NOTDEF && (fixedDefault as number) < config.min)
                 throw new Error(
                     `${this}.createClass ${className} setup ` +
-                        `value "defaultValue" (${setup.defaultValue} as fixed ${fixedDefault}) ` +
-                        `is smaller than setup value "min" (${setup.min}).`,
+                        `value "defaultValue" (${config.defaultValue} as fixed ${fixedDefault}) ` +
+                        `is smaller than setup value "min" (${config.min}).`,
                 );
-            if (setup.max !== _NOTDEF && fixedDefault > setup.max)
+            if (config.max !== _NOTDEF && (fixedDefault as number) > config.max)
                 throw new Error(
                     `${this}.createClass ${className} setup ` +
-                        `value "defaultValue" (${setup.defaultValue} as fixed ${fixedDefault}) ` +
-                        `is bigger than setup value "max" (${setup.max}).`,
+                        `value "defaultValue" (${config.defaultValue} as fixed ${fixedDefault}) ` +
+                        `is bigger than setup value "max" (${config.max}).`,
                 );
-            setup.defaultValue = fixedDefault;
+            config.defaultValue = fixedDefault as number;
         }
-        setup.sanitzeByDefault = setup.sanitzeByDefault ? true : false;
+        config.sanitzeByDefault = config.sanitzeByDefault ? true : false;
         // this way name will naturally become class.name.
         const result = {
             [className]: class extends this {
                 // jshint ignore: start
-                static minVal = setup.min === _NOTDEF ? null : setup.min;
-                static maxVal = setup.max === _NOTDEF ? null : setup.max;
+                static minVal = config.min === _NOTDEF ? null : config.min;
+                static maxVal = config.max === _NOTDEF ? null : config.max;
                 static toFixedDigits =
-                    setup.toFixedDigits === _NOTDEF
+                    config.toFixedDigits === _NOTDEF
                         ? null
-                        : setup.toFixedDigits;
+                        : config.toFixedDigits;
                 static defaultValue =
-                    setup.defaultValue === _NOTDEF ? null : setup.defaultValue;
+                    config.defaultValue === _NOTDEF ? null : config.defaultValue;
                 static sanitizeFN =
-                    setup.sanitizeFN === _NOTDEF ? null : setup.sanitizeFN;
+                    config.sanitizeFN === _NOTDEF ? null : config.sanitizeFN;
                 static validateFN =
-                    setup.validateFN === _NOTDEF ? null : setup.validateFN;
-                static sanitzeByDefault = setup.sanitzeByDefault;
+                    config.validateFN === _NOTDEF ? null : config.validateFN;
+                static sanitzeByDefault = config.sanitzeByDefault;
                 // jshint ignore: end
             },
         };
-        Object.freeze(result[className]);
-        return result[className];
+        const Model = result[className]!;
+        Object.freeze(Model);
+        return Model;
     }
 
     // Must be typeof number and not NaN
     // can be +/-Infinity
-    static isNumeric(rawValue) {
+    static isNumeric(rawValue: unknown): [boolean, string | null] {
         if (typeof rawValue !== "number")
             return [
                 false,
-                `is not typeof number "${typeof rawValue}" raw value: "${rawValue.toString()}"`,
+                `is not typeof number "${typeof rawValue}" raw value: "${String(rawValue)}"`,
             ];
         if (Number.isNaN(rawValue))
             return [false, `raw value is NaN (not a number)`];
         return [true, null];
     }
 
-    static sanitize(rawValue) {
+    static sanitize(rawValue: unknown): [number | null, string | null] {
         const [isNumeric, isNumericMessage] = this.isNumeric(rawValue);
         if (!isNumeric) return [null, isNumericMessage];
 
-        let cleanValue;
+        let cleanValue: number;
         if (this.sanitizeFN) {
             // This runs before the other sanitations, so that these
             // are still effective even if this method doesn't respect
             // the other constraints.
-            let message;
-            [cleanValue, message] = this.sanitizeFN(rawValue);
+            let message: string | null;
+            [cleanValue, message] = this.sanitizeFN(rawValue as number) as [number, string | null];
             if (message) return [cleanValue, message];
-        } else cleanValue = rawValue;
+        } else cleanValue = rawValue as number;
 
         if (this.minVal !== null && cleanValue < this.minVal)
             cleanValue = this.minVal;
@@ -153,7 +183,7 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
         return [cleanValue, null];
     }
 
-    static validate(value) {
+    static validate(value: number): [boolean | null, string | null] {
         const [isNumeric, isNumericMessage] = this.isNumeric(value);
         if (!isNumeric) return [false, isNumericMessage];
 
@@ -189,34 +219,36 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
         return this.validateFN(value);
     }
 
-    static get ppsDefaultSettings() {
-        const entries = [];
+    static get ppsDefaultSettings(): Record<string, number> {
+        const entries: [string, number][] = [];
         for (const [here, there] of [
             ["maxVal", "max"],
             ["minVal", "min"],
             ["defaultValue", "default"],
             // , ['???', 'step']
-        ]) {
-            if (this[here] !== null) entries.push([there, this[here]]);
+        ] as const) {
+            const val = (this as unknown as Record<string, number | null>)[here];
+            if (val != null) entries.push([there, val]);
         }
         return Object.fromEntries(entries);
     }
 
     constructor(
-        oldState = null,
-        serializedValue = null,
-        serializeOptions = SERIALIZE_OPTIONS,
+        oldState: _AbstractNumberModel | null = null,
+        serializedValue: TSerializedInput | null = null,
+        serializeOptions: SerializationOptions = SERIALIZE_OPTIONS,
     ) {
-        super(oldState);
+        super(oldState as _BaseSimpleModel | null);
+        const ctor = this.constructor as typeof _AbstractNumberModel;
 
         // A primal state will have a value of defaultValue or undefined.
         Object.defineProperty(this, "_value", {
             value:
                 this[OLD_STATE] === null
-                    ? this.constructor.defaultValue !== null
-                        ? this.constructor.defaultValue
+                    ? ctor.defaultValue !== null
+                        ? ctor.defaultValue
                         : undefined
-                    : this[OLD_STATE].value,
+                    : (this[OLD_STATE] as unknown as _AbstractNumberModel).value,
             configurable: true,
             writable: true,
         });
@@ -228,26 +260,26 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
                     serializedValue,
                     serializeOptions,
                 ];
-            return this.metamorphose();
+            return this.metamorphose() as this;
         }
     }
 
-    *metamorphoseGen() {
+    *metamorphoseGen(): Generator<ResourceRequirement, this, unknown> {
         if (!this.isDraft)
             throw new Error(
                 `LIFECYCLE ERROR ${this} must be in draft mode to metamorphose.`,
             );
         // compare
-        if (this[OLD_STATE] && this[OLD_STATE].value === this._value)
+        if (this[OLD_STATE] && (this[OLD_STATE] as unknown as _AbstractNumberModel).value === this._value)
             // Has NOT changed!
-            return this[OLD_STATE];
+            return this[OLD_STATE] as unknown as this;
 
         // Has changed!
-        delete this[OLD_STATE];
+        delete (this as {[OLD_STATE]?: unknown})[OLD_STATE];
         if (this[_PRIMARY_SERIALIZED_VALUE])
-            this[DESERIALIZE](...this[_PRIMARY_SERIALIZED_VALUE]);
+            this[DESERIALIZE](...(this[_PRIMARY_SERIALIZED_VALUE] as [TSerializedInput, SerializationOptions]));
         // Don't keep this
-        delete this[_PRIMARY_SERIALIZED_VALUE];
+        delete (this as {[_PRIMARY_SERIALIZED_VALUE]?: unknown})[_PRIMARY_SERIALIZED_VALUE];
         Object.defineProperty(this, "_value", {
             // Not freezing/changing this._value as it is considered "outside"
             // of the metamodel realm i.e. it's not a _BaseModel or part of
@@ -268,7 +300,7 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
         return this;
     }
 
-    get value() {
+    get value(): number {
         // if(!this.isDraft)
         //    throw new Error(`LIFECYCLE ERROR ${this} will only return this.value when immutable/not a draft..`);
         // This will acturally return this._value despite of not beeing
@@ -277,11 +309,11 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
         return this._value;
     }
 
-    set value(value) {
+    set value(value: number) {
         this.set(value);
     }
 
-    set(rawValue, sanitize = _NOTDEF) {
+    set(rawValue: number, sanitize: boolean | typeof _NOTDEF = _NOTDEF): void {
         if (!this.isDraft)
             // required: so this can be turned into a draft on demand
             throw immutableWriteError(
@@ -290,20 +322,21 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
                         `${this} is immutable, not a draft, can't set value.`,
                 ),
             );
-        let value = rawValue;
+        const ctor = this.constructor as typeof _AbstractNumberModel;
+        let value: number = rawValue;
         if (
             (sanitize !== _NOTDEF && sanitize) ||
-            (sanitize === _NOTDEF && this.constructor.sanitzeByDefault)
+            (sanitize === _NOTDEF && ctor.sanitzeByDefault)
         ) {
             const [cleanValue, sanitizeMessage] =
-                this.constructor.sanitize(rawValue);
+                ctor.sanitize(rawValue);
             if (cleanValue === null || sanitizeMessage)
                 throw new Error(
                     `SANITIZATION ERROR ${this}: ${sanitizeMessage}.`,
                 );
             value = cleanValue;
         }
-        const [valid, validateMessage] = this.constructor.validate(value);
+        const [valid, validateMessage] = ctor.validate(value);
         if (!valid)
             throw new Error(
                 `VALIDATION ERROR ${this}: ${validateMessage}. (Maybe try setting sanitize to true.)`,
@@ -311,19 +344,19 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
         this._value = value;
     }
 
-    get() {
+    get(): number {
         return this.value;
     }
-    [SERIALIZE](/*options=SERIALIZE_OPTIONS*/) {
+    [SERIALIZE](): SerializationResult {
+        const ctor = this.constructor as typeof _AbstractNumberModel;
         return [
             [],
-            this.constructor.toFixedDigits !== null
-                ? this.value.toFixed(this.constructor.toFixedDigits)
+            ctor.toFixedDigits !== null
+                ? this.value.toFixed(ctor.toFixedDigits)
                 : this.value.toString(),
         ];
     }
-    [DESERIALIZE](serializedValue /*, options=SERIALIZE_OPTIONS*/) {
-        this.value = parseFloat(serializedValue);
-        return [];
+    [DESERIALIZE](serializedValue: TSerializedInput, _options?: SerializationOptions): void {
+        this.value = parseFloat(serializedValue as string);
     }
 }
