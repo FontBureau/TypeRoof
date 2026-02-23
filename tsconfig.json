@@ -11,7 +11,7 @@
     "target": "es2022",
     "types": [],
     // For nodejs:
-    "lib": ["es2022"],
+    "lib": ["es2022", "dom"],
     // "types": ["node"],
     // and npm install -D @types/node
 
@@ -19,6 +19,7 @@
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
+    "allowImportingTsExtensions": true,
 
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
@@ -40,6 +41,10 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
+    //"paths":{
+    //    "prosemirror-model": ["./node_modules/prosemirror-model/index.d.ts"]
+    //},
+    "moduleResolution": "bundler",
   },
   "include": [
     "lib/js"
