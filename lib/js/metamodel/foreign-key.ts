@@ -74,7 +74,7 @@ type NullConstraintSymbol =
     | typeof FOREIGN_KEY_NOT_NULL
     | typeof FOREIGN_KEY_ALLOW_NULL;
 
-type KeyValue = string | typeof ForeignKey.NULL;
+export type KeyValue = string | typeof ForeignKey.NULL;
 
 type ForeignKeyConstraintFn = (
     targetContainer: _BaseContainerModel,

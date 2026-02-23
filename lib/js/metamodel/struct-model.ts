@@ -11,7 +11,10 @@ import {
     draftKeyError,
     _serializeContainer,
     SERIALIZE,
+    DESERIALIZE,
+    ResourceRequirement,
 } from './base-model.ts';
+import type { DependenciesMap, SerializationOptions, SerializationResult, TSerializedInput } from './base-model.ts';
 
 import {
     _NOTDEF,
@@ -46,7 +49,7 @@ import {
 } from './potential-write-proxy.ts';
 
 import { CoherenceFunction } from './coherence-function.ts';
-import { ForeignKey } from './foreign-key.ts';
+import { ForeignKey, type KeyValue } from './foreign-key.ts';
 import { _PRIMARY_SERIALIZED_VALUE } from './serialization.ts';
 
 import { _AbstractGenericModel } from './generic-model.ts';
@@ -54,23 +57,23 @@ import { _AbstractGenericModel } from './generic-model.ts';
 // value will be a valid key or ForeignKey.NULL depending on the
 // key constraints as well.
 const KeyValueModel = _AbstractGenericModel.createClass("KeyValueModel", {
-    validateFN: function (value) {
+    validateFN: function (value: unknown) {
         // Could also be a number in some cases, but we handle all *keys* as strings so far.
         if (typeof value !== "string" && value !== ForeignKey.NULL)
             return [
                 false,
-                `NOT A VALID KEY must be string or ForeignKey.NULL: ${value.toString()}`,
+                `NOT A VALID KEY must be string or ForeignKey.NULL: ${String(value)}`,
             ];
         return [true, null];
     },
-    serializeFN: function (value /*, serializeOptions=SERIALIZE_OPTIONS*/) {
+    serializeFN: function (value: unknown /*, serializeOptions=SERIALIZE_OPTIONS*/) {
         if (typeof value === "string") return value;
         if (value === ForeignKey.NULL) return null; // could be empty string, doesn't start with "S:"!
         // return `UNKOWN VALUE TYPE ${value.toString()}`;
-        throw new Error(`UNKOWN VALUE TYPE (in ${this.name})`);
+        throw new Error(`UNKOWN VALUE TYPE (in KeyValueModel)`);
     },
     deserializeFN: function (
-        serializedString /*, options=SERIALIZE_OPTIONS*/,
+        serializedString: unknown /*, options=SERIALIZE_OPTIONS*/,
     ) {
         // NOTE: serializeFN can return NULL but this wont take receive
         // that It will be null in that case.
@@ -81,9 +84,37 @@ const KeyValueModel = _AbstractGenericModel.createClass("KeyValueModel", {
 const WITH_SELF_REFERENCE = Symbol("WITH_SELF_REFERENCE"),
     DEBUG = false;
 
+// Local proxy tracking structure
+interface LocalProxies {
+    byProxy: Map<unknown, string>;
+    byKey: Map<string, unknown>;
+    changedBySetter: Set<string>;
+}
+
 export class _AbstractStructModel extends _BaseContainerModel {
     static WITH_SELF_REFERENCE = WITH_SELF_REFERENCE;
-    static has(key) {
+
+    // Static properties (set by createClass, frozen)
+    static fields: FreezableMap<string, typeof _BaseModel>;
+    static foreignKeys: FreezableMap<string, ForeignKey>;
+    static links: FreezableMap<string, _BaseLink>;
+    static coherenceFunctions: FreezableMap<string, CoherenceFunction>;
+    static internalizedDependencies: FreezableMap<string, InternalizedDependency>;
+    static fallBackValues: FreezableMap<string, FallBackValue>;
+    static staticDependencies: FreezableMap<string, StaticDependency>;
+    static ownDependencies: FreezableSet<string>;
+    static childrenExternalDependencies: FreezableSet<string>;
+    static dependencies: FreezableSet<string>;
+    static initOrder: string[];
+
+    // Instance properties (set via Object.defineProperty in constructor)
+    declare _value: FreezableMap<string, _BaseModel>;
+    // @ts-ignore — overrides base accessor with instance property set via Object.defineProperty
+    declare override dependencies: Readonly<Record<string, unknown>>;
+    declare [_LOCAL_PROXIES]: LocalProxies;
+    declare [_PRIMARY_SERIALIZED_VALUE]?: [FreezableMap<string, unknown>, SerializationOptions];
+
+    static has(key: string): boolean {
         // in all of the local name space
         // Own names, which override parent scope for children dependencies.
         for (const map of [
@@ -104,7 +135,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
     //      an instance of InternalizedDependency from this.internalizedDependencies
     //      an instance of FallBackValue from this.fallBackValues
     // in that order or throws a KEY ERROR
-    static get(key) {
+    static get(key: string): typeof _BaseModel | ForeignKey | _BaseLink | InternalizedDependency | FallBackValue {
         // Own names, which override parent scope for children dependencies.
         for (const map of [
             this.fields,
@@ -113,7 +144,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
             this.internalizedDependencies,
             this.fallBackValues,
         ]) {
-            if (map.has(key)) return map.get(key);
+            if (map.has(key)) return map.get(key)!;
         }
         throw new Error(
             `KEY ERROR "${key}" not found in local namespace of ${this.constructor.name}.`,
@@ -131,7 +162,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
         );
     }
 
-    static createClass(className: string, ...definitions) {
+    static createClass(className: string, ...definitions: unknown[]) {
         if (DEBUG) {
             console.log("\n" + new Array(30).fill("*+").join(""));
             console.log("START createClass", className, "raw fields:");
@@ -142,24 +173,24 @@ export class _AbstractStructModel extends _BaseContainerModel {
                 `className must be string but is ${typeof className}`,
             );
 
-        const fields = new FreezableMap(),
-            foreignKeys = new FreezableMap(),
-            links = new FreezableMap(),
-            coherenceFunctions = new FreezableMap(),
-            internalizedDependencies = new FreezableMap(),
-            fallBackValues = new FreezableMap(),
+        const fields = new FreezableMap<string, typeof _BaseModel>(),
+            foreignKeys = new FreezableMap<string, ForeignKey>(),
+            links = new FreezableMap<string, _BaseLink>(),
+            coherenceFunctions = new FreezableMap<string, CoherenceFunction>(),
+            internalizedDependencies = new FreezableMap<string, InternalizedDependency>(),
+            fallBackValues = new FreezableMap<string, FallBackValue>(),
             // Used to rename/map external dependency names to internal
             // names and still be able to use both. I.e. get "font" from
             // the parent and call it "externalFont" and define "font" in
             // here locally e.g. as a Link or as a Field.
             // Used for internalizedDependencies.
-            _ownAllDependencies = new FreezableSet(),
-            _childrenAllDependencies = new FreezableSet(),
-            staticDependencies = new FreezableMap(),
-            ownExternalDependencies = new FreezableSet(),
-            childrenExternalDependencies = new FreezableSet(),
-            dependencies = new FreezableSet(),
-            initOrder = [],
+            _ownAllDependencies = new FreezableSet<string>(),
+            _childrenAllDependencies = new FreezableSet<string>(),
+            staticDependencies = new FreezableMap<string, StaticDependency>(),
+            ownExternalDependencies = new FreezableSet<string>(),
+            childrenExternalDependencies = new FreezableSet<string>(),
+            dependencies = new FreezableSet<string>(),
+            initOrder: string[] = [],
             seen = new Set(),
             // this way name will naturally become class.name.
             result = {
@@ -183,7 +214,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
                     // jshint ignore: end
                 },
             },
-            NewClass = result[className];
+            NewClass = result[className]!;
         for (const definition of definitions) {
             if (definition instanceof StaticDependency) {
                 if (staticDependencies.has(definition.dependencyName))
@@ -193,8 +224,8 @@ export class _AbstractStructModel extends _BaseContainerModel {
                 staticDependencies.set(definition.dependencyName, definition);
                 continue;
             }
-            const [name] = definition;
-            let [, value] = definition;
+            const [name] = definition as [unknown, ...unknown[]];
+            let [, value] = definition as [unknown, ...unknown[]];
             if (seen.has(name))
                 throw new Error(
                     `VALUE ERROR ${className} multiple definitions for name "${name}" in "${className}".`,
@@ -207,7 +238,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
                 );
 
             if (value === this.WITH_SELF_REFERENCE) {
-                const [, , fn] = definition;
+                const [, , fn] = definition as [unknown, unknown, (NewClass: typeof _AbstractStructModel) => unknown];
                 value = fn(NewClass);
             }
 
@@ -225,15 +256,16 @@ export class _AbstractStructModel extends _BaseContainerModel {
                 links.set(name, value);
             } else if (value instanceof FallBackValue) {
                 fallBackValues.set(name, value);
-            } else if (value.prototype instanceof _BaseModel) {
+            } else if ((value as typeof _BaseModel).prototype instanceof _BaseModel) {
                 // value can't be equal to _BaseModel, but that's not
                 // intended for direct use anyways.
                 // FIXME: We should even check if value is abstract
                 // or meant to be used directly, by somehow marking
                 // Abstract classes (with a static symbol?);
-                fields.set(name, value);
+                const Model = value as typeof _BaseModel;
+                fields.set(name, Model);
                 // All models must communicate this.
-                for (const dependency of value.dependencies)
+                for (const dependency of Model.dependencies)
                     _childrenAllDependencies.add(dependency);
             } else
                 throw new Error(
@@ -287,14 +319,14 @@ export class _AbstractStructModel extends _BaseContainerModel {
             ownExternalDependencies,
             iterFilter(
                 _ownAllDependencies,
-                (dependency) => !staticDependencies.has(dependency),
+                (dependency: string) => !staticDependencies.has(dependency),
             ),
         );
         populateSet(
             childrenExternalDependencies,
             iterFilter(
                 _childrenAllDependencies,
-                (dependency) => !staticHas(dependency),
+                (dependency: string) => !staticHas(dependency),
             ),
         );
         populateSet(dependencies, [
@@ -323,7 +355,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
             ),
         );
 
-        for (const staticClassProperty of Object.values(NewClass))
+        for (const staticClassProperty of Object.values(NewClass as unknown as Record<string, unknown>))
             Object.freeze(staticClassProperty);
 
         // Can't override class.fields anymore, would be possible w/o the freeze.
@@ -342,7 +374,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
                 "childrenExternalDependencies",
                 "initOrder",
             ])
-                console.log(`    ${className}.${prop}:`, NewClass[prop]);
+                console.log(`    ${className}.${prop}:`, (NewClass as unknown as Record<string, unknown>)[prop]);
 
             console.log(new Array(30).fill("*-").join(""));
             console.log(new Array(30).fill("*-").join("") + "\n");
@@ -366,15 +398,15 @@ export class _AbstractStructModel extends _BaseContainerModel {
     //      immutable = new CTor(oldState).metamorphose(dependencies);
     // if not oldState this will be a primal state (immutable).
     constructor(
-        oldState = null,
-        dependencies = null,
-        serializedValue = null,
+        oldState: _AbstractStructModel | null = null,
+        dependencies: Record<string, unknown> | symbol | null = null,
+        serializedValue: unknown = null,
         serializeOptions = SERIALIZE_OPTIONS,
     ) {
         // Must call first to be able to use with this.constructor.name
         // it's super counter intuitive, given the nature of the checks
         // below, but it shouldn't create bad side effects either.
-        super(oldState);
+        super(oldState as _BaseModel | null);
         if (oldState === null && dependencies === null)
             throw new Error(
                 `TYPE ERROR either oldState or dependencies are required in ${this.constructor.name}.`,
@@ -411,7 +443,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
                 if (this[OLD_STATE] === null)
                     throw new Error("Primal State has no dependencies yet!");
                 // In draft-mode, this[OLD_STATE] has the dependencies.
-                return this[OLD_STATE].dependencies;
+                return this[OLD_STATE]!.dependencies;
             },
             configurable: true,
         });
@@ -440,18 +472,19 @@ export class _AbstractStructModel extends _BaseContainerModel {
             // but since this is a constructor it MUST return a new
             // object (when called with `new`).
             if (dependencies !== _DEFERRED_DEPENDENCIES)
-                return this.metamorphose(dependencies);
+                return this.metamorphose(dependencies as Record<string, unknown>) as this;
         }
     }
 
-    _getChangedDependencies() {
+    _getChangedDependencies(): Set<string> {
+        const ctor = this.constructor as typeof _AbstractStructModel;
         if (this[OLD_STATE] === null)
             // If this.[OLD_STATE] === null we need to create a new primal
             // value, changedDependencyNames will be fully populated to do so.
-            return new Set(this.constructor.dependencies);
-        const changedDependencyNames = new Set();
-        for (const key of this.constructor.dependencies.keys()) {
-            if (this[OLD_STATE].dependencies[key] !== this.dependencies[key])
+            return new Set(ctor.dependencies);
+        const changedDependencyNames = new Set<string>();
+        for (const key of ctor.dependencies.keys()) {
+            if ((this[OLD_STATE] as unknown as _AbstractStructModel).dependencies[key] !== this.dependencies[key])
                 changedDependencyNames.add(key);
         }
         return changedDependencyNames;
@@ -461,9 +494,9 @@ export class _AbstractStructModel extends _BaseContainerModel {
      * localScope a Map
      * childDescriptor = this.constructor.get(childName)
      */
-    collectChildDependencies(localScope, childDescriptor) {
+    collectChildDependencies(localScope: Map<string, unknown>, childDescriptor: { dependencies: Iterable<string> }): Record<string, unknown> {
         return Object.fromEntries(
-            iterMap(childDescriptor.dependencies, (key) => {
+            iterMap(childDescriptor.dependencies, (key: string) => {
                 const value = localScope.get(key);
                 if (value === undefined)
                     throw new Error(
@@ -474,7 +507,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
         );
     }
 
-    *_lockItem(localScope, locked, changedDependencyNames, name) {
+    *_lockItem(localScope: Map<string, unknown>, locked: Set<string>, changedDependencyNames: Set<string>, name: string): Generator<ResourceRequirement, void, unknown> {
         if (locked.has(name))
             // Been here done that.
             return;
@@ -486,15 +519,15 @@ export class _AbstractStructModel extends _BaseContainerModel {
         // if this is primal state construction and there's no
         // OLD_STATE the init order loop should have populated
         // this._value.get(name) by now!
-        const item = this._value.has(name)
+        const item = (this._value.has(name)
             ? this._value.get(name)
-            : this[OLD_STATE].get(name);
+            : this[OLD_STATE]!.get(name)) as _BaseModel;
         // `item` is a draft.
         // `descriptor` is a Model or an instance of ForeignKey.
         // ValueLink, Constraint and InternalizedDependency are
         // skipped with `this.hasOwn(name)` and require no
         // locking themselves.
-        const descriptor = this.constructor.get(name);
+        const descriptor = (this.constructor as typeof _AbstractStructModel).get(name);
         // Recursion! Thanks to initOrder this will resolve without
         // any infinite loops or missing dependencies.
 
@@ -511,18 +544,19 @@ export class _AbstractStructModel extends _BaseContainerModel {
             // coherence functions may have invalidated
             // the constraint and in that case we will fail.
             const key = descriptor,
-                target = localScope.get(key.targetName),
+                target = localScope.get(key.targetName) as _BaseContainerModel,
                 // May fail with an error!
-                targetKeyMaybeGen = key.constraint(target, item.value),
+                targetKeyMaybeGen = key.constraint(target, item.value as unknown as KeyValue) as
+                    KeyValue | Generator<ResourceRequirement, KeyValue, unknown>,
                 targetKey =
-                    targetKeyMaybeGen?.next instanceof Function
-                        ? yield* targetKeyMaybeGen
-                        : targetKeyMaybeGen;
+                    (targetKeyMaybeGen as Generator<ResourceRequirement, KeyValue, unknown>)?.next instanceof Function
+                        ? yield* (targetKeyMaybeGen as Generator<ResourceRequirement, KeyValue, unknown>)
+                        : targetKeyMaybeGen as KeyValue;
             let draft = null;
             if (targetKey !== item.value) {
                 // May have to turn into a draft
                 draft = item.isDraft ? item : item.getDraft();
-                draft.value = targetKey;
+                (draft as unknown as { value: KeyValue }).value = targetKey;
             }
             immutable =
                 draft !== null
@@ -555,11 +589,11 @@ export class _AbstractStructModel extends _BaseContainerModel {
     }
 
     *_lockDependencies(
-        localScope,
-        locked,
-        changedDependencyNames,
-        dependencies,
-    ) {
+        localScope: Map<string, unknown>,
+        locked: Set<string>,
+        changedDependencyNames: Set<string>,
+        dependencies: Iterable<string>,
+    ): Generator<ResourceRequirement, void, unknown> {
         for (const name of dependencies) {
             yield* this._lockItem(
                 localScope,
@@ -573,7 +607,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
     /**
      * This needs to stay compatible with _serializeContainer.
      */
-    _deserializeToMap(serializedValues, options) {
+    _deserializeToMap(serializedValues: unknown, options: SerializationOptions & { strict?: boolean }): Map<string, unknown> {
         const keepKeys = options?.structStoreKeys,
             structAsDict = options?.structAsDict,
             valuesMap = new Map();
@@ -581,8 +615,8 @@ export class _AbstractStructModel extends _BaseContainerModel {
         // owned (hasOwn) by Model.
         if (keepKeys) {
             const serializedValues_ = structAsDict
-                ? Object.entries(serializedValues)
-                : serializedValues;
+                ? Object.entries(serializedValues as Record<string, unknown>)
+                : serializedValues as [string, unknown][];
             for (const [key, serializedValue] of serializedValues_) {
                 if (!this.hasOwn(key)) {
                     // NOTE: this could be a hint of something going wrong,
@@ -601,7 +635,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
         } else {
             // Derive the keys from the positions of the values.
             for (const [i, key] of this.ownKeys().entries()) {
-                const serializedValue = serializedValues[i];
+                const serializedValue = (serializedValues as unknown[])[i];
                 if (serializedValue !== null && serializedValue !== undefined)
                     valuesMap.set(key, serializedValue);
             }
@@ -611,11 +645,11 @@ export class _AbstractStructModel extends _BaseContainerModel {
         return valuesMap;
     }
 
-    *#_metamorphoseGen(dependencies = {}) {
+    *#_metamorphoseGen(dependencies: DependenciesMap = {}): Generator<ResourceRequirement, _AbstractStructModel, unknown> {
         const [serializedValuesMap, serializeOptions] = this[
                 _PRIMARY_SERIALIZED_VALUE
             ] || [new Map()],
-            getSerialized = (name) => {
+            getSerialized = (name: string) => {
                 if (!serializedValuesMap || !serializedValuesMap.has(name))
                     return [];
                 const value = serializedValuesMap.get(name);
@@ -624,6 +658,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
             };
         // Don't keep this.
         delete this[_PRIMARY_SERIALIZED_VALUE];
+        const ctor = this.constructor as typeof _AbstractStructModel;
 
         //CAUTION: `this` is the object not the class.
         //
@@ -636,10 +671,10 @@ export class _AbstractStructModel extends _BaseContainerModel {
         // will re-use this[OLD_STATE].dependencies.
         // Fails in the if dependencies are missing.
         const dependenciesData = collectDependencies(
-            this.constructor.dependencies,
+            ctor.dependencies,
             dependencies,
             this[OLD_STATE]?.dependencies,
-            this.constructor.staticDependencies,
+            ctor.staticDependencies,
         );
 
         for (const [k, v] of Object.entries(dependenciesData)) {
@@ -673,32 +708,32 @@ export class _AbstractStructModel extends _BaseContainerModel {
             // no potential changes that need to be checked.
             this._value.size === 0
         )
-            return this[OLD_STATE];
+            return this[OLD_STATE] as unknown as this;
 
-        const localScope = new Map(),
+        const localScope = new Map<string, unknown>(),
             // localScope should already own *children*-external dependencies!!!
-            locked = new Set();
+            locked = new Set<string>();
         // This is the mantra:
         // NOTE: using this.get in this loop as it also returns
         // potentialWriteProxies as an optimization, the items
         // are made immutable eventually in the _lockItem method.
-        for (const name of this.constructor.initOrder) {
+        for (const name of ctor.initOrder) {
             // By the time each element in initOrder is at the turn,
             // its dependencies are already available in localScope
             // and they can be used.
-            if (this.constructor.childrenExternalDependencies.has(name)) {
+            if (ctor.childrenExternalDependencies.has(name)) {
                 if (
                     !(name in this.dependencies) ||
                     this.dependencies[name] === undefined
                 )
                     // should be covered above when checking dependenciesData
                     throw new Error(
-                        `DEPENDENCY ERROR ${this.constructor.name} requires "${name}" in dependenciesData.`,
+                        `DEPENDENCY ERROR ${ctor.name} requires "${name}" in dependenciesData.`,
                     );
                 localScope.set(name, this.dependencies[name]);
-            } else if (this.constructor.internalizedDependencies.has(name)) {
+            } else if (ctor.internalizedDependencies.has(name)) {
                 const internalizedDependency =
-                    this.constructor.internalizedDependencies.get(name);
+                    ctor.internalizedDependencies.get(name)!;
                 if (
                     !(
                         internalizedDependency.dependencyName in
@@ -709,7 +744,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
                 )
                     // should be covered above when checking dependenciesData
                     throw new Error(
-                        `DEPENDENCY ERROR ${this.constructor.name} requires ` +
+                        `DEPENDENCY ERROR ${ctor.name} requires ` +
                             `"${internalizedDependency.dependencyName}" in dependenciesData.` +
                             ` for "${name}": ${internalizedDependency}.`,
                     );
@@ -717,11 +752,11 @@ export class _AbstractStructModel extends _BaseContainerModel {
                     name,
                     this.dependencies[internalizedDependency.dependencyName],
                 );
-            } else if (this.constructor.fields.has(name)) {
+            } else if (ctor.fields.has(name)) {
                 // get return value can be a draft or a proxified immutable.
                 if (this[OLD_STATE] === null && !this._value.has(name)) {
                     // this is a primal state
-                    const Model = this.constructor.fields.get(name);
+                    const Model = ctor.fields.get(name)!;
                     // We want dependencies to be locked later in the
                     // process, so the coherence functions can do their
                     // thing and don't fail when writing because they get
@@ -737,11 +772,11 @@ export class _AbstractStructModel extends _BaseContainerModel {
                     for (const [k, v] of Object.entries(childDependencies)) {
                         if (!this.hasOwn(k)) continue;
                         const item = (childDependencies[k] =
-                            unwrapPotentialWriteProxy(v));
+                            unwrapPotentialWriteProxy(v)) as _BaseModel;
                         if (item.isDraft) {
                             childDependencies[k] = item.metamorphose({});
                             // put the immutable into this._value
-                            this.set(k, item);
+                            this.set(k, item as _BaseModel);
                             // put the proxy of the latest item into localScope
                             // so a later coherence function can work on the
                             // to be created draft.
@@ -758,9 +793,9 @@ export class _AbstractStructModel extends _BaseContainerModel {
                     this._value.set(name, immutable);
                 }
                 localScope.set(name, this.get(name));
-            } else if (this.constructor.coherenceFunctions.has(name)) {
+            } else if (ctor.coherenceFunctions.has(name)) {
                 const coherenceFunction =
-                        this.constructor.coherenceFunctions.get(name),
+                        ctor.coherenceFunctions.get(name)!,
                     // This can change the values of fields, if fields are used
                     // as dependencies, this must execute before.
                     // We also accept frozen childDependencies, but when attempting
@@ -795,16 +830,18 @@ export class _AbstractStructModel extends _BaseContainerModel {
                 // This is also not yet implemented in the factory method,
                 // so there may be no way to get these dependencies accepted!
                 // localScope.set(name, coherenceFunction.fn(childDependencies));
-                const maybeGen = coherenceFunction.fn(childDependencies);
-                if (maybeGen?.next instanceof Function) yield* maybeGen;
-            } else if (this.constructor.foreignKeys.has(name)) {
+                const maybeGen = coherenceFunction.fn(childDependencies) as
+                    void | Generator<ResourceRequirement, void, unknown>;
+                if ((maybeGen as Generator)?.next instanceof Function)
+                    yield* (maybeGen as Generator<ResourceRequirement, void, unknown>);
+            } else if (ctor.foreignKeys.has(name)) {
                 // Must lock the target!
                 // Key must not change anymore after being used as an dependency!
                 // This means, it would still be possible to change this
                 // in a coherence function, but when it is a direct dependency
                 // e.g. in a field OR in a link (below), this must be locked
                 // and loaded.
-                const key = this.constructor.foreignKeys.get(name);
+                const key = ctor.foreignKeys.get(name)!;
                 yield* this._lockDependencies(
                     localScope,
                     locked,
@@ -829,12 +866,12 @@ export class _AbstractStructModel extends _BaseContainerModel {
 
                 const keyValue = this.get(name); // draft or proxified immutable
                 localScope.set(name, keyValue);
-            } else if (this.constructor.links.has(name)) {
+            } else if (ctor.links.has(name)) {
                 // similar as foreignKey, but since this doesn't go to
                 // Think about making sure to have this frozen (i.e. target
                 // be frozen) before sending it as a dependency.
 
-                const link = this.constructor.links.get(name);
+                const link = ctor.links.get(name)!;
                 try {
                     yield* this._lockDependencies(
                         localScope,
@@ -843,14 +880,14 @@ export class _AbstractStructModel extends _BaseContainerModel {
                         link.dependencies,
                     ); // is { link.keyName }
                 } catch (error) {
-                    error.message = `${error.message} (in ${this})`;
+                    (error as Error).message = `${(error as Error).message} (in ${this})`;
                     throw error;
                 }
                 // resolving the link:
                 //
-                const key = this.constructor.foreignKeys.get(link.keyName),
-                    targetKey = localScope.get(link.keyName).value,
-                    target = localScope.get(key.targetName);
+                const key = ctor.foreignKeys.get(link.keyName)!,
+                    targetKey = (localScope.get(link.keyName) as _BaseModel).value as KeyValue,
+                    target = localScope.get(key.targetName) as _BaseContainerModel;
                 let value;
 
                 if (targetKey === key.NULL) {
@@ -865,12 +902,12 @@ export class _AbstractStructModel extends _BaseContainerModel {
                         //       before the key is locked again, to ensure this
                         //       doesn't happen.
                         throw new Error(
-                            `INTERNAL LOGIC ERROR ${this.constructor.name} ` +
+                            `INTERNAL LOGIC ERROR ${ctor.name} ` +
                                 `can't resolve link "${name}" ${link}: ` +
                                 `key-value for key ${link.keyName} is null ` +
                                 `but null is not allowed.`,
                         );
-                } else if (target.has(targetKey)) value = target.get(targetKey);
+                } else if (target.has(targetKey as string)) value = target.get(targetKey as string);
                 else if (this[OLD_STATE] === null) {
                     // This is a primary state, we need to accept that there
                     // can be a not well defined key, i.e. when NOT_NULL
@@ -880,17 +917,17 @@ export class _AbstractStructModel extends _BaseContainerModel {
                 } else
                     // This should never happen, as we ran key.constraint before.
                     throw new Error(
-                        `KEY ERROR ${this.constructor.name} not found key "${link.keyName}"` +
+                        `KEY ERROR ${ctor.name} not found key "${link.keyName}"` +
                             ` (is ${targetKey.toString()}) in ${key.targetName}.`,
                     );
                 localScope.set(name, value);
-            } else if (this.constructor.fallBackValues.has(name)) {
-                const fallBackValue = this.constructor.fallBackValues.get(name),
-                    primaryValue = localScope.get(fallBackValue.primaryName),
-                    value =
+            } else if (ctor.fallBackValues.has(name)) {
+                const fallBackValue = ctor.fallBackValues.get(name)!,
+                    primaryValue = localScope.get(fallBackValue.primaryName) as _BaseModel | typeof ForeignKey.NULL,
+                    value: _BaseModel | typeof ForeignKey.NULL =
                         primaryValue !== ForeignKey.NULL
                             ? primaryValue
-                            : localScope.get(fallBackValue.fallBackName);
+                            : localScope.get(fallBackValue.fallBackName) as _BaseModel | typeof ForeignKey.NULL;
                 if (value === ForeignKey.NULL)
                     throw new Error(
                         `VALUE ERROR fall back value "${fallBackValue.fallBackName}" is NULL`,
@@ -900,13 +937,13 @@ export class _AbstractStructModel extends _BaseContainerModel {
                     fallBackValue.Model
                 )
                     throw new Error(
-                        `TYPE ERROR fall back value is not a ${fallBackValue.Model.name} but a ${value.constructor.name}.`,
+                        `TYPE ERROR fall back value is not a ${fallBackValue.Model.name} but a ${(value as _BaseModel).constructor.name}.`,
                     );
                 localScope.set(name, value);
             } else
                 // A programming error, was new stuff added recently ?
                 throw new Error(
-                    `UNKOWN NAME ${this.constructor.name} Don't know how to treat "${name}".`,
+                    `UNKOWN NAME ${ctor.name} Don't know how to treat "${name}".`,
                 );
         }
 
@@ -933,19 +970,19 @@ export class _AbstractStructModel extends _BaseContainerModel {
         // compare
         if (this[OLD_STATE] && changedDependencyNames.size === 0)
             // Has NOT changed!
-            return this[OLD_STATE];
+            return this[OLD_STATE] as unknown as this;
 
         // make sure all items are in this._value
         for (const name of this.ownKeys())
-            this._value.set(name, localScope.get(name));
+            this._value.set(name, localScope.get(name) as _BaseModel);
 
         // Has changed!
         {
             // validate types in this._value
             const types = [];
-            for (const [name, Type] of this.constructor.fields.entries()) {
+            for (const [name, Type] of ctor.fields.entries()) {
                 // no inheritance allowed so far.
-                const value = this._value.get(name);
+                const value = this._value.get(name)!;
                 if (value.constructor !== Type)
                     types.push(
                         `"${name}" ${value} is not a ${Type.name} (but a ${value.constructor.name}).`,
@@ -959,8 +996,8 @@ export class _AbstractStructModel extends _BaseContainerModel {
         }
         {
             // validate keys
-            for (const name of this.constructor.foreignKeys.keys()) {
-                const value = this._value.get(name);
+            for (const name of ctor.foreignKeys.keys()) {
+                const value = this._value.get(name)!;
                 if (value.constructor !== KeyValueModel)
                     throw new Error(
                         `TYPE ERROR can't metamorphose ${this} key ` +
@@ -983,7 +1020,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
         // prevents this[OLD_STATE] from being garbage collected!
         // Keeping it only in the top most element could be an option,
         // but collecting states in an external list may be even better.
-        delete this[OLD_STATE];
+        delete (this as Record<symbol, unknown>)[OLD_STATE];
         Object.defineProperty(this, "_value", {
             value: Object.freeze(this._value),
             writable: false,
@@ -993,24 +1030,24 @@ export class _AbstractStructModel extends _BaseContainerModel {
             value: false,
             configurable: false,
         });
-        delete this[_LOCAL_PROXIES];
+        delete (this as Record<symbol, unknown>)[_LOCAL_PROXIES];
         Object.freeze(this);
     }
     #_metamorphoseCleanUp() {
-        delete this.dependencies;
+        delete (this as Record<string, unknown>).dependencies;
     }
     // This can be called without depenedencies or only with changed
     // dependencies, initially, a lack of dependencies is detected.
     // The case without dependencies is given when commiting a change within
     // a workflow, to trigger the side effects.
-    *metamorphoseGen(dependencies = {}) {
+    *metamorphoseGen(dependencies: DependenciesMap = {}): Generator<ResourceRequirement, this, unknown> {
         if (!this.isDraft)
             throw new Error(
                 `LIFECYCLE ERROR ${this} must be in draft mode to metamorphose.`,
             );
-        let result;
+        let result: this = this;
         try {
-            result = yield* this.#_metamorphoseGen(dependencies);
+            result = (yield* this.#_metamorphoseGen(dependencies)) as this;
         } finally {
             if (result === this) {
                 // This metamorphosed into a new state!
@@ -1033,15 +1070,15 @@ export class _AbstractStructModel extends _BaseContainerModel {
         return this._value;
     }
 
-    *[Symbol.iterator]() {
+    *[Symbol.iterator](): Generator<[string, _BaseModel], void, unknown> {
         // maybe use flags to decide what not to yield
         // users (data readers) may require
         // yield keys, links?
-        for (const key of this.ownKeys()) yield [key, this.get(key)];
+        for (const key of this.ownKeys()) yield [key, this.get(key) as _BaseModel];
     }
 
-    *allEntries() {
-        for (const key of this.keys()) yield [key, this.get(key)];
+    *allEntries(): Generator<[string, _BaseModel], void, unknown> {
+        for (const key of this.keys()) yield [key, this.get(key) as _BaseModel];
     }
 
     // TODO: something like this will probably be required.
@@ -1057,7 +1094,8 @@ export class _AbstractStructModel extends _BaseContainerModel {
         // I have a hunch that even links, should be contained, if we want
         // to be able to further reference them.
 
-        return this.constructor.fields.size + this.constructor.foreignKeys.size;
+        const ctor = this.constructor as typeof _AbstractStructModel;
+        return ctor.fields.size + ctor.foreignKeys.size;
     }
 
     /**
@@ -1068,10 +1106,11 @@ export class _AbstractStructModel extends _BaseContainerModel {
      * links from "below" in the hierarchy, Internalized Dependencies from
      * above. These are still included in the this.has and this.keys interfaces.
      */
-    hasOwn(key) {
+    hasOwn(key: string): boolean {
+        const ctor = this.constructor as typeof _AbstractStructModel;
         return (
-            this.constructor.fields.has(key) ||
-            this.constructor.foreignKeys.has(key)
+            ctor.fields.has(key) ||
+            ctor.foreignKeys.has(key)
         );
     }
 
@@ -1080,12 +1119,13 @@ export class _AbstractStructModel extends _BaseContainerModel {
      * that are: fields and foreignKeys. These are stored originally in this._value.
      * See hasOwn for more details.
      */
-    has(key) {
+    has(key: string): boolean {
+        const ctor = this.constructor as typeof _AbstractStructModel;
         return (
             this.hasOwn(key) ||
-            this.constructor.links.has(key) ||
-            this.constructor.internalizedDependencies.has(key) ||
-            this.constructor.fallBackValues.has(key)
+            ctor.links.has(key) ||
+            ctor.internalizedDependencies.has(key) ||
+            ctor.fallBackValues.has(key)
         );
     }
 
@@ -1094,16 +1134,17 @@ export class _AbstractStructModel extends _BaseContainerModel {
         return [...this.fields.keys(), ...this.foreignKeys.keys()];
     }
 
-    ownKeys() {
-        return this.constructor.ownKeys();
+    ownKeys(): string[] {
+        return (this.constructor as typeof _AbstractStructModel).ownKeys();
     }
 
-    keys() {
+    keys(): string[] {
+        const ctor = this.constructor as typeof _AbstractStructModel;
         return [
             ...this.ownKeys(),
-            ...this.constructor.links.keys(),
-            ...this.constructor.internalizedDependencies.keys(),
-            ...this.constructor.fallBackValues.keys(),
+            ...ctor.links.keys(),
+            ...ctor.internalizedDependencies.keys(),
+            ...ctor.fallBackValues.keys(),
         ];
     }
 
@@ -1111,23 +1152,23 @@ export class _AbstractStructModel extends _BaseContainerModel {
      * hasDraftFor and getDraftFor are likely only a required interfaces
      * for _BaseContainerModel.
      */
-    [_HAS_DRAFT_FOR_PROXY](proxy) {
+    [_HAS_DRAFT_FOR_PROXY](proxy: unknown): boolean {
         if (!this.isDraft) return false;
 
         if (!this[_LOCAL_PROXIES].byProxy.has(proxy))
             // the proxy is disconnected
             return false;
 
-        const key = this[_LOCAL_PROXIES].byProxy.get(proxy),
+        const key = this[_LOCAL_PROXIES].byProxy.get(proxy)!,
             // MAY NOT BE A DRAFT AT THIS MOMENT!
-            item = this._value.get(key);
+            item = this._value.get(key)!;
         if (!item || !item.isDraft) return false;
 
         // Identified via this[_LOCAL_PROXIES].
         return true;
     }
 
-    [_HAS_DRAFT_FOR_OLD_STATE_KEY](key) {
+    [_HAS_DRAFT_FOR_OLD_STATE_KEY](key: string): boolean {
         if (!this.isDraft) return false;
         // this implies that if this is a draft all items in
         // this._value must be drafts as well! But do we know?
@@ -1149,7 +1190,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
 
     // called from the perspective of a proxy that was created when this
     // was still an immutable.
-    [_GET_DRAFT_FOR_OLD_STATE_KEY](key) {
+    [_GET_DRAFT_FOR_OLD_STATE_KEY](key: string): _BaseModel | false {
         if (!this.isDraft)
             // required: so this can be turned into a draft on demand
             throw immutableWriteError(
@@ -1176,10 +1217,10 @@ export class _AbstractStructModel extends _BaseContainerModel {
             // created directly for [OLD_STATE] entries.
             return false;
 
-        const item = this._value.has(key)
-            ? this._value.get(key) // => assert item.isDraft
+        const item = (this._value.has(key)
+            ? this._value.get(key)! // => assert item.isDraft
             : // expect OLD_STATE to exist!
-              this[OLD_STATE].get(key); // item is not a draft
+              this[OLD_STATE]!.get(key)) as _BaseModel; // item is not a draft
         if (item.isDraft)
             // Since it was not changedBySetter this must be the original
             // draft for the item at OLD_STATE
@@ -1199,7 +1240,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
      * Returns a draft for key otherwise.
      * this is likely only for _BaseContainerModel
      */
-    [_GET_DRAFT_FOR_PROXY](proxy) {
+    [_GET_DRAFT_FOR_PROXY](proxy: unknown): _BaseModel | false {
         // TODO: check if key exists! Else KEY ERROR ${key}
         if (!this.isDraft)
             throw immutableWriteError(
@@ -1213,10 +1254,10 @@ export class _AbstractStructModel extends _BaseContainerModel {
             // proxy is disconnected
             return false;
 
-        const key = this[_LOCAL_PROXIES].byProxy.get(proxy),
-            item = this._value.has(key)
-                ? this._value.get(key)
-                : this[OLD_STATE].get(key);
+        const key = this[_LOCAL_PROXIES].byProxy.get(proxy)!,
+            item = (this._value.has(key)
+                ? this._value.get(key)!
+                : this[OLD_STATE]!.get(key)) as _BaseModel;
         // MAY NOT BE A DRAFT AT THIS MOMENT! => via set(key, immutable)...
         // in that case were going to replace the item in this._value with
         // its draft.
@@ -1228,14 +1269,14 @@ export class _AbstractStructModel extends _BaseContainerModel {
         return draft;
     }
 
-    getDraftFor(key, defaultReturn = _NOTDEF) {
+    getDraftFor(key: string, defaultReturn: unknown = _NOTDEF): _BaseModel | false {
         let proxyOrDraft;
         try {
             proxyOrDraft = this._getOwn(key, defaultReturn);
         } catch (error) {
-            if (error.message.startsWith("KEY ERROR"))
+            if ((error as Error).message.startsWith("KEY ERROR"))
                 // mark it
-                throw draftKeyError(error);
+                throw draftKeyError(error as Error);
             throw error;
         }
 
@@ -1244,14 +1285,18 @@ export class _AbstractStructModel extends _BaseContainerModel {
         return proxyOrDraft;
     }
 
-    _getOwn(key) {
-        if (!this.hasOwn(key))
+    _getOwn(key: string): _BaseModel;
+    _getOwn(key: string, defaultReturn: unknown): _BaseModel;
+    _getOwn(key: string, defaultReturn: unknown = _NOTDEF): _BaseModel {
+        if (!this.hasOwn(key)) {
+            if (defaultReturn !== _NOTDEF) return defaultReturn as _BaseModel;
             throw new Error(`KEY ERROR "${key}" not found in ${this}.`);
+        }
 
-        let item = this._value.has(key) && this._value.get(key);
-        if (!item && this[OLD_STATE] !== null) {
+        let item: _BaseModel | false = this._value.has(key) && this._value.get(key)!;
+        if (!item && this[OLD_STATE] != null) {
             // item could be not in value but proxy could exist
-            item = this[OLD_STATE].get(key);
+            item = this[OLD_STATE]!.get(key) as _BaseModel;
         }
         if (!item)
             // This would just be weird!
@@ -1269,11 +1314,11 @@ export class _AbstractStructModel extends _BaseContainerModel {
 
         // Don't create proxy twice and thereby detach the old one.
         if (!item.isDraft && this[_LOCAL_PROXIES].byKey.has(key))
-            return this[_LOCAL_PROXIES].byKey.get(key); // => proxy;
+            return this[_LOCAL_PROXIES].byKey.get(key) as _BaseModel; // => proxy;
 
         // The function understands if item is already a draft
         // and does not proxify item in that case.
-        const proxyOrDraft = _PotentialWriteProxy.create(this, item);
+        const proxyOrDraft = _PotentialWriteProxy.create(this as unknown as _BaseModel, item as _BaseModel) as _BaseModel;
         if (_PotentialWriteProxy.isProxy(proxyOrDraft)) {
             this[_LOCAL_PROXIES].byKey.set(key, proxyOrDraft);
             this[_LOCAL_PROXIES].byProxy.set(proxyOrDraft, key);
@@ -1281,42 +1326,48 @@ export class _AbstractStructModel extends _BaseContainerModel {
         return proxyOrDraft;
     }
 
-    _getLink(key) {
-        if (!this.constructor.links.has(key))
+    _getLink(key: string): _BaseModel | symbol {
+        const ctor = this.constructor as typeof _AbstractStructModel;
+        if (!ctor.links.has(key))
             throw new Error(
                 `KEY ERROR "${key}" is not a link found in ${this}.`,
             );
         // resolve the link
-        const link = this.constructor.links.get(key),
-            foreignKey = this.constructor.foreignKeys.get(link.keyName),
+        const link = ctor.links.get(key)!,
+            foreignKey = ctor.foreignKeys.get(link.keyName)!,
             targetKey = this.get(link.keyName),
             target = this.get(foreignKey.targetName);
         // FIXME: IMPROVE handling of this case everywhere!
-        if (targetKey.value === ForeignKey.NULL) return ForeignKey.NULL;
-        return target.get(targetKey.value);
+        const targetKeyValue = targetKey.value as KeyValue;
+        if (targetKeyValue === ForeignKey.NULL) return ForeignKey.NULL;
+        return (target as _BaseContainerModel).get(targetKeyValue as string);
     }
 
-    _getFallBackValue(key) {
-        if (!this.constructor.fallBackValues.has(key))
+    _getFallBackValue(key: string): unknown {
+        const ctor = this.constructor as typeof _AbstractStructModel;
+        if (!ctor.fallBackValues.has(key))
             throw new Error(
                 `KEY ERROR "${key}" is not a fallBackValues found in ${this}.`,
             );
-        const fallBackValue = this.constructor.fallBackValues.get(key),
+        const fallBackValue = ctor.fallBackValues.get(key)!,
             primaryValue = this.get(fallBackValue.primaryName);
-        return primaryValue !== ForeignKey.NULL
+        return (primaryValue as _BaseModel | symbol) !== ForeignKey.NULL
             ? primaryValue
             : this.get(fallBackValue.fallBackName);
     }
 
-    get(key, defaultReturn = _NOTDEF) {
+    get(key: string): _BaseModel;
+    get(key: string, defaultReturn: unknown): unknown;
+    get(key: string, defaultReturn: unknown = _NOTDEF): unknown {
+        const ctor = this.constructor as typeof _AbstractStructModel;
         if (this.hasOwn(key)) return this._getOwn(key);
-        if (this.constructor.internalizedDependencies.has(key))
+        if (ctor.internalizedDependencies.has(key))
             return this.dependencies[
-                this.constructor.internalizedDependencies.get(key)
+                ctor.internalizedDependencies.get(key)!
                     .dependencyName
             ];
-        if (this.constructor.links.has(key)) return this._getLink(key);
-        if (this.constructor.fallBackValues.has(key))
+        if (ctor.links.has(key)) return this._getLink(key);
+        if (ctor.fallBackValues.has(key))
             return this._getFallBackValue(key);
         if (defaultReturn !== _NOTDEF) return defaultReturn;
         throw new Error(`KEY ERROR "${key}" not found in ${this}.`);
@@ -1324,7 +1375,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
 
     // TODO: how does this work? Can't initialize at least complex stuff,
     // that has dependencies from outside!
-    set(key, entry) {
+    set(key: string, entry: _BaseModel): void {
         if (!this.isDraft)
             // Writing in all model classes:
             // raise an error when not in draft mode!
@@ -1358,9 +1409,9 @@ export class _AbstractStructModel extends _BaseContainerModel {
         }
     }
 
-    [SERIALIZE](options = SERIALIZE_OPTIONS) {
+    [SERIALIZE](options: SerializationOptions = SERIALIZE_OPTIONS): SerializationResult {
         const [resultErrors, entries] = _serializeContainer(
-            this,
+            this as unknown as _BaseContainerModel,
             /*presenceIsInformation*/ false,
             /*keepKeys*/ SERIALIZE_OPTIONS.structStoreKeys,
             options,
@@ -1370,8 +1421,14 @@ export class _AbstractStructModel extends _BaseContainerModel {
             entries !== null &&
             options?.structAsDict &&
             SERIALIZE_OPTIONS.structStoreKeys
-                ? Object.fromEntries(entries)
+                ? Object.fromEntries(entries as [string, unknown][])
                 : entries,
-        ];
+        ] as SerializationResult;
+    }
+
+    [DESERIALIZE](_serializedValue: TSerializedInput, _options: SerializationOptions): void {
+        // Struct models deserialize via _deserializeToMap in the constructor,
+        // not through the [DESERIALIZE] protocol.
+        throw new Error('NOT IMPLEMENTED: Struct models use constructor deserialization.');
     }
 }

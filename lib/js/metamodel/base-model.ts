@@ -125,7 +125,7 @@ export class FreezableSet<T> extends Set<T> {
 
 // Can be used/shared by default instead of creating new empty sets
 // as dependencies.
-export const EMPTY_SET = Object.freeze(new FreezableSet());
+export const EMPTY_SET = Object.freeze(new FreezableSet<string>());
 
 export interface ConstructableBaseDraft<T extends _BaseModel> {
     new (oldState: T): T; // Constructor signature expecting an instance of the class
@@ -404,6 +404,14 @@ export abstract class _BaseModel {
             getDraft(): _BaseModel;
         };
         return draftableState.getDraft();
+    }
+
+    static *createPrimalStateGen(
+        _dependencies: DependenciesMap,
+        _serializedValue: TSerializedInput | null = null,
+        _options: SerializationOptions = SERIALIZE_OPTIONS,
+    ): Generator<ResourceRequirement, _BaseModel, unknown> {
+        throw new Error("NOT IMPLEMENTED: createPrimalStateGen");
     }
 
     get isDraft(): boolean {
