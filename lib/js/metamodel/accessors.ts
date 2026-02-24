@@ -87,20 +87,20 @@ export function getModel(RootModel: typeof _BaseModel, path: string | Path): typ
     const pathInstance =
         typeof path === "string" ? Path.fromString(path) : path;
     // Accumulator traverses static class properties (Model, fields) which
-    // are not in _BaseModel's type surface — use Record<string, any>.
-    const result = pathInstance.parts.reduce((accum: Record<string, any>, key: string) => {
+    // are not in _BaseModel's type surface — use Record<string, unknown>.
+    const result = pathInstance.parts.reduce((accum: Record<string, unknown>, key: string) => {
         console.log("getModel:", key, "from:", accum);
         if ("Model" in accum)
             // We don't use key here, because this is a Map/List
             // and the key is just a placeholder, the Model is equal
             // for each element.
-            return accum.Model;
-        if ("fields" in accum) return accum.fields.get(key);
+            return accum.Model as Record<string, unknown>;
+        if ("fields" in accum) return (accum.fields as Map<string, unknown>).get(key) as Record<string, unknown>;
         throw new Error(
             `KEY ERROR don't know how to get model from ${accum.name}`,
         );
-    }, RootModel as Record<string, any>);
-    return result as typeof _BaseModel;
+    }, RootModel as unknown as Record<string, unknown>);
+    return result as unknown as typeof _BaseModel;
 }
 
 export function applyTo(

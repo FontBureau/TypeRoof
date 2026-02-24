@@ -109,7 +109,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
 
     // Instance properties (set via Object.defineProperty in constructor)
     declare _value: FreezableMap<string, _BaseModel>;
-    // @ts-ignore — overrides base accessor with instance property set via Object.defineProperty
+    // @ts-expect-error — overrides base accessor with instance property set via Object.defineProperty
     declare override dependencies: Readonly<Record<string, unknown>>;
     declare [_LOCAL_PROXIES]: LocalProxies;
     declare [_PRIMARY_SERIALIZED_VALUE]?: [FreezableMap<string, unknown>, SerializationOptions];
@@ -1045,6 +1045,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
             throw new Error(
                 `LIFECYCLE ERROR ${this} must be in draft mode to metamorphose.`,
             );
+        // eslint-disable-next-line @typescript-eslint/no-this-alias -- result accumulator initialized to `this`, reassigned by generator yield below; not an alias pattern.
         let result: this = this;
         try {
             result = (yield* this.#_metamorphoseGen(dependencies)) as this;

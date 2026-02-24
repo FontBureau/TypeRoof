@@ -163,7 +163,7 @@ export class _PotentialWriteProxy {
         );
     }
 
-    createMethodProxy(fnName: string, fn: Function): Function {
+    createMethodProxy(fnName: string, fn: (...args: unknown[]) => unknown): (...args: unknown[]) => unknown {
         if (_PotentialWriteProxy.isProxy(fn)) {
             // I don't actually think this case happens, but if it does, it
             // will be interesting to observe the case!
@@ -181,7 +181,7 @@ export class _PotentialWriteProxy {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const self = this;
         const handler = {
-            get: function (targetFn: Function, prop: string | symbol, receiver: unknown): unknown {
+            get: function (targetFn: (...args: unknown[]) => unknown, prop: string | symbol, receiver: unknown): unknown {
                 // assert targetFn === fn
                 // so, unlikely/seldom that we use a getter on it, maybe for
                 // fn.name ... but event that unlikely required!
@@ -189,7 +189,7 @@ export class _PotentialWriteProxy {
                 if (prop === _PotentialWriteProxy.GET) return targetFn;
                 return Reflect.get(targetFn, prop, receiver);
             },
-            apply: function (targetFn: Function, thisArgument: _BaseModel, argumentsList: unknown[]): unknown {
+            apply: function (targetFn: (...args: unknown[]) => unknown, thisArgument: _BaseModel, argumentsList: unknown[]): unknown {
                 // assert targetFn === fn
                 // Could be a setter or getter method!
                 // There won't be a confused setter that also acts as a getter

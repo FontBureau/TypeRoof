@@ -61,7 +61,11 @@ export default [
         files: ["**/*.{ts,tsx}"],
         rules: {
             "no-unused-vars": "off",
-            "@typescript-eslint/no-unused-vars": "error",
+            // The _-prefix convention signals intentionally unused parameters,
+            // commonly for interface/protocol conformance.
+            "@typescript-eslint/no-unused-vars": ["error", {
+                argsIgnorePattern: "^_",
+            }],
         },
     },
     {

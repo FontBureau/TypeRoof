@@ -357,7 +357,7 @@ export class _AbstractListModel extends _BaseContainerModel {
             ([ownOldIndex]: [number, unknown]) => ownOldIndex === oldIndex,
         );
         if (index === -1) return false;
-        let item: _BaseModel = (Object.hasOwn(this._value, index) && this._value[index]!) || (oldState.get(String(oldIndex)) as _BaseModel);
+        const item: _BaseModel = (Object.hasOwn(this._value, index) && this._value[index]!) || (oldState.get(String(oldIndex)) as _BaseModel);
         if (item.isDraft) return item;
         const draft = item.getDraft();
         this._value[index] = draft;
@@ -384,7 +384,7 @@ export class _AbstractListModel extends _BaseContainerModel {
             ([, ownProxy]: [number, unknown]) => ownProxy === proxy,
         );
         if (index === -1) return false;
-        let item: _BaseModel = (Object.hasOwn(this._value, index) && this._value[index]!) || (this[OLD_STATE] as unknown as _AbstractListModel).get(String(this[_OLD_TO_NEW_SLOT][index]![0])) as _BaseModel;
+        const item: _BaseModel = (Object.hasOwn(this._value, index) && this._value[index]!) || (this[OLD_STATE] as unknown as _AbstractListModel).get(String(this[_OLD_TO_NEW_SLOT][index]![0])) as _BaseModel;
         if (item.isDraft) return item;
         const draft = item.getDraft();
         this._value[index] = draft;
