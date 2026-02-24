@@ -155,6 +155,11 @@ button:not(:disabled):hover {
 button:disabled {
     border-color: var(--button-border-color-disabled);
     color: var(--button-text-color-disabled);
+
+    > span {
+        color: var(--button-border-color-disabled);
+        cursor: default;
+    }
 }
 
 form button {
