@@ -862,7 +862,7 @@ ui plain select
     align-items: center;
     display: flex;
     gap: 0.25em;
-    padding: 1em 0;
+    padding: 0.25em 0;
 
     label {
         width: 35%;
