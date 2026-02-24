@@ -117,7 +117,10 @@ export const GET = Symbol("_POTENTIAL_WRITE_PROXY_GET");
 export const IS_WRAPPER_TYPE = Symbol("IS_WRAPPER_TYPE");
 
 export function isProxy(maybeProxy: unknown): boolean {
-    return (!!maybeProxy && !!(maybeProxy as Record<symbol, unknown>)[IS_PROXY]) || false;
+    return (
+        (!!maybeProxy && !!(maybeProxy as Record<symbol, unknown>)[IS_PROXY]) ||
+        false
+    );
 }
 
 export function unwrapPotentialWriteProxy<T>(

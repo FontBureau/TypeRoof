@@ -1,8 +1,12 @@
-import type { FreezableMap, FreezableSet } from './base-model.ts';
-import type { CoherenceFunction } from './coherence-function.ts';
-import type { ForeignKey } from './foreign-key.ts';
-import type { _BaseLink, InternalizedDependency, FallBackValue } from './links.ts';
-import type { _BaseModel } from './base-model.ts';
+import type { FreezableMap, FreezableSet } from "./base-model.ts";
+import type { CoherenceFunction } from "./coherence-function.ts";
+import type { ForeignKey } from "./foreign-key.ts";
+import type {
+    _BaseLink,
+    InternalizedDependency,
+    FallBackValue,
+} from "./links.ts";
+import type { _BaseModel } from "./base-model.ts";
 
 // Set has no well defined order, we can just remove any item.
 // Would be different with an explicitly "OrderedSet".
@@ -75,11 +79,15 @@ export interface HasDependencies {
     dependencies: Iterable<string> & { size: number };
 }
 
-export function* allEntries(...withEntries: Map<string, HasDependencies>[]): Generator<[string, HasDependencies]> {
+export function* allEntries(
+    ...withEntries: Map<string, HasDependencies>[]
+): Generator<[string, HasDependencies]> {
     for (const item of withEntries) yield* item.entries();
 }
 
-function* allKeys(...withKeys: { keys(): Iterable<string> }[]): Generator<string> {
+function* allKeys(
+    ...withKeys: { keys(): Iterable<string> }[]
+): Generator<string> {
     for (const item of withKeys) yield* item.keys();
 }
 

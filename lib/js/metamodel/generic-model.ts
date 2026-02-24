@@ -10,20 +10,22 @@ import {
     type SerializationResult,
     type TSerializedInput,
     type ResourceRequirement,
-} from './base-model.ts';
+} from "./base-model.ts";
 
-import {
-    _NOTDEF,
-} from './util.ts';
+import { _NOTDEF } from "./util.ts";
 
-import {
-    _PRIMARY_SERIALIZED_VALUE,
-} from './serialization.ts';
+import { _PRIMARY_SERIALIZED_VALUE } from "./serialization.ts";
 
 type GenericValidateFN = (value: unknown) => [boolean, string | null];
 type GenericSanitizeFN = (value: unknown) => [unknown, string | null];
-type GenericSerializeFN = (value: unknown, options: SerializationOptions) => TSerializedInput;
-type GenericDeserializeFN = (serializedValue: TSerializedInput, options: SerializationOptions) => unknown;
+type GenericSerializeFN = (
+    value: unknown,
+    options: SerializationOptions,
+) => TSerializedInput;
+type GenericDeserializeFN = (
+    serializedValue: TSerializedInput,
+    options: SerializationOptions,
+) => unknown;
 
 export interface GenericModelSetup {
     sanitizeFN?: GenericSanitizeFN;
@@ -36,7 +38,10 @@ export interface GenericModelSetup {
 export class _AbstractGenericModel extends _BaseSimpleModel {
     // Instance properties set via Object.defineProperty
     declare _value: unknown;
-    declare [_PRIMARY_SERIALIZED_VALUE]?: [TSerializedInput, SerializationOptions];
+    declare [_PRIMARY_SERIALIZED_VALUE]?: [
+        TSerializedInput,
+        SerializationOptions,
+    ];
 
     // Static properties set by createClass on subclasses
     static sanitizeFN: GenericSanitizeFN | null;
@@ -54,7 +59,11 @@ export class _AbstractGenericModel extends _BaseSimpleModel {
             deserializeFN: _NOTDEF as typeof _NOTDEF | GenericDeserializeFN,
             ...setup,
         };
-        for (const fnName of ["sanitizeFN", "validateFN", "serializeFN"] as const) {
+        for (const fnName of [
+            "sanitizeFN",
+            "validateFN",
+            "serializeFN",
+        ] as const) {
             if (
                 config[fnName] !== _NOTDEF &&
                 typeof config[fnName] !== "function"
@@ -64,7 +73,9 @@ export class _AbstractGenericModel extends _BaseSimpleModel {
                 );
         }
         if (config.validateFN !== _NOTDEF && config.defaultValue !== _NOTDEF) {
-            const [valid, message] = (config.validateFN as GenericValidateFN)(config.defaultValue);
+            const [valid, message] = (config.validateFN as GenericValidateFN)(
+                config.defaultValue,
+            );
             if (!valid || message)
                 throw new Error(
                     `TYPE ERROR defaultValue does not validate: ${message}`,
@@ -109,7 +120,8 @@ export class _AbstractGenericModel extends _BaseSimpleModel {
             value:
                 this[OLD_STATE] === null
                     ? ctor.defaultValue
-                    : (this[OLD_STATE] as unknown as _AbstractGenericModel).value,
+                    : (this[OLD_STATE] as unknown as _AbstractGenericModel)
+                          .value,
             configurable: true,
             writable: true,
         });
@@ -141,17 +153,28 @@ export class _AbstractGenericModel extends _BaseSimpleModel {
                 `LIFECYCLE ERROR ${this} must be in draft mode to metamorphose.`,
             );
         // compare
-        if (this[OLD_STATE] && (this[OLD_STATE] as unknown as _AbstractGenericModel).value === this._value)
+        if (
+            this[OLD_STATE] &&
+            (this[OLD_STATE] as unknown as _AbstractGenericModel).value ===
+                this._value
+        )
             // Has NOT changed!
             return this[OLD_STATE] as unknown as this;
 
         // Has changed!
-        delete (this as {[OLD_STATE]?: unknown})[OLD_STATE];
+        delete (this as { [OLD_STATE]?: unknown })[OLD_STATE];
 
         if (this[_PRIMARY_SERIALIZED_VALUE])
-            this[DESERIALIZE](...(this[_PRIMARY_SERIALIZED_VALUE] as [TSerializedInput, SerializationOptions]));
+            this[DESERIALIZE](
+                ...(this[_PRIMARY_SERIALIZED_VALUE] as [
+                    TSerializedInput,
+                    SerializationOptions,
+                ]),
+            );
         // Don't keep this
-        delete (this as {[_PRIMARY_SERIALIZED_VALUE]?: unknown})[_PRIMARY_SERIALIZED_VALUE];
+        delete (this as { [_PRIMARY_SERIALIZED_VALUE]?: unknown })[
+            _PRIMARY_SERIALIZED_VALUE
+        ];
 
         Object.defineProperty(this, "_value", {
             // Not freezing/changing this._value as it is considered "outside"
@@ -197,8 +220,7 @@ export class _AbstractGenericModel extends _BaseSimpleModel {
             (sanitize !== _NOTDEF && sanitize) ||
             (sanitize === _NOTDEF && ctor.sanitizeFN !== null)
         ) {
-            const [cleanValue, sanitizeMessage] =
-                ctor.sanitize(rawValue);
+            const [cleanValue, sanitizeMessage] = ctor.sanitize(rawValue);
             if (cleanValue === null)
                 throw new Error(
                     `SANITIZATION ERROR ${this}: ${sanitizeMessage}.`,
@@ -216,19 +238,21 @@ export class _AbstractGenericModel extends _BaseSimpleModel {
     get(): unknown {
         return this.value;
     }
-    [SERIALIZE](options: SerializationOptions = SERIALIZE_OPTIONS): SerializationResult {
+    [SERIALIZE](
+        options: SerializationOptions = SERIALIZE_OPTIONS,
+    ): SerializationResult {
         const ctor = this.constructor as typeof _AbstractGenericModel;
         if (ctor.serializeFN !== null)
             return [[], ctor.serializeFN(this.value, options)];
         return super[SERIALIZE](options);
     }
-    [DESERIALIZE](serializedValue: TSerializedInput, options: SerializationOptions = SERIALIZE_OPTIONS): void {
+    [DESERIALIZE](
+        serializedValue: TSerializedInput,
+        options: SerializationOptions = SERIALIZE_OPTIONS,
+    ): void {
         const ctor = this.constructor as typeof _AbstractGenericModel;
         if (ctor.deserializeFN !== null) {
-            this.value = ctor.deserializeFN(
-                serializedValue,
-                options,
-            );
+            this.value = ctor.deserializeFN(serializedValue, options);
             return;
         }
         super[DESERIALIZE](serializedValue, options);

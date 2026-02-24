@@ -1,17 +1,12 @@
 import {
     _BaseContainerModel,
     FreezableSet,
-    keyConstraintError
-} from './base-model.ts'
+    keyConstraintError,
+} from "./base-model.ts";
 
-import {
-    _NOTDEF
-} from './util.ts';
+import { _NOTDEF } from "./util.ts";
 
-import type {
-    DefaultProvided,
-    NotDef
-}  from './util.ts';
+import type { DefaultProvided, NotDef } from "./util.ts";
 
 // this is called "Function Overloading"
 function getFirst<T>(iter: Iterable<T>): T; // throws if empty

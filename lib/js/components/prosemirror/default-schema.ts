@@ -8,7 +8,7 @@ import type {
     NodeSpec,
     MarkSpec,
     DOMOutputSpec,
-    Node
+    Node,
 } from "prosemirror-model";
 
 // These are the reserved/default nodes and marks, they won't be

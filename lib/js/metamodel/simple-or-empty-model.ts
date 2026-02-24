@@ -11,24 +11,24 @@ import {
     type SerializationOptions,
     type SerializationResult,
     type TSerializedInput,
-} from './base-model.ts';
+} from "./base-model.ts";
 
-import {
-    _NOTDEF,
-    unwrapPotentialWriteProxy,
-} from './util.ts';
+import { _NOTDEF, unwrapPotentialWriteProxy } from "./util.ts";
 
-import {
-    _PRIMARY_SERIALIZED_VALUE,
-} from './serialization.ts';
+import { _PRIMARY_SERIALIZED_VALUE } from "./serialization.ts";
 
 export class _AbstractSimpleOrEmptyModel extends _BaseSimpleModel {
     static readonly _EMPTY = Symbol("_EMPTY");
     static Model: typeof _BaseSimpleModel;
 
     // Instance properties set via Object.defineProperty
-    declare _value: _BaseSimpleModel | typeof _AbstractSimpleOrEmptyModel._EMPTY;
-    declare [_PRIMARY_SERIALIZED_VALUE]?: [TSerializedInput, SerializationOptions];
+    declare _value:
+        | _BaseSimpleModel
+        | typeof _AbstractSimpleOrEmptyModel._EMPTY;
+    declare [_PRIMARY_SERIALIZED_VALUE]?: [
+        TSerializedInput,
+        SerializationOptions,
+    ];
 
     static createClass(
         Model: typeof _BaseSimpleModel,
@@ -63,13 +63,13 @@ export class _AbstractSimpleOrEmptyModel extends _BaseSimpleModel {
     ) {
         super(oldState as _BaseSimpleModel | null);
         const ctor = this.constructor as typeof _AbstractSimpleOrEmptyModel;
-        const oldSOE = this[OLD_STATE] as _AbstractSimpleOrEmptyModel | null | undefined;
+        const oldSOE = this[OLD_STATE] as
+            | _AbstractSimpleOrEmptyModel
+            | null
+            | undefined;
         // A primal state will have a value of _EMPTY.
         Object.defineProperty(this, "_value", {
-            value:
-                oldSOE == null
-                    ? ctor._EMPTY
-                    : oldSOE.rawValue,
+            value: oldSOE == null ? ctor._EMPTY : oldSOE.rawValue,
             configurable: true,
             writable: true,
         });
@@ -91,7 +91,10 @@ export class _AbstractSimpleOrEmptyModel extends _BaseSimpleModel {
                 `LIFECYCLE ERROR ${this} must be in draft mode to metamorphose.`,
             );
         const ctor = this.constructor as typeof _AbstractSimpleOrEmptyModel;
-        const oldSOE = this[OLD_STATE] as _AbstractSimpleOrEmptyModel | null | undefined;
+        const oldSOE = this[OLD_STATE] as
+            | _AbstractSimpleOrEmptyModel
+            | null
+            | undefined;
         // compare
         if (oldSOE) {
             if (oldSOE.isEmpty && this.isEmpty)
@@ -119,10 +122,10 @@ export class _AbstractSimpleOrEmptyModel extends _BaseSimpleModel {
             // PASS
         } else if (this._value instanceof ctor.Model) {
             const val = this._value as _BaseSimpleModel;
-            const immutable = val.isDraft
-                ? val.metamorphose()
-                : val;
-            this._value = unwrapPotentialWriteProxy(immutable) as _BaseSimpleModel;
+            const immutable = val.isDraft ? val.metamorphose() : val;
+            this._value = unwrapPotentialWriteProxy(
+                immutable,
+            ) as _BaseSimpleModel;
         } else
             throw new Error(
                 `TYPE ERROR ${ctor.name} ` +
@@ -130,16 +133,12 @@ export class _AbstractSimpleOrEmptyModel extends _BaseSimpleModel {
                     `wrong type: ("${String(this._value)}" typeof ${typeof this._value}).`,
             );
         // After maybe metamorphosing this._value, just check again.
-        if (
-            oldSOE &&
-            !oldSOE.isEmpty &&
-            oldSOE.value === this._value
-        )
+        if (oldSOE && !oldSOE.isEmpty && oldSOE.value === this._value)
             // Has NOT changed after all!
             return oldSOE as this;
 
         // has changed
-        delete (this as {[OLD_STATE]?: unknown})[OLD_STATE];
+        delete (this as { [OLD_STATE]?: unknown })[OLD_STATE];
         Object.defineProperty(this, "_value", {
             value: this._value,
             writable: false,
@@ -155,15 +154,22 @@ export class _AbstractSimpleOrEmptyModel extends _BaseSimpleModel {
     }
 
     get isEmpty(): boolean {
-        return this._value === (this.constructor as typeof _AbstractSimpleOrEmptyModel)._EMPTY;
+        return (
+            this._value ===
+            (this.constructor as typeof _AbstractSimpleOrEmptyModel)._EMPTY
+        );
     }
 
     clear(): void {
-        this.set((this.constructor as typeof _AbstractSimpleOrEmptyModel)._EMPTY);
+        this.set(
+            (this.constructor as typeof _AbstractSimpleOrEmptyModel)._EMPTY,
+        );
     }
 
     // basically only for metamorphose
-    get rawValue(): _BaseSimpleModel | typeof _AbstractSimpleOrEmptyModel._EMPTY {
+    get rawValue():
+        | _BaseSimpleModel
+        | typeof _AbstractSimpleOrEmptyModel._EMPTY {
         return this._value;
     }
 
@@ -189,13 +195,12 @@ export class _AbstractSimpleOrEmptyModel extends _BaseSimpleModel {
             this._value = ctor._EMPTY;
             return;
         }
-        if (this.isEmpty)
-            this._value = ctor.Model.createPrimalState(null);
+        if (this.isEmpty) this._value = ctor.Model.createPrimalState(null);
         const val = this._value as _BaseSimpleModel;
         if (!val.isDraft) this._value = val.getDraft();
         // The concrete model (e.g. NumberModel, GenericModel) has a value setter.
         // _BaseSimpleModel doesn't declare it, so we cast through.
-        (this._value as {value: unknown}).value = value;
+        (this._value as { value: unknown }).value = value;
     }
 
     get(defaultVal: unknown = _NOTDEF): unknown {
@@ -216,11 +221,16 @@ export class _AbstractSimpleOrEmptyModel extends _BaseSimpleModel {
         // unwrap
         return (this._value as _BaseSimpleModel).value;
     }
-    [SERIALIZE](options: SerializationOptions = SERIALIZE_OPTIONS): SerializationResult {
+    [SERIALIZE](
+        options: SerializationOptions = SERIALIZE_OPTIONS,
+    ): SerializationResult {
         if (this.isEmpty) return [[], null];
         return serializeItem(this._value as _BaseSimpleModel, options);
     }
-    [DESERIALIZE](serializedValue: TSerializedInput, options: SerializationOptions = SERIALIZE_OPTIONS): void {
+    [DESERIALIZE](
+        serializedValue: TSerializedInput,
+        options: SerializationOptions = SERIALIZE_OPTIONS,
+    ): void {
         const ctor = this.constructor as typeof _AbstractSimpleOrEmptyModel;
         if (serializedValue === null)
             // serializedValue should not be null, as the parent wouldn't

@@ -1,4 +1,4 @@
-import {FreezableSet} from './base-model.ts';
+import { FreezableSet } from "./base-model.ts";
 
 // FIXME/TODO: type can be anything that _AbstractStruct.get would return
 // Also as Proxies!

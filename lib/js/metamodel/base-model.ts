@@ -1,8 +1,6 @@
-
 export const OLD_STATE = Symbol("OLD_STATE"),
     _IS_DRAFT_MARKER = Symbol("_IS_DRAFT_MARKER"),
-    _DEFERRED_DEPENDENCIES = Symbol("_DEFERRED_DEPENDENCIES")
-    ;
+    _DEFERRED_DEPENDENCIES = Symbol("_DEFERRED_DEPENDENCIES");
 
 export type DependenciesMap = Record<string, unknown>;
 
@@ -10,7 +8,6 @@ export type DependenciesMap = Record<string, unknown>;
 // using decodeURIComponent.
 export type TSerializedData = unknown;
 export type TSerializedInput = unknown;
-
 
 // The serialize implementation is expected to live here
 export const SERIALIZE: unique symbol = Symbol("SERIALIZE"),
@@ -80,7 +77,6 @@ export const SERIALIZE_OPTIONS: Readonly<SerializationOptions> = Object.freeze({
     // numbers instead of strings, making human editing nicer.
 });
 
-
 // Will prevent accidental alteration, however, this is not vandalism proof.
 // I tried using Javascript Proxy for this, however, it is not vandalism
 // proof either (e.g. via prototype pollution), if that is a concern, an
@@ -122,7 +118,6 @@ export class FreezableSet<T> extends Set<T> {
     }
 }
 
-
 // Can be used/shared by default instead of creating new empty sets
 // as dependencies.
 export const EMPTY_SET = Object.freeze(new FreezableSet<string>());
@@ -130,8 +125,6 @@ export const EMPTY_SET = Object.freeze(new FreezableSet<string>());
 export interface ConstructableBaseDraft<T extends _BaseModel> {
     new (oldState: T): T; // Constructor signature expecting an instance of the class
 }
-
-
 
 /*
 public static *createPrimalStateGen<T extends _BaseModel>(
@@ -172,12 +165,14 @@ export class ResourceRequirement {
         this.description = description;
     }
     toString() {
-        return `[${this.constructor.name} with description: ${this.description.map((item: unknown) => item && (item as {toString(): string}).toString()).join(", ")}]`;
+        return `[${this.constructor.name} with description: ${this.description.map((item: unknown) => item && (item as { toString(): string }).toString()).join(", ")}]`;
     }
 }
 
-
-export function driveResolverGenSync(syncResolve: (requirement: ResourceRequirement) => unknown, gen: Generator<ResourceRequirement, unknown, unknown>) {
+export function driveResolverGenSync(
+    syncResolve: (requirement: ResourceRequirement) => unknown,
+    gen: Generator<ResourceRequirement, unknown, unknown>,
+) {
     let result,
         sendInto = undefined;
     do {
@@ -261,7 +256,7 @@ function _isMarkedError(symbol: symbol, error: Error) {
 const IMMUTABLE_WRITE_ERROR = Symbol("IMMUTABLE_WRITE_ERROR"),
     KEY_CONSTRAINT_ERROR = Symbol("KEY_CONSTRAINT_ERROR"),
     DRAFT_KEY_ERROR = Symbol("DRAFT_KEY_ERROR"),
-        DELIBERATE_RESOURCE_RESOLVE_ERROR = Symbol(
+    DELIBERATE_RESOURCE_RESOLVE_ERROR = Symbol(
         "DELIBERATE_RESOURCE_RESOLVE_ERROR",
     );
 
@@ -285,7 +280,9 @@ export const isImmutableWriteError = _isMarkedError.bind(
         DELIBERATE_RESOURCE_RESOLVE_ERROR,
     );
 
-export function failingResourceResolve(resourceRequirement: ResourceRequirement) {
+export function failingResourceResolve(
+    resourceRequirement: ResourceRequirement,
+) {
     // detect with isDeliberateResourceResolveError
     throw deliberateResourceResolveError(
         new Error(
@@ -296,10 +293,11 @@ export function failingResourceResolve(resourceRequirement: ResourceRequirement)
     );
 }
 
-export function driveResolverGenSyncFailing(gen: Generator<ResourceRequirement, unknown, unknown>) {
+export function driveResolverGenSyncFailing(
+    gen: Generator<ResourceRequirement, unknown, unknown>,
+) {
     return driveResolverGenSync(failingResourceResolve, gen);
 }
-
 
 export type ErrorPathPart = string | number;
 
@@ -310,13 +308,14 @@ export type SerializedError = [
     ...more: any[], // eslint-disable-line @typescript-eslint/no-explicit-any
 ];
 
-
 export type SerializationSuccessResult = [errors: [], data: TSerializedData];
-export type SerializationFailureResult = [errors: SerializedError[], data: null];
+export type SerializationFailureResult = [
+    errors: SerializedError[],
+    data: null,
+];
 export type SerializationResult =
     | SerializationSuccessResult
     | SerializationFailureResult;
-
 
 export abstract class _BaseModel {
     /**
@@ -464,7 +463,6 @@ export abstract class _BaseModel {
     ): void;
 }
 
-
 /**
  * Contract for a constructor (class) used by _BaseSimpleModel
  * to create a Primal State Draft. It requires the serialization arguments.
@@ -533,7 +531,6 @@ export abstract class _BaseSimpleModel extends _BaseModel {
 export type KeyedSerializedValue = [string | number, TSerializedData | null];
 export type SingleSerializedValue = TSerializedData | null;
 
-
 /**
  * Determines if a given item should be skipped during serialization based on
  * the presence of specific 'skip data markers' (Symbols) in the options.
@@ -576,9 +573,6 @@ function _serializeErrorsPrependKey(
     }
     return newErrors;
 }
-
-
-
 
 // Define the interface for a model that can be serialized.
 // It requires the method keyed by the SERIALIZE symbol.

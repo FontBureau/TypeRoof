@@ -10,7 +10,7 @@ import {
     isDeliberateResourceResolveError,
     keyConstraintError,
     isDraftKeyError,
-} from './base-model.ts';
+} from "./base-model.ts";
 
 // These are the exports from ./base-model.ts that are used beyond this
 // file. I would prefer it, if users would import them directly.
@@ -27,44 +27,28 @@ export {
     isDraftKeyError,
     _BaseContainerModel,
     _BaseSimpleModel,
-    SERIALIZE_FORMAT_OBJECT
-}
+    SERIALIZE_FORMAT_OBJECT,
+};
 
-import {
-    CoherenceFunction
-} from './coherence-function.ts';
+import { CoherenceFunction } from "./coherence-function.ts";
 
-export {
-    CoherenceFunction
-}
+export { CoherenceFunction };
 
 import {
     objectEntriesAreEqual,
     collectDependencies,
     unwrapPotentialWriteProxy,
-} from './util.ts';
+} from "./util.ts";
 
-export { objectEntriesAreEqual, collectDependencies};
+export { objectEntriesAreEqual, collectDependencies };
 
-import {
-    ForeignKey
-} from './foreign-key.ts';
+import { ForeignKey } from "./foreign-key.ts";
 
-export {
-    ForeignKey
-}
+export { ForeignKey };
 
-import {
-    deserializeGen,
-    serialize,
-    deserializeSync,
-} from './serialization.ts';
+import { deserializeGen, serialize, deserializeSync } from "./serialization.ts";
 
-export {
-    deserializeGen,
-    serialize,
-    deserializeSync
-}
+export { deserializeGen, serialize, deserializeSync };
 
 import {
     _BaseLink,
@@ -72,7 +56,7 @@ import {
     FallBackValue,
     InternalizedDependency,
     StaticDependency,
-} from './links.ts';
+} from "./links.ts";
 
 export {
     _BaseLink,
@@ -80,81 +64,111 @@ export {
     FallBackValue,
     InternalizedDependency,
     StaticDependency,
-}
-
-import {
-    topologicalSortKahn,
-} from './topological-sort.ts';
-
-export {
-    topologicalSortKahn,
 };
 
-import {
-    _PotentialWriteProxy,
-} from './potential-write-proxy.ts';
-export {
-    _PotentialWriteProxy,
-    unwrapPotentialWriteProxy,
-};
+import { topologicalSortKahn } from "./topological-sort.ts";
 
+export { topologicalSortKahn };
 
-import { _AbstractStructModel } from './struct-model.ts';
+import { _PotentialWriteProxy } from "./potential-write-proxy.ts";
+export { _PotentialWriteProxy, unwrapPotentialWriteProxy };
+
+import { _AbstractStructModel } from "./struct-model.ts";
 export { _AbstractStructModel };
 
-import { _AbstractGenericModel } from './generic-model.ts';
+import { _AbstractGenericModel } from "./generic-model.ts";
 export { _AbstractGenericModel };
 
-import { _AbstractEnumModel } from './enum-model.ts';
+import { _AbstractEnumModel } from "./enum-model.ts";
 export { _AbstractEnumModel };
 
-import { _AbstractSimpleOrEmptyModel } from './simple-or-empty-model.ts';
+import { _AbstractSimpleOrEmptyModel } from "./simple-or-empty-model.ts";
 export { _AbstractSimpleOrEmptyModel };
 
-import { _AbstractNumberModel } from './number-model.ts';
+import { _AbstractNumberModel } from "./number-model.ts";
 export { _AbstractNumberModel };
 
 import {
-    AnyModel, IntegerModel, NumberModel, BooleanModel,
-    BooleanDefaultTrueModel, StringModel,
-} from './simple-models.ts';
+    AnyModel,
+    IntegerModel,
+    NumberModel,
+    BooleanModel,
+    BooleanDefaultTrueModel,
+    StringModel,
+} from "./simple-models.ts";
 export {
-    AnyModel, IntegerModel, NumberModel, BooleanModel,
-    BooleanDefaultTrueModel, StringModel,
+    AnyModel,
+    IntegerModel,
+    NumberModel,
+    BooleanModel,
+    BooleanDefaultTrueModel,
+    StringModel,
 };
 
-import { _AbstractListModel } from './list-model.ts';
+import { _AbstractListModel } from "./list-model.ts";
 export { _AbstractListModel };
 
-import { _AbstractOrderedMapModel, toShuffle } from './ordered-map-model.ts';
+import { _AbstractOrderedMapModel, toShuffle } from "./ordered-map-model.ts";
 export { _AbstractOrderedMapModel, toShuffle };
 
-import { _AbstractDynamicStructModel } from './dynamic-struct-model.ts';
+import { _AbstractDynamicStructModel } from "./dynamic-struct-model.ts";
 export { _AbstractDynamicStructModel };
 
-import { PathModel, PathModelOrEmpty } from './simple-models.ts';
+import { PathModel, PathModelOrEmpty } from "./simple-models.ts";
 export { PathModel, PathModelOrEmpty };
 
-import { createAvailableTypes, createDynamicType, getMinMaxRangeFromType, getFieldsByType } from './type-utils.ts';
-export { createAvailableTypes, createDynamicType, getMinMaxRangeFromType, getFieldsByType };
+import {
+    createAvailableTypes,
+    createDynamicType,
+    getMinMaxRangeFromType,
+    getFieldsByType,
+} from "./type-utils.ts";
+export {
+    createAvailableTypes,
+    createDynamicType,
+    getMinMaxRangeFromType,
+    getFieldsByType,
+};
 
-import { Path } from './path.ts';
+import { Path } from "./path.ts";
 export { Path };
 
 import {
-    IS_CONTAINER, getAllPathsAndValues, getDraftEntry,
-    getEntry, getValue, _getAllEntries, getModel,
-    applyTo, pushEntry, popEntry, spliceEntry, deleteEntry,
-} from './accessors.ts';
+    IS_CONTAINER,
+    getAllPathsAndValues,
+    getDraftEntry,
+    getEntry,
+    getValue,
+    _getAllEntries,
+    getModel,
+    applyTo,
+    pushEntry,
+    popEntry,
+    spliceEntry,
+    deleteEntry,
+} from "./accessors.ts";
 export {
-    IS_CONTAINER, getAllPathsAndValues, getDraftEntry,
-    getEntry, getValue, _getAllEntries, getModel,
-    applyTo, pushEntry, popEntry, spliceEntry, deleteEntry,
+    IS_CONTAINER,
+    getAllPathsAndValues,
+    getDraftEntry,
+    getEntry,
+    getValue,
+    _getAllEntries,
+    getModel,
+    applyTo,
+    pushEntry,
+    popEntry,
+    spliceEntry,
+    deleteEntry,
 };
 
-import { COMPARE_STATUSES, rawCompare, compare, StateComparison } from './compare.ts';
+import {
+    COMPARE_STATUSES,
+    rawCompare,
+    compare,
+    StateComparison,
+} from "./compare.ts";
 export { COMPARE_STATUSES, rawCompare, compare, StateComparison };
-
 
 // Coherence guards:
 //

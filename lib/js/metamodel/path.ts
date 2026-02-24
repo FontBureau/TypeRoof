@@ -1,4 +1,4 @@
-import { PATH_SEPARATOR } from './util.ts';
+import { PATH_SEPARATOR } from "./util.ts";
 
 export class Path {
     // jshint ignore: start
@@ -109,8 +109,7 @@ export class Path {
             // ctor.PARENT is not interesting in here as it
             // won't change serialisation
             explicitAnchoring =
-                firstPart === ctor.ROOT ||
-                firstPart === ctor.RELATIVE
+                firstPart === ctor.ROOT || firstPart === ctor.RELATIVE
                     ? firstPart
                     : null;
         if (pathParts.length && explicitAnchoring === null)
@@ -148,7 +147,9 @@ export class Path {
     fromParts(...pathParts: (string | number)[]): Path {
         return (this.constructor as typeof Path).fromParts(...pathParts);
     }
-    toString(defaultAnchoring: string | null = null /*ROOT || RELATIVE || null */): string {
+    toString(
+        defaultAnchoring: string | null = null /*ROOT || RELATIVE || null */,
+    ): string {
         const ctor = this.constructor as typeof Path;
         if (
             defaultAnchoring !== null &&
@@ -164,8 +165,7 @@ export class Path {
             this.explicitAnchoring === null
                 ? defaultAnchoring
                 : this.explicitAnchoring;
-        if (anchoring === null)
-            return this.parts.join(ctor.SEPARATOR);
+        if (anchoring === null) return this.parts.join(ctor.SEPARATOR);
         if (this.parts.length === null) return anchoring;
         return [
             anchoring === ctor.SEPARATOR ? "" : anchoring,

@@ -6,15 +6,14 @@ import {
     driveResolveGenAsync,
     driveResolverGenSyncFailing,
     serializeItem,
-}  from './base-model.ts'
+} from "./base-model.ts";
 
 import type {
     DependenciesMap,
     TSerializedInput,
     SerializationOptions,
-    ResourceRequirement
-} from './base-model.ts'
-
+    ResourceRequirement,
+} from "./base-model.ts";
 
 export function deserializeGen<T extends _BaseModel>(
     Model: DeserializableModelConstructor<T>,
@@ -105,7 +104,6 @@ export function serialize(
         `UNKNOWN FORMAT OPTION serialize ${options.format.toString()}`,
     );
 }
-
 
 export const _PRIMARY_SERIALIZED_VALUE = Symbol("_PRIMARY_SERIALIZED_VALUE");
 

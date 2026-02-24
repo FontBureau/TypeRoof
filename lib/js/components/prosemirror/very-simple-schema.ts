@@ -3,7 +3,9 @@ import { schemaSpec as defaultSchemaSpec } from "./default-schema";
 
 const pDOM: DOMOutputSpec = ["p", 0];
 
-const defaultSchemaSpecNodes = defaultSchemaSpec.nodes as { [key: string]: NodeSpec };
+const defaultSchemaSpecNodes = defaultSchemaSpec.nodes as {
+    [key: string]: NodeSpec;
+};
 
 export const nodes = {
     doc: defaultSchemaSpecNodes.doc,

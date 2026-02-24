@@ -1,11 +1,6 @@
-import {
-    FreezableSet,
-    _BaseModel,
-} from './base-model.ts';
+import { FreezableSet, _BaseModel } from "./base-model.ts";
 
-import {
-    _NOTDEF,
-} from './util.ts';
+import { _NOTDEF } from "./util.ts";
 
 export class _BaseLink {
     public readonly keyName!: string;
@@ -46,7 +41,11 @@ export class FallBackValue {
     declare public readonly primaryName: string;
     declare public readonly fallBackName: string;
     declare public readonly dependencies: FreezableSet<string>;
-    constructor(primaryName: string, fallBackName: string, Model: typeof _BaseModel) {
+    constructor(
+        primaryName: string,
+        fallBackName: string,
+        Model: typeof _BaseModel,
+    ) {
         Object.defineProperty(this, "Model", {
             value: Model,
         });
@@ -99,7 +98,11 @@ export class StaticDependency {
     declare public readonly dependencyName: string;
     declare public readonly state: _BaseModel;
     declare public readonly Model: typeof _BaseModel | undefined;
-    constructor(dependencyName: string, state: unknown, Model: typeof _BaseModel | symbol = _NOTDEF) {
+    constructor(
+        dependencyName: string,
+        state: unknown,
+        Model: typeof _BaseModel | symbol = _NOTDEF,
+    ) {
         Object.defineProperty(this, "dependencyName", {
             value: dependencyName,
         });
@@ -188,9 +191,13 @@ export class StaticDependency {
         const [localName, Model, state] =
             typeof args[0] === "string"
                 ? // called with four arguments
-                  args as [string, typeof _BaseModel, _BaseModel]
+                  (args as [string, typeof _BaseModel, _BaseModel])
                 : // called with three arguments
-                  [dependencyName, ...args] as [string, typeof _BaseModel, _BaseModel];
+                  ([dependencyName, ...args] as [
+                      string,
+                      typeof _BaseModel,
+                      _BaseModel,
+                  ]);
         return [
             new this(dependencyName, state, Model),
             [localName, new InternalizedDependency(dependencyName, Model)],

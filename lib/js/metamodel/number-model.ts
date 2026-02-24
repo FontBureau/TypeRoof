@@ -10,15 +10,11 @@ import {
     type SerializationResult,
     type TSerializedInput,
     type ResourceRequirement,
-} from './base-model.ts';
+} from "./base-model.ts";
 
-import {
-    _NOTDEF,
-} from './util.ts';
+import { _NOTDEF } from "./util.ts";
 
-import {
-    _PRIMARY_SERIALIZED_VALUE,
-} from './serialization.ts';
+import { _PRIMARY_SERIALIZED_VALUE } from "./serialization.ts";
 
 type NumberValidateFN = (value: number) => [boolean, string | null];
 type NumberSanitizeFN = (value: number) => [number | null, string | null];
@@ -36,7 +32,10 @@ export interface NumberModelSetup {
 export class _AbstractNumberModel extends _BaseSimpleModel {
     // Instance properties set via Object.defineProperty
     declare _value: number;
-    declare [_PRIMARY_SERIALIZED_VALUE]?: [TSerializedInput, SerializationOptions];
+    declare [_PRIMARY_SERIALIZED_VALUE]?: [
+        TSerializedInput,
+        SerializationOptions,
+    ];
 
     // Static properties set by createClass on subclasses
     static minVal: number | null;
@@ -58,7 +57,12 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
             sanitzeByDefault: true as boolean,
             ...setup,
         };
-        for (const name of ["min", "max", "toFixedDigits", "defaultValue"] as const) {
+        for (const name of [
+            "min",
+            "max",
+            "toFixedDigits",
+            "defaultValue",
+        ] as const) {
             const setupValue = config[name];
             if (setupValue === _NOTDEF) continue;
             const [isNumeric, message] = this.isNumeric(setupValue);
@@ -98,7 +102,9 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
             const fixedDefault =
                 config.toFixedDigits !== _NOTDEF
                     ? parseFloat(
-                          (config.defaultValue as number).toFixed(config.toFixedDigits),
+                          (config.defaultValue as number).toFixed(
+                              config.toFixedDigits,
+                          ),
                       )
                     : config.defaultValue;
             if (config.min !== _NOTDEF && (fixedDefault as number) < config.min)
@@ -127,7 +133,9 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
                         ? null
                         : config.toFixedDigits;
                 static defaultValue =
-                    config.defaultValue === _NOTDEF ? null : config.defaultValue;
+                    config.defaultValue === _NOTDEF
+                        ? null
+                        : config.defaultValue;
                 static sanitizeFN =
                     config.sanitizeFN === _NOTDEF ? null : config.sanitizeFN;
                 static validateFN =
@@ -164,7 +172,10 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
             // are still effective even if this method doesn't respect
             // the other constraints.
             let message: string | null;
-            [cleanValue, message] = this.sanitizeFN(rawValue as number) as [number, string | null];
+            [cleanValue, message] = this.sanitizeFN(rawValue as number) as [
+                number,
+                string | null,
+            ];
             if (message) return [cleanValue, message];
         } else cleanValue = rawValue as number;
 
@@ -227,7 +238,9 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
             ["defaultValue", "default"],
             // , ['???', 'step']
         ] as const) {
-            const val = (this as unknown as Record<string, number | null>)[here];
+            const val = (this as unknown as Record<string, number | null>)[
+                here
+            ];
             if (val != null) entries.push([there, val]);
         }
         return Object.fromEntries(entries);
@@ -248,7 +261,8 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
                     ? ctor.defaultValue !== null
                         ? ctor.defaultValue
                         : undefined
-                    : (this[OLD_STATE] as unknown as _AbstractNumberModel).value,
+                    : (this[OLD_STATE] as unknown as _AbstractNumberModel)
+                          .value,
             configurable: true,
             writable: true,
         });
@@ -270,16 +284,27 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
                 `LIFECYCLE ERROR ${this} must be in draft mode to metamorphose.`,
             );
         // compare
-        if (this[OLD_STATE] && (this[OLD_STATE] as unknown as _AbstractNumberModel).value === this._value)
+        if (
+            this[OLD_STATE] &&
+            (this[OLD_STATE] as unknown as _AbstractNumberModel).value ===
+                this._value
+        )
             // Has NOT changed!
             return this[OLD_STATE] as unknown as this;
 
         // Has changed!
-        delete (this as {[OLD_STATE]?: unknown})[OLD_STATE];
+        delete (this as { [OLD_STATE]?: unknown })[OLD_STATE];
         if (this[_PRIMARY_SERIALIZED_VALUE])
-            this[DESERIALIZE](...(this[_PRIMARY_SERIALIZED_VALUE] as [TSerializedInput, SerializationOptions]));
+            this[DESERIALIZE](
+                ...(this[_PRIMARY_SERIALIZED_VALUE] as [
+                    TSerializedInput,
+                    SerializationOptions,
+                ]),
+            );
         // Don't keep this
-        delete (this as {[_PRIMARY_SERIALIZED_VALUE]?: unknown})[_PRIMARY_SERIALIZED_VALUE];
+        delete (this as { [_PRIMARY_SERIALIZED_VALUE]?: unknown })[
+            _PRIMARY_SERIALIZED_VALUE
+        ];
         Object.defineProperty(this, "_value", {
             // Not freezing/changing this._value as it is considered "outside"
             // of the metamodel realm i.e. it's not a _BaseModel or part of
@@ -328,8 +353,7 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
             (sanitize !== _NOTDEF && sanitize) ||
             (sanitize === _NOTDEF && ctor.sanitzeByDefault)
         ) {
-            const [cleanValue, sanitizeMessage] =
-                ctor.sanitize(rawValue);
+            const [cleanValue, sanitizeMessage] = ctor.sanitize(rawValue);
             if (cleanValue === null || sanitizeMessage)
                 throw new Error(
                     `SANITIZATION ERROR ${this}: ${sanitizeMessage}.`,
@@ -356,7 +380,10 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
                 : this.value.toString(),
         ];
     }
-    [DESERIALIZE](serializedValue: TSerializedInput, _options?: SerializationOptions): void {
+    [DESERIALIZE](
+        serializedValue: TSerializedInput,
+        _options?: SerializationOptions,
+    ): void {
         this.value = parseFloat(serializedValue as string);
     }
 }

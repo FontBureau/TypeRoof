@@ -10,16 +10,17 @@ import {
     type SerializationResult,
     type TSerializedInput,
     type ResourceRequirement,
-} from './base-model.ts';
+} from "./base-model.ts";
 
-import {
-    _PRIMARY_SERIALIZED_VALUE,
-} from './serialization.ts';
+import { _PRIMARY_SERIALIZED_VALUE } from "./serialization.ts";
 
 export class _AbstractEnumModel extends _BaseSimpleModel {
     // Instance properties set via Object.defineProperty
     declare _value: string;
-    declare [_PRIMARY_SERIALIZED_VALUE]?: [TSerializedInput, SerializationOptions];
+    declare [_PRIMARY_SERIALIZED_VALUE]?: [
+        TSerializedInput,
+        SerializationOptions,
+    ];
 
     // Static properties set by createClass on subclasses
     static enumItems: readonly string[];
@@ -64,7 +65,9 @@ export class _AbstractEnumModel extends _BaseSimpleModel {
         // everywhere right now as I still consider it experimental.
 
         if (attachStaticProperties) {
-            for (const [name, definition] of Object.entries(attachStaticProperties)) {
+            for (const [name, definition] of Object.entries(
+                attachStaticProperties,
+            )) {
                 if (Object.hasOwn(Model, name))
                     // Tested this case with:
                     //      attachStaticProperties = {defaultValue: {value: 'testing'}}
@@ -114,16 +117,27 @@ export class _AbstractEnumModel extends _BaseSimpleModel {
                 `LIFECYCLE ERROR ${this} must be in draft mode to metamorphose.`,
             );
         // compare
-        if (this[OLD_STATE] && (this[OLD_STATE] as unknown as _AbstractEnumModel).value === this._value)
+        if (
+            this[OLD_STATE] &&
+            (this[OLD_STATE] as unknown as _AbstractEnumModel).value ===
+                this._value
+        )
             // Has NOT changed!
             return this[OLD_STATE] as unknown as this;
 
         // Has changed!
-        delete (this as {[OLD_STATE]?: unknown})[OLD_STATE];
+        delete (this as { [OLD_STATE]?: unknown })[OLD_STATE];
         if (this[_PRIMARY_SERIALIZED_VALUE])
-            this[DESERIALIZE](...(this[_PRIMARY_SERIALIZED_VALUE] as [TSerializedInput, SerializationOptions]));
+            this[DESERIALIZE](
+                ...(this[_PRIMARY_SERIALIZED_VALUE] as [
+                    TSerializedInput,
+                    SerializationOptions,
+                ]),
+            );
         // Don't keep this
-        delete (this as {[_PRIMARY_SERIALIZED_VALUE]?: unknown})[_PRIMARY_SERIALIZED_VALUE];
+        delete (this as { [_PRIMARY_SERIALIZED_VALUE]?: unknown })[
+            _PRIMARY_SERIALIZED_VALUE
+        ];
         Object.defineProperty(this, "_value", {
             // Not freezing/changing this._value as it is considered "outside"
             // of the metamodel realm i.e. it's not a _BaseModel or part of
@@ -173,10 +187,15 @@ export class _AbstractEnumModel extends _BaseSimpleModel {
         return this.value;
     }
 
-    [SERIALIZE](_options: SerializationOptions = SERIALIZE_OPTIONS): SerializationResult {
+    [SERIALIZE](
+        _options: SerializationOptions = SERIALIZE_OPTIONS,
+    ): SerializationResult {
         return [[], `${this.value}`];
     }
-    [DESERIALIZE](serializedValue: TSerializedInput, _options: SerializationOptions = SERIALIZE_OPTIONS): void {
+    [DESERIALIZE](
+        serializedValue: TSerializedInput,
+        _options: SerializationOptions = SERIALIZE_OPTIONS,
+    ): void {
         this.value = serializedValue as string;
     }
 }

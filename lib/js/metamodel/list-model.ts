@@ -1,22 +1,36 @@
 import {
-    _BaseModel, _BaseContainerModel, OLD_STATE, _IS_DRAFT_MARKER,
-    _DEFERRED_DEPENDENCIES, SERIALIZE_OPTIONS, SERIALIZE, DESERIALIZE,
-    immutableWriteError, _serializeContainer,
-    type DependenciesMap, type ResourceRequirement,
-    type SerializationOptions, type SerializationResult, type TSerializedInput,
-} from './base-model.ts';
+    _BaseModel,
+    _BaseContainerModel,
+    OLD_STATE,
+    _IS_DRAFT_MARKER,
+    _DEFERRED_DEPENDENCIES,
+    SERIALIZE_OPTIONS,
+    SERIALIZE,
+    DESERIALIZE,
+    immutableWriteError,
+    _serializeContainer,
+    type DependenciesMap,
+    type ResourceRequirement,
+    type SerializationOptions,
+    type SerializationResult,
+    type TSerializedInput,
+} from "./base-model.ts";
 import {
-    _NOTDEF, objectEntriesAreEqual, collectDependencies,
+    _NOTDEF,
+    objectEntriesAreEqual,
+    collectDependencies,
     unwrapPotentialWriteProxy,
-} from './util.ts';
+} from "./util.ts";
 import {
     _PotentialWriteProxy,
-    _HAS_DRAFT_FOR_PROXY, _HAS_DRAFT_FOR_OLD_STATE_KEY,
-    _GET_DRAFT_FOR_PROXY, _GET_DRAFT_FOR_OLD_STATE_KEY,
+    _HAS_DRAFT_FOR_PROXY,
+    _HAS_DRAFT_FOR_OLD_STATE_KEY,
+    _GET_DRAFT_FOR_PROXY,
+    _GET_DRAFT_FOR_OLD_STATE_KEY,
     _OLD_TO_NEW_SLOT,
-} from './potential-write-proxy.ts';
-import { _PRIMARY_SERIALIZED_VALUE } from './serialization.ts';
-import { ForeignKey } from './foreign-key.ts';
+} from "./potential-write-proxy.ts";
+import { _PRIMARY_SERIALIZED_VALUE } from "./serialization.ts";
+import { ForeignKey } from "./foreign-key.ts";
 
 // list/array type
 // items are accessed by index
@@ -25,7 +39,7 @@ import { ForeignKey } from './foreign-key.ts';
 // we can't have undefined entries, however, a type could be
 // of the form TypeOrEmpty...
 // MultipleTargets ...!
-type OldToNewSlot = [number, unknown][];  // [oldIndex, proxy | null]
+type OldToNewSlot = [number, unknown][]; // [oldIndex, proxy | null]
 
 export class _AbstractListModel extends _BaseContainerModel {
     static Model: typeof _BaseModel;
@@ -33,16 +47,16 @@ export class _AbstractListModel extends _BaseContainerModel {
     declare _value: _BaseModel[];
     // dependencies is set via Object.defineProperty in constructor
     declare [_OLD_TO_NEW_SLOT]: OldToNewSlot;
-    declare [_PRIMARY_SERIALIZED_VALUE]?: [TSerializedInput, SerializationOptions];
+    declare [_PRIMARY_SERIALIZED_VALUE]?: [
+        TSerializedInput,
+        SerializationOptions,
+    ];
 
     static get dependencies() {
         return this.Model.dependencies;
     }
 
-    static createClass(
-        className: string,
-        Model: typeof _BaseModel,
-    ) {
+    static createClass(className: string, Model: typeof _BaseModel) {
         // jshint unused: vars
         // this way name will naturally become class.name.
         const result = {
@@ -59,7 +73,10 @@ export class _AbstractListModel extends _BaseContainerModel {
 
     constructor(
         oldState: _AbstractListModel | null = null,
-        dependencies: DependenciesMap | typeof _DEFERRED_DEPENDENCIES | null = null,
+        dependencies:
+            | DependenciesMap
+            | typeof _DEFERRED_DEPENDENCIES
+            | null = null,
         serializedValue: TSerializedInput | null = null,
         serializeOptions: SerializationOptions = SERIALIZE_OPTIONS,
     ) {
@@ -85,7 +102,9 @@ export class _AbstractListModel extends _BaseContainerModel {
         // Start with an empty this._value for quick not-changed comparison.
         Object.defineProperty(this, "_value", {
             value: new Array(
-                this[OLD_STATE] !== null ? (this[OLD_STATE] as unknown as _AbstractListModel).length : 0,
+                this[OLD_STATE] !== null
+                    ? (this[OLD_STATE] as unknown as _AbstractListModel).length
+                    : 0,
             ),
             writable: false, // can't replace the array itself
             configurable: true,
@@ -102,10 +121,9 @@ export class _AbstractListModel extends _BaseContainerModel {
         // Keep track of proxies and OLD_STATE original indexes in a
         // shadow of this._value that is kept in sync with value!
         // Entries may get replaced by set or moved/removed by splice.
-        this[_OLD_TO_NEW_SLOT] = [...this._value.keys()].map((index): [number, unknown] => [
-            index,
-            null /*proxy*/,
-        ]);
+        this[_OLD_TO_NEW_SLOT] = [...this._value.keys()].map(
+            (index): [number, unknown] => [index, null /*proxy*/],
+        );
 
         // Create an immutable primal state if OLD_STATE is null:
         if (dependencies !== null) {
@@ -123,11 +141,15 @@ export class _AbstractListModel extends _BaseContainerModel {
             // Must return a new object (when called with `new`).
             // only works when there was no OLD_STATE
             if (dependencies !== _DEFERRED_DEPENDENCIES)
-                return this.metamorphose(dependencies as DependenciesMap) as this;
+                return this.metamorphose(
+                    dependencies as DependenciesMap,
+                ) as this;
         }
     }
 
-    *#_metamorphoseGen(dependencies: DependenciesMap = {}): Generator<ResourceRequirement, this, unknown> {
+    *#_metamorphoseGen(
+        dependencies: DependenciesMap = {},
+    ): Generator<ResourceRequirement, this, unknown> {
         const ctor = this.constructor as typeof _AbstractListModel;
         //CAUTION: `this` is the object not the class.
         //
@@ -173,27 +195,25 @@ export class _AbstractListModel extends _BaseContainerModel {
             const [serializedValues, serializeOptions] =
                     this[_PRIMARY_SERIALIZED_VALUE],
                 childItems: _BaseModel[] = [];
-            for (const serializedValue of (serializedValues as unknown[])) {
-                const childItem =
-                    yield* ctor.Model.createPrimalStateGen(
-                        this.dependencies,
-                        serializedValue,
-                        serializeOptions,
-                    );
+            for (const serializedValue of serializedValues as unknown[]) {
+                const childItem = yield* ctor.Model.createPrimalStateGen(
+                    this.dependencies,
+                    serializedValue,
+                    serializeOptions,
+                );
                 childItems.push(childItem);
             }
             this.push(...childItems);
         }
         // Don't keep this
-        delete (this as Record<symbol, unknown>)[_PRIMARY_SERIALIZED_VALUE as unknown as symbol];
+        delete (this as Record<symbol, unknown>)[
+            _PRIMARY_SERIALIZED_VALUE as unknown as symbol
+        ];
 
         const oldState = this[OLD_STATE] as _AbstractListModel | null;
         const dependenciesAreEqual =
             oldState !== null &&
-            objectEntriesAreEqual(
-                oldState.dependencies,
-                this.dependencies,
-            );
+            objectEntriesAreEqual(oldState.dependencies, this.dependencies);
 
         // shortcut
         if (
@@ -205,7 +225,8 @@ export class _AbstractListModel extends _BaseContainerModel {
             return oldState as unknown as this;
 
         for (const index of this._value.keys()) {
-            let item: _BaseModel | false = Object.hasOwn(this._value, index) && this._value[index]!;
+            let item: _BaseModel | false =
+                Object.hasOwn(this._value, index) && this._value[index]!;
             if (!item && oldState !== null) {
                 const [oldIndex /*proxy*/] = this[_OLD_TO_NEW_SLOT][index]!;
                 item = oldState.get(String(oldIndex)) as _BaseModel;
@@ -232,7 +253,8 @@ export class _AbstractListModel extends _BaseContainerModel {
             dependenciesAreEqual &&
             this.size === oldState.size &&
             this._value.every(
-                (entry: _BaseModel, index: number) => entry === oldState!.get(String(index)),
+                (entry: _BaseModel, index: number) =>
+                    entry === oldState!.get(String(index)),
             )
         )
             return oldState as unknown as this;
@@ -245,7 +267,9 @@ export class _AbstractListModel extends _BaseContainerModel {
             writable: true,
             configurable: true,
         });
-        delete (this as Record<symbol, unknown>)[OLD_STATE as unknown as symbol];
+        delete (this as Record<symbol, unknown>)[
+            OLD_STATE as unknown as symbol
+        ];
         Object.defineProperty(this, "_value", {
             value: Object.freeze(this._value),
             writable: false,
@@ -255,7 +279,9 @@ export class _AbstractListModel extends _BaseContainerModel {
             value: false,
             configurable: false,
         });
-        delete (this as Record<symbol, unknown>)[_OLD_TO_NEW_SLOT as unknown as symbol];
+        delete (this as Record<symbol, unknown>)[
+            _OLD_TO_NEW_SLOT as unknown as symbol
+        ];
         Object.freeze(this);
     }
 
@@ -263,7 +289,9 @@ export class _AbstractListModel extends _BaseContainerModel {
         delete (this as Record<string, unknown>).dependencies;
     }
 
-    *metamorphoseGen(dependencies: DependenciesMap = {}): Generator<ResourceRequirement, this, unknown> {
+    *metamorphoseGen(
+        dependencies: DependenciesMap = {},
+    ): Generator<ResourceRequirement, this, unknown> {
         if (!this.isDraft)
             throw new Error(
                 `LIFECYCLE ERROR ${this} must be in draft mode to metamorphose.`,
@@ -357,7 +385,9 @@ export class _AbstractListModel extends _BaseContainerModel {
             ([ownOldIndex]: [number, unknown]) => ownOldIndex === oldIndex,
         );
         if (index === -1) return false;
-        const item: _BaseModel = (Object.hasOwn(this._value, index) && this._value[index]!) || (oldState.get(String(oldIndex)) as _BaseModel);
+        const item: _BaseModel =
+            (Object.hasOwn(this._value, index) && this._value[index]!) ||
+            (oldState.get(String(oldIndex)) as _BaseModel);
         if (item.isDraft) return item;
         const draft = item.getDraft();
         this._value[index] = draft;
@@ -384,14 +414,21 @@ export class _AbstractListModel extends _BaseContainerModel {
             ([, ownProxy]: [number, unknown]) => ownProxy === proxy,
         );
         if (index === -1) return false;
-        const item: _BaseModel = (Object.hasOwn(this._value, index) && this._value[index]!) || (this[OLD_STATE] as unknown as _AbstractListModel).get(String(this[_OLD_TO_NEW_SLOT][index]![0])) as _BaseModel;
+        const item: _BaseModel =
+            (Object.hasOwn(this._value, index) && this._value[index]!) ||
+            ((this[OLD_STATE] as unknown as _AbstractListModel).get(
+                String(this[_OLD_TO_NEW_SLOT][index]![0]),
+            ) as _BaseModel);
         if (item.isDraft) return item;
         const draft = item.getDraft();
         this._value[index] = draft;
         return draft;
     }
 
-    getDraftFor(key: string, defaultReturn: unknown = _NOTDEF): _BaseModel | false | unknown {
+    getDraftFor(
+        key: string,
+        defaultReturn: unknown = _NOTDEF,
+    ): _BaseModel | false | unknown {
         const proxyOrDraft = this.get(key, defaultReturn);
         if (_PotentialWriteProxy.isProxy(proxyOrDraft))
             return this[_GET_DRAFT_FOR_PROXY](proxyOrDraft);
@@ -403,7 +440,9 @@ export class _AbstractListModel extends _BaseContainerModel {
      * to an integer. Negative index counts back from the end of the
      * array — if index < 0, index + array.length is accessed.
      */
-    keyToIndex(key: string | number | symbol | undefined): [number, null] | [null, string] {
+    keyToIndex(
+        key: string | number | symbol | undefined,
+    ): [number, null] | [null, string] {
         if (key === ForeignKey.NULL)
             return [null, `KEY ERROR ForeignKey.NULL is not a key.`];
         if (key === undefined) return [null, `KEY ERROR key is undefined.`];
@@ -411,8 +450,7 @@ export class _AbstractListModel extends _BaseContainerModel {
         let index = parseInt(stringKey, 10);
         if (isNaN(index))
             return [null, `KEY ERROR can't parse "${stringKey}" as integer.`];
-        if (index < 0)
-            index = index + this._value.length;
+        if (index < 0) index = index + this._value.length;
         if (index < 0 || index >= this._value.length)
             return [
                 null,
@@ -442,12 +480,16 @@ export class _AbstractListModel extends _BaseContainerModel {
         if (!item) {
             // If there's no item in value[index] yet, oldIndex will exist.
             const [oldIndex, proxy] = this[_OLD_TO_NEW_SLOT][index]!;
-            if (proxy)
-                return proxy as _BaseModel;
-            item = (this[OLD_STATE] as unknown as _AbstractListModel).get(String(oldIndex));
+            if (proxy) return proxy as _BaseModel;
+            item = (this[OLD_STATE] as unknown as _AbstractListModel).get(
+                String(oldIndex),
+            );
         }
 
-        const proxyOrDraft = _PotentialWriteProxy.create(this as unknown as _BaseModel, item) as _BaseModel;
+        const proxyOrDraft = _PotentialWriteProxy.create(
+            this as unknown as _BaseModel,
+            item,
+        ) as _BaseModel;
         if (_PotentialWriteProxy.isProxy(proxyOrDraft))
             this[_OLD_TO_NEW_SLOT][index]![1] = proxyOrDraft;
         return proxyOrDraft;
@@ -491,7 +533,11 @@ export class _AbstractListModel extends _BaseContainerModel {
         return this.splice(index, 1)[0];
     }
     // The Swiss Army Knive of array methods.
-    splice(start: number, deleteCount: number, ...entries: _BaseModel[]): _BaseModel[] {
+    splice(
+        start: number,
+        deleteCount: number,
+        ...entries: _BaseModel[]
+    ): _BaseModel[] {
         if (!this.isDraft)
             // FIXME: for the potential write proxy, it becomes very
             // interesting trying to write many entries.
@@ -511,17 +557,26 @@ export class _AbstractListModel extends _BaseContainerModel {
             oldToNewRemoved = this[_OLD_TO_NEW_SLOT].splice(
                 start,
                 deleteCount,
-                ...new Array(entries.length).fill(null).map((): [number, unknown] => [-1, null]),
+                ...new Array(entries.length)
+                    .fill(null)
+                    .map((): [number, unknown] => [-1, null]),
             );
         for (let index = 0; index < removed.length; index++) {
             if (!Object.hasOwn(removed, index)) {
-                const [oldIndex /*, proxy*/] = oldToNewRemoved[index] as [number, unknown];
-                removed[index] = (this[OLD_STATE] as unknown as _AbstractListModel).get(String(oldIndex)) as _BaseModel;
+                const [oldIndex /*, proxy*/] = oldToNewRemoved[index] as [
+                    number,
+                    unknown,
+                ];
+                removed[index] = (
+                    this[OLD_STATE] as unknown as _AbstractListModel
+                ).get(String(oldIndex)) as _BaseModel;
             }
         }
         return removed;
     }
-    [SERIALIZE](options: SerializationOptions = SERIALIZE_OPTIONS): SerializationResult {
+    [SERIALIZE](
+        options: SerializationOptions = SERIALIZE_OPTIONS,
+    ): SerializationResult {
         return _serializeContainer(
             this as unknown as _BaseContainerModel,
             /*presenceIsInformation*/ true,
@@ -530,7 +585,12 @@ export class _AbstractListModel extends _BaseContainerModel {
         );
     }
 
-    [DESERIALIZE](_serializedValue: TSerializedInput, _options: SerializationOptions): void {
-        throw new Error('NOT IMPLEMENTED: list models use constructor deserialization.');
+    [DESERIALIZE](
+        _serializedValue: TSerializedInput,
+        _options: SerializationOptions,
+    ): void {
+        throw new Error(
+            "NOT IMPLEMENTED: list models use constructor deserialization.",
+        );
     }
 }

@@ -1,28 +1,43 @@
 import {
-    _BaseModel, _BaseContainerModel, OLD_STATE, _IS_DRAFT_MARKER,
-    _DEFERRED_DEPENDENCIES, SERIALIZE_OPTIONS, SERIALIZE, DESERIALIZE,
-    immutableWriteError, _serializeContainer,
-    type DependenciesMap, type SerializationOptions, type SerializationResult, type TSerializedInput,
-} from './base-model.ts';
+    _BaseModel,
+    _BaseContainerModel,
+    OLD_STATE,
+    _IS_DRAFT_MARKER,
+    _DEFERRED_DEPENDENCIES,
+    SERIALIZE_OPTIONS,
+    SERIALIZE,
+    DESERIALIZE,
+    immutableWriteError,
+    _serializeContainer,
+    type DependenciesMap,
+    type SerializationOptions,
+    type SerializationResult,
+    type TSerializedInput,
+} from "./base-model.ts";
 
-import { ResourceRequirement } from './base-model.ts';
+import { ResourceRequirement } from "./base-model.ts";
 
 import {
-    _NOTDEF, sort_alpha, objectEntriesAreEqual, collectDependencies,
-    unwrapPotentialWriteProxy, PATH_SEPARATOR,
-} from './util.ts';
+    _NOTDEF,
+    sort_alpha,
+    objectEntriesAreEqual,
+    collectDependencies,
+    unwrapPotentialWriteProxy,
+    PATH_SEPARATOR,
+} from "./util.ts";
 
 import {
     _PotentialWriteProxy,
-    _HAS_DRAFT_FOR_PROXY, _HAS_DRAFT_FOR_OLD_STATE_KEY,
-    _GET_DRAFT_FOR_PROXY, _GET_DRAFT_FOR_OLD_STATE_KEY,
+    _HAS_DRAFT_FOR_PROXY,
+    _HAS_DRAFT_FOR_OLD_STATE_KEY,
+    _GET_DRAFT_FOR_PROXY,
+    _GET_DRAFT_FOR_OLD_STATE_KEY,
     _OLD_TO_NEW_SLOT,
-} from './potential-write-proxy.ts';
+} from "./potential-write-proxy.ts";
 
-import { _PRIMARY_SERIALIZED_VALUE } from './serialization.ts';
+import { _PRIMARY_SERIALIZED_VALUE } from "./serialization.ts";
 
-import { FreezableMap } from './base-model.ts';
-
+import { FreezableMap } from "./base-model.ts";
 
 /**
  * The only use of this function so far is to demo custom ordering in
@@ -69,7 +84,9 @@ type KVEntry = readonly [string, _BaseModel];
 interface OrderedMapModelSetup {
     ordering?: symbol | typeof _NOTDEF;
     customOrderingFn?: ((values: unknown[]) => unknown[]) | typeof _NOTDEF;
-    validateKeyFn?: ((key: unknown) => [boolean, string | null]) | typeof _NOTDEF;
+    validateKeyFn?:
+        | ((key: unknown) => [boolean, string | null])
+        | typeof _NOTDEF;
 }
 
 export class _AbstractOrderedMapModel extends _BaseContainerModel {
@@ -82,7 +99,9 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
     declare _keys: FreezableMap<string, number>;
     // dependencies is set via Object.defineProperty in constructor
     declare [_OLD_TO_NEW_SLOT]: OldToNewSlot[];
-    declare [_PRIMARY_SERIALIZED_VALUE]: [TSerializedInput, SerializationOptions] | undefined;
+    declare [_PRIMARY_SERIALIZED_VALUE]:
+        | [TSerializedInput, SerializationOptions]
+        | undefined;
 
     static get dependencies(): Set<string> {
         return this.Model.dependencies;
@@ -101,7 +120,9 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
     }
 
     static [MAP_ORDER.KEYS_ALPHA_REVERSE](values: KVEntry[]): KVEntry[] {
-        return (this as unknown as Record<symbol, (v: KVEntry[]) => KVEntry[]>)[this.ORDER.KEYS_ALPHA]!(values).reverse();
+        return (this as unknown as Record<symbol, (v: KVEntry[]) => KVEntry[]>)[
+            this.ORDER.KEYS_ALPHA
+        ]!(values).reverse();
     }
 
     static [MAP_ORDER.CUSTOM](values: KVEntry[]): KVEntry[] {
@@ -109,14 +130,24 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
     }
 
     static [MAP_ORDER.CUSTOM_REVERSE](values: KVEntry[]): KVEntry[] {
-        return (this._customOrderingFn(values as unknown[]) as KVEntry[]).reverse();
+        return (
+            this._customOrderingFn(values as unknown[]) as KVEntry[]
+        ).reverse();
     }
 
-    static createClass(className: string, Model: typeof _BaseModel, setup: OrderedMapModelSetup = {}) {
+    static createClass(
+        className: string,
+        Model: typeof _BaseModel,
+        setup: OrderedMapModelSetup = {},
+    ) {
         const config = {
             ordering: _NOTDEF as symbol | typeof _NOTDEF,
-            customOrderingFn: _NOTDEF as ((values: unknown[]) => unknown[]) | typeof _NOTDEF,
-            validateKeyFn: _NOTDEF as ((key: unknown) => [boolean, string | null]) | typeof _NOTDEF,
+            customOrderingFn: _NOTDEF as
+                | ((values: unknown[]) => unknown[])
+                | typeof _NOTDEF,
+            validateKeyFn: _NOTDEF as
+                | ((key: unknown) => [boolean, string | null])
+                | typeof _NOTDEF,
             ...setup,
         };
         if (config.ordering !== _NOTDEF) {
@@ -203,7 +234,10 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         // Start with an empty this._value for quick not-changed comparison.
         Object.defineProperty(this, "_value", {
             value: new Array(
-                this[OLD_STATE] !== null ? (this[OLD_STATE] as unknown as _AbstractOrderedMapModel).length : 0,
+                this[OLD_STATE] !== null
+                    ? (this[OLD_STATE] as unknown as _AbstractOrderedMapModel)
+                          .length
+                    : 0,
             ),
             writable: false, // can't replace the array itself
             configurable: true,
@@ -228,11 +262,16 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
 
         this[_OLD_TO_NEW_SLOT] =
             this[OLD_STATE] !== null
-                ? [...(this[OLD_STATE] as unknown as _AbstractOrderedMapModel)].map(([key /*value*/]: [string, _BaseModel], index: number): OldToNewSlot => [
-                      index,
-                      key,
-                      null /*proxy*/,
-                  ])
+                ? [
+                      ...(this[
+                          OLD_STATE
+                      ] as unknown as _AbstractOrderedMapModel),
+                  ].map(
+                      (
+                          [key /*value*/]: [string, _BaseModel],
+                          index: number,
+                      ): OldToNewSlot => [index, key, null /*proxy*/],
+                  )
                 : [];
         this._updateKeys();
 
@@ -251,12 +290,14 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
             }
             // Must return a new object (when called with `new`).
             // only works when there was no OLD_STATE
-            if (dependencies as unknown !== _DEFERRED_DEPENDENCIES)
+            if ((dependencies as unknown) !== _DEFERRED_DEPENDENCIES)
                 return this.metamorphose(dependencies) as this;
         }
     }
 
-    *#_metamorphoseGen(dependencies: DependenciesMap = {}): Generator<ResourceRequirement, this, unknown> {
+    *#_metamorphoseGen(
+        dependencies: DependenciesMap = {},
+    ): Generator<ResourceRequirement, this, unknown> {
         //CAUTION: `this` is the object not the class.
         //
         // All the following runs, to change deep down a single axis location value.
@@ -282,29 +323,32 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
 
         if (this[_PRIMARY_SERIALIZED_VALUE]) {
             const [serializedValues, serializeOptions] =
-                    this[_PRIMARY_SERIALIZED_VALUE]!;
+                this[_PRIMARY_SERIALIZED_VALUE]!;
             const childItems: [string, _BaseModel][] = [];
-            for (const [key, serializedValue] of serializedValues as [string, unknown][]) {
-                const childItem =
-                    yield* ctor.Model.createPrimalStateGen(
-                        this.dependencies,
-                        serializedValue,
-                        serializeOptions,
-                    );
+            for (const [key, serializedValue] of serializedValues as [
+                string,
+                unknown,
+            ][]) {
+                const childItem = yield* ctor.Model.createPrimalStateGen(
+                    this.dependencies,
+                    serializedValue,
+                    serializeOptions,
+                );
                 childItems.push([key, childItem]);
             }
             this.push(...childItems);
         }
         // Don't keep this
-        delete (this as Record<symbol, unknown>)[_PRIMARY_SERIALIZED_VALUE as unknown as symbol];
+        delete (this as Record<symbol, unknown>)[
+            _PRIMARY_SERIALIZED_VALUE as unknown as symbol
+        ];
 
-        const oldState = this[OLD_STATE] as unknown as _AbstractOrderedMapModel | null;
+        const oldState = this[
+            OLD_STATE
+        ] as unknown as _AbstractOrderedMapModel | null;
         const dependenciesAreEqual =
             oldState !== null &&
-            objectEntriesAreEqual(
-                oldState.dependencies,
-                this.dependencies,
-            );
+            objectEntriesAreEqual(oldState.dependencies, this.dependencies);
 
         // shortcut
         if (
@@ -318,7 +362,9 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         for (const index of this._value.keys()) {
             const kvItem: KVEntry = Object.hasOwn(this._value, index)
                 ? this._value[index]!
-                : oldState!.value[this[_OLD_TO_NEW_SLOT][index]![0]] as KVEntry;
+                : (oldState!.value[
+                      this[_OLD_TO_NEW_SLOT][index]![0]
+                  ] as KVEntry);
             const [key, item] = kvItem || [];
 
             if (!(item instanceof ctor.Model))
@@ -341,9 +387,9 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         // the mutable map can be in undefined order.
         if (ctor.ORDERING !== null) {
             // this._keys will get updated in #_lockAndFreeze via _updateKeys();
-            const newlyOrderedEntries = (ctor as unknown as Record<symbol, (v: KVEntry[]) => KVEntry[]>)[
-                ctor.ORDERING!
-            ]!(this._value);
+            const newlyOrderedEntries = (
+                ctor as unknown as Record<symbol, (v: KVEntry[]) => KVEntry[]>
+            )[ctor.ORDERING!]!(this._value);
             this._value.splice(0, Infinity);
             for (const entry of newlyOrderedEntries) this._value.push(entry);
         }
@@ -369,7 +415,9 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
             writable: true,
             configurable: true,
         });
-        delete (this as Record<symbol, unknown>)[OLD_STATE as unknown as symbol];
+        delete (this as Record<symbol, unknown>)[
+            OLD_STATE as unknown as symbol
+        ];
         Object.defineProperty(this, "_value", {
             value: Object.freeze(this._value),
             writable: false,
@@ -386,7 +434,9 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
             value: false,
             configurable: false,
         });
-        delete (this as Record<symbol, unknown>)[_OLD_TO_NEW_SLOT as unknown as symbol];
+        delete (this as Record<symbol, unknown>)[
+            _OLD_TO_NEW_SLOT as unknown as symbol
+        ];
         Object.freeze(this);
     }
 
@@ -394,7 +444,9 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         delete (this as Record<string, unknown>).dependencies;
     }
 
-    *metamorphoseGen(dependencies: DependenciesMap = {}): Generator<ResourceRequirement, this, unknown> {
+    *metamorphoseGen(
+        dependencies: DependenciesMap = {},
+    ): Generator<ResourceRequirement, this, unknown> {
         if (!this.isDraft)
             throw new Error(
                 `LIFECYCLE ERROR ${this} must be in draft mode to metamorphose.`,
@@ -442,7 +494,11 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         yield* this[Symbol.iterator]();
     }
 
-    *indexedEntries(): Generator<[number, [string, _BaseModel]], void, unknown> {
+    *indexedEntries(): Generator<
+        [number, [string, _BaseModel]],
+        void,
+        unknown
+    > {
         for (const [key, value] of this) {
             const [index /* error message*/] = this.keyToIndex(key as string);
             yield [index!, [key as string, value as _BaseModel]];
@@ -470,11 +526,11 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         const index = this[_OLD_TO_NEW_SLOT].findIndex(
             ([, , ownProxy]: OldToNewSlot) => ownProxy === proxy,
         );
-        if (index === -1)
-            return false;
+        if (index === -1) return false;
 
-        const [, /*key*/ item] = (Object.hasOwn(this._value, index) &&
-            this._value[index]!) || [null, null] as [null, null];
+        const [, /*key*/ item] =
+            (Object.hasOwn(this._value, index) && this._value[index]!) ||
+            ([null, null] as [null, null]);
         if (!item || !(item as _BaseModel).isDraft) return false;
 
         return true;
@@ -483,17 +539,16 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         if (!this.isDraft) return false;
         const oldState = this[OLD_STATE] as unknown as _AbstractOrderedMapModel;
         const [oldIndex, message] = oldState.keyToIndex(oldKey);
-        if (oldIndex === null)
-            throw new Error(message as string);
+        if (oldIndex === null) throw new Error(message as string);
 
         const index = this[_OLD_TO_NEW_SLOT].findIndex(
             ([, ownOldKey]: OldToNewSlot) => ownOldKey === oldKey,
         );
-        if (index === -1)
-            return false;
+        if (index === -1) return false;
 
-        const [, /*key*/ item] = (Object.hasOwn(this._value, index) &&
-            this._value[index]!) || [null, null] as [null, null];
+        const [, /*key*/ item] =
+            (Object.hasOwn(this._value, index) && this._value[index]!) ||
+            ([null, null] as [null, null]);
         if (!item || !(item as _BaseModel).isDraft) return false;
 
         return true;
@@ -513,8 +568,7 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
 
         const oldState = this[OLD_STATE] as unknown as _AbstractOrderedMapModel;
         const [oldIndex, message] = oldState.keyToIndex(oldKey);
-        if (oldIndex === null)
-            throw new Error(message as string);
+        if (oldIndex === null) throw new Error(message as string);
 
         const index = this[_OLD_TO_NEW_SLOT].findIndex(
             ([, ownOldKey]: OldToNewSlot) => ownOldKey === oldKey,
@@ -524,7 +578,8 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
             // object, the proxy is disconnected.
             return false;
 
-        let kvItem: KVEntry | false = Object.hasOwn(this._value, index) && this._value[index]!;
+        let kvItem: KVEntry | false =
+            Object.hasOwn(this._value, index) && this._value[index]!;
         if (!kvItem) {
             const item = oldState.get(oldKey);
             kvItem = [oldKey, item] as KVEntry;
@@ -560,25 +615,29 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         const index = this[_OLD_TO_NEW_SLOT].findIndex(
             ([, , ownProxy]: OldToNewSlot) => ownProxy === proxy,
         );
-        if (index === -1)
-            return false;
+        if (index === -1) return false;
 
-        let kvItem: KVEntry | false = Object.hasOwn(this._value, index) && this._value[index]!;
+        let kvItem: KVEntry | false =
+            Object.hasOwn(this._value, index) && this._value[index]!;
         if (!kvItem) {
             const [, /*oldIndex*/ key] = this[_OLD_TO_NEW_SLOT][index]!;
-            const oldState = this[OLD_STATE] as unknown as _AbstractOrderedMapModel;
+            const oldState = this[
+                OLD_STATE
+            ] as unknown as _AbstractOrderedMapModel;
             const item = oldState.get(key);
             kvItem = [key, item] as KVEntry;
         }
         const [key, item] = kvItem;
-        if (item.isDraft)
-            return item;
+        if (item.isDraft) return item;
         const draft = item.getDraft();
         this._value[index] = Object.freeze([key, draft]) as KVEntry;
         return draft;
     }
 
-    getDraftFor(key: string, defaultReturn: unknown = _NOTDEF): _BaseModel | false {
+    getDraftFor(
+        key: string,
+        defaultReturn: unknown = _NOTDEF,
+    ): _BaseModel | false {
         const proxyOrDraft = this.get(key, defaultReturn);
         if (_PotentialWriteProxy.isProxy(proxyOrDraft))
             return this[_GET_DRAFT_FOR_PROXY](proxyOrDraft);
@@ -597,16 +656,21 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         if (!this.isDraft) return this._value[index]![1];
 
         // Can be a draft or immutable e.g. via set(index, element)
-        let item: _BaseModel | false = Object.hasOwn(this._value, index) && this._value[index]![1];
+        let item: _BaseModel | false =
+            Object.hasOwn(this._value, index) && this._value[index]![1];
         if (!item) {
             const [oldIndex /*oldKey*/, , proxy] =
                 this[_OLD_TO_NEW_SLOT][index]!;
-            if (proxy)
-                return proxy as _BaseModel;
-            item = (this[OLD_STATE] as unknown as _AbstractOrderedMapModel).getIndex(oldIndex) as _BaseModel;
+            if (proxy) return proxy as _BaseModel;
+            item = (
+                this[OLD_STATE] as unknown as _AbstractOrderedMapModel
+            ).getIndex(oldIndex) as _BaseModel;
         }
 
-        const proxyOrDraft = _PotentialWriteProxy.create(this as unknown as _BaseModel, item) as _BaseModel;
+        const proxyOrDraft = _PotentialWriteProxy.create(
+            this as unknown as _BaseModel,
+            item,
+        ) as _BaseModel;
         if (_PotentialWriteProxy.isProxy(proxyOrDraft))
             this[_OLD_TO_NEW_SLOT][index]![2] = proxyOrDraft;
         return proxyOrDraft;
@@ -626,8 +690,7 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         let index = parseInt(String(searchIndex), 10);
         if (isNaN(index))
             return [null, `KEY ERROR can't parse "${searchIndex}" as integer.`];
-        if (index < 0)
-            index = index + this._value.length;
+        if (index < 0) index = index + this._value.length;
         if (index < 0 || index >= this._value.length)
             return [
                 null,
@@ -641,7 +704,10 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         return [key, null];
     }
 
-    keyOfIndex(index: string | number, defaultReturn: unknown = _NOTDEF): string {
+    keyOfIndex(
+        index: string | number,
+        defaultReturn: unknown = _NOTDEF,
+    ): string {
         const [key, message] = this.indexToKey(index);
         if (key === null) {
             if (defaultReturn !== _NOTDEF) return defaultReturn as string;
@@ -650,7 +716,10 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         return key;
     }
 
-    getIndex(index: string | number, defaultReturn: unknown = _NOTDEF): _BaseModel {
+    getIndex(
+        index: string | number,
+        defaultReturn: unknown = _NOTDEF,
+    ): _BaseModel {
         const key = this.keyOfIndex(index, defaultReturn);
         return this.get(key, defaultReturn) as _BaseModel;
     }
@@ -661,9 +730,11 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
 
     indexOf(item: _BaseModel, fromIndex?: number): number {
         // If fromIndex >= array.length, the array is not searched and -1 is returned.
-        if (fromIndex !== undefined && fromIndex >= this._value.length) return -1;
+        if (fromIndex !== undefined && fromIndex >= this._value.length)
+            return -1;
 
-        if (fromIndex !== undefined && fromIndex < 0) fromIndex = fromIndex + this._value.length;
+        if (fromIndex !== undefined && fromIndex < 0)
+            fromIndex = fromIndex + this._value.length;
 
         // If fromIndex < -array.length or fromIndex is omitted, 0
         // is used, causing the entire array to be searched.
@@ -713,7 +784,9 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
     }
 
     _validateKey(key: unknown): [boolean, string | null] {
-        return (this.constructor as typeof _AbstractOrderedMapModel).validateKey(key);
+        return (
+            this.constructor as typeof _AbstractOrderedMapModel
+        ).validateKey(key);
     }
     /**
      * As a one stop solution, this cleans this._value and rebuilds
@@ -726,7 +799,11 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
      * Similar like Object.fromEntries([['a',1], ['a', 2], ['a', 3]])
      * will create: {'a': 3}.
      */
-    arraySplice(index: number, deleteCount: number, ...entries: unknown[]): KVEntry[] {
+    arraySplice(
+        index: number,
+        deleteCount: number,
+        ...entries: unknown[]
+    ): KVEntry[] {
         if (!this.isDraft)
             // FIXME: for the potential write proxy, it becomes very
             // interesting trying to write many entries.
@@ -759,7 +836,8 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
                 deleteCount,
                 ..._entries.map((kvItem: KVEntry) => {
                     const unwrapped = unwrapPotentialWriteProxy(kvItem[1]);
-                    if (kvItem[1] !== unwrapped) return Object.freeze([kvItem[0], unwrapped]) as KVEntry;
+                    if (kvItem[1] !== unwrapped)
+                        return Object.freeze([kvItem[0], unwrapped]) as KVEntry;
                     return kvItem;
                 }),
             );
@@ -767,7 +845,9 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         this[_OLD_TO_NEW_SLOT].splice(
             index,
             deleteCount,
-            ...new Array(entries.length).fill(null).map((): OldToNewSlot => [-1, "", null]),
+            ...new Array(entries.length)
+                .fill(null)
+                .map((): OldToNewSlot => [-1, "", null]),
         );
         // We can have duplicate keys in entries and we can have
         // duplicate keys in this._value already.
@@ -776,7 +856,8 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         for (let i = this._value.length - 1; i >= 0; i--) {
             const kv: KVEntry = Object.hasOwn(this._value, i)
                 ? this._value[i]!
-                : (this[OLD_STATE] as unknown as _AbstractOrderedMapModel).value[this[_OLD_TO_NEW_SLOT][i]![0]] as KVEntry;
+                : ((this[OLD_STATE] as unknown as _AbstractOrderedMapModel)
+                      .value[this[_OLD_TO_NEW_SLOT][i]![0]] as KVEntry);
             const [key /*value*/] = kv;
             if (seen.has(key)) {
                 // remove duplicate
@@ -797,7 +878,11 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         return deleted;
     }
 
-    splice(startKey: string, deleteCount: number, ...entries: unknown[]): KVEntry[] {
+    splice(
+        startKey: string,
+        deleteCount: number,
+        ...entries: unknown[]
+    ): KVEntry[] {
         const [index, message] = this.keyToIndex(startKey);
         if (index === null) throw new Error(message as string);
         return this.arraySplice(index, deleteCount, ...entries);
@@ -846,7 +931,9 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         (this.get(key) as unknown as { set(v: unknown): void }).set(value);
     }
 
-    [SERIALIZE](options: SerializationOptions = SERIALIZE_OPTIONS): SerializationResult {
+    [SERIALIZE](
+        options: SerializationOptions = SERIALIZE_OPTIONS,
+    ): SerializationResult {
         return _serializeContainer(
             this as unknown as _BaseContainerModel,
             /*presenceIsInformation*/ true,
@@ -855,9 +942,13 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
         );
     }
 
-    [DESERIALIZE](_serializedValue: TSerializedInput, _options?: SerializationOptions): void {
-        throw new Error(`NOT IMPLEMENTED: ${this.constructor.name}[DESERIALIZE]. ` +
-            `Ordered map models use constructor deserialization.`);
+    [DESERIALIZE](
+        _serializedValue: TSerializedInput,
+        _options?: SerializationOptions,
+    ): void {
+        throw new Error(
+            `NOT IMPLEMENTED: ${this.constructor.name}[DESERIALIZE]. ` +
+                `Ordered map models use constructor deserialization.`,
+        );
     }
 }
-
