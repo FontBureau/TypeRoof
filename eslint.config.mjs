@@ -58,6 +58,20 @@ export default [
         },
     },
     {
+        files: ["**/*.{ts,tsx}"],
+        rules: {
+            "no-unused-vars": "off",
+            // The _-prefix convention signals intentionally unused parameters,
+            // commonly for interface/protocol conformance.
+            "@typescript-eslint/no-unused-vars": [
+                "error",
+                {
+                    argsIgnorePattern: "^_",
+                },
+            ],
+        },
+    },
+    {
         // this seems sufficient yo just override rules for the .typeroof.jsx flavor
         files: ["**/*.typeroof.jsx"],
         rules: {
