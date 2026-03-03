@@ -1163,7 +1163,7 @@ class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 "h3",
                 {},
                 (typeSpecPath.equals(rootTypeSpecPath) ? "Origin " : "") +
-                    `Type-Spec:`,
+                    `TypeSpec`,
             ],
             [
                 {
@@ -1267,7 +1267,7 @@ class TypeSpecPropertiesManager extends _CommonContainerComponent {
                     // This is probably not required for the CommonActorProperties at all.
                 ],
                 UIshowProcessedProperties,
-                "Type-Spec",
+                "TypeSpec",
             ],
         ];
         // this._initWrapper(this._childrenWidgetBus, settings, dependencyMappings, Constructor, ...args);
