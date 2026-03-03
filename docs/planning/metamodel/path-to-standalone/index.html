@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Metamodel — Path to a Standalone Library - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel - Assessment Pre Strict Typing</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel - Path to a Standalone Library</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel - Assessment Post Strict Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor - Concepts and Roadmap</a></li></ul></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p>** This file was created with an agent. **</p>
+<h1><a id="metamodel--path-to-a-standalone-library" class="heading_anchor" href="#metamodel--path-to-a-standalone-library" aria-hidden="true">#</a>Metamodel — Path to a Standalone Library</h1>
+<h2><a id="could-we-recommend-metamodel-to-others" class="heading_anchor" href="#could-we-recommend-metamodel-to-others" aria-hidden="true">#</a>Could we recommend metamodel to others?</h2>
+<p><strong>Not yet, but it has the potential to be recommendable.</strong></p>
+<h2><a id="what-makes-it-genuinely-good" class="heading_anchor" href="#what-makes-it-genuinely-good" aria-hidden="true">#</a>What makes it genuinely good</h2>
+<p>The metamodel solves a <strong>hard problem well</strong> — reactive immutable state with
+referential integrity, topological dependency resolution, copy-on-write proxies,
+and deep structural comparison. This is closer to a relational database engine
+than a typical frontend state manager. The design is cohesive, the architecture
+is clean, and it now has fully enforced type contracts (443 → 0 TypeScript
+errors under <code>strict: true</code>).</p>
+<p>Most state management libraries (Redux, MobX, Zustand, Jotai) don’t offer:</p>
+<ul>
+<li><strong>Foreign keys</strong> with null constraints and referential integrity</li>
+<li><strong>Coherence functions</strong> — cascading triggers that enforce invariants</li>
+<li><strong>Topological initialization ordering</strong> — deterministic dependency resolution</li>
+<li><strong>Structural diff</strong> with path-based change tracking</li>
+<li><strong>Copy-on-write proxies</strong> with lazy draft escalation</li>
+</ul>
+<p>For applications that <strong>need</strong> these features — and TypeRoof clearly does —
+metamodel is a serious piece of engineering.</p>
+<h2><a id="is-it-overengineered" class="heading_anchor" href="#is-it-overengineered" aria-hidden="true">#</a>Is it overengineered?</h2>
+<h3><a id="what-kind-of-apps-need-this" class="heading_anchor" href="#what-kind-of-apps-need-this" aria-hidden="true">#</a>What kind of apps need this?</h3>
+<p>Apps where <strong>the data model has internal consistency rules that must hold at all
+times</strong>, and where <strong>changes cascade</strong> — modifying one thing implies adjusting
+other things.</p>
+<ul>
+<li><strong>Typography/design tools</strong> — Change a font axis value → available glyphs
+change → text reflow recalculates → proof layout updates. These aren’t
+independent actions; they’re a cascade of dependent state transitions.</li>
+<li><strong>CAD/vector editors</strong> — Move a wall → connected walls adjust → room area
+recalculates → materials estimate updates. Referential integrity between
+objects is essential.</li>
+<li><strong>Spreadsheet engines</strong> — Change cell A1 → formulas referencing A1
+recalculate → formulas referencing <em>those</em> cells recalculate. Topological
+dependency ordering is literally the core algorithm.</li>
+<li><strong>Form builders with validation</strong> — Field A’s value constrains Field B’s
+options → Field B’s value constrains Field C’s visibility. Coherence
+functions, essentially.</li>
+<li><strong>Game editors / level designers</strong> — Entity references other entities (a door
+references a key, a trigger references an event). Foreign keys with
+null-safety.</li>
+</ul>
+<p>The common thread: <strong>the state is not a bag of independent values — it’s a
+graph with constraints.</strong></p>
+<h3><a id="why-does-typeroof-need-it" class="heading_anchor" href="#why-does-typeroof-need-it" aria-hidden="true">#</a>Why does TypeRoof need it?</h3>
+<p>TypeRoof is a typographic proofing and animation tool. Its state model manages:</p>
+<ul>
+<li><strong>Font data</strong> — loaded fonts, available axes, available glyphs, font metadata</li>
+<li><strong>Type specifications</strong> — axis locations, font size, line height, letter
+spacing — all interdependent</li>
+<li><strong>Layout state</strong> — which layout is active, what actors are on stage, how
+they’re configured</li>
+<li><strong>Animation state</strong> — keyframes, playback position, interpolation between
+states</li>
+<li><strong>UI state</strong> — active panels, selections, editing modes</li>
+</ul>
+<p>These aren’t flat values. A font change invalidates axis locations. An axis
+change invalidates glyph availability. A layout change invalidates actor
+configurations. This is exactly the cascading dependency problem that
+metamodel’s coherence functions and topological ordering solve.</p>
+<p>Without metamodel, this logic would be ad-hoc event handlers — “when font
+changes, also update axes; when axes change, also update glyphs; when…” —
+hoping the order is right and no case is missed. Metamodel makes the dependency
+graph <strong>declarative and automatically resolved</strong>.</p>
+<h3><a id="for-typeroof-not-overengineered" class="heading_anchor" href="#for-typeroof-not-overengineered" aria-hidden="true">#</a>For TypeRoof: not overengineered</h3>
+<p>The complexity of the state management matches the complexity of the domain.
+Typography has deep, real interdependencies between its concepts. A simpler
+state manager would push that complexity into the application code — into
+scattered event handlers, manual dependency tracking, and “remember to also
+update X when Y changes” comments.</p>
+<h3><a id="implementation-areas-that-could-be-simplified" class="heading_anchor" href="#implementation-areas-that-could-be-simplified" aria-hidden="true">#</a>Implementation areas that could be simplified</h3>
+<p>The <em>design</em> is not overengineered for the problem, but some <em>implementation
+choices</em> could be simplified without losing the core value proposition:</p>
+<ol>
+<li>
+<p><strong>The proxy escalation system</strong> — 463 lines of <code>_PotentialWriteProxy</code> with
+symbol-keyed trap handlers is a lot of machinery. Copy-on-write is valuable
+for undo/redo and comparison, but a simpler approach (explicit
+<code>.beginDraft()</code> / <code>.commitDraft()</code> without transparent proxies) would
+sacrifice ergonomics but dramatically reduce complexity.</p>
+</li>
+<li>
+<p><strong>Runtime immutability enforcement</strong> — <code>Object.defineProperty</code> with
+<code>configurable: false</code> plus <code>Object.freeze</code> was <strong>essential in pure
+JavaScript</strong> — it was the only way to enforce immutability. With TypeScript’s
+<code>readonly</code> and <code>strict</code> mode, the compiler now catches mutations at
+write-time, making the runtime layer a second safety net rather than the
+primary one. <strong>However</strong>, as long as consumers are untyped <code>.mjs</code> files, the
+runtime enforcement still has value. Once consumers migrate to TypeScript,
+the runtime layer becomes truly redundant and could be stripped or made
+opt-in (e.g., a development-only <code>FREEZE=true</code> flag).</p>
+</li>
+<li>
+<p><strong>Baked-in serialization</strong> — Full serialization/deserialization with async
+resource resolution is a complete persistence layer inside the state model.
+Not every app needs its state manager to also be its serialization framework.
+For TypeRoof (saving/loading type proofs) it makes sense, but a standalone
+library might offer this as an optional layer.</p>
+</li>
+</ol>
+<p>The path to standalone should include asking <strong>“what’s essential vs. what’s
+accidental complexity?”</strong> for each subsystem.</p>
+<h2><a id="whats-missing-for-recommendation" class="heading_anchor" href="#whats-missing-for-recommendation" aria-hidden="true">#</a>What’s missing for recommendation</h2>
+<h3><a id="1-no-documentation" class="heading_anchor" href="#1-no-documentation" aria-hidden="true">#</a>1. No documentation</h3>
+<p>There’s no README, no API guide, no usage examples. A developer encountering
+<code>createClass</code>, <code>metamorphoseGen</code>, or <code>_PotentialWriteProxy.create</code> has to read
+the source to understand the contract. The types help enormously now, but
+they’re not a substitute for “here’s how to define a model, here’s how state
+flows.”</p>
+<h3><a id="2-no-tests" class="heading_anchor" href="#2-no-tests" aria-hidden="true">#</a>2. No tests</h3>
+<p>You can’t recommend a library you can’t verify. Without tests, every consumer
+is doing faith-based engineering. The typing pass found 3 dormant bugs in ~8200
+lines — there could be more in code paths not yet exercised.</p>
+<h3><a id="3-no-standalone-packaging" class="heading_anchor" href="#3-no-standalone-packaging" aria-hidden="true">#</a>3. No standalone packaging</h3>
+<p>It lives inside TypeRoof. To recommend it, it would need to be extractable —
+its own package, its own repo or workspace, its own entry point. The barrel
+(<code>metamodel.ts</code>) is a good start.</p>
+<h3><a id="4-the-objectdefineproperty--as-unknown-as-ceremony" class="heading_anchor" href="#4-the-objectdefineproperty--as-unknown-as-ceremony" aria-hidden="true">#</a>4. The <code>Object.defineProperty</code> / <code>as unknown as</code> ceremony</h3>
+<p>72 escape hatches and 48 <code>declare</code> properties signal that the runtime patterns
+fight against TypeScript’s model. A library for external use should feel natural
+to type, not require workarounds. Some of this could be simplified — e.g.,
+<code>readonly</code> class fields instead of <code>Object.defineProperty</code> for immutable
+properties.</p>
+<h3><a id="5-no-migration-path-from-simpler-tools" class="heading_anchor" href="#5-no-migration-path-from-simpler-tools" aria-hidden="true">#</a>5. No migration path from simpler tools</h3>
+<p>Someone using Zustand or Redux has no on-ramp. A “metamodel in 5 minutes” guide
+showing the equivalent of <code>createStore</code> → <code>createClass</code>, <code>dispatch</code> →
+<code>metamorphose</code>, <code>selector</code> → <code>getEntry</code> would make it approachable.</p>
+<h2><a id="naming-from-metamodel-to-typecaster" class="heading_anchor" href="#naming-from-metamodel-to-typecaster" aria-hidden="true">#</a>Naming: from metamodel to Typecaster</h2>
+<p>“Metamodel” is an accurate internal name but a poor standalone identity:</p>
+<ul>
+<li><strong>Overloaded</strong> — “metamodel” already means something specific (UML, EMF).
+Developers expect ORM/schema tools, not reactive state.</li>
+<li><strong>Abstract</strong> — Doesn’t communicate what it does. “A model of models” is
+academic; “reactive immutable state with relational integrity” is practical.</li>
+<li><strong>Not searchable</strong> — Too generic, competes with existing terminology.</li>
+</ul>
+<p>The working name direction: <strong>Typecaster</strong>.</p>
+<p>Following the typography production metaphor:</p>
+<table>
+<thead>
+<tr>
+<th>Print shop role</th>
+<th>Library</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Typecaster</strong></td>
+<td>State management</td>
+<td>Casts complete, immutable, typed state from class definitions</td>
+</tr>
+<tr>
+<td><strong>Compositor</strong></td>
+<td>Scope resolution</td>
+<td>Assembles properties into resolved, hierarchical scopes</td>
+</tr>
+</tbody>
+</table>
+<p>Why Typecaster works:</p>
+<ul>
+<li><strong>Typography</strong>: A typecaster casts metal type from matrices — exactly what
+<code>createClass</code> (the matrix) + <code>metamorphose</code> (the casting) does. The result
+is a solid, immutable slug of type.</li>
+<li><strong>Programming</strong>: A typecaster casts typed state — and this is literally a
+type system for state.</li>
+<li><strong>Strong Type Systems</strong>: The company makes strong types. The Typecaster casts
+them.</li>
+<li><strong>Linotype parallel</strong>: The Linotype machine was a “line caster” — it cast
+an entire line at once as a single immutable slug. The metamodel does the
+same for state: compose the draft, cast the whole thing, can’t modify the
+slug, want a change? Recast. The old slug (<code>OLD_STATE</code>) still exists for
+comparison.</li>
+<li><strong>Distinctive</strong>: “Typecaster JS” returns nothing relevant today. Googleable,
+memorable, no collisions.</li>
+<li><strong>Paired with Compositor</strong>: Both are roles — people in the print shop with
+agency and craft. The Typecaster’s output feeds the Compositor’s input.</li>
+</ul>
+<p>Package: <code>@strongtypesystems/typecaster</code></p>
+<h3><a id="api-rename-metamorphose--cast" class="heading_anchor" href="#api-rename-metamorphose--cast" aria-hidden="true">#</a>API rename: <code>metamorphose</code> → <code>cast</code></h3>
+<p>The core operation — transforming a mutable draft into a frozen immutable
+snapshot — is called <code>metamorphose</code> internally. For the standalone library,
+<code>cast</code> is the better API name:</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token comment">// Internal (current)</span>
+<span class="token keyword">const</span> newState <span class="token operator">=</span> draft<span class="token punctuation">.</span><span class="token function">metamorphose</span><span class="token punctuation">(</span>dependencies<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// Standalone (proposed)</span>
+<span class="token keyword">const</span> newState <span class="token operator">=</span> draft<span class="token punctuation">.</span><span class="token function">cast</span><span class="token punctuation">(</span>dependencies<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>Why <code>cast</code>:</p>
+<ul>
+<li><strong>Typography</strong>: Cast type from a matrix — pour in draft, out comes solid slug</li>
+<li><strong>Programming</strong>: Type casting — and this IS a type-casting operation</li>
+<li><strong>Film/theater</strong>: Typecasting — the actor becomes strongly identified with
+the role, just as <code>createClass</code> typecasts a generic model into a specific
+character (<code>FontSize</code>, <code>AxisLocation</code>, <code>TypeSpec</code>)</li>
+<li><strong>Brand-aligned</strong>: Reinforces the Typecaster name</li>
+<li><strong>Short</strong>: 4 characters vs 12. <code>draft.cast()</code> reads naturally</li>
+</ul>
+<p>The full rename scope: <code>metamorphose</code>, <code>metamorphoseGen</code>,
+<code>#_metamorphoseGen</code> → <code>cast</code>, <code>castGen</code>, <code>#_castGen</code>.</p>
+<p><strong>Timing</strong>: Do this when extracting the standalone package, not during the
+current typing pass. It’s a branding decision, not a technical one.</p>
+<p>Other potential API renames for the standalone:</p>
+<table>
+<thead>
+<tr>
+<th>Internal</th>
+<th>Standalone</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>createClass</code></td>
+<td><code>define</code></td>
+<td>You <em>define</em> a type, the typecaster <em>casts</em> it</td>
+</tr>
+<tr>
+<td><code>metamorphose</code></td>
+<td><code>cast</code></td>
+<td>The casting operation</td>
+</tr>
+<tr>
+<td><code>metamorphoseGen</code></td>
+<td><code>castGen</code></td>
+<td>Generator version</td>
+</tr>
+<tr>
+<td><code>OLD_STATE</code></td>
+<td><code>previous</code></td>
+<td>Clearer for external users</td>
+</tr>
+<tr>
+<td><code>_PotentialWriteProxy</code></td>
+<td><code>DraftProxy</code></td>
+<td>Says what it is</td>
+</tr>
+</tbody>
+</table>
+<h2><a id="the-steps-to-get-there" class="heading_anchor" href="#the-steps-to-get-there" aria-hidden="true">#</a>The steps to get there</h2>
+<h3><a id="step-1--tests-proves-it-works" class="heading_anchor" href="#step-1--tests-proves-it-works" aria-hidden="true">#</a>Step 1 — Tests (proves it works)</h3>
+<p>Start with pure, side-effect-free functions:</p>
+<table>
+<thead>
+<tr>
+<th>Target</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>topologicalSortKahn</code></td>
+<td>Deterministic algorithm, clear inputs/outputs</td>
+</tr>
+<tr>
+<td><code>collectDependencies</code></td>
+<td>Pure data transformation</td>
+</tr>
+<tr>
+<td><code>rawCompare</code> / <code>compare</code></td>
+<td>Core diffing logic, many edge cases</td>
+</tr>
+<tr>
+<td><code>serialize</code> / <code>deserializeGen</code></td>
+<td>Round-trip property: <code>deserialize(serialize(x)) ≡ x</code></td>
+</tr>
+</tbody>
+</table>
+<p>Then graduate to lifecycle integration tests:
+<code>createClass → construct → metamorphose → mutate draft → metamorphose → compare</code></p>
+<h3><a id="step-2--documentation-explains-how-to-use-it" class="heading_anchor" href="#step-2--documentation-explains-how-to-use-it" aria-hidden="true">#</a>Step 2 — Documentation (explains how to use it)</h3>
+<ul>
+<li><strong><a href="http://README.md">README.md</a></strong> — What it is, when to use it, quickstart</li>
+<li><strong>API reference</strong> — Generated from the now-typed signatures</li>
+<li><strong>Concepts guide</strong> — Immutability model, draft lifecycle, dependency protocol,
+foreign keys, coherence functions</li>
+<li><strong>Cookbook</strong> — Common patterns: “define a struct”, “add a foreign key”,
+“react to changes via StateComparison”</li>
+</ul>
+<h3><a id="step-3--extract-to-its-own-package-makes-it-usable" class="heading_anchor" href="#step-3--extract-to-its-own-package-makes-it-usable" aria-hidden="true">#</a>Step 3 — Extract to its own package (makes it usable)</h3>
+<ul>
+<li>Separate <code>package.json</code> with its own <code>name</code>, <code>version</code>, <code>exports</code></li>
+<li>Zero external dependencies (it already has none)</li>
+<li><code>metamodel.ts</code> barrel as the public entry point</li>
+<li>Strip TypeRoof-specific test fixtures or examples into a separate package</li>
+</ul>
+<h3><a id="step-4--simplify-the-objectdefineproperty-patterns-makes-it-idiomatic" class="heading_anchor" href="#step-4--simplify-the-objectdefineproperty-patterns-makes-it-idiomatic" aria-hidden="true">#</a>Step 4 — Simplify the <code>Object.defineProperty</code> patterns (makes it idiomatic)</h3>
+<p>Audit all 48 <code>declare</code> + <code>Object.defineProperty</code> sites. For each, determine:</p>
+<ul>
+<li><strong>Is freezing required?</strong> → Keep <code>Object.defineProperty</code> with
+<code>configurable: false</code></li>
+<li><strong>Is it just “set once, never reassign”?</strong> → Replace with <code>readonly</code> class
+field. TypeScript enforces this at the type level, and the runtime behavior is
+nearly identical.</li>
+<li><strong>Is it a symbol-keyed internal slot?</strong> → Consider a <code>WeakMap</code>-based
+approach, which is more TypeScript-friendly and avoids polluting the instance
+shape.</li>
+</ul>
+<p>This would reduce the <code>as unknown as</code> count significantly and make the code
+feel like idiomatic TypeScript rather than typed JavaScript.</p>
+<h3><a id="step-5--a-small-example-app-proves-its-learnable" class="heading_anchor" href="#step-5--a-small-example-app-proves-its-learnable" aria-hidden="true">#</a>Step 5 — A small example app (proves it’s learnable)</h3>
+<p>A minimal standalone app — perhaps a todo list with categories (struct →
+list → enum) and referential integrity (foreign keys between categories and
+items). Small enough to read in 10 minutes, complete enough to demonstrate the
+lifecycle.</p>
+<h2><a id="target-audience" class="heading_anchor" href="#target-audience" aria-hidden="true">#</a>Target audience</h2>
+<p>Metamodel is <strong>not</strong> a general-purpose state manager. It’s for applications
+that need:</p>
+<ul>
+<li><strong>Structured, relational state</strong> — not a flat key-value store</li>
+<li><strong>Referential integrity</strong> — foreign keys, not just string IDs</li>
+<li><strong>Cascading validation</strong> — coherence functions, not ad-hoc middleware</li>
+<li><strong>Structural diffing</strong> — “what changed and where”, not “something changed”</li>
+<li><strong>Immutability with ergonomic mutation</strong> — CoW proxies, not spread operators</li>
+</ul>
+<p>This is a real niche that no mainstream library fills well. Typography tools,
+design systems, CAD applications, form builders with complex validation —
+these are the kinds of apps that would benefit.</p>
+<h2><a id="alignment-with-purpose" class="heading_anchor" href="#alignment-with-purpose" aria-hidden="true">#</a>Alignment with purpose</h2>
+<p>From the Strong Type Systems purpose statement:</p>
+<blockquote>
+<p><em>We create Free Libré Open Source Software (FLOSS) type tools for production,
+proofing, type-setting and animation.</em></p>
+</blockquote>
+<p>A standalone metamodel library would be a reusable foundation for any future
+type tool — not just TypeRoof. Investing in its independence is investing in the
+ecosystem.</p>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>

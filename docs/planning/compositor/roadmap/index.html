@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Compositor - Concepts and Roadmap - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel - Assessment Pre Strict Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel - Path to a Standalone Library</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel - Assessment Post Strict Typing</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor - Concepts and Roadmap</a></li></ul></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p>** This file was created with an agent. **</p>
+<h1><a id="compositor---concepts-and-roadmap" class="heading_anchor" href="#compositor---concepts-and-roadmap" aria-hidden="true">#</a>Compositor - Concepts and Roadmap</h1>
+<h2><a id="context" class="heading_anchor" href="#context" aria-hidden="true">#</a>Context</h2>
+<p>The <strong>compositor</strong> is a planned library that sits between the metamodel (state
+management) and the UI consumers (rendering). Its job is:</p>
+<ol>
+<li><strong>Inheritance resolution</strong> — Nested actors inherit property values from
+parents unless overridden, like CSS cascading but for arbitrary model
+properties.</li>
+<li><strong>Scope computation</strong> — For each consumer, compute the final resolved value
+by walking the inheritance chain.</li>
+<li><strong>Live interpolation</strong> — Between two keyMoments, interpolate property values
+based on playback position:
+<code>fontSize = lerp(keyA.fontSize, keyB.fontSize, t)</code>.</li>
+<li><strong>Incremental updates</strong> — When a model value changes, recompute only the
+affected parts of the inheritance tree.</li>
+</ol>
+<p>The data flow:</p>
+<pre><code>metamodel (state changes)
+    → compositor (inheritance + interpolation)
+        → consumers (render glyphs, layout text, draw UI)
+</code></pre>
+<p>Every metamodel state change feeds into the compositor. During animation, the
+compositor runs every frame.</p>
+<h2><a id="four-architectures" class="heading_anchor" href="#four-architectures" aria-hidden="true">#</a>Four architectures</h2>
+<h3><a id="a-all-in-typescriptjavascript" class="heading_anchor" href="#a-all-in-typescriptjavascript" aria-hidden="true">#</a>A) All in TypeScript/JavaScript</h3>
+<pre><code>JS metamodel → JS compositor → JS render
+</code></pre>
+<p><strong>Advantages:</strong></p>
+<ul>
+<li>Zero boundary crossings. State flows as native JS objects.</li>
+<li>One language, one toolchain, one debugging story.</li>
+<li>The metamodel’s <code>StateComparison</code> feeds directly into the compositor — no
+serialization, no schema translation.</li>
+<li>Coherence functions, foreign key constraints, and compositor logic share the
+same runtime. A coherence function could directly trigger a compositor
+invalidation.</li>
+<li>Lowest barrier to contribution — aligned with the FLOSS purpose and the
+largest open source ecosystem.</li>
+<li>The metamodel’s new type infrastructure (<code>strict: true</code>, 0 errors, explicit
+contracts) provides a strong foundation for building the compositor with the
+same discipline.</li>
+</ul>
+<p><strong>Disadvantages:</strong></p>
+<ul>
+<li>GC pauses during animation — but modern V8 is very good. <strong>Needs
+measurement, not assumption.</strong></li>
+<li>No SIMD for batch interpolation — but only matters if hundreds of properties
+are interpolated per frame.</li>
+<li>CPU-bound interpolation blocks the main thread — but <code>requestAnimationFrame</code>
+<ul>
+<li>careful batching may be enough, or Web Workers if not.</li>
+</ul>
+</li>
+</ul>
+<h3><a id="b-compositor-in-wasm-metamodel-in-js" class="heading_anchor" href="#b-compositor-in-wasm-metamodel-in-js" aria-hidden="true">#</a>B) Compositor in WASM, metamodel in JS</h3>
+<pre><code>JS metamodel ──[boundary]──→ WASM compositor ──[boundary]──→ JS render
+</code></pre>
+<p><strong>Advantages:</strong></p>
+<ul>
+<li>Incremental migration. Metamodel stays as-is.</li>
+<li>Rust performance for the hot path (interpolation, inheritance resolution).</li>
+<li>Compositor is algorithmically well-defined — no UI callbacks, no DOM
+interaction. Good fit for Rust.</li>
+</ul>
+<p><strong>Disadvantages:</strong></p>
+<ul>
+<li>Boundary crossing on every state change. Must serialize/deserialize model
+state or define a shared format.</li>
+<li>Double bookkeeping — both sides need to understand the schema.</li>
+<li>Two languages, two build systems, two debugging stories.</li>
+<li>Contribution barrier — Rust is less accessible than TypeScript.</li>
+</ul>
+<h3><a id="c-both-metamodel-and-compositor-in-wasm" class="heading_anchor" href="#c-both-metamodel-and-compositor-in-wasm" aria-hidden="true">#</a>C) Both metamodel and compositor in WASM</h3>
+<pre><code>WASM metamodel + compositor ──[boundary]──→ JS render
+</code></pre>
+<p><strong>Advantages:</strong></p>
+<ul>
+<li>No intermediate boundary. State flows directly from metamodel to compositor
+in Rust memory.</li>
+<li>Only final derived values (resolved font size, interpolated axis position)
+cross to JS for rendering — minimal, flat data transfer.</li>
+<li>Rust’s ownership model provides immutability for free — the entire
+<code>_PotentialWriteProxy</code> system exists because JavaScript has no ownership
+semantics. Rust doesn’t need it.</li>
+</ul>
+<p><strong>Disadvantages:</strong></p>
+<ul>
+<li>Largest investment. The entire metamodel must work in Rust.</li>
+<li>JS UI code must call into WASM for all state mutations.</li>
+<li>Coherence functions are currently JS closures — they’d need Rust equivalents.</li>
+<li><code>createClass</code> dynamic class creation doesn’t exist in Rust — becomes
+compile-time generics or proc macros.</li>
+</ul>
+<h3><a id="d-hybrid--shared-memory" class="heading_anchor" href="#d-hybrid--shared-memory" aria-hidden="true">#</a>D) Hybrid — shared memory</h3>
+<pre><code>JS metamodel ──[SharedArrayBuffer]──→ WASM compositor ──[results]──→ JS render
+</code></pre>
+<p><strong>Advantages:</strong></p>
+<ul>
+<li>No serialization — compositor reads metamodel state directly from shared
+memory.</li>
+</ul>
+<p><strong>Disadvantages:</strong></p>
+<ul>
+<li>Requires careful binary memory layout agreement — essentially a binary IDL.</li>
+<li>Complex synchronization (atomics, locks).</li>
+<li>Only works for flat/numeric data, not nested structures.</li>
+<li>CORS/security restrictions on <code>SharedArrayBuffer</code>.</li>
+</ul>
+<h2><a id="existing-predecessors-in-the-codebase" class="heading_anchor" href="#existing-predecessors-in-the-codebase" aria-hidden="true">#</a>Existing predecessors in the codebase</h2>
+<p>The compositor is not speculative — its core patterns already exist in
+production, duplicated across two subsystems.</p>
+<h3><a id="typespecnion-layoutrendering-scope" class="heading_anchor" href="#typespecnion-layoutrendering-scope" aria-hidden="true">#</a>TypeSpecnion (layout/rendering scope)</h3>
+<p>In <code>type-spec-ramp.typeroof.jsx</code>:</p>
+<ul>
+<li><strong><code>SyntheticValue</code></strong> — A computed property: wraps a function + declared
+dependency names. <code>call(...resolvedDeps)</code> produces the value.</li>
+<li><strong><code>LocalScopeTypeSpecnion</code></strong> — Resolves properties for one level: takes
+property generators + a typeSpec model, resolves <code>SyntheticValue</code>
+dependencies using <strong>the same <code>topologicalSortKahn</code></strong> from the metamodel,
+merges with parent properties.</li>
+<li><strong><code>HierarchicalScopeTypeSpecnion</code></strong> — Walks the parent chain (like CSS
+inheritance), filters inheriting properties via <code>_isInheritingPropertyFn</code>,
+merges local + parent scopes.</li>
+</ul>
+<h3><a id="animanion-animation-scope" class="heading_anchor" href="#animanion-animation-scope" aria-hidden="true">#</a>Animanion (animation scope)</h3>
+<p>In <code>animation-animanion.mjs</code>:</p>
+<ul>
+<li><strong><code>DependentValue</code></strong> — Same concept as <code>SyntheticValue</code> but for
+time-dependent values: wraps a property name + <code>momentT</code> + dependency depth.
+This is the precursor of <code>SyntheticValue</code>.</li>
+<li><strong><code>LocalScopeAnimanion</code></strong> — Resolves properties at a given <code>momentT</code> by
+interpolating between keyMoments. Has its own dependency resolution via
+<code>_resolvePropertyDependencies</code>.</li>
+<li><strong><code>HierarchicalScopeAnimanion</code></strong> — Walks the parent chain, transforms
+<code>globalT</code> through each level’s local <code>t</code> mapping, inherits properties.</li>
+</ul>
+<h3><a id="the-shared-pattern" class="heading_anchor" href="#the-shared-pattern" aria-hidden="true">#</a>The shared pattern</h3>
+<p>Both follow exactly the same architecture:</p>
+<pre><code>Local scope:    raw properties → resolve dependencies → resolved properties
+                (generators)     (topological sort)     (Map&lt;name, value&gt;)
+
+Hierarchical:   walk parent chain → filter inheriting → merge local + parent
+                (linked list)      (predicate fn)       (Map&lt;name, value&gt;)
+</code></pre>
+<p>The difference is the value domain:</p>
+<ul>
+<li>TypeSpecnion: values are static (from the model state)</li>
+<li>Animanion: values are time-dependent (interpolated between keyMoments)</li>
+</ul>
+<h3><a id="processedpropertiessystemrecord--the-mapping-layer" class="heading_anchor" href="#processedpropertiessystemrecord--the-mapping-layer" aria-hidden="true">#</a>ProcessedPropertiesSystemRecord — the mapping layer</h3>
+<p>In <code>registered-properties-definitions.mjs</code>:</p>
+<p><code>ProcessedPropertiesSystemRecord</code> maps between three worlds:</p>
+<ol>
+<li><strong>Model world</strong> — <code>modelFieldName</code> (e.g., <code>&quot;wght&quot;</code>)</li>
+<li><strong>Property world</strong> — <code>fullKey</code> (e.g., <code>&quot;axisLocations/wght&quot;</code>)</li>
+<li><strong>Registry world</strong> — <code>registryKey</code> + <code>prefix</code> (for UI components)</li>
+</ol>
+<p>The code comments acknowledge this is fragile:</p>
+<blockquote>
+<p><em>“This is mostly to identify the registry BUT double use is to read e.g.
+complex values from a propertiesMap. There’s a good chance that the double
+use will collide at some point and has to be refined.”</em></p>
+</blockquote>
+<blockquote>
+<p><em>“Create a ppsRecord on the fly. Hopefully temporary until everything is
+figured out!!!”</em></p>
+</blockquote>
+<p>The <code>childrenPropertiesBroomWagonGen</code> flattens nested model structures into
+flat <code>prefix + path</code> strings — essentially manually reconstructing what the
+metamodel’s <code>getAllPathsAndValues</code> already does.</p>
+<h2><a id="compositor-design" class="heading_anchor" href="#compositor-design" aria-hidden="true">#</a>Compositor design</h2>
+<h3><a id="core-insight-one-primitive" class="heading_anchor" href="#core-insight-one-primitive" aria-hidden="true">#</a>Core insight: one primitive</h3>
+<p><code>DependentValue</code> (Animanion) and <code>SyntheticValue</code> (TypeSpecnion) are the same
+concept at different levels of maturity: <strong>a function with declared
+dependencies, resolved via topological sort</strong>.</p>
+<p>In the compositor, there is just one primitive: a computed property with
+declared dependencies. Whether those dependencies are:</p>
+<ul>
+<li>Another property in the same scope</li>
+<li>A time value <code>t</code></li>
+<li>KeyMoment data for interpolation</li>
+<li>A parent scope value being transformed during inheritance</li>
+</ul>
+<p>…doesn’t matter to the resolution engine. It’s all one dependency graph:</p>
+<pre><code>t ──────────────────────┐
+keyMoments ─────────────┤
+                        ▼
+            interpolate(fontSize, t, keyMoments) → fontSize: 38.4
+                                                        │
+                                                        ▼
+                                        computeLineHeight(fontSize) → lineHeight: 46.1
+                                                                          │
+parentColor ──→ darken(parentColor) → color                               ▼
+                                                          computeLeading(fontSize, lineHeight) → leading: 7.7
+</code></pre>
+<p>One graph. One topological sort. One resolution pass. The distinction between
+“animated property” and “synthetic property” and “inherited-and-transformed
+property” disappears — they’re all nodes in the dependency graph with different
+input sources.</p>
+<h3><a id="eigen-properties-vs-slots" class="heading_anchor" href="#eigen-properties-vs-slots" aria-hidden="true">#</a>Eigen properties vs slots</h3>
+<p>An actor on stage has two kinds of properties:</p>
+<p><strong>Eigen-properties</strong> — fixed, intrinsic to the actor definition. These are what
+make <em>this actor</em> what it is: the specific font, the specific axis range, the
+specific text content. These must <strong>not</strong> inherit from the parent stage. They
+travel with the actor.</p>
+<p><strong>Slots</strong> — open channels that accept values from the context: current time
+<code>t</code>, position on stage, color theme. These <strong>must</strong> inherit — the actor needs
+them from its environment but doesn’t define them itself.</p>
+<h3><a id="purpose-and-slot-routing" class="heading_anchor" href="#purpose-and-slot-routing" aria-hidden="true">#</a>Purpose and slot routing</h3>
+<p>A parent scope <strong>tags</strong> values with a purpose. A child scope <strong>declares slots</strong>
+that pull from the best-matching purpose via a deterministic chain:</p>
+<pre><code>parent scope:
+  fontSize: 24  → purpose: &quot;body&quot;
+  fontSize: 18  → purpose: &quot;caption&quot;
+  fontSize: 36  → purpose: &quot;heading&quot;
+
+child scope (slot &quot;main-text&quot;):
+  purposeChain: [&quot;body&quot;, &quot;default&quot;]
+  → binds to purpose &quot;body&quot; → fontSize: 24
+</code></pre>
+<p>Routing is deterministic and data-driven: walk the <code>purposeChain</code>, first match
+wins. No scoring functions needed — the metamodel’s struct polymorphism +
+SyntheticValue computation already covers flexible cases.</p>
+<h3><a id="slot-propagation-through-actor-structure" class="heading_anchor" href="#slot-propagation-through-actor-structure" aria-hidden="true">#</a>Slot propagation through actor structure</h3>
+<p>A library actor has internal structure — nested levels that need some slot
+values routed deeper, possibly transformed:</p>
+<pre><code>Stage (provides: time, position, color)
+  └─ Actor instance
+       eigen: { font: &quot;Roboto&quot;, axisRange: [100, 900] }
+       slots: { t: ← purpose &quot;playback-time&quot; }
+       └─ Glyph renderer
+            slots: { t: ← propagated from parent }
+       └─ Axis visualizer
+            slots: { wght: ← transform(t → t * axisRange) }
+                     propagated from parent as purpose &quot;axis-wght&quot;
+</code></pre>
+<p>The same property can change identity as it flows down:</p>
+<pre><code>Stage:          purpose &quot;playback-time&quot; → t = 0.75
+Actor slot:     &quot;t&quot; ← &quot;playback-time&quot; → 0.75
+                transform: (t) =&gt; t * axisRange → 675
+                propagate as purpose &quot;axis-wght&quot;
+  Glyph slot:   &quot;wght&quot; ← &quot;axis-wght&quot; → 675
+</code></pre>
+<h3><a id="configurable-inheritance-per-property" class="heading_anchor" href="#configurable-inheritance-per-property" aria-hidden="true">#</a>Configurable inheritance per property</h3>
+<p>Beyond the current boolean <code>_isInheritingPropertyFn</code>, each property definition
+controls its own inheritance behavior:</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">interface</span> <span class="token class-name">PropertyDefinition<span class="token operator">&lt;</span><span class="token constant">T</span> <span class="token operator">=</span> <span class="token builtin">unknown</span><span class="token operator">></span></span> <span class="token punctuation">{</span>
+    name<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+    kind<span class="token operator">:</span> <span class="token string">"eigen"</span> <span class="token operator">|</span> <span class="token string">"slot"</span><span class="token punctuation">;</span>
+    purposeChain<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>            <span class="token comment">// for slots: what to bind from parent</span>
+    transform<span class="token operator">?</span><span class="token operator">:</span> SyntheticValue<span class="token operator">&lt;</span><span class="token constant">T</span><span class="token operator">></span><span class="token punctuation">;</span>      <span class="token comment">// computation at inheritance boundary</span>
+    propagate<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">boolean</span> <span class="token operator">|</span> <span class="token builtin">string</span><span class="token punctuation">;</span>       <span class="token comment">// re-export to children, possibly renamed</span>
+    defaultValue<span class="token operator">?</span><span class="token operator">:</span> <span class="token constant">T</span><span class="token punctuation">;</span>                   <span class="token comment">// single source of truth for defaults</span>
+<span class="token punctuation">}</span></code></pre>
+<h3><a id="typed-scope-properties" class="heading_anchor" href="#typed-scope-properties" aria-hidden="true">#</a>Typed scope properties</h3>
+<p>The current <code>Map&lt;string, unknown&gt;</code> provides no type safety. A typo in a
+property name silently produces <code>undefined</code>. A wrong-typed value silently
+propagates.</p>
+<p>The compositor should have typed property definitions:</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token generic-function"><span class="token function">defineProperty</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token builtin">number</span><span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token string">"fontSize"</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> kind<span class="token operator">:</span> <span class="token string">"slot"</span><span class="token punctuation">,</span> purposeChain<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">"body-size"</span><span class="token punctuation">]</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token generic-function"><span class="token function">defineProperty</span><span class="token generic class-name"><span class="token operator">&lt;</span>ColorValue<span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token string">"color"</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> kind<span class="token operator">:</span> <span class="token string">"slot"</span><span class="token punctuation">,</span> purposeChain<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">"foreground-color"</span><span class="token punctuation">]</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token generic-function"><span class="token function">defineProperty</span><span class="token generic class-name"><span class="token operator">&lt;</span>AxisLocationsValue<span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token string">"axisLocations"</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> kind<span class="token operator">:</span> <span class="token string">"eigen"</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<h3><a id="complex-properties-as-sub-scopes" class="heading_anchor" href="#complex-properties-as-sub-scopes" aria-hidden="true">#</a>Complex properties as sub-scopes</h3>
+<p>Properties like axis locations (variable number of axes) and colors (multiple
+channels + type) should not be flattened into long path-like keys. Instead,
+they become <strong>lightweight typed containers</strong>:</p>
+<pre class="language-typescript"><code class="language-typescript">scope<span class="token punctuation">.</span><span class="token generic-function"><span class="token function">get</span><span class="token generic class-name"><span class="token operator">&lt;</span>ColorValue<span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token string">"color"</span><span class="token punctuation">)</span>           <span class="token comment">// → { r: 255, g: 128, b: 0, a: 1.0, type: "rgb" }</span>
+scope<span class="token punctuation">.</span><span class="token generic-function"><span class="token function">get</span><span class="token generic class-name"><span class="token operator">&lt;</span>AxisLocationsValue<span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token string">"axisLocations"</span><span class="token punctuation">)</span>  <span class="token comment">// → { wght: 400, wdth: 100 }</span></code></pre>
+<p><strong>Option C — Lightweight typed containers:</strong></p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">interface</span> <span class="token class-name">SubScope<span class="token operator">&lt;</span><span class="token constant">T</span><span class="token operator">></span></span> <span class="token punctuation">{</span>
+    <span class="token keyword">readonly</span> value<span class="token operator">:</span> Readonly<span class="token operator">&lt;</span><span class="token constant">T</span><span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token function">override</span><span class="token punctuation">(</span>partial<span class="token operator">:</span> Partial<span class="token operator">&lt;</span><span class="token constant">T</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token operator">:</span> SubScope<span class="token operator">&lt;</span><span class="token constant">T</span><span class="token operator">></span><span class="token punctuation">;</span>  <span class="token comment">// partial override for inheritance</span>
+    <span class="token function">equals</span><span class="token punctuation">(</span>other<span class="token operator">:</span> SubScope<span class="token operator">&lt;</span><span class="token constant">T</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">boolean</span><span class="token punctuation">;</span>          <span class="token comment">// cheap comparison</span>
+<span class="token punctuation">}</span></code></pre>
+<p>Sub-scopes are immutable typed wrappers with partial override support (for
+inheritance) and equality checks (for change detection). They don’t carry the
+full metamodel machinery — the metamodel manages <em>source</em> data, the compositor
+manages <em>derived/resolved</em> data.</p>
+<p>Sub-scopes inherit <strong>as a unit</strong> by default. If a child overrides one channel,
+the intent is usually “I’m defining my own color” — not “I want parent’s green
+and blue but my own red.” Explicit partial override is opt-in:</p>
+<pre><code>parent: color = { r: 255, g: 128, b: 0, a: 1.0, type: &quot;rgb&quot; }
+
+child (no override):      color = inherited whole
+child (full override):    color = { r: 0, g: 0, b: 0, a: 1.0, type: &quot;rgb&quot; }
+child (partial override): color = { ...inherited, r: 0 }  ← explicit
+</code></pre>
+<p>The flat key model inherits channels independently because it has no concept of
+grouping. Sub-scopes fix that — the group IS the inheritance unit.</p>
+<h3><a id="unified-defaults" class="heading_anchor" href="#unified-defaults" aria-hidden="true">#</a>Unified defaults</h3>
+<p>Three layers, tried in order:</p>
+<ol>
+<li><strong>Local override</strong> — the scope defines the value explicitly</li>
+<li><strong>Inherited</strong> — flows from parent scope via purpose/slot routing</li>
+<li><strong>Schema default</strong> — from <code>PropertyDefinition.defaultValue</code></li>
+</ol>
+<p>This replaces the scattered default sources (<code>_typeSpecDefaultsMap</code>, model
+<code>defaultValue</code>, <code>parentPropertyValuesMap</code> fallback) with a single, predictable
+resolution order.</p>
+<h3><a id="declarative-model-to-property-mapping" class="heading_anchor" href="#declarative-model-to-property-mapping" aria-hidden="true">#</a>Declarative model-to-property mapping</h3>
+<p>Replaces <code>ProcessedPropertiesSystemMap.fromPrefix()</code> and the broom wagon
+generators:</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">const</span> typeSpecMapping <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token string-property property">"fontSize"</span><span class="token operator">:</span> <span class="token punctuation">{</span> property<span class="token operator">:</span> <span class="token string">"fontSize"</span><span class="token punctuation">,</span> type<span class="token operator">:</span> <span class="token string">"number"</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token string-property property">"lineHeight"</span><span class="token operator">:</span> <span class="token punctuation">{</span> property<span class="token operator">:</span> <span class="token string">"lineHeight"</span><span class="token punctuation">,</span> type<span class="token operator">:</span> <span class="token string">"number"</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token string-property property">"axisLocations/*"</span><span class="token operator">:</span> <span class="token punctuation">{</span> property<span class="token operator">:</span> <span class="token string">"axisLocations/${key}"</span><span class="token punctuation">,</span> type<span class="token operator">:</span> <span class="token string">"number"</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token string-property property">"color"</span><span class="token operator">:</span> <span class="token punctuation">{</span> property<span class="token operator">:</span> <span class="token string">"color"</span><span class="token punctuation">,</span> type<span class="token operator">:</span> ColorValue <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+<p>Each property has <strong>one canonical name</strong> and explicit metadata. The triple
+mapping problem (model key / full key / registry key) is eliminated.</p>
+<h3><a id="compositor-configuration-lives-in-the-metamodel" class="heading_anchor" href="#compositor-configuration-lives-in-the-metamodel" aria-hidden="true">#</a>Compositor configuration lives in the metamodel</h3>
+<p>The compositor configuration (property definitions, slot/eigen classification,
+purpose chains, transforms) is <strong>schema</strong> — it belongs in the metamodel.</p>
+<p>The key insight: <code>CompositorConfig</code> is just another <code>_AbstractStructModel</code>.
+The metamodel already has the machinery to define structured, typed, validated,
+serializable configuration — why invent a new container?</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">const</span> CompositorPropertyConfig <span class="token operator">=</span> _AbstractStructModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>
+    <span class="token string">"CompositorPropertyConfig"</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">kind</span><span class="token operator">:</span> EnumModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">"PropertyKind"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">"eigen"</span><span class="token punctuation">,</span> <span class="token string">"slot"</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">purposeChain</span><span class="token operator">:</span> _AbstractListModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">"PurposeChain"</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">Model</span><span class="token operator">:</span> StringModel <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">inheritAsUnit</span><span class="token operator">:</span> BooleanModel<span class="token punctuation">,</span>
+        <span class="token literal-property property">propagate</span><span class="token operator">:</span> BooleanModel<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> CompositorConfig <span class="token operator">=</span> _AbstractStructModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>
+    <span class="token string">"CompositorConfig"</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">fontSize</span><span class="token operator">:</span> CompositorPropertyConfig<span class="token punctuation">,</span>
+        <span class="token literal-property property">color</span><span class="token operator">:</span> CompositorPropertyConfig<span class="token punctuation">,</span>
+        <span class="token literal-property property">axisLocations</span><span class="token operator">:</span> CompositorPropertyConfig<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>This follows the same pattern as <code>CoherenceFunction</code>, <code>ForeignKey</code>,
+<code>InternalizedDependency</code>, and <code>FallBackValue</code> — all passed as definitions to
+<code>createClass</code> and discriminated by <code>instanceof</code>. The compositor config becomes
+a frozen static property on the class, like <code>fields</code> and <code>foreignKeys</code>.</p>
+<p><strong>Why this is right:</strong></p>
+<ul>
+<li><strong>The metamodel eats its own dog food</strong> — the compositor’s schema is defined
+in the same system it will consume.</li>
+<li><strong>Full lifecycle</strong> — serialization, comparison, validation all come for free.
+The compositor config persists when models are saved/loaded.</li>
+<li><strong>Foreign keys</strong> — a <code>purposeChain</code> entry could be a foreign key to a
+purpose registry, enforcing referential integrity.</li>
+<li><strong>Coherence functions</strong> — constraints between compositor properties are
+expressible (e.g., “if kind is eigen, purposeChain must be empty”).</li>
+<li><strong>No drift</strong> — config lives with the model definition, not in a separate
+file. One source of truth.</li>
+<li><strong>Optional</strong> — models without compositor config use defaults.</li>
+</ul>
+<h3><a id="animation-as-dependency-graph-nodes" class="heading_anchor" href="#animation-as-dependency-graph-nodes" aria-hidden="true">#</a>Animation as dependency graph nodes</h3>
+<p>The Animanion’s keyMoment interpolation becomes regular nodes in the dependency
+graph. An animated property is a computed property whose dependencies include
+<code>t</code> and keyMoment data:</p>
+<pre><code>// &quot;fontSize at t&quot; is a computed property
+dependencies: [&quot;t&quot;, &quot;keyMoments&quot;]
+compute: (t, keyMoments) =&gt; interpolate(keyMoments, t, &quot;fontSize&quot;)
+</code></pre>
+<p>A property that depends on another animated property’s value at the same <code>t</code>
+(the <code>DependentValue</code> pattern) is just a dependency edge in the same graph. The
+topological sort ensures correct resolution order within a time slice.</p>
+<p>This unification means the compositor doesn’t need separate “static resolution”
+and “animation resolution” stages — one graph, one sort, one pass.</p>
+<h2><a id="recommendation-start-with-typescript-measure-then-decide" class="heading_anchor" href="#recommendation-start-with-typescript-measure-then-decide" aria-hidden="true">#</a>Recommendation: start with TypeScript, measure, then decide</h2>
+<h3><a id="why-typescript-first" class="heading_anchor" href="#why-typescript-first" aria-hidden="true">#</a>Why TypeScript first</h3>
+<p>The case for Rust/WASM is strongest when:</p>
+<ol>
+<li>You’ve <strong>measured</strong> that JS compositor performance is insufficient.</li>
+<li>The bottleneck is <strong>computation</strong>, not DOM/layout/paint.</li>
+<li>The computation is <strong>parallelizable</strong> or <strong>SIMD-friendly</strong>.</li>
+</ol>
+<p>If the compositor’s hot loop is “for each of 50 properties, lerp between two
+floats” — that’s 50 multiplications. JavaScript does that in microseconds. WASM
+won’t meaningfully improve it.</p>
+<p>If the compositor’s hot loop is “for each of 500 glyphs, resolve 20 inherited
+properties through a 5-level scope chain, interpolate between 3 keyframes with
+easing curves, and compute bezier path offsets” — now Rust’s performance
+advantage is real.</p>
+<p><strong>Build the compositor in TypeScript first.</strong> It integrates naturally with the
+metamodel, you can iterate on the API quickly, and the typing infrastructure
+provides safety. Then <strong>profile under real workloads</strong>.</p>
+<h3><a id="escalation-path-if-js-is-too-slow" class="heading_anchor" href="#escalation-path-if-js-is-too-slow" aria-hidden="true">#</a>Escalation path if JS is too slow</h3>
+<ol>
+<li>
+<p><strong>Web Workers</strong> — Move the compositor off the main thread, communicate via
+<code>postMessage</code> with transferable objects. This alone may solve frame budget
+issues.</p>
+</li>
+<li>
+<p><strong>Rust/WASM inner loop</strong> — If still too slow, port the hot interpolation
+kernel to Rust/WASM. Not the whole compositor — just the batch computation
+that runs per frame. The TypeScript compositor becomes a thin orchestrator
+that delegates number-crunching to WASM.</p>
+</li>
+<li>
+<p><strong>Full Rust/WASM compositor (Architecture B)</strong> — Only if profiling shows
+the JS→WASM boundary itself is the bottleneck. At this point you have a
+working TypeScript compositor as a reference implementation, performance data,
+and a clear understanding of the API surface.</p>
+</li>
+<li>
+<p><strong>Full WASM stack (Architecture C)</strong> — Only if the boundary crossing between
+metamodel and compositor dominates. This is a major investment and should be
+justified by measurement, not speculation.</p>
+</li>
+</ol>
+<p>This is the difference between <strong>architecture driven by measurement</strong> and
+<strong>architecture driven by anticipation</strong>.</p>
+<h2><a id="if-rustwasm-becomes-the-path-feasibility-notes" class="heading_anchor" href="#if-rustwasm-becomes-the-path-feasibility-notes" aria-hidden="true">#</a>If Rust/WASM becomes the path: feasibility notes</h2>
+<h3><a id="the-metamorphose-protocol-in-rust" class="heading_anchor" href="#the-metamorphose-protocol-in-rust" aria-hidden="true">#</a>The metamorphose protocol in Rust</h3>
+<p>The generator-based <code>metamorphoseGen</code> protocol (yield <code>ResourceRequirement</code>,
+receive resource, continue) translates to Rust in different ways depending on
+context:</p>
+<table>
+<thead>
+<tr>
+<th>Context</th>
+<th>Approach</th>
+<th>Feasibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WASM in browser</td>
+<td>JS host drives the generator via imports/exports</td>
+<td>✅ Seamless</td>
+</tr>
+<tr>
+<td>Rust with all resources in memory</td>
+<td>Plain function, no coroutine needed</td>
+<td>✅ Trivial</td>
+</tr>
+<tr>
+<td>Rust async (disk/network I/O)</td>
+<td><code>async/await</code> — Rust’s async is a state machine (generator under the hood)</td>
+<td>✅ Native</td>
+</tr>
+<tr>
+<td>Rust embedded in foreign host</td>
+<td>Manual state machine or nightly <code>#[coroutine]</code></td>
+<td>✅ Verbose but works</td>
+</tr>
+</tbody>
+</table>
+<p>Note: runtime schema changes are not a feature that is used or desired —
+schemas are always static, defined once at startup. This means Rust’s
+compile-time model (generics, proc macros) is a natural fit, not a limitation.
+The <code>createClass</code> calls are essentially a <strong>build step</strong> that happens to run at
+runtime because JavaScript doesn’t have a better mechanism.</p>
+<h3><a id="schema-sharing-via-idl" class="heading_anchor" href="#schema-sharing-via-idl" aria-hidden="true">#</a>Schema sharing via IDL</h3>
+<p>If both JS and Rust need to understand the same model schemas, an <strong>Interface
+Definition Language</strong> eliminates drift:</p>
+<pre><code>// metamodel.idl (hypothetical)
+struct TypeSpec {
+    font: String @foreign_key(target: &quot;fonts&quot;, constraint: SET_NULL)
+    size: Number @range(min: 6, max: 144, default: 12)
+    axes: OrderedMap&lt;String, Number&gt; @ordering(ALPHA)
+}
+</code></pre>
+<p>From this, generate:</p>
+<ul>
+<li>JavaScript <code>createClass</code> calls (or metamodel consumes the IDL directly)</li>
+<li>Rust structs with serde derives</li>
+<li>TypeScript type definitions for consumers</li>
+<li>Documentation and validation schemas</li>
+</ul>
+<p>Standard IDLs (protobuf, JSON Schema) lack metamodel-specific concepts (foreign
+keys, coherence functions, topological ordering). A custom IDL would be small
+(~500 lines for the parser) with generators for each target language.</p>
+<p><strong>This only matters if Architecture B or C is pursued.</strong> For Architecture A
+(all TypeScript), the existing typed metamodel IS the schema definition.</p>
+<h3><a id="what-rust-would-not-need" class="heading_anchor" href="#what-rust-would-not-need" aria-hidden="true">#</a>What Rust would NOT need</h3>
+<ul>
+<li><strong><code>_PotentialWriteProxy</code></strong> — Rust’s ownership model gives you immutability
+for free. The entire 463-line proxy system exists because JavaScript has no
+ownership semantics.</li>
+<li><strong><code>Object.freeze</code> / <code>Object.defineProperty</code></strong> — Rust’s <code>&amp;T</code> vs <code>&amp;mut T</code>
+enforces this at compile time.</li>
+<li><strong><code>FreezableMap</code> / <code>FreezableSet</code></strong> — Rust’s <code>im</code> crate provides persistent
+data structures, or <code>Arc&lt;HashMap&gt;</code> with clone-on-write.</li>
+</ul>
+<p>A Rust metamodel would be <strong>simpler</strong> than the JavaScript version because Rust’s
+type system handles concerns that JavaScript must enforce at runtime.</p>
+<h2><a id="staged-roadmap-if-rust-is-pursued" class="heading_anchor" href="#staged-roadmap-if-rust-is-pursued" aria-hidden="true">#</a>Staged roadmap (if Rust is pursued)</h2>
+<h3><a id="stage-a--readwrite-metamodel-state-from-rust" class="heading_anchor" href="#stage-a--readwrite-metamodel-state-from-rust" aria-hidden="true">#</a>Stage A — Read/write metamodel state from Rust</h3>
+<ul>
+<li>Extract schemas from JavaScript <code>createClass</code> metadata into a static format</li>
+<li>Generate Rust structs with serde derives</li>
+<li>Rust reads/writes the JSON that <code>serialize()</code> / <code>deserializeGen()</code> produce</li>
+<li><strong>Use case</strong>: Batch processing, font analysis, server-side rendering</li>
+<li><strong>Effort</strong>: Medium (2-4 weeks)</li>
+<li><strong>Risk</strong>: Low — no changes to the JavaScript side</li>
+</ul>
+<h3><a id="stage-b--compositor-in-rustwasm" class="heading_anchor" href="#stage-b--compositor-in-rustwasm" aria-hidden="true">#</a>Stage B — Compositor in Rust/WASM</h3>
+<ul>
+<li>Build the compositor in Rust</li>
+<li>Define a flat input format (changed properties, keyframe data, playback time)</li>
+<li>JS metamodel extracts delta from <code>StateComparison</code>, sends to WASM compositor</li>
+<li>WASM returns resolved values for rendering</li>
+<li><strong>Use case</strong>: Animation performance optimization</li>
+<li><strong>Effort</strong>: Large (2-3 months)</li>
+<li><strong>Risk</strong>: Medium — boundary crossing cost, two-language maintenance</li>
+</ul>
+<h3><a id="stage-c--full-wasm-stack" class="heading_anchor" href="#stage-c--full-wasm-stack" aria-hidden="true">#</a>Stage C — Full WASM stack</h3>
+<ul>
+<li>Port metamodel to Rust (proc macro for schema definition)</li>
+<li>Compositor and metamodel share Rust memory directly</li>
+<li>JS only receives final rendered values</li>
+<li><strong>Use case</strong>: Maximum performance, minimal JS overhead</li>
+<li><strong>Effort</strong>: Very large (6+ months)</li>
+<li><strong>Risk</strong>: High — complete rewrite of the state layer</li>
+</ul>
+<p>Each stage is independently valuable and informs whether the next stage is
+justified.</p>
+<h2><a id="overall-assessment" class="heading_anchor" href="#overall-assessment" aria-hidden="true">#</a>Overall assessment</h2>
+<h3><a id="what-exists-in-the-landscape" class="heading_anchor" href="#what-exists-in-the-landscape" aria-hidden="true">#</a>What exists in the landscape</h3>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th style="text-align:center">Hierarchical</th>
+<th style="text-align:center">Per-property control</th>
+<th style="text-align:center">Routing</th>
+<th style="text-align:center">Typed</th>
+<th style="text-align:center">Dependency graph</th>
+<th style="text-align:center">Interpolation</th>
+<th style="text-align:center">Sub-scopes</th>
+<th style="text-align:center">Immutable snapshots</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CSS Cascade</strong></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">partial</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td><strong>Design Tokens / Style Dictionary</strong></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td><strong>React Context / Vue Provide</strong></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">partial</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td><strong>Houdini <code>@property</code></strong></td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td><strong>Game engine property systems</strong></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">partial</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td><strong>Compositor (proposed)</strong></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+</tbody>
+</table>
+<p>CSS comes closest conceptually — hierarchical inheritance, per-property control
+(<code>inherit</code>, <code>initial</code>, <code>unset</code>), typed properties (<code>@property</code>), and
+animation interpolation. But CSS lacks dependency-ordered computation
+(<code>calc()</code> is expression-level, not graph-level), has no concept of named
+routing (purpose → slot), and is locked to the DOM with CSS-specific value
+types.</p>
+<p>Design token systems (Figma, Style Dictionary) share the “properties cascading
+through a hierarchy” concept but are much simpler — flat reference
+substitution, no topological resolution, no animation, no computed properties.</p>
+<p>Game engines (Unity DOTS, Unreal) have sophisticated property systems with
+interpolation and dependency tracking, but they’re entity/component
+architectures, not scope-based inheritance trees.</p>
+<p><strong>Nobody combines all eight capabilities.</strong> The compositor is genuinely novel
+in unifying hierarchical scope inheritance, per-property routing, typed
+definitions, dependency-resolved computation, and time-based interpolation into
+a single coherent system.</p>
+<h3><a id="why-this-combination-matters-for-typography" class="heading_anchor" href="#why-this-combination-matters-for-typography" aria-hidden="true">#</a>Why this combination matters for typography</h3>
+<p>Typography is inherently <strong>parametric and hierarchical</strong>:</p>
+<ul>
+<li>A document has a type specification</li>
+<li>Sections inherit and override (heading vs body vs caption)</li>
+<li>Actors on a stage inherit context (time, position) but carry their own
+essence (font, axis range)</li>
+<li>Variable font axes are interdependent (weight affects optical size
+recommendations)</li>
+<li>Animation interpolates across all these simultaneously</li>
+<li>The same property can mean different things at different levels (font size
+in points at the document level becomes a scaling factor at the glyph level)</li>
+</ul>
+<p>No existing system was designed for this domain. CSS approximates it but fights
+against it — CSS inheritance is all-or-nothing per property, has no concept of
+“this actor carries its own font but inherits time from the stage,” and can’t
+express “interpolate between these two complete type specifications at t=0.6.”</p>
+<p>The compositor is a <strong>domain-specific scope engine for parametric typography</strong>
+that happens to be built on general-purpose primitives (dependency graphs,
+topological sort, immutable state).</p>
+<h3><a id="novelty-and-risk" class="heading_anchor" href="#novelty-and-risk" aria-hidden="true">#</a>Novelty and risk</h3>
+<p><strong>What’s genuinely new:</strong></p>
+<ul>
+<li>Purpose/slot routing for property inheritance (not in any system we found)</li>
+<li>Animation interpolation as regular dependency graph nodes (not separated into
+a different subsystem)</li>
+<li>Eigen/slot classification per property (stronger than CSS’s
+<code>inherit</code>/<code>initial</code>)</li>
+<li>CompositorConfig as metamodel data (the scope engine’s configuration is
+defined in the same typed system it consumes)</li>
+</ul>
+<p><strong>What’s proven (from the existing codebase):</strong></p>
+<ul>
+<li>Hierarchical scope resolution (TypeSpecnion, working in production)</li>
+<li>Topological dependency resolution (SyntheticValue + topologicalSortKahn,
+working in production)</li>
+<li>Time-based interpolation (Animanion, working in production)</li>
+<li>Immutable state + change detection (metamodel, working in production)</li>
+</ul>
+<p><strong>Risks:</strong></p>
+<ul>
+<li><strong>Complexity budget</strong> — Eight combined capabilities means eight things to
+understand, debug, and maintain. The API surface must be carefully designed
+to hide internal complexity. A user defining a property should not need to
+understand topological sort.</li>
+<li><strong>Performance at scale</strong> — Topological sort per scope per frame during
+animation could be expensive with many properties and deep hierarchies.
+Caching resolved scopes and invalidating incrementally is essential.</li>
+<li><strong>Over-generalization</strong> — The system is designed for parametric typography.
+If it tries to be a general-purpose scope engine for all domains, it risks
+becoming too abstract. The domain-specific focus (typography, design tools)
+should remain primary.</li>
+<li><strong>Learning curve</strong> — Eigen, slot, purpose, sub-scope, SyntheticValue,
+CompositorConfig — this is a lot of vocabulary. Good defaults (everything
+inherits, no slots, no purposes) and progressive disclosure (simple cases
+stay simple) are critical.</li>
+</ul>
+<h3><a id="what-success-looks-like" class="heading_anchor" href="#what-success-looks-like" aria-hidden="true">#</a>What success looks like</h3>
+<p>The compositor succeeds when:</p>
+<ol>
+<li><strong>TypeSpecnion and Animanion are deleted</strong> — replaced by a single unified
+system that handles both static and animated property resolution.</li>
+<li><strong>ProcessedPropertiesSystemRecord is deleted</strong> — replaced by declarative,
+typed property definitions in CompositorConfig.</li>
+<li><strong>The broom wagon generators are deleted</strong> — replaced by declarative
+model-to-property mappings.</li>
+<li><strong>New layouts are easier to build</strong> — a developer defines a
+CompositorConfig, declares which properties are eigen/slot, and the
+compositor handles inheritance, routing, and animation automatically.</li>
+<li><strong>Property types catch bugs at compile time</strong> — a typo in a property name
+or a wrong-typed value is a TypeScript error, not a silent runtime failure.</li>
+<li><strong>Animation and static properties use the same API</strong> — no separate code
+paths for “this property is animated” vs “this property is inherited.”</li>
+</ol>
+<h2><a id="future-exploration-breaking-the-discretecontinuous-boundary" class="heading_anchor" href="#future-exploration-breaking-the-discretecontinuous-boundary" aria-hidden="true">#</a>Future exploration: breaking the discrete/continuous boundary</h2>
+<h3><a id="the-observation" class="heading_anchor" href="#the-observation" aria-hidden="true">#</a>The observation</h3>
+<p>The codebase has two systems that view the same concept differently:</p>
+<ul>
+<li><strong><code>type-tools-grid</code></strong> — A table (or cube, or higher-dimensional structure)
+of discrete value combinations. E.g., weight [400, 500, 600, 700] × width
+[75, 100, 125] = 12 cells, each showing the font at an exact design space
+point.</li>
+<li><strong>Animanion</strong> — A timeline where properties interpolate continuously between
+keyMoments. At <code>t=0.6</code>, you see the interpolated state.</li>
+</ul>
+<p>These are treated as separate systems. But they’re the same thing at different
+resolutions:</p>
+<pre><code>Discrete:     [400]───[500]───[600]───[700]
+               cell    cell    cell    cell
+
+Continuous:   [400]═══════════════════[700]
+               t=0.0                  t=1.0
+
+Hybrid:       [400]──▶──[500]──▶──[600]──▶──[700]
+               cell  anim  cell  anim  cell  anim  cell
+</code></pre>
+<h3><a id="the-unifying-concept-parameterized-paths-through-value-spaces" class="heading_anchor" href="#the-unifying-concept-parameterized-paths-through-value-spaces" aria-hidden="true">#</a>The unifying concept: parameterized paths through value spaces</h3>
+<p>A grid axis is a <strong>discrete sampling</strong> of a continuous range. An animation is a
+<strong>continuous traversal</strong> of a value range. Both are parameterized paths — the
+difference is resolution.</p>
+<p>Multi-dimensional grids are already multi-dimensional paths:</p>
+<pre><code>wght: [400, 500, 600, 700]     ← 4 steps
+wdth: [75, 100, 125]           ← 3 steps
+opsz: [12, 24, 48]             ← 3 steps
+
+= 36 cells in a 3D grid (cube)
+</code></pre>
+<p>As a continuous path, this becomes a trajectory through 3D space — a diagonal,
+a spiral, an L-shape, or any arbitrary curve.</p>
+<h3><a id="the-abstraction-valuespace" class="heading_anchor" href="#the-abstraction-valuespace" aria-hidden="true">#</a>The abstraction: ValueSpace</h3>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">interface</span> <span class="token class-name">Dimension</span> <span class="token punctuation">{</span>
+    name<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>                           <span class="token comment">// "wght"</span>
+    range<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token builtin">number</span><span class="token punctuation">,</span> <span class="token builtin">number</span><span class="token punctuation">]</span><span class="token punctuation">;</span>                <span class="token comment">// [400, 700]</span>
+    samples<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">|</span> SamplingStrategy<span class="token punctuation">;</span>  <span class="token comment">// discrete points or auto</span>
+    easing<span class="token operator">?</span><span class="token operator">:</span> EasingFunction<span class="token punctuation">;</span>                <span class="token comment">// interpolation between samples</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">interface</span> <span class="token class-name">ValueSpace</span> <span class="token punctuation">{</span>
+    dimensions<span class="token operator">:</span> Dimension<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Discrete: enumerate all sample combinations</span>
+    <span class="token function">cells</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> Iterator<span class="token operator">&lt;</span>Record<span class="token operator">&lt;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">number</span><span class="token operator">>></span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Continuous: resolve at a point in normalized space</span>
+    <span class="token function">at</span><span class="token punctuation">(</span>coordinates<span class="token operator">:</span> Record<span class="token operator">&lt;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">number</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token operator">:</span> Record<span class="token operator">&lt;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">number</span><span class="token operator">></span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Hybrid: resolve at t along a path through the space</span>
+    <span class="token function">atPath</span><span class="token punctuation">(</span>path<span class="token operator">:</span> SpacePath<span class="token punctuation">,</span> t<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">)</span><span class="token operator">:</span> Record<span class="token operator">&lt;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">number</span><span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>A grid is <code>cells()</code>. An animation is <code>atPath(path, t)</code>. A cell-to-cell
+animation is <code>atPath(cellSequencePath, t)</code> where the path visits each cell.</p>
+<h3><a id="breaking-the-boundary-in-both-directions" class="heading_anchor" href="#breaking-the-boundary-in-both-directions" aria-hidden="true">#</a>Breaking the boundary in both directions</h3>
+<p><strong>Discrete → Continuous</strong>: The mouse position within the grid becomes a
+continuous coordinate in the value space. The grid cells are discrete
+landmarks, but the mouse reveals everything in between:</p>
+<pre><code>Grid cell [wght=500, wdth=100] at pixel (200, 150)
+Mouse hovers at (230, 160)
+→ 60% toward [wght=600] and 20% toward [wdth=125]
+→ Interpolated: wght=560, wdth=105
+</code></pre>
+<p>The cell under the cursor shows the interpolated state at the exact mouse
+position. The grid becomes a <strong>live design space explorer</strong> — not a table of
+static snapshots, but a window into a continuous space where discrete cells are
+reference points.</p>
+<p><strong>Continuous → Discrete</strong>: An animation is sampled at specific points:</p>
+<ul>
+<li><strong>Video export</strong> at 30fps — each frame is a discrete sample of continuous
+state. The <code>ValueSpace</code> produces frame-accurate snapshots.</li>
+<li><strong>Slide deck</strong> — an animation becomes a set of slides. Each slide is a
+discrete sample. The transition between slides IS the original animation.</li>
+<li><strong>Print proof sheets</strong> — sample the design space at typographically
+meaningful points.</li>
+</ul>
+<h3><a id="connection-to-the-compositor" class="heading_anchor" href="#connection-to-the-compositor" aria-hidden="true">#</a>Connection to the compositor</h3>
+<p>The <code>ValueSpace</code> feeds into the compositor as a <strong>property source</strong>:</p>
+<ul>
+<li><strong>Grid layout</strong>: each cell is a scope with eigen-properties from <code>cells()</code></li>
+<li><strong>Animation</strong>: <code>t</code>-resolved values from <code>atPath()</code> become scope properties</li>
+<li><strong>Hybrid</strong>: cells are scopes, transitions produce intermediate scopes via
+interpolation</li>
+</ul>
+<p>The compositor doesn’t need to know whether a value came from a discrete cell
+or continuous interpolation — it’s just a value in the scope. <code>ValueSpace</code>
+handles the distinction upstream.</p>
+<h3><a id="use-cases" class="heading_anchor" href="#use-cases" aria-hidden="true">#</a>Use cases</h3>
+<ol>
+<li><strong>Design space proofing</strong> — Grid overview + animated transitions between
+cells. Explore the full design space visually.</li>
+<li><strong>Video/frame export</strong> — Animation sampled at exact frame boundaries.
+Frame-accurate output from continuous state.</li>
+<li><strong>Presentation mode</strong> — Animation as slides with animated transitions.
+Same content, two viewing modes.</li>
+<li><strong>Design space analysis</strong> — Color-code cells by metrics (readability,
+contrast). Continuous version shows smooth gradients. Same data, different
+resolution.</li>
+<li><strong>Higher-dimensional exploration</strong> — 4D+ design spaces (weight × width ×
+optical size × slant) navigated via 2D grid slices with animated
+transitions along the other dimensions.</li>
+</ol>
+<h3><a id="synchronizing-continuous-and-frame-based-media" class="heading_anchor" href="#synchronizing-continuous-and-frame-based-media" aria-hidden="true">#</a>Synchronizing continuous and frame-based media</h3>
+<p>A complex animation may include actors with fixed frame rates — most notably
+video. The typography animation interpolates continuously, but the video must
+snap to discrete frame boundaries. The <code>ValueSpace</code> handles this as a
+synchronization problem:</p>
+<pre><code>Video actor:
+  dimension: &quot;frame&quot;
+  range: [0, 300]                    ← 300 frames (10s at 30fps)
+  samples: fixed(30)                 ← one sample per frame
+
+Typography animation:
+  dimension: &quot;t&quot;
+  range: [0.0, 1.0]
+  samples: continuous
+
+Synchronization:
+  keyMoment at t=0.0  ←→  frame 0
+  keyMoment at t=0.5  ←→  frame 150
+  keyMoment at t=1.0  ←→  frame 300
+</code></pre>
+<p>KeyMoments bind to keyFrame positions, creating a <strong>synchronization contract</strong>
+between the continuous typography world and the frame-based video world. The
+compositor resolves the video actor’s <code>t</code> to the nearest frame boundary —
+snapping to discrete frames — while typographic properties interpolate
+continuously around it.</p>
+<p>This works in both directions:</p>
+<ul>
+<li><strong>Playback</strong>: the animation drives <code>t</code>, the video actor snaps to the
+corresponding frame, typography interpolates smoothly.</li>
+<li><strong>Export</strong>: the video’s frame rate becomes the master clock. Each frame is a
+discrete sample of the full compositor state — typography snapped to exact
+frame boundaries, producing frame-accurate output.</li>
+<li><strong>Editing</strong>: a keyMoment can be placed at a specific video frame, ensuring
+that a typographic transition aligns with a visual event in the video.</li>
+</ul>
+<p>The binding between keyMoments and keyFrames is itself data — expressible as a
+<code>CompositorConfig</code> property on the video actor, defining the frame rate and the
+synchronization points. The metamodel manages it; the compositor resolves it.</p>
+<hr>
+<p>This is post-compositor work — the compositor’s scope system must exist first,
+then <code>ValueSpace</code> layers on top as a property source that unifies discrete and
+continuous value resolution.</p>
+<h2><a id="the-key-principle" class="heading_anchor" href="#the-key-principle" aria-hidden="true">#</a>The key principle</h2>
+<p><strong>The metamodel’s job is to be correct. The compositor’s job is to be fast.</strong></p>
+<p>TypeScript excels at correct — the typing pass we just completed proves this.
+Rust excels at fast — when there’s measurable computation to optimize.</p>
+<p>Build for correctness first. Optimize for speed when measurement demands it.</p>
+<p><strong>The compositor’s job is also to be simple</strong> — to make the complex reality of
+parametric typographic scope resolution feel natural and inevitable to the
+developer using it. The eight capabilities should feel like one coherent idea,
+not eight bolted-together features.</p>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>

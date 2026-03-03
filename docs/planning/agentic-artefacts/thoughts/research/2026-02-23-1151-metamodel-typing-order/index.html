@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel - Assessment Pre Strict Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel - Path to a Standalone Library</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel - Assessment Post Strict Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor - Concepts and Roadmap</a></li></ul></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="metamodel-module--typescript-conversion-plan" class="heading_anchor" href="#metamodel-module--typescript-conversion-plan" aria-hidden="true">#</a>Metamodel Module — TypeScript Conversion Plan</h1>
+<h2><a id="overall-status" class="heading_anchor" href="#overall-status" aria-hidden="true">#</a>Overall Status</h2>
+<p>The module is <strong>partially converted</strong>. It compiles cleanly with <code>strict: true</code> and
+<code>noUncheckedIndexedAccess</code>, but a significant portion of the code is <strong>untyped
+JavaScript that happens to live in <code>.ts</code> files</strong>. The compiler infers what it can,
+but many function signatures, class properties, and generator yields are implicitly
+<code>any</code> or loosely typed.</p>
+<h2><a id="tier-classification-by-typing-quality" class="heading_anchor" href="#tier-classification-by-typing-quality" aria-hidden="true">#</a>Tier Classification (by typing quality)</h2>
+<h3><a id="-tier-1--already-well-typed-minimal-work" class="heading_anchor" href="#-tier-1--already-well-typed-minimal-work" aria-hidden="true">#</a>🟢 Tier 1 — Already well-typed (minimal work)</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Lines</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>util.ts</code></td>
+<td>202</td>
+<td>Generics, explicit types, JSDoc. Only <code>isProxy()</code>, <code>unwrapPotentialWriteProxy()</code>, <code>objectEntriesAreEqual()</code>, and <code>collectDependencies()</code> have untyped params (~4 functions)</td>
+</tr>
+<tr>
+<td><code>path.ts</code></td>
+<td>226</td>
+<td>Likely well-typed (Path class with string operations)</td>
+</tr>
+<tr>
+<td><code>base-model.ts</code></td>
+<td>778</td>
+<td>Mostly typed — has explicit Generator types, <code>as unknown as</code> casts are intentional for constructor patterns. A few <code>any</code> for rest params</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="-tier-2--structurally-sound-needs-type-annotations" class="heading_anchor" href="#-tier-2--structurally-sound-needs-type-annotations" aria-hidden="true">#</a>🟡 Tier 2 — Structurally sound, needs type annotations</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Lines</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>coherence-function.ts</code></td>
+<td>36</td>
+<td>Small, just needs param/property types</td>
+</tr>
+<tr>
+<td><code>foreign-key.ts</code></td>
+<td>~50</td>
+<td>Small, likely similar</td>
+</tr>
+<tr>
+<td><code>links.ts</code></td>
+<td>~80</td>
+<td>Small</td>
+</tr>
+<tr>
+<td><code>serialization.ts</code></td>
+<td>~130</td>
+<td>Has Generator return types already, may need param types</td>
+</tr>
+<tr>
+<td><code>enum-model.ts</code></td>
+<td>171</td>
+<td><code>*metamorphoseGen()</code> untyped return</td>
+</tr>
+<tr>
+<td><code>simple-or-empty-model.ts</code></td>
+<td>215</td>
+<td><code>*metamorphoseGen()</code> untyped return</td>
+</tr>
+<tr>
+<td><code>number-model.ts</code></td>
+<td>329</td>
+<td><code>*metamorphoseGen()</code> untyped return</td>
+</tr>
+<tr>
+<td><code>generic-model.ts</code></td>
+<td>203</td>
+<td><code>*metamorphoseGen()</code> untyped return</td>
+</tr>
+<tr>
+<td><code>simple-models.ts</code></td>
+<td>140</td>
+<td>Factory pattern, needs type annotations</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="-tier-3--heavily-untyped-most-work-needed" class="heading_anchor" href="#-tier-3--heavily-untyped-most-work-needed" aria-hidden="true">#</a>🔴 Tier 3 — Heavily untyped (most work needed)</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Lines</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong><code>accessors.ts</code></strong></td>
+<td>118</td>
+<td><strong>Every single function is untyped</strong> — no param types, no return types, no generator yields. 10+ functions all <code>(state, path, ...)</code> with zero annotations</td>
+</tr>
+<tr>
+<td><strong><code>compare.ts</code></strong></td>
+<td>577</td>
+<td><code>CompareStatus</code> class: property declared via <code>Object.defineProperties</code> (invisible to TS). <code>rawCompare(oldState, newState)</code> and <code>compare(oldState, newState)</code> are fully untyped generators. <code>StateComparison</code> class uses <code>Object.defineProperty</code> for members, making them invisible to the type system</td>
+</tr>
+<tr>
+<td><strong><code>topological-sort.ts</code></strong></td>
+<td>133</td>
+<td><code>setPop(s)</code>, <code>_mapGetOrInit(map, name, init)</code>, <code>topologicalSortKahn(...)</code>, <code>getTopologicallySortedInitOrder(...)</code> — <strong>every function is fully untyped</strong></td>
+</tr>
+<tr>
+<td><strong><code>potential-write-proxy.ts</code></strong></td>
+<td>447</td>
+<td><code>_requiresPotentialWriteProxy(item)</code> untyped. <code>_PotentialWriteProxy</code> class: constructor params untyped, <code>this.immutable</code>, <code>this.parent</code>, <code>this.key</code>, <code>this.draft</code>, <code>this.proxy</code> — all assigned in constructor without declarations. Proxy handler methods <code>_handlerGet</code>/<code>_handlerSet</code> fully untyped</td>
+</tr>
+<tr>
+<td><strong><code>type-utils.ts</code></strong></td>
+<td>58</td>
+<td>All 4 exported functions fully untyped params and returns</td>
+</tr>
+<tr>
+<td><strong><code>dynamic-struct-model.ts</code></strong></td>
+<td>609</td>
+<td><code>*metamorphoseGen(dependencies = {})</code> untyped, <code>*entries()</code>, <code>*allEntries()</code> untyped generators</td>
+</tr>
+<tr>
+<td><strong><code>struct-model.ts</code></strong></td>
+<td>1377</td>
+<td>Largest file. Needs investigation but likely has similar patterns</td>
+</tr>
+<tr>
+<td><strong><code>list-model.ts</code></strong></td>
+<td>594</td>
+<td><code>*metamorphoseGen(dependencies = {})</code> untyped</td>
+</tr>
+<tr>
+<td><strong><code>ordered-map-model.ts</code></strong></td>
+<td>876</td>
+<td><code>*metamorphoseGen(dependencies = {})</code> untyped</td>
+</tr>
+</tbody>
+</table>
+<h2><a id="common-patterns-requiring-attention" class="heading_anchor" href="#common-patterns-requiring-attention" aria-hidden="true">#</a>Common Patterns Requiring Attention</h2>
+<ol>
+<li><strong>Untyped generator functions</strong> — <code>*metamorphoseGen()</code>, <code>*entries()</code>, <code>*allEntries()</code>
+appear in nearly every model file without <code>Generator&lt;Y, R, N&gt;</code> annotations</li>
+<li><strong><code>Object.defineProperty</code> / <code>Object.defineProperties</code></strong> — used in <code>compare.ts</code>
+(<code>StateComparison</code>) and <code>potential-write-proxy.ts</code> to set class members, making
+them invisible to TypeScript’s type system. These need <code>declare</code> property declarations</li>
+<li><strong>Untyped function parameters</strong> — concentrated in <code>accessors.ts</code>,
+<code>topological-sort.ts</code>, <code>compare.ts</code>, <code>type-utils.ts</code>, and <code>util.ts</code> (tail end)</li>
+<li><strong>Missing interfaces</strong> — no shared interface for “something with
+<code>.entries()</code>/<code>.get()</code>/<code>.keys()</code>” (used across accessors, compare, topological-sort)</li>
+</ol>
+<h2><a id="recommended-step-by-step-plan" class="heading_anchor" href="#recommended-step-by-step-plan" aria-hidden="true">#</a>Recommended Step-by-Step Plan</h2>
+<h3><a id="phase-1--foundation-types--small-files-low-risk-high-leverage" class="heading_anchor" href="#phase-1--foundation-types--small-files-low-risk-high-leverage" aria-hidden="true">#</a>Phase 1 — Foundation types &amp; small files (low risk, high leverage)</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>File</th>
+<th>Effort</th>
+<th>Why first</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>util.ts</code></td>
+<td>Small</td>
+<td>Type the 4 remaining untyped functions. Everything else depends on these symbols</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>coherence-function.ts</code></td>
+<td>Small</td>
+<td>Tiny file, used by struct models</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>foreign-key.ts</code></td>
+<td>Small</td>
+<td>Tiny file, used by struct/dynamic models</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>links.ts</code></td>
+<td>Small</td>
+<td>Tiny file</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>topological-sort.ts</code></td>
+<td>Medium</td>
+<td>All functions untyped, but self-contained. Generic <code>Set</code>/<code>Map</code> types make this straightforward</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="phase-2--leaf-model-types-independent-no-downstream-risk" class="heading_anchor" href="#phase-2--leaf-model-types-independent-no-downstream-risk" aria-hidden="true">#</a>Phase 2 — Leaf model types (independent, no downstream risk)</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>File</th>
+<th>Effort</th>
+<th>Why now</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>6</td>
+<td><code>type-utils.ts</code></td>
+<td>Small</td>
+<td>4 functions, self-contained</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>enum-model.ts</code></td>
+<td>Small</td>
+<td>Type <code>metamorphoseGen</code> return</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>generic-model.ts</code></td>
+<td>Small</td>
+<td>Type <code>metamorphoseGen</code> return</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>simple-or-empty-model.ts</code></td>
+<td>Small</td>
+<td>Type <code>metamorphoseGen</code> return</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>number-model.ts</code></td>
+<td>Medium</td>
+<td>Type <code>metamorphoseGen</code> return</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>simple-models.ts</code></td>
+<td>Small</td>
+<td>Factory, depends on the above</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="phase-3--core-proxy--container-models-higher-complexity" class="heading_anchor" href="#phase-3--core-proxy--container-models-higher-complexity" aria-hidden="true">#</a>Phase 3 — Core proxy &amp; container models (higher complexity)</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>File</th>
+<th>Effort</th>
+<th>Why here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>12</td>
+<td><code>potential-write-proxy.ts</code></td>
+<td><strong>Hard</strong></td>
+<td>Class properties via constructor assignment, Proxy handler typing, the <code>createMethodProxy</code> handler object. Architecturally sensitive</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>struct-model.ts</code></td>
+<td><strong>Hard</strong></td>
+<td>Largest file (1377 lines), central to everything</td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>list-model.ts</code></td>
+<td>Medium</td>
+<td>Container model pattern</td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>ordered-map-model.ts</code></td>
+<td>Medium-Hard</td>
+<td>Container model, largest after struct</td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>dynamic-struct-model.ts</code></td>
+<td>Medium</td>
+<td>Wrapper/polymorphic dispatch</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="phase-4--consumer-modules-depend-on-everything-above" class="heading_anchor" href="#phase-4--consumer-modules-depend-on-everything-above" aria-hidden="true">#</a>Phase 4 — Consumer modules (depend on everything above)</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>File</th>
+<th>Effort</th>
+<th>Why last</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>17</td>
+<td><code>accessors.ts</code></td>
+<td>Medium</td>
+<td>Every function untyped, but once models are typed, annotations flow naturally</td>
+</tr>
+<tr>
+<td>18</td>
+<td><code>compare.ts</code></td>
+<td><strong>Hard</strong></td>
+<td><code>Object.defineProperty</code> pattern for class members, complex generator yields with tuple types <code>[CompareStatus, data, ...pathParts]</code></td>
+</tr>
+</tbody>
+</table>
+<h3><a id="phase-5--barrel--validation" class="heading_anchor" href="#phase-5--barrel--validation" aria-hidden="true">#</a>Phase 5 — Barrel &amp; validation</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>File</th>
+<th>Effort</th>
+<th>Why last</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>19</td>
+<td><code>metamodel.ts</code></td>
+<td>Small</td>
+<td>Verify re-exports carry correct types</td>
+</tr>
+<tr>
+<td>20</td>
+<td>Full <code>tsc --noEmit</code> pass</td>
+<td>—</td>
+<td>Validate everything still compiles</td>
+</tr>
+</tbody>
+</table>
+<h2><a id="notes" class="heading_anchor" href="#notes" aria-hidden="true">#</a>Notes</h2>
+<ul>
+<li>The module compiles with <strong>zero errors</strong> today under <code>strict: true</code>. The goal is
+not to fix breakage but to make the implicit types <strong>explicit</strong>, improving
+readability, maintainability, and IDE support.</li>
+<li>Each step should be followed by a <code>tsc --noEmit</code> check to ensure no regressions.</li>
+<li>The <code>*metamorphoseGen()</code> pattern is the single most repeated untyped signature
+across the codebase — defining a shared return type early (perhaps in
+<code>base-model.ts</code>) would pay off across all model files.</li>
+</ul>
+<h1><a id="codebase-research-results-typerooflibjsmetamodel-typing-order" class="heading_anchor" href="#codebase-research-results-typerooflibjsmetamodel-typing-order" aria-hidden="true">#</a>Codebase Research Results: <code>TypeRoof/lib/js/metamodel</code> Typing Order</h1>
+<p>Based on a comprehensive analysis of import dependencies within the <code>TypeRoof/lib/js/metamodel</code> submodule, the following topologically sorted order is recommended for converting files to strictly typed TypeScript. This order ensures that dependencies are addressed from the least dependent to the most dependent.</p>
+<h2><a id="recommended-typing-order" class="heading_anchor" href="#recommended-typing-order" aria-hidden="true">#</a>Recommended Typing Order:</h2>
+<ul>
+<li><code>TypeRoof/lib/js/metamodel/base-model.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/util.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/topological-sort.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/path.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/serialization.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/potential-write-proxy.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/foreign-key.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/coherence-function.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/links.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/simple-or-empty-model.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/generic-model.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/enum-model.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/number-model.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/simple-models.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/type-utils.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/accessors.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/list-model.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/ordered-map-model.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/struct-model.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/dynamic-struct-model.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/compare.ts</code></li>
+<li><code>TypeRoof/lib/js/metamodel/metamodel.ts</code></li>
+</ul>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>

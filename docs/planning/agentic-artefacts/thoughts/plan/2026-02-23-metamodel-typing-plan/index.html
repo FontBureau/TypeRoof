@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel - Assessment Pre Strict Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel - Path to a Standalone Library</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel - Assessment Post Strict Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor - Concepts and Roadmap</a></li></ul></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="metamodel-module--typescript-strict-typing-plan" class="heading_anchor" href="#metamodel-module--typescript-strict-typing-plan" aria-hidden="true">#</a>Metamodel Module — TypeScript Strict Typing Plan</h1>
+<p><strong>Date:</strong> 2026-02-23
+<strong>Source research:</strong></p>
+<ul>
+<li><code>thoughts/research/2026-02-23-1151-metamodel-typing-order.md</code> — dependency analysis, tier classification, error counts</li>
+<li><code>thoughts/research/2026-02-23-metamodel-consumer-api-research.md</code> — how shell.mjs and components consume the metamodel API</li>
+</ul>
+<h2><a id="goal" class="heading_anchor" href="#goal" aria-hidden="true">#</a>Goal</h2>
+<p>Make all implicit types <strong>explicit</strong> across 22 files in <code>TypeRoof/lib/js/metamodel/</code>.
+Currently compiles with <code>strict: true</code> but 443 errors exist. The aim is to reach <strong>zero errors</strong>
+while improving readability, maintainability, and IDE support.</p>
+<h2><a id="current-state-2026-02-23" class="heading_anchor" href="#current-state-2026-02-23" aria-hidden="true">#</a>Current State (2026-02-23)</h2>
+<ul>
+<li><strong>443 type errors</strong> across 8 files</li>
+<li><strong>14 files</strong> already pass with zero errors (but some have implicit <code>any</code> that the compiler infers)</li>
+<li>Error distribution:
+<ul>
+<li>list-model.ts: 106 errors</li>
+<li>number-model.ts: 84 errors</li>
+<li>dynamic-struct-model.ts: 81 errors</li>
+<li>generic-model.ts: 50 errors</li>
+<li>compare.ts: 44 errors</li>
+<li>accessors.ts: 38 errors</li>
+<li>enum-model.ts: 25 errors</li>
+<li>links.ts: 15 errors</li>
+</ul>
+</li>
+</ul>
+<h2><a id="dependency-graph-local-imports-only" class="heading_anchor" href="#dependency-graph-local-imports-only" aria-hidden="true">#</a>Dependency Graph (local imports only)</h2>
+<pre><code>base-model.ts        → (no local deps — ROOT)
+topological-sort.ts  → (no local deps — ROOT)
+util.ts              → (no local deps — ROOT)
+serialization.ts     → base-model
+path.ts              → util
+coherence-function.ts→ base-model
+foreign-key.ts       → base-model, util
+links.ts             → base-model, util
+potential-write-proxy→ base-model, util
+simple-or-empty-model→ base-model, serialization, util
+generic-model.ts     → base-model, serialization, util
+enum-model.ts        → base-model, serialization
+number-model.ts      → base-model, serialization, util
+type-utils.ts        → simple-or-empty-model
+simple-models.ts     → generic-model, number-model, path, simple-or-empty-model
+accessors.ts         → base-model, path, util
+list-model.ts        → base-model, foreign-key, potential-write-proxy, serialization, util
+ordered-map-model.ts → base-model, potential-write-proxy, serialization, util
+struct-model.ts      → base-model, coherence-function, foreign-key, generic-model, links,
+                       potential-write-proxy, serialization, topological-sort, util
+dynamic-struct-model → base-model, foreign-key, potential-write-proxy, serialization,
+                       struct-model, util
+compare.ts           → accessors, base-model, dynamic-struct-model, foreign-key, list-model,
+                       ordered-map-model, path, struct-model
+metamodel.ts         → (barrel — re-exports everything)
+</code></pre>
+<hr>
+<h2><a id="key-typing-insights-from-consumer-api-research" class="heading_anchor" href="#key-typing-insights-from-consumer-api-research" aria-hidden="true">#</a>Key Typing Insights from Consumer API Research</h2>
+<p>These insights were derived from studying how <code>shell.mjs</code> and <code>components/</code> consume the
+metamodel. They inform the type definitions in each phase.</p>
+<h3><a id="generator-protocol--the-core-abstraction" class="heading_anchor" href="#generator-protocol--the-core-abstraction" aria-hidden="true">#</a>Generator Protocol — The Core Abstraction</h3>
+<p>The metamorphose generator protocol is the most important type to get right:</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token comment">// Yield: ResourceRequirement (requests for external resources, e.g. fonts)</span>
+<span class="token comment">// Return: the concrete model type (frozen immutable or OLD_STATE reuse)</span>
+<span class="token comment">// Next: unknown (resolved resource sent back via .next())</span>
+<span class="token keyword">type</span> <span class="token class-name">MetamorphoseGen<span class="token operator">&lt;</span><span class="token constant">T</span><span class="token operator">></span></span> <span class="token operator">=</span> Generator<span class="token operator">&lt;</span>ResourceRequirement<span class="token punctuation">,</span> <span class="token constant">T</span><span class="token punctuation">,</span> <span class="token builtin">unknown</span><span class="token operator">></span><span class="token punctuation">;</span></code></pre>
+<p>Three driver functions consume this generator:</p>
+<ul>
+<li><code>driveResolverGenSync</code> — fails if any ResourceRequirement is yielded</li>
+<li><code>driveResolverGenSyncFailing</code> — convenience wrapper used by <code>instance.metamorphose(deps)</code></li>
+<li><code>driveResolveGenAsync</code> — shell uses this when fonts need async loading</li>
+</ul>
+<p>Generators propagate via <code>yield*</code> through the model tree — a single top-level
+driver handles all ResourceRequirements from any depth in the hierarchy.</p>
+<h3><a id="dependencies-map" class="heading_anchor" href="#dependencies-map" aria-hidden="true">#</a>Dependencies Map</h3>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">type</span> <span class="token class-name">DependenciesMap</span> <span class="token operator">=</span> Record<span class="token operator">&lt;</span><span class="token builtin">string</span><span class="token punctuation">,</span> _BaseModel<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token comment">// e.g. { availableFonts: AvailableFontsModel, installedFonts: InstalledFontsModel }</span></code></pre>
+<p>Constructed three ways in the codebase:</p>
+<ol>
+<li><strong>Sync:</strong> <code>draft.metamorphose({})</code> collects immutable deps</li>
+<li><strong>Async:</strong> Shell primes with fresh drafts, existing drafts, and read-only state</li>
+<li><strong>Components:</strong> Pass <code>existingModel.dependencies</code> to create siblings</li>
+</ol>
+<h3><a id="duck-typed-draft" class="heading_anchor" href="#duck-typed-draft" aria-hidden="true">#</a>Duck-Typed Draft</h3>
+<p>The shell passes a plain object as “like a draft” for initial state creation:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">const</span> likeADraft <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token function-variable function">metamorphoseGen</span><span class="token operator">:</span> <span class="token parameter">dependencies</span> <span class="token operator">=></span> ApplicationModel<span class="token punctuation">.</span><span class="token function">createPrimalStateGen</span><span class="token punctuation">(</span>dependencies<span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+<p>This suggests <code>_asyncMetamorphoseState</code>’s draft parameter should accept an interface
+with <code>metamorphoseGen</code>, not just the concrete draft class.</p>
+<h3><a id="container-api-surface-orderedmap-vs-list" class="heading_anchor" href="#container-api-surface-orderedmap-vs-list" aria-hidden="true">#</a>Container API Surface (OrderedMap vs List)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>OrderedMap</th>
+<th>List</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get(key)</code></td>
+<td>Returns entry model for key</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td><code>set(key, entry)</code></td>
+<td>Sets entry at key</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td><code>has(key)</code></td>
+<td>Boolean existence check</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td><code>keys()</code></td>
+<td>Iterator of keys</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td><code>delete(key)</code></td>
+<td>Remove by key</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td><code>push(...entries)</code></td>
+<td>Takes <code>[key, entry]</code> tuples</td>
+<td>Takes bare entries</td>
+</tr>
+<tr>
+<td><code>.constructor.Model</code></td>
+<td>Child model class (static)</td>
+<td>Child model class (static)</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="createclass-signatures-by-model-type" class="heading_anchor" href="#createclass-signatures-by-model-type" aria-hidden="true">#</a><code>createClass</code> Signatures by Model Type</h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th><code>createClass</code> Arguments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_AbstractStructModel</code></td>
+<td><code>(name, ...fieldDescriptors)</code> where each is <code>[fieldName, ModelClass|ForeignKey|ValueLink|InternalizedDependency]</code> or <code>CoherenceFunction</code></td>
+</tr>
+<tr>
+<td><code>_AbstractGenericModel</code></td>
+<td><code>(name)</code> — wraps arbitrary <code>.value</code></td>
+</tr>
+<tr>
+<td><code>_AbstractOrderedMapModel</code></td>
+<td><code>(name, ChildModel, options?)</code> where options has <code>ordering</code>, <code>validateKeyFn</code></td>
+</tr>
+<tr>
+<td><code>_AbstractListModel</code></td>
+<td><code>(name, ChildModel)</code></td>
+</tr>
+<tr>
+<td><code>_AbstractDynamicStructModel</code></td>
+<td><code>(name, BaseType, typeSelectorField, dependencyForwardList)</code></td>
+</tr>
+<tr>
+<td><code>_AbstractEnumModel</code></td>
+<td><code>(name, allowedValues[], defaultValue)</code></td>
+</tr>
+<tr>
+<td><code>_AbstractSimpleOrEmptyModel</code></td>
+<td><code>(WrappedModelClass)</code> — no name</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="statecomparison-shape-for-comparets" class="heading_anchor" href="#statecomparison-shape-for-comparets" aria-hidden="true">#</a>StateComparison Shape (for compare.ts)</h3>
+<p>Array-like with <code>.map()</code>. Each entry: <code>[status, oldPath?, newPath?]</code></p>
+<p>Properties: <code>.newState</code>, <code>.isInitial</code>, <code>.getChangedMap(dependencyMapping, toLocal)</code></p>
+<p>Static: <code>StateComparison.createInitial(state, deps)</code>, <code>StateComparison.COMPARE_STATUSES</code></p>
+<p>Status values: <code>EQUALS</code>, <code>CHANGED</code>, <code>NEW</code>, <code>MOVED</code>, <code>LIST_NEW_ORDER</code></p>
+<h3><a id="resourcerequirementdescription-convention" class="heading_anchor" href="#resourcerequirementdescription-convention" aria-hidden="true">#</a>ResourceRequirement.description Convention</h3>
+<pre class="language-typescript"><code class="language-typescript"><span class="token comment">// Convention (not enforced in types):</span>
+<span class="token comment">// [ForeignKey, targetContainer, currentKey, defaultConstraint]</span>
+description<span class="token operator">:</span> <span class="token builtin">unknown</span><span class="token punctuation">[</span><span class="token punctuation">]</span></code></pre>
+<p>Currently deliberately loosely typed. The shell destructures by convention.
+Tightening this type is possible but may be premature given the flexibility.</p>
+<hr>
+<h2><a id="phased-execution-plan" class="heading_anchor" href="#phased-execution-plan" aria-hidden="true">#</a>Phased Execution Plan</h2>
+<h3><a id="phase-1--roots--foundation-0-errors-but-harden-types" class="heading_anchor" href="#phase-1--roots--foundation-0-errors-but-harden-types" aria-hidden="true">#</a>Phase 1 — Roots &amp; Foundation (0 errors, but harden types)</h3>
+<p><em>Zero-dep files. Get these right first; everything else depends on them.</em></p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>File</th>
+<th>Errors</th>
+<th>Effort</th>
+<th>Key Work</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>base-model.ts</code></td>
+<td>0</td>
+<td>Medium</td>
+<td>Define shared <code>MetamorphoseGen&lt;T&gt;</code> type alias. Audit <code>any</code> in rest params. Define <code>DependenciesMap</code> type. Consider interface for duck-typed draft (<code>{ metamorphoseGen: fn }</code> pattern seen in shell.mjs). Ensure <code>ResourceRequirement</code>, <code>driveResolverGenSync</code>, <code>driveResolveGenAsync</code> signatures are correct</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>topological-sort.ts</code></td>
+<td>0</td>
+<td>Small</td>
+<td>All 4 functions fully untyped params/returns. Self-contained, generic <code>Set</code>/<code>Map</code> types</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>util.ts</code></td>
+<td>0</td>
+<td>Small</td>
+<td>Type <code>unwrapPotentialWriteProxy</code> (returns underlying model, stripping Proxy — used in main-model.mjs and shell.mjs). Type <code>objectEntriesAreEqual</code>, <code>collectDependencies</code> (takes dependency set, passed deps, old deps, static deps → returns <code>DependenciesMap</code>)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Gate: <code>npm run typecheck</code> — must remain at ≤443 errors (no regressions)</strong></p>
+<h3><a id="phase-2--small-dependencies-15-errors-fixed" class="heading_anchor" href="#phase-2--small-dependencies-15-errors-fixed" aria-hidden="true">#</a>Phase 2 — Small Dependencies (15 errors fixed)</h3>
+<p><em>Small files that depend only on Phase 1 roots.</em></p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>File</th>
+<th>Errors</th>
+<th>Effort</th>
+<th>Key Work</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4</td>
+<td><code>serialization.ts</code></td>
+<td>0</td>
+<td>Small</td>
+<td>Has Generator return types already, add param types</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>path.ts</code></td>
+<td>0</td>
+<td>Small</td>
+<td>Path class, string operations — used by <code>getEntry</code>/<code>getDraftEntry</code> for slash-separated path resolution</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>coherence-function.ts</code></td>
+<td>0</td>
+<td>Small</td>
+<td>Tiny file. <code>CoherenceFunction.create(fieldNames[], fn)</code> — <code>fn</code> receives object keyed by field names. Used as first arg in struct <code>createClass</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>foreign-key.ts</code></td>
+<td>0</td>
+<td>Small</td>
+<td>Type static symbols (<code>NOT_NULL</code>, <code>ALLOW_NULL</code>, <code>SET_DEFAULT_FIRST</code>, <code>SET_DEFAULT_LAST</code>, <code>SET_NULL</code>, <code>NO_ACTION</code>, <code>CUSTOM</code>, <code>NULL</code>). Type constraint generator: <code>function*(targetContainer, currentKeyValue)</code> yields <code>ResourceRequirement</code>, returns key. Consumer research shows two variants: NOT_NULL+SET_DEFAULT_FIRST (main-model) and ALLOW_NULL+SET_NULL/NO_ACTION (actors/models)</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>links.ts</code></td>
+<td><strong>15</strong></td>
+<td>Small</td>
+<td><code>InternalizedDependency(dependencyName, ModelClass)</code> and <code>ValueLink(foreignKeyFieldName)</code> — both used as struct field descriptors. <strong>Fixes 15 errors</strong></td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>potential-write-proxy.ts</code></td>
+<td>0</td>
+<td><strong>Hard</strong></td>
+<td>Constructor assigns without declarations, Proxy handler typing. <code>declare</code> property declarations needed. <code>_PotentialWriteProxy.isProxy()</code> should be typed as a type guard (used in shell.mjs assertion checks)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Gate: <code>npm run typecheck</code> — target ≤428 errors (links fixed)</strong></p>
+<h3><a id="phase-3--leaf-model-types-159-errors-fixed" class="heading_anchor" href="#phase-3--leaf-model-types-159-errors-fixed" aria-hidden="true">#</a>Phase 3 — Leaf Model Types (159 errors fixed)</h3>
+<p><em>Model files that only depend on base-model, serialization, util. Each has a <code>createClass</code>
+static method and a <code>*metamorphoseGen()</code> instance method.</em></p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>File</th>
+<th>Errors</th>
+<th>Effort</th>
+<th>Key Work</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10</td>
+<td><code>enum-model.ts</code></td>
+<td><strong>25</strong></td>
+<td>Small</td>
+<td><code>createClass(name, allowedValues[], defaultValue)</code>. <code>*metamorphoseGen()</code> return type. <code>.value</code> is one of the allowed enum strings (e.g. <code>'left'|'center'|'right'</code>)</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>generic-model.ts</code></td>
+<td><strong>50</strong></td>
+<td>Medium</td>
+<td><code>createClass(name)</code> — wraps arbitrary <code>.value</code> (any). <code>*metamorphoseGen()</code> return type. Consumer code: <code>InstalledFontModel.createPrimalDraft({}); fontState.value = font;</code></td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>simple-or-empty-model.ts</code></td>
+<td>0</td>
+<td>Small</td>
+<td><code>createClass(WrappedModelClass)</code> — no name param. <code>*metamorphoseGen()</code> return type</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>number-model.ts</code></td>
+<td><strong>84</strong></td>
+<td>Medium</td>
+<td><code>*metamorphoseGen()</code>, static properties (<code>toFixedDigits</code>, <code>validateFN</code>), <code>_value</code> vs <code>value</code>, <code>_PRIMARY_SERIALIZED_VALUE</code> symbol indexing. <code>.value</code> is <code>number</code></td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>type-utils.ts</code></td>
+<td>0</td>
+<td>Small</td>
+<td>4 exported functions, fully untyped — depends on simple-or-empty-model</td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>simple-models.ts</code></td>
+<td>0</td>
+<td>Small</td>
+<td>Factory pattern, depends on generic-model, number-model, path, simple-or-empty-model. Exports <code>StringModel</code>, <code>BooleanModel</code>, etc.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Gate: <code>npm run typecheck</code> — target ≤284 errors (enum+generic+number fixed)</strong></p>
+<h3><a id="phase-4--container-models-187-errors-fixed" class="heading_anchor" href="#phase-4--container-models-187-errors-fixed" aria-hidden="true">#</a>Phase 4 — Container Models (187 errors fixed)</h3>
+<p><em>Depend on base-model, foreign-key, potential-write-proxy, serialization, util.
+These implement the Map-like and List-like container APIs.</em></p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>File</th>
+<th>Errors</th>
+<th>Effort</th>
+<th>Key Work</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>16</td>
+<td><code>list-model.ts</code></td>
+<td><strong>106</strong></td>
+<td>Medium</td>
+<td><code>createClass(name, ChildModel)</code>. Container API: <code>push(...entries)</code> takes bare entries. <code>*metamorphoseGen()</code> iterates children via <code>yield*</code>. <code>.constructor.Model</code> is the child model class</td>
+</tr>
+<tr>
+<td>17</td>
+<td><code>ordered-map-model.ts</code></td>
+<td>0</td>
+<td>Medium</td>
+<td><code>createClass(name, ChildModel, options?)</code>. Map-like API: <code>get(key)</code>, <code>set(key, entry)</code>, <code>has(key)</code>, <code>keys()</code>, <code>delete(key)</code>, <code>push(...[key, entry])</code>. Options: <code>{ ordering, validateKeyFn }</code>. <code>.constructor.Model</code> is the child model class. Verify implicit types are sound</td>
+</tr>
+<tr>
+<td>18</td>
+<td><code>struct-model.ts</code></td>
+<td>0</td>
+<td><strong>Hard</strong></td>
+<td>Largest file (58KB). <code>createClass(name, ...fieldDescriptors)</code> where descriptors are <code>[name, ModelClass|ForeignKey|ValueLink|InternalizedDependency]</code> or <code>CoherenceFunction</code>. <code>.get(fieldName)</code> returns child model. <code>collectChildDependencies</code> filters deps for children. <code>collectDependencies</code> freezes deps onto instance. Thorough audit needed</td>
+</tr>
+<tr>
+<td>19</td>
+<td><code>dynamic-struct-model.ts</code></td>
+<td><strong>81</strong></td>
+<td>Medium</td>
+<td><code>createClass(name, BaseType, typeSelectorField, depForwardList)</code>. <code>*metamorphoseGen()</code>, <code>*entries()</code>, <code>*allEntries()</code>. <code>.WrappedType</code> is the concrete struct type (accessed via <code>unwrapPotentialWriteProxy</code> in components). Depends on struct-model</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Gate: <code>npm run typecheck</code> — target ≤97 errors (list+dynamic fixed)</strong></p>
+<h3><a id="phase-5--consumer-modules-82-errors-fixed" class="heading_anchor" href="#phase-5--consumer-modules-82-errors-fixed" aria-hidden="true">#</a>Phase 5 — Consumer Modules (82 errors fixed)</h3>
+<p><em>Depend on everything above.</em></p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>File</th>
+<th>Errors</th>
+<th>Effort</th>
+<th>Key Work</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>20</td>
+<td><code>accessors.ts</code></td>
+<td><strong>38</strong></td>
+<td>Medium</td>
+<td>Exports <code>getEntry(state, path, options?)</code> and <code>getDraftEntry(state, path)</code>. Consumer research: <code>getEntry</code> third param is <code>{value: defaultValue}</code>. Also exports <code>isDraftKeyError</code>. Once models are typed, annotations flow naturally</td>
+</tr>
+<tr>
+<td>21</td>
+<td><code>compare.ts</code></td>
+<td><strong>44</strong></td>
+<td><strong>Hard</strong></td>
+<td><code>StateComparison</code> class: array-like (extends Array or has <code>.map()</code>), entries are <code>[status, oldPath?, newPath?]</code>. Properties: <code>.newState</code>, <code>.isInitial</code>. Methods: <code>.getChangedMap(depMapping, toLocal)</code>. Static: <code>createInitial(state, deps)</code>, <code>COMPARE_STATUSES</code>. Also exports <code>COMPARE_STATUSES</code> with <code>EQUALS</code>, <code>CHANGED</code>, <code>NEW</code>, <code>MOVED</code>, <code>LIST_NEW_ORDER</code>. Uses <code>Object.defineProperty</code> for class members — need <code>declare</code> declarations</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Gate: <code>npm run typecheck</code> — target <strong>0 errors</strong></strong></p>
+<h3><a id="phase-6--barrel--final-validation" class="heading_anchor" href="#phase-6--barrel--final-validation" aria-hidden="true">#</a>Phase 6 — Barrel &amp; Final Validation</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>File</th>
+<th>Errors</th>
+<th>Effort</th>
+<th>Key Work</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>22</td>
+<td><code>metamodel.ts</code></td>
+<td>0</td>
+<td>Small</td>
+<td>Verify re-exports carry correct types. Consumers import from <code>'../metamodel.mjs'</code> — ensure all public types are accessible</td>
+</tr>
+<tr>
+<td>—</td>
+<td>Full validation</td>
+<td>—</td>
+<td>—</td>
+<td><code>npm run typecheck</code> must pass with <strong>0 errors</strong> in metamodel module</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2><a id="cross-cutting-concerns" class="heading_anchor" href="#cross-cutting-concerns" aria-hidden="true">#</a>Cross-Cutting Concerns</h2>
+<ol>
+<li>
+<p><strong>Shared <code>MetamorphoseGen&lt;T&gt;</code> type</strong> — Define in <code>base-model.ts</code> early (Phase 1).
+<code>Generator&lt;ResourceRequirement, T, unknown&gt;</code> — the single most repeated untyped
+signature. Pays dividends in every model file.</p>
+</li>
+<li>
+<p><strong><code>DependenciesMap</code> type</strong> — Define in <code>base-model.ts</code> as <code>Record&lt;string, _BaseModel&gt;</code>.
+Used by <code>metamorphose()</code>, <code>metamorphoseGen()</code>, <code>createPrimalDraft()</code>,
+<code>createPrimalState()</code>, <code>collectDependencies()</code>, and stored as <code>.dependencies</code>
+on all model instances.</p>
+</li>
+<li>
+<p><strong><code>Object.defineProperty</code> → <code>declare</code> property declarations</strong> — In <code>compare.ts</code>
+and <code>potential-write-proxy.ts</code>, class members set via <code>Object.defineProperty/ies</code>
+are invisible to TypeScript. Add <code>declare</code> property declarations to make them visible.</p>
+</li>
+<li>
+<p><strong>Duck-typed draft interface</strong> — Shell passes <code>{ metamorphoseGen: fn }</code> as initial
+state. Consider a <code>Metamorphosable</code> interface in <code>base-model.ts</code>:</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">interface</span> <span class="token class-name">Metamorphosable<span class="token operator">&lt;</span><span class="token constant">T</span><span class="token operator">></span></span> <span class="token punctuation">{</span>
+    <span class="token function">metamorphoseGen</span><span class="token punctuation">(</span>dependencies<span class="token operator">?</span><span class="token operator">:</span> DependenciesMap<span class="token punctuation">)</span><span class="token operator">:</span> MetamorphoseGen<span class="token operator">&lt;</span><span class="token constant">T</span><span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+</li>
+<li>
+<p><strong>Container interfaces</strong> — <code>get()</code>/<code>set()</code>/<code>has()</code>/<code>keys()</code>/<code>entries()</code> are used
+across accessors, compare, topological-sort. Consider shared interfaces in
+<code>base-model.ts</code> or a new <code>types.ts</code>.</p>
+</li>
+<li>
+<p><strong><code>createClass</code> return types</strong> — Each <code>createClass</code> returns a class constructor
+with static methods (<code>createPrimalDraft</code>, <code>createPrimalState</code>, <code>createPrimalStateGen</code>)
+and (for containers) a static <code>Model</code> property pointing to the child model class.
+These need proper typing for the generated classes.</p>
+</li>
+<li>
+<p><strong><code>.value</code> property typing</strong> — Type varies by model: <code>any</code> on GenericModel,
+<code>number</code> on NumberModel, <code>string</code> on StringModel, enum literal union on EnumModel.
+Each model’s <code>.value</code> getter/setter should be typed accordingly.</p>
+</li>
+<li>
+<p><strong><code>unwrapPotentialWriteProxy</code> / <code>_PotentialWriteProxy.isProxy()</code></strong> — The former
+should preserve the model type (generic identity function). The latter should be
+a TypeScript type guard.</p>
+</li>
+<li>
+<p><strong>Each step must be followed by <code>npm run typecheck</code></strong> — no regressions allowed.</p>
+</li>
+<li>
+<p><strong>Don’t change runtime behavior</strong> — goal is annotation-only changes wherever possible.</p>
+</li>
+</ol>
+<hr>
+<h2><a id="status-tracking" class="heading_anchor" href="#status-tracking" aria-hidden="true">#</a>Status Tracking</h2>
+<ul>
+<li>[ ] Phase 1: Roots &amp; Foundation (steps 1-3)</li>
+<li>[ ] Phase 2: Small Dependencies (steps 4-9)</li>
+<li>[ ] Phase 3: Leaf Model Types (steps 10-15)</li>
+<li>[ ] Phase 4: Container Models (steps 16-19)</li>
+<li>[ ] Phase 5: Consumer Modules (steps 20-21)</li>
+<li>[ ] Phase 6: Barrel &amp; Validation (step 22)</li>
+</ul>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>

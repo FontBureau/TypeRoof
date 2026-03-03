@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel - Assessment Pre Strict Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel - Path to a Standalone Library</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel - Assessment Post Strict Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor - Concepts and Roadmap</a></li></ul></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="metamodel-consumer-api-research--how-the-codebase-uses-the-metamodel" class="heading_anchor" href="#metamodel-consumer-api-research--how-the-codebase-uses-the-metamodel" aria-hidden="true">#</a>Metamodel Consumer API Research — How the Codebase Uses the Metamodel</h1>
+<p><strong>Date:</strong> 2026-02-23
+<strong>Purpose:</strong> Inform type definitions for <code>TypeRoof/lib/js/metamodel/</code> by cataloging
+how the metamodel APIs are <strong>consumed</strong> in <code>shell.mjs</code> and <code>components/</code>.</p>
+<hr>
+<h2><a id="1-the-metamorphose-generator-protocol" class="heading_anchor" href="#1-the-metamorphose-generator-protocol" aria-hidden="true">#</a>1. The Metamorphose Generator Protocol</h2>
+<p>The metamodel’s central abstraction is a <strong>coroutine-style generator protocol</strong>
+where <code>metamorphoseGen()</code> is the core state-transition primitive.</p>
+<h3><a id="signature-from-base-modelts413-415-" class="heading_anchor" href="#signature-from-base-modelts413-415-" aria-hidden="true">#</a>Signature (from <code>base-model.ts:413-415</code>)</h3>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">public</span> <span class="token keyword">abstract</span> <span class="token function">metamorphoseGen</span><span class="token punctuation">(</span>
+    dependencies<span class="token operator">?</span><span class="token operator">:</span> DependenciesMap<span class="token punctuation">,</span>
+<span class="token punctuation">)</span><span class="token operator">:</span> Generator<span class="token operator">&lt;</span>ResourceRequirement<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">,</span> <span class="token builtin">unknown</span><span class="token operator">></span><span class="token punctuation">;</span></code></pre>
+<p><strong>Contract:</strong></p>
+<ul>
+<li><strong>Yields:</strong> <code>ResourceRequirement</code> objects (requests for external resources, e.g. fonts)</li>
+<li><strong>Receives via <code>.next()</code>:</strong> The resolved resource (whatever the resolver returns)</li>
+<li><strong>Returns (final value):</strong> The immutable state — either <code>this</code> (draft frozen) or <code>this[OLD_STATE]</code> (no change → reuse previous)</li>
+</ul>
+<h3><a id="three-drivers" class="heading_anchor" href="#three-drivers" aria-hidden="true">#</a>Three Drivers</h3>
+<table>
+<thead>
+<tr>
+<th>Driver</th>
+<th>Location</th>
+<th>When Used</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>driveResolverGenSync</code></td>
+<td><code>base-model.ts:180</code></td>
+<td>Normal sync metamorphose — fails if any <code>ResourceRequirement</code> is yielded</td>
+</tr>
+<tr>
+<td><code>driveResolverGenSyncFailing</code></td>
+<td><code>base-model.ts:299</code></td>
+<td>Convenience wrapper; used by <code>instance.metamorphose(deps)</code></td>
+</tr>
+<tr>
+<td><code>driveResolveGenAsync</code></td>
+<td><code>base-model.ts:196</code></td>
+<td>Shell uses this when fonts may need async loading</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="shells-async-path--__asyncmetamorphosestate-" class="heading_anchor" href="#shells-async-path--__asyncmetamorphosestate-" aria-hidden="true">#</a>Shell’s Async Path (<code>__asyncMetamorphoseState</code>)</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// shell.mjs:1413-1427</span>
+<span class="token keyword">const</span> draftState <span class="token operator">=</span> draft <span class="token operator">===</span> <span class="token keyword">null</span> <span class="token operator">?</span> <span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span><span class="token function">getDraft</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">:</span> draft
+    <span class="token punctuation">,</span> gen <span class="token operator">=</span> draftState<span class="token punctuation">.</span><span class="token function">metamorphoseGen</span><span class="token punctuation">(</span>primedDependencies<span class="token punctuation">)</span>
+    <span class="token punctuation">,</span> sharedState <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token punctuation">,</span> newState <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">driveResolveGenAsync</span><span class="token punctuation">(</span>
+          <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_asyncResolve</span><span class="token punctuation">.</span><span class="token function">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> sharedState<span class="token punctuation">)</span><span class="token punctuation">,</span> gen<span class="token punctuation">)</span>
+    <span class="token punctuation">;</span></code></pre>
+<p>The <code>_asyncResolve</code> callback inspects the <code>ResourceRequirement.description</code> array:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// shell.mjs:1336-1351</span>
+<span class="token keyword">const</span> <span class="token punctuation">[</span>indicator<span class="token punctuation">,</span> <span class="token operator">...</span>args<span class="token punctuation">]</span> <span class="token operator">=</span> resourceRequirement<span class="token punctuation">.</span>description<span class="token punctuation">;</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span>indicator <span class="token keyword">instanceof</span> <span class="token class-name">ForeignKey</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> foreignKey <span class="token operator">=</span> indicator
+        <span class="token punctuation">,</span> <span class="token punctuation">[</span>targetContainer<span class="token punctuation">]</span> <span class="token operator">=</span> args<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>targetContainer<span class="token punctuation">.</span>constructor <span class="token operator">===</span> InstalledFontsModel<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token keyword">await</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_asyncResolveFont</span><span class="token punctuation">(</span>foreignKey<span class="token punctuation">,</span> <span class="token operator">...</span>args<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p><strong>Typing insight:</strong> <code>ResourceRequirement.description</code> is an array where:</p>
+<ul>
+<li><code>[0]</code> — a <code>ForeignKey</code> instance (the indicator)</li>
+<li><code>[1]</code> — the target container (an <code>_AbstractOrderedMapModel</code> instance)</li>
+<li><code>[2]</code> — the current key value (<code>string | undefined</code>)</li>
+<li><code>[3]</code> — a default constraint symbol (<code>ForeignKey.SET_DEFAULT_FIRST</code> etc.)</li>
+</ul>
+<h3><a id="shells-sync-path--_syncmetamorphosestate-" class="heading_anchor" href="#shells-sync-path--_syncmetamorphosestate-" aria-hidden="true">#</a>Shell’s Sync Path (<code>_syncMetamorphoseState</code>)</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// shell.mjs:1379-1385</span>
+<span class="token keyword">const</span> draftState <span class="token operator">=</span> draft <span class="token operator">===</span> <span class="token keyword">null</span> <span class="token operator">?</span> <span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span><span class="token function">getDraft</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">:</span> draft<span class="token punctuation">;</span>
+<span class="token keyword">return</span> draftState<span class="token punctuation">.</span><span class="token function">metamorphose</span><span class="token punctuation">(</span>immutableDependencies<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<h3><a id="createprimalstategen--bootstrap-via-generator-delegation" class="heading_anchor" href="#createprimalstategen--bootstrap-via-generator-delegation" aria-hidden="true">#</a><code>createPrimalStateGen</code> — Bootstrap via Generator Delegation</h3>
+<pre class="language-typescript"><code class="language-typescript"><span class="token comment">// base-model.ts:514-521</span>
+<span class="token keyword">static</span> <span class="token operator">*</span><span class="token function">createPrimalStateGen</span><span class="token punctuation">(</span>dependencies<span class="token punctuation">,</span> serializedValue<span class="token punctuation">,</span> options<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> instance <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Constructor</span><span class="token punctuation">(</span><span class="token keyword">null</span><span class="token punctuation">,</span> _DEFERRED_DEPENDENCIES<span class="token punctuation">,</span> serializedValue<span class="token punctuation">,</span> options<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> gen <span class="token operator">=</span> instance<span class="token punctuation">.</span><span class="token function">metamorphoseGen</span><span class="token punctuation">(</span>dependencies<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token keyword">yield</span><span class="token operator">*</span> gen<span class="token punctuation">;</span>  <span class="token comment">// delegate all yields/sends to parent generator</span>
+<span class="token punctuation">}</span></code></pre>
+<p>Used in shell for initial state:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// shell.mjs:935-938</span>
+<span class="token keyword">const</span> likeADraft <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token function-variable function">metamorphoseGen</span><span class="token operator">:</span> <span class="token parameter">dependencies</span> <span class="token operator">=></span> ApplicationModel<span class="token punctuation">.</span><span class="token function">createPrimalStateGen</span><span class="token punctuation">(</span>dependencies<span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token keyword">await</span> <span class="token function">_initState</span><span class="token punctuation">(</span>likeADraft<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p><strong>Typing insight:</strong> The <code>likeADraft</code> object passed to <code>_initState</code> is a duck type
+with a single <code>metamorphoseGen</code> method — it’s NOT a real draft instance. This
+suggests the type for the <code>draft</code> parameter in <code>_asyncMetamorphoseState</code> should
+be a union or interface, not just the concrete draft class.</p>
+<h3><a id="yield-propagation-through-the-model-tree" class="heading_anchor" href="#yield-propagation-through-the-model-tree" aria-hidden="true">#</a><code>yield*</code> Propagation Through the Model Tree</h3>
+<p>A single top-level driver loop handles all <code>ResourceRequirement</code>s from any depth:</p>
+<pre><code>ShellController._asyncMetamorphoseState
+  └─ driveResolveGenAsync(resolve, gen)
+       └─ ApplicationModel.metamorphoseGen(deps)
+            ├─ yield* child.metamorphoseGen(childDeps)     // struct fields
+            ├─ yield* foreignKey.constraint(target, value)  // ForeignKey generators
+            └─ yield* dynamicStruct.metamorphoseGen(deps)   // dynamic types
+                 └─ yield* innerChild.metamorphoseGen(...)
+</code></pre>
+<hr>
+<h2><a id="2-createclass-patterns--how-models-are-defined" class="heading_anchor" href="#2-createclass-patterns--how-models-are-defined" aria-hidden="true">#</a>2. <code>createClass</code> Patterns — How Models Are Defined</h2>
+<h3><a id="_abstractstructmodelcreateclass" class="heading_anchor" href="#_abstractstructmodelcreateclass" aria-hidden="true">#</a><code>_AbstractStructModel.createClass</code></h3>
+<p>The most common pattern. Takes a name string and field descriptors:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// main-model.mjs:32-37</span>
+AvailableLayoutModel <span class="token operator">=</span> _AbstractStructModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>
+    <span class="token string">'AvailableLayoutModel'</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'label'</span><span class="token punctuation">,</span> StringModel<span class="token punctuation">]</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'typeClass'</span><span class="token punctuation">,</span> LayoutTypeModel<span class="token punctuation">]</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'groupKey'</span><span class="token punctuation">,</span> LayoutGroupKeyModel<span class="token punctuation">]</span>
+<span class="token punctuation">)</span></code></pre>
+<p>Field descriptors are 2-tuples: <code>[fieldName: string, ModelClass | InternalizedDependency | ForeignKey | ValueLink | CoherenceFunction]</code></p>
+<p><strong>With CoherenceFunction (must be first):</strong></p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// main-model.mjs:41-68</span>
+ApplicationModel <span class="token operator">=</span> _AbstractStructModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>
+    <span class="token string">'ApplicationModel'</span>
+  <span class="token punctuation">,</span> CoherenceFunction<span class="token punctuation">.</span><span class="token function">create</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'activeState'</span><span class="token punctuation">,</span> <span class="token string">'layoutTypeModel'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token function">checkTypes</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span>activeState<span class="token punctuation">,</span> layoutTypeModel<span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token operator">...</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'availableLayouts'</span><span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">InternalizedDependency</span><span class="token punctuation">(</span><span class="token string">'availableLayouts'</span><span class="token punctuation">,</span> AvailableLayoutsModel<span class="token punctuation">)</span><span class="token punctuation">]</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'activeLayoutKey'</span><span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">ForeignKey</span><span class="token punctuation">(</span><span class="token string">'availableLayouts'</span><span class="token punctuation">,</span> ForeignKey<span class="token punctuation">.</span><span class="token constant">NOT_NULL</span><span class="token punctuation">,</span> ForeignKey<span class="token punctuation">.</span><span class="token constant">SET_DEFAULT_LAST</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'layoutTypeModel'</span><span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">ValueLink</span><span class="token punctuation">(</span><span class="token string">'activeLayoutKey'</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'activeState'</span><span class="token punctuation">,</span> _AbstractDynamicStructModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">'DynamicLayoutModel'</span><span class="token punctuation">,</span> _BaseLayoutModel<span class="token punctuation">,</span> <span class="token string">'layoutTypeModel'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'font'</span><span class="token punctuation">,</span> <span class="token string">'installedFonts'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+  <span class="token punctuation">,</span> <span class="token operator">...</span>
+<span class="token punctuation">)</span></code></pre>
+<p><strong>Typing insight:</strong> <code>createClass</code> returns a <strong>class constructor</strong> (not an instance).
+The return type should be <code>typeof _AbstractStructModel</code> subclass with static
+<code>createPrimalDraft</code>, <code>createPrimalState</code>, <code>createPrimalStateGen</code> methods,
+and a <code>Model</code> property (for ordered maps/lists).</p>
+<h3><a id="_abstractgenericmodelcreateclass" class="heading_anchor" href="#_abstractgenericmodelcreateclass" aria-hidden="true">#</a><code>_AbstractGenericModel.createClass</code></h3>
+<p>Simple wrapper for arbitrary values:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// main-model.mjs:27-31</span>
+InstalledFontModel <span class="token operator">=</span> _AbstractGenericModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">'InstalledFontModel'</span><span class="token punctuation">)</span>
+DeferredFontModel <span class="token operator">=</span> _AbstractGenericModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">'DeferredFontModel'</span><span class="token punctuation">)</span>
+LayoutTypeModel <span class="token operator">=</span> _AbstractGenericModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">'LayoutTypeModel'</span><span class="token punctuation">)</span></code></pre>
+<h3><a id="_abstractorderedmapmodelcreateclass" class="heading_anchor" href="#_abstractorderedmapmodelcreateclass" aria-hidden="true">#</a><code>_AbstractOrderedMapModel.createClass</code></h3>
+<p>Takes a name and a child model class:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// main-model.mjs:38-40</span>
+AvailableLayoutsModel <span class="token operator">=</span> _AbstractOrderedMapModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">'AvailableLayoutsModel'</span><span class="token punctuation">,</span> AvailableLayoutModel<span class="token punctuation">)</span>
+AvailableFontsModel <span class="token operator">=</span> _AbstractOrderedMapModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">'AvailableFontsModel'</span><span class="token punctuation">,</span> DeferredFontModel<span class="token punctuation">)</span>
+InstalledFontsModel <span class="token operator">=</span> _AbstractOrderedMapModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">'InstalledFontsModel'</span><span class="token punctuation">,</span> InstalledFontModel<span class="token punctuation">)</span></code></pre>
+<p>With options:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// actors/models.mjs:121-127</span>
+OpenTypeFeaturesModel <span class="token operator">=</span> _AbstractOrderedMapModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">'OpenTypeFeaturesModel'</span><span class="token punctuation">,</span> BooleanModel<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">ordering</span><span class="token operator">:</span> _AbstractOrderedMapModel<span class="token punctuation">.</span><span class="token constant">ORDER</span><span class="token punctuation">.</span><span class="token constant">KEYS_ALPHA</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">validateKeyFn</span><span class="token operator">:</span> validateOpenTypeUIFeatureTag
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+<h3><a id="_abstractlistmodelcreateclass" class="heading_anchor" href="#_abstractlistmodelcreateclass" aria-hidden="true">#</a><code>_AbstractListModel.createClass</code></h3>
+<p>Takes a name and a child model class:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// actors/models.mjs:212-215</span>
+KeyMomentsModel <span class="token operator">=</span> _AbstractListModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">'KeyMomentsModel'</span><span class="token punctuation">,</span> KeyMomentModel<span class="token punctuation">)</span>
+TypographyKeyMomentsModel <span class="token operator">=</span> _AbstractListModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">'TypographyKeyMomentsModel'</span><span class="token punctuation">,</span> TypographyKeyMomentModel<span class="token punctuation">)</span></code></pre>
+<h3><a id="_abstractdynamicstructmodelcreateclass" class="heading_anchor" href="#_abstractdynamicstructmodelcreateclass" aria-hidden="true">#</a><code>_AbstractDynamicStructModel.createClass</code></h3>
+<p>Takes name, base type, type-selector field name, and dependency forwarding list:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// main-model.mjs:72-76</span>
+_AbstractDynamicStructModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>
+    <span class="token string">'DynamicLayoutModel'</span>
+  <span class="token punctuation">,</span> _BaseLayoutModel           <span class="token comment">// base type constraint</span>
+  <span class="token punctuation">,</span> <span class="token string">'layoutTypeModel'</span>          <span class="token comment">// field name that selects concrete type</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'font'</span><span class="token punctuation">,</span> <span class="token string">'installedFonts'</span><span class="token punctuation">]</span> <span class="token comment">// dependencies to forward to inner struct</span>
+<span class="token punctuation">)</span></code></pre>
+<p>Used identically in actors, color, axes-math:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// actors-base.mjs:55-58</span>
+_AbstractDynamicStructModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">'DynamicActorModel'</span>
+  <span class="token punctuation">,</span> _BaseActorModel<span class="token punctuation">,</span> <span class="token string">'typeClass'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'font'</span><span class="token punctuation">,</span> <span class="token string">'installedFonts'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token comment">// color.mjs:191-193</span>
+_AbstractDynamicStructModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">'DynamicColorModel'</span>
+  <span class="token punctuation">,</span> _BaseColorModel<span class="token punctuation">,</span> <span class="token string">'typeClass'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre>
+<h3><a id="_abstractenummodelcreateclass" class="heading_anchor" href="#_abstractenummodelcreateclass" aria-hidden="true">#</a><code>_AbstractEnumModel.createClass</code></h3>
+<p>Takes name, allowed values array, and default:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// actors/models.mjs:163-178</span>
+TextAlignmentModel <span class="token operator">=</span> _AbstractEnumModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">'TextAlignmentModel'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'left'</span><span class="token punctuation">,</span> <span class="token string">'center'</span><span class="token punctuation">,</span> <span class="token string">'right'</span><span class="token punctuation">,</span> <span class="token string">'start'</span><span class="token punctuation">,</span> <span class="token string">'end'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token string">'left'</span><span class="token punctuation">)</span>
+CSSPositioningVerticalModel <span class="token operator">=</span> _AbstractEnumModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">'CSSPositioningVerticalModel'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'top'</span><span class="token punctuation">,</span> <span class="token string">'bottom'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token string">'top'</span><span class="token punctuation">)</span>
+CSSDirectionModel <span class="token operator">=</span> _AbstractEnumModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span><span class="token string">'CSSDirectionModel'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'ltr'</span><span class="token punctuation">,</span> <span class="token string">'rtl'</span><span class="token punctuation">,</span> <span class="token string">'inherit'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token string">'inherit'</span><span class="token punctuation">)</span></code></pre>
+<h3><a id="_abstractsimpleoremptymodelcreateclass" class="heading_anchor" href="#_abstractsimpleoremptymodelcreateclass" aria-hidden="true">#</a><code>_AbstractSimpleOrEmptyModel.createClass</code></h3>
+<p>Takes a wrapped model class (no name):</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// actors/models.mjs:115,159-162</span>
+FontSizeModel <span class="token operator">=</span> _AbstractSimpleOrEmptyModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>NumberModel<span class="token punctuation">)</span>
+BooleanOrEmptyModel <span class="token operator">=</span> _AbstractSimpleOrEmptyModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>BooleanModel<span class="token punctuation">)</span>
+StringOrEmptyModel <span class="token operator">=</span> _AbstractSimpleOrEmptyModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>StringModel<span class="token punctuation">)</span>
+NumberOrEmptyModel <span class="token operator">=</span> _AbstractSimpleOrEmptyModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>NumberModel<span class="token punctuation">)</span>
+TextAlignmentOrEmptyModel <span class="token operator">=</span> _AbstractSimpleOrEmptyModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>TextAlignmentModel<span class="token punctuation">)</span></code></pre>
+<hr>
+<h2><a id="3-dependencies-object--shape-and-construction" class="heading_anchor" href="#3-dependencies-object--shape-and-construction" aria-hidden="true">#</a>3. Dependencies Object — Shape and Construction</h2>
+<h3><a id="the-shape" class="heading_anchor" href="#the-shape" aria-hidden="true">#</a>The Shape</h3>
+<p>Dependencies are <strong>plain objects</strong> mapping string keys to immutable model instances:</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">type</span> <span class="token class-name">DependenciesMap</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token punctuation">[</span>key<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">:</span> _BaseModel <span class="token punctuation">}</span>
+<span class="token comment">// e.g. { availableFonts: AvailableFontsModel, installedFonts: InstalledFontsModel, ... }</span></code></pre>
+<h3><a id="shell-constructs-dependencies-three-ways" class="heading_anchor" href="#shell-constructs-dependencies-three-ways" aria-hidden="true">#</a>Shell Constructs Dependencies Three Ways</h3>
+<p><strong>1. Sync path — <code>_collecStateDependencies()</code>:</strong></p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// shell.mjs:1222-1237</span>
+<span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token punctuation">[</span>key<span class="token punctuation">,</span> <span class="token punctuation">[</span>referenceCounter<span class="token punctuation">,</span> draft<span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token keyword">of</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_stateDependenciesDrafts<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>referenceCounter <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+        dependencies<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">=</span> draft<span class="token punctuation">.</span><span class="token function">metamorphose</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// draft → immutable</span>
+<span class="token punctuation">}</span></code></pre>
+<p><strong>2. Async path — <code>__asyncMetamorphoseState</code>:</strong></p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// shell.mjs:1389-1404</span>
+primedDependencies<span class="token punctuation">[</span><span class="token string">'installedFonts'</span><span class="token punctuation">]</span> <span class="token operator">=</span> InstalledFontsModel<span class="token punctuation">.</span><span class="token function">createPrimalDraft</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// fresh empty</span>
+primedDependencies<span class="token punctuation">[</span><span class="token string">'availableFonts'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_requireStateDependencyDraft</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>     <span class="token comment">// existing draft</span>
+primedDependencies<span class="token punctuation">[</span><span class="token string">'availableLayouts'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_readStateDependency</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>           <span class="token comment">// read-only</span></code></pre>
+<p><strong>3. Component code — from parent model’s <code>.dependencies</code>:</strong></p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// Various component files</span>
+<span class="token keyword">const</span> newMoment <span class="token operator">=</span> keyMoments<span class="token punctuation">.</span>constructor<span class="token punctuation">.</span>Model<span class="token punctuation">.</span><span class="token function">createPrimalDraft</span><span class="token punctuation">(</span>keyMoments<span class="token punctuation">.</span>dependencies<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> draft <span class="token operator">=</span> GridPropertiesModel<span class="token punctuation">.</span><span class="token function">createPrimalDraft</span><span class="token punctuation">(</span>dependencies<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p><strong>Typing insight:</strong> <code>createPrimalDraft</code> and <code>createPrimalState</code> both accept
+a <code>DependenciesMap</code> (often just <code>{}</code>). Component code often passes
+<code>existingModel.dependencies</code> to create siblings of the same type.</p>
+<h3><a id="three-dependency-categories-in-the-shell" class="heading_anchor" href="#three-dependency-categories-in-the-shell" aria-hidden="true">#</a>Three Dependency Categories in the Shell</h3>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Model Class</th>
+<th>Mutation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>availableFonts</code></td>
+<td><code>AvailableFontsModel</code></td>
+<td>Draft shared across font ops</td>
+</tr>
+<tr>
+<td><code>installedFonts</code></td>
+<td><code>InstalledFontsModel</code></td>
+<td>Fresh empty draft for async; populated by resolver</td>
+</tr>
+<tr>
+<td><code>availableLayouts</code></td>
+<td><code>AvailableLayoutsModel</code></td>
+<td>Read-only after init</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2><a id="4-state-access-patterns" class="heading_anchor" href="#4-state-access-patterns" aria-hidden="true">#</a>4. State Access Patterns</h2>
+<h3><a id="getfieldname--accessing-struct-fields" class="heading_anchor" href="#getfieldname--accessing-struct-fields" aria-hidden="true">#</a><code>get(fieldName)</code> — Accessing Struct Fields</h3>
+<p>Returns the child model instance at that field:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// shell.mjs:900-902 — Writing to draft fields</span>
+availableLayout<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">'typeClass'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>value <span class="token operator">=</span> LayoutModule<span class="token punctuation">.</span>Model<span class="token punctuation">;</span>
+availableLayout<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">'label'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>value <span class="token operator">=</span> label<span class="token punctuation">;</span>
+
+<span class="token comment">// shell.mjs:1010 — Deep draft access</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span>draftState<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">'activeFontKey'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>value <span class="token operator">=</span> fontName<span class="token punctuation">;</span>
+
+<span class="token comment">// shell.mjs:203 — Reading immutable</span>
+<span class="token keyword">const</span> deferredFont <span class="token operator">=</span> availableFonts<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>fontName<span class="token punctuation">)</span><span class="token punctuation">.</span>value<span class="token punctuation">;</span></code></pre>
+<p><strong>Typing insight:</strong> <code>get()</code> on a struct draft returns the child model (which may
+also be a draft). The <code>.value</code> property is the inner JS value. On
+<code>_AbstractGenericModel</code>, <code>.value</code> can be anything. On <code>NumberModel</code> it’s a number, etc.</p>
+<h3><a id="setkey-entry--setting-entries-in-orderedmap" class="heading_anchor" href="#setkey-entry--setting-entries-in-orderedmap" aria-hidden="true">#</a><code>set(key, entry)</code> — Setting Entries in OrderedMap</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// shell.mjs:206</span>
+installedFontsDraft<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span>fontName<span class="token punctuation">,</span> fontState<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// shell.mjs:321</span>
+availableFontsDraft<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span>deferredFont<span class="token punctuation">.</span>fullName<span class="token punctuation">,</span> fontState<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<h3><a id="haskey--keys--deletekey--map-like-operations" class="heading_anchor" href="#haskey--keys--deletekey--map-like-operations" aria-hidden="true">#</a><code>has(key)</code> / <code>keys()</code> / <code>delete(key)</code> — Map-like Operations</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// shell.mjs:197,201,208,222,278,334,338,1282,1289</span>
+availableFonts<span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span>fontName<span class="token punctuation">)</span>
+installedFontsDraft<span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span>fontName<span class="token punctuation">)</span>
+installedFontsDraft<span class="token punctuation">.</span><span class="token function">delete</span><span class="token punctuation">(</span>fontName<span class="token punctuation">)</span>
+<span class="token punctuation">[</span><span class="token operator">...</span>installedFonts<span class="token punctuation">.</span><span class="token function">keys</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span class="token keyword">new</span> <span class="token class-name">Set</span><span class="token punctuation">(</span>availableFontsDraft<span class="token punctuation">.</span><span class="token function">keys</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre>
+<h3><a id="pushentries--appending-to-orderedmaplist" class="heading_anchor" href="#pushentries--appending-to-orderedmaplist" aria-hidden="true">#</a><code>push(...entries)</code> — Appending to OrderedMap/List</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// shell.mjs:545 — OrderedMap push with [key, entry] tuples</span>
+availableFontsDraft<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token operator">...</span>keyEntriesInOriginalLoadOrder<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// shell.mjs:903 — OrderedMap push</span>
+availableLayoutsDraft<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">[</span>key<span class="token punctuation">,</span> availableLayout<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// actors-base.mjs:149</span>
+availableActorTypesDraft<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">[</span>key<span class="token punctuation">,</span> availableActorType<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// task-automations/simple-clock.mjs:87 — List push (no key, just entry)</span>
+activeActors<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>containerActorDraft<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p><strong>Typing insight:</strong> <code>push()</code> on OrderedMap takes <code>[key, entry]</code> tuples.
+<code>push()</code> on List takes bare entries. Both accept variadic args.</p>
+<h3><a id="getentrystate-path--getdraftentrystate-path--path-based-access" class="heading_anchor" href="#getentrystate-path--getdraftentrystate-path--path-based-access" aria-hidden="true">#</a><code>getEntry(state, path)</code> / <code>getDraftEntry(state, path)</code> — Path-Based Access</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// shell.mjs:1083-1110 — widgetBus.getEntry: tries draft first, falls back to immutable</span>
+<span class="token function-variable function">getEntry</span><span class="token operator">:</span> <span class="token parameter">path</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> entry <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>draftState<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span> entry <span class="token operator">=</span> <span class="token function">getDraftEntry</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>draftState<span class="token punctuation">,</span> path<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+        <span class="token keyword">catch</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">isDraftKeyError</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token keyword">throw</span> error<span class="token punctuation">;</span> <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>entry <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span>
+        entry <span class="token operator">=</span> <span class="token function">getEntry</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">,</span> path<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> entry<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// shell.mjs:960 — Direct path-based value setting</span>
+<span class="token function">getEntry</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>draftState<span class="token punctuation">,</span> <span class="token string">'activeState/playing'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token literal-property property">value</span><span class="token operator">:</span> <span class="token keyword">undefined</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>value <span class="token operator">=</span> uiFlags<span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span><span class="token string">'autoplay'</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p><strong>Typing insight:</strong> <code>getEntry</code> and <code>getDraftEntry</code> take a root state and a
+string path (slash-separated). They return a model instance. The third
+<code>{value: ...}</code> parameter in <code>getEntry</code> appears to be a default/options object.</p>
+<h3><a id="getdraft--creating-mutable-copies" class="heading_anchor" href="#getdraft--creating-mutable-copies" aria-hidden="true">#</a><code>getDraft()</code> — Creating Mutable Copies</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// shell.mjs:1182 — Start of a change transaction</span>
+<span class="token keyword">const</span> draft <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span><span class="token function">getDraft</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// shell.mjs:1481 — Re-draft after async metamorphose</span>
+<span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_syncMetamorphoseState</span><span class="token punctuation">(</span>newState<span class="token punctuation">.</span><span class="token function">getDraft</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// Components: common pattern</span>
+<span class="token keyword">const</span> newMoment <span class="token operator">=</span> keyMoments<span class="token punctuation">.</span>constructor<span class="token punctuation">.</span>Model<span class="token punctuation">.</span><span class="token function">createPrimalState</span><span class="token punctuation">(</span>keyMoments<span class="token punctuation">.</span>dependencies<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getDraft</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<h3><a id="isdraft--draft-detection" class="heading_anchor" href="#isdraft--draft-detection" aria-hidden="true">#</a><code>.isDraft</code> — Draft Detection</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// shell.mjs:1104 — Safety check</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span>draftState <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>entry<span class="token punctuation">.</span>isDraft <span class="token operator">||</span> _PotentialWriteProxy<span class="token punctuation">.</span><span class="token function">isProxy</span><span class="token punctuation">(</span>entry<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">'ASSERTION FAILED entry must not be draft...'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// shell.mjs:1580 — State validation</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span>newState<span class="token punctuation">.</span>isDraft<span class="token punctuation">)</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">'VALUE ERROR new state must be immutable, but is a draft.'</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<hr>
+<h2><a id="5-statecomparison--compare_statuses" class="heading_anchor" href="#5-statecomparison--compare_statuses" aria-hidden="true">#</a>5. StateComparison &amp; COMPARE_STATUSES</h2>
+<h3><a id="construction" class="heading_anchor" href="#construction" aria-hidden="true">#</a>Construction</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// shell.mjs:1583-1584</span>
+<span class="token keyword">const</span> compareResult <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">StateComparison</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">,</span> newState<span class="token punctuation">)</span>
+    <span class="token punctuation">,</span> statuses <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Set</span><span class="token punctuation">(</span>compareResult<span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">[</span>status<span class="token punctuation">,</span><span class="token punctuation">,</span><span class="token punctuation">]</span></span><span class="token punctuation">)</span> <span class="token operator">=></span> status<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">;</span></code></pre>
+<h3><a id="usage-in-shell" class="heading_anchor" href="#usage-in-shell" aria-hidden="true">#</a>Usage in Shell</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// shell.mjs:1590 — Short-circuit if nothing changed</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span>statuses<span class="token punctuation">.</span>size <span class="token operator">===</span> <span class="token number">1</span> <span class="token operator">&amp;&amp;</span> statuses<span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span><span class="token constant">COMPARE_STATUSES</span><span class="token punctuation">.</span><span class="token constant">EQUALS</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span><span class="token punctuation">;</span>
+
+<span class="token comment">// shell.mjs:1595 — Pass to UI for differential update</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span>_ui<span class="token punctuation">.</span><span class="token function">update</span><span class="token punctuation">(</span>compareResult<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<h3><a id="usage-in-components--basicsmjs-" class="heading_anchor" href="#usage-in-components--basicsmjs-" aria-hidden="true">#</a>Usage in Components (<code>basics.mjs</code>)</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// basics.mjs:945-987 — UI widget update cycle</span>
+<span class="token function">update</span><span class="token punctuation">(</span><span class="token parameter">compareResult</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> requiresFullInitialUpdate <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_provisionWidgets</span><span class="token punctuation">(</span>compareResult<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_update</span><span class="token punctuation">(</span>compareResult<span class="token punctuation">,</span> requiresFullInitialUpdate<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// basics.mjs:958-960 — Creating initial comparison for new widgets</span>
+<span class="token keyword">const</span> _compareResult <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token operator">!</span>isInitialUpdate <span class="token operator">&amp;&amp;</span> requiresFullInitialUpdate<span class="token punctuation">)</span>
+    <span class="token operator">?</span> StateComparison<span class="token punctuation">.</span><span class="token function">createInitial</span><span class="token punctuation">(</span>compareResult<span class="token punctuation">.</span>newState<span class="token punctuation">,</span> widgetWrapper<span class="token punctuation">.</span>dependencyMapping<span class="token punctuation">)</span>
+    <span class="token operator">:</span> compareResult<span class="token punctuation">;</span>
+
+<span class="token comment">// basics.mjs:1118-1119 — Destructuring status constants</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span><span class="token constant">LIST_NEW_ORDER</span><span class="token punctuation">,</span> <span class="token constant">EQUALS</span><span class="token punctuation">,</span> <span class="token constant">MOVED</span><span class="token punctuation">,</span> <span class="token constant">NEW</span><span class="token punctuation">,</span> <span class="token constant">CHANGED</span><span class="token punctuation">}</span> <span class="token operator">=</span> StateComparison<span class="token punctuation">.</span><span class="token constant">COMPARE_STATUSES</span><span class="token punctuation">;</span></code></pre>
+<p><strong>Typing insight:</strong> <code>StateComparison</code> is array-like (has <code>.map()</code>). Each entry
+is a tuple <code>[status, oldPath?, newPath?]</code>. It has properties:</p>
+<ul>
+<li><code>.newState</code> — the new state</li>
+<li><code>.isInitial</code> — boolean</li>
+<li><code>.getChangedMap(dependencyMapping, toLocal)</code> — returns a map of changes</li>
+<li>Static: <code>StateComparison.createInitial(state, deps)</code></li>
+<li>Static: <code>StateComparison.COMPARE_STATUSES</code> (same as exported <code>COMPARE_STATUSES</code>)</li>
+</ul>
+<hr>
+<h2><a id="6-foreignkey--resourcerequirement--the-async-resolution-pattern" class="heading_anchor" href="#6-foreignkey--resourcerequirement--the-async-resolution-pattern" aria-hidden="true">#</a>6. ForeignKey + ResourceRequirement — The Async Resolution Pattern</h2>
+<h3><a id="foreignkey-constraint-generators" class="heading_anchor" href="#foreignkey-constraint-generators" aria-hidden="true">#</a>ForeignKey Constraint Generators</h3>
+<p>ForeignKey supports a <code>CUSTOM</code> constraint that is a <strong>generator function</strong>:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// main-model.mjs:149-161</span>
+<span class="token punctuation">[</span><span class="token string">'activeFontKey'</span><span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">ForeignKey</span><span class="token punctuation">(</span><span class="token string">'installedFonts'</span><span class="token punctuation">,</span> ForeignKey<span class="token punctuation">.</span><span class="token constant">NOT_NULL</span><span class="token punctuation">,</span> ForeignKey<span class="token punctuation">.</span><span class="token constant">CUSTOM</span><span class="token punctuation">,</span>
+    <span class="token keyword">function</span><span class="token operator">*</span> <span class="token punctuation">(</span>targetContainer<span class="token punctuation">,</span> currentKeyValue<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> key <span class="token operator">=</span> <span class="token keyword">yield</span> <span class="token keyword">new</span> <span class="token class-name">ResourceRequirement</span><span class="token punctuation">(</span>
+            <span class="token keyword">this</span><span class="token punctuation">,</span>                           <span class="token comment">// the ForeignKey instance</span>
+            targetContainer<span class="token punctuation">,</span>                <span class="token comment">// OrderedMap model</span>
+            currentKeyValue<span class="token punctuation">,</span>                <span class="token comment">// string | undefined</span>
+            ForeignKey<span class="token punctuation">.</span><span class="token constant">SET_DEFAULT_FIRST</span>    <span class="token comment">// fallback strategy</span>
+        <span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>targetContainer<span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>allowNull<span class="token punctuation">)</span> <span class="token keyword">return</span> ForeignKey<span class="token punctuation">.</span><span class="token constant">NULL</span><span class="token punctuation">;</span>
+            <span class="token keyword">throw</span> <span class="token function">keyConstraintError</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">CONSTRAINT ERROR...</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> key<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span class="token punctuation">]</span></code></pre>
+<h3><a id="resourcerequirement-constructor" class="heading_anchor" href="#resourcerequirement-constructor" aria-hidden="true">#</a>ResourceRequirement Constructor</h3>
+<pre class="language-typescript"><code class="language-typescript"><span class="token comment">// base-model.ts:169-178</span>
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">ResourceRequirement</span> <span class="token punctuation">{</span>
+    <span class="token keyword">public</span> description<span class="token operator">:</span> <span class="token builtin">unknown</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token operator">...</span>description<span class="token operator">:</span> <span class="token builtin">unknown</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>description <span class="token operator">=</span> description<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p><strong>Typing insight:</strong> <code>ResourceRequirement</code> is deliberately loosely typed — it’s
+a bag of arguments. The shell’s <code>_asyncResolve</code> destructures it by convention:
+<code>[foreignKey, targetContainer, currentKey, defaultConstraint]</code>. A stricter
+type could be defined but might be premature given the current flexibility.</p>
+<h3><a id="variants-in-components" class="heading_anchor" href="#variants-in-components" aria-hidden="true">#</a>Variants in Components</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// actors/models.mjs:228-236 — nullable font key, different default</span>
+<span class="token punctuation">[</span><span class="token string">'activeFontKey'</span><span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">ForeignKey</span><span class="token punctuation">(</span><span class="token string">'installedFonts'</span><span class="token punctuation">,</span> ForeignKey<span class="token punctuation">.</span><span class="token constant">ALLOW_NULL</span><span class="token punctuation">,</span> ForeignKey<span class="token punctuation">.</span><span class="token constant">CUSTOM</span><span class="token punctuation">,</span>
+    <span class="token keyword">function</span><span class="token operator">*</span> <span class="token punctuation">(</span>targetContainer<span class="token punctuation">,</span> currentKeyValue<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>allowNull <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span><span class="token operator">!</span>currentKeyValue <span class="token operator">||</span> currentKeyValue <span class="token operator">===</span> ForeignKey<span class="token punctuation">.</span><span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span> ForeignKey<span class="token punctuation">.</span><span class="token constant">NULL</span><span class="token punctuation">;</span>
+        <span class="token keyword">const</span> key <span class="token operator">=</span> <span class="token keyword">yield</span> <span class="token keyword">new</span> <span class="token class-name">ResourceRequirement</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> targetContainer<span class="token punctuation">,</span> currentKeyValue<span class="token punctuation">,</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>allowNull <span class="token operator">?</span> ForeignKey<span class="token punctuation">.</span><span class="token constant">SET_NULL</span> <span class="token operator">:</span> ForeignKey<span class="token punctuation">.</span><span class="token constant">NO_ACTION</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token operator">...</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span class="token punctuation">]</span></code></pre>
+<hr>
+<h2><a id="7-model-inheritance-patterns" class="heading_anchor" href="#7-model-inheritance-patterns" aria-hidden="true">#</a>7. Model Inheritance Patterns</h2>
+<h3><a id="subclassing-abstract-models" class="heading_anchor" href="#subclassing-abstract-models" aria-hidden="true">#</a>Subclassing Abstract Models</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// main-model.mjs:25</span>
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">_BaseLayoutModel</span> <span class="token keyword">extends</span> <span class="token class-name">_AbstractStructModel</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+<span class="token comment">// actors-base.mjs (inferred)</span>
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">_BaseActorModel</span> <span class="token keyword">extends</span> <span class="token class-name">_AbstractStructModel</span> <span class="token punctuation">{</span><span class="token punctuation">}</span></code></pre>
+<p>These marker classes serve as the <code>BaseType</code> constraint for <code>_AbstractDynamicStructModel</code>.</p>
+<h3><a id="using-constructormodel-for-dynamic-type-access" class="heading_anchor" href="#using-constructormodel-for-dynamic-type-access" aria-hidden="true">#</a>Using <code>.constructor.Model</code> for Dynamic Type Access</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// Components frequently access the child model type through the constructor:</span>
+keyMoments<span class="token punctuation">.</span>constructor<span class="token punctuation">.</span>Model<span class="token punctuation">.</span><span class="token function">createPrimalDraft</span><span class="token punctuation">(</span>keyMoments<span class="token punctuation">.</span>dependencies<span class="token punctuation">)</span>
+keyMoments<span class="token punctuation">.</span>constructor<span class="token punctuation">.</span>Model<span class="token punctuation">.</span><span class="token function">createPrimalState</span><span class="token punctuation">(</span>keyMoments<span class="token punctuation">.</span>dependencies<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getDraft</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+<p><strong>Typing insight:</strong> The <code>.constructor.Model</code> property is the child model class
+set by <code>createClass</code>. For <code>_AbstractListModel</code> and <code>_AbstractOrderedMapModel</code>,
+<code>Model</code> is the model class for entries. This is a static property on the
+generated class.</p>
+<hr>
+<h2><a id="8-unwrappotentialwriteproxy-usage" class="heading_anchor" href="#8-unwrappotentialwriteproxy-usage" aria-hidden="true">#</a>8. <code>unwrapPotentialWriteProxy</code> Usage</h2>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// main-model.mjs:47</span>
+<span class="token keyword">const</span> WrappedType <span class="token operator">=</span> <span class="token function">unwrapPotentialWriteProxy</span><span class="token punctuation">(</span>activeState<span class="token punctuation">)</span><span class="token punctuation">.</span>WrappedType<span class="token punctuation">;</span>
+
+<span class="token comment">// shell.mjs:1104</span>
+_PotentialWriteProxy<span class="token punctuation">.</span><span class="token function">isProxy</span><span class="token punctuation">(</span>entry<span class="token punctuation">)</span></code></pre>
+<p><strong>Typing insight:</strong> <code>unwrapPotentialWriteProxy</code> returns the underlying model
+instance (strips the Proxy wrapper if present). The return type should be
+the same model type. <code>_PotentialWriteProxy.isProxy()</code> is a type guard.</p>
+<hr>
+<h2><a id="9-internalizeddependency-and-valuelink" class="heading_anchor" href="#9-internalizeddependency-and-valuelink" aria-hidden="true">#</a>9. <code>InternalizedDependency</code> and <code>ValueLink</code></h2>
+<h3><a id="internalizeddependency" class="heading_anchor" href="#internalizeddependency" aria-hidden="true">#</a>InternalizedDependency</h3>
+<p>Makes an external dependency appear as a struct field:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// main-model.mjs:69,77-78</span>
+<span class="token punctuation">[</span><span class="token string">'availableLayouts'</span><span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">InternalizedDependency</span><span class="token punctuation">(</span><span class="token string">'availableLayouts'</span><span class="token punctuation">,</span> AvailableLayoutsModel<span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token string">'availableFonts'</span><span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">InternalizedDependency</span><span class="token punctuation">(</span><span class="token string">'availableFonts'</span><span class="token punctuation">,</span> AvailableFontsModel<span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token string">'installedFonts'</span><span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">InternalizedDependency</span><span class="token punctuation">(</span><span class="token string">'installedFonts'</span><span class="token punctuation">,</span> InstalledFontsModel<span class="token punctuation">)</span><span class="token punctuation">]</span></code></pre>
+<h3><a id="valuelink" class="heading_anchor" href="#valuelink" aria-hidden="true">#</a>ValueLink</h3>
+<p>Dereferences a ForeignKey to provide the actual entry:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// main-model.mjs:71,162</span>
+<span class="token punctuation">[</span><span class="token string">'layoutTypeModel'</span><span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">ValueLink</span><span class="token punctuation">(</span><span class="token string">'activeLayoutKey'</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token string">'font'</span><span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">ValueLink</span><span class="token punctuation">(</span><span class="token string">'activeFontKey'</span><span class="token punctuation">)</span><span class="token punctuation">]</span></code></pre>
+<hr>
+<h2><a id="10-summary-of-key-typing-insights-for-the-metamodel" class="heading_anchor" href="#10-summary-of-key-typing-insights-for-the-metamodel" aria-hidden="true">#</a>10. Summary of Key Typing Insights for the Metamodel</h2>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Insight</th>
+<th>Affects</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metamorphoseGen</code> return</td>
+<td><code>Generator&lt;ResourceRequirement, T, unknown&gt;</code> where T is the concrete model type</td>
+<td>All model files</td>
+</tr>
+<tr>
+<td><code>createClass</code> return type</td>
+<td>Returns a class constructor with static methods, not an instance</td>
+<td>All <code>*-model.ts</code> files</td>
+</tr>
+<tr>
+<td><code>DependenciesMap</code></td>
+<td><code>Record&lt;string, _BaseModel&gt;</code> or more specific per-model</td>
+<td><code>base-model.ts</code>, all models</td>
+</tr>
+<tr>
+<td><code>createPrimalDraft(deps)</code></td>
+<td>Takes <code>DependenciesMap</code>, returns a draft instance</td>
+<td>All model classes</td>
+</tr>
+<tr>
+<td><code>.value</code> property</td>
+<td>Type varies: <code>any</code> on GenericModel, <code>number</code> on NumberModel, <code>string</code> on StringModel, enum value on EnumModel</td>
+<td>All simple models</td>
+</tr>
+<tr>
+<td><code>.get(field)</code> on struct</td>
+<td>Returns child model instance at field</td>
+<td>struct-model, dynamic-struct-model</td>
+</tr>
+<tr>
+<td><code>.get(key)</code> on map</td>
+<td>Returns entry model instance for key</td>
+<td>ordered-map-model</td>
+</tr>
+<tr>
+<td><code>.has()</code>/<code>.keys()</code>/<code>.set()</code>/<code>.delete()</code>/<code>.push()</code></td>
+<td>Map-like interface on OrderedMap; List has push but not key-based ops</td>
+<td>ordered-map-model, list-model</td>
+</tr>
+<tr>
+<td><code>ResourceRequirement.description</code></td>
+<td>Array: <code>[ForeignKey, targetContainer, currentKey, defaultConstraint]</code></td>
+<td>base-model, foreign-key</td>
+</tr>
+<tr>
+<td><code>StateComparison</code></td>
+<td>Array-like with <code>.map()</code>, entries are <code>[status, oldPath?, newPath?]</code></td>
+<td>compare.ts</td>
+</tr>
+<tr>
+<td><code>.constructor.Model</code></td>
+<td>Static property — the child model class for list/map containers</td>
+<td>list-model, ordered-map-model</td>
+</tr>
+<tr>
+<td><code>.dependencies</code></td>
+<td>Frozen object on immutable instances, writable on drafts</td>
+<td>All models</td>
+</tr>
+<tr>
+<td><code>unwrapPotentialWriteProxy</code></td>
+<td>Returns underlying model, stripping Proxy if present</td>
+<td>potential-write-proxy, util</td>
+</tr>
+<tr>
+<td><code>isDraft</code> property</td>
+<td>Boolean — <code>true</code> on mutable draft, <code>false</code> on frozen immutable</td>
+<td>All models</td>
+</tr>
+<tr>
+<td>Duck-typed draft</td>
+<td>Shell passes <code>{ metamorphoseGen: fn }</code> as “like a draft” for initial state</td>
+<td>base-model typing consideration</td>
+</tr>
+</tbody>
+</table>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>

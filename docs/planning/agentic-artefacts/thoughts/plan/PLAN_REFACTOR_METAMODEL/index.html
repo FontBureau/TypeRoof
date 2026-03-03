@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel - Assessment Pre Strict Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel - Path to a Standalone Library</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel - Assessment Post Strict Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor - Concepts and Roadmap</a></li></ul></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h2><a id="proposed-refactoring-plan-for-metamodelts" class="heading_anchor" href="#proposed-refactoring-plan-for-metamodelts" aria-hidden="true">#</a>Proposed Refactoring Plan for <code>metamodel.ts</code></h2>
+<h3><a id="1-linksts-100-lines" class="heading_anchor" href="#1-linksts-100-lines" aria-hidden="true">#</a>1. <strong><code>links.ts</code></strong> (~100 lines)</h3>
+<p>Lines 82–215. The small dependency-descriptor classes:</p>
+<ul>
+<li><code>_BaseLink</code>, <code>KeyValueLink</code>, <code>ValueLink</code></li>
+<li><code>FallBackValue</code></li>
+<li><code>InternalizedDependency</code></li>
+<li><code>StaticDependency</code></li>
+</ul>
+<p>These are self-contained data classes with no cross-dependencies to the big model classes.</p>
+<h3><a id="2-topological-sortts-120-lines" class="heading_anchor" href="#2-topological-sortts-120-lines" aria-hidden="true">#</a>2. <strong><code>topological-sort.ts</code></strong> (~120 lines)</h3>
+<p>Lines ~216–390. Pure utility logic:</p>
+<ul>
+<li><code>topologicalSortKahn()</code></li>
+<li><code>collectDependencies()</code></li>
+<li>Helper <code>_mapGetOrInit()</code></li>
+</ul>
+<p>Only depends on <code>FreezableSet</code> from <code>base-model.ts</code> and <code>_NOTDEF</code> from <code>util.ts</code>.</p>
+<h3><a id="3-potential-write-proxyts-350-lines" class="heading_anchor" href="#3-potential-write-proxyts-350-lines" aria-hidden="true">#</a>3. <strong><code>potential-write-proxy.ts</code></strong> (~350 lines)</h3>
+<p>Lines ~392–845. The <code>_PotentialWriteProxy</code> class plus:</p>
+<ul>
+<li>Private symbols (<code>_LOCAL_PROXIES</code>, <code>_OLD_TO_NEW_SLOT</code>, etc.)</li>
+<li><code>_requiresPotentialWriteProxy()</code></li>
+<li><code>unwrapPotentialWriteProxy()</code></li>
+<li><code>objectEntriesAreEqual()</code></li>
+</ul>
+<p>This is a well-defined subsystem — the copy-on-write proxy machinery.</p>
+<h3><a id="4-struct-modelts-1300-lines" class="heading_anchor" href="#4-struct-modelts-1300-lines" aria-hidden="true">#</a>4. <strong><code>struct-model.ts</code></strong> (~1300 lines)</h3>
+<p>Lines ~917–2218. <code>_AbstractStructModel</code> — the biggest single class. Includes <code>createClass()</code> and the complex <code>_metamorphoseGen</code> / <code>_lockItem</code> / <code>_lockDependencies</code> logic.</p>
+<h3><a id="5-list-modelts-580-lines" class="heading_anchor" href="#5-list-modelts-580-lines" aria-hidden="true">#</a>5. <strong><code>list-model.ts</code></strong> (~580 lines)</h3>
+<p>Lines ~2219–2800. <code>_AbstractListModel</code> plus <code>toShuffle()</code>.</p>
+<h3><a id="6-ordered-map-modelts-830-lines" class="heading_anchor" href="#6-ordered-map-modelts-830-lines" aria-hidden="true">#</a>6. <strong><code>ordered-map-model.ts</code></strong> (~830 lines)</h3>
+<p>Lines ~2800–3656. <code>_AbstractOrderedMapModel</code> plus <code>MAP_ORDER</code>.</p>
+<h3><a id="7-dynamic-struct-modelts-570-lines" class="heading_anchor" href="#7-dynamic-struct-modelts-570-lines" aria-hidden="true">#</a>7. <strong><code>dynamic-struct-model.ts</code></strong> (~570 lines)</h3>
+<p>Lines ~3657–4231. <code>_AbstractDynamicStructModel</code>.</p>
+<h3><a id="8-simple-modelsts-920-lines" class="heading_anchor" href="#8-simple-modelsts-920-lines" aria-hidden="true">#</a>8. <strong><code>simple-models.ts</code></strong> (~920 lines)</h3>
+<p>Lines ~4232–5155. The simpler/leaf model classes:</p>
+<ul>
+<li><code>_AbstractGenericModel</code></li>
+<li><code>_AbstractEnumModel</code></li>
+<li><code>_AbstractSimpleOrEmptyModel</code></li>
+<li><code>_AbstractNumberModel</code></li>
+<li><code>BooleanModel</code>, <code>BooleanDefaultTrueModel</code></li>
+</ul>
+<p>Could also be split further per class, but they’re small individually.</p>
+<h3><a id="9-type-utilsts-50-lines" class="heading_anchor" href="#9-type-utilsts-50-lines" aria-hidden="true">#</a>9. <strong><code>type-utils.ts</code></strong> (~50 lines)</h3>
+<p>Lines ~5250–5300. Factory/helper functions:</p>
+<ul>
+<li><code>createAvailableTypes()</code></li>
+<li><code>createDynamicType()</code></li>
+<li><code>getMinMaxRangeFromType()</code></li>
+<li><code>getFieldsByType()</code></li>
+</ul>
+<h3><a id="10-pathts-230-lines" class="heading_anchor" href="#10-pathts-230-lines" aria-hidden="true">#</a>10. <strong><code>path.ts</code></strong> (~230 lines)</h3>
+<p>Lines ~5304–5530. The <code>Path</code> class — fully self-contained.</p>
+<h3><a id="11-accessorsts-120-lines" class="heading_anchor" href="#11-accessorsts-120-lines" aria-hidden="true">#</a>11. <strong><code>accessors.ts</code></strong> (~120 lines)</h3>
+<p>Lines ~5530–5650. The state access/mutation helpers:</p>
+<ul>
+<li><code>getAllPathsAndValues()</code></li>
+<li><code>_getEntry()</code>, <code>getDraftEntry()</code>, <code>getEntry()</code>, <code>getValue()</code></li>
+<li><code>_getAllEntries()</code>, <code>getModel()</code></li>
+<li><code>applyTo()</code>, <code>pushEntry()</code>, <code>popEntry()</code>, <code>spliceEntry()</code>, <code>deleteEntry()</code></li>
+</ul>
+<h3><a id="12-comparets-600-lines" class="heading_anchor" href="#12-comparets-600-lines" aria-hidden="true">#</a>12. <strong><code>compare.ts</code></strong> (~600 lines)</h3>
+<p>Lines ~5650–6251. The comparison subsystem:</p>
+<ul>
+<li><code>CompareStatus</code>, <code>COMPARE_STATUSES</code></li>
+<li><code>rawCompare()</code></li>
+<li><code>compare()</code></li>
+<li><code>StateComparison</code>, <code>InitialStateComparison</code></li>
+</ul>
+<hr>
+<h3><a id="dependency-flow-roughly" class="heading_anchor" href="#dependency-flow-roughly" aria-hidden="true">#</a>Dependency flow (roughly):</h3>
+<pre><code>base-model.ts, util.ts, coherence-function.ts   (already exist)
+       ↓
+links.ts, topological-sort.ts, path.ts          (no model deps)
+       ↓
+potential-write-proxy.ts                          (needs base-model)
+       ↓
+struct-model.ts, list-model.ts,                  (need proxy + links)
+ordered-map-model.ts, dynamic-struct-model.ts
+       ↓
+simple-models.ts                                  (need base-model)
+       ↓
+type-utils.ts, accessors.ts                      (need models + path)
+       ↓
+compare.ts                                        (needs models + path)
+</code></pre>
+<p>A barrel <code>metamodel.ts</code> (or <code>index.ts</code>) would re-export everything so downstream consumers don’t break.</p>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>

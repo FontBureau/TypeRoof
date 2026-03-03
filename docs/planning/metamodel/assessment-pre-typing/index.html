@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Assessment of the Metamodel Module — Pre Strict Typing - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li class="active"><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel - Assessment Pre Strict Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel - Path to a Standalone Library</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel - Assessment Post Strict Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor - Concepts and Roadmap</a></li></ul></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p>** This file was created with an agent. **</p>
+<h1><a id="assessment-of-the-metamodel-module--pre-strict-typing" class="heading_anchor" href="#assessment-of-the-metamodel-module--pre-strict-typing" aria-hidden="true">#</a>Assessment of the Metamodel Module — Pre Strict Typing</h1>
+<h2><a id="what-it-is" class="heading_anchor" href="#what-it-is" aria-hidden="true">#</a>What it is</h2>
+<p>A <strong>reactive immutable state management framework</strong> — essentially an ORM for in-memory tree-structured state, with:</p>
+<ul>
+<li><strong>Immutable snapshots</strong> with copy-on-write via lazy proxy escalation</li>
+<li><strong>Typed schema</strong> (struct, list, ordered-map, dynamic/polymorphic struct, enum, number, string, boolean, path)</li>
+<li><strong>Foreign keys</strong> with referential integrity</li>
+<li><strong>Coherence functions</strong> (like database triggers — cascading validation/normalization)</li>
+<li><strong>Dependency tracking</strong> with topological ordering</li>
+<li><strong>Serialization/deserialization</strong> with async resource resolution</li>
+<li><strong>Deep state comparison</strong> with path-based diffing</li>
+</ul>
+<h2><a id="architecture-quality" class="heading_anchor" href="#architecture-quality" aria-hidden="true">#</a>Architecture quality</h2>
+<h3><a id="strengths" class="heading_anchor" href="#strengths" aria-hidden="true">#</a>Strengths</h3>
+<ul>
+<li><strong>Deeply thought-out design.</strong> The comments reveal careful reasoning about immutability trade-offs, comparison semantics, draft escalation. This is not “AI slop” — it’s the work of someone who understands data modeling deeply.</li>
+<li><strong>The proxy escalation pattern is clever.</strong> Lazy draft creation only when a write actually occurs avoids unnecessary copying. The <code>_PotentialWriteProxy</code> is essentially a transparent CoW mechanism.</li>
+<li><strong>Topological dependency sorting</strong> ensures initialization order is deterministic and correct. This is the kind of thing most state managers get wrong.</li>
+<li><strong>The <code>ForeignKey</code> system</strong> with null constraints and referential integrity is rare in frontend state management — more akin to a relational database.</li>
+</ul>
+<h3><a id="concerns" class="heading_anchor" href="#concerns" aria-hidden="true">#</a>Concerns</h3>
+<ul>
+<li><strong><code>instanceof</code> cascades in <code>rawCompare</code></strong> — Protocol symbols (<code>IS_LIST_MODEL</code>, <code>IS_ORDERED_MAP_MODEL</code>, etc.) would make this extensible without modifying <code>compare.ts</code> every time a new model type is added.</li>
+<li><strong><code>_AbstractDynamicStructModel</code></strong> is doing a lot — it’s a wrapper, a polymorphic dispatcher, and a struct factory. The <code>IS_WRAPPER_TYPE</code> extraction was a good first step, but the class itself might benefit from decomposition.</li>
+<li><strong>The 6 proxy symbols</strong> (<code>_LOCAL_PROXIES</code>, <code>_OLD_TO_NEW_SLOT</code>, <code>_HAS_DRAFT_FOR_*</code>, <code>_GET_DRAFT_FOR_*</code>) are threaded through every container model identically. This cross-cutting concern could potentially be handled via a mixin or base class method rather than repeated in each model.</li>
+<li><strong><code>collectDependencies</code></strong> is called by all 4 container models with nearly identical patterns — another candidate for lifting into <code>_BaseContainerModel</code>.</li>
+</ul>
+<h2><a id="post-refactoring-module-structure" class="heading_anchor" href="#post-refactoring-module-structure" aria-hidden="true">#</a>Post-refactoring module structure</h2>
+<p>The 17-file decomposition is clean:</p>
+<pre><code>                    util.ts (pure, zero deps)
+                      ↑
+    ┌─────────────────┼─────────────────┐
+    │                 │                 │
+links.ts    topological-sort.ts    serialization.ts
+    │                 │
+    └────────┬────────┘
+             │
+      base-model.ts ← coherence-function.ts, foreign-key.ts
+             ↑
+    ┌────────┼────────┬────────────────┐
+    │        │        │                │
+generic  enum  simple-or-empty  number-model.ts
+    │                 │                │
+    └────────┬────────┘                │
+             │                         │
+      simple-models.ts ← path.ts      │
+             │                         │
+    potential-write-proxy.ts           │
+             ↑                         │
+    ┌────────┼────────┬────────┐       │
+    │        │        │        │       │
+ struct   list    ordered-map  dynamic-struct
+    │        │        │        │
+    └────────┼────────┼────────┘
+             │
+      ┌──────┼──────┐
+      │             │
+  accessors.ts  compare.ts
+             │
+       metamodel.ts (barrel)
+</code></pre>
+<p><strong>No circular dependencies.</strong> Each module has a clear, single responsibility. The barrel preserves backward compatibility.</p>
+<h2><a id="recommendations-for-next-steps" class="heading_anchor" href="#recommendations-for-next-steps" aria-hidden="true">#</a>Recommendations for next steps</h2>
+<ol>
+<li><strong>Protocol symbols for model type checks</strong> — replace <code>instanceof</code> in <code>compare.ts</code> with <code>IS_STRUCT_MODEL</code>, <code>IS_LIST_MODEL</code>, etc. Same pattern as <code>IS_WRAPPER_TYPE</code>.</li>
+<li><strong>Lift proxy boilerplate</strong> — the <code>hasDraft</code>/<code>getDraft</code>/<code>getPotentialWriteProxy</code> pattern repeated in every container model could be a mixin or method on <code>_BaseContainerModel</code>.</li>
+<li><strong><code>collectDependencies</code> → <code>_BaseContainerModel</code></strong> — it’s called identically by all 4 container types.</li>
+<li><strong>Consider splitting <code>base-model.ts</code></strong> (778 lines) — <code>_BaseModel</code>, <code>_BaseSimpleModel</code>, <code>_BaseContainerModel</code> could each get their own file, but the tight coupling between them makes this less clear-cut.</li>
+<li><strong>The trailing design comments</strong> in <code>metamodel.ts</code> (lines 159–197) are valuable documentation but should probably move to a <code>DESIGN.md</code> or similar.</li>
+</ol>
+<h2><a id="overall" class="heading_anchor" href="#overall" aria-hidden="true">#</a>Overall</h2>
+<p>This is a <strong>well-designed, thoughtful system</strong> that suffered from being in a single file. The refactoring preserves all behavior while making each concern independently navigable. The biggest wins are cognitive — a developer can now look at <code>list-model.ts</code> and understand list behavior without scrolling past 2000 lines of unrelated code.</p>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>
