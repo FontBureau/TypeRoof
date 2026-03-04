@@ -374,7 +374,7 @@ export class UILanguageTag extends _BaseContainerComponent {
                         ],
                         UILanguageInput,
                         SubTagModel.fullData,
-                        `${subTag[0].toUpperCase()}${subTag.slice(1)}:`, //  require('label')
+                        `${subTag[0].toUpperCase()}${subTag.slice(1)}`, //  require('label')
                         [`UI_language_subtag_input-${subTag}`], // require('classes')
                     ];
                 },
