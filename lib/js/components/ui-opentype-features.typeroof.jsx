@@ -482,12 +482,6 @@ export class UIOTFeaturesChooser extends _BaseContainerComponent {
                 { zone: "main" },
                 [],
                 StaticNode,
-                <strong class="ui_generic_select-label">Add Feature</strong>,
-            ],
-            [
-                { zone: "main" },
-                [],
-                StaticNode,
                 <select
                     class="ui_opentype_features_chooser-select_tags_filter"
                     onChange={(e) => this._changeSelectFilter(e.target.value)}
