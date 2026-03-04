@@ -1963,9 +1963,19 @@ dimension sequence
     }
 }
 
+/******************************************************************************
+typespec properties > language
+*******************************************************************************/
+
 .ui-language_tag-info {
-    background: white;
-    padding: 0.3em;
+    background: #ddd;
+    margin-top: 0.5em;
+    padding: 0.25em 0.5em;
+
+    > ul {
+        list-style: inside;
+        padding: 0;
+    }
 }
 
 .ui_language_subtag_input {
