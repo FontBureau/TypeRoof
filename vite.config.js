@@ -99,6 +99,7 @@ export default defineConfig({
         rollupOptions: {
             input: {
                 shell: resolve(__dirname, "shell.html"),
+                legacy: resolve(__dirname, "legacy.html"),
                 player: resolve(__dirname, "app/player/index.html"),
             },
         },
