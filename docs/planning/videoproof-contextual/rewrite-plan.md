@@ -21,27 +21,31 @@ agent-created: true
 | 3 | Selector and template model definitions | ✅ Done | `a2fb631` |
 | 4 | Unified word generation engine | ✅ Done | `5c71209` |
 | 5 | Wire template engine into actor | ✅ Done | `802c194` |
+| 5b | Remove ad-hoc format, replace with TODOs | ✅ Done | `1a40f0d` |
 | 6 | Actor model migration | 🔲 Open | — |
-| 7 | Preset definitions | ✅ Done (in Phase 4) | `5c71209` |
+| 7 | Built-in templates as TemplateModel instances | 🔲 Open | — |
 | 8 | Renderer update | ✅ Done (in Phase 5) | `802c194` |
 | 9 | UI integration | 🔲 Open | — |
 
 ### Files Created/Modified
 
-- **`videoproof-contextual-template.mjs`** (469 lines) — New. Pattern compiler,
-  selector compiler, template compiler, char resolution, unified word generation
-  engine, and BUILTIN_TEMPLATES data.
+- **`videoproof-contextual-template.mjs`** (342 lines) — New. Low-level pattern
+  compiler (`compilePattern`, `fill`), char resolution utilities (`resolveKeyToCharSet`,
+  `getSelectedChars`, `resolveChars`, `resolveOuterChars`, `getCharsForKey`),
+  unified word generation engine (`generateWords`, `pairProductGen`).
+  TODOs for: template compilation from TemplateModel, selector compilation
+  from SelectorModel, BUILTIN_TEMPLATES as serialized model data.
 - **`videoproof-contextual-models.mjs`** (207 lines) — New. Selector model hierarchy
-  (leaf/combinator with dynamic type dispatch), TemplateModel, RuleModel,
-  CharGroupsListModel, and new actor/key moment models.
-- **`videoproof-contextual.mjs`** (372 lines, was 495) — Modified. Old business logic
-  (~260 lines) replaced with translation layer (~80 lines) that maps legacy
-  padMode values to the new template engine. Model definitions and renderer
-  preserved for backward compatibility.
-- **Bugfix commit** (`acee9f6`) — Fixed single-digit pattern parsing, key mismatch,
-  missing charConfig for kerning, and removed unused imports.
+  (leaf/combinator with dynamic type dispatch via createDynamicModel),
+  TemplateModel, TemplateRuleModel, CharGroupsListModel, and new
+  actor/key moment models. Uses AxesMath-style self-referential pattern
+  for recursive selector tree.
+- **`videoproof-contextual.mjs`** (289 lines, was 495) — Modified. Old business logic
+  (~260 lines) removed. Current `_getCellContents` is a stub that returns
+  resolved chars without template formatting (pending TemplateModel integration).
+  Legacy model definitions (PadModeModel etc.) preserved for backward compatibility.
 
-### What Remains (Phases 6 + 9)
+### What Remains (Phases 6, 7, 9)
 
 **Phase 6 — Actor Model Migration** requires owner decision:
 - Swap `PadModeModel` + `customPad` → `TemplateModel`
@@ -50,6 +54,12 @@ agent-created: true
 - The new models are defined in `videoproof-contextual-models.mjs` and ready to use
 - `available-actors.mjs` must be updated to import from new models
 - `stage-and-actors.mjs` REGISTERED_GENERIC_KEYMOMENT_FIELDS must be updated
+
+**Phase 7 — Built-in Templates as TemplateModel Instances**:
+- BUILTIN_TEMPLATES must be proper serialized TemplateModel data, not ad-hoc JSON
+- Create TemplateModel instances via metamodel API, serialize, store as constants
+- Deserialize at runtime through normal model path
+- Replicate current pad modes: auto-short, auto-long, kern-upper, kern-mixed, kern-lower
 
 **Phase 9 — UI Integration** requires design decisions:
 - Template selector UI (dropdown for built-in templates + custom)
