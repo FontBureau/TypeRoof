@@ -28,16 +28,18 @@ agent-created: true
 
 ### Files Created/Modified
 
-- **`videoproof-contextual-template.mjs`** (466 lines) — New. Pattern compiler,
+- **`videoproof-contextual-template.mjs`** (469 lines) — New. Pattern compiler,
   selector compiler, template compiler, char resolution, unified word generation
   engine, and BUILTIN_TEMPLATES data.
 - **`videoproof-contextual-models.mjs`** (207 lines) — New. Selector model hierarchy
   (leaf/combinator with dynamic type dispatch), TemplateModel, RuleModel,
   CharGroupsListModel, and new actor/key moment models.
-- **`videoproof-contextual.mjs`** (385 lines, was 495) — Modified. Old business logic
+- **`videoproof-contextual.mjs`** (372 lines, was 495) — Modified. Old business logic
   (~260 lines) replaced with translation layer (~80 lines) that maps legacy
   padMode values to the new template engine. Model definitions and renderer
   preserved for backward compatibility.
+- **Bugfix commit** (`acee9f6`) — Fixed single-digit pattern parsing, key mismatch,
+  missing charConfig for kerning, and removed unused imports.
 
 ### What Remains (Phases 6 + 9)
 
