@@ -23,7 +23,7 @@ agent-created: true
 | 5 | Wire template engine into actor | ✅ Done | `802c194` |
 | 5b | Remove ad-hoc format, replace with TODOs | ✅ Done | `1a40f0d` |
 | 5c | DRY: deduplicate CharGroupModel, getSelectedChars | ✅ Done | `84ff17e` |
-| 6 | Actor model migration | 🔲 Open | — |
+| 6 | Actor model migration | ✅ Done | `867cd9a` |
 | 7 | Built-in templates as TemplateModel instances | 🔲 Open | — |
 | 8 | Renderer update | ✅ Done (in Phase 5) | `802c194` |
 | 9 | UI integration | 🔲 Open | — |
@@ -36,34 +36,36 @@ agent-created: true
   (`generateWords`, `pairProductGen`). Re-exports `getSelectedChars` from
   `ui-char-groups.mjs`. TODOs for: template compilation from TemplateModel,
   selector compilation from SelectorModel, BUILTIN_TEMPLATES as serialized model data.
-- **`videoproof-contextual-models.mjs`** (207 lines) — New. Selector model hierarchy
+- **`videoproof-contextual-models.mjs`** (209 lines) — New. Selector model hierarchy
   (leaf/combinator with dynamic type dispatch via createDynamicModel),
   TemplateModel, TemplateRuleModel, CharGroupsListModel, and new
   actor/key moment models. Uses AxesMath-style self-referential pattern
-  for recursive selector tree.
-- **`videoproof-contextual.mjs`** (282 lines, was 495) — Modified. Old business logic
-  (~260 lines) removed. Uses `CharGroupModel` from videoproof-array.mjs directly
-  (DRY, no more VideoproofContextualCharGroupModel). Current `_getCellContents`
-  is a stub that returns resolved chars without template formatting (pending
-  TemplateModel integration). Legacy PadModeModel preserved for backward compat.
+  for recursive selector tree. Exports all models; `VideoproofContextualActorModel`
+  carries `charGroups` (list) + `template` + `stageBackgroundColor`.
+- **`videoproof-contextual.mjs`** (180 lines, was 495) — Modified. All old model
+  definitions removed — re-exports from `videoproof-contextual-models.mjs`.
+  Current `_getCellContents` reads from `generic/charGroups/0/...` property paths.
+  Template application deferred to Phase 7.
+- **`available-actors.mjs`** — Modified. Updated charGroupsData navigation to use
+  new model structure: `keyMoments → charGroups (list) → CharGroupModel → options`.
+- **`stage-and-actors.mjs`** — Modified. `REGISTERED_GENERIC_KEYMOMENT_FIELDS`:
+  added `charGroups`, removed `padMode` and `customPad`.
 - **`ui-char-groups.mjs`** (658 lines) — Modified. Added `getSelectedChars` as
   the canonical shared function for resolving base+extended chars with interleaving.
 
-### What Remains (Phases 6, 7, 9)
-
-**Phase 6 — Actor Model Migration** requires owner decision:
-- Swap `PadModeModel` + `customPad` → `TemplateModel`
-- Swap `charGroup` + `outerCharGroup` → `CharGroupsListModel` (1-2 items)
-- This is a **breaking change** for saved documents (serialization format changes)
-- The new models are defined in `videoproof-contextual-models.mjs` and ready to use
-- `available-actors.mjs` must be updated to import from new models
-- `stage-and-actors.mjs` REGISTERED_GENERIC_KEYMOMENT_FIELDS must be updated
+### What Remains (Phases 7, 9)
 
 **Phase 7 — Built-in Templates as TemplateModel Instances**:
-- BUILTIN_TEMPLATES must be proper serialized TemplateModel data, not ad-hoc JSON
-- Create TemplateModel instances via metamodel API, serialize, store as constants
-- Deserialize at runtime through normal model path
-- Replicate current pad modes: auto-short, auto-long, kern-upper, kern-mixed, kern-lower
+- BUILTIN_TEMPLATES must be proper deserialized TemplateModel data, not ad-hoc JSON
+- Create TemplateModel instances via metamodel deserialization API
+- Wire `compileTemplate` to compile from TemplateModel state (reading model fields)
+- Wire `compileSelector` to compile from SelectorModel instances
+- Wire compiled templates into `_getCellContents` to apply formatting
+- The `template` field IS registered in `REGISTERED_GENERIC_KEYMOMENT_FIELDS`
+  (to support the future compositor's inheritance system). The broom wagon
+  walks it, producing paths like `generic/template/defaultPattern`,
+  `generic/template/rules/0/pattern`, etc. The renderer reads these from
+  `propertyValuesMap`.
 
 **Phase 9 — UI Integration** requires design decisions:
 - Template selector UI (dropdown for built-in templates + custom)
@@ -321,22 +323,11 @@ Defined in `videoproof-contextual-template.mjs`:
   outer=Latin.Uppercase
 - **latinKernLower** — arity 2, `no$1$2$1ony`, charConfig: inner=Latin.Lowercase
 
-### Translation Layer (Backward Compatibility)
+### Translation Layer
 
-`_PAD_MODE_TO_TEMPLATE_KEY` maps old `PadModeModel` enum values to
-`BUILTIN_TEMPLATES` keys:
-```
-'auto-short'  → 'latinAutoShort'
-'auto-long'   → 'latinAutoLong'
-'kern-upper'  → 'latinKernUpper'
-'kern-mixed'  → 'latinKernMixed'
-'kern-lower'  → 'latinKernLower'
-```
-
-Custom pad mode builds a template spec on the fly:
-```
-{ defaultPattern: `${customPad}$1${customPad}`, rules: [] }
-```
+Removed in Phase 6. The old `PadModeModel` enum and `_PAD_MODE_TO_TEMPLATE_KEY`
+mapping are gone. The new model uses `TemplateModel` directly. Template application
+is pending Phase 7.
 
 ---
 
@@ -371,12 +362,14 @@ Custom pad mode builds a template spec on the fly:
 - New `_getCellContents` calling through template engine
 - Removed ~260 lines of old business logic
 
-### Phase 6: Actor Model Migration 🔲
-- Swap old model imports in `videoproof-contextual.mjs`
-- Update `available-actors.mjs` to use new models
-- Update `stage-and-actors.mjs` REGISTERED_GENERIC_KEYMOMENT_FIELDS
-- **Breaking change**: saved documents with old model format won't load
-- Consider migration path / version detection
+### Phase 6: Actor Model Migration ✅
+- Old model definitions removed from `videoproof-contextual.mjs`
+- Models re-exported from `videoproof-contextual-models.mjs`
+- `available-actors.mjs` updated: charGroupsData navigation uses new model structure
+- `stage-and-actors.mjs`: added `charGroups`, removed `padMode`/`customPad`
+- No backward compat concern — VideoproofContextual never published
+- `_getCellContents` reads `generic/charGroups/0/...` property paths
+- Template field exists on model but not yet read by renderer (Phase 7)
 
 ### Phase 9: UI Integration 🔲
 - Template selector dropdown (built-in templates + custom)
@@ -390,7 +383,7 @@ Custom pad mode builds a template spec on the fly:
 
 - `lib/js/components/actors/videoproof-contextual-template.mjs` — New template engine
 - `lib/js/components/actors/videoproof-contextual-models.mjs` — New model definitions
-- `lib/js/components/actors/videoproof-contextual.mjs` — Actor (old models + new engine)
+- `lib/js/components/actors/videoproof-contextual.mjs` — Actor (re-exports models, stub _getCellContents, renderer)
 - `lib/js/components/actors/videoproof-array.mjs` — Sibling actor, shares CharGroupModel
 - `lib/js/components/actors/available-actors.mjs` — Actor type registration
 - `lib/js/components/layouts/stage-and-actors.mjs` — Layout wiring
