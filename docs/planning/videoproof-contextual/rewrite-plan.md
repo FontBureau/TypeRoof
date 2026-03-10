@@ -22,6 +22,7 @@ agent-created: true
 | 4 | Unified word generation engine | ✅ Done | `5c71209` |
 | 5 | Wire template engine into actor | ✅ Done | `802c194` |
 | 5b | Remove ad-hoc format, replace with TODOs | ✅ Done | `1a40f0d` |
+| 5c | DRY: deduplicate CharGroupModel, getSelectedChars | ✅ Done | `84ff17e` |
 | 6 | Actor model migration | 🔲 Open | — |
 | 7 | Built-in templates as TemplateModel instances | 🔲 Open | — |
 | 8 | Renderer update | ✅ Done (in Phase 5) | `802c194` |
@@ -29,21 +30,24 @@ agent-created: true
 
 ### Files Created/Modified
 
-- **`videoproof-contextual-template.mjs`** (342 lines) — New. Low-level pattern
+- **`videoproof-contextual-template.mjs`** (309 lines) — New. Low-level pattern
   compiler (`compilePattern`, `fill`), char resolution utilities (`resolveKeyToCharSet`,
-  `getSelectedChars`, `resolveChars`, `resolveOuterChars`, `getCharsForKey`),
-  unified word generation engine (`generateWords`, `pairProductGen`).
-  TODOs for: template compilation from TemplateModel, selector compilation
-  from SelectorModel, BUILTIN_TEMPLATES as serialized model data.
+  `resolveChars`, `resolveOuterChars`), unified word generation engine
+  (`generateWords`, `pairProductGen`). Re-exports `getSelectedChars` from
+  `ui-char-groups.mjs`. TODOs for: template compilation from TemplateModel,
+  selector compilation from SelectorModel, BUILTIN_TEMPLATES as serialized model data.
 - **`videoproof-contextual-models.mjs`** (207 lines) — New. Selector model hierarchy
   (leaf/combinator with dynamic type dispatch via createDynamicModel),
   TemplateModel, TemplateRuleModel, CharGroupsListModel, and new
   actor/key moment models. Uses AxesMath-style self-referential pattern
   for recursive selector tree.
-- **`videoproof-contextual.mjs`** (289 lines, was 495) — Modified. Old business logic
-  (~260 lines) removed. Current `_getCellContents` is a stub that returns
-  resolved chars without template formatting (pending TemplateModel integration).
-  Legacy model definitions (PadModeModel etc.) preserved for backward compatibility.
+- **`videoproof-contextual.mjs`** (282 lines, was 495) — Modified. Old business logic
+  (~260 lines) removed. Uses `CharGroupModel` from videoproof-array.mjs directly
+  (DRY, no more VideoproofContextualCharGroupModel). Current `_getCellContents`
+  is a stub that returns resolved chars without template formatting (pending
+  TemplateModel integration). Legacy PadModeModel preserved for backward compat.
+- **`ui-char-groups.mjs`** (658 lines) — Modified. Added `getSelectedChars` as
+  the canonical shared function for resolving base+extended chars with interleaving.
 
 ### What Remains (Phases 6, 7, 9)
 
