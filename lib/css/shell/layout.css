@@ -69,6 +69,10 @@ app menu
         font-weight: 1000;
     }
 
+    > label {
+        min-width: 0;
+    }
+
     > menu {
         display: none;
         position: absolute;
