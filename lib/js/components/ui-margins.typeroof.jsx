@@ -83,7 +83,7 @@ export class UIMargins extends _BaseContainerComponent {
                     [],
                     UIMarginInput,
                     zones,
-                    `${pos[0].toUpperCase()}${pos.slice(1)}:`, //  require('label')
+                    `${pos[0].toUpperCase()}${pos.slice(1)}`, //  require('label')
                     [`ui_margins-input-${pos}`], // require('classes')
                 ];
             }),
