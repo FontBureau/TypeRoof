@@ -24,55 +24,102 @@ agent-created: true
 | 5b | Remove ad-hoc format, replace with TODOs | ✅ Done | `1a40f0d` |
 | 5c | DRY: deduplicate CharGroupModel, getSelectedChars | ✅ Done | `84ff17e` |
 | 6 | Actor model migration | ✅ Done | `867cd9a` |
-| 7 | Built-in templates as TemplateModel instances | 🔲 Open | — |
-| 8 | Renderer update | ✅ Done (in Phase 5) | `802c194` |
-| 9 | UI integration | 🔲 Open | — |
+| 7 | Template compilation from flat property paths | ✅ Done | `12c3c64` |
+| 8 | Model cleanup and refactoring | ✅ Done | `52e25fd` |
+| 9a | Type-driven UI infrastructure | ✅ Done | `044715e`, `3e43f37`, `90c57aa` |
+| 9b | SimpleCharsSelectorModel → CharGroupsListModel | 🔲 Open | — |
+| 9c | Template editor UI components | 🔲 Open | — |
+| 10 | Built-in templates as serialized TemplateModel data | 🔲 Open | — |
 
 ### Files Created/Modified
 
-- **`videoproof-contextual-template.mjs`** (309 lines) — New. Low-level pattern
-  compiler (`compilePattern`, `fill`), char resolution utilities (`resolveKeyToCharSet`,
-  `resolveChars`, `resolveOuterChars`), unified word generation engine
-  (`generateWords`, `pairProductGen`). Re-exports `getSelectedChars` from
-  `ui-char-groups.mjs`. TODOs for: template compilation from TemplateModel,
-  selector compilation from SelectorModel, BUILTIN_TEMPLATES as serialized model data.
-- **`videoproof-contextual-models.mjs`** (209 lines) — New. Selector model hierarchy
-  (leaf/combinator with dynamic type dispatch via createDynamicModel),
-  TemplateModel, TemplateRuleModel, CharGroupsListModel, and new
-  actor/key moment models. Uses AxesMath-style self-referential pattern
-  for recursive selector tree. Exports all models; `VideoproofContextualActorModel`
-  carries `charGroups` (list) + `template` + `stageBackgroundColor`.
-- **`videoproof-contextual.mjs`** (180 lines, was 495) — Modified. All old model
-  definitions removed — re-exports from `videoproof-contextual-models.mjs`.
-  Current `_getCellContents` reads from `generic/charGroups/0/...` property paths.
-  Template application deferred to Phase 7.
-- **`available-actors.mjs`** — Modified. Updated charGroupsData navigation to use
-  new model structure: `keyMoments → charGroups (list) → CharGroupModel → options`.
-- **`stage-and-actors.mjs`** — Modified. `REGISTERED_GENERIC_KEYMOMENT_FIELDS`:
-  added `charGroups`, removed `padMode` and `customPad`.
-- **`ui-char-groups.mjs`** (658 lines) — Modified. Added `getSelectedChars` as
-  the canonical shared function for resolving base+extended chars with interleaving.
+- **`videoproof-contextual-template.mjs`** (431 lines) — Pattern compiler
+  (`compilePattern`, `fill`), char resolution (`resolveKeyToCharSet`,
+  `resolveChars`), template compilation from flat property paths
+  (`compileTemplateFromPropertyValuesMap`, `compileSelectorFromPath`),
+  unified word generation (`generateWords`, `pairProductGen`).
+- **`videoproof-contextual-models.mjs`** (200 lines) — Selector model hierarchy
+  (`SimpleCharsSelectorModel`/`CombinatorCharsSelectorModel` with dynamic type
+  dispatch via `createDynamicModel`), `TemplateRuleModel`, `TemplateModel`,
+  `CharGroupsListModel`, actor/key moment models. Uses AxesMath-style
+  self-referential pattern for recursive selector tree.
+- **`videoproof-contextual.mjs`** (232 lines) — Actor. Re-exports from models.
+  `_getCellContents` reads charGroups + template from flat `propertyValuesMap`
+  paths, calls `compileTemplateFromPropertyValuesMap` → `generateWords`.
+  `VideoproofContextualActorRenderer` handles CSS, typography, word spans.
+- **`type-driven-ui.mjs`** (532 lines) — `UITypeDrivenListItem` (mixin of
+  list item + type-driven widgets), `UITypeDrivenList` (generic list for
+  fixed-type models with per-instance DnD transfer types).
+- **`type-driven-ui-basics.mjs`** (384 lines) — Extracted
+  `_BaseTypeDrivenContainerComponentMixin` as subclass factory for reuse
+  with `_UIBaseListContainerItem`.
+- **`basics.mjs`** — Instance fallback getters for `ITEM_DATA_TRANSFER_TYPE_PATH`
+  and `ITEM_DATA_TRANSFER_TYPE_CREATE` on `_UIBaseList`, enabling per-instance
+  override by `UITypeDrivenList`.
+- **`data-transfer-types.mjs`** — Added `getTransferTypesForModel(Model)`.
+- **`available-actors.mjs`** — Updated charGroupsData navigation.
+- **`stage-and-actors.mjs`** — `REGISTERED_GENERIC_KEYMOMENT_FIELDS`: added
+  `charGroups`, `template`; removed `padMode`, `customPad`.
+- **`ui-char-groups.mjs`** (660 lines) — Added `getSelectedChars`,
+  exported `getCharsFromCharGroups`.
 
-### What Remains (Phases 7, 9)
+---
 
-**Phase 7 — Built-in Templates as TemplateModel Instances**:
-- BUILTIN_TEMPLATES must be proper deserialized TemplateModel data, not ad-hoc JSON
-- Create TemplateModel instances via metamodel deserialization API
-- Wire `compileTemplate` to compile from TemplateModel state (reading model fields)
-- Wire `compileSelector` to compile from SelectorModel instances
-- Wire compiled templates into `_getCellContents` to apply formatting
-- The `template` field IS registered in `REGISTERED_GENERIC_KEYMOMENT_FIELDS`
-  (to support the future compositor's inheritance system). The broom wagon
-  walks it, producing paths like `generic/template/defaultPattern`,
-  `generic/template/rules/0/pattern`, etc. The renderer reads these from
-  `propertyValuesMap`.
+## What Remains (Phases 9b, 9c, 10)
 
-**Phase 9 — UI Integration** requires design decisions:
-- Template selector UI (dropdown for built-in templates + custom)
-- Custom pattern input field (visible when custom template selected)
-- CharGroups list UI: 1 or 2 charGroup selectors
-- Toggle to add/remove second charGroup
-- Preset save/load UI
+### Phase 9b — SimpleCharsSelectorModel → CharGroupsListModel
+
+`SimpleCharsSelectorModel` currently has:
+- `argIndex` (CharsSelectorArgIndexModel) — which charGroup argument to test
+- `keys` (CharsSelectorKeysModel) — list of bare key strings
+- `extended` (BooleanDefaultTrueModel) — single flag for all keys
+
+Change `keys` + `extended` → `charGroups` (CharGroupsListModel):
+- Each charGroup item is a full `CharGroupModel` with `options`, `extended`,
+  `customText`, `customSeparator`
+- Reuses existing `UICharGroupContainer` + `UITypeDrivenList` UI for free
+- The selector matches chars by group membership; font filtering is already
+  done upstream (chars reaching the selector are guaranteed in-font)
+
+Updated `SimpleCharsSelectorModel`:
+```
+SimpleCharsSelectorModel:
+  argIndex: CharsSelectorArgIndexModel (0-8)
+  charGroups: CharGroupsListModel (list of CharGroupModel)
+```
+
+This changes `compileSelectorFromPath` to read `instancePrefix/charGroups/N/options`,
+`.../extended`, etc. instead of `instancePrefix/keys/N` + `instancePrefix/extended`.
+
+### Phase 9c — Template Editor UI Components
+
+UI component tree:
+```
+UIContextualTemplateContainer (_BaseContainerComponent)
+├── defaultPattern: string input
+└── rules: UITemplateRulesList (UITypeDrivenList)
+    └── UITemplateRuleItem (UITypeDrivenListItem, per rule)
+        ├── pattern: string input
+        └── selector: UICharsSelectorContainer (AxesMath-style dynamic type switch)
+            ├── type select dropdown (Simple | Combinator | null)
+            └── instance:
+                Simple → argIndex: number input
+                         charGroups: UITypeDrivenList
+                           └── UITypeDrivenListItem (per charGroup)
+                               └── UICharGroupContainer (options, extended, custom text)
+                Combinator → combineMode: AND/OR select
+                             children: UICharsSelectorList (recursive)
+                               └── UICharsSelectorContainer (same, recursive)
+```
+
+New components: `UIContextualTemplateContainer`, `UICharsSelectorContainer`.
+Everything else reuses existing machinery.
+
+### Phase 10 — Built-in Templates
+
+Create template presets via the UI, serialize as TemplateModel data, store
+in `BUILTIN_TEMPLATES` (replacing the commented-out TODO). These become
+the default templates available in a preset selector.
 
 ---
 
@@ -116,28 +163,19 @@ The file had three layers:
 ### Reference Patterns in Codebase
 
 **AxesMath (`axes-math.mjs`)** — Self-referential dynamic type hierarchy:
-- `_BaseAxesMathItemModel` (abstract base)
 - `AxesMathLocationModel` / `AxesMathLocationsProductModel` / `AxesMathLocationsSumModel`
 - `AxesMathItemModel` (dynamic wrapper with `InternalizedDependency`)
 - Sum contains list of ItemModel → recursion through wrapper
-- Available types created after all type classes exist
+- `UIAxesMathLocationsSumItem`: reads typeKey in `_provisionWidgets`, switches
+  widget tree via `_createWrapperForType`
 
 **StylePatch (`type-spec-models.mjs`)** — Heterogeneous type dispatch:
-- `_BaseStylePatchModel` (abstract base)
-- `SimpleStylePatchModel` (leaf with typography props)
-- `CompositeStylePatchModel` (combinator with list of keys)
+- `SimpleStylePatchModel` (leaf) / `CompositeStylePatchModel` (combinator)
 - `StylePatchModel` (dynamic wrapper)
 
 **`createDynamicModel` (`dynamic-types-pattern.mjs`)** — Factory for dynamic type
 wrappers. With `staticTypes=null` uses `InternalizedDependency` (for self-reference).
 With `staticTypes` provided uses `StaticDependency`.
-
-**ColorModel (`color.mjs`)** — `ForeignKey.ALLOW_NULL` + `SET_NULL` for nullable
-dynamic struct instances.
-
-**`WITH_SELF_REFERENCE` (`struct-model.ts`)** — Symbol for recursive types within
-a single struct (used by `TypeSpecModel`, ProseMirror `JSONModel`). Not needed
-here — the AxesMath pattern (recursion through dynamic wrapper) is cleaner.
 
 ---
 
@@ -186,16 +224,17 @@ chars are included.
 Separates char *classification* (which pattern applies) from char *selection*
 (what the user iterates over).
 
-### 5. Selector Tree (AxesMath/StylePatch Pattern)
+### 5. Selector Tree (AxesMath-Style Dynamic Type)
 
-**Decision**: Selectors use the recursive dynamic type pattern:
-- `_BaseSelectorModel` (abstract base)
-- `LeafSelectorModel`: `{ argIndex, keys, extended }`
-- `CombinatorSelectorModel`: `{ op: AND|OR, children: [SelectorModel...] }`
-- `SelectorModel`: dynamic wrapper with `InternalizedDependency`
+**Decision**: Selectors use the recursive dynamic type pattern via
+`createDynamicModel`:
+- `SimpleCharsSelectorModel`: `{ argIndex, charGroups }`
+- `CombinatorCharsSelectorModel`: `{ combineMode: AND|OR, children: [CharsSelectorModel...] }`
+- `CharsSelectorModel`: dynamic wrapper with `InternalizedDependency`
+  (enables self-reference for recursive combinator trees)
 
 **Rationale**: Enables composable predicates like
-`AND({argIndex: 0, charSet: uppercaseSet}, {argIndex: 1, charSet: lowercaseSet})`
+`AND(simple(0, uppercase), simple(1, lowercase))`
 for kerning rules. Follows established codebase patterns.
 
 ### 6. CharGroups as List (1-2 Items)
@@ -234,6 +273,30 @@ and a user-editable `defaultPattern`. Same engine, same compilation.
 **Rationale**: The user gets direct access to the pattern language (`$1`, `$2`
 syntax). Power users can write kerning patterns directly.
 
+### 10. SimpleCharsSelectorModel Uses CharGroupsListModel
+
+**Decision**: Replace `keys` (list of bare key strings) + `extended` (single
+boolean) on `SimpleCharsSelectorModel` with `charGroups` (`CharGroupsListModel`).
+
+**Rationale**: `CharGroupModel` is already the right shape for "pick some chars
+from char groups" — which is exactly what a selector leaf does. Each charGroup
+carries its own `options`, `extended`, `customText`, `customSeparator`. This
+reuses the full `UICharGroupContainer` + `UITypeDrivenList` UI machinery.
+Selectors don't need font info — chars are already font-filtered upstream
+before reaching the selector.
+
+### 11. Template Compilation from Flat Property Paths
+
+**Decision**: Reconstruct template from the broom wagon's flat `propertyValuesMap`,
+following the `getColorFromPropertyValuesMap` / `getDimensionFromPropertyValuesMap`
+patterns.
+
+**Rationale**: The broom wagon walks the model tree and produces flat paths like
+`generic/template/defaultPattern`, `generic/template/rules/0/pattern`,
+`generic/template/rules/0/selector/instance/charGroups/0/options`, etc.
+`compileTemplateFromPropertyValuesMap` probes these paths to reconstruct
+the compiled template with rules, selector tests, and pattern parts arrays.
+
 ---
 
 ## Architecture
@@ -248,12 +311,15 @@ syntax). Power users can write kerning patterns directly.
 
 ### Selector System
 
-Uncompiled (data/preset definition):
+Uncompiled (model data):
 ```
-AND(
-    leaf(0, ['Latin.Uppercase'], false),
-    leaf(1, ['Latin.Lowercase'], true)
-)
+CombinatorCharsSelectorModel {
+    combineMode: 'AND',
+    children: [
+        SimpleCharsSelectorModel { argIndex: 0, charGroups: [uppercase] },
+        SimpleCharsSelectorModel { argIndex: 1, charGroups: [lowercase] }
+    ]
+}
 ```
 
 Compiled:
@@ -263,12 +329,12 @@ Compiled:
 
 ### Template Structure
 
-Uncompiled:
+Uncompiled (model data):
 ```
-{
+TemplateModel {
     rules: [
-        { selector: leaf(0, ['Latin.Lowercase'], true), pattern: 'nn$1nn' },
-        { selector: leaf(0, ['World.Figures'], false), pattern: '00$100' },
+        { selector: simple(0, [lowercase]), pattern: 'nn$1nn' },
+        { selector: simple(0, [figures]),   pattern: '00$100' },
     ],
     defaultPattern: 'HH$1HH'
 }
@@ -280,9 +346,10 @@ Compiled:
     arity: 1,
     rules: [
         { test: (args) => lowercaseSet.has(args[0]), parts: ["nn", 0, "nn"] },
-        { test: (args) => figuresSet.has(args[0]), parts: ["00", 0, "00"] },
+        { test: (args) => figuresSet.has(args[0]),   parts: ["00", 0, "00"] },
     ],
-    defaultParts: ["HH", 0, "HH"]
+    defaultParts: ["HH", 0, "HH"],
+    stateTokens: [...]
 }
 ```
 
@@ -310,86 +377,44 @@ One code path replacing ~150 lines of branching logic:
 4. Return words array
 ```
 
-### Built-in Templates (BUILTIN_TEMPLATES)
+### UI Component Tree (Phase 9c)
 
-Defined in `videoproof-contextual-template.mjs`:
+```
+UIContextualTemplateContainer (_BaseContainerComponent)
+├── defaultPattern: string input
+└── rules: UITemplateRulesList (UITypeDrivenList)
+    └── UITemplateRuleItem (UITypeDrivenListItem, per rule)
+        ├── pattern: string input
+        └── selector: UICharsSelectorContainer (AxesMath-style dynamic type switch)
+            ├── type select dropdown (Simple | Combinator | null)
+            └── instance:
+                Simple → argIndex: number input
+                         charGroups: UITypeDrivenList
+                           └── UITypeDrivenListItem (per charGroup)
+                               └── UICharGroupContainer (options, extended, custom text)
+                Combinator → combineMode: AND/OR select
+                             children: UICharsSelectorList (recursive)
+                               └── UICharsSelectorContainer (same, recursive)
+```
 
-- **latinAutoShort** — arity 1, rules for lowercase (`nn$1nn`), figures (`00$100`),
-  default `HH$1HH`
-- **latinAutoLong** — arity 1, rules for lowercase (`nnoonnoo$1oonnoonn`),
-  figures (`00110011$111001100`), default `HHOOHH$1HHOOHHOO`
-- **latinKernUpper** — arity 2, `HO$1$2$1OLA`, charConfig: inner=Latin.Uppercase
-- **latinKernMixed** — arity 2, `$1$2nnoy`, charConfig: inner=Latin.Lowercase,
-  outer=Latin.Uppercase
-- **latinKernLower** — arity 2, `no$1$2$1ony`, charConfig: inner=Latin.Lowercase
-
-### Translation Layer
-
-Removed in Phase 6. The old `PadModeModel` enum and `_PAD_MODE_TO_TEMPLATE_KEY`
-mapping are gone. The new model uses `TemplateModel` directly. Template application
-is pending Phase 7.
-
----
-
-## Implementation Plan (Updated)
-
-### Phase 1: Pattern Compiler ✅
-- `compilePattern(pattern)` → parts array
-- `fill(parts, args)` → string
-- `$$` escaping, arity detection
-
-### Phase 2: Selector Compilation ✅
-- `resolveKeyToCharSet` — selector keys → char Set
-- `compileSelectorLeaf`, `compileSelector` — recursive compilation
-- `compileTemplate` — full template compilation
-- Convenience constructors: `AND()`, `OR()`, `leaf()`
-
-### Phase 3: Selector/Template Model Definitions ✅
-- `_BaseSelectorModel`, `LeafSelectorModel`, `CombinatorSelectorModel`
-- `SelectorModel` dynamic wrapper with `InternalizedDependency`
-- `TemplateRuleModel`, `TemplateModel`
-- `CharGroupsListModel` with min/max coherence
-- New `VideoproofContextualKeyMomentModel` (with template + charGroupsList)
-
-### Phase 4: Unified Word Generation Engine ✅
-- `getSelectedChars`, `resolveChars`, `resolveOuterChars`
-- `generateWords(compiledTemplate, innerChars, outerChars)`
-- `BUILTIN_TEMPLATES` — all five Latin template specs
-
-### Phase 5: Wire Engine into Actor ✅
-- `_PAD_MODE_TO_TEMPLATE_KEY` translation layer
-- `_getCompiledTemplate` with caching
-- New `_getCellContents` calling through template engine
-- Removed ~260 lines of old business logic
-
-### Phase 6: Actor Model Migration ✅
-- Old model definitions removed from `videoproof-contextual.mjs`
-- Models re-exported from `videoproof-contextual-models.mjs`
-- `available-actors.mjs` updated: charGroupsData navigation uses new model structure
-- `stage-and-actors.mjs`: added `charGroups`, removed `padMode`/`customPad`
-- No backward compat concern — VideoproofContextual never published
-- `_getCellContents` reads `generic/charGroups/0/...` property paths
-- Template field exists on model but not yet read by renderer (Phase 7)
-
-### Phase 9: UI Integration 🔲
-- Template selector dropdown (built-in templates + custom)
-- Custom pattern text input
-- CharGroups list UI (add/remove second charGroup)
-- Preset save/load
+New components: `UIContextualTemplateContainer`, `UICharsSelectorContainer`.
+Everything else reuses existing machinery.
 
 ---
 
 ## Key Codebase References
 
-- `lib/js/components/actors/videoproof-contextual-template.mjs` — New template engine
-- `lib/js/components/actors/videoproof-contextual-models.mjs` — New model definitions
-- `lib/js/components/actors/videoproof-contextual.mjs` — Actor (re-exports models, stub _getCellContents, renderer)
+- `lib/js/components/actors/videoproof-contextual-template.mjs` — Template engine
+- `lib/js/components/actors/videoproof-contextual-models.mjs` — Model definitions
+- `lib/js/components/actors/videoproof-contextual.mjs` — Actor (re-exports, _getCellContents, renderer)
 - `lib/js/components/actors/videoproof-array.mjs` — Sibling actor, shares CharGroupModel
 - `lib/js/components/actors/available-actors.mjs` — Actor type registration
-- `lib/js/components/layouts/stage-and-actors.mjs` — Layout wiring
-- `lib/js/components/axes-math.mjs` — Reference: self-referential dynamic types
-- `lib/js/components/type-spec-models.mjs` — Reference: StylePatch pattern
-- `lib/js/components/dynamic-types-pattern.mjs` — `createDynamicModel` helper
-- `lib/js/components/ui-char-groups.mjs` — Char group utilities
+- `lib/js/components/layouts/stage-and-actors.mjs` — Layout wiring, KeyMomentController
+- `lib/js/components/type-driven-ui.mjs` — UITypeDrivenList/Item, uiElementsMap
+- `lib/js/components/type-driven-ui-basics.mjs` — _BaseTypeDrivenContainerComponentMixin
+- `lib/js/components/axes-math.mjs` — Reference: UIAxesMathLocationsSumItem pattern
+- `lib/js/components/dynamic-types-pattern.mjs` — createDynamicModel helper
+- `lib/js/components/data-transfer-types.mjs` — getTransferTypesForModel
+- `lib/js/components/ui-char-groups.mjs` — UICharGroupContainer, char group utilities
+- `lib/js/components/basics.mjs` — _UIBaseList, DnD transfer type infrastructure
 - `lib/assets/glyph-groups.json` — Char database (Latin, Greek, Cyrillic, World)
-- `docs/planning/compositor/roadmap.md` — Future inheritance system
