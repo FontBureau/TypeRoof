@@ -27,8 +27,8 @@ agent-created: true
 | 7 | Template compilation from flat property paths | ✅ Done | `12c3c64` |
 | 8 | Model cleanup and refactoring | ✅ Done | `52e25fd` |
 | 9a | Type-driven UI infrastructure | ✅ Done | `044715e`, `3e43f37`, `90c57aa` |
-| 9b | SimpleCharsSelectorModel → CharGroupsListModel | 🔲 Open | — |
-| 9c | Template editor UI components | 🔲 Open | — |
+| 9b | SimpleCharsSelectorModel → CharGroupsListModel | ✅ Done | `dec835f` |
+| 9c | Template editor UI components | ✅ Done | `d26b1f6` |
 | 10 | Built-in templates as serialized TemplateModel data | 🔲 Open | — |
 
 ### Files Created/Modified
@@ -47,7 +47,7 @@ agent-created: true
   `_getCellContents` reads charGroups + template from flat `propertyValuesMap`
   paths, calls `compileTemplateFromPropertyValuesMap` → `generateWords`.
   `VideoproofContextualActorRenderer` handles CSS, typography, word spans.
-- **`type-driven-ui.mjs`** (532 lines) — `UITypeDrivenListItem` (mixin of
+- **`type-driven-ui.mjs`** (660 lines) — `UITypeDrivenListItem` (mixin of
   list item + type-driven widgets), `UITypeDrivenList` (generic list for
   fixed-type models with per-instance DnD transfer types).
 - **`type-driven-ui-basics.mjs`** (384 lines) — Extracted
@@ -65,55 +65,46 @@ agent-created: true
 
 ---
 
-## What Remains (Phases 9b, 9c, 10)
+## What Remains (Phase 10)
 
-### Phase 9b — SimpleCharsSelectorModel → CharGroupsListModel
+### Completed: Phase 9b — SimpleCharsSelectorModel → CharGroupsListModel (`dec835f`)
 
-`SimpleCharsSelectorModel` currently has:
-- `argIndex` (CharsSelectorArgIndexModel) — which charGroup argument to test
-- `keys` (CharsSelectorKeysModel) — list of bare key strings
-- `extended` (BooleanDefaultTrueModel) — single flag for all keys
+Replaced `keys` (list of bare strings) + `extended` (single boolean) with
+`charGroups` (CharGroupsListModel). Each selector leaf now carries full
+`CharGroupModel` items. Updated `compileSelectorFromPath` accordingly.
+Deleted `CharsSelectorKeyModel`, `CharsSelectorKeysModel`, removed
+`BooleanDefaultTrueModel` import.
 
-Change `keys` + `extended` → `charGroups` (CharGroupsListModel):
-- Each charGroup item is a full `CharGroupModel` with `options`, `extended`,
-  `customText`, `customSeparator`
-- Reuses existing `UICharGroupContainer` + `UITypeDrivenList` UI for free
-- The selector matches chars by group membership; font filtering is already
-  done upstream (chars reaching the selector are guaranteed in-font)
+### Completed: Phase 9c — Template Editor UI Components (`d26b1f6`)
 
-Updated `SimpleCharsSelectorModel`:
-```
-SimpleCharsSelectorModel:
-  argIndex: CharsSelectorArgIndexModel (0-8)
-  charGroups: CharGroupsListModel (list of CharGroupModel)
-```
+`UICharsSelectorContainer`: dynamic-type container for `CharsSelectorModel`,
+follows `UILeadingAlgorithm` pattern (`_BaseDynamicCollectionContainerComponent`
++ `_BaseTypeDrivenContainerComponentMixin`). GenericSelect dropdown for
+`selectorTypeKey`, dynamic widget provisioning for `instance` field.
 
-This changes `compileSelectorFromPath` to read `instancePrefix/charGroups/N/options`,
-`.../extended`, etc. instead of `instancePrefix/keys/N` + `instancePrefix/extended`.
-
-### Phase 9c — Template Editor UI Components
+`uiElementsMap` entries added for: `TemplateModel` → `UITypeDrivenContainer`,
+`TemplateRulesModel` → `UITypeDrivenList`, `CharsSelectorModel` →
+`UICharsSelectorContainer`, `CharsSelectorItemsModel` → `UITypeDrivenList`.
 
 UI component tree:
 ```
-UIContextualTemplateContainer (_BaseContainerComponent)
-├── defaultPattern: string input
-└── rules: UITemplateRulesList (UITypeDrivenList)
-    └── UITemplateRuleItem (UITypeDrivenListItem, per rule)
-        ├── pattern: string input
-        └── selector: UICharsSelectorContainer (AxesMath-style dynamic type switch)
-            ├── type select dropdown (Simple | Combinator | null)
-            └── instance:
-                Simple → argIndex: number input
-                         charGroups: UITypeDrivenList
-                           └── UITypeDrivenListItem (per charGroup)
-                               └── UICharGroupContainer (options, extended, custom text)
-                Combinator → combineMode: AND/OR select
-                             children: UICharsSelectorList (recursive)
-                               └── UICharsSelectorContainer (same, recursive)
+TemplateModel → UITypeDrivenContainer
+├── defaultPattern: StringModel → UILineOfTextInput
+└── rules: TemplateRulesModel → UITypeDrivenList
+    └── TemplateRuleModel → UITypeDrivenListItem
+        ├── pattern: StringModel → UILineOfTextInput
+        └── selector: CharsSelectorModel → UICharsSelectorContainer
+            ├── selectorTypeKey: GenericSelect dropdown (Simple | Combinator | null)
+            └── instance (dynamic):
+                Simple → UITypeDrivenContainer
+                │  ├── argIndex: NumberModel → UINumberAndRangeInput
+                │  └── charGroups: CharGroupsListModel → UITypeDrivenList
+                │      └── CharGroupModel → UICharGroupContainer
+                Combinator → UITypeDrivenContainer
+                   ├── combineMode: EnumModel → UISelectInput
+                   └── children: CharsSelectorItemsModel → UITypeDrivenList
+                       └── CharsSelectorModel → UICharsSelectorContainer (recursive)
 ```
-
-New components: `UIContextualTemplateContainer`, `UICharsSelectorContainer`.
-Everything else reuses existing machinery.
 
 ### Phase 10 — Built-in Templates
 
