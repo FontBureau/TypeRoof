@@ -17,3 +17,6 @@ dist
 
 # Eleventy build output
 _site
+
+# agentic tool
+.goosehints
