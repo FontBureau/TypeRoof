@@ -2091,3 +2091,26 @@ tooltips
 }
 
 /**************************************************************************** */
+
+/* Contextual template editor: summary-first, expand active path */
+.ui_contextual_template_rule_item-contents,
+.ui_chars_selector_container-contents {
+    display: none;
+    margin-top: .2rem;
+}
+
+.ui_contextual_template_rule_item-summary,
+.ui_chars_selector_container-summary {
+    font-size: .9em;
+}
+
+.ui_contextual_template_rule_item:focus-within > .ui_contextual_template_rule_item-contents,
+.ui_chars_selector_container:focus-within > .ui_chars_selector_container-contents {
+    display: block;
+}
+
+.ui_contextual_template_rule_item:focus-within > .ui_contextual_template_rule_item-summary,
+.ui_chars_selector_container:focus-within > .ui_chars_selector_container-summary {
+    opacity: 1;
+    font-weight: 600;
+}
