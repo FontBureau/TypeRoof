@@ -13,10 +13,8 @@ import {
     createStylePatch,
 } from "../../type-spec-models.mjs";
 import { FontSelect } from "../../font-loading.mjs";
-import {
-    UITypeDrivenContainer,
-    genericTypeToUIElement,
-} from "../../type-driven-ui.mjs";
+import { UITypeDrivenContainer } from "../../type-driven-ui-basics.mjs";
+import { genericTypeToUIElement } from "../../type-driven-ui.mjs";
 import { typeSpecGetDefaults } from "./defaults.mjs";
 import {
     SPECIFIC,
