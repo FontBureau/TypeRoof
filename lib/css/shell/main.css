@@ -948,6 +948,24 @@ select and drag
     white-space: nowrap;
 }
 
+/* Virtual-scroll contextual renderer */
+.actor_renderer-videoproof_contextual {
+    overflow: hidden;
+    /* Fill the layer container (stage layer is 100% x 100% of stage) */
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    /* Remove the outline that appears on focus (tabindex="0") */
+    outline: none;
+}
+
+.actor_renderer-videoproof_contextual.fixed-lines span {
+    margin-right: calc(1em * var(--gap-em, 0));
+}
+.actor_renderer-videoproof_contextual.fixed-lines span.end-of-line {
+    margin-right: 0;
+}
+
 .actor_renderer-videoproof_array {
     /**
      * This way it scrolls vertically within the stage.
