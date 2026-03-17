@@ -948,15 +948,22 @@ select and drag
     white-space: nowrap;
 }
 
-/* Virtual-scroll contextual renderer */
-.actor_renderer-videoproof_contextual {
-    overflow: hidden;
-    /* Fill the layer container (stage layer is 100% x 100% of stage) */
+/* Virtual-scroll contextual renderer:
+ *   scroll_container (overflow-y: auto, native scrollbar)
+ *     spacer (height: 10000%, inline style — creates scroll range)
+ *     content element (position: sticky; top: 0 — stays pinned)
+ */
+.actor_renderer-videoproof_contextual-scroll_container {
+    overflow-y: auto;
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-    /* Remove the outline that appears on focus (tabindex="0") */
     outline: none;
+}
+
+.actor_renderer-videoproof_contextual {
+    position: sticky;
+    top: 0;
 }
 
 .actor_renderer-videoproof_contextual.fixed-lines span {
