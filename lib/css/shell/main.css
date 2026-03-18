@@ -858,11 +858,12 @@ ui plain select
 .ui_plain_select {
     align-items: center;
     display: flex;
-    gap: 0.25em;
+    gap: 0.75em;
     padding: 0.25em 0;
 
     label,
     .ui_generic_select-label {
+        text-align: right;
         width: 35%;
     }
 
@@ -2009,11 +2010,12 @@ typespec properties > language
 .ui_language_subtag_input {
     align-items: center;
     display: flex;
-    gap: var(--gap-size);
+    gap: 0.75em;
     padding: 0.25em 0;
 
     > label {
-        width: 25%;
+        text-align: right;
+        width: 35%;
     }
 
     > input {
