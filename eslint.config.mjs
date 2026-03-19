@@ -48,9 +48,9 @@ export default [
             "no-sparse-arrays": "off",
             "no-undef": ["error", { typeof: true }],
             "no-unused-vars": [
-                "warn",
+                "error",
                 {
-                    varsIgnorePattern: "React|h",
+                    varsIgnorePattern: "^(React|h)$",
                 },
             ],
             // generators without a yield are perfectly fine and  the behavior is well defined
