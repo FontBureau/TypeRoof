@@ -2084,7 +2084,7 @@ tooltips
     align-self: anchor-center;
     left: calc(anchor(right) + 5px);
     margin: 0;
-    padding: 1em;
+    padding: 0.5em;
     background-color: var(--tooltip-bg-color);
     border: 0;
     color: var(--tooltip-text-color);
