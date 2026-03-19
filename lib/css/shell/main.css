@@ -872,12 +872,12 @@ ui plain select
     }
 
     input[type="range"] {
-        width: 20%;
+        width: 22%;
     }
 
     button {
         margin-left: auto;
-        width: 20%;
+        width: 18%;
     }
 }
 
