@@ -236,13 +236,14 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
             ["maxVal", "max"],
             ["minVal", "min"],
             ["defaultValue", "default"],
-            // , ['???', 'step']
         ] as const) {
             const val = (this as unknown as Record<string, number | null>)[
                 here
             ];
             if (val != null) entries.push([there, val]);
         }
+        if (this.toFixedDigits != null)
+            entries.push(["step", 10 ** -this.toFixedDigits]);
         return Object.fromEntries(entries);
     }
 
