@@ -8,6 +8,15 @@ a:visited {
 }
 
 /******************************************************************************
+abbr
+*******************************************************************************/
+
+abbr {
+    text-decoration-line: underline;
+    text-decoration-style: dotted;
+}
+
+/******************************************************************************
 button / select / input / textarea
 *******************************************************************************/
 
@@ -28,6 +37,7 @@ textarea {
     background-color: var(--background-color);
     border: 1px solid var(--input-border-color);
     font-size: inherit;
+    max-width: 100%;
 }
 
 select:disabled,

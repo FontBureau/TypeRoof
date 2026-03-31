@@ -93,6 +93,10 @@ layout select
     }
 }
 
+.ui_layout_select-label {
+    display: none;
+}
+
 /******************************************************************************
 document manager
 *******************************************************************************/
@@ -639,10 +643,13 @@ color patch
 *******************************************************************************/
 
 .ui_color_patch {
+    display: inline-block;
+    margin-right: 0.25em;
+    vertical-align: middle;
     position: relative;
 
-    --width: 1.5em;
-    --height: 1.3em;
+    --width: 1.2em;
+    --height: 1.2em;
 
     width: var(--width);
     height: var(--height);
@@ -706,49 +713,38 @@ processed properties
 *******************************************************************************/
 
 .ui-show_processed_properties {
-    font-variation-settings: "wdth" 50;
+    font-variation-settings: "wdth" 80;
     margin: 1.5em 0;
 }
 
 .ui-show_processed_properties h4 {
-    background-color: #fff;
-    border: 1px solid #999;
     margin: 0;
-    margin-top: -1px;
+    margin-top: 1em;
     margin-bottom: -1px;
-    padding: 0.5em;
+    padding: 0.5em 0;
 }
 
 .ui-show_processed_properties-list {
     background-color: #fff;
     box-sizing: border-box;
-    display: table;
-    border-collapse: collapse;
     margin: 0 !important;
     padding: 0;
-    table-layout: fixed;
     width: 100%;
 }
 
 .ui-show_processed_properties-item {
-    display: table-row;
-}
-
-.ui-show_processed_properties-label,
-.ui-show_processed_properties-value {
-    display: table-cell;
     border: 1px solid #999;
+    display: flex;
+    gap: 2em;
+    margin-top: -1px;
     padding: 0.5em;
-    overflow-wrap: break-word;
-}
-
-.ui-show_processed_properties-label {
-    width: 65%;
+    justify-content: space-between;
 }
 
 .ui-show_processed_properties-value {
     font-weight: bold;
-    width: 35%;
+    text-align: right;
+    word-break: break-all;
 }
 
 /******************************************************************************
@@ -858,13 +854,16 @@ ui plain select
 *******************************************************************************/
 
 .number-and-range-input,
+.ui_generic_select,
 .ui_plain_select {
     align-items: center;
     display: flex;
-    gap: 0.25em;
+    gap: 0.75em;
     padding: 0.25em 0;
 
-    label {
+    label,
+    .ui_generic_select-label {
+        text-align: right;
         width: 35%;
     }
 
@@ -873,12 +872,12 @@ ui plain select
     }
 
     input[type="range"] {
-        width: 30%;
+        width: 22%;
     }
 
     button {
         margin-left: auto;
-        width: 20%;
+        width: 18%;
     }
 }
 
@@ -1336,6 +1335,10 @@ select and drag
     display: initial;
 }
 
+.ui_links_map-tools > .ui_generic_select {
+    display: flex;
+}
+
 .ui_node_spec_to_type_spec_links_map-tools > * {
     /* otherwise some are initially inline and we get a line break
      * when we focus
@@ -1361,6 +1364,10 @@ select and drag
 /* needs more specificity than the rule above */
 .ui_links_map-tools.ui_links_map-tools:focus-within > * {
     display: block;
+}
+
+.ui_links_map-tools.ui_links_map-tools:focus-within > .ui_generic_select {
+    display: flex;
 }
 
 .ui_links_map-item_value {
@@ -1736,6 +1743,28 @@ dimension sequence
     display: block;
 }
 
+.ui_generic_struct_container {
+    h3 {
+        --font-size-change: 1.25;
+
+        font-variation-settings: "opsz" 12;
+    }
+
+    > .ui-language_tag,
+    > .ui_leading-algorithm_container,
+    > .ui-margins,
+    > .ui_opentype_features_chooser,
+    > .manual_axes_locations {
+        margin-bottom: 2em;
+    }
+
+    > .ui-language_tag,
+    > .number-and-range-input + .ui_color_chooser,
+    > .ui_opentype_features_chooser {
+        margin-top: 2em;
+    }
+}
+
 /**************************************************************************** */
 
 .dialog-multi_select_fonts {
@@ -1963,19 +1992,30 @@ dimension sequence
     }
 }
 
+/******************************************************************************
+typespec properties > language
+*******************************************************************************/
+
 .ui-language_tag-info {
-    background: white;
-    padding: 0.3em;
+    background: #ddd;
+    margin-top: 0.5em;
+    padding: 0.25em 0.5em;
+
+    > ul {
+        list-style: inside;
+        padding: 0;
+    }
 }
 
 .ui_language_subtag_input {
     align-items: center;
     display: flex;
-    gap: var(--gap-size);
+    gap: 0.75em;
     padding: 0.25em 0;
 
     > label {
-        width: 25%;
+        text-align: right;
+        width: 35%;
     }
 
     > input {
@@ -2019,6 +2059,17 @@ dimension sequence
 }
 
 /******************************************************************************
+checkbox
+*******************************************************************************/
+
+.ui_checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
+    width: max-content;
+}
+
+/******************************************************************************
 tooltips
 *******************************************************************************/
 
@@ -2033,7 +2084,7 @@ tooltips
     align-self: anchor-center;
     left: calc(anchor(right) + 5px);
     margin: 0;
-    padding: 1em;
+    padding: 0.5em;
     background-color: var(--tooltip-bg-color);
     border: 0;
     color: var(--tooltip-text-color);

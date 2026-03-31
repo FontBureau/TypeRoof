@@ -327,30 +327,29 @@ export class UILanguageInput extends _BaseComponent {
 export class UILanguageTag extends _BaseContainerComponent {
     constructor(widgetBus, _zones) {
         const { h } = widgetBus.domTool,
-            infoTarget = <div></div>,
             info = (
                 <div class="ui-language_tag-info">
-                    <h4>Language Tag Info</h4>
-                    {infoTarget}
-                    <hr />• Help:{" "}
-                    <a
-                        class="external-link"
-                        href="https://www.w3.org/International/questions/qa-choosing-language-tags"
-                        target="_blank"
-                        rel="noreferrer"
-                    >
-                        Choosing a Language Tag
-                    </a>
-                    <br />• Data is based on the{" "}
-                    <a
-                        class="external-link"
-                        href="https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry"
-                        target="_blank"
-                        rel="noreferrer"
-                    >
-                        IANA Language Subtag Registry
-                    </a>
-                    <br />
+                    <h4>Related Resources</h4>
+                    <ul>
+                        <li>
+                            <a
+                                href="https://www.w3.org/International/questions/qa-choosing-language-tags"
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                Choosing a Language Tag
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href="https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry"
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                IANA Language Subtag Registry
+                            </a>
+                        </li>
+                    </ul>
                 </div>
             ),
             element = (
@@ -358,11 +357,7 @@ export class UILanguageTag extends _BaseContainerComponent {
                     <h3 class="ui-language_tag-label">Language</h3>
                 </div>
             ),
-            zones = new Map([
-                ..._zones,
-                ["main", element],
-                ["info", infoTarget],
-            ]);
+            zones = new Map([..._zones, ["main", element]]);
         widgetBus.insertElement(element);
         super(widgetBus, zones, [
             ...Array.from(LanguageTagModel.fields).map(
@@ -374,7 +369,7 @@ export class UILanguageTag extends _BaseContainerComponent {
                         ],
                         UILanguageInput,
                         SubTagModel.fullData,
-                        `${subTag[0].toUpperCase()}${subTag.slice(1)}:`, //  require('label')
+                        `${subTag[0].toUpperCase()}${subTag.slice(1)}`, //  require('label')
                         [`UI_language_subtag_input-${subTag}`], // require('classes')
                     ];
                 },
