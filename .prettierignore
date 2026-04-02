@@ -20,6 +20,7 @@
 !**/*.yml
 !**/shell/*.css
 !lib/js/**/*.css
+!**/simple-ramp/*.js
 
 # Ignore glyph-groups.yaml
 lib/assets/glyph-groups.yaml
