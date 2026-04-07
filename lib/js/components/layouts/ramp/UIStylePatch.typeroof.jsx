@@ -11,7 +11,6 @@ import {
 } from "../../registered-properties-definitions.mjs";
 import { ForeignKey } from "../../../metamodel.mjs";
 import { TYPESPEC_PPS_MAP } from "./TYPESPEC_PPS_MAP.mjs";
-import { getStylePatchFullLabel } from "../../type-spec-models.mjs";
 import { UICompositeStylePatch } from "./UICompositeStylePatch.typeroof.jsx";
 
 function getRequireUpdateDefaultsFn(updateDefaultsNames) {
