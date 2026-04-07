@@ -1,3 +1,7 @@
+import { _BaseComponent } from "../../basics.mjs";
+import { SPECIFIC } from "../../registered-properties-definitions.mjs";
+import { HierarchicalScopeTypeSpecnion } from "./_BaseTypeSpecnion.typeroof.jsx";
+
 export class TypeSpecLiveProperties extends _BaseComponent {
     constructor(
         widgetBus,

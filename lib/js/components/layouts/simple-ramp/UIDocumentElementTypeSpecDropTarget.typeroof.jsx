@@ -1,3 +1,5 @@
+import { _BaseDropTarget } from "../../generic.mjs";
+
 export class UIDocumentElementTypeSpecDropTarget extends _BaseDropTarget {
     static BASE_CLASS = "ui_document_element_typespec";
 

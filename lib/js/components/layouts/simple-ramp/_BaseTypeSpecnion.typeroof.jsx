@@ -1,3 +1,6 @@
+import { SyntheticValue } from "./SyntheticValue.js";
+import { topologicalSortKahn } from "../../../metamodel.mjs";
+
 function mapSetProperties(map, ...propertiesArgs) {
     for (const properties of propertiesArgs)
         for (const [propertyName, propertyValue] of properties)

@@ -1,3 +1,15 @@
+import { _UIBaseMap } from "../../basics.mjs";
+import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
+import {
+    availableStylePatchTypes,
+    getStylePatchFullLabel,
+    validateStyleName,
+    createStylePatch,
+} from "../../type-spec-models.mjs";
+import { SimpleSelect } from "./SimpleSelect.typeroof.jsx";
+import { MapSelectButton } from "./MapSelectButton.typeroof.jsx";
+import { Path } from "../../../metamodel.mjs";
+
 export class UIStylePatchesMap extends _UIBaseMap {
     // jshint ignore: start
     static ROOT_CLASS = `ui_style_patches_map`;

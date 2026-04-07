@@ -1,3 +1,7 @@
+import { _BaseDynamicMapContainerComponent } from "../../basics.mjs";
+import { _AbstractListModel } from "../../../metamodel.mjs";
+import { UIDocumentNode } from "./UIDocumentNode.typeroof.jsx";
+
 // It's interesting on the one hand, each segment requires it's own
 // control, e.g. to change the typeSpecLink, on the other hand,
 // it requires the data to render properly, and that is very depending

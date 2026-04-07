@@ -1,3 +1,9 @@
+import { _BaseComponent } from "../../basics.mjs";
+import { COLOR } from "../../registered-properties-definitions.mjs";
+import { actorApplyCSSColors } from "../../actors/properties-util.mjs";
+import { getRegisteredPropertySetup } from "../../registered-properties.mjs";
+import { setLanguageTag } from "../../language-tags.typeroof.jsx";
+
 export class ProseMirrorGeneralDocumentStyler extends _BaseComponent {
     update(changedMap) {
         const element = this.widgetBus.getWidgetById("proseMirror").element;

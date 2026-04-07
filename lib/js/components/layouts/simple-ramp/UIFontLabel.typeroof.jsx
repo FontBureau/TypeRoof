@@ -1,4 +1,6 @@
-import { DynamicTag } from "../generic.mjs";
+import { DynamicTag } from "../../generic.mjs";
+import { identity } from "../../../util.mjs";
+import { ForeignKey } from "../../../metamodel.mjs";
 
 export class UIFontLabel extends DynamicTag {
     constructor(

@@ -1,3 +1,10 @@
+import { _BaseContainerComponent } from "../../basics.mjs";
+import { UIDocumentNodes } from "./UIDocumentNodes.typeroof.jsx";
+import {
+    UIDocumentTypeSpecStyler,
+    getTypeSpecPropertiesIdMethod,
+} from "../../prosemirror/type-spec.typeroof.jsx";
+
 // This should inject it's own e.g. <p> element.
 // It's interesting, the "nodesContainer" might have to change when the
 // typeSpec changes! Thus, creating nodesContainer in the constructor might

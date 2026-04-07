@@ -1,3 +1,12 @@
+import { _BaseByPathContainerComponent } from "./_BaseByPathContainerComponent.typeroof.jsx";
+import { _NOTDEF, _getFallback } from "./typeSpecGetDefaults.js";
+import { StaticTag } from "../../generic.mjs";
+import {
+    UITypeDrivenContainer,
+    genericTypeToUIElement,
+} from "../../type-driven-ui.mjs";
+import { NODESPEC_PPS_MAP } from "./NODESPEC_PPS_MAP.js";
+
 /**
  * Here's a good lesson, compared to typeSpecGetDefaults this is trivial,
  * because we don't have liveProperties

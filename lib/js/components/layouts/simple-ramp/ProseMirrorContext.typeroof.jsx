@@ -1,3 +1,12 @@
+import { _BaseContainerComponent } from "../../basics.mjs";
+import {
+    UIProseMirrorMenu,
+    TypeSpecSubscriptions,
+} from "../../prosemirror/type-spec.typeroof.jsx";
+import { ProseMirror } from "../../prosemirror/integration.typeroof.jsx";
+import { schemaSpec as proseMirrorDefaultSchema } from "../../prosemirror/default-schema";
+import { ProseMirrorGeneralDocumentStyler } from "./ProseMirrorGeneralDocumentStyler.typeroof.jsx";
+
 /**
  * This is basically the central control switchboard for the ProseMirror
  * integration. So far, especially the IDs are required by the components

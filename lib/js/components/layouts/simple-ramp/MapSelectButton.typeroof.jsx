@@ -1,3 +1,5 @@
+import { DynamicTag } from "../../generic.mjs";
+
 export class MapSelectButton extends DynamicTag {
     constructor(widgetBus, tag, attr, eventListeners, ...restArgs) {
         super(widgetBus, tag, attr, ...restArgs);

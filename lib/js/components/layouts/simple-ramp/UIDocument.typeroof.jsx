@@ -1,3 +1,6 @@
+import { _BaseContainerComponent } from "../../basics.mjs";
+import { UIDocumentNodes } from "./UIDocumentNodes.typeroof.jsx";
+
 // Currently unused, but the way to render a document equivalent
 // to the rendering of ProseMirror, without ProseMirror
 export class UIDocument extends _BaseContainerComponent {

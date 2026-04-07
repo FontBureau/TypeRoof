@@ -1,3 +1,11 @@
+import { _BaseByPathContainerComponent } from "./_BaseByPathContainerComponent.typeroof.jsx";
+import { StaticTag } from "../../generic.mjs";
+import {
+    StylePatchModel,
+    getStylePatchFullLabel,
+} from "../../type-spec-models.mjs";
+import { UIStylePatch } from "./UIStylePatch.typeroof.jsx";
+
 export class StylePatchPropertiesManager extends _BaseByPathContainerComponent {
     constructor(widgetBus, _zones) {
         super(

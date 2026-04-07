@@ -1,3 +1,10 @@
+import { _UIBaseMap } from "../../basics.mjs";
+import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
+import { MapSelectButton } from "./MapSelectButton.typeroof.jsx";
+import { identity } from "../../../util.mjs";
+import { WasteBasketDropTarget } from "../../generic.mjs";
+import { Path } from "../../../metamodel.mjs";
+
 // based on a copy of UIStylePatchesMap
 export class UINodeSpecMap extends _UIBaseMap {
     static ROOT_CLASS = `ui_node_spec_map`;

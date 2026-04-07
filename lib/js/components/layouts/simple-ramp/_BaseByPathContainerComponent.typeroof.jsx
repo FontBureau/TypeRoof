@@ -1,3 +1,10 @@
+import {
+    _CommonContainerComponent,
+    _BaseDynamicCollectionContainerComponent,
+} from "../../basics.mjs";
+import { Path, getEntry } from "../../../metamodel.mjs";
+import { StaticTag } from "../../generic.mjs";
+
 /**
  * FIXME: this is also kind of a repeated pattern TypeSpecPropertiesManager
  * looks similar, however the details are a bit different because of the

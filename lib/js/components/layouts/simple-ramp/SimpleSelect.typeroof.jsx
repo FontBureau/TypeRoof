@@ -1,3 +1,6 @@
+import { _BaseComponent } from "../../basics.mjs";
+import { PlainSelectInput } from "../../generic.mjs";
+
 export class SimpleSelect extends _BaseComponent {
     constructor(widgetBus, label, items, changeHandler = null) {
         super(widgetBus);

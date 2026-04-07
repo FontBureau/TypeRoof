@@ -1,4 +1,6 @@
-import { _BaseComponent } from "../basics.mjs";
+import { _BaseComponent } from "../../basics.mjs";
+import { createIcon } from "../../icons.mjs";
+import { Path, getEntry } from "../../../metamodel.mjs";
 
 function _uniqueKey(keys) {
     const keysSet = new Set(keys),

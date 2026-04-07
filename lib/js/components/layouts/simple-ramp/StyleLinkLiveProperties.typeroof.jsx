@@ -1,3 +1,5 @@
+import { _BaseComponent } from "../../basics.mjs";
+
 export class StyleLinkLiveProperties extends _BaseComponent {
     constructor(widgetBus) {
         super(widgetBus);

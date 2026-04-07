@@ -1,3 +1,7 @@
+import { _BaseTreeEditor } from "./_BaseTreeEditor.typeroof.jsx";
+import { TypeSpecModel } from "../../type-spec-models.mjs";
+import { Path } from "../../../metamodel.mjs";
+
 export class TypeSpecTreeEditor extends _BaseTreeEditor {
     _isContainerItem(item) {
         //return getActorTreeNodeType(actor) === getActorTreeNodeType.CONTAINER_NODE_TYPE;

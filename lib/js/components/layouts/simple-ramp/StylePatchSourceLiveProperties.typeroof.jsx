@@ -1,3 +1,6 @@
+import { _BaseComponent } from "../../basics.mjs";
+import { STYLE_PATCH_PROPERTIES_GENERATORS } from "./_getTypeSpecDefaultsMap.js";
+
 /**
  * This is to determine and cache the set of properties of a StylePatch.
  * for a SimpleStylePatch, this would not really be necessary, but the

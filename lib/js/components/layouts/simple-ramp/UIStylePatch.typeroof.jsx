@@ -1,3 +1,19 @@
+import { _BaseContainerComponent } from "../../basics.mjs";
+import { FontSelect } from "../../font-loading.mjs";
+import {
+    UITypeDrivenContainer,
+    genericTypeToUIElement,
+} from "../../type-driven-ui.mjs";
+import { typeSpecGetDefaults } from "./typeSpecGetDefaults.js";
+import {
+    SPECIFIC,
+    ProcessedPropertiesSystemMap,
+} from "../../registered-properties-definitions.mjs";
+import { ForeignKey } from "../../../metamodel.mjs";
+import { TYPESPEC_PPS_MAP } from "./TYPESPEC_PPS_MAP.js";
+import { getStylePatchFullLabel } from "../../type-spec-models.mjs";
+import { UICompositeStylePatch } from "./UICompositeStylePatch.typeroof.jsx";
+
 function getRequireUpdateDefaultsFn(updateDefaultsNames) {
     return (changedMap) =>
         Array.from(changedMap.keys()).some((name) =>

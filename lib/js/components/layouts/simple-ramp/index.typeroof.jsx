@@ -1,6 +1,53 @@
-import { _BaseContainerComponent } from "../basics.mjs";
-
-import { _BaseLayoutModel } from "../main-model.mjs";
+import {
+    _BaseContainerComponent,
+    SimpleProtocolHandler,
+} from "../../basics.mjs";
+import { _BaseLayoutModel } from "../../main-model.mjs";
+import {
+    PathModelOrEmpty,
+    Path,
+    BooleanModel,
+    CoherenceFunction,
+    deserializeSync,
+    SERIALIZE_OPTIONS,
+    SERIALIZE_FORMAT_OBJECT,
+} from "../../../metamodel.mjs";
+import {
+    TypeSpecModel,
+    StylePatchesMapModel,
+} from "../../type-spec-models.mjs";
+import {
+    ProseMirrorSchemaModel,
+    NodeSpecToTypeSpecMapModel,
+    NodeModel,
+} from "../../prosemirror/models.typeroof.jsx";
+import {
+    Collapsible,
+    WasteBasketDropTarget,
+    UICheckboxInput,
+} from "../../generic.mjs";
+import { SelectAndDragByOptions } from "../stage-and-actors.mjs";
+import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
+import { GENERIC } from "../../registered-properties-definitions.mjs";
+import {
+    isInheritingPropertyFn,
+    getRegisteredPropertySetup,
+} from "../../registered-properties.mjs";
+import { UINodeSpecToTypeSpecLinksMap } from "../../type-spec-fundamentals.mjs";
+import {
+    _getTypeSpecDefaultsMap,
+    TYPE_SPEC_PROPERTIES_GENERATORS,
+} from "./_getTypeSpecDefaultsMap.js";
+import { StylePatchSourcesMeta } from "./StylePatchSourcesMeta.typeroof.jsx";
+import { TypeSpecMeta } from "./TypeSpecMeta.typeroof.jsx";
+import { TypeSpecTreeEditor } from "./TypeSpecTreeEditor.typeroof.jsx";
+import { TypeSpecPropertiesManager } from "./TypeSpecPropertiesManager.typeroof.jsx";
+import { UIStylePatchesMap } from "./UIStylePatchesMap.typeroof.jsx";
+import { StylePatchPropertiesManager } from "./StylePatchPropertiesManager.typeroof.jsx";
+import { ProseMirrorContext } from "./ProseMirrorContext.typeroof.jsx";
+import { UINodeSpecMap } from "./UINodeSpecMap.typeroof.jsx";
+import { NodeSpecPropertiesManager } from "./NodeSpecPropertiesManager.typeroof.jsx";
+import DEFAULT_STATE from "../../../../assets/typespec-ramp-initial-state.json" with { type: "json" };
 
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)

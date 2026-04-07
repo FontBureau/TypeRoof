@@ -1,3 +1,7 @@
+import { _UIBaseList } from "../../basics.mjs";
+import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
+import { getStylePatchFullLabel } from "../../type-spec-models.mjs";
+
 export class UICompositeStylePatchItem extends _UIBaseList.UIItem {
     static ROOT_CLASS = `ui-style_patch-composite-item`;
     static BASE_CLASSES = [...super.BASE_CLASSES, super.ROOT_CLASS];

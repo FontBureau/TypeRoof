@@ -1,3 +1,10 @@
+import {
+    _BaseDynamicMapContainerComponent,
+    HANDLE_CHANGED_AS_NEW,
+} from "../../basics.mjs";
+import { Path } from "../../../metamodel.mjs";
+import { StyleLinkLiveProperties } from "./StyleLinkLiveProperties.typeroof.jsx";
+
 export class StyleLinksMeta extends _BaseDynamicMapContainerComponent {
     // important here, as we use the value of each entry in the path
     // of the stylePatchProperties@
