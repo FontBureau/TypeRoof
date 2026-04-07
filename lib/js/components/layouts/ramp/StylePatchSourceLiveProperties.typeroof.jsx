@@ -1,5 +1,5 @@
 import { _BaseComponent } from "../../basics.mjs";
-import { STYLE_PATCH_PROPERTIES_GENERATORS } from "./_getTypeSpecDefaultsMap.js";
+import { STYLE_PATCH_PROPERTIES_GENERATORS } from "./_getTypeSpecDefaultsMap.mjs";
 
 /**
  * This is to determine and cache the set of properties of a StylePatch.

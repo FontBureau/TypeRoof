@@ -37,7 +37,7 @@ import { UINodeSpecToTypeSpecLinksMap } from "../../type-spec-fundamentals.mjs";
 import {
     _getTypeSpecDefaultsMap,
     TYPE_SPEC_PROPERTIES_GENERATORS,
-} from "./_getTypeSpecDefaultsMap.js";
+} from "./_getTypeSpecDefaultsMap.mjs";
 import { StylePatchSourcesMeta } from "./StylePatchSourcesMeta.typeroof.jsx";
 import { TypeSpecMeta } from "./TypeSpecMeta.typeroof.jsx";
 import { TypeSpecTreeEditor } from "./TypeSpecTreeEditor.typeroof.jsx";
