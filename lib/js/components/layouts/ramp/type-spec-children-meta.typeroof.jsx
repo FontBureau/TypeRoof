@@ -2,7 +2,7 @@ import {
     _BaseDynamicMapContainerComponent,
     HANDLE_CHANGED_AS_NEW,
 } from "../../basics.mjs";
-import { TypeSpecMeta } from "./TypeSpecMeta.typeroof.jsx";
+import { TypeSpecMeta } from "./type-spec-meta.typeroof.jsx";
 
 export class TypeSpecChildrenMeta extends _BaseDynamicMapContainerComponent {
     [HANDLE_CHANGED_AS_NEW] = true; // jshint ignore:line

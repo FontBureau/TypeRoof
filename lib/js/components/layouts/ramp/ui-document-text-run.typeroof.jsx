@@ -1,11 +1,11 @@
 import { _BaseContainerComponent } from "../../basics.mjs";
-import { GenericUpdater } from "./GenericUpdater.js";
+import { GenericUpdater } from "./generic-updater.mjs";
 import {
     getTypeSpecPropertiesIdMethod,
     UIDocumentStyleStyler,
     UIDocumentUnkownStyleStyler,
 } from "../../prosemirror/type-spec.typeroof.jsx";
-import { UIDocumentElement } from "./UIDocumentElement.typeroof.jsx";
+import { UIDocumentElement } from "./ui-document-element.typeroof.jsx";
 
 // I'm unsure about this, as the parent node can (and probably should from
 // time to time) call normalize() and then this.node may become disconnected.

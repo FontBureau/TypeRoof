@@ -1,7 +1,7 @@
 import { _BaseContainerComponent } from "../../basics.mjs";
 import { Path } from "../../../metamodel.mjs";
-import { UIDocumentTextRun } from "./UIDocumentTextRun.typeroof.jsx";
-import { UIDocumentElement } from "./UIDocumentElement.typeroof.jsx";
+import { UIDocumentTextRun } from "./ui-document-text-run.typeroof.jsx";
+import { UIDocumentElement } from "./ui-document-element.typeroof.jsx";
 
 export class UIDocumentNode extends _BaseContainerComponent {
     constructor(widgetBus, zones, originTypeSpecPath, documentRootPath) {

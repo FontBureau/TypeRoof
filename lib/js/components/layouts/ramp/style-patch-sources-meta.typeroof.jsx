@@ -2,7 +2,7 @@ import {
     _BaseDynamicMapContainerComponent,
     HANDLE_CHANGED_AS_NEW,
 } from "../../basics.mjs";
-import { StylePatchSourceLiveProperties } from "./StylePatchSourceLiveProperties.typeroof.jsx";
+import { StylePatchSourceLiveProperties } from "./style-patch-source-live-properties.typeroof.jsx";
 
 export class StylePatchSourcesMeta extends _BaseDynamicMapContainerComponent {
     // NOTE: in here we could probably handle changed as changed just fine.

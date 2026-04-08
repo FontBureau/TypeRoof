@@ -1,5 +1,5 @@
 import { _UIBaseList } from "../../basics.mjs";
-import { UICompositeStylePatchItem } from "./UICompositeStylePatchItem.typeroof.jsx";
+import { UICompositeStylePatchItem } from "./ui-composite-style-patch-item.typeroof.jsx";
 import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
 import { Path } from "../../../metamodel.mjs";
 

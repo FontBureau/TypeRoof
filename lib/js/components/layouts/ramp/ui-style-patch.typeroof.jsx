@@ -4,14 +4,14 @@ import {
     UITypeDrivenContainer,
     genericTypeToUIElement,
 } from "../../type-driven-ui.mjs";
-import { typeSpecGetDefaults } from "./typeSpecGetDefaults.mjs";
+import { typeSpecGetDefaults } from "./type-spec-get-defaults.mjs";
 import {
     SPECIFIC,
     ProcessedPropertiesSystemMap,
 } from "../../registered-properties-definitions.mjs";
 import { ForeignKey } from "../../../metamodel.mjs";
-import { TYPESPEC_PPS_MAP } from "./TYPESPEC_PPS_MAP.mjs";
-import { UICompositeStylePatch } from "./UICompositeStylePatch.typeroof.jsx";
+import { TYPESPEC_PPS_MAP } from "./typespec-pps-map.mjs";
+import { UICompositeStylePatch } from "./ui-composite-style-patch.typeroof.jsx";
 
 function getRequireUpdateDefaultsFn(updateDefaultsNames) {
     return (changedMap) =>

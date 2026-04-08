@@ -1,7 +1,7 @@
 import { _BaseContainerComponent } from "../../basics.mjs";
-import { TypeSpecLiveProperties } from "./TypeSpecLiveProperties.typeroof.jsx";
-import { StyleLinksMeta } from "./StyleLinksMeta.typeroof.jsx";
-import { TypeSpecChildrenMeta } from "./TypeSpecChildrenMeta.typeroof.jsx";
+import { TypeSpecLiveProperties } from "./type-spec-live-properties.typeroof.jsx";
+import { StyleLinksMeta } from "./style-links-meta.typeroof.jsx";
+import { TypeSpecChildrenMeta } from "./type-spec-children-meta.typeroof.jsx";
 
 /**
  * It's smarter to build the AnimationLiveProperties (and possibly other "meta data")

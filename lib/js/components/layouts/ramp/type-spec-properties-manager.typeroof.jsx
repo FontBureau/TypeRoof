@@ -4,9 +4,9 @@ import {
 } from "../../basics.mjs";
 import { Path, getEntry } from "../../../metamodel.mjs";
 import { StaticTag, UILineOfTextInput } from "../../generic.mjs";
-import { UIFontLabel } from "./UIFontLabel.typeroof.jsx";
+import { UIFontLabel } from "./ui-font-label.typeroof.jsx";
 import { FontSelect } from "../../font-loading.mjs";
-import { typeSpecGetDefaults } from "./typeSpecGetDefaults.mjs";
+import { typeSpecGetDefaults } from "./type-spec-get-defaults.mjs";
 import {
     ProcessedPropertiesSystemMap,
     SPECIFIC,
@@ -15,7 +15,7 @@ import {
     UITypeDrivenContainer,
     genericTypeToUIElement,
 } from "../../type-driven-ui.mjs";
-import { TYPESPEC_PPS_MAP } from "./TYPESPEC_PPS_MAP.mjs";
+import { TYPESPEC_PPS_MAP } from "./typespec-pps-map.mjs";
 import { UIshowProcessedProperties } from "../../processed-properties.mjs";
 import { TypeSpecModel } from "../../type-spec-models.mjs";
 

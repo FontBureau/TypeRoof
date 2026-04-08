@@ -5,7 +5,7 @@ import {
 } from "../../prosemirror/type-spec.typeroof.jsx";
 import { ProseMirror } from "../../prosemirror/integration.typeroof.jsx";
 import { schemaSpec as proseMirrorDefaultSchema } from "../../prosemirror/default-schema";
-import { ProseMirrorGeneralDocumentStyler } from "./ProseMirrorGeneralDocumentStyler.typeroof.jsx";
+import { ProseMirrorGeneralDocumentStyler } from "./prose-mirror-general-document-styler.typeroof.jsx";
 
 /**
  * This is basically the central control switchboard for the ProseMirror

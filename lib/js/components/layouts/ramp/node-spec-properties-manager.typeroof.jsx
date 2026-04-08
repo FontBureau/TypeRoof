@@ -1,11 +1,11 @@
-import { _BaseByPathContainerComponent } from "./_BaseByPathContainerComponent.typeroof.jsx";
-import { _NOTDEF, _getFallback } from "./typeSpecGetDefaults.mjs";
+import { _BaseByPathContainerComponent } from "./base-by-path-container-component.typeroof.jsx";
+import { _NOTDEF, _getFallback } from "./type-spec-get-defaults.mjs";
 import { StaticTag } from "../../generic.mjs";
 import {
     UITypeDrivenContainer,
     genericTypeToUIElement,
 } from "../../type-driven-ui.mjs";
-import { NODESPEC_PPS_MAP } from "./NODESPEC_PPS_MAP.mjs";
+import { NODESPEC_PPS_MAP } from "./nodespec-pps-map.mjs";
 
 /**
  * Here's a good lesson, compared to typeSpecGetDefaults this is trivial,

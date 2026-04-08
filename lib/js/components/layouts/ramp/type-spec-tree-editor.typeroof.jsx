@@ -1,4 +1,4 @@
-import { _BaseTreeEditor } from "./_BaseTreeEditor.typeroof.jsx";
+import { _BaseTreeEditor } from "./base-tree-editor.typeroof.jsx";
 import { TypeSpecModel } from "../../type-spec-models.mjs";
 import { Path } from "../../../metamodel.mjs";
 
