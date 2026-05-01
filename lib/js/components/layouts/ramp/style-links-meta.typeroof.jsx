@@ -3,7 +3,7 @@ import {
     HANDLE_CHANGED_AS_NEW,
 } from "../../basics.mjs";
 import { Path } from "../../../metamodel.mjs";
-import { StyleLinkLiveProperties } from "./style-link-live-properties.typeroof.jsx";
+import { StyleLinkLiveProperties } from "./live-properties.typeroof.jsx";
 
 export class StyleLinksMeta extends _BaseDynamicMapContainerComponent {
     // important here, as we use the value of each entry in the path
