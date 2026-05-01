@@ -1,4 +1,4 @@
-import { _BaseByPathContainerComponent } from "./base-by-path-container-component.typeroof.jsx";
+import { _BaseByPathContainerComponent } from "./shared.typeroof.jsx";
 import { _NOTDEF, _getFallback } from "./defaults.mjs";
 import { StaticTag } from "../../generic.mjs";
 import {

@@ -7,7 +7,7 @@ import {
     createStylePatch,
 } from "../../type-spec-models.mjs";
 import { SimpleSelect } from "./simple-select.typeroof.jsx";
-import { MapSelectButton } from "./map-select-button.typeroof.jsx";
+import { MapSelectButton } from "./shared.typeroof.jsx";
 import { Path } from "../../../metamodel.mjs";
 
 export class UIStylePatchesMap extends _UIBaseMap {

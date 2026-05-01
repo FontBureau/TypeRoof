@@ -1,6 +1,6 @@
 import { _UIBaseMap } from "../../basics.mjs";
 import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
-import { MapSelectButton } from "./map-select-button.typeroof.jsx";
+import { MapSelectButton } from "./shared.typeroof.jsx";
 import { identity } from "../../../util.mjs";
 import { WasteBasketDropTarget } from "../../generic.mjs";
 import { Path } from "../../../metamodel.mjs";
