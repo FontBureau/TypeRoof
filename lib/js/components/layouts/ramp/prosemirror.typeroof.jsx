@@ -454,7 +454,7 @@ export class UIDocumentNode extends _BaseContainerComponent {
     }
 }
 
-// It's interesting on the one hand, each segment requires it's own
+// It's interesting on the one hand, each segment requires its own
 // control, e.g. to change the typeSpecLink, on the other hand,
 // it requires the data to render properly, and that is very depending
 // on the settings.
