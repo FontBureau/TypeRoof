@@ -2121,21 +2121,25 @@ tooltips
 .ui_contextual_template_rule_item-contents,
 .ui_chars_selector_container-contents {
     display: none;
-    margin-top: .2rem;
+    margin-top: 0.2rem;
 }
 
 .ui_contextual_template_rule_item-summary,
 .ui_chars_selector_container-summary {
-    font-size: .9em;
+    font-size: 0.9em;
 }
 
-.ui_contextual_template_rule_item:focus-within > .ui_contextual_template_rule_item-contents,
-.ui_chars_selector_container:focus-within > .ui_chars_selector_container-contents {
+.ui_contextual_template_rule_item:focus-within
+    > .ui_contextual_template_rule_item-contents,
+.ui_chars_selector_container:focus-within
+    > .ui_chars_selector_container-contents {
     display: block;
 }
 
-.ui_contextual_template_rule_item:focus-within > .ui_contextual_template_rule_item-summary,
-.ui_chars_selector_container:focus-within > .ui_chars_selector_container-summary {
+.ui_contextual_template_rule_item:focus-within
+    > .ui_contextual_template_rule_item-summary,
+.ui_chars_selector_container:focus-within
+    > .ui_chars_selector_container-summary {
     opacity: 1;
     font-weight: 600;
 }

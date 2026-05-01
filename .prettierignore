@@ -21,6 +21,7 @@
 !**/shell/*.css
 !lib/js/**/*.css
 !**/ramp/*.*
+!lib/js/components/**/*contextual*mjs
 
 # Ignore glyph-groups.yaml
 lib/assets/glyph-groups.yaml
