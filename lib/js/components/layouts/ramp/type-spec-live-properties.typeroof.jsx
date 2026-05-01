@@ -1,6 +1,6 @@
 import { _BaseComponent } from "../../basics.mjs";
 import { SPECIFIC } from "../../registered-properties-definitions.mjs";
-import { HierarchicalScopeTypeSpecnion } from "./base-type-specnion.typeroof.jsx";
+import { HierarchicalScopeTypeSpecnion } from "./type-specnion.mjs";
 
 export class TypeSpecLiveProperties extends _BaseComponent {
     constructor(
