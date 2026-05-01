@@ -34,19 +34,20 @@ import {
     getRegisteredPropertySetup,
 } from "../../registered-properties.mjs";
 import { UINodeSpecToTypeSpecLinksMap } from "../../type-spec-fundamentals.mjs";
+import { _getTypeSpecDefaultsMap } from "./defaults.mjs";
+import { TYPE_SPEC_PROPERTIES_GENERATORS } from "./properties-generators.mjs";
+import { StylePatchSourcesMeta, TypeSpecMeta } from "./meta.typeroof.jsx";
+import { TypeSpecTreeEditor } from "./tree-editor.typeroof.jsx";
+import { TypeSpecPropertiesManager } from "./type-spec-properties.typeroof.jsx";
 import {
-    _getTypeSpecDefaultsMap,
-    TYPE_SPEC_PROPERTIES_GENERATORS,
-} from "./get-type-spec-defaults-map.mjs";
-import { StylePatchSourcesMeta } from "./style-patch-sources-meta.typeroof.jsx";
-import { TypeSpecMeta } from "./type-spec-meta.typeroof.jsx";
-import { TypeSpecTreeEditor } from "./type-spec-tree-editor.typeroof.jsx";
-import { TypeSpecPropertiesManager } from "./type-spec-properties-manager.typeroof.jsx";
-import { UIStylePatchesMap } from "./ui-style-patches-map.typeroof.jsx";
-import { StylePatchPropertiesManager } from "./style-patch-properties-manager.typeroof.jsx";
-import { ProseMirrorContext } from "./prose-mirror-context.typeroof.jsx";
-import { UINodeSpecMap } from "./ui-node-spec-map.typeroof.jsx";
-import { NodeSpecPropertiesManager } from "./node-spec-properties-manager.typeroof.jsx";
+    UIStylePatchesMap,
+    StylePatchPropertiesManager,
+} from "./style-patches.typeroof.jsx";
+import { ProseMirrorContext } from "./prosemirror.typeroof.jsx";
+import {
+    UINodeSpecMap,
+    NodeSpecPropertiesManager,
+} from "./node-specs.typeroof.jsx";
 import DEFAULT_STATE from "../../../../assets/typespec-ramp-initial-state.json" with { type: "json" };
 
 //  We can't create the self-reference directly

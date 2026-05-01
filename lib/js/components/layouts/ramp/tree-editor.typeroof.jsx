@@ -1,6 +1,7 @@
 import { _BaseComponent } from "../../basics.mjs";
 import { createIcon } from "../../icons.mjs";
 import { Path, getEntry } from "../../../metamodel.mjs";
+import { TypeSpecModel } from "../../type-spec-models.mjs";
 
 function _uniqueKey(keys) {
     const keysSet = new Set(keys),
@@ -547,5 +548,27 @@ export class _BaseTreeEditor extends _BaseComponent {
 
     _getItemLabel(/*item*/) {
         throw new Error(`NOT IMPLEMENTED ${this}._getItemLabel`);
+    }
+}
+
+export class TypeSpecTreeEditor extends _BaseTreeEditor {
+    _isContainerItem(item) {
+        return item instanceof TypeSpecModel;
+    }
+    _getContainerRelPathToChildren() {
+        return Path.fromParts("children");
+    }
+    _getItemLabel(item) {
+        const typeLabel = "TypeSpec",
+            itemLabel = item.get("label").value;
+        return itemLabel ? `${typeLabel}: ${itemLabel}` : typeLabel;
+    }
+
+    _createItem(typeKey, dependencies) {
+        if (typeKey !== "TypeSpec")
+            throw new Error(
+                `VALUE ERROR don't know how to create item for typeKey: "${typeKey}"`,
+            );
+        return TypeSpecModel.createPrimalDraft(dependencies);
     }
 }
