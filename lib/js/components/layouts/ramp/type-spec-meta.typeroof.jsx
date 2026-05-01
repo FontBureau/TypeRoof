@@ -1,5 +1,5 @@
 import { _BaseContainerComponent } from "../../basics.mjs";
-import { TypeSpecLiveProperties } from "./type-spec-live-properties.typeroof.jsx";
+import { TypeSpecLiveProperties } from "./live-properties.typeroof.jsx";
 import { StyleLinksMeta } from "./style-links-meta.typeroof.jsx";
 import { TypeSpecChildrenMeta } from "./type-spec-children-meta.typeroof.jsx";
 
