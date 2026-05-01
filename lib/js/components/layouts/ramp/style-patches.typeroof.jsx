@@ -1,4 +1,9 @@
-import { _UIBaseList, _UIBaseMap, _BaseComponent, _BaseContainerComponent } from "../../basics.mjs";
+import {
+    _UIBaseList,
+    _UIBaseMap,
+    _BaseComponent,
+    _BaseContainerComponent,
+} from "../../basics.mjs";
 import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
 import {
     StylePatchModel,
@@ -7,7 +12,7 @@ import {
     validateStyleName,
     createStylePatch,
 } from "../../type-spec-models.mjs";
-import { FontSelect, } from "../../font-loading.mjs";
+import { FontSelect } from "../../font-loading.mjs";
 import {
     UITypeDrivenContainer,
     genericTypeToUIElement,
@@ -19,7 +24,10 @@ import {
 } from "../../registered-properties-definitions.mjs";
 import { ForeignKey, Path } from "../../../metamodel.mjs";
 import { TYPESPEC_PPS_MAP } from "./pps-maps.mjs";
-import { MapSelectButton, _BaseByPathContainerComponent } from "./shared.typeroof.jsx";
+import {
+    MapSelectButton,
+    _BaseByPathContainerComponent,
+} from "./shared.typeroof.jsx";
 import { StaticTag, PlainSelectInput } from "../../generic.mjs";
 
 // --- composite style patch chain ---
