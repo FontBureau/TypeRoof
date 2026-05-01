@@ -4,7 +4,7 @@ import {
     UITypeDrivenContainer,
     genericTypeToUIElement,
 } from "../../type-driven-ui.mjs";
-import { typeSpecGetDefaults } from "./type-spec-get-defaults.mjs";
+import { typeSpecGetDefaults } from "./defaults.mjs";
 import {
     SPECIFIC,
     ProcessedPropertiesSystemMap,
