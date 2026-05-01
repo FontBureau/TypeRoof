@@ -5,12 +5,12 @@ Persisted artifacts supporting the plan in
 
 ## Contents
 
-| File | Purpose |
-|---|---|
-| `symbol-inventory.tsv` | 68 top-level symbols from the pre-split source, with line ranges and proposed target file. **Source of truth** for what goes where. |
-| `import-graph.sh` | Produces per-file import counts (sibling + external) and totals. Re-run after each migration step to track progress toward the target (83 total imports). |
-| `compute-fan-out.sh` | For each symbol, counts how many *other* symbols in the same target file it references. Used to derive within-file symbol ordering (leaves at top, trunk at bottom). |
-| `project-target-imports.sh` | Projects what the totals should be after the refactor, based on hypothetical target-file composition. |
+| File                        | Purpose                                                                                                                                                              |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `symbol-inventory.tsv`      | 68 top-level symbols from the pre-split source, with line ranges and proposed target file. **Source of truth** for what goes where.                                  |
+| `import-graph.sh`           | Produces per-file import counts (sibling + external) and totals. Re-run after each migration step to track progress toward the target (83 total imports).            |
+| `compute-fan-out.sh`        | For each symbol, counts how many _other_ symbols in the same target file it references. Used to derive within-file symbol ordering (leaves at top, trunk at bottom). |
+| `project-target-imports.sh` | Projects what the totals should be after the refactor, based on hypothetical target-file composition.                                                                |
 
 ## Regenerating derived data
 
@@ -36,5 +36,5 @@ They encode decisions (symbol-to-target mapping) and enable verification
 (import-count deltas) that another session needs to execute the plan
 reliably. `/tmp/` is not portable across sessions or machines.
 
-Anything the scripts *compute* (CSV/TXT outputs) stays in `/tmp/` — it
+Anything the scripts _compute_ (CSV/TXT outputs) stays in `/tmp/` — it
 can always be regenerated and is not itself a decision.

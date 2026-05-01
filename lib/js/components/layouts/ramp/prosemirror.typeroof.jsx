@@ -234,14 +234,7 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
         this._documentRootPath = documentRootPath;
         this._stylerWrapper = null;
         const widgets = [
-            [
-                {},
-                [
-                    "text",
-                ],
-                GenericUpdater,
-                this._updateNode.bind(this),
-            ],
+            [{}, ["text"], GenericUpdater, this._updateNode.bind(this)],
         ];
         this._initWidgets(widgets);
     }
@@ -689,9 +682,7 @@ export class ProseMirrorContext extends _BaseContainerComponent {
             [
                 // IMPORTANT: must be before ProseMirror
                 { ...menuSettings, id: new.target.ID_MAP.menu },
-                [
-                    "nodeSpecToTypeSpec",
-                ],
+                ["nodeSpecToTypeSpec"],
                 UIProseMirrorMenu,
                 originTypeSpecPath,
             ],

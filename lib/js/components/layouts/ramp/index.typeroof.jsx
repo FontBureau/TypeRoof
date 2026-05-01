@@ -34,15 +34,20 @@ import {
     getRegisteredPropertySetup,
 } from "../../registered-properties.mjs";
 import { UINodeSpecToTypeSpecLinksMap } from "../../type-spec-fundamentals.mjs";
-import {
-} from "./defaults.mjs";
+import { _getTypeSpecDefaultsMap } from "./defaults.mjs";
 import { TYPE_SPEC_PROPERTIES_GENERATORS } from "./properties-generators.mjs";
 import { StylePatchSourcesMeta, TypeSpecMeta } from "./meta.typeroof.jsx";
 import { TypeSpecTreeEditor } from "./tree-editor.typeroof.jsx";
 import { TypeSpecPropertiesManager } from "./type-spec-properties.typeroof.jsx";
-import { UIStylePatchesMap, StylePatchPropertiesManager } from "./style-patches.typeroof.jsx";
+import {
+    UIStylePatchesMap,
+    StylePatchPropertiesManager,
+} from "./style-patches.typeroof.jsx";
 import { ProseMirrorContext } from "./prosemirror.typeroof.jsx";
-import { UINodeSpecMap, NodeSpecPropertiesManager } from "./node-specs.typeroof.jsx";
+import {
+    UINodeSpecMap,
+    NodeSpecPropertiesManager,
+} from "./node-specs.typeroof.jsx";
 import DEFAULT_STATE from "../../../../assets/typespec-ramp-initial-state.json" with { type: "json" };
 
 //  We can't create the self-reference directly
