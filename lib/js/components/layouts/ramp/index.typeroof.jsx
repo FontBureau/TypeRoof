@@ -39,7 +39,7 @@ import {
 import { TYPE_SPEC_PROPERTIES_GENERATORS } from "./properties-generators.mjs";
 import { StylePatchSourcesMeta, TypeSpecMeta } from "./meta.typeroof.jsx";
 import { TypeSpecTreeEditor } from "./tree-editor.typeroof.jsx";
-import { TypeSpecPropertiesManager } from "./type-spec-properties-manager.typeroof.jsx";
+import { TypeSpecPropertiesManager } from "./type-spec-properties.typeroof.jsx";
 import { UIStylePatchesMap } from "./ui-style-patches-map.typeroof.jsx";
 import { StylePatchPropertiesManager } from "./style-patch-properties-manager.typeroof.jsx";
 import { ProseMirrorContext } from "./prose-mirror-context.typeroof.jsx";
