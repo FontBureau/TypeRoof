@@ -43,8 +43,8 @@ import { TypeSpecPropertiesManager } from "./type-spec-properties.typeroof.jsx";
 import { UIStylePatchesMap } from "./style-patches.typeroof.jsx";
 import { StylePatchPropertiesManager } from "./style-patches.typeroof.jsx";
 import { ProseMirrorContext } from "./prose-mirror-context.typeroof.jsx";
-import { UINodeSpecMap } from "./ui-node-spec-map.typeroof.jsx";
-import { NodeSpecPropertiesManager } from "./node-spec-properties-manager.typeroof.jsx";
+import { UINodeSpecMap } from "./node-specs.typeroof.jsx";
+import { NodeSpecPropertiesManager } from "./node-specs.typeroof.jsx";
 import DEFAULT_STATE from "../../../../assets/typespec-ramp-initial-state.json" with { type: "json" };
 
 //  We can't create the self-reference directly
