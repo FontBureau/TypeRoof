@@ -10,7 +10,7 @@ import {
     ProcessedPropertiesSystemMap,
 } from "../../registered-properties-definitions.mjs";
 import { ForeignKey } from "../../../metamodel.mjs";
-import { TYPESPEC_PPS_MAP } from "./typespec-pps-map.mjs";
+import { TYPESPEC_PPS_MAP } from "./pps-maps.mjs";
 import { UICompositeStylePatch } from "./ui-composite-style-patch.typeroof.jsx";
 
 function getRequireUpdateDefaultsFn(updateDefaultsNames) {
