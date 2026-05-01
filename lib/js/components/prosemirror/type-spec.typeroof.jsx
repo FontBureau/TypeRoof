@@ -1163,7 +1163,7 @@ export class UIProseMirrorMenu extends _BaseComponent {
         return result;
     }
 
-    updateView(view /*, prevState = null*/) {
+    async updateView(view /*, prevState = null*/) {
         // NOTE: when "prevState !== null", I don't think the view changes,
         // however, the menu can check which commands should be active.
         this._editorView = view;
@@ -1178,6 +1178,13 @@ export class UIProseMirrorMenu extends _BaseComponent {
             allStylesSuperSet = new Set(),
             // allow these
             commonSubSet = new Set();
+
+        const selectedTypeSpec = typeSpecs.entries().next().value;
+        await this._changeState(() => {
+            const updatedValue = selectedTypeSpec[1].parts.at(-1).toString();
+            this.getEntry("editingTypeSpec").set(updatedValue);
+        });
+
         for (const [typeSpec, path] of typeSpecs) {
             const stylePatches = typeSpec.get("stylePatches");
             // console.log(
