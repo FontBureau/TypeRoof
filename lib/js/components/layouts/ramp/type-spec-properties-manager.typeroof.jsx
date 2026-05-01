@@ -15,7 +15,7 @@ import {
     UITypeDrivenContainer,
     genericTypeToUIElement,
 } from "../../type-driven-ui.mjs";
-import { TYPESPEC_PPS_MAP } from "./typespec-pps-map.mjs";
+import { TYPESPEC_PPS_MAP } from "./pps-maps.mjs";
 import { UIshowProcessedProperties } from "../../processed-properties.mjs";
 import { TypeSpecModel } from "../../type-spec-models.mjs";
 

@@ -5,7 +5,7 @@ import {
     UITypeDrivenContainer,
     genericTypeToUIElement,
 } from "../../type-driven-ui.mjs";
-import { NODESPEC_PPS_MAP } from "./nodespec-pps-map.mjs";
+import { NODESPEC_PPS_MAP } from "./pps-maps.mjs";
 
 /**
  * Here's a good lesson, compared to typeSpecGetDefaults this is trivial,
