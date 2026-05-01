@@ -1,5 +1,5 @@
 import { _BaseByPathContainerComponent } from "./base-by-path-container-component.typeroof.jsx";
-import { _NOTDEF, _getFallback } from "./type-spec-get-defaults.mjs";
+import { _NOTDEF, _getFallback } from "./defaults.mjs";
 import { StaticTag } from "../../generic.mjs";
 import {
     UITypeDrivenContainer,

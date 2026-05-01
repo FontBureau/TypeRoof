@@ -6,7 +6,7 @@ import { Path, getEntry } from "../../../metamodel.mjs";
 import { StaticTag, UILineOfTextInput } from "../../generic.mjs";
 import { UIFontLabel } from "./ui-font-label.typeroof.jsx";
 import { FontSelect } from "../../font-loading.mjs";
-import { typeSpecGetDefaults } from "./type-spec-get-defaults.mjs";
+import { typeSpecGetDefaults } from "./defaults.mjs";
 import {
     ProcessedPropertiesSystemMap,
     SPECIFIC,
