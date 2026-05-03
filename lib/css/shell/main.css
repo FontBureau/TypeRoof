@@ -590,10 +590,6 @@ drag handle
     margin-right: 0.125rem;
 }
 
-.drag_handle > span {
-    font-size: 0.875rem !important;
-}
-
 .drag_handle:hover {
     box-shadow: rgb(43 43 43 / 15%) 0 0 0.625rem;
     outline: 0.1em solid black;
@@ -2118,6 +2114,8 @@ tooltips
 /**************************************************************************** */
 
 /* Contextual template editor: summary-first, expand active path */
+
+/*
 .ui_contextual_template_rule_item-contents,
 .ui_chars_selector_container-contents {
     display: none;
@@ -2142,4 +2140,14 @@ tooltips
     > .ui_chars_selector_container-summary {
     opacity: 1;
     font-weight: 600;
+}
+*/
+
+.type_driven-type-char_group_arguments_list_model-items {
+    /* If it is only one item (first-child and last-child at the same time)
+     * don't show the item tools (move, delete)
+     * */
+    .type_driven-type-char_group_model:first-child:last-child > .tools_container {
+        display: none;
+    }
 }
