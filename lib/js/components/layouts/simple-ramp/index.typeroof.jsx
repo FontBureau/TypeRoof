@@ -209,6 +209,7 @@ class SimpleRampController extends _BaseContainerComponent {
                 Collapsible,
                 "Editor",
                 editorManagerContainer,
+                true,
             ],
             [
                 { zone: "main" },
@@ -216,6 +217,7 @@ class SimpleRampController extends _BaseContainerComponent {
                 Collapsible,
                 "TypeSpec Properties",
                 propertiesManagerContainer,
+                true,
             ],
             [
                 {},
