@@ -1885,6 +1885,10 @@ dimension sequence
     padding: 0;
 }
 
+/******************************************************************************
+prosemirror menu
+*******************************************************************************/
+
 .ui_prose_mirror_menu {
     /* The amount of style buttons can change quickly when using
    * the cursor to navigate the document. This leads to the UI in the
@@ -1917,6 +1921,16 @@ dimension sequence
 
     button.active:disabled {
         background: darkgrey;
+    }
+}
+
+.ui_prose_mirror_menu-simple {
+    height: auto;
+    margin-bottom: 1em;
+
+    .ui_prose_mirror_menu-container-blocks,
+    .typeroof-ui-label {
+        display: none;
     }
 }
 
@@ -1989,6 +2003,10 @@ dimension sequence
   }
 }
 /* stylelint-enable */
+
+/******************************************************************************
+prosemirror
+*******************************************************************************/
 
 .prosemirror-host {
     /* so the background color fills the entire layout */
