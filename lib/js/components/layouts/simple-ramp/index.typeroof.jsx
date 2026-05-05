@@ -235,6 +235,7 @@ class SimpleRampController extends _BaseContainerComponent {
                 // proseMirrorSettings
                 { zone: "layout" },
                 originTypeSpecPath,
+                true,
                 // menuSettings
                 { zone: "prose-mirror-editor-menu" },
             ],
