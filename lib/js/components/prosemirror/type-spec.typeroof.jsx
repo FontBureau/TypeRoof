@@ -1320,87 +1320,50 @@ export class UIBoldItalicMenu extends _BaseComponent {
     constructor(widgetBus, originTypeSpecPath) {
         super(widgetBus);
         this._originTypeSpecPath = originTypeSpecPath;
-        this._buttonToStyle = new Map();
-        this._buttonToBlock = new Map();
-        [this.element, this._stylesContainer, this._blocksContainer] =
-            this._initTemplate();
+        this._styleToButton = new Map();
+        [this.element] = this._initTemplate();
     }
 
     _getTemplate(h) {
         return (
             <div class="ui_prose_mirror_menu-simple">
-                <div class="ui_prose_mirror_menu-container ui_prose_mirror_menu-container-blocks">
-                    <span class="typeroof-ui-label">Nodes:</span>
-                    <div class="ui_prose_mirror_menu-blocks"></div>
-                </div>
-                <div class="ui_prose_mirror_menu-container ui_prose_mirror_menu-container-styles">
-                    <span class="typeroof-ui-label">Styles:</span>
-                    <div class="ui_prose_mirror_menu-styles"></div>
-                </div>
+                <button type="button" data-style="bold">
+                    <b>B</b>
+                </button>
+                <button type="button" data-style="italic">
+                    <i>I</i>
+                </button>
             </div>
         );
     }
 
     _initTemplate() {
         const container = this._getTemplate(this._domTool.h),
-            stylesContainer = container.querySelector(
-                ".ui_prose_mirror_menu-styles",
-            ),
-            blocksContainer = container.querySelector(
-                ".ui_prose_mirror_menu-blocks",
-            );
+            boldButton = container.querySelector("[data-style=bold]"),
+            italicButton = container.querySelector("[data-style=italic]");
         this._insertElement(container);
-        stylesContainer.addEventListener(
+        this._styleToButton.set("bold", boldButton);
+        this._styleToButton.set("italic", italicButton);
+        container.addEventListener(
             "pointerdown",
             this._stylesClickHandler.bind(this),
         );
-        blocksContainer.addEventListener(
-            "pointerdown",
-            this._blocksClickHandler.bind(this),
-        );
-        // send a command
-        // command = toggleMark(schema.marks.strong)
-        // command(this._editorView.state, this._editorView.dispatch, this._editorView)
-        return [container, stylesContainer, blocksContainer];
+        return [container];
     }
 
     _stylesClickHandler(event) {
-        if (!this._buttonToStyle.has(event.target) || !this._editorView) return;
+        const styleName = event.target.getAttribute("data-style");
+        if (!this._styleToButton.has(styleName) || !this._editorView) return;
         event.preventDefault();
         this._editorView.focus(); // important to keep the selection alive
         if (event.target.disabled) return;
-        const styleName = this._buttonToStyle.get(event.target),
-            { dispatch, state } = this._editorView,
+        const { dispatch, state } = this._editorView,
             markType = state.schema.marks["generic-style"];
         toggleMark(
             markType,
             { "data-style-name": styleName },
-            {
-                /// Controls whether, when part of the selected range has the mark
-                /// already and part doesn't, the mark is removed (`true`, the
-                /// default) or added (`false`).
-                // removeWhenPresent?: boolean
-                /// When set to false, this will prevent the command from acting on
-                /// the content of inline nodes marked as
-                /// [atoms](#model.NodeSpec.atom) that are completely covered by a
-                /// selection range.
-                // enterInlineAtoms?: boolean
-                /// By default, this command doesn't apply to leading and trailing
-                /// whitespace in the selection. Set this to `true` to change that.
-                // includeWhitespace?: boolean
-            },
+            {},
         )(state, dispatch);
-    }
-
-    _blocksClickHandler(event) {
-        if (!this._buttonToBlock.has(event.target) || !this._editorView) return;
-        event.preventDefault();
-        this._editorView.focus(); // important to keep the selection alive
-        if (event.target.disabled) return;
-        const nodeTypeName = this._buttonToBlock.get(event.target),
-            { dispatch, state } = this._editorView,
-            nodeType = state.schema.nodes[nodeTypeName];
-        setBlockType(nodeType /*, attrs*/)(state, dispatch);
     }
 
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
@@ -1412,8 +1375,6 @@ export class UIBoldItalicMenu extends _BaseComponent {
             state.doc,
             ranges,
             false /*enterAtoms*/,
-            // we don't look at "text" directly and it seems like
-            // these paths always also produce the parent paths
             new Set(["text"]) /* skip types*/,
         );
         for (const pathOfTypes of pathsOfTypes) {
@@ -1427,154 +1388,50 @@ export class UIBoldItalicMenu extends _BaseComponent {
         return result;
     }
 
-    async updateView(view /*, prevState = null*/) {
-        // NOTE: when "prevState !== null", I don't think the view changes,
-        // however, the menu can check which commands should be active.
+    async updateView(view) {
+        if (!view) return;
+
         this._editorView = view;
         const state = this._editorView.state,
-            // when prevState is null this call comes from the constructor
-            // otherwise it comes from the update method.
-
-            // => set { typeSpecs }
             typeSpecs = this._getTypeSpecs(state),
             setsOfStyles = new Map(),
-            // display these
-            allStylesSuperSet = new Set(),
-            // allow these
+            allStylesSuperSet = new Set(["bold", "italic", "bold italic"]),
             commonSubSet = new Set();
 
-        for (const [typeSpec, path] of typeSpecs) {
+        for (const [, path] of typeSpecs) {
             await this._changeState(() => {
                 const selectedTypeSpec = path.parts.at(-1).toString();
                 this.getEntry("editingTypeSpec").set(selectedTypeSpec);
             });
-
-            const stylePatches = typeSpec.get("stylePatches");
-            // console.log(
-            //   `${path} :: ${typeSpec.get("label").value} STYLES:`,
-            //   ...stylePatches.keys(),
-            // );
-            // OK so these keys are the options that we are going to present
-
-            setsOfStyles.set(typeSpec, new Set(stylePatches.keys()));
-            for (const style of stylePatches.keys())
-                allStylesSuperSet.add(style);
         }
         for (const style of allStylesSuperSet) {
             if (
                 setsOfStyles.values().every((stylesSet) => stylesSet.has(style))
-            )
+            ) {
                 commonSubSet.add(style);
+            }
         }
 
-        // Hmm, things a menu item to activate/deactivate a mark could
-        // show:
-        //      bold: the mark is active at the current position/selection
-        //              -> click again should turn it off
-        //
-        //      active: can the mark be applied at the current position
-        //              -> it's interesting we could either apply it only
-        //                 where it is available OR everywhere and mark when a definition is missing
-        //                 -> second could be a ctr+click
-        //                 -> consequently ctrl would make those inactive marks active
-        //                 -> bold marks would be always active, as turning the
-        //                    mark off should be possible AND only happen where it
-        //                    active. Then, maybe it would become not-bold and inactive
-        //      visible: it seems like marks that are defined somewhere, but are not
-        //               in the current context, should not be displayed at all
-
-        // FIXME: we should define an order and keep it stable...
-        // i.e. stylePatches has an inherent order but before, the typeSpecs
-        // could have, i.e. in order of appearance, maybe depth-first, but
-        // it's not readily accessible for us.
-
-        const [activeNodes, activeMarks] = getActiveNodesAndMarks(state),
+        const [, activeMarks] = getActiveNodesAndMarks(state),
             genericStyleMark = state.schema.marks["generic-style"],
-            activeStyles = activeMarks.get(genericStyleMark) || new Set(),
-            h = this._domTool.h,
-            oldButtons = Array.from(this._buttonToStyle.keys());
-        this._buttonToStyle.clear();
-        for (const styleName of Array.from(allStylesSuperSet).toSorted()) {
-            // reusing stuff
-            const button = oldButtons.length ? (
-                oldButtons.pop()
-            ) : (
-                <button type="button">{"initial"}</button>
-            );
+            activeStyles = activeMarks.get(genericStyleMark) || new Set();
+        for (const styleName of allStylesSuperSet) {
+            const button = this._styleToButton.get(styleName);
             button.textContent = styleName;
             button.disabled = !commonSubSet.has(styleName);
             button.classList[activeStyles.has(styleName) ? "add" : "remove"](
                 "active",
             );
-            this._buttonToStyle.set(button, styleName);
         }
-        this._stylesContainer.replaceChildren(...this._buttonToStyle.keys());
-
-        for (const [button, nodeTypeName] of this._buttonToBlock) {
-            const nodeType = state.schema.nodes[nodeTypeName];
-            button.classList[activeNodes.has(nodeType) ? "add" : "remove"](
-                "active",
-            );
-        }
-
-        // console.log(
-        //   `${this}.updateView view:`,
-        //   view,
-        //   "\n    ",
-        //   prevState === null ? "INITIAL" : "CONSECUTIVE",
-        //   "prevState:",
-        //   prevState,
-        //   "\n",
-        //   // can be multiple, right???
-        //   // intuitiveley it feels correct to allow only the subset of
-        //   // available marks/styles to be active/available.
-        //   // maybe we could display the superset, but make only the
-        //   // subset available.
-        //   "The current TypeSpecs:",
-        //   ...typeSpecs
-        //     .entries()
-        //     .map(([typeSpec, path]) => `${path} :: ${typeSpec.get("label").value}`),
-        //   // 'The available style-links:',
-        // );
-
-        // const typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes)
-        // {command: toggleMark(schema.marks.strong), dom: icon("B", "strong")},
-        //let active = command(state, null, this._editorView)
     }
 
     destroyView() {
-        // I'm not sure if we need to do anyhing in here, maybe make all
-        // all menu-items inactive.
         this._editorView = null;
-        // console.log(`${this}.destroyView view`);
     }
-    update(changedMap) {
-        // console.log(`>>>>>>>>>>>>>>>>>>>${this}.update:`, ...changedMap.keys());
 
+    update(changedMap) {
         if (changedMap.has("nodeSpecToTypeSpec")) {
-            const nodeSpecToTypeSpec = changedMap.get("nodeSpecToTypeSpec"),
-                h = this._domTool.h,
-                oldButtons = Array.from(this._buttonToBlock.keys());
-            // console.log("nodeSpecToTypeSpec", ...nodeSpecToTypeSpec.keys());
-            this._buttonToBlock.clear();
-            for (const blockName of nodeSpecToTypeSpec.keys()) {
-                // reusing stuff
-                const button = oldButtons.length ? (
-                    oldButtons.shift()
-                ) : (
-                    <button type="button">{"initial"}</button>
-                );
-                button.textContent = blockName;
-                // Would have to be decided in updateView
-                // button.disabled = !commonSubSet.has(style);
-                this._buttonToBlock.set(button, blockName);
-            }
-            this._blocksContainer.replaceChildren(
-                ...this._buttonToBlock.keys(),
-            );
-            if (this._editorView)
-                // mark butttons as active.
-                this.updateView(this._editorView);
+            this.updateView(this._editorView);
         }
     }
 }

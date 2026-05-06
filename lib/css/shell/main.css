@@ -1820,6 +1820,18 @@ prosemirror menu
     .typeroof-ui-label {
         display: none;
     }
+
+    button.active {
+        color: white;
+        background: black;
+        font-variation-settings:
+            "opsz" 12,
+            "GRAD" 150;
+    }
+
+    button.active:disabled {
+        background: darkgrey;
+    }
 }
 
 /*
