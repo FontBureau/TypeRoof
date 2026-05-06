@@ -1328,10 +1328,10 @@ export class UIBoldItalicMenu extends _BaseComponent {
         return (
             <div class="ui_prose_mirror_menu-simple">
                 <button type="button" data-style="bold">
-                    <b>B</b>
+                    <span class="material-symbols-outlined">format_bold</span>
                 </button>
                 <button type="button" data-style="italic">
-                    <i>I</i>
+                    <span class="material-symbols-outlined">format_italic</span>
                 </button>
             </div>
         );
@@ -1398,12 +1398,12 @@ export class UIBoldItalicMenu extends _BaseComponent {
             allStylesSuperSet = new Set(["bold", "italic", "bold italic"]),
             commonSubSet = new Set();
 
-        for (const [, path] of typeSpecs) {
-            await this._changeState(() => {
-                const selectedTypeSpec = path.parts.at(-1).toString();
-                this.getEntry("editingTypeSpec").set(selectedTypeSpec);
-            });
-        }
+        const selectedTypeSpec = typeSpecs.entries().next().value;
+        await this._changeState(() => {
+            const updatedValue = selectedTypeSpec[1].parts.at(-1).toString();
+            this.getEntry("editingTypeSpec").set(updatedValue);
+        });
+
         for (const style of allStylesSuperSet) {
             if (
                 setsOfStyles.values().every((stylesSet) => stylesSet.has(style))
@@ -1414,14 +1414,18 @@ export class UIBoldItalicMenu extends _BaseComponent {
 
         const [, activeMarks] = getActiveNodesAndMarks(state),
             genericStyleMark = state.schema.marks["generic-style"],
-            activeStyles = activeMarks.get(genericStyleMark) || new Set();
+            activeStyles = activeMarks.get(genericStyleMark) || [],
+            activeStylesSeparated = new Set(
+                Array.from(activeStyles).flatMap((s) => s.split(" ")),
+            );
         for (const styleName of allStylesSuperSet) {
             const button = this._styleToButton.get(styleName);
-            button.textContent = styleName;
+            if (!button) continue;
+
             button.disabled = !commonSubSet.has(styleName);
-            button.classList[activeStyles.has(styleName) ? "add" : "remove"](
-                "active",
-            );
+            button.classList[
+                activeStylesSeparated.has(styleName) ? "add" : "remove"
+            ]("active");
         }
     }
 

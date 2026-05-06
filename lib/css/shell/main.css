@@ -1925,6 +1925,8 @@ prosemirror menu
 }
 
 .ui_prose_mirror_menu-simple {
+    display: flex;
+    gap: 0.25em;
     height: auto;
     margin-bottom: 1em;
 
@@ -1933,12 +1935,15 @@ prosemirror menu
         display: none;
     }
 
-    button.active {
-        color: white;
-        background: black;
-        font-variation-settings:
-            "opsz" 12,
-            "GRAD" 150;
+    button {
+        height: auto;
+        padding: 0.25rem;
+
+        &.active {
+            color: white;
+            background: var(--button-active-color);
+            border-color: var(--button-active-color);
+        }
     }
 
     button.active:disabled {
