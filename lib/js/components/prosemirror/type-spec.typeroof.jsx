@@ -1352,16 +1352,33 @@ export class UIBoldItalicMenu extends _BaseComponent {
     }
 
     _stylesClickHandler(event) {
-        const styleName = event.target.getAttribute("data-style");
-        if (!this._styleToButton.has(styleName) || !this._editorView) return;
         event.preventDefault();
-        this._editorView.focus(); // important to keep the selection alive
-        if (event.target.disabled) return;
+        const button = event.target.closest("button");
+        const styleName = button.getAttribute("data-style");
+        if (!this._styleToButton.has(styleName) || !this._editorView) return;
+        if (button.disabled) return;
+
         const { dispatch, state } = this._editorView,
-            markType = state.schema.marks["generic-style"];
+            markType = state.schema.marks["generic-style"],
+            [, activeMarks] = getActiveNodesAndMarks(state),
+            genericStyleMark = state.schema.marks["generic-style"],
+            activeStyles = activeMarks.get(genericStyleMark) || [],
+            activeStylesSeparated = Array.from(activeStyles).flatMap((s) =>
+                s.split(" "),
+            ),
+            newStyleName = activeStylesSeparated.includes(styleName)
+                ? activeStylesSeparated.filter((s) => s !== styleName).join(" ")
+                : activeStylesSeparated.concat(styleName).toSorted().join(" ");
+        // FIXME: clicking bold and italic buttons should set the style name to
+        // "bold italic". The values being passed to `toggleMark` are correct as
+        // can be verified with the logs below, but it's still not working for
+        // some reason.
+        console.log("> clicked:", styleName);
+        console.log("> active styles are:", activeStylesSeparated);
+        console.log("> change style to:", newStyleName);
         toggleMark(
             markType,
-            { "data-style-name": styleName },
+            { "data-style-name": newStyleName },
             {},
         )(state, dispatch);
     }
