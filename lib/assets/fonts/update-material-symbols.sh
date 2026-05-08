@@ -13,6 +13,8 @@ ICON_NAMES=(
     format_align_center
     format_align_left
     format_align_right
+    format_bold
+    format_italic
     info
     keyboard_arrow_down
     keyboard_arrow_up
