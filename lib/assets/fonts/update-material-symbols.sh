@@ -34,7 +34,7 @@ CHROME_UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko
 
 # Extract the woff2 URL from the CSS url(...) declaration
 SUBSET_FONT_URL=$(curl -s -A "$CHROME_UA" "$API_CSS_URL" \
-    | grep -oP "(?<=url\()https://[^)]+(?=\))")
+    | sed -nE 's|.*url\((https://[^)]+)\).*|\1|p')
 
 if [ -z "$SUBSET_FONT_URL" ]; then
     echo "ERROR: Could not extract font URL from Google Fonts API response." >&2
