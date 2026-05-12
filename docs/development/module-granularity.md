@@ -14,6 +14,8 @@ agent-created: true
 
 This is a style note, not a hard rule. Apply judgment. When in doubt, prefer fewer, more cohesive files over many small ones.
 
+This file is also intended to instruct an agent when a file is about to be split up.
+
 ## Prefer coupling‑based decomposition over one‑class‑per‑file
 
 When a file grows large, the first instinct is often "one class per file." This is a syntactic decomposition. The TypeRoof preference is a **coupling‑based** decomposition: group files by what *changes together*, not by how many top‑level declarations they contain.
@@ -46,19 +48,22 @@ For a layout folder (e.g. `lib/js/components/layouts/<name>/`), a useful shape i
 - **One UI file per controller zone** — matches what `TypeSpecRampController.zones` (or equivalent) already enumerates.
 - **Optionally one `shared` file** for UI helpers used by multiple zones.
 
-Typical total: **~10–15 files**, each in the 100–800 line range. A 4000+ line single file is a signal to split. A folder with 30+ files in flat layout is a signal to consolidate.
+A 4000+ line single file is a signal to split.
+A folder with 30+ files in flat layout is a signal to consolidate.
 
-## Three properties a good decomposition has
+## Four properties a good decomposition has
 
-1. **Filenames describe subsystems, not single symbols.** A file named `foo.mjs` because it exports `foo` is a symptom: it hides what else lives in the file and, in practice, ends up collecting unrelated symbols over time (see the historical `get-type-spec-defaults-map.mjs` which contained the entire properties‑generator pipeline). Name files after the *responsibility*, not after one member of it.
+1. **Filenames describe subsystems, not single symbols.** A file named `foo.mjs` because it exports `foo` is a symptom: it hides what else lives in the file and, in practice, ends up collecting unrelated symbols over time. Name files after the *responsibility*, not after one member of it.
 
 2. **Import lists are short.** A file that imports 20 siblings is almost always mis‑grouped: either it is a controller (in which case this is expected and limited to `index.typeroof.jsx`) or its contents should be folded together with some of its dependencies. Watch the sibling‑import count as a proxy.
 
 3. **Tier direction is one‑way.** UI files import engine files; engine files do not import UI files. If this ever needs to reverse, it is a design smell, not a naming problem.
 
-## When to split a large file
+4. **Circular dependencies are absent.** Coupling-based decomposition risks "spaghetti" logic if boundaries aren't clean. If File A and File B are so tightly coupled that they must import each other to function, they are not two modules; they are one module that has been artificially split. *The Fix:* Either merge them back into a single file or extract the shared logic into a third "leaf" module (like a types.mjs or constants.mjs) that both can import without knowing about each other.
 
-Before splitting, write a short plan — one paragraph per target file naming its intended responsibility and which existing symbols go into it. Check the plan against the *actual coupling* (who imports whom) rather than the syntactic class list. This is the 20‑minute version of the exercise in `docs/planning/ramp-layout-coupling-based-decomposition.md`; reuse the approach.
+## AGENTS: How to split a large file
+
+Before splitting, write a short plan — one paragraph per target file naming its intended responsibility and which existing symbols go into it. Check the plan against the *actual coupling* (who imports whom) rather than the syntactic class list.
 
 For files over ~1000 lines that will be split on a feature branch, **propose the target decomposition in a short planning document before executing it** — not a heavyweight RFC, just "here are the N pieces I see and why." This is cheaper than discovering the grouping is wrong after 39 files land.
 
