@@ -412,9 +412,11 @@ export class ProseMirror extends _BaseComponent {
         widgetBus,
         /*SchemaSpec: */ proseMirrorDefaultSchema,
         idMap = {},
+        originTypeSpecPath = null,
     ) {
         super(widgetBus);
         this._idMap = idMap;
+        this._originTypeSpecPath = originTypeSpecPath;
         this._proseMirrorDefaultSchema = proseMirrorDefaultSchema;
         // The cache is bi-directional, meaning that both mappings will be
         // set: proseMirrorNode -> metamodelNode and metamodelNode ->
@@ -772,6 +774,9 @@ export class ProseMirror extends _BaseComponent {
         return newNode;
     }
 
+    _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
+    _getTypeSpecs = getTypeSpecsMethod;
+
     _prosemirrorDispatchTranscation(transaction) {
         // console.log(
         //   `${this} DISPATCH_TRANSACTION size went from`,
@@ -818,6 +823,13 @@ export class ProseMirror extends _BaseComponent {
                 );
             });
         }
+
+        this._changeState(() => {
+            const typeSpecs = this._getTypeSpecs(this.view.state),
+                selectedTypeSpec = typeSpecs.entries().next().value,
+                updatedValue = selectedTypeSpec[1].parts.at(-1).toString();
+            this.getEntry("editingTypeSpec").set(updatedValue);
+        });
     }
 
     update(changedMap) {
