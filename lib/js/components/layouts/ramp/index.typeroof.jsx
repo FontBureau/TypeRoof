@@ -34,7 +34,7 @@ import {
     getRegisteredPropertySetup,
 } from "../../registered-properties.mjs";
 import { UINodeSpecToTypeSpecLinksMap } from "../../type-spec-fundamentals.mjs";
-import { _getTypeSpecDefaultsMap } from "./defaults.mjs";
+import { getTypeSpecDefaultsMap } from "./defaults.mjs";
 import { TYPE_SPEC_PROPERTIES_GENERATORS } from "./properties-generators.mjs";
 import { StylePatchSourcesMeta, TypeSpecMeta } from "./meta.typeroof.jsx";
 import { TypeSpecTreeEditor } from "./tree-editor.typeroof.jsx";
@@ -198,7 +198,7 @@ class TypeSpecRampController extends _BaseContainerComponent {
         // widgetBus.insertElement(stageManagerContainer);
         super(widgetBus, zones);
 
-        const typeSpecDefaultsMap = _getTypeSpecDefaultsMap(
+        const typeSpecDefaultsMap = getTypeSpecDefaultsMap(
             widgetBus.getEntry(originTypeSpecPath).dependencies,
         );
 
