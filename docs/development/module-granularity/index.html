@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Module Granularity - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel - Assessment Pre Strict Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel - Path to a Standalone Library</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel - Assessment Post Strict Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor - Concepts and Roadmap</a></li></ul></li>
+<li class="active"><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="module-granularity" class="heading_anchor" href="#module-granularity" aria-hidden="true">#</a>Module Granularity</h1>
+<blockquote>
+<p>Guideline for deciding how to split a file — or whether to split it at all.</p>
+</blockquote>
+<p>This is a style note, not a hard rule. Apply judgment. When in doubt, prefer fewer, more cohesive files over many small ones.</p>
+<p>This file is also intended to instruct an agent when a file is about to be split up.</p>
+<h2><a id="prefer-couplingbased-decomposition-over-oneclassperfile" class="heading_anchor" href="#prefer-couplingbased-decomposition-over-oneclassperfile" aria-hidden="true">#</a>Prefer coupling‑based decomposition over one‑class‑per‑file</h2>
+<p>When a file grows large, the first instinct is often “one class per file.” This is a syntactic decomposition. The TypeRoof preference is a <strong>coupling‑based</strong> decomposition: group files by what <em>changes together</em>, not by how many top‑level declarations they contain.</p>
+<p>A module boundary should hide a decision that is likely to change. If two classes, one class and its helpers, or a base class and its only subclass always change in lockstep, they belong in the same file regardless of size.</p>
+<h3><a id="heuristics" class="heading_anchor" href="#heuristics" aria-hidden="true">#</a>Heuristics</h3>
+<p><strong>Keep together</strong></p>
+<ul>
+<li>A class and its private helpers that no other file imports.</li>
+<li>A base class and subclasses that live only in this folder <em>and</em> share non‑trivial protocol.</li>
+<li>Parallel pairs that share structure (e.g. <code>typeSpecGetDefaults</code> / <code>nodeSpecGetDefaults</code>, <code>TYPESPEC_PPS_MAP</code> / <code>NODESPEC_PPS_MAP</code>): seeing them side‑by‑side makes the parallel visible and inconsistencies obvious.</li>
+<li>A small chain of list / item / row components where each layer has exactly one caller.</li>
+<li>Registered constants and the functions that register them (e.g. <code>TYPE_SPEC_PROPERTIES_GENERATORS</code> with the <code>*Gen</code> functions it contains).</li>
+</ul>
+<p><strong>Split apart</strong></p>
+<ul>
+<li>Independent subsystems that are imported from different consumers in the layout / controller.</li>
+<li>Files that have grown past the point where a reader can form a mental model in one sitting (subjective; ~1000 lines is a reasonable warning line, not a hard limit).</li>
+<li>A helper that is <em>genuinely</em> used by two or more otherwise‑independent subsystems: promote to a <code>shared</code> or <code>utils</code> file rather than duplicating or picking a random home.</li>
+<li>The engine (semantics, data pipelines, generators, invariants) from the UI (widgets, event handling, rendering). When both live in one folder, give them separate files and make the tier visible.</li>
+</ul>
+<h3><a id="the-granularity-sweet-spot" class="heading_anchor" href="#the-granularity-sweet-spot" aria-hidden="true">#</a>The granularity sweet spot</h3>
+<p>For a layout folder (e.g. <code>lib/js/components/layouts/&lt;name&gt;/</code>), a useful shape is:</p>
+<ul>
+<li><strong><code>index.typeroof.jsx</code></strong> — <code>Model</code>, <code>Controller</code>, public exports.</li>
+<li><strong>A small handful of engine files</strong> — properties, generators, PPS maps, defaults, synthetic values, state machinery.</li>
+<li><strong>One UI file per controller zone</strong> — matches what <code>TypeSpecRampController.zones</code> (or equivalent) already enumerates.</li>
+<li><strong>Optionally one <code>shared</code> file</strong> for UI helpers used by multiple zones.</li>
+</ul>
+<p>A 4000+ line single file is a signal to split.
+A folder with 30+ files in flat layout is a signal to consolidate.</p>
+<h2><a id="four-properties-a-good-decomposition-has" class="heading_anchor" href="#four-properties-a-good-decomposition-has" aria-hidden="true">#</a>Four properties a good decomposition has</h2>
+<ol>
+<li>
+<p><strong>Filenames describe subsystems, not single symbols.</strong> A file named <code>foo.mjs</code> because it exports <code>foo</code> is a symptom: it hides what else lives in the file and, in practice, ends up collecting unrelated symbols over time. Name files after the <em>responsibility</em>, not after one member of it.</p>
+</li>
+<li>
+<p><strong>Import lists are short.</strong> A file that imports 20 siblings is almost always mis‑grouped: either it is a controller (in which case this is expected and limited to <code>index.typeroof.jsx</code>) or its contents should be folded together with some of its dependencies. Watch the sibling‑import count as a proxy.</p>
+</li>
+<li>
+<p><strong>Tier direction is one‑way.</strong> UI files import engine files; engine files do not import UI files. If this ever needs to reverse, it is a design smell, not a naming problem.</p>
+</li>
+<li>
+<p><strong>Circular dependencies are absent.</strong> Coupling-based decomposition risks “spaghetti” logic if boundaries aren’t clean. If File A and File B are so tightly coupled that they must import each other to function, they are not two modules; they are one module that has been artificially split. <em>The Fix:</em> Either merge them back into a single file or extract the shared logic into a third “leaf” module (like a types.mjs or constants.mjs) that both can import without knowing about each other.</p>
+</li>
+</ol>
+<h2><a id="agents-how-to-split-a-large-file" class="heading_anchor" href="#agents-how-to-split-a-large-file" aria-hidden="true">#</a>AGENTS: How to split a large file</h2>
+<p>Before splitting, write a short plan — one paragraph per target file naming its intended responsibility and which existing symbols go into it. Check the plan against the <em>actual coupling</em> (who imports whom) rather than the syntactic class list.</p>
+<p>For files over ~1000 lines that will be split on a feature branch, <strong>propose the target decomposition in a short planning document before executing it</strong> — not a heavyweight RFC, just “here are the N pieces I see and why.” This is cheaper than discovering the grouping is wrong after 39 files land.</p>
+<h2><a id="bundler-note" class="heading_anchor" href="#bundler-note" aria-hidden="true">#</a>Bundler note</h2>
+<p>TypeRoof uses a bundler with tree‑shaking. Consolidating files does <em>not</em> pull unused code into the bundle: unused exports are still dropped. Optimize the source layout for <strong>reading</strong>, not for per‑file bundle boundaries.</p>
+<h2><a id="file-extension-convention" class="heading_anchor" href="#file-extension-convention" aria-hidden="true">#</a>File extension convention</h2>
+<p>Two distinct concerns get conflated here. Treat them separately.</p>
+<h3><a id="concern-a--does-the-file-need-jsx" class="heading_anchor" href="#concern-a--does-the-file-need-jsx" aria-hidden="true">#</a>Concern A — Does the file need JSX?</h3>
+<ul>
+<li><strong>UI files</strong> (components that produce DOM / virtual nodes, or use the project’s JSX pragma) → <strong><code>.typeroof.jsx</code></strong>. In this project the extension is the opt-in: the bundler’s JSX transform is wired to <code>.typeroof.jsx</code> specifically, and <code>.mjs</code> is treated as plain ES modules.</li>
+<li><strong>Engine files</strong> (data, reducers, generators, pure logic, PPS plumbing) should not produce DOM and therefore don’t need JSX. They stay <strong><code>.mjs</code></strong>.</li>
+<li>It is technically harmless for an engine file to carry the <code>.typeroof.jsx</code> extension (the JSX transform is a no-op when no JSX appears), but it muddles the UI/engine distinction at a glance. Prefer <code>.mjs</code> for engine files.</li>
+</ul>
+<p>Rule: a split that moves JSX out of a file should rename to <code>.mjs</code>; a consolidation that brings JSX into a file should rename to <code>.typeroof.jsx</code>.</p>
+<h3><a id="concern-b--is-the-file-formatted-by-prettier" class="heading_anchor" href="#concern-b--is-the-file-formatted-by-prettier" aria-hidden="true">#</a>Concern B — Is the file formatted by prettier?</h3>
+<p>Project-wide, <code>.prettierignore</code> uses a deny-by-default pattern (<code>*</code>) and allow-lists specific globs. Current reality:</p>
+<ul>
+<li><code>**/*.jsx</code> is globally allow-listed → <strong>every <code>.typeroof.jsx</code> file is prettier-formatted</strong>, wherever it lives.</li>
+<li><code>**/*.mjs</code> is <strong>not</strong> globally allow-listed → <code>.mjs</code> files are skipped by prettier unless a directory-specific allow-list covers them.</li>
+<li><code>**/ramp/*.*</code> is a blanket allow-list → inside <code>lib/js/components/layouts/ramp/</code>, prettier formats <em>all</em> extensions, including <code>.mjs</code>.</li>
+</ul>
+<p>Consequences worth knowing:</p>
+<ul>
+<li><strong>For new UI files anywhere:</strong> <code>.typeroof.jsx</code> is the right extension on both grounds — JSX is available, and prettier covers the file.</li>
+<li><strong>For new engine files:</strong> <code>.mjs</code> is technically correct (no JSX needed). If prettier coverage matters for a given file, either (a) place it under a directory that’s allow-listed (e.g. <code>ramp/</code>), or (b) extend <code>.prettierignore</code> to cover it explicitly — do not rename <code>.mjs</code> → <code>.typeroof.jsx</code> purely to obtain prettier coverage, that conflates the two concerns.</li>
+</ul>
+<h3><a id="tiny-decision-table" class="heading_anchor" href="#tiny-decision-table" aria-hidden="true">#</a>Tiny decision table</h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Extension</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>New UI component</td>
+<td><code>.typeroof.jsx</code></td>
+<td>Needs JSX; prettier-covered.</td>
+</tr>
+<tr>
+<td>New engine module, anywhere</td>
+<td><code>.mjs</code></td>
+<td>No JSX; extend <code>.prettierignore</code> separately if formatting is desired.</td>
+</tr>
+<tr>
+<td>A previously JSX-free file starts producing DOM</td>
+<td>rename <code>.mjs</code> → <code>.typeroof.jsx</code></td>
+<td>Extension is the JSX opt-in.</td>
+</tr>
+<tr>
+<td>Extracting pure logic out of a <code>.typeroof.jsx</code> into its own file</td>
+<td>new file is <code>.mjs</code></td>
+<td>No JSX in the extracted module.</td>
+</tr>
+<tr>
+<td>Mixed UI+engine <code>.mjs</code> file (historical) getting split</td>
+<td>UI part → <code>.typeroof.jsx</code>, engine part → <code>.mjs</code></td>
+<td>Both concerns resolved.</td>
+</tr>
+</tbody>
+</table>
+<h2><a id="naming" class="heading_anchor" href="#naming" aria-hidden="true">#</a>Naming</h2>
+<ul>
+<li>Prefer the hyphenated <code>type-spec-*</code>, <code>node-spec-*</code>, <code>style-patch-*</code> form consistently. Do not mix <code>typespec-</code> / <code>type-spec-</code> in the same folder.</li>
+<li>Prefer lowercase‑kebab for files, <code>PascalCase</code> for classes, <code>camelCase</code> for functions and values — this is already the de‑facto rule; noted here so the coupling note is self‑contained.</li>
+</ul>
+<h2><a id="references" class="heading_anchor" href="#references" aria-hidden="true">#</a>References</h2>
+<ul>
+<li>D. L. Parnas, <em>On the Criteria To Be Used in Decomposing Systems into Modules</em> (1972) — the original argument that module boundaries should hide decisions, not syntactic units.</li>
+<li>John Ousterhout, <em>A Philosophy of Software Design</em> — specifically the “deep vs. shallow modules” chapter.</li>
+<li><code>docs/planning/ramp-layout-coupling-based-decomposition.md</code> — worked example of applying this guideline to a 4700‑line file that had been mechanically split into 39.</li>
+</ul>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>
