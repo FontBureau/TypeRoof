@@ -1037,7 +1037,8 @@ select and drag
     padding: var(--gap-size);
 }
 
-.ui_videoproof_array_layers-item .ui_button {
+.ui_videoproof_array_layers-item .ui_button,
+.ui_base_list_item > .tools_container {
     float: right;
 }
 
@@ -2143,11 +2144,42 @@ tooltips
 }
 */
 
-.type_driven-type-char_group_arguments_list_model-items {
-    /* If it is only one item (first-child and last-child at the same time)
-     * don't show the item tools (move, delete)
-     * */
-    .type_driven-type-char_group_model:first-child:last-child > .tools_container {
-        display: none;
+
+
+.ui-chars-selector-summary {
+    white-space: pre-wrap;
+}
+
+.ui_contextual_template_rule {
+    .ui_contextual_template_rule-contents {
+        display:none;
+    }
+    &.edit .ui_contextual_template_rule-contents {
+        display: block;
     }
 }
+
+.type_driven-type-template_rule_model {
+        border-top: 1px solid var(--fieldset-border-color);
+        border-bottom: 1px solid var(--fieldset-border-color);
+        padding-bottom: 0.2rem;
+        margin-bottom: -1px;
+}
+
+.ui_contextual_template_rule > .ui_contextual_template_rule-contents {
+
+    &:focus-within > .ui_chars_selector_container{
+        background: red;
+    }
+    .ui_base_list-items {
+        margin-left: .75em;
+        >* {
+            background: salmon;
+        }
+        > *:nth-child(odd) {
+            background: lime
+        }
+    }
+}
+
+
