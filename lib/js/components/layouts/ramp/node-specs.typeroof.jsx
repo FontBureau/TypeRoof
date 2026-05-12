@@ -7,7 +7,7 @@ import {
 import { identity } from "../../../util.mjs";
 import { WasteBasketDropTarget, StaticTag } from "../../generic.mjs";
 import { Path } from "../../../metamodel.mjs";
-import { _NOTDEF, _getFallback } from "./defaults.mjs";
+import { _NOTDEF, getFallback } from "./defaults.mjs";
 import {
     UITypeDrivenContainer,
     genericTypeToUIElement,
@@ -24,7 +24,7 @@ function nodeSpecGetDefaults(
     /*BaseModelType.*/ modelDefaultValue = _NOTDEF,
 ) {
     const { fullKey } = ppsRecord;
-    return _getFallback(fullKey, modelDefaultValue);
+    return getFallback(fullKey, modelDefaultValue);
 }
 
 export class NodeSpecPropertiesManager extends _BaseByPathContainerComponent {
