@@ -1,6 +1,7 @@
 import { ForeignKey, FreezableMap } from "../metamodel.mjs";
 
 import {
+    _BaseComponent,
     _BaseContainerComponent,
     _BaseDynamicCollectionContainerComponent,
     _UIBaseListContainerItem,
@@ -8,11 +9,17 @@ import {
 } from "./basics.mjs";
 
 import {
-    StaticTag,
     StaticNode,
     GenericSelect,
     PlainNumberAndRangeInput,
+    UILineOfTextInput,
+    Collapsible,
+    PlainToggleButton
 } from "./generic.mjs";
+
+import {
+    createIcon
+} from "./icons.mjs";
 
 import {
     _BaseTypeDrivenContainerComponentMixin,
@@ -28,6 +35,9 @@ import {
 import { createCharsSelector } from "./actors/videoproof-contextual-models.mjs";
 
 import { getCharGroupSummaryFromModel } from "./ui-char-groups.mjs";
+
+
+import './ui-contextual-template.css';
 
 /**
  * In the templates for the videoproof-contextual patterns we use $1 and
@@ -68,13 +78,15 @@ function _truncateSummary(value, maxLength = 36) {
     return `${text.slice(0, Math.max(0, maxLength - 1))}…`;
 }
 
-function _getSelectorSummary(selectorModel) {
+function _getSelectorSummary(selectorModel, depth=0) {
     const typeKey = selectorModel.get("selectorTypeKey").value;
-    if (typeKey === ForeignKey.NULL) return "(none)";
+    const indent = ' '.repeat(depth * 2);
+    if (typeKey === ForeignKey.NULL) return `${indent}(-NULL-)`;
 
     const instanceWrapper = selectorModel.get("instance");
 
-    if (!instanceWrapper.hasWrapped) return typeKey || "(none)";
+    // initial value.
+    if (!instanceWrapper.hasWrapped) return typeKey || "-";
 
     const availableCharsSelectorTypes = selectorModel.get(
         "availableCharsSelectorTypes",
@@ -84,15 +96,16 @@ function _getSelectorSummary(selectorModel) {
     if (typeKey === "Simple") {
         const argIndex = instance.get("argIndex").value,
             charGroup = instance.get("charGroup");
-        return `${label}(arg${argIndex}): ${getCharGroupSummaryFromModel(charGroup)}`;
+            // '\xa0' === nbsp
+        return `${indent}$${argIndex+1}:\xa0${getCharGroupSummaryFromModel(charGroup)}`;
     }
 
     if (typeKey === "CombinatorAnd" || typeKey === "CombinatorOr") {
-        const children = instance.get("children").size;
-        return `${label}(${children} child${children === 1 ? "" : "ren"})`;
+        const children = instance.get("children").value.map(selectorModel=>_getSelectorSummary(selectorModel, depth+1));
+        return `${indent}${label}(${children.length ? "\n" : ""}${children.join(",\n")}${children.length ? "\n" + indent : ""})`;
     }
 
-    return `${label}`;
+    return `${indent}${label}`;
 }
 
 function _getTemplateRuleSummary(ruleModel) {
@@ -110,7 +123,10 @@ export class UIContextualTemplateContainer extends _BaseTypeDrivenContainerCompo
         const localZoneElement = widgetBus.domTool.createElement("div", {
                 class: "ui_contextual_template_container",
             }),
-            contentsZoneElement = widgetBus.domTool.createElement("div"),
+            contentsZoneElement = widgetBus.domTool.createElement("div",
+            {
+                class: "ui_contextual_template-contents",
+            }),
             zones = new Map([
                 ..._zones,
                 ["local", localZoneElement],
@@ -125,16 +141,16 @@ export class UIContextualTemplateContainer extends _BaseTypeDrivenContainerCompo
         ).constructor;
         const widgets = this._defineWidgets(
             TypeClass,
-            contentsZoneElement,
             injectable,
             propertyRoot,
             label,
         );
         this._initWidgets(widgets);
     }
+
+    // NOTE: contentsZoneElement is acquired by: this._zones.get('contents')
     _defineWidgets(
         TypeClass,
-        contentsZoneElement,
         injectable,
         propertyRoot,
         label,
@@ -145,8 +161,13 @@ export class UIContextualTemplateContainer extends _BaseTypeDrivenContainerCompo
                 TypeClass.fields.keys(),
             );
         return [
-            [{ zone: "local" }, [], StaticTag, "h4", {}, [label]],
-            [{ zone: "local" }, [], StaticNode, contentsZoneElement],
+            [
+                {zone: 'local'}
+              , []
+              , Collapsible
+              , label
+              , this._zones.get('contents')
+            ],
             ...this._defineGenericWidgets(
                 TypeClass,
                 (fieldName) => TypeClass.fields.has(fieldName),
@@ -169,9 +190,6 @@ export class UICharsSelectorContainer extends _BaseTypeDrivenContainerComponentM
                 class: "ui_chars_selector_container",
                 tabindex: "0",
             }),
-            summaryElement = widgetBus.domTool.createElement("div", {
-                class: "ui_chars_selector_container-summary",
-            }),
             contentsZoneElement = widgetBus.domTool.createElement("div", {
                 class: "ui_chars_selector_container-contents",
             }),
@@ -180,24 +198,26 @@ export class UICharsSelectorContainer extends _BaseTypeDrivenContainerComponentM
                 ["local", localZoneElement],
                 ["contents", contentsZoneElement],
             ]);
-        localZoneElement.append(summaryElement, contentsZoneElement);
         widgetBus.insertElement(localZoneElement);
         super(widgetBus, zones);
         this._propertyRoot = propertyRoot;
+        if (propertyRoot === undefined)
+            throw new Error(
+                `${this} propertyRoot is undefined _zones:${_zones} injectable:${injectable} widgetBus:${widgetBus}`,
+            );
 
         this._injectable = injectable;
         this._ActiveInstanceType = null;
-        this._summaryElement = summaryElement;
         {
             const widgets = this._initialWidgets;
             this._initialWidgetsAmount = widgets.length;
             this._initWidgets(widgets);
-            this._updateSummary();
         }
     }
 
     get _initialWidgets() {
         return [
+            [{ zone: "local" }, [], StaticNode, this._zones.get('contents')],
             [
                 { zone: "contents" },
                 [
@@ -269,93 +289,131 @@ export class UICharsSelectorContainer extends _BaseTypeDrivenContainerComponentM
         }
         return requiresFullInitialUpdate;
     }
-
-    _update(compareResult, requiresFullInitialUpdateSet, isInitialUpdate) {
-        const result = super._update(
-            compareResult,
-            requiresFullInitialUpdateSet,
-            isInitialUpdate,
-        );
-        this._updateSummary();
-        return result;
-    }
-
-    _updateSummary() {
-        this._summaryElement.textContent = `Selector: ${_getSelectorSummary(this.getEntry("."))}`;
-    }
 }
 
-class UIContextualTemplateRuleListItem extends _BaseTypeDrivenContainerComponentMixin(
-    _UIBaseListContainerItem,
-) {
-    static TYPE_CLASS_PART = "type_driven";
+class UICharsSelectorSummary extends _BaseComponent{
+    constructor(widgetBus) {
+        super(widgetBus);
+        [this.element] = this._initTemplate();
+    }
+    _initTemplate() {
+        const h = this._domTool.h,
+            element = (
+                <div class="ui-chars-selector-summary"></div>
+            );
 
-    constructor(
-        widgetBus,
-        _zones,
-        ppsRecord,
-        eventHandlers = [],
-        draggable = false,
-        deletable = false,
-        injectable = null,
-        transferTypePath = null,
-    ) {
-        const summaryElement = widgetBus.domTool.createElement("div", {
-                class: "ui_contextual_template_rule_item-summary",
+        this._insertElement(element);
+        return [element];
+    }
+    update (changedMap) {
+        const selector = changedMap.get('selector');
+        this.element.textContent = _getSelectorSummary(selector);
+    }
+}
+// FIXME: now basically a copy of UIContextualTemplateContainer we should
+// base this on a common component
+export class UIContextualTemplateRule extends _BaseTypeDrivenContainerComponentMixin(
+    _BaseContainerComponent,
+) {
+    constructor(widgetBus, _zones, injectable, propertyRoot, label) {
+        const baseClass = 'ui_contextual_template_rule',
+            localZoneElement = widgetBus.domTool.createElement('div', {
+                'class': baseClass,
+                'tabindex': 0
             }),
             contentsZoneElement = widgetBus.domTool.createElement("div", {
-                class: "ui_contextual_template_rule_item-contents",
+                'class': `${baseClass}-contents`
             }),
-            zones = new Map([..._zones, ["contents", contentsZoneElement]]);
-        super(widgetBus, zones, eventHandlers, draggable, deletable);
-
-        this.element.classList.add("ui_contextual_template_rule_item");
-        this.element.setAttribute("tabindex", "0");
-        this.element.append(summaryElement, contentsZoneElement);
+            zones = new Map([
+                ..._zones,
+                ["local", localZoneElement],
+                ["contents", contentsZoneElement],
+            ]);
+        widgetBus.insertElement(localZoneElement);
+        super(widgetBus, zones);
+        {
+            this._editButton = new PlainToggleButton(
+                this._domTool,
+                this._toggleEdit.bind(this, null),
+                "edit",
+                createIcon("edit_off"),
+                createIcon("edit"),
+                "Edit"
+            );
+        }
+        this._edit = null;
+        this._toggleEdit(false);
         this._injectable = injectable;
-        this.ITEM_DATA_TRANSFER_TYPE_PATH = transferTypePath;
-        this._summaryElement = summaryElement;
+        const TypeClass = this.widgetBus.getEntry(
+            this.widgetBus.rootPath,
+        ).constructor;
+        const widgets = this._defineWidgets(
+            TypeClass,
+            injectable,
+            propertyRoot,
+            label,
+        );
+        this._initWidgets(widgets);
+    }
 
-        const entry = this.widgetBus.getEntry(this.widgetBus.rootPath),
-            TypeClass = entry.constructor,
+    /**
+     * use a boolean for value to set an explicit state, otherwise, use
+     * null to toggle the current value
+     */
+    _toggleEdit(value=null) {
+        this._edit =  value === null ? (!this._edit) : (!!value);
+        this._editButton.update(this._edit);
+        this._zones.get("local")
+            .classList[this._edit ? "add" : "remove"]("edit");
+    }
+
+    _defineWidgets(
+        TypeClass,
+        injectable,
+        propertyRoot,
+        label,
+    ) {
+        const generalSettings = { zone: "contents" },
             ppsMap = ProcessedPropertiesSystemMap.fromPrefix(
-                ppsRecord.propertyRoot,
+                propertyRoot,
                 TypeClass.fields.keys(),
             ),
-            widgets = [
-                ...this._defineGenericWidgets(
-                    TypeClass,
-                    (fieldName) => TypeClass.fields.has(fieldName),
-                    { zone: "contents" },
-                    ppsMap,
-                    this._injectable,
-                ),
-            ];
-        this._initWidgets(widgets);
-        this._updateSummary();
-    }
+            omit = new Set(['pattern']);
+        return [
+            // custom
+            [
+                {zone: "local"},
+                [['pattern', 'value']],
+                UILineOfTextInput
+            ],
+            [{zone: "tools"}, [], StaticNode,this._editButton.element],
+            [
+                {zone: "local"},
+                ['selector'],
+                UICharsSelectorSummary
+            ],
+            // type driven zone
+            [{ zone: "local" }, [], StaticNode, this._zones.get("contents")],
+            // type driven
+            ...this._defineGenericWidgets(
+                TypeClass,
+                (fieldName) => {
+                    console.log('isAllowed:', fieldName, `!omit.has(${fieldName})`, !omit.has(fieldName), `&&  TypeClass.fields.has(${fieldName})`,  TypeClass.fields.has(fieldName),
+                     '->', (!omit.has(fieldName) && TypeClass.fields.has(fieldName)));
 
-    _update(compareResult, requiresFullInitialUpdateSet, isInitialUpdate) {
-        const result = super._update(
-            compareResult,
-            requiresFullInitialUpdateSet,
-            isInitialUpdate,
-        );
-        // call always???
-        this._updateSummary();
-        return result;
-    }
-
-    _updateSummary() {
-        this._summaryElement.textContent = _getTemplateRuleSummary(
-            this.getEntry(this.widgetBus.rootPath),
-        );
+                    return (!omit.has(fieldName) && TypeClass.fields.has(fieldName))
+                },
+                generalSettings,
+                ppsMap,
+                injectable,
+            ),
+        ];
     }
 }
 
 export class UIContextualTemplateRulesList extends UITypeDrivenListWithAddButton {
     static ADD_BUTTON_TEXT = "+ add rule";
-    static UIItem = UIContextualTemplateRuleListItem;
+    // static UIItem = UIContextualTemplateRuleListItem; // the default is UITypeDrivenListItem
     _itemsDeletable = true;
 }
 
