@@ -1,4 +1,4 @@
-import { Path } from "../../metamodel.mjs";
+import { FreezableSet, Path } from "../../metamodel.mjs";
 
 import {
     NodeModel,
@@ -44,6 +44,133 @@ export function getPathOfTypes(
 
     if (currentType) pathOfTypes.push(currentType);
     return pathOfTypes;
+}
+
+/**
+ * started this from looking at function markApplies
+ * https://github.com/ProseMirror/prosemirror-commands/blob/master/src/commands.ts
+ * not sure if it is sufficiently complete.
+ */
+export function getPathsOfTypes(
+    doc /* :Node*/,
+    ranges /*: readonly SelectionRange[]*/,
+    enterAtoms /*: boolean*/,
+    skip = Object.freeze(new FreezableSet()),
+) {
+    const result = new Map(), // try to reduce the amount of results
+        seen = new Set();
+    for (let i = 0; i < ranges.length; i++) {
+        const { $from, $to } = ranges[i];
+        if ($from.depth === 0 && !result.has(0))
+            // && doc.inlineContent ?????
+            result.set(0, [doc.type.name]);
+        doc.nodesBetween($from.pos, $to.pos, (node, pos) => {
+            if (
+                seen.has(pos) ||
+                skip.has(node.type.name) ||
+                (!enterAtoms &&
+                    node.isAtom &&
+                    node.isInline &&
+                    pos >= $from.pos &&
+                    pos + node.nodeSize <= $to.pos)
+            )
+                return;
+            const resolved = doc.resolve(pos);
+            result.set(pos, getPathOfTypes(resolved.path, node.type.name));
+        });
+    }
+    return result.values();
+}
+
+/* We need this a lot, as it seems, there are still some duplicates in this module! */
+function _getBestTypeSpecPropertiesId(
+    typeSpecLink,
+    protocolHandlerName /*='typeSpecProperties@'*/,
+    protocolHandlerImplementation,
+    originTypeSpecPath,
+    asPath = false,
+) {
+    const currentTypeSpecPath = Path.fromString(typeSpecLink),
+        format = (path) => `${protocolHandlerName}${path}`;
+    if (protocolHandlerImplementation === null)
+        throw new Error(
+            `KEY ERROR ProtocolHandler for identifier "${protocolHandlerName}" not found.`,
+        );
+
+    // getProtocolHandlerImplementation
+    let testPath =
+        currentTypeSpecPath.parts.length === 0 ||
+        currentTypeSpecPath.parts[0] === "children"
+            ? // the initial "children" is part from typeSpecLink
+              originTypeSpecPath.append(...currentTypeSpecPath)
+            : originTypeSpecPath.append("children", ...currentTypeSpecPath);
+    while (true) {
+        if (!originTypeSpecPath.isRootOf(testPath))
+            // We have gone to far up. This also prevents that
+            // a currentTypeSpecPath could potentially inject '..'
+            // to break out of originTypeSpecPath, though,
+            // the latter seems unlikely, as we parse it in here.
+            break;
+        const typeSpecPropertiesId = format(testPath);
+        if (protocolHandlerImplementation.hasRegistered(typeSpecPropertiesId))
+            return asPath ? testPath : typeSpecPropertiesId;
+        // Move towards root and continue; // remove 'children' and `{key}`
+        testPath = testPath.slice(0, -2);
+    }
+    return asPath ? originTypeSpecPath : format(originTypeSpecPath);
+}
+
+/**
+ * MAYBE: requires a better name
+ *
+ * NOTE (to myself): I think going via _getBestTypeSpecPropertiesId is
+ * maybe not an ideal implementation, so far, look twice and overthink
+ * where asPath===true;
+ */
+export function getTypeSpecPropertiesIdMethod(
+    pathOfTypes,
+    asPath = false,
+    nodeSpecToTypeSpecName = "nodeSpecToTypeSpec",
+    protocolHandlerName = "typeSpecProperties@",
+) {
+    const nodeSpecToTypeSpec = this.getEntry(nodeSpecToTypeSpecName),
+        typeKey = pathOfTypes.at(-1),
+        typeSpecLink = nodeSpecToTypeSpec.get(typeKey, { value: "" }).value, // => default '' would be the root TypeSpec
+        protocolHandlerImplementation =
+            this.widgetBus.getProtocolHandlerImplementation(
+                protocolHandlerName,
+                null,
+            );
+    return _getBestTypeSpecPropertiesId(
+        typeSpecLink,
+        protocolHandlerName,
+        protocolHandlerImplementation,
+        this._originTypeSpecPath,
+        asPath,
+    );
+}
+
+export function getTypeSpecsMethod(state) {
+    const { empty, $cursor, ranges } = state.selection, // as TextSelection
+        result = new Map();
+    if (empty && !$cursor) return result;
+    const pathsOfTypes = getPathsOfTypes(
+        state.doc,
+        ranges,
+        false /*enterAtoms*/,
+        // we don't look at "text" directly and it seems like
+        // these paths always also produce the parent paths
+        new Set(["text"]) /* skip types*/,
+    );
+    for (const pathOfTypes of pathsOfTypes) {
+        const typeSpecPath = this._getTypeSpecPropertiesId(
+                pathOfTypes,
+                true /*asPath*/,
+            ),
+            typeSpec = this.getEntry(typeSpecPath);
+        result.set(typeSpec, typeSpecPath);
+    }
+    return result;
 }
 
 class ProsemirrorNodeView {
