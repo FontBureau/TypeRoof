@@ -10,14 +10,17 @@ import { getRegisteredPropertySetup } from "../../registered-properties.mjs";
 import { setLanguageTag } from "../../language-tags.typeroof.jsx";
 import { _BaseDropTarget } from "../../generic.mjs";
 import {
+    UIBoldItalicMenu,
     UIDocumentTypeSpecStyler,
     UIDocumentStyleStyler,
     UIDocumentUnkownStyleStyler,
-    getTypeSpecPropertiesIdMethod,
     UIProseMirrorMenu,
     TypeSpecSubscriptions,
 } from "../../prosemirror/type-spec.typeroof.jsx";
-import { ProseMirror } from "../../prosemirror/integration.typeroof.jsx";
+import {
+    ProseMirror,
+    getTypeSpecPropertiesIdMethod,
+} from "../../prosemirror/integration.typeroof.jsx";
 import { schemaSpec as proseMirrorDefaultSchema } from "../../prosemirror/default-schema";
 
 class GenericUpdater extends _BaseComponent {
@@ -676,6 +679,7 @@ export class ProseMirrorContext extends _BaseContainerComponent {
         zones,
         proseMirrorSettings /* e.g. {zone:'layout'}*/,
         originTypeSpecPath,
+        isSimpleRamp,
         menuSettings /* e.g. {zone:'main'}*/,
     ) {
         super(widgetBus, zones, [
@@ -683,15 +687,21 @@ export class ProseMirrorContext extends _BaseContainerComponent {
                 // IMPORTANT: must be before ProseMirror
                 { ...menuSettings, id: new.target.ID_MAP.menu },
                 ["nodeSpecToTypeSpec"],
-                UIProseMirrorMenu,
+                isSimpleRamp ? UIBoldItalicMenu : UIProseMirrorMenu,
                 originTypeSpecPath,
             ],
             [
                 { ...proseMirrorSettings, id: new.target.ID_MAP.proseMirror },
-                ["proseMirrorSchema", "document"],
+                [
+                    "proseMirrorSchema",
+                    "document",
+                    "nodeSpecToTypeSpec",
+                    "editingTypeSpec",
+                ],
                 ProseMirror,
                 proseMirrorDefaultSchema,
                 new.target.ID_MAP,
+                originTypeSpecPath,
             ],
             [
                 { id: new.target.ID_MAP.subscriptions },
