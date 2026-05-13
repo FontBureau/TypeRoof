@@ -27,16 +27,15 @@ import {
     isInheritingPropertyFn,
     getRegisteredPropertySetup,
 } from "../../registered-properties.mjs";
+import { getTypeSpecDefaultsMap } from "../ramp/defaults.mjs";
+import { TYPE_SPEC_PROPERTIES_GENERATORS } from "../ramp/properties-generators.mjs";
+import { StylePatchSourcesMeta, TypeSpecMeta } from "../ramp/meta.typeroof.jsx";
+import { TypeSpecPropertiesManager } from "../ramp/type-spec-properties.typeroof.jsx";
 import {
-    _getTypeSpecDefaultsMap,
-    TYPE_SPEC_PROPERTIES_GENERATORS,
-} from "../ramp/get-type-spec-defaults-map.mjs";
-import { StylePatchSourcesMeta } from "../ramp/style-patch-sources-meta.typeroof.jsx";
-import { TypeSpecMeta } from "../ramp/type-spec-meta.typeroof.jsx";
-import { TypeSpecPropertiesManager } from "../ramp/type-spec-properties-manager.typeroof.jsx";
-import { UIStylePatchesMap } from "../ramp/ui-style-patches-map.typeroof.jsx";
-import { StylePatchPropertiesManager } from "../ramp/style-patch-properties-manager.typeroof.jsx";
-import { ProseMirrorContext } from "../ramp/prose-mirror-context.typeroof.jsx";
+    StylePatchPropertiesManager,
+    UIStylePatchesMap,
+} from "../ramp/style-patches.typeroof.jsx";
+import { ProseMirrorContext } from "../ramp/prosemirror.typeroof.jsx";
 import DEFAULT_STATE from "../../../../assets/typespec-ramp-initial-state.json" with { type: "json" };
 
 //  We can't create the self-reference directly
@@ -169,7 +168,7 @@ class SimpleRampController extends _BaseContainerComponent {
         // widgetBus.insertElement(stageManagerContainer);
         super(widgetBus, zones);
 
-        const typeSpecDefaultsMap = _getTypeSpecDefaultsMap(
+        const typeSpecDefaultsMap = getTypeSpecDefaultsMap(
             widgetBus.getEntry(originTypeSpecPath).dependencies,
         );
 
