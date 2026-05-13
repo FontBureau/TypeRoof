@@ -564,7 +564,7 @@ export class ProseMirror extends _BaseComponent {
             view = new EditorView(element, {
                 state,
                 dispatchTransaction:
-                    this._prosemirrorDispatchTranscation.bind(this),
+                    this._prosemirrorDispatchTransaction.bind(this),
                 markViews: {
                     "generic-style": this._createGenericMarkView,
                 },
@@ -777,7 +777,7 @@ export class ProseMirror extends _BaseComponent {
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
     _getTypeSpecs = getTypeSpecsMethod;
 
-    _prosemirrorDispatchTranscation(transaction) {
+    _prosemirrorDispatchTransaction(transaction) {
         // console.log(
         //   `${this} DISPATCH_TRANSACTION size went from`,
         //   transaction.before.content.size,
