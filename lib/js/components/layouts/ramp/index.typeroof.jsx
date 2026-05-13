@@ -374,6 +374,7 @@ class TypeSpecRampController extends _BaseContainerComponent {
                 // proseMirrorSettings
                 { zone: "layout" },
                 originTypeSpecPath,
+                false,
                 // menuSettings
                 { zone: "prose-mirror-editor-menu" },
             ],

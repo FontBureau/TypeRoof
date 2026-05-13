@@ -1773,6 +1773,10 @@ dimension sequence
     padding: 0;
 }
 
+/******************************************************************************
+prosemirror menu
+*******************************************************************************/
+
 .ui_prose_mirror_menu {
     /* The amount of style buttons can change quickly when using
    * the cursor to navigate the document. This leads to the UI in the
@@ -1801,6 +1805,33 @@ dimension sequence
         font-variation-settings:
             "opsz" 12,
             "GRAD" 150;
+    }
+
+    button.active:disabled {
+        background: darkgrey;
+    }
+}
+
+.ui_prose_mirror_menu-simple {
+    display: flex;
+    gap: 0.25em;
+    height: auto;
+    margin-bottom: 1em;
+
+    .ui_prose_mirror_menu-container-blocks,
+    .typeroof-ui-label {
+        display: none;
+    }
+
+    button {
+        height: auto;
+        padding: 0.25rem;
+
+        &.active {
+            color: white;
+            background: var(--button-active-color);
+            border-color: var(--button-active-color);
+        }
     }
 
     button.active:disabled {
@@ -1877,6 +1908,10 @@ dimension sequence
   }
 }
 /* stylelint-enable */
+
+/******************************************************************************
+prosemirror
+*******************************************************************************/
 
 .prosemirror-host {
     /* so the background color fills the entire layout */

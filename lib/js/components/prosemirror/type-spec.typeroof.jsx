@@ -1,4 +1,4 @@
-import { Path, StateComparison, FreezableSet } from "../../metamodel.mjs";
+import { Path, StateComparison } from "../../metamodel.mjs";
 
 import {
     _CommonContainerComponent,
@@ -37,75 +37,12 @@ import { renderAxesParameterDisplay } from "../axes-parameters.mjs";
 
 import { toggleMark, setBlockType } from "prosemirror-commands";
 
-import { getPathOfTypes } from "./integration.typeroof.jsx";
-
-/* We need this a lot, as it seems, there are still some duplicates in this module! */
-function _getBestTypeSpecPropertiesId(
-    typeSpecLink,
-    protocolHandlerName /*='typeSpecProperties@'*/,
-    protocolHandlerImplementation,
-    originTypeSpecPath,
-    asPath = false,
-) {
-    const currentTypeSpecPath = Path.fromString(typeSpecLink),
-        format = (path) => `${protocolHandlerName}${path}`;
-    if (protocolHandlerImplementation === null)
-        throw new Error(
-            `KEY ERROR ProtocolHandler for identifier "${protocolHandlerName}" not found.`,
-        );
-
-    // getProtocolHandlerImplementation
-    let testPath =
-        currentTypeSpecPath.parts.length === 0 ||
-        currentTypeSpecPath.parts[0] === "children"
-            ? // the initial "children" is part from typeSpecLink
-              originTypeSpecPath.append(...currentTypeSpecPath)
-            : originTypeSpecPath.append("children", ...currentTypeSpecPath);
-    while (true) {
-        if (!originTypeSpecPath.isRootOf(testPath))
-            // We have gone to far up. This also prevents that
-            // a currentTypeSpecPath could potentially inject '..'
-            // to break out of originTypeSpecPath, though,
-            // the latter seems unlikely, as we parse it in here.
-            break;
-        const typeSpecPropertiesId = format(testPath);
-        if (protocolHandlerImplementation.hasRegistered(typeSpecPropertiesId))
-            return asPath ? testPath : typeSpecPropertiesId;
-        // Move towards root and continue; // remove 'children' and `{key}`
-        testPath = testPath.slice(0, -2);
-    }
-    return asPath ? originTypeSpecPath : format(originTypeSpecPath);
-}
-
-/**
- * MAYBE: requires a better name
- *
- * NOTE (to myself): I think going via _getBestTypeSpecPropertiesId is
- * maybe not an ideal implementation, so far, look twice and overthink
- * where asPath===true;
- */
-export function getTypeSpecPropertiesIdMethod(
-    pathOfTypes,
-    asPath = false,
-    nodeSpecToTypeSpecName = "nodeSpecToTypeSpec",
-    protocolHandlerName = "typeSpecProperties@",
-) {
-    const nodeSpecToTypeSpec = this.getEntry(nodeSpecToTypeSpecName),
-        typeKey = pathOfTypes.at(-1),
-        typeSpecLink = nodeSpecToTypeSpec.get(typeKey, { value: "" }).value, // => default '' would be the root TypeSpec
-        protocolHandlerImplementation =
-            this.widgetBus.getProtocolHandlerImplementation(
-                protocolHandlerName,
-                null,
-            );
-    return _getBestTypeSpecPropertiesId(
-        typeSpecLink,
-        protocolHandlerName,
-        protocolHandlerImplementation,
-        this._originTypeSpecPath,
-        asPath,
-    );
-}
+import {
+    getPathOfTypes,
+    getPathsOfTypes,
+    getTypeSpecPropertiesIdMethod,
+    getTypeSpecsMethod,
+} from "./integration.typeroof.jsx";
 
 export function typeSpecGetFontMethod(changedMap, propertyValuesMap) {
     const fontPPSRecord = ProcessedPropertiesSystemMap.createSimpleRecord(
@@ -990,42 +927,6 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
     }
 }
 
-/**
- * started this from looking at function markApplies
- * https://github.com/ProseMirror/prosemirror-commands/blob/master/src/commands.ts
- * not sure if it is sufficiently complete.
- */
-function _getPathsOfTypes(
-    doc /* :Node*/,
-    ranges /*: readonly SelectionRange[]*/,
-    enterAtoms /*: boolean*/,
-    skip = Object.freeze(new FreezableSet()),
-) {
-    const result = new Map(), // try to reduce the amount of results
-        seen = new Set();
-    for (let i = 0; i < ranges.length; i++) {
-        const { $from, $to } = ranges[i];
-        if ($from.depth === 0 && !result.has(0))
-            // && doc.inlineContent ?????
-            result.set(0, [doc.type.name]);
-        doc.nodesBetween($from.pos, $to.pos, (node, pos) => {
-            if (
-                seen.has(pos) ||
-                skip.has(node.type.name) ||
-                (!enterAtoms &&
-                    node.isAtom &&
-                    node.isInline &&
-                    pos >= $from.pos &&
-                    pos + node.nodeSize <= $to.pos)
-            )
-                return;
-            const resolved = doc.resolve(pos);
-            result.set(pos, getPathOfTypes(resolved.path, node.type.name));
-        });
-    }
-    return result.values();
-}
-
 function _addMark(map, mark) {
     if (!map.has(mark.type)) map.set(mark.type, new Set());
     if ("data-style-name" in mark.attrs)
@@ -1140,28 +1041,7 @@ export class UIProseMirrorMenu extends _BaseComponent {
     }
 
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
-    _getTypeSpecs(state) {
-        const { empty, $cursor, ranges } = state.selection, // as TextSelection
-            result = new Map();
-        if (empty && !$cursor) return result;
-        const pathsOfTypes = _getPathsOfTypes(
-            state.doc,
-            ranges,
-            false /*enterAtoms*/,
-            // we don't look at "text" directly and it seems like
-            // these paths always also produce the parent paths
-            new Set(["text"]) /* skip types*/,
-        );
-        for (const pathOfTypes of pathsOfTypes) {
-            const typeSpecPath = this._getTypeSpecPropertiesId(
-                    pathOfTypes,
-                    true /*asPath*/,
-                ),
-                typeSpec = this.getEntry(typeSpecPath);
-            result.set(typeSpec, typeSpecPath);
-        }
-        return result;
-    }
+    _getTypeSpecs = getTypeSpecsMethod;
 
     updateView(view /*, prevState = null*/) {
         // NOTE: when "prevState !== null", I don't think the view changes,
@@ -1178,6 +1058,7 @@ export class UIProseMirrorMenu extends _BaseComponent {
             allStylesSuperSet = new Set(),
             // allow these
             commonSubSet = new Set();
+
         for (const [typeSpec, path] of typeSpecs) {
             const stylePatches = typeSpec.get("stylePatches");
             // console.log(
@@ -1305,6 +1186,121 @@ export class UIProseMirrorMenu extends _BaseComponent {
             if (this._editorView)
                 // mark butttons as active.
                 this.updateView(this._editorView);
+        }
+    }
+}
+
+export class UIBoldItalicMenu extends _BaseComponent {
+    constructor(widgetBus, originTypeSpecPath) {
+        super(widgetBus);
+        this._originTypeSpecPath = originTypeSpecPath;
+        this._styleToButton = new Map();
+        [this.element] = this._initTemplate();
+    }
+
+    _getTemplate(h) {
+        return (
+            <div class="ui_prose_mirror_menu-simple">
+                <button type="button" data-style="bold">
+                    <span class="material-symbols-outlined">format_bold</span>
+                </button>
+                <button type="button" data-style="italic">
+                    <span class="material-symbols-outlined">format_italic</span>
+                </button>
+            </div>
+        );
+    }
+
+    _initTemplate() {
+        const container = this._getTemplate(this._domTool.h),
+            boldButton = container.querySelector("[data-style=bold]"),
+            italicButton = container.querySelector("[data-style=italic]");
+        this._insertElement(container);
+        this._styleToButton.set("bold", boldButton);
+        this._styleToButton.set("italic", italicButton);
+        container.addEventListener(
+            "pointerdown",
+            this._stylesClickHandler.bind(this),
+        );
+        return [container];
+    }
+
+    _stylesClickHandler(event) {
+        event.preventDefault();
+        const button = event.target.closest("button");
+        const styleName = button.getAttribute("data-style");
+        if (!this._styleToButton.has(styleName) || !this._editorView) return;
+        if (button.disabled) return;
+
+        const { dispatch, state } = this._editorView,
+            markType = state.schema.marks["generic-style"],
+            [, activeMarks] = getActiveNodesAndMarks(state),
+            genericStyleMark = state.schema.marks["generic-style"],
+            activeStyles = activeMarks.get(genericStyleMark) || [],
+            activeStylesSeparated = Array.from(activeStyles).flatMap((s) =>
+                s.split(" "),
+            ),
+            newStyleName = activeStylesSeparated.includes(styleName)
+                ? activeStylesSeparated.filter((s) => s !== styleName).join(" ")
+                : activeStylesSeparated.concat(styleName).toSorted().join(" ");
+        // FIXME: clicking bold and italic buttons should set the style name to
+        // "bold italic". The values being passed to `toggleMark` are correct as
+        // can be verified with the logs below, but it's still not working for
+        // some reason.
+        console.log("> clicked:", styleName);
+        console.log("> active styles are:", activeStylesSeparated);
+        console.log("> change style to:", newStyleName);
+        toggleMark(
+            markType,
+            { "data-style-name": newStyleName },
+            {},
+        )(state, dispatch);
+    }
+
+    _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
+    _getTypeSpecs = getTypeSpecsMethod;
+
+    updateView(view) {
+        if (!view) return;
+
+        this._editorView = view;
+        const state = this._editorView.state,
+            setsOfStyles = new Map(),
+            allStylesSuperSet = new Set(["bold", "italic", "bold italic"]),
+            commonSubSet = new Set();
+
+        for (const style of allStylesSuperSet) {
+            if (
+                setsOfStyles.values().every((stylesSet) => stylesSet.has(style))
+            ) {
+                commonSubSet.add(style);
+            }
+        }
+
+        const [, activeMarks] = getActiveNodesAndMarks(state),
+            genericStyleMark = state.schema.marks["generic-style"],
+            activeStyles = activeMarks.get(genericStyleMark) || [],
+            activeStylesSeparated = new Set(
+                Array.from(activeStyles).flatMap((s) => s.split(" ")),
+            );
+        for (const styleName of allStylesSuperSet) {
+            const button = this._styleToButton.get(styleName);
+            if (!button) continue;
+
+            button.disabled = !commonSubSet.has(styleName);
+            button.classList[
+                activeStylesSeparated.has(styleName) ? "add" : "remove"
+            ]("active");
+        }
+    }
+
+    destroyView() {
+        this._editorView = null;
+    }
+
+    update(changedMap) {
+        if (changedMap.has("nodeSpecToTypeSpec")) {
+            this.updateView(this._editorView);
         }
     }
 }
