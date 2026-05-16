@@ -514,7 +514,7 @@ class UICharGroupArgumentsListItem extends UITypeDrivenListWithAddButton.UIItem 
             [
                 "label",
                 simpleArgument(({ fieldName }) => {
-                    return `char group for argument $${parseInt(fieldName) + 1}`;
+                    return `char group argument $${parseInt(fieldName) + 1}`;
                 }),
             ],
         ]),
