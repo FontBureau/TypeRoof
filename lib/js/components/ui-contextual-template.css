@@ -1,3 +1,22 @@
+/**************************************************************************** *
+This behavioral/functional css, not "just" styling
+/**************************************************************************** */
+
+
+/* Contextual template editor: summary-first, expand active path */
+.ui-chars-selector-summary {
+    white-space: pre-wrap;
+    cursor: pointer;
+}
+
+.ui_contextual_template_rule {
+    .ui_contextual_template_rule-contents {
+        display:none;
+    }
+    &.edit .ui_contextual_template_rule-contents {
+        display: block;
+    }
+}
 .type_driven-type-char_group_arguments_list_model-items {
     /**
      * We hide the [+ add char group] button when there's more than one

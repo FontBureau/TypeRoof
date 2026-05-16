@@ -108,12 +108,6 @@ function _getSelectorSummary(selectorModel, depth=0) {
     return `${indent}${label}`;
 }
 
-function _getTemplateRuleSummary(ruleModel) {
-    const pattern = _truncateSummary(ruleModel.get("pattern").value || "", 24),
-        selector = _getSelectorSummary(ruleModel.get("selector"));
-    return `pattern: "${pattern}" · ${selector}`;
-}
-
 // UIContextualTemplateContainer: hardcoded container for TemplateModel.
 // Contains a label and as data fields: defaultPattern string input, and the rules list
 export class UIContextualTemplateContainer extends _BaseTypeDrivenContainerComponentMixin(
@@ -292,15 +286,18 @@ export class UICharsSelectorContainer extends _BaseTypeDrivenContainerComponentM
 }
 
 class UICharsSelectorSummary extends _BaseComponent{
-    constructor(widgetBus) {
+    constructor(widgetBus, eventListeners=[]) {
         super(widgetBus);
-        [this.element] = this._initTemplate();
+        [this.element] = this._initTemplate(eventListeners);
     }
-    _initTemplate() {
+    _initTemplate(eventListeners=[]) {
         const h = this._domTool.h,
             element = (
                 <div class="ui-chars-selector-summary"></div>
             );
+
+        for(const listenerArgs of eventListeners)
+            element.addEventListener(...listenerArgs);
 
         this._insertElement(element);
         return [element];
@@ -371,7 +368,7 @@ export class UIContextualTemplateRule extends _BaseTypeDrivenContainerComponentM
         TypeClass,
         injectable,
         propertyRoot,
-        label,
+        //label,
     ) {
         const generalSettings = { zone: "contents" },
             ppsMap = ProcessedPropertiesSystemMap.fromPrefix(
@@ -390,7 +387,8 @@ export class UIContextualTemplateRule extends _BaseTypeDrivenContainerComponentM
             [
                 {zone: "local"},
                 ['selector'],
-                UICharsSelectorSummary
+                UICharsSelectorSummary,
+                [['click', this._toggleEdit.bind(this, null)]]
             ],
             // type driven zone
             [{ zone: "local" }, [], StaticNode, this._zones.get("contents")],
