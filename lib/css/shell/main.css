@@ -147,6 +147,7 @@ document manager
 .typeroof-ui-label,
 .typeroof-ui label > :is(strong, span):first-child {
     font-weight: 600;
+    text-transform: capitalize;
 }
 
 .key_moments_timeline-items {
@@ -882,6 +883,18 @@ ui plain select
 }
 
 /******************************************************************************
+manual-axes-locations
+*******************************************************************************/
+
+.manual_axes_locations {
+    .number-and-range-input{
+        label abbr {
+            text-transform: none;
+        }
+    }
+}
+
+/******************************************************************************
 select and drag
 *******************************************************************************/
 
@@ -1496,6 +1509,7 @@ collapsible
     cursor: pointer;
     font-weight: 600;
     padding: 0.5em 1em;
+    text-transform: capitalize;
 }
 
 .ui_collapsible-toggler::after {
