@@ -590,6 +590,10 @@ drag handle
     margin-right: 0.125rem;
 }
 
+.drag_handle > span {
+    font-size: 0.875rem !important;
+}
+
 .drag_handle:hover {
     box-shadow: rgb(43 43 43 / 15%) 0 0 0.625rem;
     outline: 0.1em solid black;
