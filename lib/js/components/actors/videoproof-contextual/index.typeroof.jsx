@@ -1,4 +1,4 @@
-import { _BaseComponent } from "../basics.mjs";
+import { _BaseComponent } from "../../basics.mjs";
 
 import {
     measureWordWidths,
@@ -9,34 +9,34 @@ import {
     getVisibleRange,
     DEFAULT_GAP_EM,
     DEFAULT_LINE_HEIGHT_EM,
-} from "./videoproof-contextual-layout.mjs";
+} from "./layout.mjs";
 
 import {
     actorApplyCSSColors,
     actorApplyCssProperties,
     setTypographicPropertiesToSample,
-} from "./properties-util.mjs";
+} from "../properties-util.mjs";
 
-import { setLanguageTagDirect } from "../language-tags.typeroof.jsx";
+import { setLanguageTagDirect } from "../../language-tags.typeroof.jsx";
 
-import { getRegisteredPropertySetup } from "../registered-properties.mjs";
+import { getRegisteredPropertySetup } from "../../registered-properties.mjs";
 
 // Re-export models from the models module for available-actors.mjs
 export {
     VideoproofContextualKeyMomentModel,
     VideoproofContextualKeyMomentsModel,
     VideoproofContextualActorModel,
-} from "./videoproof-contextual-models.mjs";
+} from "./models.mjs";
 
-import { resolveChars } from "../ui-char-groups.mjs";
+import { resolveChars } from "../../ui-char-groups.mjs";
 
-import { METAMODEL } from "../registered-properties-definitions.mjs";
+import { METAMODEL } from "../../registered-properties-definitions.mjs";
 
 import {
     compileTemplate,
     DEFAULT_COMPILED_TEMPLATE,
     generateWords,
-} from "./videoproof-contextual-template.mjs";
+} from "./template.mjs";
 
 // --- Business Logic ---
 //

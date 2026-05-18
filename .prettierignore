@@ -21,7 +21,7 @@
 !**/shell/*.css
 !lib/js/**/*.css
 !**/ramp/*.*
-!lib/js/components/**/*contextual*mjs
+!lib/js/components/**/videoproof-contextual/*
 
 # Ignore glyph-groups.yaml
 lib/assets/glyph-groups.yaml

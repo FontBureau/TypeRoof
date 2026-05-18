@@ -30,7 +30,7 @@ import {
     ProcessedPropertiesSystemRecord,
 } from "./registered-properties-definitions.mjs";
 
-import { createCharsSelector } from "./actors/videoproof-contextual-models.mjs";
+import { createCharsSelector } from "./actors/videoproof-contextual/models.mjs";
 
 import { getCharGroupSummaryFromModel } from "./ui-char-groups.mjs";
 
