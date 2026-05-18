@@ -37,8 +37,8 @@ import { getCharGroupSummaryFromModel } from "./ui-char-groups.mjs";
 import "./ui-contextual-template.css";
 
 /**
- * In the templates for the videoproof-contextual patterns we use $1 and
- * $2 as placeholders, these map to argument 0 and argument 1. To make
+ * In the templates for the videoproof-contextual patterns we use '\1' and
+ * '\2' as placeholders, these map to argument 0 and argument '\1'. To make
  * it more obvious for the user to which pattern placeholder the selector
  * belongs, this adds 1 to the actual argument index value.
  */
@@ -69,11 +69,6 @@ export const UIArgIndexInput = _UIAbstractPlainInputWrapper.createClass(
     PlainArgIndexInput,
 );
 
-function _truncateSummary(value, maxLength = 36) {
-    const text = `${value ?? ""}`;
-    if (text.length <= maxLength) return text;
-    return `${text.slice(0, Math.max(0, maxLength - 1))}…`;
-}
 
 function _getSelectorSummary(selectorModel, depth = 0) {
     const typeKey = selectorModel.get("selectorTypeKey").value;
@@ -94,7 +89,7 @@ function _getSelectorSummary(selectorModel, depth = 0) {
         const argIndex = instance.get("argIndex").value,
             charGroup = instance.get("charGroup");
         // '\xa0' === nbsp
-        return `${indent}$${argIndex + 1}:\xa0${getCharGroupSummaryFromModel(charGroup)}`;
+        return `${indent}\\${argIndex + 1}:\xa0${getCharGroupSummaryFromModel(charGroup)}`;
     }
 
     if (typeKey === "CombinatorAnd" || typeKey === "CombinatorOr") {
@@ -473,12 +468,12 @@ export class UICharsSelectorItemsList extends UITypeDrivenListWithAddButton {
 // directly OR use anyModel -> UITypeDrivenContainer
 //
 // I'd like to have a way, to specify the label of the children->children
-// here, they are currently an index (i) but should be i=>`$${i+1}` but
+// here, they are currently an index (i) but should be i=>`\${i+1}` but
 // that's very specific for the use case in videoproof-contextual where
-// the placeholder for the chars in the patterns are $1 and $2
+// the placeholder for the chars in the patterns are \1 and \2
 // so, maybe, going down from the VideoproofContextualKeyMomentModel
 // we can say very specifically thet the generic/chargGroups/{fieldName}
-// label should be handled like  fieldName=>`$${i+1}` basically, an override
+// label should be handled like  fieldName=>`\${i+1}` basically, an override
 // of the default _BaseTypeDrivenContainerComponentMixin._getArgumentConfig
 // behavior...!
 //
@@ -490,7 +485,7 @@ export class UICharsSelectorItemsList extends UITypeDrivenListWithAddButton {
 // or change it completeley to not evem include an require('label'). in the
 // case above the `argument` is actually the result of resolving 'label',
 // so whatever we use to apply to that, it might at some point in the future
-// be transformed and it would not make sense to i=>`$${i}`
+// be transformed and it would not make sense to i=>`\${i}`
 //
 // TBH overriding the definition of the "label" getter is likeley the
 // best way forward, as it is semantically the right thing to do. Overriding
@@ -505,7 +500,7 @@ class UICharGroupArgumentsListItem extends UITypeDrivenListWithAddButton.UIItem 
             [
                 "label",
                 simpleArgument(({ fieldName }) => {
-                    return `char group argument $${parseInt(fieldName) + 1}`;
+                    return `char group argument \\${parseInt(fieldName) + 1}`;
                 }),
             ],
         ]),
