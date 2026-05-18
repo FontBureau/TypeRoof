@@ -207,9 +207,10 @@ function _getCellContents(
 export class VideoproofContextualActorRenderer extends _BaseComponent {
     static getTemplate(h) {
         return (
-            <div class="actor_renderer-videoproof_contextual-scroll_container" tabindex="0">
-                <div class="actor_renderer-videoproof_contextual fixed-lines"></div>
-                <div class="actor_renderer-videoproof_contextual-spacer" style="height: 10000%"></div>
+            <div class="actor_renderer-videoproof_contextual" tabindex="0">
+                <div class="actor_renderer-videoproof_contextual-spacer">
+                    <div class="actor_renderer-videoproof_contextual-content fixed-lines"></div>
+                </div>
             </div>
         );
     }
@@ -243,25 +244,28 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
         // Flag to suppress scroll handler during programmatic scrollTop changes
         this._suppressScrollHandler = false;
 
-        [this._scrollContainer, this._spacer, this.element] =
-            this._initTemplate();
+        [this.element, this._spacer, this._content] = this._initTemplate();
 
         // Event handlers (bound for cleanup)
-        this._onScroll = this._onScroll.bind(this);
+        this._onScroll = this.__onScroll.bind(this);
         this._onKeydown = this._onKeydown.bind(this);
 
-        this._scrollContainer.addEventListener("scroll", this._onScroll, {
+        this.element.addEventListener("scroll", this._onScroll, {
             passive: true,
         });
-        this._scrollContainer.addEventListener("keydown", this._onKeydown);
+        this.element.addEventListener("keydown", this._onKeydown);
     }
 
     _initTemplate() {
-        const scrollContainer = this.constructor.getTemplate(this._domTool.h),
-            element = scrollContainer.querySelector('.actor_renderer-videoproof_contextual'),
-            spacer = scrollContainer.querySelector('.actor_renderer-videoproof_contextual-spacer');
-        this._insertElement(scrollContainer);
-        return [scrollContainer, spacer, element];
+        const element = this.constructor.getTemplate(this._domTool.h),
+            content = element.querySelector(
+                ".actor_renderer-videoproof_contextual-content",
+            ),
+            spacer = element.querySelector(
+                ".actor_renderer-videoproof_contextual-spacer",
+            );
+        this._insertElement(element);
+        return [element, spacer, content];
     }
 
     // --- Phase 1: Measurement ---
@@ -318,10 +322,22 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
         this._totalLines = result.totalLines;
 
         // Apply font-size and layout CSS to the element
-        this.element.style.setProperty("font-size", `${this._fontSizePt}pt`);
-        this.element.style.setProperty("line-height", `${this._lineHeightEm}`);
-        this.element.style.setProperty("--gap-em", `${this._gapEm}`);
-        this.element.style.setProperty("padding", "0");
+        this._content.style.setProperty("font-size", `${this._fontSizePt}pt`);
+        this._content.style.setProperty("line-height", `${this._lineHeightEm}`);
+        this._content.style.setProperty("--gap-em", `${this._gapEm}`);
+        this._content.style.setProperty("padding", "0");
+
+        // The scrolling feels most natural when we respect native scrolling height.
+        // However, browser layout engines use a hardcoded coordinate ceiling (around
+        // 8.3 million physical pixels) where sticky containers stop rendering properly.
+        // We cap the track at 3,000,000pt (~4,000,000px) to maximize scroll resolution
+        // and precision for trackpads while staying safely under the browser cliff.
+        const MAX_SAFE_HEIGHT_PT = 3000000;
+        const totalHeightPT = Math.min(
+            MAX_SAFE_HEIGHT_PT,
+            this._fontSizePt * this._lineHeightEm * this._totalLines,
+        );
+        this._spacer.style.setProperty("height", `${totalHeightPT}pt`);
 
         // Clamp scroll position: the current word index may now be
         // on a different line or past the end. clampScrollPosition
@@ -348,7 +364,7 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
         );
 
         if (lastWord < firstWord) {
-            this._domTool.clear(this.element);
+            this._domTool.clear(this._content);
             return;
         }
 
@@ -372,13 +388,13 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
             if (lineEndIndices.has(i)) span.classList.add("end-of-line");
             spans.push(span);
         }
-        this.element.replaceChildren(...spans);
+        this._content.replaceChildren(...spans);
     }
 
     // --- Phase 4: Scroll ---
     //
     // Native scrollbar via spacer element. The scroll container has
-    // overflow-y: auto and contains a tall spacer (height: 10000%)
+    // overflow-y: auto and contains a tall spacer
     // that creates the scroll range. The content element is
     // position: sticky; top: 0 and stays pinned.
     //
@@ -388,7 +404,7 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
     //   and   maxLine = max(0, totalLines - linesPerPage)
 
     _getMaxScrollTop() {
-        return this._spacer.offsetHeight - this._scrollContainer.clientHeight;
+        return this._spacer.offsetHeight - this.element.clientHeight;
     }
 
     _getMaxLine() {
@@ -422,10 +438,9 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
         const targetScrollTop = this._wordIndexToScrollTop(
             this._scrollWordIndex,
         );
-        if (Math.abs(this._scrollContainer.scrollTop - targetScrollTop) < 1)
-            return;
+        if (Math.abs(this.element.scrollTop - targetScrollTop) < 1) return;
         this._suppressScrollHandler = true;
-        this._scrollContainer.scrollTop = targetScrollTop;
+        this.element.scrollTop = targetScrollTop;
         this._suppressScrollHandler = false;
     }
 
@@ -459,11 +474,9 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
         this._renderVisiblePage();
     }
 
-    _onScroll(/*event*/) {
+    __onScroll(/*event*/) {
         if (this._suppressScrollHandler) return;
-        const wordIndex = this._scrollTopToWordIndex(
-            this._scrollContainer.scrollTop,
-        );
+        const wordIndex = this._scrollTopToWordIndex(this.element.scrollTop);
         if (wordIndex === this._scrollWordIndex) return;
         this._scrollWordIndex = wordIndex;
         this._renderVisiblePage();
@@ -503,8 +516,8 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
     // --- Cleanup ---
 
     destroy() {
-        this._scrollContainer.removeEventListener("scroll", this._onScroll);
-        this._scrollContainer.removeEventListener("keydown", this._onKeydown);
+        this.element.removeEventListener("scroll", this._onScroll);
+        this.element.removeEventListener("keydown", this._onKeydown);
         super.destroy();
     }
 
@@ -522,7 +535,10 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
         ).value;
         if (changedMap.has("font")) {
             const font = changedMap.get("font").value;
-            this.element.style.setProperty("font-family", `"${font.fullName}"`);
+            this._content.style.setProperty(
+                "font-family",
+                `"${font.fullName}"`,
+            );
             this._cellsStateKey = null;
             // Font change invalidates word width measurements
             this._measurementStateKey = null;
@@ -576,7 +592,7 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
                     this._wordWidthsEm = [];
                     this._lineStarts = [];
                     this._totalLines = 0;
-                    this._domTool.clear(this.element);
+                    this._domTool.clear(this._content);
                 }
             } else if (cellContents.stateKey !== null) {
                 // Words didn't change, but layout might need update
@@ -585,24 +601,24 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
                 if (this._relayout()) this._renderVisiblePage();
             }
             actorApplyCSSColors(
-                this.element,
+                this._content,
                 propertyValuesMap,
                 getDefault,
                 colorPropertiesMap,
             );
             actorApplyCssProperties(
-                this.element,
+                this._content,
                 propertyValuesMap,
                 getDefault,
                 propertiesData,
             );
             // skipFontSize=true: we manage font-size ourselves
             setTypographicPropertiesToSample(
-                this.element,
+                this._content,
                 propertyValuesMap,
                 true,
             );
-            setLanguageTagDirect(this.element, propertyValuesMap);
+            setLanguageTagDirect(this._content, propertyValuesMap);
         }
     }
 }

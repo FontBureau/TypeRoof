@@ -961,28 +961,26 @@ select and drag
     white-space: nowrap;
 }
 
-/* Virtual-scroll contextual renderer:
- *   scroll_container (overflow-y: auto, native scrollbar)
- *     spacer (height: 10000%, inline style — creates scroll range)
- *     content element (position: sticky; top: 0 — stays pinned)
- */
-.actor_renderer-videoproof_contextual-scroll_container {
+.actor_renderer-videoproof_contextual {
     overflow-y: auto;
     width: 100%;
     height: 100%;
-    box-sizing: border-box;
-    outline: none;
 }
 
-.actor_renderer-videoproof_contextual {
+.actor_renderer-videoproof_contextual-spacer {
+    box-sizing: border-box;
+    display: flow-root;
+}
+
+.actor_renderer-videoproof_contextual-content {
     position: sticky;
     top: 0;
 }
 
-.actor_renderer-videoproof_contextual.fixed-lines span {
+.actor_renderer-videoproof_contextual-content.fixed-lines span {
     margin-right: calc(1em * var(--gap-em, 0));
 }
-.actor_renderer-videoproof_contextual.fixed-lines span.end-of-line {
+.actor_renderer-videoproof_contextual-content.fixed-lines span.end-of-line {
     margin-right: 0;
 }
 
