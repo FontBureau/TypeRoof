@@ -396,9 +396,6 @@ export class UIContextualTemplateRule extends _BaseTypeDrivenContainerComponentM
             ...this._defineGenericWidgets(
                 TypeClass,
                 (fieldName) => {
-                    console.log('isAllowed:', fieldName, `!omit.has(${fieldName})`, !omit.has(fieldName), `&&  TypeClass.fields.has(${fieldName})`,  TypeClass.fields.has(fieldName),
-                     '->', (!omit.has(fieldName) && TypeClass.fields.has(fieldName)));
-
                     return (!omit.has(fieldName) && TypeClass.fields.has(fieldName))
                 },
                 generalSettings,
