@@ -14,12 +14,10 @@ import {
     PlainNumberAndRangeInput,
     UILineOfTextInput,
     Collapsible,
-    PlainToggleButton
+    PlainToggleButton,
 } from "./generic.mjs";
 
-import {
-    createIcon
-} from "./icons.mjs";
+import { createIcon } from "./icons.mjs";
 
 import {
     _BaseTypeDrivenContainerComponentMixin,
@@ -28,16 +26,15 @@ import {
 } from "./type-driven-ui-basics.mjs";
 
 import {
-        ProcessedPropertiesSystemMap,
-        ProcessedPropertiesSystemRecord
+    ProcessedPropertiesSystemMap,
+    ProcessedPropertiesSystemRecord,
 } from "./registered-properties-definitions.mjs";
 
 import { createCharsSelector } from "./actors/videoproof-contextual-models.mjs";
 
 import { getCharGroupSummaryFromModel } from "./ui-char-groups.mjs";
 
-
-import './ui-contextual-template.css';
+import "./ui-contextual-template.css";
 
 /**
  * In the templates for the videoproof-contextual patterns we use $1 and
@@ -78,9 +75,9 @@ function _truncateSummary(value, maxLength = 36) {
     return `${text.slice(0, Math.max(0, maxLength - 1))}…`;
 }
 
-function _getSelectorSummary(selectorModel, depth=0) {
+function _getSelectorSummary(selectorModel, depth = 0) {
     const typeKey = selectorModel.get("selectorTypeKey").value;
-    const indent = ' '.repeat(depth * 2);
+    const indent = " ".repeat(depth * 2);
     if (typeKey === ForeignKey.NULL) return `${indent}(-NULL-)`;
 
     const instanceWrapper = selectorModel.get("instance");
@@ -96,12 +93,16 @@ function _getSelectorSummary(selectorModel, depth=0) {
     if (typeKey === "Simple") {
         const argIndex = instance.get("argIndex").value,
             charGroup = instance.get("charGroup");
-            // '\xa0' === nbsp
-        return `${indent}$${argIndex+1}:\xa0${getCharGroupSummaryFromModel(charGroup)}`;
+        // '\xa0' === nbsp
+        return `${indent}$${argIndex + 1}:\xa0${getCharGroupSummaryFromModel(charGroup)}`;
     }
 
     if (typeKey === "CombinatorAnd" || typeKey === "CombinatorOr") {
-        const children = instance.get("children").value.map(selectorModel=>_getSelectorSummary(selectorModel, depth+1));
+        const children = instance
+            .get("children")
+            .value.map((selectorModel) =>
+                _getSelectorSummary(selectorModel, depth + 1),
+            );
         return `${indent}${label}(${children.length ? "\n" : ""}${children.join(",\n")}${children.length ? "\n" + indent : ""})`;
     }
 
@@ -117,8 +118,7 @@ export class UIContextualTemplateContainer extends _BaseTypeDrivenContainerCompo
         const localZoneElement = widgetBus.domTool.createElement("div", {
                 class: "ui_contextual_template_container",
             }),
-            contentsZoneElement = widgetBus.domTool.createElement("div",
-            {
+            contentsZoneElement = widgetBus.domTool.createElement("div", {
                 class: "ui_contextual_template-contents",
             }),
             zones = new Map([
@@ -143,12 +143,7 @@ export class UIContextualTemplateContainer extends _BaseTypeDrivenContainerCompo
     }
 
     // NOTE: contentsZoneElement is acquired by: this._zones.get('contents')
-    _defineWidgets(
-        TypeClass,
-        injectable,
-        propertyRoot,
-        label,
-    ) {
+    _defineWidgets(TypeClass, injectable, propertyRoot, label) {
         const generalSettings = { zone: "contents" },
             ppsMap = ProcessedPropertiesSystemMap.fromPrefix(
                 propertyRoot,
@@ -156,11 +151,11 @@ export class UIContextualTemplateContainer extends _BaseTypeDrivenContainerCompo
             );
         return [
             [
-                {zone: 'local'}
-              , []
-              , Collapsible
-              , label
-              , this._zones.get('contents')
+                { zone: "local" },
+                [],
+                Collapsible,
+                label,
+                this._zones.get("contents"),
             ],
             ...this._defineGenericWidgets(
                 TypeClass,
@@ -211,7 +206,7 @@ export class UICharsSelectorContainer extends _BaseTypeDrivenContainerComponentM
 
     get _initialWidgets() {
         return [
-            [{ zone: "local" }, [], StaticNode, this._zones.get('contents')],
+            [{ zone: "local" }, [], StaticNode, this._zones.get("contents")],
             [
                 { zone: "contents" },
                 [
@@ -285,25 +280,23 @@ export class UICharsSelectorContainer extends _BaseTypeDrivenContainerComponentM
     }
 }
 
-class UICharsSelectorSummary extends _BaseComponent{
-    constructor(widgetBus, eventListeners=[]) {
+class UICharsSelectorSummary extends _BaseComponent {
+    constructor(widgetBus, eventListeners = []) {
         super(widgetBus);
         [this.element] = this._initTemplate(eventListeners);
     }
-    _initTemplate(eventListeners=[]) {
+    _initTemplate(eventListeners = []) {
         const h = this._domTool.h,
-            element = (
-                <div class="ui-chars-selector-summary"></div>
-            );
+            element = <div class="ui-chars-selector-summary"></div>;
 
-        for(const listenerArgs of eventListeners)
+        for (const listenerArgs of eventListeners)
             element.addEventListener(...listenerArgs);
 
         this._insertElement(element);
         return [element];
     }
-    update (changedMap) {
-        const selector = changedMap.get('selector');
+    update(changedMap) {
+        const selector = changedMap.get("selector");
         this.element.textContent = _getSelectorSummary(selector);
     }
 }
@@ -313,13 +306,13 @@ export class UIContextualTemplateRule extends _BaseTypeDrivenContainerComponentM
     _BaseContainerComponent,
 ) {
     constructor(widgetBus, _zones, injectable, propertyRoot, label) {
-        const baseClass = 'ui_contextual_template_rule',
-            localZoneElement = widgetBus.domTool.createElement('div', {
-                'class': baseClass,
-                'tabindex': 0
+        const baseClass = "ui_contextual_template_rule",
+            localZoneElement = widgetBus.domTool.createElement("div", {
+                class: baseClass,
+                tabindex: 0,
             }),
             contentsZoneElement = widgetBus.domTool.createElement("div", {
-                'class': `${baseClass}-contents`
+                class: `${baseClass}-contents`,
             }),
             zones = new Map([
                 ..._zones,
@@ -335,7 +328,7 @@ export class UIContextualTemplateRule extends _BaseTypeDrivenContainerComponentM
                 "edit",
                 createIcon("edit_off"),
                 createIcon("edit"),
-                "Edit"
+                "Edit",
             );
         }
         this._edit = null;
@@ -357,10 +350,11 @@ export class UIContextualTemplateRule extends _BaseTypeDrivenContainerComponentM
      * use a boolean for value to set an explicit state, otherwise, use
      * null to toggle the current value
      */
-    _toggleEdit(value=null) {
-        this._edit =  value === null ? (!this._edit) : (!!value);
+    _toggleEdit(value = null) {
+        this._edit = value === null ? !this._edit : !!value;
         this._editButton.update(this._edit);
-        this._zones.get("local")
+        this._zones
+            .get("local")
             .classList[this._edit ? "add" : "remove"]("edit");
     }
 
@@ -375,20 +369,16 @@ export class UIContextualTemplateRule extends _BaseTypeDrivenContainerComponentM
                 propertyRoot,
                 TypeClass.fields.keys(),
             ),
-            omit = new Set(['pattern']);
+            omit = new Set(["pattern"]);
         return [
             // custom
+            [{ zone: "local" }, [["pattern", "value"]], UILineOfTextInput],
+            [{ zone: "tools" }, [], StaticNode, this._editButton.element],
             [
-                {zone: "local"},
-                [['pattern', 'value']],
-                UILineOfTextInput
-            ],
-            [{zone: "tools"}, [], StaticNode,this._editButton.element],
-            [
-                {zone: "local"},
-                ['selector'],
+                { zone: "local" },
+                ["selector"],
                 UICharsSelectorSummary,
-                [['click', this._toggleEdit.bind(this, null)]]
+                [["click", this._toggleEdit.bind(this, null)]],
             ],
             // type driven zone
             [{ zone: "local" }, [], StaticNode, this._zones.get("contents")],
@@ -396,7 +386,9 @@ export class UIContextualTemplateRule extends _BaseTypeDrivenContainerComponentM
             ...this._defineGenericWidgets(
                 TypeClass,
                 (fieldName) => {
-                    return (!omit.has(fieldName) && TypeClass.fields.has(fieldName))
+                    return (
+                        !omit.has(fieldName) && TypeClass.fields.has(fieldName)
+                    );
                 },
                 generalSettings,
                 ppsMap,
@@ -426,8 +418,10 @@ class UICharsSelectorContainerItem extends _UIBaseListContainerItem {
     ) {
         super(widgetBus, _zones, eventHandlers, draggable, deletable);
 
-        if(!(ppsRecord  instanceof ProcessedPropertiesSystemRecord))
-            throw new Error(`${this.constructor.name} ppsRecord is not a ProcessedPropertiesSystemRecord!`);
+        if (!(ppsRecord instanceof ProcessedPropertiesSystemRecord))
+            throw new Error(
+                `${this.constructor.name} ppsRecord is not a ProcessedPropertiesSystemRecord!`,
+            );
         const propertyRoot = ppsRecord.propertyRoot;
 
         this._injectable = injectable;

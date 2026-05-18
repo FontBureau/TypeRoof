@@ -186,7 +186,7 @@ menu {
     padding: 0;
 }
 
-.ui_button{
+.ui_button {
     &,
     &.ui_button-add,
     &.ui_button-move,

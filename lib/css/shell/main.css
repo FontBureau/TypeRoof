@@ -887,7 +887,7 @@ manual-axes-locations
 *******************************************************************************/
 
 .manual_axes_locations {
-    .number-and-range-input{
+    .number-and-range-input {
         label abbr {
             text-transform: none;
         }
@@ -1065,10 +1065,10 @@ select and drag
         /* place everything before move and remove */
         order: -3;
     }
-    .ui_button-move{
+    .ui_button-move {
         order: -2;
     }
-    .ui_button-remove{
+    .ui_button-remove {
         order: -1;
     }
 }
@@ -2158,14 +2158,13 @@ ui-contextual-template
 .type_driven-type-template_rule_model:nth-child(2n) {
     background: var(--list-item-even-bg);
 }
-.type_driven-type-template_rule_model:nth-child(2n+1) {
+.type_driven-type-template_rule_model:nth-child(2n + 1) {
     background-color: var(--list-item-odd-bg);
 }
 
-.ui_chars_selector_container .ui_generic_select-label{
+.ui_chars_selector_container .ui_generic_select-label {
     width: auto;
 }
-
 
 .type_driven-type-chars_selector_items_model-items {
     background: none;
@@ -2173,5 +2172,4 @@ ui-contextual-template
     border-left: 1px solid var(--fieldset-border-color);
     border-top: 1px solid var(--fieldset-border-color);
     padding-left: 0.75em;
-
 }

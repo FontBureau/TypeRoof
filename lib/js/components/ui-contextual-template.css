@@ -2,7 +2,6 @@
 This behavioral/functional css, not "just" styling
 /**************************************************************************** */
 
-
 /* Contextual template editor: summary-first, expand active path */
 .ui-chars-selector-summary {
     white-space: pre-wrap;
@@ -11,7 +10,7 @@ This behavioral/functional css, not "just" styling
 
 .ui_contextual_template_rule {
     .ui_contextual_template_rule-contents {
-        display:none;
+        display: none;
     }
     &.edit .ui_contextual_template_rule-contents {
         display: block;
@@ -22,7 +21,8 @@ This behavioral/functional css, not "just" styling
      * We hide the [+ add char group] button when there's more than one
      * item (the first-child is not the last child)
      */
-    &:has(.type_driven-type-char_group_model:first-child:not(:last-child)) + .ui_type_driven_list-add_button {
+    &:has(.type_driven-type-char_group_model:first-child:not(:last-child))
+        + .ui_type_driven_list-add_button {
         display: none;
     }
     /**
@@ -30,7 +30,8 @@ This behavioral/functional css, not "just" styling
      * don't show the item tools (move, delete).
      * The model ensures that there's always at least one item in the list.
      **/
-    .type_driven-type-char_group_model:first-child:last-child > .tools_container {
+    .type_driven-type-char_group_model:first-child:last-child
+        > .tools_container {
         display: none;
     }
 }
