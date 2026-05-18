@@ -205,13 +205,15 @@ function _getCellContents(
 // The native scrollbar position is mapped proportionally to the word index.
 
 export class VideoproofContextualActorRenderer extends _BaseComponent {
-    // jshint ignore:start
-    static TEMPLATE =
-        `<div class="actor_renderer-videoproof_contextual-scroll_container" tabindex="0">` +
-        `<div class="actor_renderer-videoproof_contextual fixed-lines"></div>` +
-        `<div style="height: 10000%"></div>` +
-        `</div>`;
-    // jshint ignore:end
+    static getTemplate(h) {
+        return (
+            <div class="actor_renderer-videoproof_contextual-scroll_container" tabindex="0">
+                <div class="actor_renderer-videoproof_contextual fixed-lines"></div>
+                <div class="actor_renderer-videoproof_contextual-spacer" style="height: 10000%"></div>
+            </div>
+        );
+    }
+
     constructor(widgetBus, charGroupsData) {
         super(widgetBus);
         this._charGroupsData = charGroupsData;
@@ -242,7 +244,7 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
         this._suppressScrollHandler = false;
 
         [this._scrollContainer, this._spacer, this.element] =
-            this.initTemplate();
+            this._initTemplate();
 
         // Event handlers (bound for cleanup)
         this._onScroll = this._onScroll.bind(this);
@@ -253,13 +255,11 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
         });
         this._scrollContainer.addEventListener("keydown", this._onKeydown);
     }
-    initTemplate() {
-        const frag = this._domTool.createFragmentFromHTML(
-                this.constructor.TEMPLATE,
-            ),
-            scrollContainer = frag.firstElementChild,
-            element = scrollContainer.children[0],
-            spacer = scrollContainer.children[1];
+
+    _initTemplate() {
+        const scrollContainer = this.constructor.getTemplate(this._domTool.h),
+            element = scrollContainer.querySelector('.actor_renderer-videoproof_contextual'),
+            spacer = scrollContainer.querySelector('.actor_renderer-videoproof_contextual-spacer');
         this._insertElement(scrollContainer);
         return [scrollContainer, spacer, element];
     }
