@@ -393,13 +393,7 @@ export class UIContextualTemplateRule extends _BaseTypeDrivenContainerComponentM
     }
 }
 
-export class UIContextualTemplateRulesList extends UITypeDrivenListWithAddButton {
-    static ADD_BUTTON_TEXT = "+ add rule";
-    // static UIItem = UIContextualTemplateRuleListItem; // the default is UITypeDrivenListItem
-    _itemsDeletable = true;
-}
-
-class UICharsSelectorContainerItem extends _UIBaseListContainerItem {
+export class UICharsSelectorContainerItem extends _UIBaseListContainerItem {
     static TYPE_CLASS_PART = "selector_container_item";
     constructor(
         widgetBus,
@@ -420,7 +414,7 @@ class UICharsSelectorContainerItem extends _UIBaseListContainerItem {
         const propertyRoot = ppsRecord.propertyRoot;
 
         this._injectable = injectable;
-        this.ITEM_DATA_TRANSFER_TYPE_PATH = transferTypePath;
+        this._ITEM_DATA_TRANSFER_TYPE_PATH = transferTypePath;
 
         // OK so here we can initialize the UICharsSelectorContainer then ...
         const widgets = [
@@ -437,20 +431,6 @@ class UICharsSelectorContainerItem extends _UIBaseListContainerItem {
     }
 }
 
-// The child is no longer a dynamic list, not sure if this type makes sense
-// as such.
-export class UICharsSelectorItemsList extends UITypeDrivenListWithAddButton {
-    static ADD_BUTTON_TEXT = "+ add selector";
-    static UIItem = UICharsSelectorContainerItem;
-    _itemsDeletable = true;
-
-    // instance generic/template/rules/0/selector/children/0/instance
-    // DynamicCharsSelectorModel Can't find generic UI-Element for ModelType
-    // DynamicCharsSelectorModel (isOrEmpty: false, BaseModelType: DynamicCharsSelectorModel).
-    // This is interesting, as UICharsSelectorContainer already handles the
-    // dynamic type, but it's not a proper list item!
-    // We should hence rather have that wrapped as a list item than this
-}
 
 // TODO: CHECK: UITypeDrivenListWithAddButton
 // UHH, hmm, OK, does this eventually use UICharGroupContainer ???
@@ -493,7 +473,7 @@ export class UICharsSelectorItemsList extends UITypeDrivenListWithAddButton {
 // of the named requirements and will be hard to keep when eventually the
 // configuration is attached to the UI-Elements directly.
 
-class UICharGroupArgumentsListItem extends UITypeDrivenListWithAddButton.UIItem {
+export class UICharGroupArgumentsListItem extends UITypeDrivenListWithAddButton.UIItem {
     static _resolvers = Object.freeze(
         new FreezableMap([
             ...UITypeDrivenListWithAddButton.UIItem._resolvers, // inherit
@@ -505,10 +485,4 @@ class UICharGroupArgumentsListItem extends UITypeDrivenListWithAddButton.UIItem 
             ],
         ]),
     );
-}
-
-export class UICharGroupArgumentsList extends UITypeDrivenListWithAddButton {
-    static ADD_BUTTON_TEXT = "+ add char group";
-    static UIItem = UICharGroupArgumentsListItem;
-    _itemsDeletable = true;
 }
