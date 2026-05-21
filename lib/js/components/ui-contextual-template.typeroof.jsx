@@ -1,4 +1,4 @@
-import { ForeignKey, FreezableMap } from "../metamodel.mjs";
+import { ForeignKey, FreezableMap, Path } from "../metamodel.mjs";
 
 import {
     _BaseComponent,
@@ -123,13 +123,41 @@ export class UIContextualTemplateContainer extends _BaseTypeDrivenContainerCompo
         widgetBus.insertElement(localZoneElement);
         super(widgetBus, zones);
 
-        this._injectable = injectable;
+        this._injectable = {
+            ...injectable,
+            getDefaults: (ppsRecord, modelFieldName, defaultVal) => {
+                // The problem is, that we cut out the taking part of the
+                // TemplateModel in the PPS and thus, the usual getDefaults
+                // implementation doesn't work anymore.
+                // This is a very simple replacement, but let's see if it breaks.
+                //
+                // arguments, an example:
+                //      ppsRecord: Object { prefix: "generic/template/rules/0/selector/instance/charGroup/",
+                //             fullKey: "generic/template/rules/0/selector/instance/charGroup/options",
+                //             modelFieldName: "options"
+                //      modelFieldName: "options"
+                //      ...args: ["all-gid"] // the fallback
+                //
+                // Works because we have based the ppsReccords on the actual
+                // model structure. Maybe a good learing for the next system:
+                // include a full path to the source model?
+                // Will only work for simple values.
+                const propertyRootPath = Path.fromString(propertyRoot),
+                    ppsFullPath = Path.fromString(ppsRecord.fullKey),
+                    relPath = ppsFullPath.toRelative(propertyRootPath),
+                    absPath = this.widgetBus.rootPath.append(...relPath.parts),
+                    field = this.getEntry(absPath);
+                // duck-typing OrEmpty: implicitly `isEmpty` won't be true if
+                //  it is not an OrEmpty model.
+                return field.isEmpty ? defaultVal : field.value;
+            },
+        };
         const TypeClass = this.widgetBus.getEntry(
             this.widgetBus.rootPath,
         ).constructor;
         const widgets = this._defineWidgets(
             TypeClass,
-            injectable,
+            this._injectable,
             propertyRoot,
             label,
         );
