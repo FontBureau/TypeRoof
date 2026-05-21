@@ -570,11 +570,12 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
             const templateModel = propertyValuesMap.get(`${METAMODEL}template`);
             if (
                 this._compiledTemplate === null || // initial
-                this._compiledTemplate.templateModel !== templateModel
+                this._compiledTemplate.templateModel !== templateModel ||
+                this._compiledTemplate.font !== font
             ) {
                 // Compile the template (rules + selectors + defaultPattern).
                 this._compiledTemplate = templateModel
-                    ? compileTemplate(templateModel, this._charGroupsData)
+                    ? compileTemplate(templateModel, this._charGroupsData, font)
                     : DEFAULT_COMPILED_TEMPLATE;
             }
 
