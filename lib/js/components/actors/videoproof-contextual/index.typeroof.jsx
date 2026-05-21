@@ -49,6 +49,7 @@ function _getCellContents(
     charGroupsData,
     fonts,
     propertyValuesMap,
+    compiledTemplate,
     previousStateKey,
 ) {
     const cellContents = { words: [], stateKey: null, changed: true };
@@ -89,13 +90,8 @@ function _getCellContents(
         outerCustomSeparator = hasOuterCharGroup
             ? propertyValuesMap.get("generic/charGroups/1/customSeparator") ||
               ""
-            : "",
-        templateModel = propertyValuesMap.get(`${METAMODEL}template`);
-    // Compile the full template (rules + selectors + defaultPattern)
-    // from flat property paths, following the getColorFromPropertyValuesMap pattern.
-    const compiledTemplate = templateModel
-        ? compileTemplate(templateModel, charGroupsData)
-        : DEFAULT_COMPILED_TEMPLATE;
+            : ""
+        ;
     // State key: all parameters that influence word generation.
     const stateKeyTokens = [
         fullNames,
@@ -218,6 +214,9 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
     constructor(widgetBus, charGroupsData) {
         super(widgetBus);
         this._charGroupsData = charGroupsData;
+
+        // caching indicators
+        this._compiledTemplate = null;
 
         // One of three StateKeys
         this._cellsStateKey = null;
@@ -574,10 +573,21 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
                 ];
             // _getCellContents is a lot like the original function
             // and cellContents.stateKey thereby as well
+
+            const templateModel = propertyValuesMap.get(`${METAMODEL}template`);
+            if(this._compiledTemplate === null // initial
+                    || this._compiledTemplate.templateModel !== templateModel) {
+                // Compile the template (rules + selectors + defaultPattern).
+                this._compiledTemplate = templateModel
+                    ? compileTemplate(templateModel, this._charGroupsData)
+                    : DEFAULT_COMPILED_TEMPLATE;
+            }
+
             const cellContents = _getCellContents(
                 this._charGroupsData,
                 [font],
                 propertyValuesMap,
+                this._compiledTemplate,
                 this._cellsStateKey,
             );
             if (cellContents.changed) {
