@@ -90,8 +90,7 @@ function _getCellContents(
         outerCustomSeparator = hasOuterCharGroup
             ? propertyValuesMap.get("generic/charGroups/1/customSeparator") ||
               ""
-            : ""
-        ;
+            : "";
     // State key: all parameters that influence word generation.
     const stateKeyTokens = [
         fullNames,
@@ -220,6 +219,8 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
 
         // One of three StateKeys
         this._cellsStateKey = null;
+        // contains _cellsStateKey
+        this._layoutStateKey = null;
 
         // Virtual-scroll state
         this._words = [];
@@ -233,8 +234,6 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
         // This makes the position meaningful for sharing/review and
         // stable across relayouts.
         this._scrollWordIndex = 0;
-        this._measurementStateKey = null;
-        this._layoutStateKey = null;
 
         // Configurable parameters (constants for now, configurable later)
         this._gapEm = DEFAULT_GAP_EM;
@@ -270,18 +269,15 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
     // --- Phase 1: Measurement ---
 
     _measureWords(font, words) {
-        this._words = words;
-        this._wordWidthsEm = measureWordWidths(
-            this.widgetBus.harfbuzz.hbjs,
-            font,
+        return [
             words,
-        );
-        // Invalidate layout
-        this._layoutStateKey = null;
+            measureWordWidths(this.widgetBus.harfbuzz.hbjs, font, words), // wordWidthsEm
+        ];
     }
 
     // --- Phase 2: Layout ---
 
+    // FIXME: got to do this via the properties system!
     _getAvailableDimensions() {
         // The host element is the stage layer (100% x 100% of stage)
         // offsetWidth/Height give pre-transform dimensions
@@ -300,8 +296,7 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
             heightPt,
             this._gapEm,
             this._lineHeightEm,
-            this._wordWidthsEm.length,
-            this._measurementStateKey,
+            this._cellsStateKey,
         ].join(";");
 
         if (layoutKey === this._layoutStateKey) return false; // no change
@@ -533,14 +528,12 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
                 : this.getEntry("font")
         ).value;
         if (changedMap.has("font")) {
-            const font = changedMap.get("font").value;
             this._content.style.setProperty(
                 "font-family",
                 `"${font.fullName}"`,
             );
+            // Font change invalidates word width measurements and contents
             this._cellsStateKey = null;
-            // Font change invalidates word width measurements
-            this._measurementStateKey = null;
         }
 
         if (
@@ -575,8 +568,10 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
             // and cellContents.stateKey thereby as well
 
             const templateModel = propertyValuesMap.get(`${METAMODEL}template`);
-            if(this._compiledTemplate === null // initial
-                    || this._compiledTemplate.templateModel !== templateModel) {
+            if (
+                this._compiledTemplate === null || // initial
+                this._compiledTemplate.templateModel !== templateModel
+            ) {
                 // Compile the template (rules + selectors + defaultPattern).
                 this._compiledTemplate = templateModel
                     ? compileTemplate(templateModel, this._charGroupsData)
@@ -591,25 +586,19 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
                 this._cellsStateKey,
             );
             if (cellContents.changed) {
+                // this will also invalidate this._layoutStateKey;
                 this._cellsStateKey = cellContents.stateKey;
-                if (cellContents.words.length) {
-                    this._measureWords(font, cellContents.words);
-                    this._measurementStateKey = cellContents.stateKey;
-                    this._relayout();
-                    this._renderVisiblePage();
-                } else {
-                    this._words = [];
-                    this._wordWidthsEm = [];
-                    this._lineStarts = [];
-                    this._totalLines = 0;
-                    this._domTool.clear(this._content);
-                }
-            } else if (cellContents.stateKey !== null) {
-                // Words didn't change, but layout might need update
-                // (e.g., container resized since last render).
-                // _relayout is cheap when nothing changed (state key check).
-                if (this._relayout()) this._renderVisiblePage();
+                // this is slow!
+                [this._words, this._wordWidthsEm] = this._measureWords(
+                    font,
+                    cellContents.words,
+                );
             }
+
+            // Even if Words didn't change, but layout might need update
+            // (e.g., container resized since last render).
+            if (this._relayout()) this._renderVisiblePage();
+
             actorApplyCSSColors(
                 this._content,
                 propertyValuesMap,

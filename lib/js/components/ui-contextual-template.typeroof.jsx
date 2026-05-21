@@ -69,7 +69,6 @@ export const UIArgIndexInput = _UIAbstractPlainInputWrapper.createClass(
     PlainArgIndexInput,
 );
 
-
 function _getSelectorSummary(selectorModel, depth = 0) {
     const typeKey = selectorModel.get("selectorTypeKey").value;
     const indent = " ".repeat(depth * 2);
@@ -212,6 +211,7 @@ export class UICharsSelectorContainer extends _BaseTypeDrivenContainerComponentM
                 "ui_chars_selector_select", // baseClass
                 "Selector Type", // labelContent
                 (key, availableType) => availableType.get("label").value, // optionGetLabel
+                // maybe disallow to set null?
                 [true, "(none)", ForeignKey.NULL], // [allowNull, allowNullLabel, nullModelValue]
                 this._changeTypeHandler.bind(this), // onChangeFn
             ],
