@@ -295,8 +295,7 @@ class UICharsSelectorSummary extends _BaseComponent {
         this.element.textContent = _getSelectorSummary(selector);
     }
 }
-// FIXME: now basically a copy of UIContextualTemplateContainer we should
-// base this on a common component
+
 export class UIContextualTemplateRule extends _BaseTypeDrivenContainerComponentMixin(
     _BaseContainerComponent,
 ) {
@@ -430,48 +429,6 @@ export class UICharsSelectorContainerItem extends _UIBaseListContainerItem {
         this._initWidgets(widgets);
     }
 }
-
-
-// TODO: CHECK: UITypeDrivenListWithAddButton
-// UHH, hmm, OK, does this eventually use UICharGroupContainer ???
-// Don't think so, I guess the resolution is like this:
-//      the child/item represents the actual child item and it
-//      resolves each of those children type driven, while, actually
-//      it would be better to check if we can represent the child item
-//      directly with another UI and use that.
-//      so, maybe this whole class, the item class should not itself
-//      resolve type-driven, but rather use the default type driven
-//      container and wrap it, but only if there's no direct match.
-//
-// Similar to UICharsSelectorItemsList but UICharsSelectorContainerItem would
-// type driven either match CharsSelectorModel -> UICharsSelectorContainer
-// directly OR use anyModel -> UITypeDrivenContainer
-//
-// I'd like to have a way, to specify the label of the children->children
-// here, they are currently an index (i) but should be i=>`\${i+1}` but
-// that's very specific for the use case in videoproof-contextual where
-// the placeholder for the chars in the patterns are \1 and \2
-// so, maybe, going down from the VideoproofContextualKeyMomentModel
-// we can say very specifically thet the generic/chargGroups/{fieldName}
-// label should be handled like  fieldName=>`\${i+1}` basically, an override
-// of the default _BaseTypeDrivenContainerComponentMixin._getArgumentConfig
-// behavior...!
-//
-// soo, it's rather hard to change _getArgumentConfig, or to be more precise,
-// it's rather unprecedented. We could though, maybe change the
-// uiElementsMap definition, to include a paramerter payload function:
-//          if(typeof parameter.payload === 'function')
-//                argument = parameter.payload(argument);
-// or change it completeley to not evem include an require('label'). in the
-// case above the `argument` is actually the result of resolving 'label',
-// so whatever we use to apply to that, it might at some point in the future
-// be transformed and it would not make sense to i=>`\${i}`
-//
-// TBH overriding the definition of the "label" getter is likeley the
-// best way forward, as it is semantically the right thing to do. Overriding
-// the require definitions to get something else instead defeats the purpose
-// of the named requirements and will be hard to keep when eventually the
-// configuration is attached to the UI-Elements directly.
 
 export class UICharGroupArgumentsListItem extends UITypeDrivenListWithAddButton.UIItem {
     static _resolvers = Object.freeze(
