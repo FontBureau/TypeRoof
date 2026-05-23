@@ -186,10 +186,18 @@ menu {
     padding: 0;
 }
 
-.ui_button.ui_button-add,
-.ui_button.ui_button-move,
-.ui_button.ui_button-remove {
-    padding: 0.25em;
+.ui_button {
+    &,
+    &.ui_button-add,
+    &.ui_button-move,
+    &.ui_button-remove {
+        padding: 0.25em;
+    }
+}
+
+button.ui_button.ui_button-move.drag_handle {
+    height: 1.5rem;
+    width: initial;
 }
 
 .ui_button.ui_button-remove {

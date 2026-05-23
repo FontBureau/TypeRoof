@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li class="active"><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">Videoproof Contextual Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel - Assessment Pre Strict Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel - Path to a Standalone Library</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel - Assessment Post Strict Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor - Concepts and Roadmap</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="videoproof-contextual-actor--rewrite-plan" class="heading_anchor" href="#videoproof-contextual-actor--rewrite-plan" aria-hidden="true">#</a>Videoproof Contextual Actor — Rewrite Plan</h1>
+<blockquote>
+<p>This document was created through a design discussion session and serves
+as context memory for continuing the implementation in future sessions.</p>
+</blockquote>
+<hr>
+<h2><a id="implementation-status" class="heading_anchor" href="#implementation-status" aria-hidden="true">#</a>Implementation Status</h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Description</th>
+<th>Status</th>
+<th>Commit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Pattern compiler and fill engine</td>
+<td>✅ Done</td>
+<td><code>6019cf5</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Selector compilation and template engine</td>
+<td>✅ Done</td>
+<td><code>f8fc7e5</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Selector and template model definitions</td>
+<td>✅ Done</td>
+<td><code>a2fb631</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Unified word generation engine</td>
+<td>✅ Done</td>
+<td><code>5c71209</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Wire template engine into actor</td>
+<td>✅ Done</td>
+<td><code>802c194</code></td>
+</tr>
+<tr>
+<td>5b</td>
+<td>Remove ad-hoc format, replace with TODOs</td>
+<td>✅ Done</td>
+<td><code>1a40f0d</code></td>
+</tr>
+<tr>
+<td>5c</td>
+<td>DRY: deduplicate CharGroupModel, getSelectedChars</td>
+<td>✅ Done</td>
+<td><code>84ff17e</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>Actor model migration</td>
+<td>✅ Done</td>
+<td><code>867cd9a</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td>Template compilation from flat property paths</td>
+<td>✅ Done</td>
+<td><code>12c3c64</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td>Model cleanup and refactoring</td>
+<td>✅ Done</td>
+<td><code>52e25fd</code></td>
+</tr>
+<tr>
+<td>9a</td>
+<td>Type-driven UI infrastructure</td>
+<td>✅ Done</td>
+<td><code>044715e</code>, <code>3e43f37</code>, <code>90c57aa</code></td>
+</tr>
+<tr>
+<td>9b</td>
+<td>SimpleCharsSelectorModel → CharGroupsListModel</td>
+<td>✅ Done</td>
+<td><code>dec835f</code></td>
+</tr>
+<tr>
+<td>9c</td>
+<td>Template editor UI components</td>
+<td>✅ Done</td>
+<td><code>d26b1f6</code></td>
+</tr>
+<tr>
+<td>10</td>
+<td>Built-in templates as serialized TemplateModel data</td>
+<td>🔲 Open</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="files-createdmodified" class="heading_anchor" href="#files-createdmodified" aria-hidden="true">#</a>Files Created/Modified</h3>
+<ul>
+<li><strong><code>videoproof-contextual-template.mjs</code></strong> (431 lines) — Pattern compiler
+(<code>compilePattern</code>, <code>fill</code>), char resolution (<code>resolveKeyToCharSet</code>,
+<code>resolveChars</code>), template compilation from flat property paths
+(<code>compileTemplateFromPropertyValuesMap</code>, <code>compileSelectorFromPath</code>),
+unified word generation (<code>generateWords</code>, <code>pairProductGen</code>).</li>
+<li><strong><code>videoproof-contextual-models.mjs</code></strong> (200 lines) — Selector model hierarchy
+(<code>SimpleCharsSelectorModel</code>/<code>CombinatorCharsSelectorModel</code> with dynamic type
+dispatch via <code>createDynamicModel</code>), <code>TemplateRuleModel</code>, <code>TemplateModel</code>,
+<code>CharGroupsListModel</code>, actor/key moment models. Uses AxesMath-style
+self-referential pattern for recursive selector tree.</li>
+<li><strong><code>videoproof-contextual.mjs</code></strong> (232 lines) — Actor. Re-exports from models.
+<code>_getCellContents</code> reads charGroups + template from flat <code>propertyValuesMap</code>
+paths, calls <code>compileTemplateFromPropertyValuesMap</code> → <code>generateWords</code>.
+<code>VideoproofContextualActorRenderer</code> handles CSS, typography, word spans.</li>
+<li><strong><code>type-driven-ui.mjs</code></strong> (660 lines) — <code>UITypeDrivenListItem</code> (mixin of
+list item + type-driven widgets), <code>UITypeDrivenList</code> (generic list for
+fixed-type models with per-instance DnD transfer types).</li>
+<li><strong><code>type-driven-ui-basics.mjs</code></strong> (384 lines) — Extracted
+<code>_BaseTypeDrivenContainerComponentMixin</code> as subclass factory for reuse
+with <code>_UIBaseListContainerItem</code>.</li>
+<li><strong><code>basics.mjs</code></strong> — Instance fallback getters for <code>ITEM_DATA_TRANSFER_TYPE_PATH</code>
+and <code>ITEM_DATA_TRANSFER_TYPE_CREATE</code> on <code>_UIBaseList</code>, enabling per-instance
+override by <code>UITypeDrivenList</code>.</li>
+<li><strong><code>data-transfer-types.mjs</code></strong> — Added <code>getTransferTypesForModel(Model)</code>.</li>
+<li><strong><code>available-actors.mjs</code></strong> — Updated charGroupsData navigation.</li>
+<li><strong><code>stage-and-actors.mjs</code></strong> — <code>REGISTERED_GENERIC_KEYMOMENT_FIELDS</code>: added
+<code>charGroups</code>, <code>template</code>; removed <code>padMode</code>, <code>customPad</code>.</li>
+<li><strong><code>ui-char-groups.mjs</code></strong> (660 lines) — Added <code>getSelectedChars</code>,
+exported <code>getCharsFromCharGroups</code>.</li>
+</ul>
+<hr>
+<h2><a id="what-remains-phase-10" class="heading_anchor" href="#what-remains-phase-10" aria-hidden="true">#</a>What Remains (Phase 10)</h2>
+<h3><a id="completed-phase-9b--simplecharsselectormodel--chargroupslistmodel--dec835f-" class="heading_anchor" href="#completed-phase-9b--simplecharsselectormodel--chargroupslistmodel--dec835f-" aria-hidden="true">#</a>Completed: Phase 9b — SimpleCharsSelectorModel → CharGroupsListModel (<code>dec835f</code>)</h3>
+<p>Replaced <code>keys</code> (list of bare strings) + <code>extended</code> (single boolean) with
+<code>charGroups</code> (CharGroupsListModel). Each selector leaf now carries full
+<code>CharGroupModel</code> items. Updated <code>compileSelectorFromPath</code> accordingly.
+Deleted <code>CharsSelectorKeyModel</code>, <code>CharsSelectorKeysModel</code>, removed
+<code>BooleanDefaultTrueModel</code> import.</p>
+<h3><a id="completed-phase-9c--template-editor-ui-components--d26b1f6-" class="heading_anchor" href="#completed-phase-9c--template-editor-ui-components--d26b1f6-" aria-hidden="true">#</a>Completed: Phase 9c — Template Editor UI Components (<code>d26b1f6</code>)</h3>
+<p><code>UICharsSelectorContainer</code>: dynamic-type container for <code>CharsSelectorModel</code>,
+follows <code>UILeadingAlgorithm</code> pattern (<code>_BaseDynamicCollectionContainerComponent</code></p>
+<ul>
+<li><code>_BaseTypeDrivenContainerComponentMixin</code>). GenericSelect dropdown for
+<code>selectorTypeKey</code>, dynamic widget provisioning for <code>instance</code> field.</li>
+</ul>
+<p><code>uiElementsMap</code> entries added for: <code>TemplateModel</code> → <code>UITypeDrivenContainer</code>,
+<code>TemplateRulesModel</code> → <code>UITypeDrivenList</code>, <code>CharsSelectorModel</code> →
+<code>UICharsSelectorContainer</code>, <code>CharsSelectorItemsModel</code> → <code>UITypeDrivenList</code>.</p>
+<p>UI component tree:</p>
+<pre><code>TemplateModel → UITypeDrivenContainer
+├── defaultPattern: StringModel → UILineOfTextInput
+└── rules: TemplateRulesModel → UITypeDrivenList
+    └── TemplateRuleModel → UITypeDrivenListItem
+        ├── pattern: StringModel → UILineOfTextInput
+        └── selector: CharsSelectorModel → UICharsSelectorContainer
+            ├── selectorTypeKey: GenericSelect dropdown (Simple | Combinator | null)
+            └── instance (dynamic):
+                Simple → UITypeDrivenContainer
+                │  ├── argIndex: NumberModel → UINumberAndRangeInput
+                │  └── charGroups: CharGroupsListModel → UITypeDrivenList
+                │      └── CharGroupModel → UICharGroupContainer
+                Combinator → UITypeDrivenContainer
+                   ├── combineMode: EnumModel → UISelectInput
+                   └── children: CharsSelectorItemsModel → UITypeDrivenList
+                       └── CharsSelectorModel → UICharsSelectorContainer (recursive)
+</code></pre>
+<h3><a id="phase-10--built-in-templates" class="heading_anchor" href="#phase-10--built-in-templates" aria-hidden="true">#</a>Phase 10 — Built-in Templates</h3>
+<p>Create template presets via the UI, serialize as TemplateModel data, store
+in <code>BUILTIN_TEMPLATES</code> (replacing the commented-out TODO). These become
+the default templates available in a preset selector.</p>
+<hr>
+<h2><a id="research-current-state" class="heading_anchor" href="#research-current-state" aria-hidden="true">#</a>Research: Current State</h2>
+<h3><a id="architecture-of-videoproof-contextualmjs-before-rewrite" class="heading_anchor" href="#architecture-of-videoproof-contextualmjs-before-rewrite" aria-hidden="true">#</a>Architecture of <code>videoproof-contextual.mjs</code> (before rewrite)</h3>
+<p>The file had three layers:</p>
+<ol>
+<li>
+<p><strong>Model definitions</strong> (lines 1–142) — <code>PadModeModel</code> enum,
+<code>VideoproofContextualKeyMomentModel</code> struct with <code>charGroup</code>,
+<code>padMode</code>, <code>customPad</code>, <code>outerCharGroup</code> fields.</p>
+</li>
+<li>
+<p><strong>Business logic</strong> (lines 144–406) — Word generation from charGroups + padMode.
+This was the core problem: ~260 lines of branching, hardcoded Latin behavior,
+with the following functions:</p>
+<ul>
+<li><code>_testCharType</code> — regex-based char classification (Latin-only)</li>
+<li><code>_autoFormatters</code> / <code>_formatterTests</code> — pattern selection by char type</li>
+<li><code>_kernFormatters</code> — hardcoded kerning patterns per mode</li>
+<li><code>_kernModesCharsConfig</code> — hardcoded char sources per kern mode</li>
+<li><code>padModeIsKerning</code>, <code>padModeIsAutoContextual</code> — mode branching</li>
+<li><code>_getKerningWords</code>, <code>_getAutoContextualWords</code>, <code>_getCustomContextualWords</code></li>
+<li><code>_getWords</code> — top-level dispatcher</li>
+<li><code>_getCellContents</code> — stateKey-based caching wrapper</li>
+</ul>
+</li>
+<li>
+<p><strong>Renderer</strong> (lines 410–491) — <code>VideoproofContextualActorRenderer</code>,
+a <code>_BaseComponent</code> subclass. Creates <code>&lt;span&gt;</code> per word, calls
+<code>fixContextualLineBreaks</code>. The <code>update()</code> method handles font,
+animation properties, colors, CSS, and language tags.</p>
+</li>
+</ol>
+<h3><a id="known-problems-from-fixmes-in-original-code" class="heading_anchor" href="#known-problems-from-fixmes-in-original-code" aria-hidden="true">#</a>Known Problems (from FIXMEs in original code)</h3>
+<ul>
+<li><code>PadModeModel</code> enum mixes formatting modes (auto-short/long, custom)
+with kerning modes (kern-upper/mixed/lower) — different semantics</li>
+<li>Kern modes hardcoded to Latin — comments explicitly flag this</li>
+<li><code>outerCharGroup</code> was an awkward bolt-on for kerning pair support</li>
+<li>Extended kern pairs can produce ~47K pairs (performance issue)</li>
+<li><code>_autoFormatters</code> described as “maximally strange” in the code itself</li>
+<li>stateKey dirty-checking is fragile string concatenation</li>
+</ul>
+<h3><a id="reference-patterns-in-codebase" class="heading_anchor" href="#reference-patterns-in-codebase" aria-hidden="true">#</a>Reference Patterns in Codebase</h3>
+<p><strong>AxesMath (<code>axes-math.mjs</code>)</strong> — Self-referential dynamic type hierarchy:</p>
+<ul>
+<li><code>AxesMathLocationModel</code> / <code>AxesMathLocationsProductModel</code> / <code>AxesMathLocationsSumModel</code></li>
+<li><code>AxesMathItemModel</code> (dynamic wrapper with <code>InternalizedDependency</code>)</li>
+<li>Sum contains list of ItemModel → recursion through wrapper</li>
+<li><code>UIAxesMathLocationsSumItem</code>: reads typeKey in <code>_provisionWidgets</code>, switches
+widget tree via <code>_createWrapperForType</code></li>
+</ul>
+<p><strong>StylePatch (<code>type-spec-models.mjs</code>)</strong> — Heterogeneous type dispatch:</p>
+<ul>
+<li><code>SimpleStylePatchModel</code> (leaf) / <code>CompositeStylePatchModel</code> (combinator)</li>
+<li><code>StylePatchModel</code> (dynamic wrapper)</li>
+</ul>
+<p><strong><code>createDynamicModel</code> (<code>dynamic-types-pattern.mjs</code>)</strong> — Factory for dynamic type
+wrappers. With <code>staticTypes=null</code> uses <code>InternalizedDependency</code> (for self-reference).
+With <code>staticTypes</code> provided uses <code>StaticDependency</code>.</p>
+<hr>
+<h2><a id="design-decisions" class="heading_anchor" href="#design-decisions" aria-hidden="true">#</a>Design Decisions</h2>
+<h3><a id="1-padmode--data-driven-templates" class="heading_anchor" href="#1-padmode--data-driven-templates" aria-hidden="true">#</a>1. padMode → Data-Driven Templates</h3>
+<p><strong>Decision</strong>: Replace <code>PadModeModel</code> enum with a <code>TemplateModel</code> struct containing
+rules (selector + pattern pairs) and a default pattern. What was hardcoded behavior
+becomes data.</p>
+<p><strong>Rationale</strong>: The current padMode options like “auto-short” are actually
+“Latin auto short.” Defining these as data presets makes it possible to add
+script-specific templates without code changes.</p>
+<h3><a id="2-unified-contextual--kerning-engine" class="heading_anchor" href="#2-unified-contextual--kerning-engine" aria-hidden="true">#</a>2. Unified Contextual + Kerning Engine</h3>
+<p><strong>Decision</strong>: One engine handles both contextual (arity-1: <code>nn$1nn</code>) and kerning
+(arity-2: <code>HO$1$2$1OLA</code>) through the same rule-matching + fill pipeline.</p>
+<p><strong>Rationale</strong>: The difference between contextual and kerning is just arity —
+how many chars are substituted into the pattern. The rule matching, pattern
+filling, and iteration logic are identical.</p>
+<h3><a id="3-compiled-patterns-parts-array" class="heading_anchor" href="#3-compiled-patterns-parts-array" aria-hidden="true">#</a>3. Compiled Patterns (Parts Array)</h3>
+<p><strong>Decision</strong>: Parse patterns once into arrays of interleaved string literals and
+argument indices. Fill by walking the array.</p>
+<p><strong>Example</strong>: <code>&quot;HO$1$2$1OLA&quot;</code> → <code>[&quot;HO&quot;, 0, 1, 0, &quot;OLA&quot;]</code></p>
+<p><strong>Fill</strong>: Linear walk, <code>typeof p === 'number' ? args[p] : p</code>, string concatenation.</p>
+<p><strong>Rationale</strong>: Faster than <code>String.replace</code> for repeated fills. Pattern is parsed
+once, applied hundreds/thousands of times. V8 JIT-friendly tight loop.</p>
+<p><strong>Escaping</strong>: <code>$$</code> → literal <code>$</code>. Resolved at compile time, zero runtime cost.</p>
+<h3><a id="4-compiled-selectors-set-based" class="heading_anchor" href="#4-compiled-selectors-set-based" aria-hidden="true">#</a>4. Compiled Selectors (Set-Based)</h3>
+<p><strong>Decision</strong>: Selector keys resolve to <code>Set</code> objects at compile time. Extended
+chars are flattened into the sets. The selector spec controls whether extended
+chars are included.</p>
+<p><strong>Rationale</strong>: <code>Set.has()</code> is O(1). No runtime database lookups, no regex matching.
+Separates char <em>classification</em> (which pattern applies) from char <em>selection</em>
+(what the user iterates over).</p>
+<h3><a id="5-selector-tree-axesmath-style-dynamic-type" class="heading_anchor" href="#5-selector-tree-axesmath-style-dynamic-type" aria-hidden="true">#</a>5. Selector Tree (AxesMath-Style Dynamic Type)</h3>
+<p><strong>Decision</strong>: Selectors use the recursive dynamic type pattern via
+<code>createDynamicModel</code>:</p>
+<ul>
+<li><code>SimpleCharsSelectorModel</code>: <code>{ argIndex, charGroups }</code></li>
+<li><code>CombinatorCharsSelectorModel</code>: <code>{ combineMode: AND|OR, children: [CharsSelectorModel...] }</code></li>
+<li><code>CharsSelectorModel</code>: dynamic wrapper with <code>InternalizedDependency</code>
+(enables self-reference for recursive combinator trees)</li>
+</ul>
+<p><strong>Rationale</strong>: Enables composable predicates like
+<code>AND(simple(0, uppercase), simple(1, lowercase))</code>
+for kerning rules. Follows established codebase patterns.</p>
+<h3><a id="6-chargroups-as-list-1-2-items" class="heading_anchor" href="#6-chargroups-as-list-1-2-items" aria-hidden="true">#</a>6. CharGroups as List (1-2 Items)</h3>
+<p><strong>Decision</strong>: Replace <code>charGroup</code> + <code>outerCharGroup</code> with a
+<code>CharGroupsListModel</code> (list of <code>CharGroupModel</code>, 1-2 items, coherence-enforced).</p>
+<p><strong>Semantics</strong>:</p>
+<ul>
+<li>Length 1: single char source. For arity-2, outer = base chars (no extended).</li>
+<li>Length 2: explicit outer (index 1) / inner (index 0), each with own extended flag.</li>
+</ul>
+<p><strong>Rationale</strong>: No boolean flag, no nullable struct gymnastics. Length <em>is</em> the
+signal. Clean serialization. Coherence function enforces the invariant.</p>
+<h3><a id="7-template-terminology" class="heading_anchor" href="#7-template-terminology" aria-hidden="true">#</a>7. Template Terminology</h3>
+<p><strong>Decision</strong>: What was “padMode” becomes “template.” A template is a set of
+rules (selector + pattern pairs) plus a default pattern. A “preset” is a saved
+instance of the full model state (charGroups + template).</p>
+<h3><a id="8-no-inheritance-for-now" class="heading_anchor" href="#8-no-inheritance-for-now" aria-hidden="true">#</a>8. No Inheritance for Now</h3>
+<p><strong>Decision</strong>: Every key moment carries a concrete template and charGroups.
+No inheritance/OrEmpty for these fields.</p>
+<p><strong>Rationale</strong>: Template and charGroups don’t interpolate between keyframes
+(they’re discrete, like <code>textRun</code>). The proper inheritance solution is the
+compositor system (see <code>docs/planning/compositor/roadmap.md</code>). Building a
+one-off mechanism now would be throwaway work.</p>
+<h3><a id="9-custom-mode--user-editable-template" class="heading_anchor" href="#9-custom-mode--user-editable-template" aria-hidden="true">#</a>9. Custom Mode = User-Editable Template</h3>
+<p><strong>Decision</strong>: “Custom” is not a special mode. It’s a template with no rules
+and a user-editable <code>defaultPattern</code>. Same engine, same compilation.</p>
+<p><strong>Rationale</strong>: The user gets direct access to the pattern language (<code>$1</code>, <code>$2</code>
+syntax). Power users can write kerning patterns directly.</p>
+<h3><a id="10-simplecharsselectormodel-uses-chargroupslistmodel" class="heading_anchor" href="#10-simplecharsselectormodel-uses-chargroupslistmodel" aria-hidden="true">#</a>10. SimpleCharsSelectorModel Uses CharGroupsListModel</h3>
+<p><strong>Decision</strong>: Replace <code>keys</code> (list of bare key strings) + <code>extended</code> (single
+boolean) on <code>SimpleCharsSelectorModel</code> with <code>charGroups</code> (<code>CharGroupsListModel</code>).</p>
+<p><strong>Rationale</strong>: <code>CharGroupModel</code> is already the right shape for “pick some chars
+from char groups” — which is exactly what a selector leaf does. Each charGroup
+carries its own <code>options</code>, <code>extended</code>, <code>customText</code>, <code>customSeparator</code>. This
+reuses the full <code>UICharGroupContainer</code> + <code>UITypeDrivenList</code> UI machinery.
+Selectors don’t need font info — chars are already font-filtered upstream
+before reaching the selector.</p>
+<h3><a id="11-template-compilation-from-flat-property-paths" class="heading_anchor" href="#11-template-compilation-from-flat-property-paths" aria-hidden="true">#</a>11. Template Compilation from Flat Property Paths</h3>
+<p><strong>Decision</strong>: Reconstruct template from the broom wagon’s flat <code>propertyValuesMap</code>,
+following the <code>getColorFromPropertyValuesMap</code> / <code>getDimensionFromPropertyValuesMap</code>
+patterns.</p>
+<p><strong>Rationale</strong>: The broom wagon walks the model tree and produces flat paths like
+<code>generic/template/defaultPattern</code>, <code>generic/template/rules/0/pattern</code>,
+<code>generic/template/rules/0/selector/instance/charGroups/0/options</code>, etc.
+<code>compileTemplateFromPropertyValuesMap</code> probes these paths to reconstruct
+the compiled template with rules, selector tests, and pattern parts arrays.</p>
+<hr>
+<h2><a id="architecture" class="heading_anchor" href="#architecture" aria-hidden="true">#</a>Architecture</h2>
+<h3><a id="pattern-language" class="heading_anchor" href="#pattern-language" aria-hidden="true">#</a>Pattern Language</h3>
+<ul>
+<li>Placeholders: <code>$1</code>, <code>$2</code>, … <code>$9</code> (positional, 1-indexed in syntax, 0-indexed
+in compiled form)</li>
+<li>Escape: <code>$$</code> → literal <code>$</code></li>
+<li>Compiled form: parts array — <code>[&quot;HO&quot;, 0, 1, 0, &quot;OLA&quot;]</code></li>
+<li>Arity: max argument index + 1</li>
+</ul>
+<h3><a id="selector-system" class="heading_anchor" href="#selector-system" aria-hidden="true">#</a>Selector System</h3>
+<p>Uncompiled (model data):</p>
+<pre><code>CombinatorCharsSelectorModel {
+    combineMode: 'AND',
+    children: [
+        SimpleCharsSelectorModel { argIndex: 0, charGroups: [uppercase] },
+        SimpleCharsSelectorModel { argIndex: 1, charGroups: [lowercase] }
+    ]
+}
+</code></pre>
+<p>Compiled:</p>
+<pre><code>{ test: (args) =&gt; uppercaseSet.has(args[0]) &amp;&amp; lowercaseSet.has(args[1]) }
+</code></pre>
+<h3><a id="template-structure" class="heading_anchor" href="#template-structure" aria-hidden="true">#</a>Template Structure</h3>
+<p>Uncompiled (model data):</p>
+<pre><code>TemplateModel {
+    rules: [
+        { selector: simple(0, [lowercase]), pattern: 'nn$1nn' },
+        { selector: simple(0, [figures]),   pattern: '00$100' },
+    ],
+    defaultPattern: 'HH$1HH'
+}
+</code></pre>
+<p>Compiled:</p>
+<pre><code>{
+    arity: 1,
+    rules: [
+        { test: (args) =&gt; lowercaseSet.has(args[0]), parts: [&quot;nn&quot;, 0, &quot;nn&quot;] },
+        { test: (args) =&gt; figuresSet.has(args[0]),   parts: [&quot;00&quot;, 0, &quot;00&quot;] },
+    ],
+    defaultParts: [&quot;HH&quot;, 0, &quot;HH&quot;],
+    stateTokens: [...]
+}
+</code></pre>
+<h3><a id="unified-engine" class="heading_anchor" href="#unified-engine" aria-hidden="true">#</a>Unified Engine</h3>
+<p>One code path replacing ~150 lines of branching logic:</p>
+<pre><code>1. Read charGroups from key moment
+2. Build iteration set:
+   - charGroups.length === 1, arity 1:
+       chars = getChars(charGroups[0])
+       iterate: [c] for each c in chars
+   - charGroups.length === 1, arity 2:
+       inner = getChars(charGroups[0])  (with extended per its flag)
+       outer = getCharsBase(charGroups[0])  (no extended)
+       iterate: [outer, inner] for cartesian product
+   - charGroups.length === 2, arity 2:
+       inner = getChars(charGroups[0])
+       outer = getChars(charGroups[1])
+       iterate: [outer, inner] for cartesian product
+3. For each item in iteration set:
+   - Walk compiled rules, first test(args) hit → fill(parts, args)
+   - Fallback → fill(defaultParts, args)
+4. Return words array
+</code></pre>
+<h3><a id="ui-component-tree-phase-9c" class="heading_anchor" href="#ui-component-tree-phase-9c" aria-hidden="true">#</a>UI Component Tree (Phase 9c)</h3>
+<pre><code>UIContextualTemplateContainer (_BaseContainerComponent)
+├── defaultPattern: string input
+└── rules: UITemplateRulesList (UITypeDrivenList)
+    └── UITemplateRuleItem (UITypeDrivenListItem, per rule)
+        ├── pattern: string input
+        └── selector: UICharsSelectorContainer (AxesMath-style dynamic type switch)
+            ├── type select dropdown (Simple | Combinator | null)
+            └── instance:
+                Simple → argIndex: number input
+                         charGroups: UITypeDrivenList
+                           └── UITypeDrivenListItem (per charGroup)
+                               └── UICharGroupContainer (options, extended, custom text)
+                Combinator → combineMode: AND/OR select
+                             children: UICharsSelectorList (recursive)
+                               └── UICharsSelectorContainer (same, recursive)
+</code></pre>
+<p>New components: <code>UIContextualTemplateContainer</code>, <code>UICharsSelectorContainer</code>.
+Everything else reuses existing machinery.</p>
+<hr>
+<h2><a id="key-codebase-references" class="heading_anchor" href="#key-codebase-references" aria-hidden="true">#</a>Key Codebase References</h2>
+<ul>
+<li><code>lib/js/components/actors/videoproof-contextual-template.mjs</code> — Template engine</li>
+<li><code>lib/js/components/actors/videoproof-contextual-models.mjs</code> — Model definitions</li>
+<li><code>lib/js/components/actors/videoproof-contextual.mjs</code> — Actor (re-exports, _getCellContents, renderer)</li>
+<li><code>lib/js/components/actors/videoproof-array.mjs</code> — Sibling actor, shares CharGroupModel</li>
+<li><code>lib/js/components/actors/available-actors.mjs</code> — Actor type registration</li>
+<li><code>lib/js/components/layouts/stage-and-actors.mjs</code> — Layout wiring, KeyMomentController</li>
+<li><code>lib/js/components/type-driven-ui.mjs</code> — UITypeDrivenList/Item, uiElementsMap</li>
+<li><code>lib/js/components/type-driven-ui-basics.mjs</code> — _BaseTypeDrivenContainerComponentMixin</li>
+<li><code>lib/js/components/axes-math.mjs</code> — Reference: UIAxesMathLocationsSumItem pattern</li>
+<li><code>lib/js/components/dynamic-types-pattern.mjs</code> — createDynamicModel helper</li>
+<li><code>lib/js/components/data-transfer-types.mjs</code> — getTransferTypesForModel</li>
+<li><code>lib/js/components/ui-char-groups.mjs</code> — UICharGroupContainer, char group utilities</li>
+<li><code>lib/js/components/basics.mjs</code> — _UIBaseList, DnD transfer type infrastructure</li>
+<li><code>lib/assets/glyph-groups.json</code> — Char database (Latin, Greek, Cyrillic, World)</li>
+</ul>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>

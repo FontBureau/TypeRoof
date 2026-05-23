@@ -25,12 +25,16 @@ ICON_NAMES=(
     refresh
     remove
     swap_vert
+    edit
+    edit_off
 )
-# Join the array elements using a comma
-ICON_NAMES_ARGUMENT=$(IFS=,; echo "${ICON_NAMES[*]}")
+# Join the array elements using a comma, must be sorted alphabetically
+ICON_NAMES_ARGUMENT=$(IFS=$'\n';sorted=($(sort <<<"${ICON_NAMES[*]}"));IFS=,;echo "${sorted[*]}")
 
 API_CSS_URL="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=$ICON_NAMES_ARGUMENT"
 CHROME_UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+echo "API CSS URL: $API_CSS_URL"
 
 # Extract the woff2 URL from the CSS url(...) declaration
 SUBSET_FONT_URL=$(curl -s -A "$CHROME_UA" "$API_CSS_URL" \

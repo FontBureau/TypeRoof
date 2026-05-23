@@ -8,10 +8,8 @@ import { identity } from "../../../util.mjs";
 import { WasteBasketDropTarget, StaticTag } from "../../generic.mjs";
 import { Path } from "../../../metamodel.mjs";
 import { _NOTDEF, getFallback } from "./defaults.mjs";
-import {
-    UITypeDrivenContainer,
-    genericTypeToUIElement,
-} from "../../type-driven-ui.mjs";
+import { UITypeDrivenContainer } from "../../type-driven-ui-basics.mjs";
+import { genericTypeToUIElement } from "../../type-driven-ui.mjs";
 import { NODESPEC_PPS_MAP } from "./pps-maps.mjs";
 
 /**

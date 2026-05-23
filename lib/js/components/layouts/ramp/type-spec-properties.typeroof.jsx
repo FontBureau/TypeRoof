@@ -10,10 +10,8 @@ import {
     ProcessedPropertiesSystemMap,
     SPECIFIC,
 } from "../../registered-properties-definitions.mjs";
-import {
-    UITypeDrivenContainer,
-    genericTypeToUIElement,
-} from "../../type-driven-ui.mjs";
+import { UITypeDrivenContainer } from "../../type-driven-ui-basics.mjs";
+import { genericTypeToUIElement } from "../../type-driven-ui.mjs";
 import { TYPESPEC_PPS_MAP } from "./pps-maps.mjs";
 import { UIshowProcessedProperties } from "../../processed-properties.mjs";
 import { TypeSpecModel } from "../../type-spec-models.mjs";

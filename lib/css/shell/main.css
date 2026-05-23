@@ -147,6 +147,7 @@ document manager
 .typeroof-ui-label,
 .typeroof-ui label > :is(strong, span):first-child {
     font-weight: 600;
+    text-transform: capitalize;
 }
 
 .key_moments_timeline-items {
@@ -882,6 +883,18 @@ ui plain select
 }
 
 /******************************************************************************
+manual-axes-locations
+*******************************************************************************/
+
+.manual_axes_locations {
+    .number-and-range-input {
+        label abbr {
+            text-transform: none;
+        }
+    }
+}
+
+/******************************************************************************
 select and drag
 *******************************************************************************/
 
@@ -946,6 +959,30 @@ select and drag
     display: inline;
     margin-right: 0;
     white-space: nowrap;
+}
+
+.actor_renderer-videoproof_contextual {
+    overflow-y: auto;
+    width: 100%;
+    height: 100%;
+}
+
+.actor_renderer-videoproof_contextual-spacer {
+    box-sizing: border-box;
+    display: flow-root;
+}
+
+.actor_renderer-videoproof_contextual-content {
+    position: sticky;
+    top: 0;
+}
+
+.actor_renderer-videoproof_contextual-content.fixed-lines span {
+    margin-right: calc(1em * var(--gap-em, 0));
+}
+
+.actor_renderer-videoproof_contextual-content.fixed-lines span.end-of-line {
+    margin-right: 0;
 }
 
 .actor_renderer-videoproof_array {
@@ -1018,6 +1055,33 @@ select and drag
 
 .ui_videoproof_array_layers-item .ui_button {
     float: right;
+}
+
+.ui_base_list_simple_item {
+    height: 1.5em;
+    border: 1px solid #999;
+    margin-bottom: -1px;
+    padding: 0.5em;
+}
+
+.ui_base_list_item > .tools_container {
+    float: right;
+    display: inline-flex;
+
+    & > * {
+        margin-right: 0.125rem;
+
+        /* place everything before move and remove */
+        order: -3;
+    }
+
+    .ui_button-move {
+        order: -2;
+    }
+
+    .ui_button-remove {
+        order: -1;
+    }
 }
 
 .dragging {
@@ -1182,6 +1246,7 @@ select and drag
 .ui-axes_math-locations_sum_item-label {
     padding: 0 0.2em;
     border: 0.1em solid black;
+    line-height: 2em;
 }
 
 .ui-axes_math-locations_sum_item > :last-child {
@@ -1266,14 +1331,30 @@ select and drag
     --drop-target-indicator-width: 0.2em;
 }
 
-:is(.ui_axes_math-map-item, .ui_base_map-item)
-    > :is(.ui_axes_math-axis_tag, .ui_base_map-key) {
-    display: inline-block;
+.ui_axes_math-map-item {
+    & > :is(*, .ui_base_map-key) {
+        flex: 0 1 content;
+    }
+}
+
+:is(.ui_base_map-item) > :is(.ui_base_map-key) {
     padding-right: var(--padding-horizontal);
 }
 
-.ui_axes_math-map-item .ui-axes_math-location_values {
-    display: inline;
+:is(.ui_axes_math-map-item) > :is(.ui_axes_math-axis_tag, ) {
+    padding-right: var(--padding-horizontal);
+
+    .ui_base_map-key-input {
+        margin-inline: 0.25em;
+        width: 3em;
+    }
+}
+
+.ui-axes_math-location_values {
+    display: block flex;
+    align-items: center;
+    flex-wrap: wrap;
+    align-content: initial;
 }
 
 .ui_axes_math-axis_tag:has(+ .drag_handle) {
@@ -1282,8 +1363,11 @@ select and drag
 
 .ui_axes_math-map-item > .ui-axes_math-location_value,
 .ui-axes_math-location_values > .ui-axes_math-location_value {
-    display: inline-block;
     padding: 0 var(--padding-horizontal);
+    height: 2.5em;
+    margin: 0 -1px 0 0; /* has a border from .ui_base_list_simple_item */
+    display: flex;
+    align-items: center;
 }
 
 .ui-axes_math-location_value.drop_target_indicator-after {
@@ -1319,7 +1403,8 @@ select and drag
 
 .ui_base_map-tools {
     display: inline-block;
-    margin-left: 0.5em;
+
+    /* margin-left: 0.5em; */
     vertical-align: middle;
     /* stylelint-disable-next-line declaration-property-value-no-unknown */
     vertical-align: -webkit-baseline-middle;
@@ -1329,14 +1414,17 @@ select and drag
     display: none;
 }
 
-.ui_node_spec_map-tools > *,
-.ui_style_patches_map-tools > *,
-.ui_links_map-tools > * {
-    display: initial;
-}
+.ui_node_spec_map-tools,
+.ui_style_patches_map-tools,
+.ui_links_map-tools {
+    & > * {
+        display: initial;
+    }
 
-.ui_links_map-tools > .ui_generic_select {
-    display: flex;
+    & > .ui_links_map-key-create > .ui_generic_select,
+    & > .ui_generic_select {
+        display: block;
+    }
 }
 
 .ui_node_spec_to_type_spec_links_map-tools > * {
@@ -1361,13 +1449,22 @@ select and drag
     display: none;
 }
 
+.ui_axes_math-map-tools {
+    display: inline-flex;
+    float: right;
+
+    & > * {
+        display: block;
+    }
+}
+
 /* needs more specificity than the rule above */
 .ui_links_map-tools.ui_links_map-tools:focus-within > * {
     display: block;
 }
 
 .ui_links_map-tools.ui_links_map-tools:focus-within > .ui_generic_select {
-    display: flex;
+    display: block;
 }
 
 .ui_links_map-item_value {
@@ -1456,6 +1553,7 @@ collapsible
     cursor: pointer;
     font-weight: 600;
     padding: 0.5em 1em;
+    text-transform: capitalize;
 }
 
 .ui_collapsible-toggler::after {
@@ -1722,6 +1820,10 @@ dimension sequence
     gap: 0.5em;
     margin-bottom: -1px;
     padding: 0.5em 0;
+
+    .add_or_drag-drag_handle {
+        width: fit-content;
+    }
 }
 
 .ui-dimension_sequence .typeroof-ui-label {
@@ -2090,4 +2192,32 @@ tooltips
     color: var(--tooltip-text-color);
 }
 
+/**************************************************************************** *
+ui-contextual-template
 /**************************************************************************** */
+
+.type_driven-type-template_rule_model {
+    border-top: 1px solid var(--fieldset-border-color);
+    border-bottom: 1px solid var(--fieldset-border-color);
+    padding-bottom: 0.2rem;
+    margin-bottom: -1px;
+}
+
+.type_driven-type-template_rule_model:nth-child(2n) {
+    background: var(--list-item-even-bg);
+}
+
+.type_driven-type-template_rule_model:nth-child(2n + 1) {
+    background-color: var(--list-item-odd-bg);
+}
+
+.ui_chars_selector_container .ui_generic_select-label {
+    width: auto;
+}
+
+.type_driven-type-chars_selector_items_model-items {
+    background: none;
+    border-left: 1px solid var(--fieldset-border-color);
+    border-top: 1px solid var(--fieldset-border-color);
+    padding-left: 0.75em;
+}

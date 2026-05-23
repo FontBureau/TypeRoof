@@ -475,7 +475,9 @@ export class _AbstractStructModel extends _BaseContainerModel {
         Object.defineProperty(this, "dependencies", {
             get: () => {
                 if (this[OLD_STATE] === null)
-                    throw new Error("Primal State has no dependencies yet!");
+                    throw new Error(
+                        `LIFECYCLE ERROR [${this.constructor.name}] Primal State has no dependencies yet!`,
+                    );
                 // In draft-mode, this[OLD_STATE] has the dependencies.
                 return this[OLD_STATE]!.dependencies;
             },
