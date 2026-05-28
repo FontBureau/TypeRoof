@@ -1,9 +1,16 @@
-import { FreezableSet } from "./base-model.ts";
+import { FreezableSet, _BaseModel } from "./base-model.ts";
 
 // FIXME/TODO: type can be anything that _AbstractStruct.get would return
 // Also as Proxies!
 export type ValueMap = Record<string, unknown>;
-export type CoherenceFn = (valueMap: ValueMap) => void;
+
+export type CoherenceMeta = {
+    isNew: boolean;
+    wasSerialized: boolean;
+    setFn(key: string, entry: _BaseModel): void;
+};
+
+export type CoherenceFn = (valueMap: ValueMap, meta: CoherenceMeta) => void;
 
 export class CoherenceFunction {
     // Use the definite assignment assertion '!'
