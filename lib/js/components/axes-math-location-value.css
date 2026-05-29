@@ -1,0 +1,42 @@
+/*
+ * Maybe incomplete, but this is the base of the functional CSS ensuring
+ * the focus driven UI works.
+ */
+
+
+/* Base: show output, hide controls */
+.ui-axes_math-location_value .ui-axes_math-location_value-logical_value,
+.ui-axes_math-location_value .ui-axes_math-location_value-numeric_value,
+.ui-axes_math-location_value .ui-axes_math-location_value-drag_handle {
+    display: none;
+}
+
+.ui-axes_math-location_value .ui-axes_math-location_value-output {
+    display: inline;
+}
+
+/* Focused: show controls, hide output */
+.ui-axes_math-location_value.focus .ui-axes_math-location_value-logical_value,
+.ui-axes_math-location_value.focus .ui-axes_math-location_value-numeric_value,
+.ui-axes_math-location_value.focus .ui-axes_math-location_value-drag_handle {
+    display: initial;
+}
+
+.ui-axes_math-location_value.focus .ui-axes_math-location_value-output {
+    display: none;
+}
+
+/* Dragging overrides */
+.ui-axes_math-location_value.dragging .ui-axes_math-location_value-output,
+.ui-axes_math-location_value.dragging .ui-axes_math-location_value-drag_handle {
+    display: initial;
+}
+
+.ui-axes_math-location_value.dragging .ui-axes_math-location_value-logical_value,
+.ui-axes_math-location_value.dragging .ui-axes_math-location_value-numeric_value {
+    display: none;
+}
+
+.ui-axes_math-location_value > * {
+    vertical-align: middle;
+}
