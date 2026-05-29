@@ -1263,42 +1263,6 @@ select and drag
     display: inline;
 }
 
-/*
- * hide
- *    - output: when focused
- *    - inputs: when not focused (by default)
- */
-.ui-axes_math-location_value:focus-within .ui-axes_math-location_value-output,
-.ui-axes_math-location_value-drag_handle,
-.ui-axes_math-location_value .ui-axes_math-location_value-logical_value,
-.ui-axes_math-location_value .ui-axes_math-location_value-numeric_value,
-.ui-axes_math-location_value.dragging
-    .ui-axes_math-location_value-logical_value,
-.ui-axes_math-location_value.dragging
-    .ui-axes_math-location_value-numeric_value,
-.ui-axes_math-location_value:focus-within.dragging
-    .ui-axes_math-location_value-logical_value,
-.ui-axes_math-location_value:focus-within.dragging
-    .ui-axes_math-location_value-numeric_value {
-    display: none;
-}
-
-/*
- * show
- *    - output: when not focused (default)
- *    - inputs: when focused
- */
-.ui-axes_math-location_value:focus-within
-    .ui-axes_math-location_value-logical_value,
-.ui-axes_math-location_value:focus-within
-    .ui-axes_math-location_value-numeric_value,
-.ui-axes_math-location_value:focus-within
-    .ui-axes_math-location_value-drag_handle,
-.ui-axes_math-location_value.dragging .ui-axes_math-location_value-output,
-.ui-axes_math-location_value.dragging .ui-axes_math-location_value-drag_handle {
-    display: initial;
-}
-
 .ui-axes_math-location_value-numeric_value {
     width: calc(5 * 0.75em);
 }
