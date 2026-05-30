@@ -729,6 +729,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
                 return [value, serializeOptions];
             };
         // Don't keep this.
+        const wasSerialized = this[_PRIMARY_SERIALIZED_VALUE] !== undefined;
         delete this[_PRIMARY_SERIALIZED_VALUE];
         const ctor = this.constructor as typeof _AbstractStructModel;
 
@@ -901,9 +902,32 @@ export class _AbstractStructModel extends _BaseContainerModel {
                 // This is also not yet implemented in the factory method,
                 // so there may be no way to get these dependencies accepted!
                 // localScope.set(name, coherenceFunction.fn(childDependencies));
-                const maybeGen = coherenceFunction.fn(
-                    childDependencies,
-                ) as void | Generator<ResourceRequirement, void, unknown>;
+                const maybeGen = coherenceFunction.fn(childDependencies, {
+                    isNew: this[OLD_STATE] === null,
+                    wasSerialized: wasSerialized,
+                    // setFn: this.set.bind(this)
+                    // I'm not sure if we need to guard what this function
+                    // can do further, e.g. regarding the dependencies
+                    // or types of the newly set items. However, this is
+                    // going to be restricted from the original set function
+                    // in that it can only set keys that are present
+                    // in the coherence function dependencies:
+                    setFn: (key: string, entry: _BaseModel): void => {
+                        if (!coherenceFunction.dependencies.has(key))
+                            throw new Error(
+                                `KEY ERROR ${this}: ${coherenceFunction} ` +
+                                    `is trying to set a key "${key}" that is not in its ` +
+                                    `dependencies: ${coherenceFunction.dependencies}`,
+                            );
+                        // Looks like most of the childDependencies items
+                        // are just proxies at this point, going via
+                        // this.set to have changes propagated. Also,
+                        // re-setting localScope explicitly. I'm not sure
+                        // that is required though.
+                        this.set(key, entry);
+                        localScope.set(key, this.get(key));
+                    },
+                }) as void | Generator<ResourceRequirement, void, unknown>;
                 if ((maybeGen as Generator)?.next instanceof Function)
                     yield* maybeGen as Generator<
                         ResourceRequirement,
