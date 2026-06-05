@@ -3,6 +3,7 @@ import {
     IS_PROXY,
     GET_IMMUTABLE,
     GET_DRAFT,
+    ENSURE_DRAFT,
     GET,
     IS_WRAPPER_TYPE,
     isProxy,
@@ -100,6 +101,7 @@ export class _PotentialWriteProxy {
     static IS_PROXY = IS_PROXY;
     static GET_IMMUTABLE = GET_IMMUTABLE;
     static GET_DRAFT = GET_DRAFT;
+    static ENSURE_DRAFT = ENSURE_DRAFT;
     static GET = GET;
     // jshint ignore: end
     static isProxy = isProxy;
@@ -461,6 +463,7 @@ export class _PotentialWriteProxy {
         if (prop === _PotentialWriteProxy.GET_IMMUTABLE) return this.immutable;
         if (prop === _PotentialWriteProxy.GET_DRAFT)
             return this.hasDraft() ? this.getDraft() : undefined;
+        if (prop === _PotentialWriteProxy.ENSURE_DRAFT) return this.getDraft();
         if (prop === _PotentialWriteProxy.GET)
             return this.hasDraft() ? this.getDraft() : this.immutable;
 
