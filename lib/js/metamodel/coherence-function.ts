@@ -1,4 +1,4 @@
-import { FreezableSet, _BaseModel } from "./base-model.ts";
+import { FreezableSet, _BaseModel, ResourceRequirement } from "./base-model.ts";
 
 // FIXME/TODO: type can be anything that _AbstractStruct.get would return
 // Also as Proxies!
@@ -10,7 +10,16 @@ export type CoherenceMeta = {
     setFn(key: string, entry: _BaseModel): void;
 };
 
-export type CoherenceFn = (valueMap: ValueMap, meta: CoherenceMeta) => void;
+export type CoherenceGenerator = Generator<
+    ResourceRequirement,
+    unknown,
+    unknown
+>;
+
+export type CoherenceFn = (
+    valueMap: ValueMap,
+    meta: CoherenceMeta,
+) => unknown | CoherenceGenerator;
 
 export class CoherenceFunction {
     // Use the definite assignment assertion '!'
