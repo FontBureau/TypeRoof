@@ -355,9 +355,19 @@ export class _AbstractStructModel extends _BaseContainerModel {
             childrenExternalDependencies,
             iterFilter(
                 _childrenAllDependencies,
-                (dependency: string) => !staticHas(dependency),
+                // SO FAR: coherenceFunction return values cannot be propagated
+                // out of this scope as a dependency. However, during metamorphose
+                // the values can be used internally to make on coherenceFunction
+                // depend on another and primarily determine execution order, but
+                // also propagate result values between them.
+                (dependency: string) =>
+                    !(
+                        staticHas(dependency) ||
+                        coherenceFunctions.has(dependency)
+                    ),
             ),
         );
+
         populateSet(dependencies, [
             //jshint ignore: line
             // Via internalizedDependencies, these are allways
@@ -896,12 +906,19 @@ export class _AbstractStructModel extends _BaseContainerModel {
                 // this can do the same job.
                 //
                 // FIXME not a fan of using result like this! It makes stuff
-                // complicated! (does iit though?)
+                // complicated! (does it though?)
                 // However, the coherenceFunction is part of the init order, and
                 // as such can technically set a name, there's no clash.
                 // This is also not yet implemented in the factory method,
                 // so there may be no way to get these dependencies accepted!
                 // localScope.set(name, coherenceFunction.fn(childDependencies));
+                // UPDATE: using coherenceFunction names as dependencies for
+                // other coherenceFunctions is a great way to ensure an execution
+                // order of these functions. In order to do so, it is required
+                // that we set a name to localScope, and hence, we can as
+                // well use the return value. We won't accept `undefined`
+                // though and replace that with `null` as in collectChildDependencies
+                // `undefined` is an error.
                 const maybeGen = coherenceFunction.fn(childDependencies, {
                     isNew: this[OLD_STATE] === null,
                     wasSerialized: wasSerialized,
@@ -928,12 +945,18 @@ export class _AbstractStructModel extends _BaseContainerModel {
                         localScope.set(key, this.get(key));
                     },
                 }) as void | Generator<ResourceRequirement, void, unknown>;
-                if ((maybeGen as Generator)?.next instanceof Function)
-                    yield* maybeGen as Generator<
+                if ((maybeGen as Generator)?.next instanceof Function) {
+                    const result = yield* maybeGen as Generator<
                         ResourceRequirement,
                         void,
                         unknown
                     >;
+                    localScope.set(name, result === undefined ? null : result);
+                } else
+                    localScope.set(
+                        name,
+                        maybeGen === undefined ? null : maybeGen,
+                    );
             } else if (ctor.foreignKeys.has(name)) {
                 // Must lock the target!
                 // Key must not change anymore after being used as an dependency!
