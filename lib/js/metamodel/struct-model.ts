@@ -131,6 +131,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
         // in all of the local name space
         // Own names, which override parent scope for children dependencies.
         for (const map of [
+            this.coherenceFunctions,
             this.fields,
             this.foreignKeys,
             this.links,
@@ -142,6 +143,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
         return false;
     }
     // In all of the local name space returns a:
+    //      an instance of CoherenceFunction from this.coherenceFunctions
     //      an instance of _BaseModel from this.fields
     //      an instance of ForeignKey from this.keys
     //      an instance of _BaseLink from this.links
@@ -151,6 +153,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
     static get(
         key: string,
     ):
+        | CoherenceFunction
         | typeof _BaseModel
         | ForeignKey
         | _BaseLink
@@ -158,6 +161,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
         | FallBackValue {
         // Own names, which override parent scope for children dependencies.
         for (const map of [
+            this.coherenceFunctions,
             this.fields,
             this.foreignKeys,
             this.links,
@@ -337,6 +341,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
         //      filterFn = dependency=>!this.has.call({fields, keys, links}, dependency)
         //      iterFilter(childrenDependencies, filterFn)
         const staticHas = this.has.bind({
+            coherenceFunctions,
             fields,
             foreignKeys,
             links,
@@ -355,16 +360,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
             childrenExternalDependencies,
             iterFilter(
                 _childrenAllDependencies,
-                // SO FAR: coherenceFunction return values cannot be propagated
-                // out of this scope as a dependency. However, during metamorphose
-                // the values can be used internally to make on coherenceFunction
-                // depend on another and primarily determine execution order, but
-                // also propagate result values between them.
-                (dependency: string) =>
-                    !(
-                        staticHas(dependency) ||
-                        coherenceFunctions.has(dependency)
-                    ),
+                (dependency: string) => !staticHas(dependency),
             ),
         );
 
