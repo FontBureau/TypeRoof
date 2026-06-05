@@ -53,7 +53,10 @@ import {
     _GET_DRAFT_FOR_OLD_STATE_KEY,
 } from "./potential-write-proxy.ts";
 
-import { CoherenceFunction } from "./coherence-function.ts";
+import {
+    CoherenceFunction,
+    type CoherenceGenerator,
+} from "./coherence-function.ts";
 import { ForeignKey, type KeyValue } from "./foreign-key.ts";
 import { _PRIMARY_SERIALIZED_VALUE } from "./serialization.ts";
 
@@ -940,13 +943,11 @@ export class _AbstractStructModel extends _BaseContainerModel {
                         this.set(key, entry);
                         localScope.set(key, this.get(key));
                     },
-                }) as void | Generator<ResourceRequirement, void, unknown>;
-                if ((maybeGen as Generator)?.next instanceof Function) {
-                    const result = yield* maybeGen as Generator<
-                        ResourceRequirement,
-                        void,
-                        unknown
-                    >;
+                }) as unknown | CoherenceGenerator;
+                if (
+                    (maybeGen as CoherenceGenerator)?.next instanceof Function
+                ) {
+                    const result = yield* maybeGen as CoherenceGenerator;
                     localScope.set(name, result === undefined ? null : result);
                 } else
                     localScope.set(
