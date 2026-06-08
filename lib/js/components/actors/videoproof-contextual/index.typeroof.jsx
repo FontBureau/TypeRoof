@@ -564,7 +564,7 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
                     return [true, getRegisteredPropertySetup(property).default];
                 },
                 colorPropertiesMap = [
-                    ["colors/backgroundColor", "background-color"],
+                    ["colors/stageBackgroundColor", "background-color"],
                     ["colors/textColor", "color"],
                 ];
             // _getCellContents is a lot like the original function
