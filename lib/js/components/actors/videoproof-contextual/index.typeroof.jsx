@@ -519,7 +519,10 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
 
     update(changedMap) {
         const propertiesData = [
+            // [fullKey, cssProperty, unit, cleanFn]
             ["numericProperties/z-index", "z-index", "", Math.round],
+            ['generic/showCellBoxes', '--cell-boxes-outline', '', (val)=>val === true ? '1px solid' : ''],
+            ['generic/cellAlignment', '--cell-alignment', '', ],
         ];
 
         const font = (
