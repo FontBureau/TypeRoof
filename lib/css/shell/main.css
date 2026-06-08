@@ -989,9 +989,8 @@ select and drag
     margin-right: 0;
 }
 
-.actor_renderer-videoproof_contextual-content span{
+.actor_renderer-videoproof_contextual-content span {
     outline: var(--cell-boxes-outline, none);
-
 }
 
 .actor_renderer-videoproof_array {
