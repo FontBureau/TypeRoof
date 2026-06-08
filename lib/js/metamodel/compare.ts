@@ -107,13 +107,15 @@ export function* rawCompare(
     // Not the same constructor, but instanceof is not relevant here
     // because a sub-class can change everything about the model.
     if (oldState.constructor !== newState.constructor) {
-        // Can't recurse: old and new have different structures, so
-        // there's no meaningful child-by-child comparison.  Enumerate
-        // all descendants of newState as NEW so that consumers
-        // (e.g. getChangedMap) see the complete set of changed paths.
         yield [CHANGED, null];
-        for (const [, ...parts] of getAllPathsAndValues(newState))
-            if (parts.length > 0) yield [NEW, null, ...parts];
+        // Enumerating all descendants as NEW here would be correct
+        // (the structures differ, so no child-by-child comparison is
+        // possible) but is a dead effort: _update detects NEW
+        // ancestors and issues a full initialUpdate for affected
+        // widgets, which works directly from newState without
+        // consulting the comparison result.
+        // for (const [, ...parts] of getAllPathsAndValues(newState))
+        //     if (parts.length > 0) yield [NEW, null, ...parts];
         return;
     }
 
@@ -126,12 +128,12 @@ export function* rawCompare(
         // as it requires a changed interface. Using NEW.
         // It is also marked as CHANGED when the the type is the same
         // but the value changed.
-        // Can't recurse: WrappedType differs, so the internal
-        // structure changed.  Enumerate all descendants of newState
-        // so that downstream dependency lookups don't miss paths.
         yield [NEW, null];
-        for (const [, ...parts] of getAllPathsAndValues(newState))
-            if (parts.length > 0) yield [NEW, null, ...parts];
+        // Same as constructor case above: enumerating descendants as
+        // NEW would be correct but redundant — _update handles this
+        // via full initialUpdate for affected widgets.
+        // for (const [, ...parts] of getAllPathsAndValues(newState))
+        //     if (parts.length > 0) yield [NEW, null, ...parts];
         return;
     }
 
