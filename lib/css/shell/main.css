@@ -975,6 +975,10 @@ select and drag
 .actor_renderer-videoproof_contextual-content {
     position: sticky;
     top: 0;
+    text-align: var(
+        --cell-alignment,
+        center
+    ); /* this is the actual text align */
 }
 
 .actor_renderer-videoproof_contextual-content.fixed-lines span {
@@ -983,6 +987,11 @@ select and drag
 
 .actor_renderer-videoproof_contextual-content.fixed-lines span.end-of-line {
     margin-right: 0;
+}
+
+.actor_renderer-videoproof_contextual-content span{
+    outline: var(--cell-boxes-outline, none);
+
 }
 
 .actor_renderer-videoproof_array {
