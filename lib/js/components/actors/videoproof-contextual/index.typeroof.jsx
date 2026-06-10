@@ -297,6 +297,11 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
             this._gapEm,
             this._lineHeightEm,
             this._cellsStateKey,
+            // CAUTION: add LanguageTag and OpenTypeFeatures: they can change
+            //     shaping. However, the measurements so far are based on
+            //     wdth, wght, opsz only, so it's not exact anyways.
+            //     Also: thinking about this: variable axes changes
+            //     can also trigger GSUB which could produce wrong maxima.
         ].join(";");
 
         if (layoutKey === this._layoutStateKey) return false; // no change
