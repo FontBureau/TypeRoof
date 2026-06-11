@@ -991,6 +991,7 @@ select and drag
 
 .actor_renderer-videoproof_contextual-content span {
     outline: var(--cell-boxes-outline, none);
+    background: var(--cell-background-color, none);
 }
 
 .actor_renderer-videoproof_array {
