@@ -7,7 +7,14 @@ import {
     HANDLE_CHANGED_AS_NEW,
 } from "./basics.mjs";
 
-import { GenericSelect, StaticNode } from "./generic.mjs";
+import { require } from "./dependency-injection";
+
+import {
+    GenericSelect,
+    StaticNode,
+    DynamicTag,
+    CollapsibleContainer,
+} from "./generic.mjs";
 
 import { OTFeatureInfo } from "../ot-feature-info.mjs";
 
@@ -460,6 +467,7 @@ export class UIOTFeaturesChooser extends _BaseContainerComponent {
         getDefaults,
         requireUpdateDefaults,
         updateDefaultsDependencies,
+        label = "OpenType Features",
     ) {
         const h = widgetBus.domTool.h,
             localMain = <div class="ui_opentype_features_chooser"></div>,
@@ -469,15 +477,16 @@ export class UIOTFeaturesChooser extends _BaseContainerComponent {
                 "font",
             );
         widgetBus.insertElement(localMain);
-        super(widgetBus, zones, [
-            [
+        const labelWidget = [];
+        if (label !== null)
+            labelWidget.push([
                 { zone: "main" },
                 [],
                 StaticNode,
-                <h3 class="ui_opentype_features_chooser-label">
-                    OpenType Features
-                </h3>,
-            ],
+                <h3 class="ui_opentype_features_chooser-label">{label}</h3>,
+            ]);
+        super(widgetBus, zones, [
+            ...labelWidget,
             [
                 { zone: "main" },
                 [],
@@ -556,5 +565,70 @@ export class UIOTFeaturesChooser extends _BaseContainerComponent {
             value.value = OTFeatureInfo.all[tag].uiBoolean;
             openTypeFeatures.set(tag, value);
         });
+    }
+}
+
+export class UIOTFeaturesChooserCollapsible extends CollapsibleContainer {
+    constructor(
+        widgetBus,
+        _zones,
+        getDefaults,
+        requireUpdateDefaults,
+        updateDefaultsDependencies,
+        togglerLabel = "OpenType Features",
+        isOpened = false,
+        scroll = false,
+    ) {
+        const classNameParticle = "opentype_features",
+            flavor = "minimal";
+        const widgets = [
+            [
+                {
+                    zone: "main",
+                    // rootPath: same as parent
+                },
+                [
+                    // This is required, so that the fields end up in the
+                    // dependencies as well
+                    [
+                        widgetBus.getExternalName("openTypeFeatures"),
+                        "openTypeFeatures",
+                    ],
+                    [widgetBus.getExternalName("rootFont"), "rootFont"],
+                ],
+                UIOTFeaturesChooser,
+                require("raw:zones"),
+                getDefaults,
+                requireUpdateDefaults,
+                updateDefaultsDependencies,
+                null,
+            ],
+            [
+                { zone: "label" },
+                [[widgetBus.getExternalName("openTypeFeatures"), "data"]],
+                DynamicTag,
+                "span",
+                {}, //attr
+                // formatter
+                (openTypeFeatures) => {
+                    const tags = [];
+                    for (const [featureTag, featureValue] of openTypeFeatures)
+                        tags.push(
+                            `"${featureTag}":\xA0${featureValue.value ? "1" : "0"}`,
+                        );
+                    return tags.length ? ` ${tags.join(", ")}` : "";
+                },
+            ],
+        ];
+        super(
+            widgetBus,
+            _zones,
+            togglerLabel,
+            flavor,
+            classNameParticle,
+            widgets,
+            isOpened,
+            scroll,
+        );
     }
 }
