@@ -577,7 +577,6 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
                     ["colors/stageBackgroundColor", "background-color"],
                     ["colors/backgroundColor", "--cell-background-color"],
                     ["colors/textColor", "color"],
-
                 ];
             // _getCellContents is a lot like the original function
             // and cellContents.stateKey thereby as well
