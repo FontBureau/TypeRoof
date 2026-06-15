@@ -60,6 +60,7 @@ export default [
     {
         files: ["**/*.{ts,tsx}"],
         rules: {
+            "no-undef": "off",
             "no-unused-vars": "off",
             // The _-prefix convention signals intentionally unused parameters,
             // commonly for interface/protocol conformance.

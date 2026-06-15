@@ -47,7 +47,8 @@
     "moduleResolution": "bundler",
   },
   "include": [
-    "lib/js"
+    "lib/js",
+    "app/wikipedia-demo",
   ],
   "exclude": [
     "node_modules",
