@@ -138,6 +138,7 @@ export default defineConfig({
                 shell: resolve(__dirname, "shell.html"),
                 legacy: resolve(__dirname, "legacy.html"),
                 player: resolve(__dirname, "app/player/index.html"),
+                wikipedia: resolve(__dirname, "app/wikipedia/index.html"),
             },
             output: {
                 keepNames: true,
