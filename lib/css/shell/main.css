@@ -1513,41 +1513,55 @@ select and drag
 collapsible
 *******************************************************************************/
 
-.ui_collapsible {
+.minimal-collapsible {
+    /** same toggle styling as color chooser */
+    & > .ui_collapsible_toggle {
+        display: list-item;
+        list-style-type: disclosure-closed;
+        list-style-position: inside;
+    }
+    &.ui_collapsible-opened > .ui_collapsible_toggle {
+        list-style-type: disclosure-open;
+    }
+}
+
+.separating-collapsible {
+    /* sane as the collapsible style i.e. used to separate logical major UI blocks  */
+
     border-top: 1px solid var(--fieldset-border-color);
     border-bottom: 1px solid var(--fieldset-border-color);
     margin-bottom: -1px;
-}
 
-.ui_collapsible-toggler {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    font-weight: 600;
-    padding: 0.5em 1em;
-    text-transform: capitalize;
-}
+    & > .ui_collapsible_toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        font-weight: 600;
+        padding: 0.5em 1em;
+        text-transform: capitalize;
+    }
 
-.ui_collapsible-toggler::after {
-    /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
-    font-family: "Material Symbols Outlined";
-    font-size: 1.3rem;
-    font-variation-settings: "wght" 200;
-    line-height: 0.8rem;
-    content: "\e313";
-}
+    & > .ui_collapsible_toggle::after {
+        /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
+        font-family: "Material Symbols Outlined";
+        font-size: 1.3rem;
+        font-variation-settings: "wght" 200;
+        line-height: 0.8rem;
+        content: "\e313";
+    }
 
-.ui_collapsible-opened > .ui_collapsible-toggler::after {
-    content: "\e316";
-}
+    &.ui_collapsible-opened > .ui_collapsible_toggle::after {
+        content: "\e316";
+    }
 
-.ui_collapsible-contents {
-    padding: 1em;
-}
+    & > .ui_collapsible-contents {
+        padding: 1em;
+    }
 
-.ui_collapsible-closed > .ui_collapsible-contents {
-    display: none;
+    &.ui_collapsible-closed > .ui_collapsible-contents {
+        display: none;
+    }
 }
 
 /**************************************************************************** */

@@ -13,7 +13,9 @@ import {
     setupTooltip,
 } from "./basics.mjs";
 
-import { StaticNode } from "./generic.mjs";
+import { require } from "./dependency-injection";
+
+import { DynamicTag, StaticNode, CollapsibleContainer } from "./generic.mjs";
 
 // SEE:
 // https://www.w3.org/International/questions/qa-choosing-language-tags
@@ -325,7 +327,7 @@ export class UILanguageInput extends _BaseComponent {
 }
 
 export class UILanguageTag extends _BaseContainerComponent {
-    constructor(widgetBus, _zones) {
+    constructor(widgetBus, _zones, label = "Language") {
         const { h } = widgetBus.domTool,
             info = (
                 <div class="ui-language_tag-info">
@@ -354,7 +356,10 @@ export class UILanguageTag extends _BaseContainerComponent {
             ),
             element = (
                 <div class="ui-language_tag">
-                    <h3 class="ui-language_tag-label">Language</h3>
+                    {(label && (
+                        <h3 class="ui-language_tag-label">{label}</h3>
+                    )) ||
+                        ""}
                 </div>
             ),
             zones = new Map([..._zones, ["main", element]]);
@@ -376,6 +381,63 @@ export class UILanguageTag extends _BaseContainerComponent {
             ),
             [{ zone: "main" }, [], StaticNode, info],
         ]);
+    }
+}
+
+export class UICLanguageTagCollapsible extends CollapsibleContainer {
+    constructor(
+        widgetBus,
+        _zones,
+        togglerLabel = "Language",
+        isOpened = false,
+        scroll = false,
+    ) {
+        const classNameParticle = "language_tag",
+            flavor = "minimal";
+        const widgets = [
+            [
+                {
+                    zone: "main",
+                    // rootPath: same as parent
+                },
+                [],
+                UILanguageTag,
+                require("raw:zones"),
+                null,
+            ],
+            [
+                { zone: "label" },
+                [[".", "data"]],
+                DynamicTag,
+                "span",
+                {}, //attr
+                // formatter
+                (data) => {
+                    // It would be even better to read this from processed properties, like
+                    // the color chooser does for it's label, but so far UICLanguageTagCollapsible
+                    // is designed as a drop-in replacement for UILanguageTag and that has no
+                    // knowkledge about it's target. So we only show the data that is actually
+                    // there, not the full result.
+                    const args = [];
+                    for (const key of ["language", "script", "region"]) {
+                        const item = data.get(key);
+                        args.push(item.isEmpty ? null : item.value);
+                    }
+                    const tag = createLanguageTag(...args);
+                    return tag !== null ? ` ${tag}` : "";
+                },
+            ],
+        ];
+        super(
+            widgetBus,
+            _zones,
+            togglerLabel,
+            flavor,
+            classNameParticle,
+            widgets,
+            isOpened,
+            scroll,
+        );
     }
 }
 
