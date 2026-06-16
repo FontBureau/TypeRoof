@@ -1997,6 +1997,10 @@ dimension sequence
     }
 }
 
+:is(.videoproof_layout, .ui-parameters-display.ui_videoproof) {
+  margin-left: 2em;
+}
+
 /* NOTE: the .ProseMirror is very generic as it's coming from
  * the ProseMirror class, we should not use it this specifically.
  */
