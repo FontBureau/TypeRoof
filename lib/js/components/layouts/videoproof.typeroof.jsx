@@ -858,8 +858,8 @@ const LAYER_TYPE_KEY = "LayerActorModel";
 // subsequently `getDraftEntry` or the `model.getDraftFor` accessors.
 // This is a good case to study and explain metamodel inner workings and
 // optimization strategies.
-const VideoproofArrayV2Model = _BaseLayoutModel.createClass(
-    "VideoproofArrayV2Model",
+const VideoproofModel = _BaseLayoutModel.createClass(
+    "VideoproofModel",
     ...timeControlModelMixin,
     ...StaticDependency.createWithInternalizedDependency(
         "availableAxesMathItemTypes",
@@ -1905,7 +1905,7 @@ class VideoproofContainerStyler extends StaticNode {
     }
 }
 
-class VideoproofArrayV2Controller extends _BaseTypeDrivenContainerComponentMixin(
+class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
     _BaseContainerComponent,
 ) {
     constructor(widgetBus, _zones) {
@@ -2433,7 +2433,4 @@ class VideoproofArrayV2Controller extends _BaseTypeDrivenContainerComponentMixin
     }
 }
 
-export {
-    VideoproofArrayV2Model as Model,
-    VideoproofArrayV2Controller as Controller,
-};
+export { VideoproofModel as Model, VideoproofController as Controller };
