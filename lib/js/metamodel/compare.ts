@@ -108,6 +108,14 @@ export function* rawCompare(
     // because a sub-class can change everything about the model.
     if (oldState.constructor !== newState.constructor) {
         yield [CHANGED, null];
+        // Enumerating all descendants as NEW here would be correct
+        // (the structures differ, so no child-by-child comparison is
+        // possible) but is a dead effort: _update detects NEW
+        // ancestors and issues a full initialUpdate for affected
+        // widgets, which works directly from newState without
+        // consulting the comparison result.
+        // for (const [, ...parts] of getAllPathsAndValues(newState))
+        //     if (parts.length > 0) yield [NEW, null, ...parts];
         return;
     }
 
@@ -121,6 +129,11 @@ export function* rawCompare(
         // It is also marked as CHANGED when the the type is the same
         // but the value changed.
         yield [NEW, null];
+        // Same as constructor case above: enumerating descendants as
+        // NEW would be correct but redundant — _update handles this
+        // via full initialUpdate for affected widgets.
+        // for (const [, ...parts] of getAllPathsAndValues(newState))
+        //     if (parts.length > 0) yield [NEW, null, ...parts];
         return;
     }
 

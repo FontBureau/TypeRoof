@@ -28,10 +28,10 @@ function _getEntry(
         typeof path === "string" ? Path.fromString(path) : path;
     try {
         return [...pathInstance.parts].reduce(
-            (accum: _BaseModel, part: string) => {
+            (accum: _BaseModel, part: string, i: number) => {
                 if (!(accum instanceof _BaseContainerModel))
                     throw new Error(
-                        `CONTAINER ENTRY ERROR no container at ${part} in ${accum} path: ${pathInstance.toString()}.`,
+                        `CONTAINER ENTRY ERROR no container at ${part}#${i} in ${accum} path: ${pathInstance.toString()}.`,
                     );
                 const fn = (
                     accum as unknown as Record<
@@ -41,7 +41,7 @@ function _getEntry(
                 )[fnName];
                 if (!fn)
                     throw new Error(
-                        `VALUE ERROR container has no method "${fnName}" at "${part}" in path: ${pathInstance.toString()}.`,
+                        `VALUE ERROR container has no method "${fnName}" at "${part}#${i}" in path: ${pathInstance.toString()}.`,
                     );
                 return fn.call(accum, part) as _BaseModel;
             },

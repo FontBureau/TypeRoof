@@ -53,7 +53,10 @@ import {
     _GET_DRAFT_FOR_OLD_STATE_KEY,
 } from "./potential-write-proxy.ts";
 
-import { CoherenceFunction } from "./coherence-function.ts";
+import {
+    CoherenceFunction,
+    type CoherenceGenerator,
+} from "./coherence-function.ts";
 import { ForeignKey, type KeyValue } from "./foreign-key.ts";
 import { _PRIMARY_SERIALIZED_VALUE } from "./serialization.ts";
 
@@ -131,6 +134,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
         // in all of the local name space
         // Own names, which override parent scope for children dependencies.
         for (const map of [
+            this.coherenceFunctions,
             this.fields,
             this.foreignKeys,
             this.links,
@@ -142,6 +146,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
         return false;
     }
     // In all of the local name space returns a:
+    //      an instance of CoherenceFunction from this.coherenceFunctions
     //      an instance of _BaseModel from this.fields
     //      an instance of ForeignKey from this.keys
     //      an instance of _BaseLink from this.links
@@ -151,6 +156,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
     static get(
         key: string,
     ):
+        | CoherenceFunction
         | typeof _BaseModel
         | ForeignKey
         | _BaseLink
@@ -158,6 +164,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
         | FallBackValue {
         // Own names, which override parent scope for children dependencies.
         for (const map of [
+            this.coherenceFunctions,
             this.fields,
             this.foreignKeys,
             this.links,
@@ -337,6 +344,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
         //      filterFn = dependency=>!this.has.call({fields, keys, links}, dependency)
         //      iterFilter(childrenDependencies, filterFn)
         const staticHas = this.has.bind({
+            coherenceFunctions,
             fields,
             foreignKeys,
             links,
@@ -358,6 +366,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
                 (dependency: string) => !staticHas(dependency),
             ),
         );
+
         populateSet(dependencies, [
             //jshint ignore: line
             // Via internalizedDependencies, these are allways
@@ -896,12 +905,19 @@ export class _AbstractStructModel extends _BaseContainerModel {
                 // this can do the same job.
                 //
                 // FIXME not a fan of using result like this! It makes stuff
-                // complicated! (does iit though?)
+                // complicated! (does it though?)
                 // However, the coherenceFunction is part of the init order, and
                 // as such can technically set a name, there's no clash.
                 // This is also not yet implemented in the factory method,
                 // so there may be no way to get these dependencies accepted!
                 // localScope.set(name, coherenceFunction.fn(childDependencies));
+                // UPDATE: using coherenceFunction names as dependencies for
+                // other coherenceFunctions is a great way to ensure an execution
+                // order of these functions. In order to do so, it is required
+                // that we set a name to localScope, and hence, we can as
+                // well use the return value. We won't accept `undefined`
+                // though and replace that with `null` as in collectChildDependencies
+                // `undefined` is an error.
                 const maybeGen = coherenceFunction.fn(childDependencies, {
                     isNew: this[OLD_STATE] === null,
                     wasSerialized: wasSerialized,
@@ -927,13 +943,17 @@ export class _AbstractStructModel extends _BaseContainerModel {
                         this.set(key, entry);
                         localScope.set(key, this.get(key));
                     },
-                }) as void | Generator<ResourceRequirement, void, unknown>;
-                if ((maybeGen as Generator)?.next instanceof Function)
-                    yield* maybeGen as Generator<
-                        ResourceRequirement,
-                        void,
-                        unknown
-                    >;
+                }) as unknown | CoherenceGenerator;
+                if (
+                    (maybeGen as CoherenceGenerator)?.next instanceof Function
+                ) {
+                    const result = yield* maybeGen as CoherenceGenerator;
+                    localScope.set(name, result === undefined ? null : result);
+                } else
+                    localScope.set(
+                        name,
+                        maybeGen === undefined ? null : maybeGen,
+                    );
             } else if (ctor.foreignKeys.has(name)) {
                 // Must lock the target!
                 // Key must not change anymore after being used as an dependency!

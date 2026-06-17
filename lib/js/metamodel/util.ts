@@ -113,6 +113,7 @@ export function populateArray<T, A extends PushableArray<T>>(
 export const IS_PROXY = Symbol("_POTENTIAL_WRITE_PROXY_IS_PROXY");
 export const GET_IMMUTABLE = Symbol("_POTENTIAL_WRITE_PROXY_GET_IMMUTABLE");
 export const GET_DRAFT = Symbol("_POTENTIAL_WRITE_PROXY_GET_DRAFT");
+export const ENSURE_DRAFT = Symbol("_POTENTIAL_WRITE_PROXY_ENSURE_DRAFT");
 export const GET = Symbol("_POTENTIAL_WRITE_PROXY_GET");
 export const IS_WRAPPER_TYPE = Symbol("IS_WRAPPER_TYPE");
 
@@ -125,12 +126,13 @@ export function isProxy(maybeProxy: unknown): boolean {
 
 export function unwrapPotentialWriteProxy<T>(
     maybeProxy: Record<symbol, T> | T,
-    type: "immutable" | "draft" | null = null,
+    type: "immutable" | "draft" | "ensureDraft" | null = null,
 ): T {
     if (!isProxy(maybeProxy)) return maybeProxy as T;
     const proxy = maybeProxy as Record<symbol, T>;
     if (type === "immutable") return proxy[GET_IMMUTABLE] as T;
     if (type === "draft") return proxy[GET_DRAFT] as T;
+    if (type === "ensureDraft") return proxy[ENSURE_DRAFT] as T;
     return proxy[GET] as T;
 }
 

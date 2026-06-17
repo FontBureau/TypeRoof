@@ -297,6 +297,11 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
             this._gapEm,
             this._lineHeightEm,
             this._cellsStateKey,
+            // CAUTION: add LanguageTag and OpenTypeFeatures: they can change
+            //     shaping. However, the measurements so far are based on
+            //     wdth, wght, opsz only, so it's not exact anyways.
+            //     Also: thinking about this: variable axes changes
+            //     can also trigger GSUB which could produce wrong maxima.
         ].join(";");
 
         if (layoutKey === this._layoutStateKey) return false; // no change
@@ -519,7 +524,15 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
 
     update(changedMap) {
         const propertiesData = [
+            // [fullKey, cssProperty, unit, cleanFn]
             ["numericProperties/z-index", "z-index", "", Math.round],
+            [
+                "generic/showCellBoxes",
+                "--cell-boxes-outline",
+                "",
+                (val) => (val === true ? "1px solid" : ""),
+            ],
+            ["generic/cellAlignment", "--cell-alignment", ""],
         ];
 
         const font = (
@@ -561,7 +574,8 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
                     return [true, getRegisteredPropertySetup(property).default];
                 },
                 colorPropertiesMap = [
-                    ["colors/backgroundColor", "background-color"],
+                    ["colors/stageBackgroundColor", "--background-color"],
+                    ["colors/backgroundColor", "--cell-background-color"],
                     ["colors/textColor", "color"],
                 ];
             // _getCellContents is a lot like the original function

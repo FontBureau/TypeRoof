@@ -975,6 +975,16 @@ select and drag
 .actor_renderer-videoproof_contextual-content {
     position: sticky;
     top: 0;
+    text-align: var(
+        --cell-alignment,
+        center
+    ); /* this is the actual text align */
+
+    /*
+     * This is part of a hack to override the application of
+     * background-color layout specific.
+     */
+    background-color: var(--background-color);
 }
 
 .actor_renderer-videoproof_contextual-content.fixed-lines span {
@@ -983,6 +993,11 @@ select and drag
 
 .actor_renderer-videoproof_contextual-content.fixed-lines span.end-of-line {
     margin-right: 0;
+}
+
+.actor_renderer-videoproof_contextual-content span {
+    outline: var(--cell-boxes-outline, none);
+    background: var(--cell-background-color, none);
 }
 
 .actor_renderer-videoproof_array {
@@ -1049,10 +1064,6 @@ select and drag
     padding: var(--gap-size) 0;
 }
 
-.typeroof-layout-before > .ui_videoproof.ui-parameters-display {
-    padding: var(--gap-size);
-}
-
 .ui_videoproof_array_layers-item .ui_button {
     float: right;
 }
@@ -1106,6 +1117,26 @@ select and drag
      */
     flex-wrap: wrap;
     gap: 0 calc(1pt * var(--font-size-pt, 24) * var(--gap-widht-em, 0));
+    background-color: var(--background-color);
+}
+
+.videoproof_layout {
+    .actor_renderer-videoproof_array_v2,
+    .actor_renderer-videoproof_contextual-content {
+        /*
+         * This is a switch specific to layouts/videoproof where the layout
+         * can set that var to `none` and render the background itself on a
+         * parent node. The default is that the `--layout-specific-override-actor-renderer-videoproof-array-v2-background-color`
+         * is not defined and we fall through to `--background-color`, which
+         * is set by the actor itself.
+         * For colors with transparency, this prevents that the color is
+         * added on top of itself.
+         */
+        background-color: var(
+            --layout-specific-override-actor-renderer-videoproof-array-v2-background-color,
+            var(--background-color)
+        );
+    }
 }
 
 .typeroof-layout > .actor_renderer-videoproof_array_v2 {
@@ -1504,41 +1535,56 @@ select and drag
 collapsible
 *******************************************************************************/
 
-.ui_collapsible {
+.minimal-collapsible {
+    /** same toggle styling as color chooser */
+    & > .ui_collapsible_toggle {
+        display: list-item;
+        list-style-type: disclosure-closed;
+        list-style-position: inside;
+    }
+
+    &.ui_collapsible-opened > .ui_collapsible_toggle {
+        list-style-type: disclosure-open;
+    }
+}
+
+.separating-collapsible {
+    /* sane as the collapsible style i.e. used to separate logical major UI blocks  */
+
     border-top: 1px solid var(--fieldset-border-color);
     border-bottom: 1px solid var(--fieldset-border-color);
     margin-bottom: -1px;
-}
 
-.ui_collapsible-toggler {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    font-weight: 600;
-    padding: 0.5em 1em;
-    text-transform: capitalize;
-}
+    & > .ui_collapsible_toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        font-weight: 600;
+        padding: 0.5em 1em;
+        text-transform: capitalize;
+    }
 
-.ui_collapsible-toggler::after {
-    /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
-    font-family: "Material Symbols Outlined";
-    font-size: 1.3rem;
-    font-variation-settings: "wght" 200;
-    line-height: 0.8rem;
-    content: "\e313";
-}
+    & > .ui_collapsible_toggle::after {
+        /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
+        font-family: "Material Symbols Outlined";
+        font-size: 1.3rem;
+        font-variation-settings: "wght" 200;
+        line-height: 0.8rem;
+        content: "\e313";
+    }
 
-.ui_collapsible-opened > .ui_collapsible-toggler::after {
-    content: "\e316";
-}
+    &.ui_collapsible-opened > .ui_collapsible_toggle::after {
+        content: "\e316";
+    }
 
-.ui_collapsible-contents {
-    padding: 1em;
-}
+    & > .ui_collapsible-contents {
+        padding: 1em;
+    }
 
-.ui_collapsible-closed > .ui_collapsible-contents {
-    display: none;
+    &.ui_collapsible-closed > .ui_collapsible-contents {
+        display: none;
+    }
 }
 
 /**************************************************************************** */
@@ -1972,6 +2018,10 @@ dimension sequence
         color: black;
         background: white;
     }
+}
+
+:is(.videoproof_layout, .ui-parameters-display.ui_videoproof) {
+    padding-left: 2em; /* using padding: so we include the background color */
 }
 
 /* NOTE: the .ProseMirror is very generic as it's coming from
