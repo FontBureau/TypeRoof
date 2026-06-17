@@ -979,6 +979,7 @@ select and drag
         --cell-alignment,
         center
     ); /* this is the actual text align */
+
     /*
      * This is part of a hack to override the application of
      * background-color layout specific.
@@ -1541,6 +1542,7 @@ collapsible
         list-style-type: disclosure-closed;
         list-style-position: inside;
     }
+
     &.ui_collapsible-opened > .ui_collapsible_toggle {
         list-style-type: disclosure-open;
     }
