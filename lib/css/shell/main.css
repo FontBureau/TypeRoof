@@ -979,6 +979,11 @@ select and drag
         --cell-alignment,
         center
     ); /* this is the actual text align */
+    /*
+     * This is part of a hack to override the application of
+     * background-color layout specific.
+     */
+    background-color: var(--background-color);
 }
 
 .actor_renderer-videoproof_contextual-content.fixed-lines span {
@@ -1058,10 +1063,6 @@ select and drag
     padding: var(--gap-size) 0;
 }
 
-.typeroof-layout-before > .ui_videoproof.ui-parameters-display {
-    padding: var(--gap-size);
-}
-
 .ui_videoproof_array_layers-item .ui_button {
     float: right;
 }
@@ -1115,6 +1116,26 @@ select and drag
      */
     flex-wrap: wrap;
     gap: 0 calc(1pt * var(--font-size-pt, 24) * var(--gap-widht-em, 0));
+    background-color: var(--background-color);
+}
+
+.videoproof_layout {
+    .actor_renderer-videoproof_array_v2,
+    .actor_renderer-videoproof_contextual-content {
+        /*
+         * This is a switch specific to layouts/videoproof where the layout
+         * can set that var to `none` and render the background itself on a
+         * parent node. The default is that the `--layout-specific-override-actor-renderer-videoproof-array-v2-background-color`
+         * is not defined and we fall through to `--background-color`, which
+         * is set by the actor itself.
+         * For colors with transparency, this prevents that the color is
+         * added on top of itself.
+         */
+        background-color: var(
+            --layout-specific-override-actor-renderer-videoproof-array-v2-background-color,
+            var(--background-color)
+        );
+    }
 }
 
 .typeroof-layout > .actor_renderer-videoproof_array_v2 {
@@ -1998,7 +2019,7 @@ dimension sequence
 }
 
 :is(.videoproof_layout, .ui-parameters-display.ui_videoproof) {
-  margin-left: 2em;
+    padding-left: 2em; /* using padding: so we include the background color */
 }
 
 /* NOTE: the .ProseMirror is very generic as it's coming from
