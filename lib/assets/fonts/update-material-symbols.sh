@@ -29,6 +29,7 @@ ICON_NAMES=(
     swap_vert
     edit
     edit_off
+    open_in_full
 )
 # Join the array elements using a comma, must be sorted alphabetically
 ICON_NAMES_ARGUMENT=$(IFS=$'\n';sorted=($(sort <<<"${ICON_NAMES[*]}"));IFS=,;echo "${sorted[*]}")
