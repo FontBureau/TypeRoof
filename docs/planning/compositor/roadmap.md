@@ -132,7 +132,7 @@ production, duplicated across two subsystems.
 
 ### TypeSpecnion (layout/rendering scope)
 
-In `type-spec-ramp.typeroof.jsx`:
+In `type-spec-ramp.typeroof.jsx` (now under `layouts/type-stage/...`):
 
 - **`SyntheticValue`** — A computed property: wraps a function + declared
   dependency names. `call(...resolvedDeps)` produces the value.
