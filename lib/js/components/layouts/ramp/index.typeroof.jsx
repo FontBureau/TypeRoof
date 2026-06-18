@@ -40,8 +40,8 @@ import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" wit
 
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
-const SimpleRampModel = _BaseLayoutModel.createClass(
-    "SimpleRampModel",
+const RampModel = _BaseLayoutModel.createClass(
+    "RampModel",
     // The root TypeSpec
     ["typeSpec", TypeSpecModel],
     ["editingTypeSpec", PathModelOrEmpty],
@@ -116,7 +116,7 @@ const SimpleRampModel = _BaseLayoutModel.createClass(
     ),
 );
 
-class SimpleRampController extends _BaseContainerComponent {
+class RampController extends _BaseContainerComponent {
     constructor(widgetBus, _zones) {
         // BUT: we may need a mechanism to handle typeSpec inheritance!
         // widgetBus.wrapper.setProtocolHandlerImplementation(
@@ -264,4 +264,4 @@ class SimpleRampController extends _BaseContainerComponent {
     }
 }
 
-export { SimpleRampModel as Model, SimpleRampController as Controller };
+export { RampModel as Model, RampController as Controller };
