@@ -29,7 +29,10 @@ import {
 } from "../../registered-properties.mjs";
 import { getTypeSpecDefaultsMap } from "../type-stage/defaults.mjs";
 import { TYPE_SPEC_PROPERTIES_GENERATORS } from "../type-stage/properties-generators.mjs";
-import { StylePatchSourcesMeta, TypeSpecMeta } from "../type-stage/meta.typeroof.jsx";
+import {
+    StylePatchSourcesMeta,
+    TypeSpecMeta,
+} from "../type-stage/meta.typeroof.jsx";
 import { TypeSpecPropertiesManager } from "../type-stage/type-spec-properties.typeroof.jsx";
 import {
     StylePatchPropertiesManager,
