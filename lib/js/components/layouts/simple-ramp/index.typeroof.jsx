@@ -27,15 +27,15 @@ import {
     isInheritingPropertyFn,
     getRegisteredPropertySetup,
 } from "../../registered-properties.mjs";
-import { getTypeSpecDefaultsMap } from "../ramp/defaults.mjs";
-import { TYPE_SPEC_PROPERTIES_GENERATORS } from "../ramp/properties-generators.mjs";
-import { StylePatchSourcesMeta, TypeSpecMeta } from "../ramp/meta.typeroof.jsx";
-import { TypeSpecPropertiesManager } from "../ramp/type-spec-properties.typeroof.jsx";
+import { getTypeSpecDefaultsMap } from "../type-stage/defaults.mjs";
+import { TYPE_SPEC_PROPERTIES_GENERATORS } from "../type-stage/properties-generators.mjs";
+import { StylePatchSourcesMeta, TypeSpecMeta } from "../type-stage/meta.typeroof.jsx";
+import { TypeSpecPropertiesManager } from "../type-stage/type-spec-properties.typeroof.jsx";
 import {
     StylePatchPropertiesManager,
     UIStylePatchesMap,
-} from "../ramp/style-patches.typeroof.jsx";
-import { ProseMirrorContext } from "../ramp/prosemirror.typeroof.jsx";
+} from "../type-stage/style-patches.typeroof.jsx";
+import { ProseMirrorContext } from "../type-stage/prosemirror.typeroof.jsx";
 import DEFAULT_STATE from "../../../../assets/typespec-ramp-initial-state.json" with { type: "json" };
 
 //  We can't create the self-reference directly
