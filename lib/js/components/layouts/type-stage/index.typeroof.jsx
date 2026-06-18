@@ -48,12 +48,12 @@ import {
     UINodeSpecMap,
     NodeSpecPropertiesManager,
 } from "./node-specs.typeroof.jsx";
-import DEFAULT_STATE from "../../../../assets/typespec-ramp-initial-state.json" with { type: "json" };
+import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
-const TypeSpecRampModel = _BaseLayoutModel.createClass(
-    "TypeSpecRampModel",
+const TypeStageModel = _BaseLayoutModel.createClass(
+    "TypeStageModel",
     // The root TypeSpec
     ["typeSpec", TypeSpecModel],
     ["editingTypeSpec", PathModelOrEmpty],
@@ -128,7 +128,7 @@ const TypeSpecRampModel = _BaseLayoutModel.createClass(
     ),
 );
 
-class TypeSpecRampController extends _BaseContainerComponent {
+class TypeStageController extends _BaseContainerComponent {
     constructor(widgetBus, _zones) {
         // BUT: we may need a mechanism to handle typeSpec inheritance!
         // widgetBus.wrapper.setProtocolHandlerImplementation(
@@ -467,4 +467,4 @@ class TypeSpecRampController extends _BaseContainerComponent {
     }
 }
 
-export { TypeSpecRampModel as Model, TypeSpecRampController as Controller };
+export { TypeStageModel as Model, TypeStageController as Controller };

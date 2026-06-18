@@ -36,7 +36,7 @@ import {
     UIStylePatchesMap,
 } from "../type-stage/style-patches.typeroof.jsx";
 import { ProseMirrorContext } from "../type-stage/prosemirror.typeroof.jsx";
-import DEFAULT_STATE from "../../../../assets/typespec-ramp-initial-state.json" with { type: "json" };
+import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
