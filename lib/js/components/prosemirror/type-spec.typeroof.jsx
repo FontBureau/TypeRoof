@@ -1240,17 +1240,17 @@ export class UIBoldItalicMenu extends _BaseComponent {
             activeStyles = activeMarks.get(genericStyleMark) || [],
             activeStylesSeparated = Array.from(activeStyles).flatMap((s) =>
                 s.split(" "),
-            ),
-            newStyleName = activeStylesSeparated.includes(styleName)
-                ? activeStylesSeparated.filter((s) => s !== styleName).join(" ")
-                : activeStylesSeparated.concat(styleName).toSorted().join(" ");
-        // FIXME: clicking bold and italic buttons should set the style name to
-        // "bold italic". The values being passed to `toggleMark` are correct as
-        // can be verified with the logs below, but it's still not working for
-        // some reason.
-        console.log("> clicked:", styleName);
-        console.log("> active styles are:", activeStylesSeparated);
-        console.log("> change style to:", newStyleName);
+            );
+        let newStyleName = activeStylesSeparated.includes(styleName)
+            ? activeStylesSeparated.filter((s) => s !== styleName).join(" ")
+            : activeStylesSeparated.concat(styleName).toSorted().join(" ");
+
+        // newStyleName must not be "" (the empty string). The result of
+        // no mark is achieved by removing the active mark, and that is the
+        // job of `toggleMark`. In the case of an "" newStyleName should
+        // just be styleName and toggleMark will remove it.
+        if (newStyleName === "") newStyleName = styleName;
+
         toggleMark(
             markType,
             { "data-style-name": newStyleName },
