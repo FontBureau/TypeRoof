@@ -35,7 +35,8 @@ import { setLanguageTag } from "../language-tags.typeroof.jsx";
 
 import { renderAxesParameterDisplay } from "../axes-parameters.mjs";
 
-import { toggleMark, setBlockType } from "prosemirror-commands";
+import { setBlockType } from "prosemirror-commands";
+import { toggleMark } from "./commands.ts";
 
 import {
     getPathOfTypes,
