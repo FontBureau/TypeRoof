@@ -452,7 +452,10 @@ export class _BaseTreeEditor extends _BaseComponent {
                 ...this._renderActor(itemPath, actor, state),
             );
             container.append(itemElement);
-            this._itemElements.set(itemPath.toString(), itemElement);
+            this._itemElements.set(
+                itemPath.toString(Path.RELATIVE),
+                itemElement,
+            );
         }
         return [container];
     }
@@ -486,7 +489,7 @@ export class _BaseTreeEditor extends _BaseComponent {
         }
         this._activePaths.clear();
         for (const activePath of pathsToActivate) {
-            const activePathStr = activePath.toString();
+            const activePathStr = activePath.toString(Path.RELATIVE);
             if (!this._itemElements.has(activePathStr)) {
                 // FIXME: need to figure out.
                 // deserializeing four-panels-wip-0004_slides_as_layers.txt
