@@ -679,17 +679,28 @@ export class ProseMirrorContext extends _BaseContainerComponent {
         zones,
         proseMirrorSettings /* e.g. {zone:'layout'}*/,
         originTypeSpecPath,
+        // FIXME
         isSimpleRamp,
         menuSettings /* e.g. {zone:'main'}*/,
     ) {
         super(widgetBus, zones, [
-            [
-                // IMPORTANT: must be before ProseMirror
-                { ...menuSettings, id: new.target.ID_MAP.menu },
-                ["nodeSpecToTypeSpec"],
-                isSimpleRamp ? UIBoldItalicMenu : UIProseMirrorMenu,
-                originTypeSpecPath,
-            ],
+            isSimpleRamp
+                ? [
+                      // IMPORTANT: must be before ProseMirror
+                      { ...menuSettings, id: new.target.ID_MAP.menu },
+                      ["nodeSpecToTypeSpec"],
+                      UIBoldItalicMenu,
+                      originTypeSpecPath,
+                  ]
+                : [
+                      // IMPORTANT: must be before ProseMirror
+                      { id: new.target.ID_MAP.menu },
+                      ["nodeSpecToTypeSpec"],
+                      UIProseMirrorMenu,
+                      zones,
+                      originTypeSpecPath,
+                      menuSettings,
+                  ],
             [
                 { ...proseMirrorSettings, id: new.target.ID_MAP.proseMirror },
                 [

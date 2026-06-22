@@ -954,27 +954,112 @@ function getActiveNodesAndMarks(editorState) {
     return result;
 }
 
-export class UIProseMirrorMenu extends _BaseComponent {
-    constructor(widgetBus, originTypeSpecPath) {
+export class UIProseMirrorMenuBlocks extends _BaseComponent {
+    constructor(widgetBus) {
         super(widgetBus);
-        this._originTypeSpecPath = originTypeSpecPath;
-        this._buttonToStyle = new Map();
         this._buttonToBlock = new Map();
-        [this.element, this._stylesContainer, this._blocksContainer] =
-            this._initTemplate();
+        [this.element, this._blocksContainer] = this._initTemplate();
     }
 
     _getTemplate(h) {
         return (
-            <div class="ui_prose_mirror_menu">
-                <div class="ui_prose_mirror_menu-container ui_prose_mirror_menu-container-blocks">
-                    <span class="typeroof-ui-label">Nodes:</span>
-                    <div class="ui_prose_mirror_menu-blocks"></div>
-                </div>
-                <div class="ui_prose_mirror_menu-container ui_prose_mirror_menu-container-styles">
-                    <span class="typeroof-ui-label">Styles:</span>
-                    <div class="ui_prose_mirror_menu-styles"></div>
-                </div>
+            <div class="ui_prose_mirror_menu-container ui_prose_mirror_menu-container-blocks">
+                <span class="typeroof-ui-label">Nodes:</span>
+                <div class="ui_prose_mirror_menu-blocks"></div>
+            </div>
+        );
+    }
+
+    _initTemplate() {
+        const container = this._getTemplate(this._domTool.h),
+            blocksContainer = container.querySelector(
+                ".ui_prose_mirror_menu-blocks",
+            );
+        this._insertElement(container);
+        blocksContainer.addEventListener(
+            "pointerdown",
+            this._blocksClickHandler.bind(this),
+        );
+        // send a command
+        // command = toggleMark(schema.marks.strong)
+        // command(this._editorView.state, this._editorView.dispatch, this._editorView)
+        return [container, blocksContainer];
+    }
+
+    _blocksClickHandler(event) {
+        if (!this._buttonToBlock.has(event.target) || !this._editorView) return;
+        event.preventDefault();
+        this._editorView.focus(); // important to keep the selection alive
+        if (event.target.disabled) return;
+        const nodeTypeName = this._buttonToBlock.get(event.target),
+            { dispatch, state } = this._editorView,
+            nodeType = state.schema.nodes[nodeTypeName];
+        setBlockType(nodeType /*, attrs*/)(state, dispatch);
+    }
+
+    updateView(view /*, prevState = null*/) {
+        // NOTE: when "prevState !== null", I don't think the view changes,
+        // however, the menu can check which commands should be active.
+        this._editorView = view;
+        const state = this._editorView.state;
+
+        const [activeNodes] = getActiveNodesAndMarks(state);
+        for (const [button, nodeTypeName] of this._buttonToBlock) {
+            const nodeType = state.schema.nodes[nodeTypeName];
+            button.classList[activeNodes.has(nodeType) ? "add" : "remove"](
+                "active",
+            );
+        }
+    }
+
+    destroyView() {
+        // I'm not sure if we need to do anyhing in here, maybe make all
+        // all menu-items inactive.
+        this._editorView = null;
+    }
+    update(changedMap) {
+        // console.log(`>>>>>>>>>>>>>>>>>>>${this}.update:`, ...changedMap.keys());
+
+        if (changedMap.has("nodeSpecToTypeSpec")) {
+            const nodeSpecToTypeSpec = changedMap.get("nodeSpecToTypeSpec"),
+                h = this._domTool.h,
+                oldButtons = Array.from(this._buttonToBlock.keys());
+            // console.log("nodeSpecToTypeSpec", ...nodeSpecToTypeSpec.keys());
+            this._buttonToBlock.clear();
+            for (const blockName of nodeSpecToTypeSpec.keys()) {
+                // reusing stuff
+                const button = oldButtons.length ? (
+                    oldButtons.shift()
+                ) : (
+                    <button type="button">{"initial"}</button>
+                );
+                button.textContent = blockName;
+                // Would have to be decided in updateView
+                // button.disabled = !commonSubSet.has(style);
+                this._buttonToBlock.set(button, blockName);
+            }
+            this._blocksContainer.replaceChildren(
+                ...this._buttonToBlock.keys(),
+            );
+            if (this._editorView)
+                // mark butttons as active.
+                this.updateView(this._editorView);
+        }
+    }
+}
+export class UIProseMirrorMenuStyles extends _BaseComponent {
+    constructor(widgetBus, originTypeSpecPath) {
+        super(widgetBus);
+        this._originTypeSpecPath = originTypeSpecPath;
+        this._buttonToStyle = new Map();
+        [this.element, this._stylesContainer] = this._initTemplate();
+    }
+
+    _getTemplate(h) {
+        return (
+            <div class="ui_prose_mirror_menu-container ui_prose_mirror_menu-container-styles">
+                <span class="typeroof-ui-label">Styles:</span>
+                <div class="ui_prose_mirror_menu-styles"></div>
             </div>
         );
     }
@@ -983,23 +1068,16 @@ export class UIProseMirrorMenu extends _BaseComponent {
         const container = this._getTemplate(this._domTool.h),
             stylesContainer = container.querySelector(
                 ".ui_prose_mirror_menu-styles",
-            ),
-            blocksContainer = container.querySelector(
-                ".ui_prose_mirror_menu-blocks",
             );
         this._insertElement(container);
         stylesContainer.addEventListener(
             "pointerdown",
             this._stylesClickHandler.bind(this),
         );
-        blocksContainer.addEventListener(
-            "pointerdown",
-            this._blocksClickHandler.bind(this),
-        );
         // send a command
         // command = toggleMark(schema.marks.strong)
         // command(this._editorView.state, this._editorView.dispatch, this._editorView)
-        return [container, stylesContainer, blocksContainer];
+        return [container, stylesContainer];
     }
 
     _stylesClickHandler(event) {
@@ -1028,17 +1106,6 @@ export class UIProseMirrorMenu extends _BaseComponent {
                 // includeWhitespace?: boolean
             },
         )(state, dispatch);
-    }
-
-    _blocksClickHandler(event) {
-        if (!this._buttonToBlock.has(event.target) || !this._editorView) return;
-        event.preventDefault();
-        this._editorView.focus(); // important to keep the selection alive
-        if (event.target.disabled) return;
-        const nodeTypeName = this._buttonToBlock.get(event.target),
-            { dispatch, state } = this._editorView,
-            nodeType = state.schema.nodes[nodeTypeName];
-        setBlockType(nodeType /*, attrs*/)(state, dispatch);
     }
 
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
@@ -1100,7 +1167,7 @@ export class UIProseMirrorMenu extends _BaseComponent {
         // could have, i.e. in order of appearance, maybe depth-first, but
         // it's not readily accessible for us.
 
-        const [activeNodes, activeMarks] = getActiveNodesAndMarks(state),
+        const [, activeMarks] = getActiveNodesAndMarks(state),
             genericStyleMark = state.schema.marks["generic-style"],
             activeStyles = activeMarks.get(genericStyleMark) || new Set(),
             h = this._domTool.h,
@@ -1121,37 +1188,6 @@ export class UIProseMirrorMenu extends _BaseComponent {
             this._buttonToStyle.set(button, styleName);
         }
         this._stylesContainer.replaceChildren(...this._buttonToStyle.keys());
-
-        for (const [button, nodeTypeName] of this._buttonToBlock) {
-            const nodeType = state.schema.nodes[nodeTypeName];
-            button.classList[activeNodes.has(nodeType) ? "add" : "remove"](
-                "active",
-            );
-        }
-
-        // console.log(
-        //   `${this}.updateView view:`,
-        //   view,
-        //   "\n    ",
-        //   prevState === null ? "INITIAL" : "CONSECUTIVE",
-        //   "prevState:",
-        //   prevState,
-        //   "\n",
-        //   // can be multiple, right???
-        //   // intuitiveley it feels correct to allow only the subset of
-        //   // available marks/styles to be active/available.
-        //   // maybe we could display the superset, but make only the
-        //   // subset available.
-        //   "The current TypeSpecs:",
-        //   ...typeSpecs
-        //     .entries()
-        //     .map(([typeSpec, path]) => `${path} :: ${typeSpec.get("label").value}`),
-        //   // 'The available style-links:',
-        // );
-
-        // const typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes)
-        // {command: toggleMark(schema.marks.strong), dom: icon("B", "strong")},
-        //let active = command(state, null, this._editorView)
     }
 
     destroyView() {
@@ -1160,34 +1196,76 @@ export class UIProseMirrorMenu extends _BaseComponent {
         this._editorView = null;
         // console.log(`${this}.destroyView view`);
     }
-    update(changedMap) {
-        // console.log(`>>>>>>>>>>>>>>>>>>>${this}.update:`, ...changedMap.keys());
+}
 
-        if (changedMap.has("nodeSpecToTypeSpec")) {
-            const nodeSpecToTypeSpec = changedMap.get("nodeSpecToTypeSpec"),
-                h = this._domTool.h,
-                oldButtons = Array.from(this._buttonToBlock.keys());
-            // console.log("nodeSpecToTypeSpec", ...nodeSpecToTypeSpec.keys());
-            this._buttonToBlock.clear();
-            for (const blockName of nodeSpecToTypeSpec.keys()) {
-                // reusing stuff
-                const button = oldButtons.length ? (
-                    oldButtons.shift()
-                ) : (
-                    <button type="button">{"initial"}</button>
-                );
-                button.textContent = blockName;
-                // Would have to be decided in updateView
-                // button.disabled = !commonSubSet.has(style);
-                this._buttonToBlock.set(button, blockName);
+/**
+ * As we use IDs to identify "the menu" (ID_MAP.menu) and there can
+ * be only a single widget per ID, this acts as a publisher to multiple
+ * menu widgets. A pattern that may be worth to repeat.
+ */
+export function _IDPublisherMixin(Base) {
+    return class extends Base {
+        static ID_MAP = Object.freeze({});
+
+        _forward(apiMethod, ...args) {
+            if (this._cachedForwards !== null) {
+                // This attempts to fix a life cycle issue, the initial call to updateView
+                // is missed because we don't have created these widgets created yet!
+                this._cachedForwards.push([apiMethod, ...args]);
+                return;
             }
-            this._blocksContainer.replaceChildren(
-                ...this._buttonToBlock.keys(),
-            );
-            if (this._editorView)
-                // mark butttons as active.
-                this.updateView(this._editorView);
+            for (const id of Object.values(this.constructor.ID_MAP)) {
+                const widget = this.getWidgetById(id, null);
+                if (widget !== null) widget[apiMethod](...args);
+            }
         }
+
+        _update(...args) {
+            const result = super._update(...args);
+            if (this._cachedForwards !== null) {
+                const cachedForwards = this._cachedForwards;
+                this._cachedForwards = null;
+                for (const args of cachedForwards) this._forward(...args);
+            }
+            return result;
+        }
+    };
+}
+
+export class UIProseMirrorMenu extends _IDPublisherMixin(
+    _BaseContainerComponent,
+) {
+    static ID_MAP = Object.freeze({
+        menuStyles: "proseMirrorMenuStyles",
+        menuBlocks: "proseMirrorMenuBlocks",
+        menuOG: "proseMirrorMenuOG",
+    });
+    constructor(widgetBus, zones, originTypeSpecPath, menuSettings) {
+        const widgets = [
+            [
+                { ...menuSettings, id: new.target.ID_MAP.menuStyles },
+                [
+                    widgetBus.getExternalName("nodeSpecToTypeSpec"),
+                    "nodeSpecToTypeSpec",
+                ],
+                UIProseMirrorMenuBlocks,
+            ],
+            [
+                { ...menuSettings, id: new.target.ID_MAP.menuBlocks },
+                [],
+                UIProseMirrorMenuStyles,
+                originTypeSpecPath,
+            ],
+        ];
+        super(widgetBus, zones, widgets);
+        this._cachedForwards = [];
+    }
+    // The actually forwarded API calls
+    updateView(...args) {
+        this._forward("updateView", ...args);
+    }
+    destroyView(...args) {
+        this._forward("destroyView", ...args);
     }
 }
 
@@ -1229,6 +1307,7 @@ export class UIBoldItalicMenu extends _BaseComponent {
     _stylesClickHandler(event) {
         event.preventDefault();
         const button = event.target.closest("button");
+        if (!button) return;
         const styleName = button.getAttribute("data-style");
         if (!this._styleToButton.has(styleName) || !this._editorView) return;
         if (button.disabled) return;
