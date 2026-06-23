@@ -33,6 +33,8 @@ import {
 
 import { setLanguageTag } from "../language-tags.typeroof.jsx";
 
+import { createIcon } from "../icons.mjs";
+
 import { renderAxesParameterDisplay } from "../axes-parameters.mjs";
 
 import { setBlockType } from "prosemirror-commands";
@@ -955,23 +957,27 @@ function getActiveNodesAndMarks(editorState) {
 }
 
 export class UIProseMirrorMenuBlocks extends _BaseComponent {
-    constructor(widgetBus) {
+    constructor(widgetBus, label = null) {
         super(widgetBus);
         this._buttonToBlock = new Map();
-        [this.element, this._blocksContainer] = this._initTemplate();
+        [this.element, this._blocksContainer] = this._initTemplate(label);
     }
 
-    _getTemplate(h) {
+    _getTemplate(h, label = null) {
         return (
             <div class="ui_prose_mirror_menu-container ui_prose_mirror_menu-container-blocks">
-                <span class="typeroof-ui-label">Nodes:</span>
+                {label !== null ? (
+                    <span class="typeroof-ui-label">{label}</span>
+                ) : (
+                    ""
+                )}
                 <div class="ui_prose_mirror_menu-blocks"></div>
             </div>
         );
     }
 
-    _initTemplate() {
-        const container = this._getTemplate(this._domTool.h),
+    _initTemplate(label = null) {
+        const container = this._getTemplate(this._domTool.h, label),
             blocksContainer = container.querySelector(
                 ".ui_prose_mirror_menu-blocks",
             );
@@ -1048,24 +1054,28 @@ export class UIProseMirrorMenuBlocks extends _BaseComponent {
     }
 }
 export class UIProseMirrorMenuStyles extends _BaseComponent {
-    constructor(widgetBus, originTypeSpecPath) {
+    constructor(widgetBus, originTypeSpecPath, label = null) {
         super(widgetBus);
         this._originTypeSpecPath = originTypeSpecPath;
         this._buttonToStyle = new Map();
-        [this.element, this._stylesContainer] = this._initTemplate();
+        [this.element, this._stylesContainer] = this._initTemplate(label);
     }
 
-    _getTemplate(h) {
+    _getTemplate(h, label = null) {
         return (
             <div class="ui_prose_mirror_menu-container ui_prose_mirror_menu-container-styles">
-                <span class="typeroof-ui-label">Styles:</span>
+                {label !== null ? (
+                    <span class="typeroof-ui-label">{label}</span>
+                ) : (
+                    ""
+                )}
                 <div class="ui_prose_mirror_menu-styles"></div>
             </div>
         );
     }
 
-    _initTemplate() {
-        const container = this._getTemplate(this._domTool.h),
+    _initTemplate(label = null) {
+        const container = this._getTemplate(this._domTool.h, label),
             stylesContainer = container.querySelector(
                 ".ui_prose_mirror_menu-styles",
             );
@@ -1081,11 +1091,19 @@ export class UIProseMirrorMenuStyles extends _BaseComponent {
     }
 
     _stylesClickHandler(event) {
-        if (!this._buttonToStyle.has(event.target) || !this._editorView) return;
+        const targetButton = event.target.closest("button");
+        // if(!targetButton) we did not actually click a button but mahybe stylesContainer directly
+        if (
+            !targetButton ||
+            !this._buttonToStyle.has(targetButton) ||
+            !this._editorView
+        )
+            return;
+
         event.preventDefault();
         this._editorView.focus(); // important to keep the selection alive
-        if (event.target.disabled) return;
-        const styleName = this._buttonToStyle.get(event.target),
+        if (targetButton.disabled) return;
+        const styleName = this._buttonToStyle.get(targetButton),
             { dispatch, state } = this._editorView,
             markType = state.schema.marks["generic-style"];
         toggleMark(
@@ -1110,6 +1128,26 @@ export class UIProseMirrorMenuStyles extends _BaseComponent {
 
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
     _getTypeSpecs = getTypeSpecsMethod;
+
+    // This is very specific, but it's easy to e.g. override in a subclass.
+    _setButtonContent(button, styleName) {
+        if (!this.__styleIconsMap) {
+            // just a little local cache
+            this.__styleIconsMap = new Map(
+                ["bold", "italic", "bold italic"].map((style) => [
+                    style,
+                    style
+                        .split(" ")
+                        .map((name) => createIcon(`format_${name}`)),
+                ]),
+            );
+        }
+        if (this.__styleIconsMap.has(styleName)) {
+            const contents = this.__styleIconsMap.get(styleName);
+            this._domTool.clear(button);
+            this._domTool.appendChildren(button, contents);
+        } else button.textContent = styleName;
+    }
 
     updateView(view /*, prevState = null*/) {
         // NOTE: when "prevState !== null", I don't think the view changes,
@@ -1173,14 +1211,14 @@ export class UIProseMirrorMenuStyles extends _BaseComponent {
             h = this._domTool.h,
             oldButtons = Array.from(this._buttonToStyle.keys());
         this._buttonToStyle.clear();
-        for (const styleName of Array.from(allStylesSuperSet).toSorted()) {
+        for (const styleName of Array.from(allStylesSuperSet)) {
             // reusing stuff
             const button = oldButtons.length ? (
                 oldButtons.pop()
             ) : (
                 <button type="button">{"initial"}</button>
             );
-            button.textContent = styleName;
+            this._setButtonContent(button, styleName);
             button.disabled = !commonSubSet.has(styleName);
             button.classList[activeStyles.has(styleName) ? "add" : "remove"](
                 "active",
@@ -1195,6 +1233,16 @@ export class UIProseMirrorMenuStyles extends _BaseComponent {
         // all menu-items inactive.
         this._editorView = null;
         // console.log(`${this}.destroyView view`);
+    }
+
+    update(changedMap) {
+        if (changedMap.has("typeSpec") && this._editorView) {
+            // Especially the order of styles could be different, this reorders:
+            // it's however interesting, that the typeSpec are not read from
+            // here, maybe we should use another update mechanism via
+            // this._editorView.state!
+            this.updateView(this._editorView);
+        }
     }
 }
 
@@ -1244,17 +1292,16 @@ export class UIProseMirrorMenu extends _IDPublisherMixin(
         const widgets = [
             [
                 { ...menuSettings, id: new.target.ID_MAP.menuStyles },
-                [
-                    widgetBus.getExternalName("nodeSpecToTypeSpec"),
-                    "nodeSpecToTypeSpec",
-                ],
+                ["nodeSpecToTypeSpec"],
                 UIProseMirrorMenuBlocks,
+                "Nodes:",
             ],
             [
                 { ...menuSettings, id: new.target.ID_MAP.menuBlocks },
-                [],
+                ["typeSpec", "nodeSpecToTypeSpec"],
                 UIProseMirrorMenuStyles,
                 originTypeSpecPath,
+                "Styles:",
             ],
         ];
         super(widgetBus, zones, widgets);
