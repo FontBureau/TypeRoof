@@ -10,7 +10,7 @@ import { getRegisteredPropertySetup } from "../../registered-properties.mjs";
 import { setLanguageTag } from "../../language-tags.typeroof.jsx";
 import { _BaseDropTarget } from "../../generic.mjs";
 import {
-    UIBoldItalicMenu,
+    UIProseMirrorMenuStyles,
     UIDocumentTypeSpecStyler,
     UIDocumentStyleStyler,
     UIDocumentUnkownStyleStyler,
@@ -688,14 +688,14 @@ export class ProseMirrorContext extends _BaseContainerComponent {
                 ? [
                       // IMPORTANT: must be before ProseMirror
                       { ...menuSettings, id: new.target.ID_MAP.menu },
-                      ["nodeSpecToTypeSpec"],
-                      UIBoldItalicMenu,
+                      ["typeSpec", "nodeSpecToTypeSpec"],
+                      UIProseMirrorMenuStyles,
                       originTypeSpecPath,
                   ]
                 : [
                       // IMPORTANT: must be before ProseMirror
                       { id: new.target.ID_MAP.menu },
-                      ["nodeSpecToTypeSpec"],
+                      [],
                       UIProseMirrorMenu,
                       zones,
                       originTypeSpecPath,
