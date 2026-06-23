@@ -1911,6 +1911,9 @@ prosemirror menu
 
 .ui_prose_mirror_menu-blocks,
 .ui_prose_mirror_menu-styles {
+    button {
+        vertical-align: top;
+    }
     button.active {
         color: white;
         background: black;
