@@ -48,7 +48,9 @@ import {
     UINodeSpecMap,
     NodeSpecPropertiesManager,
 } from "./node-specs.typeroof.jsx";
-import DEFAULT_STATE from "../../../../assets/typespec-ramp-initial-state.json" with { type: "json" };
+
+// Temporary while working on the Wikipedia converter
+import DEFAULT_STATE from "../../../../assets/wikipedia-demo.json" with { type: "json" };
 
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
