@@ -750,15 +750,20 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         domElement,
         pathOfTypes,
         structuralElements,
-        nextTypeSpecProperties = null,
+        nextPathOfTypes = null,
     ) {
-        const typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes),
-            widgetWrapper = this._createTypeSpecStylerWrapper(
+        const typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes);
+        const nextTypeSpecProperties = nextPathOfTypes !== null
+                ? this._getTypeSpecPropertiesId(nextPathOfTypes)
+                : null
+                ;
+        const widgetWrapper = this._createTypeSpecStylerWrapper(
                 typeSpecProperties,
                 domElement,
                 structuralElements,
                 nextTypeSpecProperties,
             );
+
         this._subscribers.set(domElement, {
             widgetWrapper,
             pathOfTypes,
