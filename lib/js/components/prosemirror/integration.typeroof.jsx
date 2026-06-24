@@ -229,26 +229,22 @@ class ProsemirrorNodeView {
             pathOfTypes = getPathOfTypes(resolved.path, node.type.name),
             pos = getPos(),
             nextPos = pos + node.nodeSize;
-        let nextTypeSpecProperties = null;
+        let nextPathOfTypes = null;
         if (nextPos < view.state.doc.content.size) {
             const nextNode = view.state.doc.nodeAt(nextPos);
             if (nextNode) {
-                const nextResolved = view.state.doc.resolve(nextPos),
-                    nextPathOfTypes = getPathOfTypes(
-                        nextResolved.path,
-                        nextNode.type.name,
-                    );
-                nextTypeSpecProperties =
-                    subscriptionsWidget._getTypeSpecPropertiesId(
-                        nextPathOfTypes,
-                    );
+                const nextResolved = view.state.doc.resolve(nextPos);
+                nextPathOfTypes = getPathOfTypes(
+                    nextResolved.path,
+                    nextNode.type.name,
+                );
             }
         }
         subscriptionsWidget.subscribe(
             this._stylerDOM,
             pathOfTypes,
             structuralElements /*, contentIndexes*/,
-            nextTypeSpecProperties,
+            nextPathOfTypes,
         );
     }
 
