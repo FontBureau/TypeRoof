@@ -352,20 +352,22 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
             // value must be computed from the next sibling's typeSpecnion.
             // actorApplyCssProperties will have set --margin-block-end to
             // the default (0) since createMargin returns null for *After
-            // units. Override with the actual next-sibling value here.
+            // units. Fall back to current propertyValuesMap when the next
+            // sibling resolves to the same TypeSpec (deduplicated). CSS
+            // handles the last-child case via :not(:last-child).
             const marginEndUnit = propertyValuesMap.get(
                 `${GENERIC}blockMargins/end/unit`,
             );
             if (
-                nextProperties &&
-                (marginEndUnit === "lineHeightAfter" ||
-                    marginEndUnit === "emAfter")
+                marginEndUnit === "lineHeightAfter" ||
+                marginEndUnit === "emAfter"
             ) {
-                const marginEndValue = propertyValuesMap.get(
+                const nsProps = nextProperties ?? propertyValuesMap,
+                    marginEndValue = propertyValuesMap.get(
                         `${GENERIC}blockMargins/end/value`,
                     ),
-                    nsFontSize = nextProperties.get(`${GENERIC}fontSize`),
-                    nsLineHeightEm = nextProperties.get(
+                    nsFontSize = nsProps.get(`${GENERIC}fontSize`),
+                    nsLineHeightEm = nsProps.get(
                         `${LEADING}leading/line-height-em`,
                     );
                 if (
@@ -725,7 +727,8 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 ["/font", "rootFont"],
                 ["showParameters"],
             ];
-        if (nextTypeSpecProperties !== null)
+        if (nextTypeSpecProperties !== null
+            && nextTypeSpecProperties !== typeSpecProperties)
             dependencyMappings.push([
                 nextTypeSpecProperties,
                 "nextProperties@",

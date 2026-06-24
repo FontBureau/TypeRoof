@@ -172,7 +172,8 @@ export class UIDocumentElement extends _BaseContainerComponent {
                 [typeSpecProperties, "properties@"],
                 ["/font", "rootFont"],
             ];
-        if (nextTypeSpecProperties !== null)
+        if (nextTypeSpecProperties !== null
+            && nextTypeSpecProperties !== typeSpecProperties)
             dependencyMappings.push([
                 nextTypeSpecProperties,
                 "nextProperties@",
