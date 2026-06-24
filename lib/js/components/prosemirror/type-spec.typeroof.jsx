@@ -253,7 +253,18 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                 changedMap.has("properties@")
                     ? changedMap.get("properties@")
                     : this.getEntry("properties@")
-            ).typeSpecnion.getProperties();
+            ).typeSpecnion.getProperties(),
+            // Next sibling's resolved properties. Only present when a next
+            // sibling exists — last child has no nextProperties@ wired.
+            nextProperties =
+                this.widgetBus.wrapper.dependencyReverseMapping.has(
+                    "nextProperties@",
+                )
+                    ? (changedMap.has("nextProperties@")
+                          ? changedMap.get("nextProperties@")
+                          : this.getEntry("nextProperties@")
+                      ).typeSpecnion.getProperties()
+                    : null;
         // console.log(`${this}.update propertyValuesMap:`, ...propertyValuesMap.keys());
         if (changedMap.has("rootFont") || changedMap.has("properties@")) {
             // This also triggers when font changes in a parent trickle
@@ -337,6 +348,45 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
             );
             setLanguageTag(this.outerElement, propertyValuesMap);
 
+            // If margin-end unit is 'lineHeightAfter' or 'emAfter', the
+            // value must be computed from the next sibling's typeSpecnion.
+            // actorApplyCssProperties will have set --margin-block-end to
+            // the default (0) since createMargin returns null for *After
+            // units. Override with the actual next-sibling value here.
+            const marginEndUnit = propertyValuesMap.get(
+                `${GENERIC}blockMargins/end/unit`,
+            );
+            if (
+                nextProperties &&
+                (marginEndUnit === "lineHeightAfter" ||
+                    marginEndUnit === "emAfter")
+            ) {
+                const marginEndValue = propertyValuesMap.get(
+                        `${GENERIC}blockMargins/end/value`,
+                    ),
+                    nsFontSize = nextProperties.get(`${GENERIC}fontSize`),
+                    nsLineHeightEm = nextProperties.get(
+                        `${LEADING}leading/line-height-em`,
+                    );
+                if (
+                    marginEndValue !== null &&
+                    marginEndValue !== undefined &&
+                    nsFontSize !== null &&
+                    nsFontSize !== undefined
+                ) {
+                    const computed =
+                        marginEndUnit === "lineHeightAfter"
+                            ? `${
+                                  marginEndValue * nsLineHeightEm * nsFontSize
+                              }pt`
+                            : `${marginEndValue * nsFontSize}pt`;
+                    this.outerElement.style.setProperty(
+                        "--margin-block-end",
+                        computed,
+                    );
+                }
+            }
+
             // putting font-size on the outer element, that way, we can use
             // EM also on the outer element.
             const fontSizeName = `${GENERIC}fontSize`;
@@ -360,13 +410,21 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
             structuralElements.outer !== structuralElements.inner
                 ? new Map([..._zones, ["outer", structuralElements.outer]])
                 : _zones;
+        const stylerDependencies = [
+            [widgetBus.getExternalName("properties@"), "properties@"],
+            [widgetBus.getExternalName("rootFont"), "rootFont"],
+        ];
+        // Conditionally include next sibling's typeSpecnion for
+        // resolving lineHeightAfter/emAfter margin units.
+        if (widgetBus.wrapper.dependencyReverseMapping.has("nextProperties@"))
+            stylerDependencies.push([
+                widgetBus.getExternalName("nextProperties@"),
+                "nextProperties@",
+            ]);
         super(widgetBus, zones, [
             [
                 {},
-                [
-                    [widgetBus.getExternalName("properties@"), "properties@"],
-                    [widgetBus.getExternalName("rootFont"), "rootFont"],
-                ],
+                stylerDependencies,
                 UIDocumentTypeSpecStyler,
                 structuralElements.inner,
                 structuralElements.outer,
@@ -659,14 +717,20 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         typeSpecProperties,
         domElement,
         structuralElements,
+        nextTypeSpecProperties = null,
     ) {
         const settings = {},
             dependencyMappings = [
                 [typeSpecProperties, "properties@"],
                 ["/font", "rootFont"],
                 ["showParameters"],
-            ],
-            Constructor = UIDocumentNodeOutfitter,
+            ];
+        if (nextTypeSpecProperties !== null)
+            dependencyMappings.push([
+                nextTypeSpecProperties,
+                "nextProperties@",
+            ]);
+        const Constructor = UIDocumentNodeOutfitter,
             args = [this._zones, structuralElements];
         return this._initWrapper(
             this._childrenWidgetBus,
@@ -679,12 +743,18 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
 
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
 
-    subscribe(domElement, pathOfTypes, structuralElements) {
+    subscribe(
+        domElement,
+        pathOfTypes,
+        structuralElements,
+        nextTypeSpecProperties = null,
+    ) {
         const typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes),
             widgetWrapper = this._createTypeSpecStylerWrapper(
                 typeSpecProperties,
                 domElement,
                 structuralElements,
+                nextTypeSpecProperties,
             );
         this._subscribers.set(domElement, {
             widgetWrapper,
