@@ -2075,11 +2075,12 @@ prosemirror
         text-box: trim-start text;
     }
 
-    /* FIXME: this is temporary, margins need to be
- * a property. However, using the line-height of
- * the element AFTER as the gap-size is a good
- * enough for now runion/automation approach.
- */
+    /* The gap between adjacent type-spec nodes is modeled as
+     * margin-block-end on the preceding element, sized by the
+     * following element's leading ('lineHeightAfter' unit).
+     * The renderer resolves this by reading fontSize and
+     * line-height-em from the next sibling's typeSpecnion.
+     */
     > *:not(:first-child) {
         margin-block-start: var(--margin-block-start, 0);
     }

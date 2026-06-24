@@ -226,11 +226,29 @@ class ProsemirrorNodeView {
         // we don't actually need to know the node position, but we
         // care about the TypeSpec of it and possibly of it's parents types
         const resolved = view.state.doc.resolve(getPos()),
-            pathOfTypes = getPathOfTypes(resolved.path, node.type.name);
+            pathOfTypes = getPathOfTypes(resolved.path, node.type.name),
+            pos = getPos(),
+            nextPos = pos + node.nodeSize;
+        let nextTypeSpecProperties = null;
+        if (nextPos < view.state.doc.content.size) {
+            const nextNode = view.state.doc.nodeAt(nextPos);
+            if (nextNode) {
+                const nextResolved = view.state.doc.resolve(nextPos),
+                    nextPathOfTypes = getPathOfTypes(
+                        nextResolved.path,
+                        nextNode.type.name,
+                    );
+                nextTypeSpecProperties =
+                    subscriptionsWidget._getTypeSpecPropertiesId(
+                        nextPathOfTypes,
+                    );
+            }
+        }
         subscriptionsWidget.subscribe(
             this._stylerDOM,
             pathOfTypes,
             structuralElements /*, contentIndexes*/,
+            nextTypeSpecProperties,
         );
     }
 

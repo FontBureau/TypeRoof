@@ -163,13 +163,21 @@ export class UIDocumentElement extends _BaseContainerComponent {
 
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
 
-    _createTypeSpecStylerWrapper(typeSpecProperties) {
+    _createTypeSpecStylerWrapper(
+        typeSpecProperties,
+        nextTypeSpecProperties = null,
+    ) {
         const settings = {},
             dependencyMappings = [
                 [typeSpecProperties, "properties@"],
                 ["/font", "rootFont"],
-            ],
-            Constructor = UIDocumentTypeSpecStyler,
+            ];
+        if (nextTypeSpecProperties !== null)
+            dependencyMappings.push([
+                nextTypeSpecProperties,
+                "nextProperties@",
+            ]);
+        const Constructor = UIDocumentTypeSpecStyler,
             args = [this.node, this.node];
         return this._initWrapper(
             this._childrenWidgetBus,
@@ -193,15 +201,30 @@ export class UIDocumentElement extends _BaseContainerComponent {
 
     _provisionWidgets(/* compareResult */) {
         const pathOfTypes = this._getPathOfTypes(this.widgetBus.rootPath),
-            typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes),
-            oldId =
-                this._typeSpecStylerWrapper !== null
-                    ? this._widgets.indexOf(this._typeSpecStylerWrapper)
-                    : -1;
+            typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes);
+        // Compute the next sibling's typeSpecProperties for
+        // resolving lineHeightAfter/emAfter margin units.
+        let nextTypeSpecProperties = null;
+        const parentCollection = this.getEntry(this.widgetBus.rootPath.parent),
+            currentKey = this.widgetBus.rootPath.parts.at(-1),
+            currentIndex = parentCollection.indexOfKey(currentKey);
+        if (currentIndex >= 0 && currentIndex + 1 < parentCollection.size) {
+            const nextKey = parentCollection.keyOfIndex(currentIndex + 1),
+                nextPath = this.widgetBus.rootPath.parent.append(nextKey),
+                nextPathOfTypes = this._getPathOfTypes(nextPath);
+            nextTypeSpecProperties =
+                this._getTypeSpecPropertiesId(nextPathOfTypes);
+        }
+        const oldId =
+            this._typeSpecStylerWrapper !== null
+                ? this._widgets.indexOf(this._typeSpecStylerWrapper)
+                : -1;
         if (oldId === -1) {
             // inital
-            this._typeSpecStylerWrapper =
-                this._createTypeSpecStylerWrapper(typeSpecProperties);
+            this._typeSpecStylerWrapper = this._createTypeSpecStylerWrapper(
+                typeSpecProperties,
+                nextTypeSpecProperties,
+            );
             this._widgets.splice(0, 0, this._typeSpecStylerWrapper);
         } else {
             const oldWrapper = this._widgets[oldId];
@@ -210,8 +233,10 @@ export class UIDocumentElement extends _BaseContainerComponent {
                     "typeSpecProperties@",
                 ) !== typeSpecProperties
             ) {
-                const newWrapper =
-                    this._createTypeSpecStylerWrapper(typeSpecProperties);
+                const newWrapper = this._createTypeSpecStylerWrapper(
+                    typeSpecProperties,
+                    nextTypeSpecProperties,
+                );
                 this._widgets.splice(oldId, 1, newWrapper);
                 oldWrapper.destroy();
                 this._typeSpecStylerWrapper = newWrapper;
