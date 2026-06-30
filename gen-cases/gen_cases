@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+"""Generate self-contained font-loading test cases from templates."""
+
+import sys
+import os
+import shutil
+
+
+def die(msg: str) -> None:
+    print(f"ERROR: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def main() -> None:
+    if len(sys.argv) != 3:
+        prog = os.path.basename(sys.argv[0])
+        die(f"Usage: {prog} FONT OUTPUT_DIR")
+
+    font_path = sys.argv[1]
+    output_dir = sys.argv[2]
+
+    if not os.path.isfile(font_path):
+        die(f"Font file not found: {font_path}")
+
+    font_basename = os.path.basename(font_path)
+    output_dir = os.path.join(output_dir, f"case-{font_basename}")
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    templates_dir = os.path.join(script_dir, "templates")
+
+    if not os.path.isdir(templates_dir):
+        die(f"Templates directory not found: {templates_dir}")
+
+    # Collect template files
+    template_files = sorted(
+        f for f in os.listdir(templates_dir)
+        if os.path.isfile(os.path.join(templates_dir, f))
+    )
+    if not template_files:
+        die(f"No template files found in: {templates_dir}")
+
+    # Create output directory
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Copy font
+    font_dest = os.path.join(output_dir, font_basename)
+    shutil.copy2(font_path, font_dest)
+    print(f"Copied font: {font_basename}")
+
+    # Render templates
+    for tpl_name in template_files:
+        tpl_path = os.path.join(templates_dir, tpl_name)
+        with open(tpl_path, "r", encoding="utf-8") as fh:
+            content = fh.read()
+
+        rendered = content.replace("{{FONT_FILENAME}}", font_basename)
+
+        out_path = os.path.join(output_dir, tpl_name)
+        with open(out_path, "w", encoding="utf-8") as fh:
+            fh.write(rendered)
+        print(f"Rendered: {tpl_name}")
+
+    print(f"\nDone. {len(template_files)} case(s) written to: {output_dir}")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JS FontFace — {{FONT_FILENAME}}</title>
+<style>
+.test {
+  font-family: 'TestFont', serif;
+  font-size: 48px;
+}
+</style>
+<script async>
+async function main() {
+  const r = await fetch('{{FONT_FILENAME}}');
+  const b = await r.arrayBuffer();
+  const face = new FontFace('TestFont', b);
+  const loaded = await face.load();
+  document.fonts.add(loaded);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', main);
+} else {
+  main();
+}
+</script>
+</head>
+<body>
+<p>Case: js-fontface | Font: {{FONT_FILENAME}}</p>
+<p class="test" id="sample">The quick brown fox jumps over the lazy dog.</p>
+</body>
+</html>
