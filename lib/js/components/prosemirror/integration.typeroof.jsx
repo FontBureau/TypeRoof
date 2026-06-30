@@ -182,9 +182,21 @@ class ProsemirrorNodeView {
     //     decorations: readonly Decoration[],
     //     innerDecorations: DecorationSource
     // ) → NodeView
-    constructor(widgetBus, subscriptionsId, node, view, getPos) {
+    constructor(
+        widgetBus,
+        subscriptionsId,
+        node,
+        view,
+        getPos,
+        decorations,
+        innerDecorations,
+    ) {
         this.widgetBus = widgetBus;
         this._subscriptionsId = subscriptionsId;
+        this._node = node;
+        this._view = view;
+        this._decorations = decorations;
+        this._innerDecorations = innerDecorations;
         // TODO: a more direct API in widgetBus for this wouldn't hurt
         // e.g. getTagForType
         const mmNodeSpec = this.widgetBus
@@ -221,40 +233,37 @@ class ProsemirrorNodeView {
             outer: this.dom,
             inner: this._stylerDOM,
         };
-        // https://prosemirror.net/docs/ref/#model.ResolvedPos
-        // https://prosemirror.net/docs/ref/#model.Node.resolve
-        // we don't actually need to know the node position, but we
-        // care about the TypeSpec of it and possibly of it's parents types
-        const resolved = view.state.doc.resolve(getPos()),
-            pathOfTypes = getPathOfTypes(resolved.path, node.type.name),
-            pos = getPos(),
-            nextPos = pos + node.nodeSize;
-        let nextPathOfTypes = null;
-        if (nextPos < view.state.doc.content.size) {
-            const nextNode = view.state.doc.nodeAt(nextPos);
-            if (nextNode) {
-                const nextResolved = view.state.doc.resolve(nextPos);
-                nextPathOfTypes = getPathOfTypes(
-                    nextResolved.path,
-                    nextNode.type.name,
-                );
-            }
-        }
+
         subscriptionsWidget.subscribe(
             this._stylerDOM,
-            pathOfTypes,
             structuralElements /*, contentIndexes*/,
-            nextPathOfTypes,
+            node,
+            getPos,
+            decorations,
+            innerDecorations,
         );
     }
 
-    // // I dont't think implementing `update` is required so far.
-    // update(node, ...args) {
-    //     console.log(`${this.constructor.name} update`, node.type.name, 'other args:', ...args, 'this.dom.textContent:', this.dom.textContent);
-    //     // if (node.content.size > 0) this.dom.classList.remove("empty")
-    //     // else this.dom.classList.add("empty")
-    //     return true;
-    // }
+    // OK, so when I split a node, the NodeView is updated not completely
+    // re-created, so I need to pass this new node on to the subscription...
+    update(node, decorations, innerDecorations) {
+        this._node = node;
+        this._decorations = decorations;
+        this._innerDecorations = innerDecorations;
+        const subscriptionsWidget = this.widgetBus.getWidgetById(
+            this._subscriptionsId,
+            null,
+        );
+        if (subscriptionsWidget === null) return;
+        subscriptionsWidget.updateSubscription(
+            this._stylerDOM,
+            node,
+            decorations,
+            innerDecorations,
+        );
+        return true;
+    }
+
     destroy() {
         this.widgetBus
             .getWidgetById(this._subscriptionsId, null)
@@ -443,7 +452,7 @@ export class ProseMirror extends _BaseComponent {
             // By the time this gets called, the link is already established.
             // TODO: could fail on a cache-miss, as it would be bad if
             // the assertion above is not true!
-            { getLinked: (item) => this._nodesCache.get(item) },
+            { getLinked: this.getLinked.bind(this) },
         );
 
         this._createGenericNodeView = (...args) =>
@@ -459,6 +468,13 @@ export class ProseMirror extends _BaseComponent {
                 ...args,
             );
         [this.element, this.view] = this.initTemplate();
+    }
+
+    // Be a bit cautious with the availability of items in the cache
+    // the life-cycle/moment of linking may be problematic in some cases.
+    // This method is on purpose public.
+    getLinked(item) {
+        return this._nodesCache.get(item);
     }
 
     _menuPlugin() {

@@ -172,8 +172,10 @@ export class UIDocumentElement extends _BaseContainerComponent {
                 [typeSpecProperties, "properties@"],
                 ["/font", "rootFont"],
             ];
-        if (nextTypeSpecProperties !== null
-            && nextTypeSpecProperties !== typeSpecProperties)
+        if (
+            nextTypeSpecProperties !== null &&
+            nextTypeSpecProperties !== typeSpecProperties
+        )
             dependencyMappings.push([
                 nextTypeSpecProperties,
                 "nextProperties@",
@@ -742,7 +744,7 @@ export class ProseMirrorContext extends _BaseContainerComponent {
             ],
             [
                 { id: new.target.ID_MAP.subscriptions },
-                ["nodeSpecToTypeSpec", "typeSpec"],
+                ["nodeSpecToTypeSpec", "typeSpec", "document"],
                 TypeSpecSubscriptions,
                 zones,
                 originTypeSpecPath,

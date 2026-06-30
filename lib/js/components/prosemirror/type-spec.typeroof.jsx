@@ -210,10 +210,11 @@ class UIParametersDisplay extends _BaseComponent {
  * margins.
  */
 export class UIDocumentTypeSpecStyler extends _BaseComponent {
-    constructor(widgetBus, innerElement, outerElement) {
+    constructor(widgetBus, innerElement, outerElement, pmNode) {
         super(widgetBus);
         this.innerElement = innerElement;
         this.outerElement = outerElement;
+        this.pmNode = pmNode;
     }
     update(changedMap) {
         const innerPropertiesData = [
@@ -402,8 +403,46 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
     }
 }
 
+class NodeTypeSpecLabel extends _BaseComponent {
+    constructor(widgetBus, typeSpecPath) {
+        super(widgetBus);
+        this._typeSpecPath = typeSpecPath;
+        const h = widgetBus.domTool.h;
+        this.element = <div class="ui_type_spec_label">[…]</div>;
+        this._insertElement(this.element);
+    }
+
+    update(changedMap) {
+        if (changedMap.has("label"))
+            this.element.textContent = changedMap.get("label").value;
+
+        if (changedMap.has("editingTypeSpec")) {
+            const editingTypeSpec = changedMap.get("editingTypeSpec");
+            let isActive = false;
+            if (!editingTypeSpec.isEmpty) {
+                // make it explicitly relative, so equals works...
+                // FIXME: should rather fix the equals method!
+                isActive = this._typeSpecPath.equals(
+                    Path.fromParts(".", ...editingTypeSpec.value.parts),
+                );
+            }
+            this.element.classList[isActive ? "add" : "remove"](
+                "ui_type_spec-editing",
+            );
+        }
+    }
+}
+
 class UIDocumentNodeOutfitter extends _BaseContainerComponent {
-    constructor(widgetBus, _zones, structuralElements) {
+    constructor(
+        widgetBus,
+        _zones,
+        structuralElements,
+        typeSpecPath,
+        pmNode,
+        originTypeSpecPath,
+        getPos,
+    ) {
         // If structuralElements.outer === structuralElements.inner
         // the contents of outer must be purely managed by prosemirror
         // and hence it would be plainly wrong to create a zone for
@@ -412,38 +451,182 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
             structuralElements.outer !== structuralElements.inner
                 ? new Map([..._zones, ["outer", structuralElements.outer]])
                 : _zones;
-        const stylerDependencies = [
-            [widgetBus.getExternalName("properties@"), "properties@"],
-            [widgetBus.getExternalName("rootFont"), "rootFont"],
-        ];
-        // Conditionally include next sibling's typeSpecnion for
-        // resolving lineHeightAfter/emAfter margin units.
-        if (widgetBus.wrapper.dependencyReverseMapping.has("nextProperties@"))
-            stylerDependencies.push([
-                widgetBus.getExternalName("nextProperties@"),
-                "nextProperties@",
-            ]);
-        super(widgetBus, zones, [
-            [
-                {},
-                stylerDependencies,
-                UIDocumentTypeSpecStyler,
-                structuralElements.inner,
-                structuralElements.outer,
-            ],
+
+        super(widgetBus, zones);
+        this._structuralElements = structuralElements;
+        // could kind of extract this from properties@
+        this._typeSpecPath = typeSpecPath;
+        this._pmNode = pmNode;
+        this._originTypeSpecPath = originTypeSpecPath; // required for getTypeSpecPropertiesIdMethod
+        this._getPos = getPos;
+
+        this._nextProperties = null;
+        {
+            const initialWidgets = this._staticWidgets;
+            this._initialWidgetsAmount = initialWidgets.length;
+            this._initWidgets(initialWidgets); // put widgetWrappers into this._widgets
+        }
+    }
+
+    get pmNode() {
+        return this._pmNode;
+    }
+
+    get _staticWidgets() {
+        return [
             [
                 {
                     zone: "outer",
                     activationTest: () => this.getEntry("showParameters").value,
                 },
                 [
-                    [widgetBus.getExternalName("properties@"), "properties@"],
-                    [widgetBus.getExternalName("rootFont"), "rootFont"],
+                    [
+                        this.widgetBus.getExternalName("properties@"),
+                        "properties@",
+                    ],
+                    [this.widgetBus.getExternalName("rootFont"), "rootFont"],
                 ],
                 UIParametersDisplay,
                 ["ui_type_spec_ramp"],
             ],
-        ]);
+            [
+                { zone: "outer" },
+                [
+                    [this._typeSpecPath.append("label").toString(), "label"],
+                    ["editingTypeSpec"],
+                ],
+                NodeTypeSpecLabel,
+                this._typeSpecPath.toRelative(
+                    this.widgetBus.rootPath.append("typeSpec", "children"),
+                ),
+            ],
+        ];
+    }
+
+    _createWidgetDefinition() {
+        // update/replace this dynamically depending on the value of
+        // nextProperties which we, at this point, hopefully always, can
+        // determine using pmNode, parenContent and pmNode-Index => I hope
+        // we can't/won't create clashes with nodes that exist as duplicates,
+        // but I believe, PM wouldn't accept that anyways, metamodel would,
+        // so we should not do that ...!
+
+        const ownProperties = this.widgetBus.getExternalName("properties@"),
+            stylerDependencies = [
+                [ownProperties, "properties@"],
+                [this.widgetBus.getExternalName("rootFont"), "rootFont"],
+                // I'm not so sure this is required at all!
+                [
+                    this.widgetBus.getExternalName("parentContent"),
+                    "parentContent",
+                ],
+            ];
+
+        // Conditionally include next sibling's typeSpecnion for
+        // resolving lineHeightAfter/emAfter margin units.
+        if (
+            this._nextProperties !== null &&
+            this._nextProperties !== ownProperties
+        )
+            stylerDependencies.push([this._nextProperties, "nextProperties@"]);
+
+        return [
+            {},
+            stylerDependencies,
+            UIDocumentTypeSpecStyler,
+            this._structuralElements.inner,
+            this._structuralElements.outer,
+        ];
+    }
+
+    // requires this.getEntry(nodeSpecToTypeSpecName),
+    _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
+
+    _checkNextProperties(/*compareResult*/) {
+        // NOTE: if this._nextProperties is null it must be set in here!
+
+        // `parentContent` we actually do set in the parent! and if it changes (ever) we would
+        // expect parent to re-initialize this!
+        // [this.widgetBus.getExternalName("parentContent"), "parentContent"],
+        // const changedMap = this._getChangedMapFromCompareResult(compareResult);
+        // => TODO: we could use the none-presence of `parentContent` as an
+        // indicator that we don't need to check further.
+
+        const view = this.widgetBus.getWidgetById("proseMirror").view;
+        const nodePos = this._getPos();
+        // Resolve the position
+
+        const nextPos = nodePos + this._pmNode.nodeSize;
+        let nextPathOfTypes = null;
+        let nextNode = null;
+        let nextResolved = null;
+        // 3. Ensure we haven't walked off the end of the document
+        if (nextPos < view.state.doc.content.size) {
+            // 4. Resolve the calculated position
+            nextResolved = view.state.doc.resolve(nextPos);
+
+            // 5. Look at the node sitting exactly at this new position
+            nextNode = nextResolved.nodeAfter;
+
+            if (nextNode) {
+                nextPathOfTypes = getPathOfTypes(
+                    nextResolved.path,
+                    nextNode.type.name,
+                );
+            }
+        }
+
+        const nextTypeSpecProperties =
+            nextPathOfTypes !== null
+                ? this._getTypeSpecPropertiesId(nextPathOfTypes)
+                : null;
+        const hasChanged = this._nextProperties !== nextTypeSpecProperties;
+        if (hasChanged)
+            // update the cached value as well
+            this._nextProperties = nextTypeSpecProperties;
+        return hasChanged;
+    }
+
+    // NOTE: I adopted the pattern of intial widgets and dynamic widgets
+    // from the pattern in UILeadingAlgorithm in components/type-spec-fundamentals.mjs
+    _provisionWidgets(compareResult) {
+        const removedDynamicWidgets = this._widgets.splice(
+            this._initialWidgetsAmount,
+            Infinity,
+        );
+        const requiresFullInitialUpdate = super._provisionWidgets.call(this);
+
+        // figure out the nextProperties@ of this._pmNode and if
+        // they have changed, rebuild the UIDocumentTypeSpecStyler.
+
+        const requireUpdateDynamicWidget =
+            this._checkNextProperties(compareResult) ||
+            removedDynamicWidgets.length === 0; // is initial
+        // do we need to replace/renew the dynamic widget
+        if (!requireUpdateDynamicWidget) {
+            // don't change
+            this._widgets.push(...removedDynamicWidgets);
+            removedDynamicWidgets.splice(0, Infinity);
+        } else {
+            const widgetDefinitions = [this._createWidgetDefinition()];
+            this._initWidgets(widgetDefinitions); // pushes into this._widgets
+        }
+
+        for (const widgetWrapper of removedDynamicWidgets)
+            this._destroyWidget(widgetWrapper);
+
+        for (const widgetWrapper of this._widgets.slice(
+            this._initialWidgetsAmount,
+        )) {
+            const isActive = widgetWrapper.widget !== null;
+            if (!isActive) {
+                // if new, initialize ..
+                this._createWidget(widgetWrapper);
+                requiresFullInitialUpdate.add(widgetWrapper);
+            }
+        }
+
+        return requiresFullInitialUpdate;
     }
 }
 
@@ -717,24 +900,30 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
 
     _createTypeSpecStylerWrapper(
         typeSpecProperties,
+        typeSpecPath,
         domElement,
         structuralElements,
-        nextTypeSpecProperties = null,
+        parentContentsPath,
+        node,
+        getPos,
     ) {
         const settings = {},
             dependencyMappings = [
                 [typeSpecProperties, "properties@"],
                 ["/font", "rootFont"],
                 ["showParameters"],
+                // unused so far!
+                [parentContentsPath.toString(), "parentContent"],
             ];
-        if (nextTypeSpecProperties !== null
-            && nextTypeSpecProperties !== typeSpecProperties)
-            dependencyMappings.push([
-                nextTypeSpecProperties,
-                "nextProperties@",
-            ]);
         const Constructor = UIDocumentNodeOutfitter,
-            args = [this._zones, structuralElements];
+            args = [
+                this._zones,
+                structuralElements,
+                typeSpecPath,
+                node,
+                this._originTypeSpecPath,
+                getPos,
+            ];
         return this._initWrapper(
             this._childrenWidgetBus,
             settings,
@@ -746,31 +935,85 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
 
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
 
-    subscribe(
-        domElement,
-        pathOfTypes,
-        structuralElements,
-        nextPathOfTypes = null,
-    ) {
-        const typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes);
-        const nextTypeSpecProperties = nextPathOfTypes !== null
-                ? this._getTypeSpecPropertiesId(nextPathOfTypes)
-                : null
-                ;
-        const widgetWrapper = this._createTypeSpecStylerWrapper(
-                typeSpecProperties,
-                domElement,
-                structuralElements,
-                nextTypeSpecProperties,
-            );
+    _subscriptionGetDerrived(domElement) {
+        const subscription = this._subscribers.get(domElement);
 
-        this._subscribers.set(domElement, {
-            widgetWrapper,
+        // https://prosemirror.net/docs/ref/#model.ResolvedPos
+        // https://prosemirror.net/docs/ref/#model.Node.resolve
+        // we don't actually need to know the node position, but we
+        // care about the TypeSpec of it and possibly of it's parents types
+        const view = this.widgetBus.getWidgetById("proseMirror").view,
+            { getPos, node } = subscription,
+            resolved = view.state.doc.resolve(getPos()),
+            pathOfTypes = getPathOfTypes(resolved.path, node.type.name),
+            typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes),
+            typeSpecPath = this._getTypeSpecPropertiesId(
+                pathOfTypes,
+                true /*asPath*/,
+            ),
+            indexPath = [];
+        for (let d = 0; d <= resolved.depth; d++)
+            indexPath.push(resolved.index(d));
+
+        const parentContentsPath = Path.fromParts(
+            this.widgetBus.getExternalName("document"),
+            ...indexPath.map((i) => ["content", i]).flat(),
+        ).parent;
+
+        return {
             pathOfTypes,
             typeSpecProperties,
+            typeSpecPath,
+            parentContentsPath,
+        };
+    }
+
+    subscribe(
+        domElement,
+        structuralElements,
+        node,
+        getPos,
+        decorations,
+        innerDecorations,
+    ) {
+        const subscription = {
             structuralElements,
+            node,
+            getPos,
+            decorations,
+            innerDecorations,
             styles: new Set(),
-        });
+        };
+        this._subscribers.set(domElement, subscription);
+        const derrived = this._subscriptionGetDerrived(domElement),
+            { typeSpecProperties, typeSpecPath, parentContentsPath } = derrived;
+        const widgetWrapper = this._createTypeSpecStylerWrapper(
+            typeSpecProperties,
+            typeSpecPath,
+            domElement,
+            structuralElements,
+            parentContentsPath,
+            node,
+            getPos,
+        );
+        Object.assign(subscription, derrived, { widgetWrapper });
+        this._updateDOM(() => this._activateWidget(widgetWrapper));
+    }
+
+    // especially when node has changed, e.g. when a node was split by
+    // pressing Enter within it's content.
+    updateSubscription(domElement, node, decorations, innerDecorations) {
+        const subscription = this._subscribers.get(domElement);
+        Object.assign(subscription, { node, decorations, innerDecorations });
+        const updates = this._updateWidget(domElement, subscription);
+        if (updates === null) return;
+        const { widgetWrapper } = updates;
+        this._destroyWidget(subscription.widgetWrapper);
+        this._widgets.splice(
+            this._widgets.indexOf(subscription.widgetWrapper),
+            1,
+        );
+        Object.assign(subscription, updates);
         this._updateDOM(() => this._activateWidget(widgetWrapper));
     }
 
@@ -873,6 +1116,71 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         /* All widgets are added later in the lifecycle of this compoment.*/
     }
 
+    _updateWidget(domElement, subscription) {
+        const derrived = this._subscriptionGetDerrived(domElement);
+        let requireUpdate = false;
+
+        // OK so here;s an inline comparison of those items in derrived
+        // not sure if we require this eventually
+        EVALUATION: for (const [key, value] of Object.entries(derrived)) {
+            const cached = subscription[key];
+            if (key === "pathOfTypes") {
+                // compare arrays
+                if (value.length !== cached.length) {
+                    requireUpdate = true;
+                    break EVALUATION;
+                }
+                for (let i = 0, l = value.length; i < l; i++) {
+                    if (value[i] !== cached[i]) {
+                        requireUpdate = true;
+                        break EVALUATION;
+                    }
+                }
+            }
+            // typeSpecProperties
+            else if (typeof value === "string") {
+                if (value !== cached) {
+                    requireUpdate = true;
+                    break EVALUATION;
+                }
+            }
+            // typeSpecPath, parentContentsPath
+            else if (value instanceof Path) {
+                if (!value.equals(cached)) {
+                    requireUpdate = true;
+                    break EVALUATION;
+                }
+            } else
+                throw new Error(
+                    `TYPE ERROR don't know how to compare ${key} of subscription`,
+                );
+        }
+
+        if (
+            !requireUpdate &&
+            subscription.widgetWrapper?.widget.pmNode === subscription.node
+        )
+            // if parentContentsPath changed, so far, it would be a great
+            // reason to rebuild this
+            // did not change
+            return null;
+
+        const { typeSpecProperties, typeSpecPath, parentContentsPath } =
+            derrived;
+
+        // BUILD NEW REPLACEMEMT
+        const widgetWrapper = this._createTypeSpecStylerWrapper(
+            typeSpecProperties,
+            typeSpecPath,
+            domElement,
+            subscription.structuralElements,
+            parentContentsPath, // has potential to change, would be better if not
+            subscription.node, // <= will change!
+            subscription.getPos, // <= will never change!
+        );
+        return Object.assign({ widgetWrapper }, derrived);
+    }
+
     _provisionWidgets(compareResult) {
         const requiresFullInitialUpdate = new Set(),
             changedMap = this._getChangedMapFromCompareResult(compareResult);
@@ -888,29 +1196,19 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         // - When a used stylePatches link e.g. "italic" is renamed e.g. to "italicx"
         const requiresUpdate = new Map();
         for (const [domElement, subscription] of this._subscribers) {
-            const typeSpecProperties = this._getTypeSpecPropertiesId(
-                subscription.pathOfTypes,
-            );
-            if (typeSpecProperties === subscription.typeSpecProperties)
-                // did not change
-                continue;
-
-            const widgetWrapper = this._createTypeSpecStylerWrapper(
-                typeSpecProperties,
-                domElement,
-                subscription.structuralElements,
-            );
+            const updates = this._updateWidget(domElement, subscription);
+            if (updates === null) continue;
+            const { widgetWrapper } = updates;
             this._destroyWidget(subscription.widgetWrapper);
             this._widgets.splice(
                 this._widgets.indexOf(subscription.widgetWrapper),
                 1,
                 widgetWrapper,
             );
+            Object.assign(subscription, updates);
             this._createWidget(widgetWrapper);
-            subscription.typeSpecProperties = typeSpecProperties;
-            subscription.widgetWrapper = widgetWrapper;
             requiresFullInitialUpdate.add(widgetWrapper);
-
+            // UPDATE MARKS
             for (const styleDOMElement of Array.from(subscription.styles)) {
                 const oldStyleSubscription =
                         this._styleSubscribers.get(styleDOMElement),
