@@ -2030,7 +2030,6 @@ prosemirror menu
     padding-left: 2em; /* using padding: so we include the background color */
 }
 
-
 .ui_opentype_features_chooser-select-select {
     max-width: 100%;
 }

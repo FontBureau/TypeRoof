@@ -1,11 +1,12 @@
-
 /******************************************************************************
 prosemirror
 *******************************************************************************/
 
-.prosemirror-host {
+.ui_prosemirror_host {
     /* so the background color fills the entire layout */
     min-height: 100%;
+
+    --label-width-or-margin-inline-start: 2.5rem;
 }
 
 :where(.ProseMirror, .typeroof-document) {
@@ -57,7 +58,7 @@ prosemirror
         --space-after: 0;
     }
 
-    & > * {
+    .editor-advanced & > * {
         /* only acceptable for block-style
          * this way, the label-columns in the ramp on the left can
          * spread over the entire height of the element including its
@@ -65,36 +66,19 @@ prosemirror
          * be occupied by elements.
          */
         display: grid;
-        grid-template-columns: 2.5rem auto;
-        grid-template-rows: var(--space-before, 0) auto auto var(
-                --space-after,
-                0
-            );
+        grid-template-columns: auto;
+        grid-template-rows:
+            var(--space-before, 0)
+            auto auto
+            var(--space-after, 0);
         grid-template-areas:
-            "left space-before"
-            "left content"
-            "left bottom"
-            "left space-after";
+            "space-before"
+            "content"
+            "bottom"
+            "space-after";
 
         & > * {
             grid-area: content;
-        }
-
-        & > .ui_type_spec_label {
-            grid-area: left;
-            font-size: 1rem;
-            background-color: transparent;
-            line-height: 1.3;
-            padding: 0.3rem;
-            margin-inline-end: 0.3em;
-
-            &.ui_type_spec-editing {
-                background-color: #eef;
-            }
-        }
-
-        & > .ui_type_spec_label.active {
-            background-color: darkkhaki;
         }
 
         & > .ui-parameters-display {
@@ -102,30 +86,64 @@ prosemirror
             line-height: 1.3;
         }
     }
-}
 
-.ui_type_tools_grid-cell :is(.ProseMirror, .typeroof-document) {
-    /* this is a very simple editor instance */
-    margin-left: 0;
+    .editor-advanced.has-node-labels & > * {
+        grid-template-columns: var(--label-width-or-margin-inline-start, 0) auto;
+        grid-template-areas:
+            "label space-before"
+            "label content"
+            "label bottom"
+            "label space-after";
 
-    --line-height: 1em; /* should be a property */
-    --margin-block-start: 0; /* calc(var(--line-height) * 0.5); should also be a property */
-    > * {
-        /* In this configuration, I'm looking to make the
-         * paragraph and hard-break having the same leading. As people
-         * will rather expect "Enter" to just create a single line break
-         * not a gap, and they rather won't be aware of Shift+Enter to
-         * insert a hard-break. In order to make the leading even, we
-         * can't use the text-box-trim.
-         */
-        text-box: none;
+        & > .ui_type_spec_label {
+            grid-area: label;
+            font-size: 1rem;
+            background-color: transparent;
+            line-height: 1.3;
+            padding: 0.3rem;
+            margin-inline-end: 0.3em;
+            text-align: center;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+
+            &.ui_type_spec-editing {
+                background-color: #eef;
+            }
+        }
     }
 
-    > *:first-child {
-        text-box: trim-start text;
+    .editor-advanced:not(.has-node-labels) & {
+        margin-inline-start: var(--label-width-or-margin-inline-start, 0);
     }
 
-    > *:not(:first-child) {
-        margin-block-start: var(--margin-block-start, 0);
+    .editor-simple & {
+        /* this is a very simple editor instance */
+        margin-left: 0;
+
+        --line-height: 1.2em; /* should be a property */
+        --margin-block-start: 0; /* calc(var(--line-height) * 0.5); should also be a property */
+        > * {
+            /* In this configuration, I'm looking to make the
+             * paragraph and hard-break having the same leading. As people
+             * will rather expect "Enter" to just create a single line break
+             * not a gap, and they rather won't be aware of Shift+Enter to
+             * insert a hard-break. In order to make the leading even, we
+             * can't use the text-box-trim.
+             */
+            text-box: none;
+        }
+
+        > *:first-child {
+            text-box: trim-start text;
+        }
+
+        > *:not(:first-child) {
+            margin-block-start: var(--margin-block-start, 0);
+        }
+
+        > *:not(:last-child) {
+            margin-block-end: var(--margin-block-end, 0);
+        }
     }
 }
