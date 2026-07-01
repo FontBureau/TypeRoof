@@ -413,9 +413,11 @@ class NodeTypeSpecLabel extends _BaseComponent {
     }
 
     update(changedMap) {
-        if (changedMap.has("label"))
-            this.element.textContent = changedMap.get("label").value;
-
+        if (changedMap.has("label")) {
+            const label = changedMap.get("label").value;
+            this.element.setAttribute("title", label);
+            this.element.textContent = label;
+        }
         if (changedMap.has("editingTypeSpec")) {
             const editingTypeSpec = changedMap.get("editingTypeSpec");
             let isActive = false;
@@ -442,6 +444,7 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         pmNode,
         originTypeSpecPath,
         getPos,
+        nodeOutfitterOptions = { typeSpecLabels: false },
     ) {
         // If structuralElements.outer === structuralElements.inner
         // the contents of outer must be purely managed by prosemirror
@@ -459,6 +462,7 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         this._pmNode = pmNode;
         this._originTypeSpecPath = originTypeSpecPath; // required for getTypeSpecPropertiesIdMethod
         this._getPos = getPos;
+        this._nodeOutfitterOptions = nodeOutfitterOptions;
 
         this._nextProperties = null;
         {
@@ -490,7 +494,24 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                 ["ui_type_spec_ramp"],
             ],
             [
-                { zone: "outer" },
+                {
+                    zone: "outer",
+                    // If the `typeSpecLabels` option is a function it is
+                    // treated itself as the activationTest function,
+                    // leaving it to the caller how to implement it. Otherwise,
+                    // the  activationTest will only return true if the value
+                    // of the option is strictly `true`;
+                    activationTest: () => {
+                        if (
+                            typeof this._nodeOutfitterOptions
+                                ?.typeSpecLabels === "function"
+                        )
+                            return this._nodeOutfitterOptions.typeSpecLabels();
+                        return (
+                            this._nodeOutfitterOptions.typeSpecLabels === true
+                        );
+                    },
+                },
                 [
                     [this._typeSpecPath.append("label").toString(), "label"],
                     ["editingTypeSpec"],
@@ -732,7 +753,12 @@ export class UIDocumentStyleStyler extends _BaseComponent {
  *      - unsubscribeMark(domElement)
  */
 export class TypeSpecSubscriptions extends _CommonContainerComponent {
-    constructor(widgetBus, zones, originTypeSpecPath) {
+    constructor(
+        widgetBus,
+        zones,
+        originTypeSpecPath,
+        nodeOutfitterOptions = {},
+    ) {
         super(widgetBus, zones);
         this._originTypeSpecPath = originTypeSpecPath;
         this._subscribers = new Map();
@@ -742,6 +768,12 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             this._checkNewlySubscribedMarks.bind(this),
         );
         this._styleSubscribers = new Map();
+        this._nodeOutfitterOptions = Object.assign(
+            {
+                typeSpecLabels: false,
+            },
+            nodeOutfitterOptions,
+        );
     }
 
     get dependencies() {
@@ -923,6 +955,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 node,
                 this._originTypeSpecPath,
                 getPos,
+                this._nodeOutfitterOptions,
             ];
         return this._initWrapper(
             this._childrenWidgetBus,

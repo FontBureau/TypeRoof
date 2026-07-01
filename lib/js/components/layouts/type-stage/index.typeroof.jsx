@@ -67,6 +67,7 @@ const TypeStageModel = _BaseLayoutModel.createClass(
     // the root of all typeSpecs
     ["document", NodeModel],
     ["showParameters", BooleanModel],
+    ["showNodeTypeSpecLabels", BooleanModel],
     CoherenceFunction.create(
         [
             "document",
@@ -384,6 +385,13 @@ class TypeStageController extends _BaseContainerComponent {
                 UICheckboxInput,
                 "show-parameters", // classToken
                 getRegisteredPropertySetup(`${GENERIC}showParameters`).label, //label
+            ],
+            [
+                { zone: "editor-manager" },
+                [["showNodeTypeSpecLabels", "value"]],
+                UICheckboxInput,
+                "show-node-type-spec-labels", // classToken
+                "Show TypeSpec Labels", //label
             ],
             [
                 { zone: "main" },

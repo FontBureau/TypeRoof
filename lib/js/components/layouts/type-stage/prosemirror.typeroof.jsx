@@ -59,7 +59,7 @@ class ProseMirrorGeneralDocumentStyler extends _BaseComponent {
             // NOTE: apply paddings (use padding instead of margins)
             // especially left and top, but ideally also right and bottom
             // This is because we don't apply styles directly to the actual
-            // document element, but rather to the parent of that. (.prosemirror-host)
+            // document element, but rather to the parent of that. (.ui_prosemirror_host)
             // i.e the element in here is a lot like the outerElement.
             //
             // NOTE: it could be worth to try to treat the actual .ProseMirror
@@ -690,6 +690,16 @@ export class UIDocument extends _BaseContainerComponent {
     }
 }
 
+class UpdateLabelListener extends _BaseComponent {
+    update(changedMap) {
+        const element = this.widgetBus.getWidgetById(
+                ProseMirrorContext.ID_MAP.proseMirror,
+            ).element,
+            showLabels = changedMap.get("showNodeTypeSpecLabels").value;
+        element.classList[showLabels ? "add" : "remove"]("has-node-labels");
+    }
+}
+
 /**
  * This is basically the central control switchboard for the ProseMirror
  * integration. So far, especially the IDs are required by the components
@@ -741,6 +751,17 @@ export class ProseMirrorContext extends _BaseContainerComponent {
                 proseMirrorDefaultSchema,
                 new.target.ID_MAP,
                 originTypeSpecPath,
+                [
+                    "editor-advanced",
+                    ...(isSimpleRamp ? ["has-node-labels"] : []),
+                ],
+            ],
+            [
+                {
+                    activationTest: () => isSimpleRamp !== true,
+                },
+                ["showNodeTypeSpecLabels"],
+                UpdateLabelListener,
             ],
             [
                 { id: new.target.ID_MAP.subscriptions },
@@ -748,6 +769,14 @@ export class ProseMirrorContext extends _BaseContainerComponent {
                 TypeSpecSubscriptions,
                 zones,
                 originTypeSpecPath,
+                {
+                    typeSpecLabels: isSimpleRamp
+                        ? true
+                        : () => {
+                              return this.getEntry("./showNodeTypeSpecLabels")
+                                  .value;
+                          },
+                } /*nodeOutfitterOptions*/,
             ],
             [
                 {},
