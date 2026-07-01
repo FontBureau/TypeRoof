@@ -693,7 +693,7 @@ export class UIDocument extends _BaseContainerComponent {
 class UpdateLabelListener extends _BaseComponent {
     update(changedMap) {
         const element = this.widgetBus.getWidgetById(
-                ProseMirrorContext.ID_MAP.proseMirror,
+                BaseProseMirrorContext.ID_MAP.proseMirror,
             ).element,
             showLabels = changedMap.get("showNodeTypeSpecLabels").value;
         element.classList[showLabels ? "add" : "remove"]("has-node-labels");
@@ -705,40 +705,31 @@ class UpdateLabelListener extends _BaseComponent {
  * integration. So far, especially the IDs are required by the components
  * to work and to interact.
  */
-export class ProseMirrorContext extends _BaseContainerComponent {
+
+export class BaseProseMirrorContext extends _BaseContainerComponent {
     static ID_MAP = Object.freeze({
         menu: "proseMirrorMenu",
         proseMirror: "proseMirror",
         subscriptions: "typeSpecSubscriptionsRegistry",
     });
+}
 
+export class RampProseMirrorContext extends BaseProseMirrorContext {
     constructor(
         widgetBus,
         zones,
-        proseMirrorSettings /* e.g. {zone:'layout'}*/,
+        proseMirrorSettings,
         originTypeSpecPath,
-        // FIXME
-        isSimpleRamp,
-        menuSettings /* e.g. {zone:'main'}*/,
+        menuSettings,
     ) {
         super(widgetBus, zones, [
-            isSimpleRamp
-                ? [
-                      // IMPORTANT: must be before ProseMirror
-                      { ...menuSettings, id: new.target.ID_MAP.menu },
-                      ["typeSpec", "nodeSpecToTypeSpec"],
-                      UIProseMirrorMenuStyles,
-                      originTypeSpecPath,
-                  ]
-                : [
-                      // IMPORTANT: must be before ProseMirror
-                      { id: new.target.ID_MAP.menu },
-                      [],
-                      UIProseMirrorMenu,
-                      zones,
-                      originTypeSpecPath,
-                      menuSettings,
-                  ],
+            [
+                // IMPORTANT: must be before ProseMirror
+                { ...menuSettings, id: new.target.ID_MAP.menu },
+                ["typeSpec", "nodeSpecToTypeSpec"],
+                UIProseMirrorMenuStyles,
+                originTypeSpecPath,
+            ],
             [
                 { ...proseMirrorSettings, id: new.target.ID_MAP.proseMirror },
                 [
@@ -751,17 +742,7 @@ export class ProseMirrorContext extends _BaseContainerComponent {
                 proseMirrorDefaultSchema,
                 new.target.ID_MAP,
                 originTypeSpecPath,
-                [
-                    "editor-advanced",
-                    ...(isSimpleRamp ? ["has-node-labels"] : []),
-                ],
-            ],
-            [
-                {
-                    activationTest: () => isSimpleRamp !== true,
-                },
-                ["showNodeTypeSpecLabels"],
-                UpdateLabelListener,
+                ["editor-advanced", "has-node-labels"],
             ],
             [
                 { id: new.target.ID_MAP.subscriptions },
@@ -769,13 +750,64 @@ export class ProseMirrorContext extends _BaseContainerComponent {
                 TypeSpecSubscriptions,
                 zones,
                 originTypeSpecPath,
+                { typeSpecLabels: true } /*nodeOutfitterOptions*/,
+            ],
+            [
+                {},
+                [
+                    [
+                        `typeSpecProperties@${originTypeSpecPath.toString()}`,
+                        "properties@",
+                    ],
+                ],
+                ProseMirrorGeneralDocumentStyler,
+            ],
+        ]);
+    }
+}
+
+export class TypeStageProseMirrorContext extends BaseProseMirrorContext {
+    constructor(
+        widgetBus,
+        zones,
+        proseMirrorSettings /* e.g. {zone:'layout'}*/,
+        originTypeSpecPath,
+        menuSettings /* e.g. {zone:'main'}*/,
+    ) {
+        super(widgetBus, zones, [
+            [
+                // IMPORTANT: must be before ProseMirror
+                { id: new.target.ID_MAP.menu },
+                [],
+                UIProseMirrorMenu,
+                zones,
+                originTypeSpecPath,
+                menuSettings,
+            ],
+            [
+                { ...proseMirrorSettings, id: new.target.ID_MAP.proseMirror },
+                [
+                    "proseMirrorSchema",
+                    "document",
+                    "nodeSpecToTypeSpec",
+                    "editingTypeSpec",
+                ],
+                ProseMirror,
+                proseMirrorDefaultSchema,
+                new.target.ID_MAP,
+                originTypeSpecPath,
+                ["editor-advanced"],
+            ],
+            [{}, ["showNodeTypeSpecLabels"], UpdateLabelListener],
+            [
+                { id: new.target.ID_MAP.subscriptions },
+                ["nodeSpecToTypeSpec", "typeSpec", "document"],
+                TypeSpecSubscriptions,
+                zones,
+                originTypeSpecPath,
                 {
-                    typeSpecLabels: isSimpleRamp
-                        ? true
-                        : () => {
-                              return this.getEntry("./showNodeTypeSpecLabels")
-                                  .value;
-                          },
+                    typeSpecLabels: () =>
+                        this.getEntry("./showNodeTypeSpecLabels").value,
                 } /*nodeOutfitterOptions*/,
             ],
             [
