@@ -43,7 +43,7 @@ import {
     UIStylePatchesMap,
     StylePatchPropertiesManager,
 } from "./style-patches.typeroof.jsx";
-import { ProseMirrorContext } from "./prosemirror.typeroof.jsx";
+import { TypeStageProseMirrorContext } from "./prosemirror.typeroof.jsx";
 import {
     UINodeSpecMap,
     NodeSpecPropertiesManager,
@@ -370,12 +370,11 @@ class TypeStageController extends _BaseContainerComponent {
             [
                 {},
                 [],
-                ProseMirrorContext,
+                TypeStageProseMirrorContext,
                 zones,
                 // proseMirrorSettings
                 { zone: "layout" },
                 originTypeSpecPath,
-                false,
                 // menuSettings
                 { zone: "prose-mirror-editor-menu" },
             ],

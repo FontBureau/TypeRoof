@@ -38,7 +38,7 @@ import {
     StylePatchPropertiesManager,
     UIStylePatchesMap,
 } from "../type-stage/style-patches.typeroof.jsx";
-import { ProseMirrorContext } from "../type-stage/prosemirror.typeroof.jsx";
+import { RampProseMirrorContext } from "../type-stage/prosemirror.typeroof.jsx";
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 
 //  We can't create the self-reference directly
@@ -234,12 +234,11 @@ class RampController extends _BaseContainerComponent {
             [
                 {},
                 [],
-                ProseMirrorContext,
+                RampProseMirrorContext,
                 zones,
                 // proseMirrorSettings
                 { zone: "layout" },
                 originTypeSpecPath,
-                true,
                 // menuSettings
                 { zone: "prose-mirror-editor-menu" },
             ],
