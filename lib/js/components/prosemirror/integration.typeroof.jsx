@@ -429,13 +429,14 @@ const mac =
 
 export class ProseMirror extends _BaseComponent {
     //jshint ignore:start
-    static TEMPLATE = `<div class="prosemirror-host"></div>`;
+    static TEMPLATE = `<div class="ui_prosemirror_host"></div>`;
     //jshint ignore:end
     constructor(
         widgetBus,
         /*SchemaSpec: */ proseMirrorDefaultSchema,
         idMap = {},
         originTypeSpecPath = null,
+        classes = [],
     ) {
         super(widgetBus);
         this._idMap = idMap;
@@ -467,7 +468,7 @@ export class ProseMirror extends _BaseComponent {
                 this._idMap.subscriptions,
                 ...args,
             );
-        [this.element, this.view] = this.initTemplate();
+        [this.element, this.view] = this.initTemplate(classes);
     }
 
     // Be a bit cautious with the availability of items in the cache
@@ -602,11 +603,12 @@ export class ProseMirror extends _BaseComponent {
         return view;
     }
 
-    initTemplate() {
+    initTemplate(classes = []) {
         const frag = this._domTool.createFragmentFromHTML(
                 this.constructor.TEMPLATE,
             ),
             element = frag.firstElementChild;
+        for (const name of classes) element.classList.add(name);
         this._insertElement(element);
         const view = this._initProseMirrorView(element);
         return [element, view];
@@ -854,12 +856,13 @@ export class ProseMirror extends _BaseComponent {
             });
         }
 
-        this._changeState(() => {
-            const typeSpecs = this._getTypeSpecs(this.view.state),
-                selectedTypeSpec = typeSpecs.entries().next().value,
-                updatedValue = selectedTypeSpec[1].parts.at(-1).toString();
-            this.getEntry("editingTypeSpec").set(updatedValue);
-        });
+        if (this._originTypeSpecPath !== null)
+            this._changeState(() => {
+                const typeSpecs = this._getTypeSpecs(this.view.state),
+                    selectedTypeSpec = typeSpecs.entries().next().value,
+                    updatedValue = selectedTypeSpec[1].parts.at(-1).toString();
+                this.getEntry("editingTypeSpec").set(updatedValue);
+            });
     }
 
     update(changedMap) {
