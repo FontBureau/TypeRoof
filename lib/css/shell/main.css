@@ -1916,8 +1916,11 @@ prosemirror menu
         vertical-align: top;
     }
 
-    button.active {
+    button.active, button.active > * {
         color: white;
+    }
+
+    button.active {
         background: black;
         font-variation-settings:
             "opsz" 12,
