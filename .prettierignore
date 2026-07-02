@@ -21,6 +21,7 @@
 !**/shell/*.css
 !lib/js/**/*.css
 !**/ramp/*.*
+!**/type-stage/*.*
 !lib/js/components/**/videoproof-contextual/*
 !lib/js/components/presets.mjs
 

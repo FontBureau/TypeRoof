@@ -21,39 +21,30 @@ import {
     NodeSpecToTypeSpecMapModel,
     NodeModel,
 } from "../../prosemirror/models.typeroof.jsx";
-import {
-    Collapsible,
-    WasteBasketDropTarget,
-    UICheckboxInput,
-} from "../../generic.mjs";
-import { SelectAndDragByOptions } from "../stage-and-actors.mjs";
-import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
+import { Collapsible, UICheckboxInput } from "../../generic.mjs";
 import { GENERIC } from "../../registered-properties-definitions.mjs";
 import {
     isInheritingPropertyFn,
     getRegisteredPropertySetup,
 } from "../../registered-properties.mjs";
-import { UINodeSpecToTypeSpecLinksMap } from "../../type-spec-fundamentals.mjs";
-import { getTypeSpecDefaultsMap } from "./defaults.mjs";
-import { TYPE_SPEC_PROPERTIES_GENERATORS } from "./properties-generators.mjs";
-import { StylePatchSourcesMeta, TypeSpecMeta } from "./meta.typeroof.jsx";
-import { TypeSpecTreeEditor } from "./tree-editor.typeroof.jsx";
-import { TypeSpecPropertiesManager } from "./type-spec-properties.typeroof.jsx";
+import { getTypeSpecDefaultsMap } from "../type-stage/defaults.mjs";
+import { TYPE_SPEC_PROPERTIES_GENERATORS } from "../type-stage/properties-generators.mjs";
 import {
-    UIStylePatchesMap,
+    StylePatchSourcesMeta,
+    TypeSpecMeta,
+} from "../type-stage/meta.typeroof.jsx";
+import { TypeSpecPropertiesManager } from "../type-stage/type-spec-properties.typeroof.jsx";
+import {
     StylePatchPropertiesManager,
-} from "./style-patches.typeroof.jsx";
-import { ProseMirrorContext } from "./prosemirror.typeroof.jsx";
-import {
-    UINodeSpecMap,
-    NodeSpecPropertiesManager,
-} from "./node-specs.typeroof.jsx";
-import DEFAULT_STATE from "../../../../assets/typespec-ramp-initial-state.json" with { type: "json" };
+    UIStylePatchesMap,
+} from "../type-stage/style-patches.typeroof.jsx";
+import { RampProseMirrorContext } from "../type-stage/prosemirror.typeroof.jsx";
+import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
-const TypeSpecRampModel = _BaseLayoutModel.createClass(
-    "TypeSpecRampModel",
+const RampModel = _BaseLayoutModel.createClass(
+    "RampModel",
     // The root TypeSpec
     ["typeSpec", TypeSpecModel],
     ["editingTypeSpec", PathModelOrEmpty],
@@ -128,32 +119,17 @@ const TypeSpecRampModel = _BaseLayoutModel.createClass(
     ),
 );
 
-class TypeSpecRampController extends _BaseContainerComponent {
+class RampController extends _BaseContainerComponent {
     constructor(widgetBus, _zones) {
         // BUT: we may need a mechanism to handle typeSpec inheritance!
         // widgetBus.wrapper.setProtocolHandlerImplementation(
         //    ...SimpleProtocolHandler.create('animationProperties@'));
-        const typeSpecManagerContainer = widgetBus.domTool.createElement(
-                "div",
-                {
-                    class: "type_spec-manager",
-                },
-            ),
-            propertiesManagerContainer = widgetBus.domTool.createElement(
+        const propertiesManagerContainer = widgetBus.domTool.createElement(
                 "div",
                 {
                     class: "properties-manager",
                 },
             ),
-            stylePatchesManagerContainer = widgetBus.domTool.createElement(
-                "div",
-                {
-                    class: "style_patches-manager",
-                },
-            ),
-            nodeSpecManagerContainer = widgetBus.domTool.createElement("div", {
-                class: "node_spec-manager",
-            }),
             // To have this first within editorManagerContainer.
             proseMirrorEditorMenuContainer = widgetBus.domTool.createElement(
                 "div",
@@ -168,10 +144,7 @@ class TypeSpecRampController extends _BaseContainerComponent {
             ),
             zones = new Map([
                 ..._zones,
-                ["type_spec-manager", typeSpecManagerContainer],
                 ["properties-manager", propertiesManagerContainer],
-                ["style_patches-manager", stylePatchesManagerContainer],
-                ["node_spec-manager", nodeSpecManagerContainer],
                 ["editor-manager", editorManagerContainer],
                 ["prose-mirror-editor-menu", proseMirrorEditorMenuContainer],
             ]),
@@ -244,62 +217,9 @@ class TypeSpecRampController extends _BaseContainerComponent {
                 { zone: "main" },
                 [],
                 Collapsible,
-                "Styles",
-                stylePatchesManagerContainer,
-            ],
-            [
-                { zone: "main" },
-                [],
-                Collapsible,
-                "TypeSpecs",
-                typeSpecManagerContainer,
-            ],
-            [
-                {
-                    zone: "type_spec-manager",
-                },
-                [],
-                SelectAndDragByOptions,
-                "Create",
-                "", //'drag and drop into Rap-Editor.'
-                [
-                    // options [type, label, value]
-                    [
-                        DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_CREATE,
-                        "Type Spec",
-                        "TypeSpec",
-                    ],
-                ],
-            ],
-            [
-                { zone: "type_spec-manager" },
-                [
-                    ["typeSpec/children", "activeActors"],
-                    ["editingTypeSpec", "editingActor"],
-                ],
-                TypeSpecTreeEditor,
-                {
-                    // dataTransferTypes
-                    PATH: DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_PATH,
-                    CREATE: DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_CREATE,
-                },
-            ],
-            [
-                {
-                    zone: "type_spec-manager",
-                },
-                [["typeSpec/children", "rootCollection"]],
-                WasteBasketDropTarget,
-                "Delete",
-                "", //'drag and drop into trash-bin.'
-                [DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_PATH],
-            ],
-            [
-                { zone: "main" },
-                [],
-                Collapsible,
                 "TypeSpec Properties",
                 propertiesManagerContainer,
+                true,
             ],
             [
                 {},
@@ -312,64 +232,9 @@ class TypeSpecRampController extends _BaseContainerComponent {
                 new Map([...zones, ["main", propertiesManagerContainer]]),
             ],
             [
-                {
-                    zone: "style_patches-manager",
-                    relativeRootPath: Path.fromParts(".", "stylePatchesSource"),
-                },
-                [
-                    [".", "childrenOrderedMap"],
-                    ["../editingStylePatch", "stylePatchPath"],
-                ],
-                UIStylePatchesMap, // search for e.g. UIAxesMathLocation in videoproof-array-v2.mjs
-                zones,
-                [], // eventHandlers
-                null, // label 'Style Patches'
-                true, // dragAndDrop
-            ],
-            [
-                {
-                    zone: "style_patches-manager",
-                },
-                [["typeSpec/children", "rootCollection"]],
-                WasteBasketDropTarget,
-                "Delete",
-                "", //'drag and drop into trash-bin.'
-                [
-                    DATA_TRANSFER_TYPES.TYPE_SPEC_STYLE_PATCH_PATH,
-                    DATA_TRANSFER_TYPES.TYPE_SPEC_STYLE_PATCH_LINK_PATH,
-                    // to delete the axesLocations values coming from UIAxesMathLocation
-                    DATA_TRANSFER_TYPES.AXESMATH_LOCATION_VALUE_PATH,
-                ],
-            ],
-            [
-                {
-                    zone: "style_patches-manager",
-                    relativeRootPath: Path.fromParts(".", "stylePatchesSource"),
-                },
-                [
-                    [".", "childrenOrderedMap"],
-                    ["../editingStylePatch", "stylePatchPath"],
-                ],
-                StylePatchPropertiesManager,
-                new Map([...zones, ["main", stylePatchesManagerContainer]]),
-            ],
-            //  , [
-            //        {
-            //            zone: 'layout'
-            //          , relativeRootPath: Path.fromParts('.','document')
-            //        }
-            //      , [
-            //              ['../proseMirrorSchema/nodes', 'nodeSpec']
-            //            , ['../nodeSpecToTypeSpec', 'nodeSpecToTypeSpec']
-            //        ]
-            //      , UIDocument
-            //      , zones
-            //      , originTypeSpecPath
-            //    ]
-            [
                 {},
                 [],
-                ProseMirrorContext,
+                RampProseMirrorContext,
                 zones,
                 // proseMirrorSettings
                 { zone: "layout" },
@@ -384,59 +249,6 @@ class TypeSpecRampController extends _BaseContainerComponent {
                 "show-parameters", // classToken
                 getRegisteredPropertySetup(`${GENERIC}showParameters`).label, //label
             ],
-            [
-                { zone: "main" },
-                [],
-                Collapsible,
-                "NodeSpecs",
-                nodeSpecManagerContainer,
-            ],
-            [
-                { zone: "node_spec-manager" },
-                [
-                    ["./proseMirrorSchema/nodes", "childrenOrderedMap"],
-                    ["editingNodeSpecPath", "nodeSpecPath"],
-                ],
-                UINodeSpecMap,
-                new Map([...zones, ["main", nodeSpecManagerContainer]]),
-                [], // eventHandlers
-                "NodeSpec-Map",
-                true, // dragEntries (dragAndDrop)
-            ],
-            [
-                {
-                    zone: "node_spec-manager",
-                },
-                [
-                    ["./proseMirrorSchema/nodes", "childrenOrderedMap"],
-                    ["editingNodeSpecPath", "nodeSpecPath"],
-                ],
-                NodeSpecPropertiesManager,
-                new Map([...zones, ["main", nodeSpecManagerContainer]]),
-            ],
-            [
-                { zone: "node_spec-manager" },
-                [
-                    ["./nodeSpecToTypeSpec", "childrenOrderedMap"],
-                    // In this configuration we map "NodeSpec to TypeSpec"
-                    // The directionality is not necessarily obvious, but
-                    // NodeSpec is the key as a nodeSpec can only have one
-                    // TypeSpec, TypeSpec is the value as we can have multiple
-                    // NodeSpecs use the same TypeSpec.
-                    // However, the "TypeSpec" is called the "source", so
-                    // source and target may not be the right words.
-                    // sourceMap is inherited from UIStylePatchesLinksMap
-                    // maybe we need to change that in here.
-                    ["./typeSpec", "sourceMap"], // these are the values of the map
-                    ["./proseMirrorSchema/nodes", "targetMap"], // these are the keys of the map
-                ],
-                // based on UIStylePatchesLinksMap
-                UINodeSpecToTypeSpecLinksMap,
-                new Map([...zones, ["main", nodeSpecManagerContainer]]),
-                [], // eventHandlers
-                "NodeSpec to TypeSpec",
-                true, // dragEntries (dragAndDrop)
-            ],
         ];
         this._initWidgets(widgets);
     }
@@ -444,26 +256,14 @@ class TypeSpecRampController extends _BaseContainerComponent {
         this.widgetBus.wrapper
             .getProtocolHandlerImplementation("typeSpecProperties@")
             .resetUpdatedLog();
-        this.widgetBus.wrapper
-            .getProtocolHandlerImplementation("stylePatchProperties@")
-            .resetUpdatedLog();
-        this.widgetBus.wrapper
-            .getProtocolHandlerImplementation("styleLinkProperties@")
-            .resetUpdatedLog();
         super.update(...args);
     }
     initialUpdate(...args) {
         this.widgetBus.wrapper
             .getProtocolHandlerImplementation("typeSpecProperties@")
             .resetUpdatedLog();
-        this.widgetBus.wrapper
-            .getProtocolHandlerImplementation("stylePatchProperties@")
-            .resetUpdatedLog();
-        this.widgetBus.wrapper
-            .getProtocolHandlerImplementation("styleLinkProperties@")
-            .resetUpdatedLog();
         super.initialUpdate(...args);
     }
 }
 
-export { TypeSpecRampModel as Model, TypeSpecRampController as Controller };
+export { RampModel as Model, RampController as Controller };

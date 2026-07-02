@@ -4,6 +4,7 @@
 @import url("./elements.css");
 @import url("./layout.css");
 @import url("./docs.css");
+@import url("./type-stage.css");
 
 /******************************************************************************
 material symbols
@@ -1885,6 +1886,10 @@ dimension sequence
     padding: 0;
 }
 
+/******************************************************************************
+prosemirror menu
+*******************************************************************************/
+
 .ui_prose_mirror_menu {
     /* The amount of style buttons can change quickly when using
    * the cursor to navigate the document. This leads to the UI in the
@@ -1907,12 +1912,43 @@ dimension sequence
 
 .ui_prose_mirror_menu-blocks,
 .ui_prose_mirror_menu-styles {
+    button {
+        vertical-align: top;
+    }
+
     button.active {
         color: white;
         background: black;
         font-variation-settings:
             "opsz" 12,
             "GRAD" 150;
+    }
+
+    button.active:disabled {
+        background: darkgrey;
+    }
+}
+
+.ui_prose_mirror_menu-simple {
+    display: flex;
+    gap: 0.25em;
+    height: auto;
+    margin-bottom: 1em;
+
+    .ui_prose_mirror_menu-container-blocks,
+    .typeroof-ui-label {
+        display: none;
+    }
+
+    button {
+        height: auto;
+        padding: 0.25rem;
+
+        &.active {
+            color: white;
+            background: var(--button-active-color);
+            border-color: var(--button-active-color);
+        }
     }
 
     button.active:disabled {
@@ -1990,91 +2026,8 @@ dimension sequence
 }
 /* stylelint-enable */
 
-.prosemirror-host {
-    /* so the background color fills the entire layout */
-    min-height: 100%;
-}
-
-:where(.ProseMirror, .typeroof-document) {
-    *[data-unknown-type] {
-        outline: 4px solid red;
-        font-family: RobotoFlex, sans-serif;
-        margin: 1em 0;
-    }
-
-    .unknown-style {
-        font-family: RobotoFlex, sans-serif;
-        color: black;
-        background: deeppink;
-        text-decoration-style: solid;
-        text-decoration-thickness: 1.5pt;
-        text-decoration-color: deeppink;
-        text-decoration-skip-ink: none;
-        text-decoration-line: underline;
-    }
-
-    .unknown-style::before {
-        content: " (UNKOWN STYLE: " attr(data-style-name) ") ";
-        color: black;
-        background: white;
-    }
-}
-
 :is(.videoproof_layout, .ui-parameters-display.ui_videoproof) {
     padding-left: 2em; /* using padding: so we include the background color */
-}
-
-/* NOTE: the .ProseMirror is very generic as it's coming from
- * the ProseMirror class, we should not use it this specifically.
- */
-:is(.ProseMirror, .typeroof-document) {
-    margin-left: 2em;
-
-    * {
-        line-height: var(--line-height);
-
-        /* FIXME: not functioning in Firefox, requires workaround! */
-        text-box: trim-start text;
-    }
-
-    /* FIXME: this is temporary, margins need to be
- * a property. However, using the line-height of
- * the element AFTER as the gap-size is a good
- * enough for now runion/automation approach.
- */
-    > *:not(:first-child) {
-        margin-block-start: var(--margin-block-start, 0);
-    }
-
-    > *:not(:last-child) {
-        margin-block-end: var(--margin-block-end, 0);
-    }
-}
-
-.ui_type_tools_grid-cell :is(.ProseMirror, .typeroof-document) {
-    /* this is a very simple editor instance */
-    margin-left: 0;
-
-    --line-height: 1em; /* should be a property */
-    --margin-block-start: 0; /* calc(var(--line-height) * 0.5); should also be a property */
-    > * {
-        /* In this configuration, I'm looking to make the
-         * paragraph and hard-break having the same leading. As people
-         * will rather expect "Enter" to just create a single line break
-         * not a gap, and they rather won't be aware of Shift+Enter to
-         * insert a hard-break. In order to make the leading even, we
-         * can't use the text-box-trim.
-         */
-        text-box: none;
-    }
-
-    > *:first-child {
-        text-box: trim-start text;
-    }
-
-    > *:not(:first-child) {
-        margin-block-start: var(--margin-block-start, 0);
-    }
 }
 
 .ui_opentype_features_chooser-select-select {

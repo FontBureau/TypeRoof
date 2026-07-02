@@ -45,7 +45,7 @@ For a layout folder (e.g. `lib/js/components/layouts/<name>/`), a useful shape i
 
 - **`index.typeroof.jsx`** — `Model`, `Controller`, public exports.
 - **A small handful of engine files** — properties, generators, PPS maps, defaults, synthetic values, state machinery.
-- **One UI file per controller zone** — matches what `TypeSpecRampController.zones` (or equivalent) already enumerates.
+- **One UI file per controller zone** — matches what `TypeStageController.zones` (or equivalent) already enumerates.
 - **Optionally one `shared` file** for UI helpers used by multiple zones.
 
 A 4000+ line single file is a signal to split.
@@ -89,12 +89,12 @@ Project-wide, `.prettierignore` uses a deny-by-default pattern (`*`) and allow-l
 
 - `**/*.jsx` is globally allow-listed → **every `.typeroof.jsx` file is prettier-formatted**, wherever it lives.
 - `**/*.mjs` is **not** globally allow-listed → `.mjs` files are skipped by prettier unless a directory-specific allow-list covers them.
-- `**/ramp/*.*` is a blanket allow-list → inside `lib/js/components/layouts/ramp/`, prettier formats *all* extensions, including `.mjs`.
+- `**/type-stage/*.*` is a blanket allow-list → inside `lib/js/components/layouts/type-stage/`, prettier formats *all* extensions, including `.mjs`.
 
 Consequences worth knowing:
 
 - **For new UI files anywhere:** `.typeroof.jsx` is the right extension on both grounds — JSX is available, and prettier covers the file.
-- **For new engine files:** `.mjs` is technically correct (no JSX needed). If prettier coverage matters for a given file, either (a) place it under a directory that's allow-listed (e.g. `ramp/`), or (b) extend `.prettierignore` to cover it explicitly — do not rename `.mjs` → `.typeroof.jsx` purely to obtain prettier coverage, that conflates the two concerns.
+- **For new engine files:** `.mjs` is technically correct (no JSX needed). If prettier coverage matters for a given file, either (a) place it under a directory that's allow-listed (e.g. `type-stage/`), or (b) extend `.prettierignore` to cover it explicitly — do not rename `.mjs` → `.typeroof.jsx` purely to obtain prettier coverage, that conflates the two concerns.
 
 ### Tiny decision table
 
