@@ -1,4 +1,4 @@
-import { Path, StateComparison } from "../../metamodel.mjs";
+import { Path, StateComparison, getEntry } from "../../metamodel.mjs";
 
 import {
     _CommonContainerComponent,
@@ -1401,6 +1401,15 @@ export class UIProseMirrorMenuBlocks extends _BaseComponent {
         return [container, blocksContainer];
     }
 
+    _getTypeSpecLabel(typeSpec, blockName, typeSpecLink) {
+        const linkParts = Path.fromString(typeSpecLink).parts,
+            path =
+                linkParts.length === 0 || linkParts[0] === "children"
+                    ? Path.fromParts(...linkParts)
+                    : Path.fromParts("children", ...linkParts);
+        return getEntry(typeSpec, path).get("label").value;
+    }
+
     _blocksClickHandler(event) {
         if (!this._buttonToBlock.has(event.target) || !this._editorView) return;
         event.preventDefault();
@@ -1435,20 +1444,34 @@ export class UIProseMirrorMenuBlocks extends _BaseComponent {
     update(changedMap) {
         // console.log(`>>>>>>>>>>>>>>>>>>>${this}.update:`, ...changedMap.keys());
 
-        if (changedMap.has("nodeSpecToTypeSpec")) {
-            const nodeSpecToTypeSpec = changedMap.get("nodeSpecToTypeSpec"),
+        if (
+            changedMap.has("nodeSpecToTypeSpec") ||
+            changedMap.has("typeSpec")
+        ) {
+            const nodeSpecToTypeSpec = changedMap.has("nodeSpecToTypeSpec")
+                    ? changedMap.get("nodeSpecToTypeSpec")
+                    : this.getEntry("nodeSpecToTypeSpec"),
+                typeSpec = changedMap.has("typeSpec")
+                    ? changedMap.get("typeSpec")
+                    : this.getEntry("typeSpec"),
                 h = this._domTool.h,
                 oldButtons = Array.from(this._buttonToBlock.keys());
             // console.log("nodeSpecToTypeSpec", ...nodeSpecToTypeSpec.keys());
             this._buttonToBlock.clear();
-            for (const blockName of nodeSpecToTypeSpec.keys()) {
+            for (const [blockName, typeSpecLink] of nodeSpecToTypeSpec) {
                 // reusing stuff
                 const button = oldButtons.length ? (
                     oldButtons.shift()
                 ) : (
                     <button type="button">{"initial"}</button>
                 );
-                button.textContent = blockName;
+                const label = this._getTypeSpecLabel(
+                    typeSpec,
+                    blockName,
+                    typeSpecLink,
+                );
+                button.textContent =
+                    label !== "" ? `${label} [${blockName}]` : `[${blockName}]`;
                 // Would have to be decided in updateView
                 // button.disabled = !commonSubSet.has(style);
                 this._buttonToBlock.set(button, blockName);
@@ -1701,7 +1724,7 @@ export class UIProseMirrorMenu extends _IDPublisherMixin(
         const widgets = [
             [
                 { ...menuSettings, id: new.target.ID_MAP.menuStyles },
-                ["nodeSpecToTypeSpec"],
+                ["typeSpec", "nodeSpecToTypeSpec"],
                 UIProseMirrorMenuBlocks,
                 "Nodes:",
             ],
