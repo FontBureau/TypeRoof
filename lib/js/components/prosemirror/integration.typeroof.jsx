@@ -859,9 +859,21 @@ export class ProseMirror extends _BaseComponent {
         if (this._originTypeSpecPath !== null)
             this._changeState(() => {
                 const typeSpecs = this._getTypeSpecs(this.view.state),
-                    selectedTypeSpec = typeSpecs.entries().next().value,
-                    updatedValue = selectedTypeSpec[1].parts.at(-1).toString();
-                this.getEntry("editingTypeSpec").set(updatedValue);
+                    [, selectedTypeSpecPath] = typeSpecs.entries().next().value,
+                    editingTypeSpec = this.getEntry("editingTypeSpec");
+                if (this._originTypeSpecPath.equals(selectedTypeSpecPath))
+                    editingTypeSpec.clear();
+                else {
+                    // FIXME: the fact that we have to append "children"
+                    // here shows that the `editingTypeSpec` is treated
+                    // wrongly, we should always include the `children`
+                    // part in these paths, so we can get cleanly down to
+                    // the this._originTypeSpecPath.
+                    const childrenPath =
+                        this._originTypeSpecPath.append("children");
+                    editingTypeSpec.value =
+                        selectedTypeSpecPath.toRelative(childrenPath);
+                }
             });
     }
 
