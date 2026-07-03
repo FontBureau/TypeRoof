@@ -191,7 +191,7 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
             ),
             [path, pathExists] = ((pathOrEmpty) => {
                 if (pathOrEmpty.isEmpty) return [rootPath, true];
-                const path = rootPath.append("children", ...pathOrEmpty.value),
+                const path = rootPath.append(...pathOrEmpty.value),
                     rootState = this.getEntry("/"),
                     pathExists = getEntry(rootState, path, false) !== false;
                 return [pathExists ? path : rootPath, pathExists];

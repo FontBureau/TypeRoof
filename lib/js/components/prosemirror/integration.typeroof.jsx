@@ -135,7 +135,9 @@ export function getTypeSpecPropertiesIdMethod(
 ) {
     const nodeSpecToTypeSpec = this.getEntry(nodeSpecToTypeSpecName),
         typeKey = pathOfTypes.at(-1),
-        typeSpecLink = nodeSpecToTypeSpec.get(typeKey, { value: "" }).value, // => default '' would be the root TypeSpec
+        typeSpecLink = !nodeSpecToTypeSpec.has(typeKey)
+            ? ""
+            : nodeSpecToTypeSpec.get(typeKey).get("link").value,
         protocolHandlerImplementation =
             this.widgetBus.getProtocolHandlerImplementation(
                 protocolHandlerName,
@@ -864,15 +866,9 @@ export class ProseMirror extends _BaseComponent {
                 if (this._originTypeSpecPath.equals(selectedTypeSpecPath))
                     editingTypeSpec.clear();
                 else {
-                    // FIXME: the fact that we have to append "children"
-                    // here shows that the `editingTypeSpec` is treated
-                    // wrongly, we should always include the `children`
-                    // part in these paths, so we can get cleanly down to
-                    // the this._originTypeSpecPath.
-                    const childrenPath =
-                        this._originTypeSpecPath.append("children");
-                    editingTypeSpec.value =
-                        selectedTypeSpecPath.toRelative(childrenPath);
+                    editingTypeSpec.value = selectedTypeSpecPath.toRelative(
+                        this._originTypeSpecPath,
+                    );
                 }
             });
     }
