@@ -5,7 +5,11 @@ import {
     _BaseByPathContainerComponent,
 } from "./shared.typeroof.jsx";
 import { identity } from "../../../util.mjs";
-import { WasteBasketDropTarget, StaticTag } from "../../generic.mjs";
+import {
+    WasteBasketDropTarget,
+    StaticTag,
+    StaticNode,
+} from "../../generic.mjs";
 import { Path } from "../../../metamodel.mjs";
 import { _NOTDEF, getFallback } from "./defaults.mjs";
 import { UITypeDrivenContainer } from "../../type-driven-ui-basics.mjs";
@@ -55,6 +59,7 @@ export class NodeSpecPropertiesManager extends _BaseByPathContainerComponent {
 
     _createItemWrappers(path) {
         const key = path.parts.at(-1),
+            h = this._domTool.h,
             widgets = [
                 [
                     {
@@ -65,6 +70,25 @@ export class NodeSpecPropertiesManager extends _BaseByPathContainerComponent {
                     "h3",
                     {},
                     `NodeSpec: ${key}`,
+                ],
+                [
+                    {
+                        zone: "local",
+                    },
+                    [],
+                    StaticNode,
+                    <p>
+                        <strong>CAUTION</strong> this interface is experimental
+                        and only partially useful yet. Find documentation at{" "}
+                        <a
+                            target="_blank"
+                            rel="noreferrer"
+                            href="https://prosemirror.net/docs/ref/#model.NodeSpec"
+                        >
+                            ProseMirror interface NodeSpec
+                        </a>
+                        .
+                    </p>,
                 ],
             ];
 
