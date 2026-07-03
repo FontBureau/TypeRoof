@@ -1484,14 +1484,17 @@ select and drag
 }
 
 .ui_links_map-item_value-change_select,
-.ui_links_map-item_value-change_input {
+.ui_links_map-item_value-change_input,
+.ui_links_map-item_value .line_of_text {
     display: none;
 }
 
 .ui_links_map-item_value:focus-within
     :is(
         .ui_links_map-item_value-change_select,
-        .ui_links_map-item_value-change_input
+        .ui_links_map-item_value-change_input,
+        .line_of_text,
+
     ) {
     display: block;
 }
@@ -1916,7 +1919,8 @@ prosemirror menu
         vertical-align: top;
     }
 
-    button.active, button.active > * {
+    button.active,
+    button.active > * {
         color: white;
     }
 

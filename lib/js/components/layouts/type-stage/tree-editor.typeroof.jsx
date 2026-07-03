@@ -461,13 +461,15 @@ export class _BaseTreeEditor extends _BaseComponent {
     }
 
     _renderActor(path, actor, state = null) {
-        const fragment = this._domTool.createFragmentFromHTML(
-                `<button><span></span> <em></em></button>`,
+        const h = this._domTool.h,
+            button = (
+                <button>
+                    <span></span>
+                </button>
             ),
-            result = [...fragment.childNodes],
-            button = fragment.querySelector("button");
+            result = [button];
         button.addEventListener("click", this._onClickHandler.bind(this, path));
-        fragment.querySelector("span").textContent = this._getItemLabel(actor);
+        button.querySelector("span").textContent = this._getItemLabel(actor);
         button.setAttribute("title", `local path: ${path}`);
         if (this._isContainerItem(actor)) {
             // used to be if(typeClass === LayerActorModel) {
@@ -511,7 +513,14 @@ export class _BaseTreeEditor extends _BaseComponent {
             : this.getEntry("editingActor");
         if (changedMap.has("activeActors")) {
             const activeActors = changedMap.get("activeActors"),
-                basePath = Path.fromParts("./");
+                // this is a bit confusing, but we don't actually start
+                // with the root "activeActor" instead, we start
+                // with the "activeActors" which are at the hypothetical
+                // offset of this._containerRelPathToChildren from the root
+                // activeActor and the children active actors maintain
+                // that offset i.e. their children are also located at
+                // the offset of offset of this._containerRelPathToChildren.
+                basePath = this._containerRelPathToChildren;
             this._domTool.clear(this._actorsElement);
             this._actorsElement.append(
                 ...this._renderLayer(basePath, activeActors, {

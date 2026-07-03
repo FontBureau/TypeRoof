@@ -390,7 +390,7 @@ class TypeStageController extends _BaseContainerComponent {
                 [["showNodeTypeSpecLabels", "value"]],
                 UICheckboxInput,
                 "show-node-type-spec-labels", // classToken
-                "Show TypeSpec Labels", //label
+                "Show Element Labels", //label
             ],
             [
                 { zone: "main" },

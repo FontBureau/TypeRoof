@@ -404,19 +404,51 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
 }
 
 class NodeTypeSpecLabel extends _BaseComponent {
-    constructor(widgetBus, typeSpecPath) {
+    constructor(widgetBus, typeSpecPath, nodeTypeName) {
         super(widgetBus);
         this._typeSpecPath = typeSpecPath;
+        this._nodeTypeName = nodeTypeName;
         const h = widgetBus.domTool.h;
-        this.element = <div class="ui_type_spec_label">[…]</div>;
+        this.element = (
+            <div class="ui_type_spec_label">
+                <span>[…]</span>
+            </div>
+        );
+        this.label = this.element.querySelector("span");
         this._insertElement(this.element);
     }
 
     update(changedMap) {
-        if (changedMap.has("label")) {
-            const label = changedMap.get("label").value;
-            this.element.setAttribute("title", label);
-            this.element.textContent = label;
+        if (
+            changedMap.has("nodeSpecToTypeSpec") ||
+            changedMap.has("typeSpecLabel")
+        ) {
+            let label = null;
+            const nodeSpecToTypeSpec = changedMap.has("nodeSpecToTypeSpec")
+                ? changedMap.get("nodeSpecToTypeSpec")
+                : this.getEntry("nodeSpecToTypeSpec");
+            if (nodeSpecToTypeSpec.has(this._nodeTypeName)) {
+                const edgeLabel = nodeSpecToTypeSpec
+                    .get(this._nodeTypeName)
+                    .get("label").value;
+                if (edgeLabel !== "") label = edgeLabel;
+            }
+            if (label === null) {
+                const typeSpecLabel = (
+                    changedMap.has("typeSpecLabel")
+                        ? changedMap.get("typeSpecLabel")
+                        : this.getEntry("typeSpecLabel")
+                ).value;
+                if (typeSpecLabel !== "") label = typeSpecLabel;
+            }
+
+            if (label === null) label = this._nodeTypeName;
+
+            this.element.setAttribute(
+                "title",
+                `${label} :: Node Type ${this._nodeTypeName} :: Type Spec Path ${this._typeSpecPath}`,
+            );
+            this.label.textContent = label;
         }
         if (changedMap.has("editingTypeSpec")) {
             const editingTypeSpec = changedMap.get("editingTypeSpec");
@@ -513,13 +545,19 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                     },
                 },
                 [
-                    [this._typeSpecPath.append("label").toString(), "label"],
+                    [
+                        this._typeSpecPath.append("label").toString(),
+                        "typeSpecLabel",
+                    ],
+                    [
+                        this.widgetBus.getExternalName("nodeSpecToTypeSpec"),
+                        "nodeSpecToTypeSpec",
+                    ],
                     ["editingTypeSpec"],
                 ],
                 NodeTypeSpecLabel,
-                this._typeSpecPath.toRelative(
-                    this.widgetBus.rootPath.append("typeSpec", "children"),
-                ),
+                this._typeSpecPath.toRelative(this._originTypeSpecPath),
+                this._pmNode.type.name,
             ],
         ];
     }
@@ -946,6 +984,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 ["showParameters"],
                 // unused so far!
                 [parentContentsPath.toString(), "parentContent"],
+                ["nodeSpecToTypeSpec"],
             ];
         const Constructor = UIDocumentNodeOutfitter,
             args = [
@@ -1401,13 +1440,20 @@ export class UIProseMirrorMenuBlocks extends _BaseComponent {
         return [container, blocksContainer];
     }
 
-    _getTypeSpecLabel(typeSpec, blockName, typeSpecLink) {
-        const linkParts = Path.fromString(typeSpecLink.value).parts,
+    _getTypeSpecLabel(typeSpec, blockName, typeSpecEdge) {
+        const label = typeSpecEdge.get("label").value;
+        if (label !== "") return label;
+
+        // fallback...
+        const linkParts = Path.fromString(typeSpecEdge.get("link").value).parts,
             path =
                 linkParts.length === 0 || linkParts[0] === "children"
                     ? Path.fromParts(...linkParts)
                     : Path.fromParts("children", ...linkParts);
-        return getEntry(typeSpec, path).get("label").value;
+        const typeSpecLabel = getEntry(typeSpec, path).get("label").value;
+        return typeSpecLabel !== ""
+            ? `${typeSpecLabel} [${blockName}]`
+            : `[${blockName}]`;
     }
 
     _blocksClickHandler(event) {
@@ -1470,8 +1516,7 @@ export class UIProseMirrorMenuBlocks extends _BaseComponent {
                     blockName,
                     typeSpecLink,
                 );
-                button.textContent =
-                    label !== "" ? `${label} [${blockName}]` : `[${blockName}]`;
+                button.textContent = label;
                 // Would have to be decided in updateView
                 // button.disabled = !commonSubSet.has(style);
                 this._buttonToBlock.set(button, blockName);
