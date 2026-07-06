@@ -21,7 +21,12 @@ import {
     NodeSpecToTypeSpecMapModel,
     NodeModel,
 } from "../../prosemirror/models.typeroof.jsx";
-import { Collapsible, UICheckboxInput } from "../../generic.mjs";
+import {
+    Collapsible,
+    WasteBasketDropTarget,
+    UICheckboxInput,
+} from "../../generic.mjs";
+import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
 import { GENERIC } from "../../registered-properties-definitions.mjs";
 import {
     isInheritingPropertyFn,
@@ -142,10 +147,17 @@ class RampController extends _BaseContainerComponent {
                 },
                 proseMirrorEditorMenuContainer,
             ),
+            stylePatchesManagerContainer = widgetBus.domTool.createElement(
+                "div",
+                {
+                    class: "style_patches-manager",
+                },
+            ),
             zones = new Map([
                 ..._zones,
                 ["properties-manager", propertiesManagerContainer],
                 ["editor-manager", editorManagerContainer],
+                ["style_patches-manager", stylePatchesManagerContainer],
                 ["prose-mirror-editor-menu", proseMirrorEditorMenuContainer],
             ]),
             typeSpecRelativePath = Path.fromParts(".", "typeSpec"),
@@ -217,9 +229,16 @@ class RampController extends _BaseContainerComponent {
                 { zone: "main" },
                 [],
                 Collapsible,
-                "TypeSpec Properties",
+                "TypeSpecs",
                 propertiesManagerContainer,
                 true,
+            ],
+            [
+                { zone: "main" },
+                [],
+                Collapsible,
+                "Styles",
+                stylePatchesManagerContainer,
             ],
             [
                 {},
@@ -248,6 +267,48 @@ class RampController extends _BaseContainerComponent {
                 UICheckboxInput,
                 "show-parameters", // classToken
                 getRegisteredPropertySetup(`${GENERIC}showParameters`).label, //label
+            ],
+            [
+                {
+                    zone: "style_patches-manager",
+                    relativeRootPath: Path.fromParts(".", "stylePatchesSource"),
+                },
+                [
+                    [".", "childrenOrderedMap"],
+                    ["../editingStylePatch", "stylePatchPath"],
+                ],
+                UIStylePatchesMap, // search for e.g. UIAxesMathLocation in videoproof-array-v2.mjs
+                zones,
+                [], // eventHandlers
+                null, // label 'Style Patches'
+                true, // dragAndDrop
+            ],
+            [
+                {
+                    zone: "style_patches-manager",
+                },
+                [["typeSpec/children", "rootCollection"]],
+                WasteBasketDropTarget,
+                "Delete",
+                "", //'drag and drop into trash-bin.'
+                [
+                    DATA_TRANSFER_TYPES.TYPE_SPEC_STYLE_PATCH_PATH,
+                    DATA_TRANSFER_TYPES.TYPE_SPEC_STYLE_PATCH_LINK_PATH,
+                    // to delete the axesLocations values coming from UIAxesMathLocation
+                    DATA_TRANSFER_TYPES.AXESMATH_LOCATION_VALUE_PATH,
+                ],
+            ],
+            [
+                {
+                    zone: "style_patches-manager",
+                    relativeRootPath: Path.fromParts(".", "stylePatchesSource"),
+                },
+                [
+                    [".", "childrenOrderedMap"],
+                    ["../editingStylePatch", "stylePatchPath"],
+                ],
+                StylePatchPropertiesManager,
+                new Map([...zones, ["main", stylePatchesManagerContainer]]),
             ],
         ];
         this._initWidgets(widgets);

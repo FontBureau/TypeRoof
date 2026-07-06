@@ -245,15 +245,22 @@ class TypeStageController extends _BaseContainerComponent {
                 { zone: "main" },
                 [],
                 Collapsible,
-                "Styles",
-                stylePatchesManagerContainer,
+                "TypeSpecs",
+                typeSpecManagerContainer,
             ],
             [
                 { zone: "main" },
                 [],
                 Collapsible,
-                "TypeSpecs",
-                typeSpecManagerContainer,
+                "TypeSpec Properties",
+                propertiesManagerContainer,
+            ],
+            [
+                { zone: "main" },
+                [],
+                Collapsible,
+                "Styles",
+                stylePatchesManagerContainer,
             ],
             [
                 {
@@ -294,13 +301,6 @@ class TypeStageController extends _BaseContainerComponent {
                 "Delete",
                 "", //'drag and drop into trash-bin.'
                 [DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_PATH],
-            ],
-            [
-                { zone: "main" },
-                [],
-                Collapsible,
-                "TypeSpec Properties",
-                propertiesManagerContainer,
             ],
             [
                 {},
