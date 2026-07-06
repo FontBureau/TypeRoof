@@ -1771,7 +1771,7 @@ export class UIProseMirrorMenu extends _IDPublisherMixin(
                 { ...menuSettings, id: new.target.ID_MAP.menuBlocks },
                 ["typeSpec", "nodeSpecToTypeSpec"],
                 UIProseMirrorMenuBlocks,
-                "Nodes:",
+                "Elements:",
             ],
             [
                 { ...menuSettings, id: new.target.ID_MAP.menuStyles },
