@@ -38,7 +38,7 @@ import { createIcon } from "../icons.mjs";
 import { renderAxesParameterDisplay } from "../axes-parameters.mjs";
 
 import { setBlockType } from "prosemirror-commands";
-import { toggleMark } from "./commands.ts";
+import { toggleMark, removeMark } from "./commands.ts";
 
 import {
     getPathOfTypes,
@@ -1531,11 +1531,34 @@ export class UIProseMirrorMenuBlocks extends _BaseComponent {
     }
 }
 export class UIProseMirrorMenuStyles extends _BaseComponent {
-    constructor(widgetBus, originTypeSpecPath, label = null) {
+    constructor(
+        widgetBus,
+        originTypeSpecPath,
+        label = null,
+        showClearStylesButton = true,
+    ) {
         super(widgetBus);
         this._originTypeSpecPath = originTypeSpecPath;
         this._buttonToStyle = new Map();
         [this.element, this._stylesContainer] = this._initTemplate(label);
+        this._clearStylesButton = showClearStylesButton
+            ? this._createClearStylesButton()
+            : null;
+    }
+
+    _createClearStylesButton() {
+        const h = this._domTool.h,
+            button = (
+                <button
+                    type="button"
+                    class="ui_prose_mirror_menu-clear_styles"
+                    title="Remove styles"
+                >
+                    {createIcon("format_clear")}
+                </button>
+            );
+        button.disabled = true;
+        return button;
     }
 
     _getTemplate(h, label = null) {
@@ -1570,12 +1593,17 @@ export class UIProseMirrorMenuStyles extends _BaseComponent {
     _stylesClickHandler(event) {
         const targetButton = event.target.closest("button");
         // if(!targetButton) we did not actually click a button but mahybe stylesContainer directly
-        if (
-            !targetButton ||
-            !this._buttonToStyle.has(targetButton) ||
-            !this._editorView
-        )
+        if (!targetButton || !this._editorView) return;
+        if (targetButton === this._clearStylesButton) {
+            event.preventDefault();
+            this._editorView.focus(); // important to keep the selection alive
+            if (targetButton.disabled) return;
+            const { dispatch, state } = this._editorView,
+                markType = state.schema.marks["generic-style"];
+            removeMark(markType)(state, dispatch);
             return;
+        }
+        if (!this._buttonToStyle.has(targetButton)) return;
 
         event.preventDefault();
         this._editorView.focus(); // important to keep the selection alive
@@ -1702,7 +1730,12 @@ export class UIProseMirrorMenuStyles extends _BaseComponent {
             );
             this._buttonToStyle.set(button, styleName);
         }
-        this._stylesContainer.replaceChildren(...this._buttonToStyle.keys());
+        const children = Array.from(this._buttonToStyle.keys());
+        if (this._clearStylesButton !== null) {
+            this._clearStylesButton.disabled = activeStyles.size === 0;
+            children.push(this._clearStylesButton);
+        }
+        this._stylesContainer.replaceChildren(...children);
     }
 
     destroyView() {

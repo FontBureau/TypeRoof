@@ -247,3 +247,32 @@ export function toggleMark(
         return true;
     };
 }
+
+/**
+ * removeMark – unconditionally remove all marks of markType from the
+ * selection (or from the stored marks when the selection is empty).
+ */
+export function removeMark(markType: MarkType): Command {
+    return function (
+        state: EditorState,
+        dispatch: ((tr: Transaction) => void) | undefined,
+    ): boolean {
+        const { empty, $cursor, ranges } = state.selection as TextSelection;
+        if (
+            (empty && !$cursor) ||
+            !markApplies(state.doc, ranges, markType, true)
+        )
+            return false;
+        if (dispatch) {
+            if ($cursor) {
+                dispatch(state.tr.removeStoredMark(markType));
+            } else {
+                const tr = state.tr;
+                for (const r of ranges)
+                    tr.removeMark(r.$from.pos, r.$to.pos, markType);
+                dispatch(tr.scrollIntoView());
+            }
+        }
+        return true;
+    };
+}
