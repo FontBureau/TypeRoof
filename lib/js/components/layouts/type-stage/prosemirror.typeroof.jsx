@@ -10,7 +10,6 @@ import { getRegisteredPropertySetup } from "../../registered-properties.mjs";
 import { setLanguageTag } from "../../language-tags.typeroof.jsx";
 import { _BaseDropTarget } from "../../generic.mjs";
 import {
-    UIProseMirrorMenuStyles,
     UIDocumentTypeSpecStyler,
     UIDocumentStyleStyler,
     UIDocumentUnkownStyleStyler,
@@ -725,10 +724,12 @@ export class RampProseMirrorContext extends BaseProseMirrorContext {
         super(widgetBus, zones, [
             [
                 // IMPORTANT: must be before ProseMirror
-                { ...menuSettings, id: new.target.ID_MAP.menu },
-                ["typeSpec", "nodeSpecToTypeSpec"],
-                UIProseMirrorMenuStyles,
+                { id: new.target.ID_MAP.menu },
+                [],
+                UIProseMirrorMenu,
+                zones,
                 originTypeSpecPath,
+                menuSettings,
             ],
             [
                 { ...proseMirrorSettings, id: new.target.ID_MAP.proseMirror },
