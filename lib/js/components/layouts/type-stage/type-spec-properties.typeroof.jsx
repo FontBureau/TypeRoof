@@ -173,7 +173,6 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                     ["typeSpecProperties@", "properties@"],
                 ],
                 UIshowProcessedProperties,
-                "TypeSpec",
             ],
         ];
         return widgets.map((widgetArgs) =>
