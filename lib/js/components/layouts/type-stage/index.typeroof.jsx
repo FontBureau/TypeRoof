@@ -127,6 +127,9 @@ const TypeStageModel = _BaseLayoutModel.createClass(
             }
         },
     ),
+    // fixme: add a coherence function to ensure the link paths in nodeSpecToTypeSpec
+    // are explicitly relative, i.e. start with a "./" not "/". could eventually also
+    // start with "../"
 );
 
 class TypeStageController extends _BaseContainerComponent {
