@@ -146,35 +146,35 @@
     [
       "heading-1",
       {
-          "link": "/children/0",
+          "link": "./children/0",
           "label": "H1"
       }
     ],
     [
       "heading-2",
       {
-          "link": "/children/1",
+          "link": "./children/1",
           "label": "H2"
       }
     ],
     [
       "heading-3",
       {
-          "link": "/children/2",
+          "link": "./children/2",
           "label": "H3"
       }
     ],
     [
       "paragraph",
       {
-          "link": "/children/3",
+          "link": "./children/3",
           "label": "T1"
       }
     ],
     [
       "paragraph-2",
       {
-          "link": "/children/4",
+            "link": "./children/4",
           "label": "T2"
       }
     ]
