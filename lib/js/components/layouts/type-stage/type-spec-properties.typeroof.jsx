@@ -122,37 +122,51 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 },
             ],
             [
-                {
-                    rootPath: typeSpecPath,
-                    zone: "main",
-                },
+                { zone: "main" },
+                [],
+                CollapsibleContainer,
+                this._zones,
+                "font",
+                "minimal",
+                "typespec_font", //classNameParticle
+                // widgets
                 [
-                    "font",
-                    ["/font", "rootFont"],
-                    ["typeSpecProperties@", "properties@"],
+                    [
+                        {
+                            rootPath: typeSpecPath,
+                            zone: "label",
+                        },
+                        [
+                            "font",
+                            ["/font", "rootFont"],
+                            ["typeSpecProperties@", "properties@"],
+                        ],
+                        UIFontLabel,
+                        ProcessedPropertiesSystemMap.createSimpleRecord(
+                            SPECIFIC,
+                            "font",
+                        ),
+                        "span",
+                        {},
+                        (font, inherited = false) => {
+                            return (
+                                ` ${font.nameVersion}` +
+                                (inherited ? " (inherited)" : "")
+                            );
+                        },
+                    ],
+                    [
+                        {
+                            rootPath: typeSpecPath,
+                            zone: "main",
+                        },
+                        [["/availableFonts", "options"], "activeFontKey"],
+                        FontSelect,
+                        true,
+                    ],
                 ],
-                UIFontLabel,
-                ProcessedPropertiesSystemMap.createSimpleRecord(
-                    SPECIFIC,
-                    "font",
-                ),
-                "span",
-                {},
-                (font, inherited = false) => {
-                    return (
-                        `${font.nameVersion}` +
-                        (inherited ? " (inherited)" : "")
-                    );
-                },
-            ],
-            [
-                {
-                    rootPath: typeSpecPath,
-                    zone: "main",
-                },
-                [["/availableFonts", "options"], "activeFontKey"],
-                FontSelect,
-                true,
+                false, // open
+                false, // scroll
             ],
             [
                 { rootPath: typeSpecPath, zone: "main" },
