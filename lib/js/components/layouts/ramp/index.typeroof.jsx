@@ -97,7 +97,9 @@ class TypeSpecSelect extends GenericSelect {
         if (this._typeSpecLabels.has(key)) {
             const { treePrefix: prefix, label } = this._typeSpecLabels.get(key);
             treePrefix = prefix;
-            if (label !== "") labels.unshift(label);
+            // We omit TypeSpec labels in the ramp, instead we focus on
+            // the "Edge" labels.
+            if (label !== "") labels.push(`label: ${label}`);
         }
 
         if (key === ".")
@@ -189,7 +191,7 @@ class TypeSpecSelect extends GenericSelect {
             }
             const data = this._metaData.get(linkStr);
             if (nodeKey !== null && edgeLabel !== "")
-                data.labels.push(`${edgeLabel} :: ${nodeKey}`);
+                data.labels.push(`${edgeLabel} (Node: ${nodeKey})`);
             else if (nodeKey !== null) data.labels.push(nodeKey);
             else if (edgeLabel !== "") data.labels.push(edgeLabel);
         };
@@ -352,7 +354,7 @@ class RampController extends _BaseContainerComponent {
                     ["nodeSpecToTypeSpec"],
                 ],
                 TypeSpecSelect,
-                "Choose a TypeSpec",
+                "Editing TypeSpec",
             ],
             [
                 {},
