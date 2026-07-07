@@ -8,9 +8,6 @@ import {
     Path,
     BooleanModel,
     CoherenceFunction,
-    deserializeSync,
-    SERIALIZE_OPTIONS,
-    SERIALIZE_FORMAT_OBJECT,
 } from "../../../metamodel.mjs";
 import {
     TypeSpecModel,
@@ -44,6 +41,8 @@ import {
     UIStylePatchesMap,
 } from "../type-stage/style-patches.typeroof.jsx";
 import { RampProseMirrorContext } from "../type-stage/prosemirror.typeroof.jsx";
+
+import {initTypeSpecCoherenceFn} from "../type-stage/index.typeroof.jsx";
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 
 //  We can't create the self-reference directly
@@ -63,65 +62,7 @@ const RampModel = _BaseLayoutModel.createClass(
     // the root of all typeSpecs
     ["document", NodeModel],
     ["showParameters", BooleanModel],
-    CoherenceFunction.create(
-        [
-            "document",
-            "typeSpec",
-            "stylePatchesSource",
-            "proseMirrorSchema",
-            "nodeSpecToTypeSpec",
-        ],
-        function initTypeSpec({
-            typeSpec,
-            document,
-            stylePatchesSource,
-            proseMirrorSchema,
-            nodeSpecToTypeSpec,
-        }) {
-            // if typeSpec and document are empty
-            if (
-                document.get("content").size === 0 &&
-                typeSpec.get("children").size === 0 &&
-                stylePatchesSource.size === 0
-            ) {
-                for (const [Model, target, data] of [
-                    [NodeModel, document, DEFAULT_STATE.document],
-                    [TypeSpecModel, typeSpec, DEFAULT_STATE.typeSpec],
-                    [
-                        StylePatchesMapModel,
-                        stylePatchesSource,
-                        DEFAULT_STATE.stylePatchesSource,
-                    ],
-                    [
-                        ProseMirrorSchemaModel,
-                        proseMirrorSchema,
-                        DEFAULT_STATE.proseMirrorSchema,
-                    ],
-                    [
-                        NodeSpecToTypeSpecMapModel,
-                        nodeSpecToTypeSpec,
-                        DEFAULT_STATE.nodeSpecToTypeSpec,
-                    ],
-                ]) {
-                    const serializeOptions = Object.assign(
-                            {},
-                            SERIALIZE_OPTIONS,
-                            {
-                                format: SERIALIZE_FORMAT_OBJECT,
-                            },
-                        ),
-                        newItem = deserializeSync(
-                            Model,
-                            target.dependencies,
-                            data,
-                            serializeOptions,
-                        );
-                    for (const [key, enrty] of newItem.entries())
-                        target.set(key, enrty);
-                }
-            }
-        },
-    ),
+    initTypeSpecCoherenceFn(DEFAULT_STATE),
 );
 
 class RampController extends _BaseContainerComponent {
