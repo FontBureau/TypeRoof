@@ -717,6 +717,10 @@ processed properties
 .ui-show_processed_properties {
     font-variation-settings: "wdth" 80;
     margin: 1.5em 0;
+
+    .ui_collapsible-closed & {
+        display: none;
+    }
 }
 
 .ui-show_processed_properties h4 {
