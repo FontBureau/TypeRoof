@@ -22,6 +22,7 @@ import {
     Collapsible,
     WasteBasketDropTarget,
     UICheckboxInput,
+    GenericSelect,
 } from "../../generic.mjs";
 import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
 import { GENERIC } from "../../registered-properties-definitions.mjs";
@@ -42,7 +43,7 @@ import {
 } from "../type-stage/style-patches.typeroof.jsx";
 import { RampProseMirrorContext } from "../type-stage/prosemirror.typeroof.jsx";
 
-import {initTypeSpecCoherenceFn} from "../type-stage/index.typeroof.jsx";
+import { initTypeSpecCoherenceFn } from "../type-stage/index.typeroof.jsx";
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 
 //  We can't create the self-reference directly
@@ -64,6 +65,130 @@ const RampModel = _BaseLayoutModel.createClass(
     ["showParameters", BooleanModel],
     initTypeSpecCoherenceFn(DEFAULT_STATE),
 );
+
+class TypeSpecSelect extends GenericSelect {
+    static BASE_CLASS = "ui_type_spec_select";
+    _metaData = new Map();
+    _typeSpecLabels = new Map();
+    constructor(widgetBus, labelContent) {
+        const allowNull = []; // use for root? otherwise, root could be included in the values...
+        // the typeSpecPath value, however, can be empty!
+        super(
+            widgetBus,
+            new.target.BASE_CLASS,
+            labelContent,
+            null /*optionGetLabel=null*/,
+            allowNull /* =[] */,
+            new.target.onChangeFn,
+            /* =null , optionGetGroup=null , optionsGen=null */
+        );
+    }
+
+    static onChangeFn(value) {
+        this.getEntry("value").value = value;
+    }
+
+    _optionGetLabel(key /*, value*/) {
+        const labels = [];
+        if (this._metaData.has(key))
+            labels.push(...this._metaData.get(key).labels);
+
+        if (this._typeSpecLabels.has(key))
+            labels.unshift(this._typeSpecLabels.get(key));
+
+        if (key === ".")
+            //root
+            labels.unshift("Origin TypeSpec");
+        return labels.length === 0 ? key : labels.join(" ");
+    }
+
+    *_optionsGen(rootTypeSpec) {
+        const layers = [[Path.fromParts("."), rootTypeSpec]];
+        while (layers.length) {
+            const layer = layers.pop(),
+                [currentPath, currentTypeSpec] = layer,
+                currentPathStr = currentPath.toString(Path.RELATIVE);
+            if (!this._metaData.has(currentPathStr))
+                // we can cut short here, as this._metaData contains
+                // the leaves and all their parents, so if a parent is
+                // missing, we don't need to visit and attempt to yield
+                // the children.
+                continue;
+            const typeSpecLabel = currentTypeSpec.get("label").value;
+            if (typeSpecLabel !== "")
+                this._typeSpecLabels.set(
+                    currentPathStr,
+                    currentTypeSpec.get("label").value,
+                );
+            yield [currentPathStr, currentPath];
+            const children = currentTypeSpec.get("children"),
+                childrenLayers = [];
+            for (const [key, childTypeSpec] of children)
+                childrenLayers.push([
+                    currentPath.append("children", key),
+                    childTypeSpec,
+                ]);
+            // reverse children first...
+            childrenLayers.reverse();
+            layers.unshift(...childrenLayers);
+        }
+    }
+
+    _updateMetaData(nodeSpecToTypeSpec) {
+        /* pass */
+        // This is a stub! in the final options we want to have all
+        // items that are targets in nodeSpecToTypeSpec, e.g.
+        //  for(const edge of nodeSpecToTypeSpec.values())
+        //          const linkStr = edge.get('link').value;
+        // AND all of the parents of that link up to the "rootTypeSpec"
+        // which would be just '.'
+        // The paths are folded with the `children` part, we don't need
+        // the paths to the "children" items, as they are just structure
+        // and can't be active TypeSpec
+        const upsertEdge = (linkStr, nodeKey = null, edgeLabel = "") => {
+            if (!this._metaData.has(linkStr)) {
+                this._metaData.set(linkStr, { labels: [] });
+            }
+            const data = this._metaData.get(linkStr);
+            if (nodeKey !== null && edgeLabel !== "")
+                data.labels.push(`${edgeLabel} :: ${nodeKey}`);
+            else if (nodeKey !== null) data.labels.push(nodeKey);
+            else if (edgeLabel !== "") data.labels.push(edgeLabel);
+        };
+
+        this._metaData.clear();
+        for (const [nodeKey, edge] of nodeSpecToTypeSpec) {
+            const linkStr = edge.get("link").value;
+            upsertEdge(linkStr, nodeKey, edge.get("label").value);
+            if (linkStr === ".") continue;
+            let linkPath = Path.fromParts(linkStr);
+            while (linkPath.parts.length) {
+                // removes ['children', key]
+                linkPath = linkPath.parent.parent;
+                upsertEdge(linkPath.toString(Path.RELATIVE));
+            }
+        }
+    }
+
+    _updateValue(activePath) {
+        this._select.value = activePath.isEmpty
+            ? "." // root? must it be a Path?
+            : activePath.value.toString(Path.RELATIVE);
+    }
+
+    update(changedMap) {
+        let _changedMap = changedMap;
+        if (changedMap.has("nodeSpecToTypeSpec")) {
+            this._updateMetaData(changedMap.get("nodeSpecToTypeSpec"));
+            // Now ensure options are updated.
+            if (!changedMap.has("options")) {
+                _changedMap = new Map(changedMap);
+                _changedMap.set("options", this._getEntry("options"));
+            }
+        }
+        super.update(_changedMap);
+    }
+}
 
 class RampController extends _BaseContainerComponent {
     constructor(widgetBus, _zones) {
@@ -180,6 +305,16 @@ class RampController extends _BaseContainerComponent {
                 Collapsible,
                 "Styles",
                 stylePatchesManagerContainer,
+            ],
+            [
+                { zone: "properties-manager" },
+                [
+                    ["editingTypeSpec", "value"],
+                    ["typeSpec", "options"],
+                    ["nodeSpecToTypeSpec"],
+                ],
+                TypeSpecSelect,
+                "Choose a TypeSpec",
             ],
             [
                 {},

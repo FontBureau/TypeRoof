@@ -53,7 +53,7 @@ import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" wit
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
 export function initTypeSpecCoherenceFn(DEFAULT_STATE) {
-    return  CoherenceFunction.create(
+    return CoherenceFunction.create(
         [
             "document",
             "typeSpec",
