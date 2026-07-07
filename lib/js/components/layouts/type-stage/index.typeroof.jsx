@@ -52,23 +52,8 @@ import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" wit
 
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
-const TypeStageModel = _BaseLayoutModel.createClass(
-    "TypeStageModel",
-    // The root TypeSpec
-    ["typeSpec", TypeSpecModel],
-    ["editingTypeSpec", PathModelOrEmpty],
-    // could potentially be a struct with some coherence logic etc.
-    // for the actual data
-    ["stylePatchesSource", StylePatchesMapModel],
-    ["editingStylePatch", PathModelOrEmpty],
-    ["proseMirrorSchema", ProseMirrorSchemaModel],
-    ["editingNodeSpecPath", PathModelOrEmpty],
-    ["nodeSpecToTypeSpec", NodeSpecToTypeSpecMapModel],
-    // the root of all typeSpecs
-    ["document", NodeModel],
-    ["showParameters", BooleanModel],
-    ["showNodeTypeSpecLabels", BooleanModel],
-    CoherenceFunction.create(
+export function initTypeSpecCoherenceFn(DEFAULT_STATE) {
+    return  CoherenceFunction.create(
         [
             "document",
             "typeSpec",
@@ -126,7 +111,25 @@ const TypeStageModel = _BaseLayoutModel.createClass(
                 }
             }
         },
-    ),
+    );
+}
+const TypeStageModel = _BaseLayoutModel.createClass(
+    "TypeStageModel",
+    // The root TypeSpec
+    ["typeSpec", TypeSpecModel],
+    ["editingTypeSpec", PathModelOrEmpty],
+    // could potentially be a struct with some coherence logic etc.
+    // for the actual data
+    ["stylePatchesSource", StylePatchesMapModel],
+    ["editingStylePatch", PathModelOrEmpty],
+    ["proseMirrorSchema", ProseMirrorSchemaModel],
+    ["editingNodeSpecPath", PathModelOrEmpty],
+    ["nodeSpecToTypeSpec", NodeSpecToTypeSpecMapModel],
+    // the root of all typeSpecs
+    ["document", NodeModel],
+    ["showParameters", BooleanModel],
+    ["showNodeTypeSpecLabels", BooleanModel],
+    initTypeSpecCoherenceFn(DEFAULT_STATE),
     // fixme: add a coherence function to ensure the link paths in nodeSpecToTypeSpec
     // are explicitly relative, i.e. start with a "./" not "/". could eventually also
     // start with "../"
