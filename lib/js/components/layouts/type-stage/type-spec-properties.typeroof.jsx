@@ -3,7 +3,11 @@ import {
     _BaseDynamicCollectionContainerComponent,
 } from "../../basics.mjs";
 import { Path, getEntry, ForeignKey } from "../../../metamodel.mjs";
-import { StaticTag, UILineOfTextInput, DynamicTag } from "../../generic.mjs";
+import {
+    UILineOfTextInput,
+    DynamicTag,
+    CollapsibleContainer,
+} from "../../generic.mjs";
 import { FontSelect } from "../../font-loading.mjs";
 import { typeSpecGetDefaults } from "./defaults.mjs";
 import {
@@ -96,26 +100,26 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                     : this.getEntry(typeSpecPropertiesKey);
             },
             getDefaults = typeSpecGetDefaults.bind(null, getLiveProperties);
+
         const widgets = [
             [
                 {
                     zone: "main",
+                    rootPath: typeSpecPath,
                 },
-                [],
-                StaticTag,
+                [["label", "data"]],
+                DynamicTag,
                 "h3",
                 {},
-                (typeSpecPath.equals(rootTypeSpecPath) ? "Origin " : "") +
-                    `TypeSpec`,
-            ],
-            [
-                {
-                    rootPath: typeSpecPath,
-                    zone: "main",
+                (label) => {
+                    return (
+                        (typeSpecPath.equals(rootTypeSpecPath)
+                            ? "Origin "
+                            : "") +
+                        `TypeSpec` +
+                        (label !== "" ? ` ${label}` : "")
+                    );
                 },
-                [["label", "value"]],
-                UILineOfTextInput,
-                "Label",
             ],
             [
                 {
@@ -174,6 +178,29 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 ],
                 UIshowProcessedPropertiesCollapsible,
                 this._zones,
+            ],
+            [
+                { zone: "main" },
+                [],
+                CollapsibleContainer,
+                this._zones,
+                "settings",
+                "minimal",
+                "typespec_inherent_settings", //classNameParticle
+                [
+                    // widgets
+                    [
+                        {
+                            rootPath: typeSpecPath,
+                            zone: "main",
+                        },
+                        [["label", "value"]],
+                        UILineOfTextInput,
+                        "Label",
+                    ],
+                ],
+                false, // isOpened = false,
+                false, // scroll = false,
             ],
         ];
         return widgets.map((widgetArgs) =>
