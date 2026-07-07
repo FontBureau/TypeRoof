@@ -93,43 +93,81 @@ class TypeSpecSelect extends GenericSelect {
         if (this._metaData.has(key))
             labels.push(...this._metaData.get(key).labels);
 
-        if (this._typeSpecLabels.has(key))
-            labels.unshift(this._typeSpecLabels.get(key));
+        let treePrefix = "";
+        if (this._typeSpecLabels.has(key)) {
+            const { treePrefix: prefix, label } = this._typeSpecLabels.get(key);
+            treePrefix = prefix;
+            if (label !== "") labels.unshift(label);
+        }
 
         if (key === ".")
             //root
             labels.unshift("Origin TypeSpec");
-        return labels.length === 0 ? key : labels.join(" ");
+
+        const text = labels.length === 0 ? key : labels.join(" ");
+        return `${treePrefix}${text}`;
     }
 
     *_optionsGen(rootTypeSpec) {
-        const layers = [[Path.fromParts("."), rootTypeSpec]];
+        // idempotent: options are fully rebuilt on every update
+        this._typeSpecLabels.clear();
+
+        // this._metaData holds every reachable node (the leaves and all
+        // their ancestors up to "."). It is the single source of truth for
+        // visibility, so we check it once here for the root and once per
+        // child at enqueue time (needed anyway to know each node's last
+        // *visible* child).
+        if (!this._metaData.has(".")) return;
+
+        const layers = [
+            // [path, typeSpec, ancestorPrefix, isLast, isRoot]
+            [Path.fromParts("."), rootTypeSpec, "", true, true],
+        ];
         while (layers.length) {
-            const layer = layers.pop(),
-                [currentPath, currentTypeSpec] = layer,
-                currentPathStr = currentPath.toString(Path.RELATIVE);
-            if (!this._metaData.has(currentPathStr))
-                // we can cut short here, as this._metaData contains
-                // the leaves and all their parents, so if a parent is
-                // missing, we don't need to visit and attempt to yield
-                // the children.
-                continue;
-            const typeSpecLabel = currentTypeSpec.get("label").value;
-            if (typeSpecLabel !== "")
-                this._typeSpecLabels.set(
-                    currentPathStr,
-                    currentTypeSpec.get("label").value,
-                );
+            const [
+                    currentPath,
+                    currentTypeSpec,
+                    ancestorPrefix,
+                    isLast,
+                    isRoot,
+                ] = layers.shift(),
+                currentPathStr = currentPath.toString(Path.RELATIVE),
+                // The root is marked with a bullet trunk, its descendants
+                // use bold box-drawing connectors.
+                treePrefix = isRoot
+                    ? "●\xa0"
+                    : `${ancestorPrefix}${isLast ? "┗━" : "┣━"}\xa0`;
+            this._typeSpecLabels.set(currentPathStr, {
+                treePrefix,
+                label: currentTypeSpec.get("label").value,
+            });
             yield [currentPathStr, currentPath];
-            const children = currentTypeSpec.get("children"),
-                childrenLayers = [];
-            for (const [key, childTypeSpec] of children)
-                childrenLayers.push([
-                    currentPath.append("children", key),
-                    childTypeSpec,
-                ]);
-            // reverse children first...
-            childrenLayers.reverse();
+
+            const visibleChildren = [];
+            for (const [key, childTypeSpec] of currentTypeSpec.get(
+                "children",
+            )) {
+                const childPath = currentPath.append("children", key);
+                if (this._metaData.has(childPath.toString(Path.RELATIVE)))
+                    visibleChildren.push([childPath, childTypeSpec]);
+            }
+
+            // For the child level: a guide pipe if this node has a following
+            // sibling, blank space if it was the last child. The root's
+            // children hang directly under the "●" trunk (empty prefix).
+            const childAncestorPrefix = isRoot
+                    ? ""
+                    : `${ancestorPrefix}${isLast ? "\xa0\xa0\xa0" : "┃\xa0\xa0"}`,
+                childrenLayers = visibleChildren.map(
+                    ([childPath, childTypeSpec], index) => [
+                        childPath,
+                        childTypeSpec,
+                        childAncestorPrefix,
+                        index === visibleChildren.length - 1, // isLast
+                        false, // isRoot
+                    ],
+                );
+            // shift() takes from the front, unshift() prepends -> DFS pre-order.
             layers.unshift(...childrenLayers);
         }
     }
