@@ -433,20 +433,18 @@ class NodeTypeSpecLabel extends _BaseComponent {
                     .get("label").value;
                 if (edgeLabel !== "") label = edgeLabel;
             }
-            if (label === null) {
-                const typeSpecLabel = (
-                    changedMap.has("typeSpecLabel")
-                        ? changedMap.get("typeSpecLabel")
-                        : this.getEntry("typeSpecLabel")
-                ).value;
-                if (typeSpecLabel !== "") label = typeSpecLabel;
-            }
+
+            const typeSpecLabel = (
+                changedMap.has("typeSpecLabel")
+                    ? changedMap.get("typeSpecLabel")
+                    : this.getEntry("typeSpecLabel")
+            ).value;
 
             if (label === null) label = this._nodeTypeName;
 
             this.element.setAttribute(
                 "title",
-                `${label} :: Node Type ${this._nodeTypeName} :: Type Spec Path ${this._typeSpecPath}`,
+                `${label} :: Node ${this._nodeTypeName} :: TypeSpec: ${typeSpecLabel !== "" ? " " + typeSpecLabel : ""} ${this._typeSpecPath}`,
             );
             this.label.textContent = label;
         }

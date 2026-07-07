@@ -2195,3 +2195,22 @@ ui-contextual-template
     border-top: 1px solid var(--fieldset-border-color);
     padding-left: 0.75em;
 }
+
+/**************************************************************************** *
+select menus...
+/**************************************************************************** */
+
+.ui_type_spec_select-select,
+.ui_font-select_select {
+    /* This made long options overflow and break, the overflow options
+     * below did not have an effect (in Chrome).
+     * value `auto` restores expected behavior.
+     */
+    &,
+    &::picker(select) {
+        appearance: auto;
+    }
+
+    width: 100%;
+    text-overflow: ellipsis;
+}
