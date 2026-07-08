@@ -1,8 +1,11 @@
 import { _BaseContainerComponent } from "./basics.mjs";
 
+import { require } from "./dependency-injection.mjs";
+
 import {
     UINumberAndRangeOrEmptyInput,
     UISelectOrEmptyInput,
+    CollapsibleContainer,
 } from "./generic.mjs";
 
 import { MarginUnitModel } from "./type-spec-models.mjs";
@@ -66,14 +69,12 @@ class UIMarginInput extends _BaseContainerComponent {
 }
 
 export class UIMargins extends _BaseContainerComponent {
-    constructor(widgetBus, _zones, label) {
+    constructor(widgetBus, _zones, label = null) {
         const { h } = widgetBus.domTool,
-            element = (
-                <div class="ui-margins">
-                    <h3 class="ui-margins-label">{label}</h3>
-                </div>
-            ),
+            element = <div class="ui-margins"></div>,
             zones = new Map([..._zones, ["main", element]]);
+        if (label !== null)
+            element.append(<h3 class="ui-margins-label">{label}</h3>);
         widgetBus.insertElement(element);
         super(widgetBus, zones, [
             ...["start", "end"].map((pos) => {
@@ -88,5 +89,40 @@ export class UIMargins extends _BaseContainerComponent {
                 ];
             }),
         ]);
+    }
+}
+
+export class UIMarginsCollapsible extends CollapsibleContainer {
+    constructor(
+        widgetBus,
+        _zones,
+        togglerLabel,
+        isOpened = false,
+        scroll = false,
+    ) {
+        const classNameParticle = "margins",
+            flavor = "minimal";
+        const widgets = [
+            [
+                {
+                    zone: "main",
+                    // rootPath: same as parent
+                },
+                [],
+                UIMargins,
+                require("raw:zones"),
+                // label=null
+            ],
+        ];
+        super(
+            widgetBus,
+            _zones,
+            togglerLabel,
+            flavor,
+            classNameParticle,
+            widgets,
+            isOpened,
+            scroll,
+        );
     }
 }
