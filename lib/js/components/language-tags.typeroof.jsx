@@ -1,7 +1,5 @@
 import { identity } from "../util.mjs";
 
-import { ProcessedPropertiesSystemMap } from "./registered-properties-definitions.mjs";
-
 import {
     _AbstractStructModel,
     _AbstractEnumModel,
@@ -391,25 +389,33 @@ export class UILanguageTag extends _BaseContainerComponent {
 class UILanguageLabel extends DynamicTag {
     constructor(
         widgetBus,
-        ppsRecord,
         tag,
         attr,
         formatter = identity,
         initialContent = "(initializing)",
     ) {
         super(widgetBus, tag, attr, formatter, initialContent);
-        this._ppsRecord = ppsRecord;
     }
     update(changedMap) {
         if (changedMap.has("properties@")) {
-            const propertyValuesMap = (
-                    changedMap.has("properties@")
-                        ? changedMap.get("properties@")
-                        : this.getEntry("properties@")
-                ).typeSpecnion.getProperties(),
-                languageTag = propertyValuesMap.has(this._ppsRecord.fullKey)
-                    ? propertyValuesMap.get(this._ppsRecord.fullKey)
+            const properties = changedMap.has("properties@")
+                ? changedMap.get("properties@")
+                : this.getEntry("properties@");
+            let languageTag;
+            if (properties.typeSpecnion) {
+                const propertyValuesMap =
+                        properties.typeSpecnion.getProperties(),
+                    langKey = `${LANGUAGE}lang`;
+                languageTag = propertyValuesMap.has(langKey)
+                    ? propertyValuesMap.get(langKey)
                     : null;
+            } else if (properties.animanion) {
+                const propertyValuesMap =
+                    properties.animanion.getPropertiesFromGlobalT(0);
+                // we don't have the SyntheticValue in animanion
+                languageTag = readLanguageTag(propertyValuesMap);
+            }
+
             this.element.textContent = this._formatter(
                 languageTag !== null ? ` ${languageTag}` : "",
             );
@@ -417,7 +423,7 @@ class UILanguageLabel extends DynamicTag {
     }
 }
 
-export class UICLanguageTagCollapsible extends CollapsibleContainer {
+export class UILanguageTagCollapsible extends CollapsibleContainer {
     constructor(
         widgetBus,
         _zones,
@@ -442,10 +448,6 @@ export class UICLanguageTagCollapsible extends CollapsibleContainer {
                 { zone: "label" },
                 [[widgetBus.getExternalName("properties@"), "properties@"]],
                 UILanguageLabel,
-                ProcessedPropertiesSystemMap.createSimpleRecord(
-                    LANGUAGE,
-                    "lang",
-                ),
                 "span",
                 {},
             ],
@@ -480,7 +482,7 @@ export function createLanguageTag(language, script, region) {
     return parts.join("-");
 }
 
-export function setLanguageTagDirect(element, propertyValuesMap) {
+export function readLanguageTag(propertyValuesMap) {
     const args = [];
     for (const key of ["language", "script", "region"]) {
         const fullKey = `${LANGUAGE}${key}`;
@@ -490,7 +492,11 @@ export function setLanguageTagDirect(element, propertyValuesMap) {
                 : null,
         );
     }
-    const languageTag = createLanguageTag(...args);
+    return createLanguageTag(...args);
+}
+
+export function setLanguageTagDirect(element, propertyValuesMap) {
+    const languageTag = readLanguageTag(propertyValuesMap);
     if (languageTag !== null) element.setAttribute("lang", languageTag);
     else element.removeAttribute("lang");
 }

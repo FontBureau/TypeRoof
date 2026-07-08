@@ -108,7 +108,7 @@ import {
 
 import { UIOTFeaturesChooserCollapsible as UIOTFeaturesChooser } from "../ui-opentype-features.typeroof.jsx";
 
-import { UICLanguageTagCollapsible as UILanguageTag } from "../language-tags.typeroof.jsx";
+import { UILanguageTagCollapsible as UILanguageTag } from "../language-tags.typeroof.jsx";
 
 import { renderAxesParameterDisplay } from "../axes-parameters.mjs";
 
@@ -251,7 +251,7 @@ class UIVideoproofArrayLayer extends _BaseContainerComponent {
                         "languageTag",
                     ),
                 },
-                [],
+                [[`animationProperties@${widgetBus.rootPath}`, "properties@"]],
                 UILanguageTag,
                 this._zones,
             ],
@@ -2269,7 +2269,7 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                         "languageTag",
                     ),
                 },
-                [],
+                [[videoProofAnimationPropertiesKey, "properties@"]],
                 UILanguageTag,
                 this._zones,
             ],
