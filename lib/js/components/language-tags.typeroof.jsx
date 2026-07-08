@@ -1,3 +1,7 @@
+import { identity } from "../util.mjs";
+
+import { ProcessedPropertiesSystemMap } from "./registered-properties-definitions.mjs";
+
 import {
     _AbstractStructModel,
     _AbstractEnumModel,
@@ -384,6 +388,35 @@ export class UILanguageTag extends _BaseContainerComponent {
     }
 }
 
+class UILanguageLabel extends DynamicTag {
+    constructor(
+        widgetBus,
+        ppsRecord,
+        tag,
+        attr,
+        formatter = identity,
+        initialContent = "(initializing)",
+    ) {
+        super(widgetBus, tag, attr, formatter, initialContent);
+        this._ppsRecord = ppsRecord;
+    }
+    update(changedMap) {
+        if (changedMap.has("properties@")) {
+            const propertyValuesMap = (
+                    changedMap.has("properties@")
+                        ? changedMap.get("properties@")
+                        : this.getEntry("properties@")
+                ).typeSpecnion.getProperties(),
+                languageTag = propertyValuesMap.has(this._ppsRecord.fullKey)
+                    ? propertyValuesMap.get(this._ppsRecord.fullKey)
+                    : null;
+            this.element.textContent = this._formatter(
+                languageTag !== null ? ` ${languageTag}` : "",
+            );
+        }
+    }
+}
+
 export class UICLanguageTagCollapsible extends CollapsibleContainer {
     constructor(
         widgetBus,
@@ -407,25 +440,14 @@ export class UICLanguageTagCollapsible extends CollapsibleContainer {
             ],
             [
                 { zone: "label" },
-                [[".", "data"]],
-                DynamicTag,
+                [[widgetBus.getExternalName("properties@"), "properties@"]],
+                UILanguageLabel,
+                ProcessedPropertiesSystemMap.createSimpleRecord(
+                    LANGUAGE,
+                    "lang",
+                ),
                 "span",
-                {}, //attr
-                // formatter
-                (data) => {
-                    // It would be even better to read this from processed properties, like
-                    // the color chooser does for it's label, but so far UICLanguageTagCollapsible
-                    // is designed as a drop-in replacement for UILanguageTag and that has no
-                    // knowkledge about it's target. So we only show the data that is actually
-                    // there, not the full result.
-                    const args = [];
-                    for (const key of ["language", "script", "region"]) {
-                        const item = data.get(key);
-                        args.push(item.isEmpty ? null : item.value);
-                    }
-                    const tag = createLanguageTag(...args);
-                    return tag !== null ? ` ${tag}` : "";
-                },
+                {},
             ],
         ];
         super(
