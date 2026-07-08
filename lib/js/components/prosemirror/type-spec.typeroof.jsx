@@ -444,7 +444,7 @@ class NodeTypeSpecLabel extends _BaseComponent {
 
             this.element.setAttribute(
                 "title",
-                `${label} :: Node ${this._nodeTypeName} :: TypeSpec: ${typeSpecLabel !== "" ? " " + typeSpecLabel : ""} ${this._typeSpecPath}`,
+                `${label} :: Node ${this._nodeTypeName} :: TypeSpec ${typeSpecLabel !== "" ? " " + typeSpecLabel : ""} ${this._typeSpecPath}`,
             );
             this.label.textContent = label;
         }
