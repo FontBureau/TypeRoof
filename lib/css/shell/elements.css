@@ -204,3 +204,13 @@ button.ui_button.ui_button-move.drag_handle {
     border-color: var(--color-danger);
     color: var(--color-danger);
 }
+
+.ui_toggle_button-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+
+    .material-symbols-outlined {
+        font-size: 2rem !important;
+    }
+}
