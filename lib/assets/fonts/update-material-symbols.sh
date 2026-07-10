@@ -28,6 +28,8 @@ ICON_NAMES=(
     refresh
     remove
     swap_vert
+    toggle_on
+    toggle_off
     edit
     edit_off
     open_in_full
