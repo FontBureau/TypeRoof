@@ -7,6 +7,7 @@ import {
     UILineOfTextInput,
     DynamicTag,
     CollapsibleContainer,
+    StaticTag,
 } from "../../generic.mjs";
 import { FontSelect } from "../../font-loading.mjs";
 import { typeSpecGetDefaults } from "./defaults.mjs";
@@ -14,12 +15,36 @@ import {
     ProcessedPropertiesSystemMap,
     SPECIFIC,
 } from "../../registered-properties-definitions.mjs";
-import { UITypeDrivenContainer } from "../../type-driven-ui-basics.mjs";
+
+import { require } from "../../dependency-injection.mjs";
+
+import {
+    UITypeDrivenContainer,
+    createTypeToUIElementFunction,
+} from "../../type-driven-ui-basics.mjs";
 import { genericTypeToUIElement } from "../../type-driven-ui.mjs";
 import { TYPESPEC_PPS_MAP } from "./pps-maps.mjs";
 import { UIshowProcessedPropertiesCollapsible } from "../../processed-properties.mjs";
 import { TypeSpecModel } from "../../type-spec-models.mjs";
 import { identity } from "../../../util.mjs";
+
+import {
+    AxesLocationsModel,
+    UIManualAxesLocations,
+} from "../../ui-manual-axis-locations.mjs";
+
+import { ManualMarginsModel } from "../../type-spec-models.mjs";
+
+import { UIMargins } from "../../ui-margins.typeroof.jsx";
+
+import {
+    LanguageTagModel,
+    UILanguageTag,
+} from "../../language-tags.typeroof.jsx";
+
+import { OpenTypeFeaturesModel } from "../../actors/models.mjs";
+
+import { UIOTFeaturesChooser } from "../../ui-opentype-features.typeroof.jsx";
 
 class UIFontLabel extends DynamicTag {
     constructor(
@@ -50,6 +75,89 @@ class UIFontLabel extends DynamicTag {
     }
 }
 
+const uiElementMap = new Map([
+        [
+            AxesLocationsModel,
+            [
+                UIManualAxesLocations,
+                require("settings:internalPropertyName", "axesLocations"),
+                require("settings:dependencyMapping", [
+                    "baseFontSize",
+                    "fontSize",
+                ]),
+                // NOTE setting dependencyMapping 'font' without
+                // 'properties@' and 'rootFont' also works, but that is
+                // used in manual configurations.
+                // Where this configurarion is used in type-spec-ramp
+                // the NEW WAY is required..
+                // TODO: rootFont should not be required.
+                require("settings:dependencyMapping", ["/font", "rootFont"]),
+                require("settings:dependencyMapping", [
+                    "typeSpecProperties@",
+                    "properties@",
+                ]),
+                require("settings:dependencyMapping", "autoOPSZ"),
+                require("raw:getDefaults"), // used to be: this._getDefaults.bind(this)
+                require("ppsRecord"),
+                // within dependencyMappings: ...updateDefaultsDependencies
+                // but also injects raw:requireUpdateDefaults
+                require("requireUpdateDefaults"),
+                ({ h }) => (
+                    <h4 class="manual_axes_locations-label">
+                        Variable Font Axes
+                    </h4>
+                ),
+            ],
+        ],
+        [
+            OpenTypeFeaturesModel,
+            [
+                UIOTFeaturesChooser,
+                //, require('settings:rootPath')
+                require("settings:internalPropertyName", "openTypeFeatures"),
+                require("settings:dependencyMapping", ["/font", "rootFont"]),
+                // badly portable!
+                // , require('settings:dependencyMapping', ['typeSpecProperties@', 'properties@'])
+                // in injectable do: 'properties@': ['typeSpecProperties@', 'properties@']
+                require("zones"),
+                require("raw:getDefaults"),
+                require("requireUpdateDefaults"),
+                require("updateDefaultsDependencies"),
+                ({ h }) => (
+                    <h4 class="ui_opentype_features_chooser-label">
+                        OpenType Features
+                    </h4>
+                ),
+            ],
+        ],
+        [
+            LanguageTagModel,
+            [
+                UILanguageTag,
+                require("settings:rootPath"),
+                require("zones"),
+                // This doesn't work, instead updateDefaultsDependencies is used.
+                //, require('settings:dependencyMapping', ['typeSpecProperties@', 'properties@'])
+                require("settings:updateDefaultsDependencies"),
+                null,
+            ],
+        ],
+        [
+            ManualMarginsModel,
+            [
+                UIMargins,
+                require("settings:rootPath"),
+                require("zones"),
+                ({ h }) => <h4 class="ui-margins-label">Vertical Margins</h4>,
+            ],
+        ],
+    ]),
+    orEmptyUIElementMap = new Map(),
+    typeSpecTypeToUIElement = createTypeToUIElementFunction(
+        uiElementMap,
+        orEmptyUIElementMap,
+        genericTypeToUIElement,
+    );
 export class TypeSpecPropertiesManager extends _CommonContainerComponent {
     // jshint ignore:start
     /**
@@ -99,8 +207,52 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                     ? null
                     : this.getEntry(typeSpecPropertiesKey);
             },
-            getDefaults = typeSpecGetDefaults.bind(null, getLiveProperties);
-
+            getDefaults = typeSpecGetDefaults.bind(null, getLiveProperties),
+            filteredTypeDriven = (keys, createOwnLocalZone = false) => {
+                const filteredPPSMap = new Map();
+                for (const key of keys) {
+                    if (!TYPESPEC_PPS_MAP.has(key))
+                        throw new Error(
+                            `KEY ERROR TYPESPEC_PPS_MAP does ` +
+                                `not have key "${key}" known entries: ` +
+                                `${Array.from(TYPESPEC_PPS_MAP.keys()).join(", ")}.`,
+                        );
+                    filteredPPSMap.set(key, TYPESPEC_PPS_MAP.get(key));
+                }
+                return [
+                    { rootPath: typeSpecPath, zone: "main" },
+                    [],
+                    UITypeDrivenContainer,
+                    this._zones,
+                    {
+                        getDefaults: getDefaults,
+                        updateDefaultsDependencies,
+                        genericTypeToUIElement: typeSpecTypeToUIElement,
+                        requireUpdateDefaults,
+                    },
+                    filteredPPSMap,
+                    false, // label
+                    createOwnLocalZone, // createOwnLocalZone === false: uses wrapper.host instead i.e. "main"
+                ];
+            },
+            sections = {
+                language: ["languageTag", "direction"],
+                typeface: [
+                    "baseFontSize",
+                    "relativeFontSize",
+                    "openTypeFeatures",
+                    "axesLocations",
+                ],
+                horizontal: ["columnWidth", "textAlign"],
+                vertical: ["leading", "blockMargins"],
+                color: ["textColor", "backgroundColor"],
+            };
+        {
+            const used = new Set(Array.from(Object.values(sections)).flat());
+            sections.rest = Array.from(TYPESPEC_PPS_MAP.keys()).filter(
+                (k) => !used.has(k),
+            );
+        }
         const widgets = [
             [
                 {
@@ -126,10 +278,21 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 [],
                 CollapsibleContainer,
                 this._zones,
-                "font",
+                "Language and Script",
                 "minimal",
-                "typespec_font", //classNameParticle
-                // widgets
+                "typespec_language_and_script", //classNameParticle
+                [filteredTypeDriven(sections.language)] /* widgets */,
+                false, // open
+                false, // scroll
+            ],
+            [
+                { zone: "main" },
+                [],
+                CollapsibleContainer,
+                this._zones,
+                "Typeface and Size",
+                "minimal",
+                "typespec_typeface_and_size", //classNameParticle
                 [
                     [
                         {
@@ -149,10 +312,8 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                         "span",
                         {},
                         (font, inherited = false) => {
-                            return (
-                                ` ${font.nameVersion}` +
-                                (inherited ? " (inherited)" : "")
-                            );
+                            return ` ${font.name}`;
+                            //+ (inherited ? " (inherited)" : "")
                         },
                     ],
                     [
@@ -164,23 +325,36 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                         FontSelect,
                         true,
                     ],
+                    filteredTypeDriven(sections.typeface),
                 ],
                 false, // open
                 false, // scroll
             ],
             [
-                { rootPath: typeSpecPath, zone: "main" },
+                { zone: "main" },
                 [],
-                UITypeDrivenContainer,
+                CollapsibleContainer,
                 this._zones,
-                {
-                    getDefaults: getDefaults,
-                    updateDefaultsDependencies,
-                    genericTypeToUIElement,
-                    requireUpdateDefaults,
-                },
-                TYPESPEC_PPS_MAP,
+                "Horizontal Layout",
+                "minimal",
+                "typespec_horizontal_layout", //classNameParticle
+                [filteredTypeDriven(sections.horizontal)] /* widgets */,
+                false, // open
+                false, // scroll
             ],
+            [
+                { zone: "main" },
+                [],
+                CollapsibleContainer,
+                this._zones,
+                "Vertical Layout",
+                "minimal",
+                "typespec_vertical_layout", //classNameParticle
+                [filteredTypeDriven(sections.vertical)] /* widgets */,
+                false, // open
+                false, // scroll
+            ],
+            filteredTypeDriven([...sections.color, ...sections.rest], true),
             [
                 {
                     rootPath: typeSpecPath,
@@ -210,7 +384,7 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                         },
                         [["label", "value"]],
                         UILineOfTextInput,
-                        "Label",
+                        "TypeSpec Label",
                     ],
                 ],
                 false, // isOpened = false,
