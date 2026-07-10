@@ -433,11 +433,23 @@ class RampController extends _BaseContainerComponent {
         this.widgetBus.wrapper
             .getProtocolHandlerImplementation("typeSpecProperties@")
             .resetUpdatedLog();
+        this.widgetBus.wrapper
+            .getProtocolHandlerImplementation("stylePatchProperties@")
+            .resetUpdatedLog();
+        this.widgetBus.wrapper
+            .getProtocolHandlerImplementation("styleLinkProperties@")
+            .resetUpdatedLog();
         super.update(...args);
     }
     initialUpdate(...args) {
         this.widgetBus.wrapper
             .getProtocolHandlerImplementation("typeSpecProperties@")
+            .resetUpdatedLog();
+        this.widgetBus.wrapper
+            .getProtocolHandlerImplementation("stylePatchProperties@")
+            .resetUpdatedLog();
+        this.widgetBus.wrapper
+            .getProtocolHandlerImplementation("styleLinkProperties@")
             .resetUpdatedLog();
         super.initialUpdate(...args);
     }

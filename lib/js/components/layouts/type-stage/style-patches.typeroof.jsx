@@ -170,6 +170,10 @@ export class UIStylePatch extends _BaseContainerComponent {
                         `${this.widgetBus.rootPath.append("instance/activeFontKey")}`,
                         "activeFontKey",
                     ],
+                    [
+                        `stylePatchProperties@${this.widgetBus.rootPath}`,
+                        "properties@",
+                    ],
                 ];
             args = [
                 this._zones,
