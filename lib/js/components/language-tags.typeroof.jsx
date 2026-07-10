@@ -414,6 +414,9 @@ class UILanguageLabel extends DynamicTag {
                     properties.animanion.getPropertiesFromGlobalT(0);
                 // we don't have the SyntheticValue in animanion
                 languageTag = readLanguageTag(propertyValuesMap);
+            } else {
+                const propertyValuesMap = properties.propertyValuesMap;
+                languageTag = readLanguageTag(propertyValuesMap);
             }
 
             this.element.textContent = this._formatter(
