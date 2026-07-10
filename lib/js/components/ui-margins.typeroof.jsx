@@ -73,8 +73,15 @@ export class UIMargins extends _BaseContainerComponent {
         const { h } = widgetBus.domTool,
             element = <div class="ui-margins"></div>,
             zones = new Map([..._zones, ["main", element]]);
-        if (label !== null)
-            element.append(<h3 class="ui-margins-label">{label}</h3>);
+        if (label !== null) {
+            let labelElement;
+            if (typeof label === "string")
+                labelElement = <h3 class="ui-margins-label">{label}</h3>;
+            else if (typeof label === "function")
+                labelElement = label(widgetBus.domTool);
+            else labelElement = label;
+            element.append(labelElement);
+        }
         widgetBus.insertElement(element);
         super(widgetBus, zones, [
             ...["start", "end"].map((pos) => {

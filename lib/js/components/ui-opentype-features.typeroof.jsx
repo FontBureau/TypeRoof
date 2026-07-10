@@ -478,13 +478,15 @@ export class UIOTFeaturesChooser extends _BaseContainerComponent {
             );
         widgetBus.insertElement(localMain);
         const labelWidget = [];
-        if (label !== null)
-            labelWidget.push([
-                { zone: "main" },
-                [],
-                StaticNode,
-                <h3 class="ui_opentype_features_chooser-label">{label}</h3>,
-            ]);
+        if (label !== null) {
+            let labelElement;
+            if (typeof label === "string")
+                <h3 class="ui_opentype_features_chooser-label">{label}</h3>;
+            else if (typeof label === "function")
+                labelElement = label(widgetBus.domTool);
+            else labelElement = label;
+            labelWidget.push([{ zone: "main" }, [], StaticNode, labelElement]);
+        }
         super(widgetBus, zones, [
             ...labelWidget,
             [
