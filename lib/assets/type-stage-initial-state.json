@@ -5,6 +5,21 @@
       "language": "en"
     },
     "baseFontSize": "14",
+    "textColor": {
+      "instance": {
+        "L": "0.00000",
+        "C": "0.00000"
+      },
+      "colorTypeKey": "OKLCH"
+    },
+    "backgroundColor": {
+      "instance": {
+        "L": "100.00000",
+        "C": "0.00000",
+        "alpha": "100.00000"
+      },
+      "colorTypeKey": "OKLCH"
+    },
     "autoOPSZ": "1",
     "children": [
       [
