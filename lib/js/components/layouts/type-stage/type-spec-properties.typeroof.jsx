@@ -7,7 +7,6 @@ import {
     UILineOfTextInput,
     DynamicTag,
     CollapsibleContainer,
-    StaticTag,
 } from "../../generic.mjs";
 import { FontSelect } from "../../font-loading.mjs";
 import { typeSpecGetDefaults } from "./defaults.mjs";
@@ -172,6 +171,7 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
     constructor(widgetBus, zones) {
         // provision widgets dynamically!
         super(widgetBus, zones);
+        this._collapsibleStates = new Map();
     }
     get dependencies() {
         const dependencies = super.dependencies;
@@ -182,6 +182,16 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
         const dependencies = super.modelDependencies;
         dependencies.add(this.widgetBus.getExternalName("typeSpecPath"));
         return dependencies;
+    }
+
+    _getCollapsibleState(id, defaultVal) {
+        return this._collapsibleStates.has(id)
+            ? this._collapsibleStates.get(id)
+            : defaultVal;
+    }
+
+    _storeCollapsibleState(id, state) {
+        this._collapsibleStates.set(id, state);
     }
 
     _createTypeSpecWrappers(typeSpecPath, rootTypeSpecPath) {
@@ -274,7 +284,10 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 },
             ],
             [
-                { zone: "main" },
+                {
+                    zone: "main",
+                    id: "typespec_language_and_script_collapsible",
+                },
                 [],
                 CollapsibleContainer,
                 this._zones,
@@ -282,11 +295,14 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 "minimal",
                 "typespec_language_and_script", //classNameParticle
                 [filteredTypeDriven(sections.language)] /* widgets */,
-                false, // open
+                this._getCollapsibleState(
+                    "typespec_language_and_script_collapsible",
+                    false,
+                ), // open
                 false, // scroll
             ],
             [
-                { zone: "main" },
+                { zone: "main", id: "typespec_typeface_and_size_collapsible" },
                 [],
                 CollapsibleContainer,
                 this._zones,
@@ -327,11 +343,14 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                     ],
                     filteredTypeDriven(sections.typeface),
                 ],
-                false, // open
+                this._getCollapsibleState(
+                    "typespec_typeface_and_size_collapsible",
+                    false,
+                ), // open
                 false, // scroll
             ],
             [
-                { zone: "main" },
+                { zone: "main", id: "typespec_horizontal_layout_collapsible" },
                 [],
                 CollapsibleContainer,
                 this._zones,
@@ -339,11 +358,14 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 "minimal",
                 "typespec_horizontal_layout", //classNameParticle
                 [filteredTypeDriven(sections.horizontal)] /* widgets */,
-                false, // open
+                this._getCollapsibleState(
+                    "typespec_horizontal_layout_collapsible",
+                    false,
+                ), // open
                 false, // scroll
             ],
             [
-                { zone: "main" },
+                { zone: "main", id: "typespec_vertical_layout_collapsible" },
                 [],
                 CollapsibleContainer,
                 this._zones,
@@ -351,7 +373,10 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 "minimal",
                 "typespec_vertical_layout", //classNameParticle
                 [filteredTypeDriven(sections.vertical)] /* widgets */,
-                false, // open
+                this._getCollapsibleState(
+                    "typespec_vertical_layout_collapsible",
+                    false,
+                ), // open
                 false, // scroll
             ],
             filteredTypeDriven([...sections.color, ...sections.rest], true),
@@ -368,7 +393,7 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 this._zones,
             ],
             [
-                { zone: "main" },
+                { zone: "main", id: "typespec_inherent_settings_collapsible" },
                 [],
                 CollapsibleContainer,
                 this._zones,
@@ -387,7 +412,10 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                         "TypeSpec Label",
                     ],
                 ],
-                false, // isOpened = false,
+                this._getCollapsibleState(
+                    "typespec_inherent_settings_collapsible",
+                    false,
+                ), // isOpened = false,
                 false, // scroll = false,
             ],
         ];
@@ -413,7 +441,14 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
             })(pathOrEmpty),
             rebuild = changedMap.has("typeSpecPath") || !pathExists;
         if (rebuild) {
-            for (const widgetWrapper of this._widgets) widgetWrapper.destroy();
+            for (const widgetWrapper of this._widgets) {
+                if (widgetWrapper.WidgetClass === CollapsibleContainer)
+                    this._storeCollapsibleState(
+                        widgetWrapper.id,
+                        widgetWrapper.widget.isOpen,
+                    );
+                this._destroyWidget(widgetWrapper);
+            }
             this._widgets.splice(0, Infinity);
         }
         const requiresFullInitialUpdate = new Set(),
