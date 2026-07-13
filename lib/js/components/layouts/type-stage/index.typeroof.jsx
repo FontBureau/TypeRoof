@@ -251,7 +251,7 @@ class TypeStageController extends _BaseContainerComponent {
                 { zone: "main" },
                 [],
                 Collapsible,
-                "TypeSpecs",
+                "Typographic Specifications",
                 typeSpecManagerContainer,
             ],
             [

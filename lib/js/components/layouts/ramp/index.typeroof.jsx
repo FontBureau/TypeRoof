@@ -335,7 +335,7 @@ class RampController extends _BaseContainerComponent {
                 { zone: "main" },
                 [],
                 Collapsible,
-                "TypeSpecs",
+                "Typographic Specifications",
                 propertiesManagerContainer,
                 true,
             ],
