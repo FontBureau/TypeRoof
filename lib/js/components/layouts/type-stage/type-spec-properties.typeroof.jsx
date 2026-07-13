@@ -366,7 +366,7 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 [filteredTypeDriven(sections.horizontal)] /* widgets */,
                 this._getCollapsibleState(
                     "typespec_horizontal_layout_collapsible",
-                    false,
+                    true,
                 ), // open
                 false, // scroll
             ],
