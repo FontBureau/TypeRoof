@@ -19,6 +19,7 @@ import {
     _BaseDynamicCollectionContainerComponent,
     _BaseComponent,
     SimpleProtocolHandler,
+    UIButton,
 } from "../basics.mjs";
 
 import {
@@ -323,43 +324,6 @@ class UIVideoproofArrayLayer extends _BaseContainerComponent {
         throw new Error(
             `KEY ERROR ${this}._getDefaults: not found "${fullKey}" for t=0 in ${liveProperties}`,
         );
-    }
-}
-
-class UIButton extends _BaseComponent {
-    // jshint ignore: start
-    static TEMPLATE = `<button class="ui_button"><!-- insert: label --></button>`;
-    // jshint ignore: end
-    constructor(
-        widgetBus,
-        label,
-        eventHandlers = [],
-        options = { title: null, classPart: null, elementAttributes: [] },
-    ) {
-        super(widgetBus);
-        [this.element] = this._initTemplate(label, eventHandlers, options);
-    }
-    _initTemplate(
-        label,
-        eventHandlers,
-        { title, classPart, elementAttributes },
-    ) {
-        const element = this._domTool.createFragmentFromHTML(
-            this.constructor.TEMPLATE,
-        ).firstElementChild;
-        this._domTool.insertAtMarkerComment(element, "insert: label", label);
-        for (const args of eventHandlers)
-            element.addEventListener(
-                ...args /* e.g.: ['click', onClickFn, true] */,
-            );
-        if (classPart !== null && classPart !== undefined)
-            element.classList.add(`ui_button-${classPart}`);
-        if (title !== null && title !== undefined) element.title = title;
-        if (elementAttributes !== null && elementAttributes !== undefined)
-            for (const [name, value] of elementAttributes)
-                element.setAttribute(name, value);
-        this._insertElement(element);
-        return [element];
     }
 }
 
