@@ -45,6 +45,8 @@ import { OpenTypeFeaturesModel } from "../../actors/models.mjs";
 
 import { UIOTFeaturesChooser } from "../../ui-opentype-features.typeroof.jsx";
 
+import { UIColorChooserTwoColorsWithSwap } from "../../ui-color-chooser.mjs";
+
 class UIFontLabel extends DynamicTag {
     constructor(
         widgetBus,
@@ -255,6 +257,10 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 ],
                 horizontal: ["columnWidth", "textAlign"],
                 vertical: ["leading", "blockMargins"],
+                // we don't use sections.color activeley, instead we
+                // use UIColorChooserTwoColorsWithSwap to control these
+                // however, we keep this in here so sections.rest does
+                // not contain the colors either.
                 color: ["textColor", "backgroundColor"],
             };
         {
@@ -379,7 +385,22 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 ), // open
                 false, // scroll
             ],
-            filteredTypeDriven([...sections.color, ...sections.rest], true),
+
+            // filteredTypeDriven([...sections.color, ...sections.rest], true),
+            [
+                { rootPath: typeSpecPath, zone: "main" },
+                [
+                    ["textColor", "color1"],
+                    ["backgroundColor", "color2"],
+                ],
+                UIColorChooserTwoColorsWithSwap,
+                this._zones,
+                ["FG", "BG"],
+                getDefaults,
+                updateDefaultsDependencies,
+                requireUpdateDefaults,
+            ],
+            filteredTypeDriven([...sections.rest], true),
             [
                 {
                     rootPath: typeSpecPath,

@@ -763,7 +763,7 @@ color chooser
     list-style-position: inside;
 }
 
-.ui_color_chooser.settings_visible .ui_color_chooser-label_toggle {
+.settings_visible .ui_color_chooser-label_toggle {
     list-style-type: disclosure-open;
 }
 
@@ -772,6 +772,24 @@ color chooser
     margin-left: 0.5em;
     vertical-align: baseline;
     margin-top: 0.3em;
+}
+
+.ui_color_chooser_two_colors-label_toggle {
+    display: flex;
+    justify-content: center;
+    /* stylelint-disable-next-line declaration-property-value-no-unknown */
+    align-items: anchor-center;
+    gap: 0.3rem;
+    margin: 0.5rem 0;
+
+    .ui-button-swap {
+        height: 2rem;
+    }
+
+    .ui_color_patch {
+        --width: 4rem;
+        --height: 2rem;
+    }
 }
 
 /******************************************************************************
