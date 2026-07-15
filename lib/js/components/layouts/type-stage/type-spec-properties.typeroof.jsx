@@ -41,9 +41,14 @@ import {
     UILanguageTag,
 } from "../../language-tags.typeroof.jsx";
 
-import { OpenTypeFeaturesModel } from "../../actors/models.mjs";
+import {
+    OpenTypeFeaturesModel,
+    TextAlignmentModel,
+} from "../../actors/models.mjs";
 
 import { UIOTFeaturesChooser } from "../../ui-opentype-features.typeroof.jsx";
+
+import { UITextAlignment } from "../../ui-text-alignment.typeroof.jsx";
 
 import { UIColorChooserTwoColorsWithSwap } from "../../ui-color-chooser.mjs";
 
@@ -153,7 +158,21 @@ const uiElementMap = new Map([
             ],
         ],
     ]),
-    orEmptyUIElementMap = new Map(),
+    orEmptyUIElementMap = new Map([
+        [
+            TextAlignmentModel,
+            [
+                UITextAlignment,
+                require("settings:rootPath"),
+                require("zones"),
+                TYPESPEC_PPS_MAP.get("textAlign"),
+                TYPESPEC_PPS_MAP.get("direction"),
+                require("raw:getDefaults"),
+                require("updateDefaultsDependencies"),
+                null, // label
+            ],
+        ],
+    ]),
     typeSpecTypeToUIElement = createTypeToUIElementFunction(
         uiElementMap,
         orEmptyUIElementMap,
@@ -262,7 +281,8 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 // however, we keep this in here so sections.rest does
                 // not contain the colors either.
                 color: ["textColor", "backgroundColor"],
-            };
+            },
+            h = this._domTool.h;
         {
             const used = new Set(Array.from(Object.values(sections)).flat());
             sections.rest = Array.from(TYPESPEC_PPS_MAP.keys()).filter(

@@ -7,6 +7,8 @@
 ICON_NAMES=(
     add
     arrow_forward
+    arrow_left_alt
+    arrow_right_alt
     chevron_right
     delete
     drag_pan
