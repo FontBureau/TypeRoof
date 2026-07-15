@@ -405,20 +405,32 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 ), // open
                 false, // scroll
             ],
-
             // filteredTypeDriven([...sections.color, ...sections.rest], true),
             [
-                { rootPath: typeSpecPath, zone: "main" },
-                [
-                    ["textColor", "color1"],
-                    ["backgroundColor", "color2"],
-                ],
-                UIColorChooserTwoColorsWithSwap,
+                { zone: "main", id: "typespec_color_collapsible" },
+                [],
+                CollapsibleContainer,
                 this._zones,
-                ["FG", "BG"],
-                getDefaults,
-                updateDefaultsDependencies,
-                requireUpdateDefaults,
+                "Color",
+                "minimal",
+                "typespec_color", //classNameParticle
+                [
+                    [
+                        { rootPath: typeSpecPath, zone: "main" },
+                        [
+                            ["textColor", "color1"],
+                            ["backgroundColor", "color2"],
+                        ],
+                        UIColorChooserTwoColorsWithSwap,
+                        require("raw:zones"),
+                        ["FG", "BG"],
+                        getDefaults,
+                        updateDefaultsDependencies,
+                        requireUpdateDefaults,
+                    ],
+                ],
+                this._getCollapsibleState("typespec_color_collapsible", true), // open
+                false, // scroll
             ],
             filteredTypeDriven([...sections.rest], true),
             [
