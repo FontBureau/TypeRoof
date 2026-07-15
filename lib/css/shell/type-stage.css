@@ -16,6 +16,14 @@ prosemirror
         margin: 1em 0;
     }
 
+    *[data-style-name] {
+        /* Any other value messes with the line-height of the parent
+         * block when e.g. the font-size is getting too big. This way,
+         * inline-styles can be huge, but they don't influence the line-height.
+         */
+        line-height: 0;
+    }
+
     .unknown-style {
         font-family: RobotoFlex, sans-serif;
         color: black;
