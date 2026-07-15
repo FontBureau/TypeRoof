@@ -172,12 +172,12 @@ const uiElementMap = new Map([
                 null, // label
             ],
         ],
-    ]),
-    typeSpecTypeToUIElement = createTypeToUIElementFunction(
-        uiElementMap,
-        orEmptyUIElementMap,
-        genericTypeToUIElement,
-    );
+    ]);
+export const typeSpecTypeToUIElement = createTypeToUIElementFunction(
+    uiElementMap,
+    orEmptyUIElementMap,
+    genericTypeToUIElement,
+);
 export class TypeSpecPropertiesManager extends _CommonContainerComponent {
     // jshint ignore:start
     /**
