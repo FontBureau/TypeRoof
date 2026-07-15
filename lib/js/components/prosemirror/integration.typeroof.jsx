@@ -858,19 +858,28 @@ export class ProseMirror extends _BaseComponent {
             });
         }
 
-        if (this._originTypeSpecPath !== null)
-            this._changeState(() => {
-                const typeSpecs = this._getTypeSpecs(this.view.state),
-                    [, selectedTypeSpecPath] = typeSpecs.entries().next().value,
-                    editingTypeSpec = this.getEntry("editingTypeSpec");
-                if (this._originTypeSpecPath.equals(selectedTypeSpecPath))
-                    editingTypeSpec.clear();
-                else {
-                    editingTypeSpec.value = selectedTypeSpecPath.toRelative(
-                        this._originTypeSpecPath,
+        if (this._originTypeSpecPath !== null) {
+            const typeSpecs = this._getTypeSpecs(this.view.state),
+                [, selectedTypeSpecPath] = typeSpecs.entries().next().value,
+                editingTypeSpec = this.getEntry("editingTypeSpec");
+            if (this._originTypeSpecPath.equals(selectedTypeSpecPath))
+                this._changeState(() =>
+                    this.getEntry("editingTypeSpec").clear(),
+                );
+            else {
+                const newPath = selectedTypeSpecPath.toRelative(
+                    this._originTypeSpecPath,
+                );
+                if (
+                    editingTypeSpec.isEmpty ||
+                    !newPath.equals(editingTypeSpec.value)
+                )
+                    this._changeState(
+                        () =>
+                            (this.getEntry("editingTypeSpec").value = newPath),
                     );
-                }
-            });
+            }
+        }
     }
 
     update(changedMap) {
