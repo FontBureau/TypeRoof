@@ -708,7 +708,7 @@ export class UIDocumentStyleStyler extends _BaseComponent {
         this.element.style = "";
     }
     update(changedMap) {
-        const propertiesData = [],
+        const propertiesData = [["generic/direction", "direction", ""]],
             propertyValuesMap = (
                 changedMap.has("properties@")
                     ? changedMap.get("properties@")
