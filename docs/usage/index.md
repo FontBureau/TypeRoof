@@ -50,7 +50,7 @@ TypeRoof Legacy implements a couple of Layouts that still need to be ported
 to the Shell but remain very useful for type proofing. TypeRoof Shell,
 on the other hand, has a couple of Layouts that document steps in the
 history of recent development but are not very relevant for actual use.
-Yet, "Videoproof Array V2" and "Stage and Actors" show the latest
+Yet, "Videoproof Array V2" and "Motion Stage" show the latest
 achievements, and as they start to show utility, we will focus the
 following lessons on these.
 
@@ -82,15 +82,15 @@ from the app again.
 
 https://www.youtube.com/watch?v=5AY1KnkSOcI
 
-## Layout: Stage and Actors
+## Layout: Motion Stage
 
 The concepts of actors on a stage, "Key Moments", and inheritance of
 property values are central to the animation capabilities of TypeRoof
-Shell. The Layout "Stage and Actors" represents a unified interface that
+Shell. The Layout "Motion Stage" represents a unified interface that
 exposes all possibilities under that structure; meanwhile, a Layout like
-"Videoproof Array V2" intentionally provides a streamlined interface to
+"Videoproof" intentionally provides a streamlined interface to
 specific aspects of the animation model. Some complexity is inherent
-because of the generic nature of the "Stage and Actors" Layout. The UI is
+because of the generic nature of the "Motion Stage" Layout. The UI is
 intentionally under-designed, presenting another complication; this is a
 part of the explorative nature of the development process, and subsequent
 iterations will improve this.

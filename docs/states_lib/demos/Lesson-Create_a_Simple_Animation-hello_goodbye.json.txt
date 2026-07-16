@@ -126,6 +126,6 @@
     "height": "720",
     "editingActor": "./0"
   },
-  "activeLayoutKey": "StageAndActors",
+  "activeLayoutKey": "MotionStage",
   "activeFontKey": "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"
 }

@@ -949,7 +949,7 @@ const VideoproofModel = _BaseLayoutModel.createClass(
     // , ['videoproofActor', VideoproofActorModel]
     //
     // The above is elegant and straight to the point, however, given
-    // that a default stage-and-actors configuration can do what I need
+    // that a default motion-stage configuration can do what I need
     // I tend to think, I set this up more similar to a stage, and use
     // a CoherenceFunction to cover the cases that are not ideal. So,
     // actors-meta can work it's magic out of the box.
@@ -1115,7 +1115,7 @@ const VideoproofModel = _BaseLayoutModel.createClass(
                 font.value.fullName
             ) {
                 // Set font explicitly, to make the videoproofActor Model
-                // self contained when copied e.g. to stage-and-actors.
+                // self contained when copied e.g. to motion-stage.
                 // This creates a duplication of the information in
                 // the global font key.
                 getVideoproofActorDraft("localActiveFontKey").set(
@@ -1918,7 +1918,7 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
             ),
             // This is not used via dependencyMapping, hence the path must be relative...
             // FIXME: This is a very good example having to track the paths
-            // however, it can only be problematic in the stage-and-actors
+            // however, it can only be problematic in the motion-stage
             // case, as the layout, this example!!!, doesn't move the videoproofArrayV2
             // model around.
             formatAnimationPropertiesKey = (animationPropertiesPath) =>
