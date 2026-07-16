@@ -58,6 +58,10 @@ prosemirror
         --space-after: var(--margin-block-end, 0);
     }
 
+    /* These rules were compensating an older, more "hacky" way on how
+     * margins were accomplished. While we still can't make explicit
+     * rules for first/last element in the app, but it's not required
+     * anymore to remove these spacings. Leaving in here as a reminder.
     > *:first-child {
         --space-before: 0;
     }
@@ -65,7 +69,7 @@ prosemirror
     > *:last-child {
         --space-after: 0;
     }
-
+    */
     .editor-advanced & > * {
         /* only acceptable for block-style
          * this way, the label-columns in the ramp on the left can
