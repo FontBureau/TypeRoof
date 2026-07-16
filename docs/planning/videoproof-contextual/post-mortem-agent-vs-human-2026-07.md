@@ -1,3 +1,10 @@
+---
+eleventyNavigation:
+  key: "Videoproof Contextual Post-Mortem (Agent vs Human, 2026-07)"
+  parent: Planning
+agent-created: true
+---
+
 # Post-Mortem: VideoproofContextual — the Model-Led Rewrite vs. the Human Finish
 
 *Written 2026-07-16. Retrospective on the `VideoproofContextualActor` effort,

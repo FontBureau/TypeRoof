@@ -1,3 +1,10 @@
+---
+eleventyNavigation:
+  key: "Architecture Analysis: Agent-Friendliness"
+  parent: Planning
+agent-created: true
+---
+
 # Architecture Analysis: What Makes TypeRoof Agent-Friendly
 
 ## Context

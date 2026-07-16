@@ -1,3 +1,10 @@
+---
+eleventyNavigation:
+  key: "Design Analysis: Composable Widget System (RFC 3/3)"
+  parent: Planning
+agent-created: true
+---
+
 # Design Analysis: Composable Widget System
 ## Revised Evaluation — Beyond REQUIREMENTS
 

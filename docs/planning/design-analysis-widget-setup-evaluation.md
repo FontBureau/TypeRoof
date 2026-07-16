@@ -1,3 +1,10 @@
+---
+eleventyNavigation:
+  key: "Design Analysis: Widget Setup Evaluation (RFC 2/3)"
+  parent: Planning
+agent-created: true
+---
+
 # Critical Evaluation: Self-Describing Widget Setup
 
 > **Status: PROPOSAL / not implemented — part 2 of 3.** As of 2026-07-16,
