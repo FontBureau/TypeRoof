@@ -2,6 +2,8 @@
 eleventyNavigation:
   key: "Architecture Analysis: Agent-Friendliness"
   parent: Planning
+  title: 'Agent-Friendliness'
+  order: 33
 agent-created: true
 ---
 

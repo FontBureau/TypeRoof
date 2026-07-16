@@ -2,6 +2,8 @@
 eleventyNavigation:
   key: Videoproof Contextual Rewrite Plan
   parent: Planning
+  title: 'VP-Contextual: Rewrite Plan'
+  order: 40
 agent-created: true
 ---
 

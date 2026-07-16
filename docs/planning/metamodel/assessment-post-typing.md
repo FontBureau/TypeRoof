@@ -3,8 +3,8 @@ title:  Assessment of the Metamodel Module — Post Strict Typing
 eleventyNavigation:
   parent: Planning
   key: assessment-post-typing
-  title: Metamodel - Assessment Post Strict Typing
-  order: 2
+  title: 'Metamodel: Post-Typing'
+  order: 21
 agent-created: true
 ---
 

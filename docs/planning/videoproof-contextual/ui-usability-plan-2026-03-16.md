@@ -2,6 +2,8 @@
 eleventyNavigation:
   key: Videoproof Contextual UI Usability Plan (2026-03-16)
   parent: Planning
+  title: 'VP-Contextual: UI Usability'
+  order: 41
 agent-created: true
 ---
 

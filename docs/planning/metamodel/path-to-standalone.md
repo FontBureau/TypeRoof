@@ -3,8 +3,8 @@ title: Metamodel — Path to a Standalone Library
 eleventyNavigation:
   parent: Planning
   key: path-to-standalone
-  title: Metamodel - Path to a Standalone Library
-  order: 1
+  title: 'Metamodel: Standalone Lib'
+  order: 22
 agent-created: true
 ---
 

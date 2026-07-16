@@ -3,8 +3,8 @@ title:  Assessment of the Metamodel Module — Pre Strict Typing
 eleventyNavigation:
   parent: Planning
   key: assessment-pre-typing
-  title: Metamodel - Assessment Pre Strict Typing
-  order: 1
+  title: 'Metamodel: Pre-Typing'
+  order: 20
 agent-created: true
 ---
 

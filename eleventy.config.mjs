@@ -87,6 +87,35 @@ export default function (eleventyConfig) {
         }
     );
 
+    // The sidebar renders the whole navigation tree. Some branches (esp.
+    // "Planning") contain many documents that would clutter every page.
+    // Collapse the children of a given branch unless the current page IS
+    // that branch or lives within its subtree. The full set stays reachable
+    // from the branch's own index page (see docs/development/planning.md).
+    eleventyConfig.addFilter('collapseNavBranch', function(pages, activeKey, branchKey='Planning') {
+        const collectKeys = (node, acc)=>{
+            acc.add(node.key);
+            for(const child of node.children || [])
+                collectKeys(child, acc);
+            return acc;
+        };
+        const prune = (node)=>{
+            const copy = Object.assign({}, node);
+            if(node.key === branchKey) {
+                const withinBranch = activeKey != null
+                    && collectKeys(node, new Set()).has(activeKey);
+                copy.children = withinBranch
+                    ? (node.children || []).map(prune)
+                    : [];
+                return copy;
+            }
+            if(node.children)
+                copy.children = node.children.map(prune);
+            return copy;
+        };
+        return pages.map(prune);
+    });
+
     // This creates directory listings for docs/states_lib
     const libDir = 'docs/states_lib'
    , directoryTemplate = `# States Library{% if page.url != "/${libDir}/" %}: {{page.url | remove: "/${libDir}" | remove_last: "/" }}{% endif %}

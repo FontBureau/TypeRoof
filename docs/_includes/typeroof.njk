@@ -21,6 +21,7 @@
                 <nav>
                     {{ collections.all
                         | eleventyNavigation
+                        | collapseNavBranch(eleventyNavigation.key)
                         | eleventyNavigationToHtml({
                             activeListItemClass: "active",
                             activeKey: eleventyNavigation.key

@@ -2,6 +2,8 @@
 eleventyNavigation:
   key: "Design Analysis: Widget Setup Evaluation (RFC 2/3)"
   parent: Planning
+  title: 'Widgets RFC 2: Evaluation'
+  order: 31
 agent-created: true
 ---
 

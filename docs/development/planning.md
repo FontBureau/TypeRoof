@@ -12,3 +12,7 @@ eleventyNavigation:
 Design documents in preparation of future efforts.
 Also: files to interact with agents and from interactions with agents.
 
+## All Planning Documents
+
+{{ collections.all | eleventyNavigation: "Planning" | eleventyNavigationToHtml }}
+

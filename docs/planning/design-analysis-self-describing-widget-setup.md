@@ -2,6 +2,8 @@
 eleventyNavigation:
   key: "Design Analysis: Self-Describing Widget Setup (RFC 1/3)"
   parent: Planning
+  title: 'Widgets RFC 1: Self-Describing'
+  order: 30
 agent-created: true
 ---
 

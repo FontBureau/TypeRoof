@@ -2,6 +2,8 @@
 eleventyNavigation:
   key: "Design Analysis: Composable Widget System (RFC 3/3)"
   parent: Planning
+  title: 'Widgets RFC 3: Composable'
+  order: 32
 agent-created: true
 ---
 

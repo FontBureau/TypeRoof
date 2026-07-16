@@ -2,6 +2,8 @@
 eleventyNavigation:
   key: "Videoproof Contextual Post-Mortem (Agent vs Human, 2026-07)"
   parent: Planning
+  title: 'VP-Contextual: Post-Mortem'
+  order: 42
 agent-created: true
 ---
 

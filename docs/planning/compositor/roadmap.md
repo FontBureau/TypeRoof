@@ -3,7 +3,7 @@ title:  Compositor - Concepts and Roadmap
 eleventyNavigation:
   parent: Planning
   key: compositor-roadmap
-  title: Compositor - Concepts and Roadmap
+  title: 'Compositor: Roadmap'
   order: 10
 agent-created: true
 ---
