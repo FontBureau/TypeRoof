@@ -4,6 +4,7 @@
 @import url("./elements.css");
 @import url("./layout.css");
 @import url("./docs.css");
+@import url("./type-stage.css");
 
 /******************************************************************************
 material symbols
@@ -200,7 +201,7 @@ document manager
     paint-order: stroke;
 }
 
-.stage_and_actors {
+.motion_stage {
     /* It's important, that the inner size of the stage has
      * the exact width/height dimensions.
      */
@@ -209,12 +210,12 @@ document manager
     border-inline-start-width: 0;
 }
 
-.stage_and_actors-wrapper {
+.motion_stage-wrapper {
     position: relative;
     overflow: hidden;
 }
 
-.stage_and_actors-wrapper::before {
+.motion_stage-wrapper::before {
     content: "";
     display: block;
     position: absolute;
@@ -227,7 +228,7 @@ document manager
     background-image: var(--transparency-indicator-bg-image);
 }
 
-.stage_and_actors-wrapper > .stage_and_actors-layer-top {
+.motion_stage-wrapper > .motion_stage-layer-top {
     width: 100%;
     height: 100%;
     position: absolute;
@@ -236,7 +237,7 @@ document manager
     z-index: 0;
 }
 
-.stage_and_actors-layer-sub {
+.motion_stage-layer-sub {
     position: absolute;
     overflow: visible;
 }
@@ -716,6 +717,10 @@ processed properties
 .ui-show_processed_properties {
     font-variation-settings: "wdth" 80;
     margin: 1.5em 0;
+
+    .ui_collapsible-closed & {
+        display: none;
+    }
 }
 
 .ui-show_processed_properties h4 {
@@ -758,7 +763,7 @@ color chooser
     list-style-position: inside;
 }
 
-.ui_color_chooser.settings_visible .ui_color_chooser-label_toggle {
+.settings_visible .ui_color_chooser-label_toggle {
     list-style-type: disclosure-open;
 }
 
@@ -767,6 +772,24 @@ color chooser
     margin-left: 0.5em;
     vertical-align: baseline;
     margin-top: 0.3em;
+}
+
+.ui_color_chooser_two_colors-label_toggle {
+    display: flex;
+    justify-content: center;
+    /* stylelint-disable-next-line declaration-property-value-no-unknown */
+    align-items: anchor-center;
+    gap: 0.3rem;
+    margin: 0.5rem 0;
+
+    .ui-button-swap {
+        height: 2rem;
+    }
+
+    .ui_color_patch {
+        --width: 4rem;
+        --height: 2rem;
+    }
 }
 
 /******************************************************************************
@@ -1005,7 +1028,7 @@ select and drag
      * This way it scrolls vertically within the stage.
      * FIXME:CAUTION: May be too simplistic and require rethinking but
      * looks good so far. In a stand-alone layout, as opposed to in the
-     * stage-and-actors layout, we might need a different handling.
+     * motion-stage layout, we might need a different handling.
      * I.e. in the case of usage within an movie/film-like
      * non-interactive animation, it is wrong to add manual scrolling to
      * this! However, so far there's no distinction made between
@@ -1483,14 +1506,17 @@ select and drag
 }
 
 .ui_links_map-item_value-change_select,
-.ui_links_map-item_value-change_input {
+.ui_links_map-item_value-change_input,
+.ui_links_map-item_value .line_of_text {
     display: none;
 }
 
 .ui_links_map-item_value:focus-within
     :is(
         .ui_links_map-item_value-change_select,
-        .ui_links_map-item_value-change_input
+        .ui_links_map-item_value-change_input,
+        .line_of_text,
+
     ) {
     display: block;
 }
@@ -1885,6 +1911,10 @@ dimension sequence
     padding: 0;
 }
 
+/******************************************************************************
+prosemirror menu
+*******************************************************************************/
+
 .ui_prose_mirror_menu {
     /* The amount of style buttons can change quickly when using
    * the cursor to navigate the document. This leads to the UI in the
@@ -1907,12 +1937,47 @@ dimension sequence
 
 .ui_prose_mirror_menu-blocks,
 .ui_prose_mirror_menu-styles {
-    button.active {
+    button {
+        vertical-align: top;
+    }
+
+    button.active,
+    button.active > * {
         color: white;
+    }
+
+    button.active {
         background: black;
         font-variation-settings:
             "opsz" 12,
             "GRAD" 150;
+    }
+
+    button.active:disabled {
+        background: darkgrey;
+    }
+}
+
+.ui_prose_mirror_menu-simple {
+    display: flex;
+    gap: 0.25em;
+    height: auto;
+    margin-bottom: 1em;
+
+    .ui_prose_mirror_menu-container-blocks,
+    .typeroof-ui-label {
+        display: none;
+    }
+
+    button {
+        height: auto;
+        padding: 0.25rem;
+
+        &.active {
+            color: white;
+            background: var(--button-active-color);
+            border-color: var(--button-active-color);
+        }
     }
 
     button.active:disabled {
@@ -1990,91 +2055,8 @@ dimension sequence
 }
 /* stylelint-enable */
 
-.prosemirror-host {
-    /* so the background color fills the entire layout */
-    min-height: 100%;
-}
-
-:where(.ProseMirror, .typeroof-document) {
-    *[data-unknown-type] {
-        outline: 4px solid red;
-        font-family: RobotoFlex, sans-serif;
-        margin: 1em 0;
-    }
-
-    .unknown-style {
-        font-family: RobotoFlex, sans-serif;
-        color: black;
-        background: deeppink;
-        text-decoration-style: solid;
-        text-decoration-thickness: 1.5pt;
-        text-decoration-color: deeppink;
-        text-decoration-skip-ink: none;
-        text-decoration-line: underline;
-    }
-
-    .unknown-style::before {
-        content: " (UNKOWN STYLE: " attr(data-style-name) ") ";
-        color: black;
-        background: white;
-    }
-}
-
 :is(.videoproof_layout, .ui-parameters-display.ui_videoproof) {
     padding-left: 2em; /* using padding: so we include the background color */
-}
-
-/* NOTE: the .ProseMirror is very generic as it's coming from
- * the ProseMirror class, we should not use it this specifically.
- */
-:is(.ProseMirror, .typeroof-document) {
-    margin-left: 2em;
-
-    * {
-        line-height: var(--line-height);
-
-        /* FIXME: not functioning in Firefox, requires workaround! */
-        text-box: trim-start text;
-    }
-
-    /* FIXME: this is temporary, margins need to be
- * a property. However, using the line-height of
- * the element AFTER as the gap-size is a good
- * enough for now runion/automation approach.
- */
-    > *:not(:first-child) {
-        margin-block-start: var(--margin-block-start, 0);
-    }
-
-    > *:not(:last-child) {
-        margin-block-end: var(--margin-block-end, 0);
-    }
-}
-
-.ui_type_tools_grid-cell :is(.ProseMirror, .typeroof-document) {
-    /* this is a very simple editor instance */
-    margin-left: 0;
-
-    --line-height: 1em; /* should be a property */
-    --margin-block-start: 0; /* calc(var(--line-height) * 0.5); should also be a property */
-    > * {
-        /* In this configuration, I'm looking to make the
-         * paragraph and hard-break having the same leading. As people
-         * will rather expect "Enter" to just create a single line break
-         * not a gap, and they rather won't be aware of Shift+Enter to
-         * insert a hard-break. In order to make the leading even, we
-         * can't use the text-box-trim.
-         */
-        text-box: none;
-    }
-
-    > *:first-child {
-        text-box: trim-start text;
-    }
-
-    > *:not(:first-child) {
-        margin-block-start: var(--margin-block-start, 0);
-    }
 }
 
 .ui_opentype_features_chooser-select-select {
@@ -2234,4 +2216,23 @@ ui-contextual-template
     border-left: 1px solid var(--fieldset-border-color);
     border-top: 1px solid var(--fieldset-border-color);
     padding-left: 0.75em;
+}
+
+/**************************************************************************** *
+select menus...
+/**************************************************************************** */
+
+.ui_type_spec_select-select,
+.ui_font-select_select {
+    /* This made long options overflow and break, the overflow options
+     * below did not have an effect (in Chrome).
+     * value `auto` restores expected behavior.
+     */
+    &,
+    &::picker(select) {
+        appearance: auto;
+    }
+
+    width: 100%;
+    text-overflow: ellipsis;
 }

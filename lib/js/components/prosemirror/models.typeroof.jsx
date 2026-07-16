@@ -408,9 +408,14 @@ export const // We don't do  prosemirror SchemaSpec yet, but we may need it to a
     // it less likely that we don't link to an actual typeSpec, but in
     // general, the not-found case is plannned into it.
     // For the keys here as well, these are the same keys as in
+    NodeSpecToTypeSpecEdgeModel = _AbstractStructModel.createClass(
+        "NodeSpecToTypeSpecEdgeModel",
+        ["link", StringModel],
+        ["label", StringModel], // empty String will be treated as not set.
+    ),
     NodeSpecToTypeSpecMapModel = _AbstractOrderedMapModel.createClass(
         "NodeSpecToTypeSpecMapModel",
-        StringModel,
+        NodeSpecToTypeSpecEdgeModel,
     ),
     // NOTE: I'm entirely not sure if we need this as a model, as the
     // actual Schema will be created with the original type. So far, this

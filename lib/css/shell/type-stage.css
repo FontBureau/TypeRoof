@@ -1,0 +1,171 @@
+/******************************************************************************
+prosemirror
+*******************************************************************************/
+
+.ui_prosemirror_host {
+    /* so the background color fills the entire layout */
+    min-height: 100%;
+
+    --label-width-or-margin-inline-start: 2.5rem;
+}
+
+:where(.ProseMirror, .typeroof-document) {
+    *[data-unknown-type] {
+        outline: 4px solid red;
+        font-family: RobotoFlex, sans-serif;
+        margin: 1em 0;
+    }
+
+    *[data-style-name] {
+        /* Any other value messes with the line-height of the parent
+         * block when e.g. the font-size is getting too big. This way,
+         * inline-styles can be huge, but they don't influence the line-height.
+         */
+        line-height: 0;
+    }
+
+    .unknown-style {
+        font-family: RobotoFlex, sans-serif;
+        color: black;
+        background: deeppink;
+        text-decoration-style: solid;
+        text-decoration-thickness: 1.5pt;
+        text-decoration-color: deeppink;
+        text-decoration-skip-ink: none;
+        text-decoration-line: underline;
+    }
+
+    .unknown-style::before {
+        content: " (UNKOWN STYLE: " attr(data-style-name) ") ";
+        color: black;
+        background: white;
+    }
+}
+
+/* NOTE: the .ProseMirror is very generic as it's coming from
+ * the ProseMirror class, we should not use it this specifically.
+ */
+:is(.ProseMirror, .typeroof-document) {
+    /** margin-left: 2em; */
+
+    > * {
+        line-height: var(--line-height);
+
+        /* FIXME: not functioning in Firefox, requires workaround! */
+        text-box: trim-start text;
+
+        --space-before: var(--margin-block-start, 0);
+        --space-after: var(--margin-block-end, 0);
+    }
+
+    /* These rules were compensating an older, more "hacky" way on how
+     * margins were accomplished. While we still can't make explicit
+     * rules for first/last element in the app, but it's not required
+     * anymore to remove these spacings. Leaving in here as a reminder.
+    > *:first-child {
+        --space-before: 0;
+    }
+
+    > *:last-child {
+        --space-after: 0;
+    }
+    */
+    .editor-advanced & > * {
+        /* only acceptable for block-style
+         * this way, the label-columns in the ramp on the left can
+         * spread over the entire height of the element including its
+         * margins, which are here expressed as template areas which wont
+         * be occupied by elements.
+         */
+        display: grid;
+        grid-template-columns: auto;
+        grid-template-rows:
+            var(--space-before, 0)
+            auto auto
+            var(--space-after, 0);
+        grid-template-areas:
+            "space-before"
+            "content"
+            "bottom"
+            "space-after";
+
+        & > * {
+            grid-area: content;
+        }
+
+        & > .ui-parameters-display {
+            grid-area: bottom;
+            line-height: 1.3;
+        }
+    }
+
+    .editor-advanced.has-node-labels & > * {
+        grid-template-columns: var(--label-width-or-margin-inline-start, 0) auto;
+        grid-template-areas:
+            "label space-before"
+            "label content"
+            "label bottom"
+            "label space-after";
+
+        & > .ui_type_spec_label {
+            position: relative;
+            grid-area: label;
+
+            > span {
+                /* this way (psoition absolute) the label does not
+                 * influence the height of the actual element, even
+                 * if the element is smaller than the lavel.
+                 */
+                position: absolute;
+                width: stretch; /* only use available space */
+                font-size: 1rem;
+                background-color: transparent;
+                line-height: 1.3;
+                padding: 0.3rem;
+                margin-inline-end: 0.3em;
+                text-align: center;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+            }
+
+            &.ui_type_spec-editing {
+                background-color: #eef;
+            }
+        }
+    }
+
+    .editor-advanced:not(.has-node-labels) & {
+        margin-inline-start: var(--label-width-or-margin-inline-start, 0);
+    }
+
+    .editor-simple & {
+        /* this is a very simple editor instance */
+        margin-left: 0;
+
+        --line-height: 1.2em; /* should be a property */
+        --margin-block-start: 0; /* calc(var(--line-height) * 0.5); should also be a property */
+        > * {
+            /* In this configuration, I'm looking to make the
+             * paragraph and hard-break having the same leading. As people
+             * will rather expect "Enter" to just create a single line break
+             * not a gap, and they rather won't be aware of Shift+Enter to
+             * insert a hard-break. In order to make the leading even, we
+             * can't use the text-box-trim.
+             */
+            text-box: none;
+        }
+
+        > *:first-child {
+            text-box: trim-start text;
+        }
+
+        > *:not(:first-child) {
+            margin-block-start: var(--margin-block-start, 0);
+        }
+
+        > *:not(:last-child) {
+            margin-block-end: var(--margin-block-end, 0);
+        }
+    }
+}

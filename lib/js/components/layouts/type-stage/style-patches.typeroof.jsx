@@ -13,8 +13,7 @@ import {
     createStylePatch,
 } from "../../type-spec-models.mjs";
 import { FontSelect } from "../../font-loading.mjs";
-import { UITypeDrivenContainer } from "../../type-driven-ui-basics.mjs";
-import { genericTypeToUIElement } from "../../type-driven-ui.mjs";
+import { _BaseTypeDrivenContainerComponentMixin } from "../../type-driven-ui-basics.mjs";
 import { typeSpecGetDefaults } from "./defaults.mjs";
 import {
     SPECIFIC,
@@ -22,11 +21,19 @@ import {
 } from "../../registered-properties-definitions.mjs";
 import { ForeignKey, Path } from "../../../metamodel.mjs";
 import { TYPESPEC_PPS_MAP } from "./pps-maps.mjs";
+import { typeSpecTypeToUIElement } from "./type-spec-properties.typeroof.jsx";
+
 import {
     MapSelectButton,
     _BaseByPathContainerComponent,
 } from "./shared.typeroof.jsx";
-import { StaticTag, PlainSelectInput } from "../../generic.mjs";
+import {
+    StaticTag,
+    PlainSelectInput,
+    CollapsibleContainer,
+} from "../../generic.mjs";
+import { require } from "../../dependency-injection.mjs";
+import { UIColorChooserTwoColorsWithSwap } from "../../ui-color-chooser.mjs";
 
 // --- composite style patch chain ---
 
@@ -90,6 +97,20 @@ function getRequireUpdateDefaultsFn(updateDefaultsNames) {
         );
 }
 
+function copyFromMap(sourceMap, keys) {
+    const filteredMap = new Map();
+    for (const key of keys) {
+        if (!sourceMap.has(key))
+            throw new Error(
+                `KEY ERROR sourceMap does ` +
+                    `not have key "${key}" known entries: ` +
+                    `${Array.from(sourceMap.keys()).join(", ")}.`,
+            );
+        filteredMap.set(key, sourceMap.get(key));
+    }
+    return filteredMap;
+}
+
 /*
  * TODO: this is a very simple nice concept:
  * taking an dynamic type and building specific interfaces
@@ -108,33 +129,147 @@ function getRequireUpdateDefaultsFn(updateDefaultsNames) {
  * hence, maybe it could be a mixin-approach as UIAxesMathLocationsSumItem
  * already extends _UIBaseListContainerItem.
  */
-export class UIStylePatch extends _BaseContainerComponent {
-    constructor(widgetBus, zones /*, originTypeSpecPath*/) {
+export class UIStylePatch extends _BaseTypeDrivenContainerComponentMixin(
+    _BaseContainerComponent,
+) {
+    constructor(
+        widgetBus,
+        zones,
+        collapsibleStatesAPI /*, originTypeSpecPath*/,
+    ) {
         super(widgetBus, zones);
         // this._originTypeSpecPath = originTypeSpecPath;
-        this._currentTypeKey = null;
+        this._currentType = null;
+        this._collapsibleStatesAPI = collapsibleStatesAPI;
     }
 
-    _createWrappersForType(typeKey) {
+    _defineSimpleStylePatchWidgets(
+        TypeClass,
+        settings,
+        injectable,
+        ppsMap,
+        label,
+    ) {
+        const labelDefinition = [
+                { zone: settings.zone },
+                [],
+                StaticTag,
+                "h4",
+                {},
+                [label],
+            ],
+            sections = {
+                language: ["languageTag", "direction"],
+                typeface: [
+                    "baseFontSize",
+                    "relativeFontSize",
+                    "openTypeFeatures",
+                    "axesLocations",
+                ],
+                // Not used, but defined here so it does not end
+                // up in settings.rest.
+                color: ["textColor", "backgroundColor"],
+            };
+        {
+            const used = new Set(Array.from(Object.values(sections)).flat());
+            sections.rest = Array.from(ppsMap.keys()).filter(
+                (k) => !used.has(k),
+            );
+        }
+        const defineWidgets = (keys, settings = {}) => {
+            return this._defineGenericWidgets(
+                TypeClass,
+                (fieldName) => TypeClass.fields.has(fieldName), // all allowed
+                { zone: "main", ...settings },
+                copyFromMap(ppsMap, keys),
+                injectable,
+            );
+        };
+
+        return [
+            ...(label ? [labelDefinition] : []),
+            [
+                { id: "stylepatch_language_collapsible", ...settings },
+                [],
+                CollapsibleContainer,
+                this._zones,
+                "Language and Script",
+                "minimal",
+                "stylepatch_language", //classNameParticle
+                // widgets
+                [...defineWidgets(sections.language)],
+                this._collapsibleStatesAPI.get(
+                    "stylepatch_language_collapsible",
+                    false,
+                ), // open
+                false, // scroll
+            ],
+            [
+                { id: "stylepatch_typeface_and_size_collapsible", ...settings },
+                [],
+                CollapsibleContainer,
+                this._zones,
+                "Typeface and Size",
+                "minimal",
+                "stylepatch_typeface_and_size", //classNameParticle
+                [
+                    [
+                        {
+                            zone: "main",
+                        },
+                        [["/availableFonts", "options"], "activeFontKey"],
+                        FontSelect,
+                        true,
+                    ],
+                    ...defineWidgets(sections.typeface),
+                ],
+                this._collapsibleStatesAPI.get(
+                    "stylepatch_typeface_and_size_collapsible",
+                    false,
+                ), // open
+                false, // scroll
+            ],
+            [
+                { id: "stylepatch_color_collapsible", ...settings },
+                [],
+                CollapsibleContainer,
+                this._zones,
+                "Color",
+                "minimal",
+                "stylepatch_color", //classNameParticle
+                [
+                    [
+                        { zone: "main" },
+                        [
+                            ["textColor", "color1"],
+                            ["backgroundColor", "color2"],
+                        ],
+                        UIColorChooserTwoColorsWithSwap,
+                        require("raw:zones"),
+                        ["FG", "BG"],
+                        injectable.getDefaults,
+                        injectable.updateDefaultsDependencies,
+                        injectable.requireUpdateDefaults,
+                    ],
+                ],
+                this._collapsibleStatesAPI.get(
+                    "stylepatch_rest_collapsible",
+                    true,
+                ), // open
+                false, // scroll
+            ],
+            ...defineWidgets(sections.rest, settings),
+        ];
+    }
+
+    _createWrappersForType(typeKey, Type) {
         const widgets = [],
             settings = {
                 // document/nodes/{key}
                 rootPath: this.widgetBus.rootPath.append("instance"),
                 zone: "local",
             };
-        let Constructor, dependencyMappings, args;
         if (typeKey === "SimpleStylePatch") {
-            // need a handling for the font selection!
-            widgets.push([
-                { ...settings },
-                [["/availableFonts", "options"], "activeFontKey"],
-                FontSelect,
-                true,
-            ]);
-
-            dependencyMappings = [];
-            Constructor = UITypeDrivenContainer;
-
             const getLiveProperties = () => {
                     return null;
                 },
@@ -170,14 +305,16 @@ export class UIStylePatch extends _BaseContainerComponent {
                         `${this.widgetBus.rootPath.append("instance/activeFontKey")}`,
                         "activeFontKey",
                     ],
-                ];
-            args = [
-                this._zones,
-                {
+                    [
+                        `stylePatchProperties@${this.widgetBus.rootPath}`,
+                        "properties@",
+                    ],
+                ],
+                injectable = {
                     // injectable
                     getDefaults,
                     updateDefaultsDependencies,
-                    genericTypeToUIElement,
+                    genericTypeToUIElement: typeSpecTypeToUIElement,
                     requireUpdateDefaults: getRequireUpdateDefaultsFn(
                         new Set(
                             updateDefaultsDependencies.map((item) =>
@@ -185,30 +322,46 @@ export class UIStylePatch extends _BaseContainerComponent {
                             ),
                         ),
                     ),
-                },
-                PPS_MAP,
-            ];
+                };
+            widgets.push(
+                ...this._defineSimpleStylePatchWidgets(
+                    Type,
+                    settings,
+                    injectable,
+                    PPS_MAP,
+                ),
+            );
         } else if (typeKey === "CompositeStylePatch") {
-            dependencyMappings = [
-                ["./styles", "collection"],
-                [this.widgetBus.getExternalName("sourceMap"), "sourceMap"],
-            ];
-            Constructor = UICompositeStylePatch;
-            args = [this._zones];
+            const dependencyMappings = [
+                    ["./styles", "collection"],
+                    [this.widgetBus.getExternalName("sourceMap"), "sourceMap"],
+                ],
+                Constructor = UICompositeStylePatch,
+                args = [this._zones];
+            widgets.push([settings, dependencyMappings, Constructor, ...args]);
         } else throw new Error(`KEY ERROR unknown typeKey ${typeKey}.`);
 
-        widgets.push([settings, dependencyMappings, Constructor, ...args]);
         return widgets.map((widget) =>
             this._initWrapper(this._childrenWidgetBus, ...widget),
         );
     }
 
+    _destroyWidget(widgetWrapper) {
+        if (widgetWrapper.WidgetClass === CollapsibleContainer)
+            this._collapsibleStatesAPI.set(
+                widgetWrapper.id,
+                widgetWrapper.widget.isOpen,
+            );
+        return super._destroyWidget(widgetWrapper);
+    }
+
     _provisionWidgets(/* compareResult */) {
         const node = this.getEntry("."),
+            Type = node.get("stylePatchTypeModel").value.get("typeClass").value,
             typeKey = node.get("stylePatchTypeKey").value;
-        if (this._currentTypeKey === typeKey) return new Set();
-        this._currentTypeKey = typeKey;
-        const newWrappers = this._createWrappersForType(typeKey),
+        if (this._currentType === Type) return new Set();
+        this._currentType = Type;
+        const newWrappers = this._createWrappersForType(typeKey, Type),
             deleted = this._widgets.splice(0, Infinity, ...newWrappers);
         for (const wrapper of deleted) this._destroyWidget(wrapper);
         return super._provisionWidgets();
@@ -225,6 +378,7 @@ export class StylePatchPropertiesManager extends _BaseByPathContainerComponent {
             "childrenOrderedMap", // childrenMapEntryName
             "stylePatchTypeKey", // typeKeyName=null
         );
+        this._collapsibleStates = new Map();
     }
 
     _createEmptyWrappers() {
@@ -234,6 +388,16 @@ export class StylePatchPropertiesManager extends _BaseByPathContainerComponent {
         return widgets.map((widgetArgs) =>
             this._initWrapper(this._childrenWidgetBus, ...widgetArgs),
         );
+    }
+
+    _getCollapsibleState(id, defaultVal) {
+        return this._collapsibleStates.has(id)
+            ? this._collapsibleStates.get(id)
+            : defaultVal;
+    }
+
+    _storeCollapsibleState(id, state) {
+        this._collapsibleStates.set(id, state);
     }
 
     _createItemWrappers(stylePatchPath, item) {
@@ -264,6 +428,10 @@ export class StylePatchPropertiesManager extends _BaseByPathContainerComponent {
                     [[this.widgetBus.rootPath.toString(), "sourceMap"]],
                     UIStylePatch,
                     this._zones,
+                    {
+                        get: this._getCollapsibleState.bind(this),
+                        set: this._storeCollapsibleState.bind(this),
+                    },
                     stylePatchPath,
                 ],
             ];

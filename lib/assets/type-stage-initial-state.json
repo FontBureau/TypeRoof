@@ -5,11 +5,33 @@
       "language": "en"
     },
     "baseFontSize": "14",
+    "textColor": {
+      "instance": {
+        "L": "0.00000",
+        "C": "0.00000",
+        "alpha": "100.00000"
+      },
+      "colorTypeKey": "OKLCH"
+    },
+    "backgroundColor": {
+      "instance": {
+        "L": "100.00000",
+        "C": "0.00000",
+        "alpha": "100.00000"
+      },
+      "colorTypeKey": "OKLCH"
+    },
     "autoOPSZ": "1",
     "children": [
       [
         "0",
         {
+          "blockMargins": {
+              "start": {
+              "unit": "baseEm",
+              "value": "2.00000"
+            }
+          },
           "relativeFontSize": "4.571428571",
           "autoOPSZ": "1",
           "axesLocations": [
@@ -18,7 +40,7 @@
               "700"
             ]
           ],
-          "label": "H1"
+          "label": "Headline 1"
         }
       ],
       [
@@ -32,7 +54,7 @@
               "600"
             ]
           ],
-          "label": "H2"
+          "label": "Headline 2"
         }
       ],
       [
@@ -46,7 +68,7 @@
               "550"
             ]
           ],
-          "label": "H3"
+          "label": "Headline 3"
         }
       ],
       [
@@ -54,7 +76,7 @@
         {
           "relativeFontSize": "1.285714286",
           "autoOPSZ": "1",
-          "label": "T1",
+          "label": "Text 1",
           "stylePatches": [
             [
               "italic",
@@ -75,7 +97,7 @@
         "4",
         {
           "autoOPSZ": "1",
-          "label": "T2",
+          "label": "Text 2",
           "stylePatches": [
             [
               "italic",
@@ -145,23 +167,38 @@
   "nodeSpecToTypeSpec": [
     [
       "heading-1",
-      "/children/0"
+      {
+          "link": "./children/0",
+          "label": "H1"
+      }
     ],
     [
       "heading-2",
-      "/children/1"
+      {
+          "link": "./children/1",
+          "label": "H2"
+      }
     ],
     [
       "heading-3",
-      "/children/2"
+      {
+          "link": "./children/2",
+          "label": "H3"
+      }
     ],
     [
       "paragraph",
-      "/children/3"
+      {
+          "link": "./children/3",
+          "label": "T1"
+      }
     ],
     [
       "paragraph-2",
-      "/children/4"
+      {
+            "link": "./children/4",
+          "label": "T2"
+      }
     ]
   ],
   "document": {

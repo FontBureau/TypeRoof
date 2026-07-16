@@ -1,3 +1,5 @@
+import { identity } from "../util.mjs";
+
 import {
     _AbstractStructModel,
     _AbstractEnumModel,
@@ -384,7 +386,47 @@ export class UILanguageTag extends _BaseContainerComponent {
     }
 }
 
-export class UICLanguageTagCollapsible extends CollapsibleContainer {
+class UILanguageLabel extends DynamicTag {
+    constructor(
+        widgetBus,
+        tag,
+        attr,
+        formatter = identity,
+        initialContent = "(initializing)",
+    ) {
+        super(widgetBus, tag, attr, formatter, initialContent);
+    }
+    update(changedMap) {
+        if (changedMap.has("properties@")) {
+            const properties = changedMap.has("properties@")
+                ? changedMap.get("properties@")
+                : this.getEntry("properties@");
+            let languageTag;
+            if (properties.typeSpecnion) {
+                const propertyValuesMap =
+                        properties.typeSpecnion.getProperties(),
+                    langKey = `${LANGUAGE}lang`;
+                languageTag = propertyValuesMap.has(langKey)
+                    ? propertyValuesMap.get(langKey)
+                    : null;
+            } else if (properties.animanion) {
+                const propertyValuesMap =
+                    properties.animanion.getPropertiesFromGlobalT(0);
+                // we don't have the SyntheticValue in animanion
+                languageTag = readLanguageTag(propertyValuesMap);
+            } else {
+                const propertyValuesMap = properties.propertyValuesMap;
+                languageTag = readLanguageTag(propertyValuesMap);
+            }
+
+            this.element.textContent = this._formatter(
+                languageTag !== null ? ` ${languageTag}` : "",
+            );
+        }
+    }
+}
+
+export class UILanguageTagCollapsible extends CollapsibleContainer {
     constructor(
         widgetBus,
         _zones,
@@ -407,25 +449,10 @@ export class UICLanguageTagCollapsible extends CollapsibleContainer {
             ],
             [
                 { zone: "label" },
-                [[".", "data"]],
-                DynamicTag,
+                [[widgetBus.getExternalName("properties@"), "properties@"]],
+                UILanguageLabel,
                 "span",
-                {}, //attr
-                // formatter
-                (data) => {
-                    // It would be even better to read this from processed properties, like
-                    // the color chooser does for it's label, but so far UICLanguageTagCollapsible
-                    // is designed as a drop-in replacement for UILanguageTag and that has no
-                    // knowkledge about it's target. So we only show the data that is actually
-                    // there, not the full result.
-                    const args = [];
-                    for (const key of ["language", "script", "region"]) {
-                        const item = data.get(key);
-                        args.push(item.isEmpty ? null : item.value);
-                    }
-                    const tag = createLanguageTag(...args);
-                    return tag !== null ? ` ${tag}` : "";
-                },
+                {},
             ],
         ];
         super(
@@ -458,7 +485,7 @@ export function createLanguageTag(language, script, region) {
     return parts.join("-");
 }
 
-export function setLanguageTagDirect(element, propertyValuesMap) {
+export function readLanguageTag(propertyValuesMap) {
     const args = [];
     for (const key of ["language", "script", "region"]) {
         const fullKey = `${LANGUAGE}${key}`;
@@ -468,7 +495,11 @@ export function setLanguageTagDirect(element, propertyValuesMap) {
                 : null,
         );
     }
-    const languageTag = createLanguageTag(...args);
+    return createLanguageTag(...args);
+}
+
+export function setLanguageTagDirect(element, propertyValuesMap) {
+    const languageTag = readLanguageTag(propertyValuesMap);
     if (languageTag !== null) element.setAttribute("lang", languageTag);
     else element.removeAttribute("lang");
 }

@@ -190,6 +190,6 @@
     "width": "720",
     "height": "720"
   },
-  "activeLayoutKey": "StageAndActors",
+  "activeLayoutKey": "MotionStage",
   "activeFontKey": "from-file Decovar Alpha Regular24 Version_0-000"
 }

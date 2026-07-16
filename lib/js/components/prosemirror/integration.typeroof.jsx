@@ -1,4 +1,4 @@
-import { Path } from "../../metamodel.mjs";
+import { FreezableSet, Path } from "../../metamodel.mjs";
 
 import {
     NodeModel,
@@ -46,6 +46,135 @@ export function getPathOfTypes(
     return pathOfTypes;
 }
 
+/**
+ * started this from looking at function markApplies
+ * https://github.com/ProseMirror/prosemirror-commands/blob/master/src/commands.ts
+ * not sure if it is sufficiently complete.
+ */
+export function getPathsOfTypes(
+    doc /* :Node*/,
+    ranges /*: readonly SelectionRange[]*/,
+    enterAtoms /*: boolean*/,
+    skip = Object.freeze(new FreezableSet()),
+) {
+    const result = new Map(), // try to reduce the amount of results
+        seen = new Set();
+    for (let i = 0; i < ranges.length; i++) {
+        const { $from, $to } = ranges[i];
+        if ($from.depth === 0 && !result.has(0))
+            // && doc.inlineContent ?????
+            result.set(0, [doc.type.name]);
+        doc.nodesBetween($from.pos, $to.pos, (node, pos) => {
+            if (
+                seen.has(pos) ||
+                skip.has(node.type.name) ||
+                (!enterAtoms &&
+                    node.isAtom &&
+                    node.isInline &&
+                    pos >= $from.pos &&
+                    pos + node.nodeSize <= $to.pos)
+            )
+                return;
+            const resolved = doc.resolve(pos);
+            result.set(pos, getPathOfTypes(resolved.path, node.type.name));
+        });
+    }
+    return result.values();
+}
+
+/* We need this a lot, as it seems, there are still some duplicates in this module! */
+function _getBestTypeSpecPropertiesId(
+    typeSpecLink,
+    protocolHandlerName /*='typeSpecProperties@'*/,
+    protocolHandlerImplementation,
+    originTypeSpecPath,
+    asPath = false,
+) {
+    const currentTypeSpecPath = Path.fromString(typeSpecLink),
+        format = (path) => `${protocolHandlerName}${path}`;
+    if (protocolHandlerImplementation === null)
+        throw new Error(
+            `KEY ERROR ProtocolHandler for identifier "${protocolHandlerName}" not found.`,
+        );
+
+    // getProtocolHandlerImplementation
+    let testPath =
+        currentTypeSpecPath.parts.length === 0 ||
+        currentTypeSpecPath.parts[0] === "children"
+            ? // the initial "children" is part from typeSpecLink
+              originTypeSpecPath.append(...currentTypeSpecPath)
+            : originTypeSpecPath.append("children", ...currentTypeSpecPath);
+    while (true) {
+        if (!originTypeSpecPath.isRootOf(testPath))
+            // We have gone to far up. This also prevents that
+            // a currentTypeSpecPath could potentially inject '..'
+            // to break out of originTypeSpecPath, though,
+            // the latter seems unlikely, as we parse it in here.
+            break;
+        const typeSpecPropertiesId = format(testPath);
+        if (protocolHandlerImplementation.hasRegistered(typeSpecPropertiesId))
+            return asPath ? testPath : typeSpecPropertiesId;
+        // Move towards root and continue; // remove 'children' and `{key}`
+        testPath = testPath.slice(0, -2);
+    }
+    return asPath ? originTypeSpecPath : format(originTypeSpecPath);
+}
+
+/**
+ * MAYBE: requires a better name
+ *
+ * NOTE (to myself): I think going via _getBestTypeSpecPropertiesId is
+ * maybe not an ideal implementation, so far, look twice and overthink
+ * where asPath===true;
+ */
+export function getTypeSpecPropertiesIdMethod(
+    pathOfTypes,
+    asPath = false,
+    nodeSpecToTypeSpecName = "nodeSpecToTypeSpec",
+    protocolHandlerName = "typeSpecProperties@",
+) {
+    const nodeSpecToTypeSpec = this.getEntry(nodeSpecToTypeSpecName),
+        typeKey = pathOfTypes.at(-1),
+        typeSpecLink = !nodeSpecToTypeSpec.has(typeKey)
+            ? ""
+            : nodeSpecToTypeSpec.get(typeKey).get("link").value,
+        protocolHandlerImplementation =
+            this.widgetBus.getProtocolHandlerImplementation(
+                protocolHandlerName,
+                null,
+            );
+    return _getBestTypeSpecPropertiesId(
+        typeSpecLink,
+        protocolHandlerName,
+        protocolHandlerImplementation,
+        this._originTypeSpecPath,
+        asPath,
+    );
+}
+
+export function getTypeSpecsMethod(state) {
+    const { empty, $cursor, ranges } = state.selection, // as TextSelection
+        result = new Map();
+    if (empty && !$cursor) return result;
+    const pathsOfTypes = getPathsOfTypes(
+        state.doc,
+        ranges,
+        false /*enterAtoms*/,
+        // we don't look at "text" directly and it seems like
+        // these paths always also produce the parent paths
+        new Set(["text"]) /* skip types*/,
+    );
+    for (const pathOfTypes of pathsOfTypes) {
+        const typeSpecPath = this._getTypeSpecPropertiesId(
+                pathOfTypes,
+                true /*asPath*/,
+            ),
+            typeSpec = this.getEntry(typeSpecPath);
+        result.set(typeSpec, typeSpecPath);
+    }
+    return result;
+}
+
 class ProsemirrorNodeView {
     // the args are from https://prosemirror.net/docs/ref/#view.NodeViewConstructor
     // type NodeViewConstructor = fn(
@@ -55,9 +184,21 @@ class ProsemirrorNodeView {
     //     decorations: readonly Decoration[],
     //     innerDecorations: DecorationSource
     // ) → NodeView
-    constructor(widgetBus, subscriptionsId, node, view, getPos) {
+    constructor(
+        widgetBus,
+        subscriptionsId,
+        node,
+        view,
+        getPos,
+        decorations,
+        innerDecorations,
+    ) {
         this.widgetBus = widgetBus;
         this._subscriptionsId = subscriptionsId;
+        this._node = node;
+        this._view = view;
+        this._decorations = decorations;
+        this._innerDecorations = innerDecorations;
         // TODO: a more direct API in widgetBus for this wouldn't hurt
         // e.g. getTagForType
         const mmNodeSpec = this.widgetBus
@@ -94,26 +235,37 @@ class ProsemirrorNodeView {
             outer: this.dom,
             inner: this._stylerDOM,
         };
-        // https://prosemirror.net/docs/ref/#model.ResolvedPos
-        // https://prosemirror.net/docs/ref/#model.Node.resolve
-        // we don't actually need to know the node position, but we
-        // care about the TypeSpec of it and possibly of it's parents types
-        const resolved = view.state.doc.resolve(getPos()),
-            pathOfTypes = getPathOfTypes(resolved.path, node.type.name);
+
         subscriptionsWidget.subscribe(
             this._stylerDOM,
-            pathOfTypes,
             structuralElements /*, contentIndexes*/,
+            node,
+            getPos,
+            decorations,
+            innerDecorations,
         );
     }
 
-    // // I dont't think implementing `update` is required so far.
-    // update(node, ...args) {
-    //     console.log(`${this.constructor.name} update`, node.type.name, 'other args:', ...args, 'this.dom.textContent:', this.dom.textContent);
-    //     // if (node.content.size > 0) this.dom.classList.remove("empty")
-    //     // else this.dom.classList.add("empty")
-    //     return true;
-    // }
+    // OK, so when I split a node, the NodeView is updated not completely
+    // re-created, so I need to pass this new node on to the subscription...
+    update(node, decorations, innerDecorations) {
+        this._node = node;
+        this._decorations = decorations;
+        this._innerDecorations = innerDecorations;
+        const subscriptionsWidget = this.widgetBus.getWidgetById(
+            this._subscriptionsId,
+            null,
+        );
+        if (subscriptionsWidget === null) return;
+        subscriptionsWidget.updateSubscription(
+            this._stylerDOM,
+            node,
+            decorations,
+            innerDecorations,
+        );
+        return true;
+    }
+
     destroy() {
         this.widgetBus
             .getWidgetById(this._subscriptionsId, null)
@@ -279,15 +431,18 @@ const mac =
 
 export class ProseMirror extends _BaseComponent {
     //jshint ignore:start
-    static TEMPLATE = `<div class="prosemirror-host"></div>`;
+    static TEMPLATE = `<div class="ui_prosemirror_host"></div>`;
     //jshint ignore:end
     constructor(
         widgetBus,
         /*SchemaSpec: */ proseMirrorDefaultSchema,
         idMap = {},
+        originTypeSpecPath = null,
+        classes = [],
     ) {
         super(widgetBus);
         this._idMap = idMap;
+        this._originTypeSpecPath = originTypeSpecPath;
         this._proseMirrorDefaultSchema = proseMirrorDefaultSchema;
         // The cache is bi-directional, meaning that both mappings will be
         // set: proseMirrorNode -> metamodelNode and metamodelNode ->
@@ -300,7 +455,7 @@ export class ProseMirror extends _BaseComponent {
             // By the time this gets called, the link is already established.
             // TODO: could fail on a cache-miss, as it would be bad if
             // the assertion above is not true!
-            { getLinked: (item) => this._nodesCache.get(item) },
+            { getLinked: this.getLinked.bind(this) },
         );
 
         this._createGenericNodeView = (...args) =>
@@ -315,7 +470,14 @@ export class ProseMirror extends _BaseComponent {
                 this._idMap.subscriptions,
                 ...args,
             );
-        [this.element, this.view] = this.initTemplate();
+        [this.element, this.view] = this.initTemplate(classes);
+    }
+
+    // Be a bit cautious with the availability of items in the cache
+    // the life-cycle/moment of linking may be problematic in some cases.
+    // This method is on purpose public.
+    getLinked(item) {
+        return this._nodesCache.get(item);
     }
 
     _menuPlugin() {
@@ -435,7 +597,7 @@ export class ProseMirror extends _BaseComponent {
             view = new EditorView(element, {
                 state,
                 dispatchTransaction:
-                    this._prosemirrorDispatchTranscation.bind(this),
+                    this._prosemirrorDispatchTransaction.bind(this),
                 markViews: {
                     "generic-style": this._createGenericMarkView,
                 },
@@ -443,11 +605,12 @@ export class ProseMirror extends _BaseComponent {
         return view;
     }
 
-    initTemplate() {
+    initTemplate(classes = []) {
         const frag = this._domTool.createFragmentFromHTML(
                 this.constructor.TEMPLATE,
             ),
             element = frag.firstElementChild;
+        for (const name of classes) element.classList.add(name);
         this._insertElement(element);
         const view = this._initProseMirrorView(element);
         return [element, view];
@@ -645,7 +808,10 @@ export class ProseMirror extends _BaseComponent {
         return newNode;
     }
 
-    _prosemirrorDispatchTranscation(transaction) {
+    _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
+    _getTypeSpecs = getTypeSpecsMethod;
+
+    _prosemirrorDispatchTransaction(transaction) {
         // console.log(
         //   `${this} DISPATCH_TRANSACTION size went from`,
         //   transaction.before.content.size,
@@ -690,6 +856,29 @@ export class ProseMirror extends _BaseComponent {
                     this.view.state.doc,
                 );
             });
+        }
+
+        if (this._originTypeSpecPath !== null) {
+            const typeSpecs = this._getTypeSpecs(this.view.state),
+                [, selectedTypeSpecPath] = typeSpecs.entries().next().value,
+                editingTypeSpec = this.getEntry("editingTypeSpec");
+            if (this._originTypeSpecPath.equals(selectedTypeSpecPath))
+                this._changeState(() =>
+                    this.getEntry("editingTypeSpec").clear(),
+                );
+            else {
+                const newPath = selectedTypeSpecPath.toRelative(
+                    this._originTypeSpecPath,
+                );
+                if (
+                    editingTypeSpec.isEmpty ||
+                    !newPath.equals(editingTypeSpec.value)
+                )
+                    this._changeState(
+                        () =>
+                            (this.getEntry("editingTypeSpec").value = newPath),
+                    );
+            }
         }
     }
 

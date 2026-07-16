@@ -19,6 +19,7 @@ import {
     _BaseDynamicCollectionContainerComponent,
     _BaseComponent,
     SimpleProtocolHandler,
+    UIButton,
 } from "../basics.mjs";
 
 import {
@@ -92,7 +93,7 @@ import { UIColorChooser } from "../ui-color-chooser.mjs";
 
 import { DATA_TRANSFER_TYPES } from "../data-transfer-types.mjs";
 
-import { initAnimanion, UITimeControl } from "./stage-and-actors.mjs";
+import { initAnimanion, UITimeControl } from "./motion-stage.mjs";
 
 import { ContainerMeta } from "../actors/actors-meta.mjs";
 
@@ -108,7 +109,7 @@ import {
 
 import { UIOTFeaturesChooserCollapsible as UIOTFeaturesChooser } from "../ui-opentype-features.typeroof.jsx";
 
-import { UICLanguageTagCollapsible as UILanguageTag } from "../language-tags.typeroof.jsx";
+import { UILanguageTagCollapsible as UILanguageTag } from "../language-tags.typeroof.jsx";
 
 import { renderAxesParameterDisplay } from "../axes-parameters.mjs";
 
@@ -251,7 +252,7 @@ class UIVideoproofArrayLayer extends _BaseContainerComponent {
                         "languageTag",
                     ),
                 },
-                [],
+                [[`animationProperties@${widgetBus.rootPath}`, "properties@"]],
                 UILanguageTag,
                 this._zones,
             ],
@@ -323,43 +324,6 @@ class UIVideoproofArrayLayer extends _BaseContainerComponent {
         throw new Error(
             `KEY ERROR ${this}._getDefaults: not found "${fullKey}" for t=0 in ${liveProperties}`,
         );
-    }
-}
-
-class UIButton extends _BaseComponent {
-    // jshint ignore: start
-    static TEMPLATE = `<button class="ui_button"><!-- insert: label --></button>`;
-    // jshint ignore: end
-    constructor(
-        widgetBus,
-        label,
-        eventHandlers = [],
-        options = { title: null, classPart: null, elementAttributes: [] },
-    ) {
-        super(widgetBus);
-        [this.element] = this._initTemplate(label, eventHandlers, options);
-    }
-    _initTemplate(
-        label,
-        eventHandlers,
-        { title, classPart, elementAttributes },
-    ) {
-        const element = this._domTool.createFragmentFromHTML(
-            this.constructor.TEMPLATE,
-        ).firstElementChild;
-        this._domTool.insertAtMarkerComment(element, "insert: label", label);
-        for (const args of eventHandlers)
-            element.addEventListener(
-                ...args /* e.g.: ['click', onClickFn, true] */,
-            );
-        if (classPart !== null && classPart !== undefined)
-            element.classList.add(`ui_button-${classPart}`);
-        if (title !== null && title !== undefined) element.title = title;
-        if (elementAttributes !== null && elementAttributes !== undefined)
-            for (const [name, value] of elementAttributes)
-                element.setAttribute(name, value);
-        this._insertElement(element);
-        return [element];
     }
 }
 
@@ -985,7 +949,7 @@ const VideoproofModel = _BaseLayoutModel.createClass(
     // , ['videoproofActor', VideoproofActorModel]
     //
     // The above is elegant and straight to the point, however, given
-    // that a default stage-and-actors configuration can do what I need
+    // that a default motion-stage configuration can do what I need
     // I tend to think, I set this up more similar to a stage, and use
     // a CoherenceFunction to cover the cases that are not ideal. So,
     // actors-meta can work it's magic out of the box.
@@ -1151,7 +1115,7 @@ const VideoproofModel = _BaseLayoutModel.createClass(
                 font.value.fullName
             ) {
                 // Set font explicitly, to make the videoproofActor Model
-                // self contained when copied e.g. to stage-and-actors.
+                // self contained when copied e.g. to motion-stage.
                 // This creates a duplication of the information in
                 // the global font key.
                 getVideoproofActorDraft("localActiveFontKey").set(
@@ -1954,7 +1918,7 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
             ),
             // This is not used via dependencyMapping, hence the path must be relative...
             // FIXME: This is a very good example having to track the paths
-            // however, it can only be problematic in the stage-and-actors
+            // however, it can only be problematic in the motion-stage
             // case, as the layout, this example!!!, doesn't move the videoproofArrayV2
             // model around.
             formatAnimationPropertiesKey = (animationPropertiesPath) =>
@@ -2103,13 +2067,13 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                 // FIXME: "injectable" => this must update paths as well!
                 {
                     // injectable
-                    // not implemented: _getArgumentConfig http://localhost:8080/lib/js/components/layouts/stage-and-actors.mjs:2771
+                    // not implemented: _getArgumentConfig http://localhost:8080/lib/js/components/layouts/motion-stage.mjs:2771
                     updateDefaultsDependencies,
-                    // not implemented: _getArgumentConfig http://localhost:8080/lib/js/components/layouts/stage-and-actors.mjs:2775
+                    // not implemented: _getArgumentConfig http://localhost:8080/lib/js/components/layouts/motion-stage.mjs:2775
                     requireUpdateDefaults,
                     genericTypeToUIElement,
-                    // get: not implemented: UICharGroupContainer http://localhost:8080/lib/js/components/layouts/stage-and-actors.mjs:2955
-                    // use: not implemented:  _activateCustom http://localhost:8080/lib/js/components/layouts/stage-and-actors.mjs:3020
+                    // get: not implemented: UICharGroupContainer http://localhost:8080/lib/js/components/layouts/motion-stage.mjs:2955
+                    // use: not implemented:  _activateCustom http://localhost:8080/lib/js/components/layouts/motion-stage.mjs:3020
                     // Uncaught (in promise) Error: not implemented: get getDefaults(prefix:string:generic/charGroup, key:string:options, defaultVal:object:null)
                     getDefaults: this._getDefaults.bind(
                         this,
@@ -2269,7 +2233,7 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                         "languageTag",
                     ),
                 },
-                [],
+                [[videoProofAnimationPropertiesKey, "properties@"]],
                 UILanguageTag,
                 this._zones,
             ],

@@ -13,11 +13,13 @@ import {
     UIDocumentTypeSpecStyler,
     UIDocumentStyleStyler,
     UIDocumentUnkownStyleStyler,
-    getTypeSpecPropertiesIdMethod,
     UIProseMirrorMenu,
     TypeSpecSubscriptions,
 } from "../../prosemirror/type-spec.typeroof.jsx";
-import { ProseMirror } from "../../prosemirror/integration.typeroof.jsx";
+import {
+    ProseMirror,
+    getTypeSpecPropertiesIdMethod,
+} from "../../prosemirror/integration.typeroof.jsx";
 import { schemaSpec as proseMirrorDefaultSchema } from "../../prosemirror/default-schema";
 
 class GenericUpdater extends _BaseComponent {
@@ -56,7 +58,7 @@ class ProseMirrorGeneralDocumentStyler extends _BaseComponent {
             // NOTE: apply paddings (use padding instead of margins)
             // especially left and top, but ideally also right and bottom
             // This is because we don't apply styles directly to the actual
-            // document element, but rather to the parent of that. (.prosemirror-host)
+            // document element, but rather to the parent of that. (.ui_prosemirror_host)
             // i.e the element in here is a lot like the outerElement.
             //
             // NOTE: it could be worth to try to treat the actual .ProseMirror
@@ -160,13 +162,24 @@ export class UIDocumentElement extends _BaseContainerComponent {
 
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
 
-    _createTypeSpecStylerWrapper(typeSpecProperties) {
+    _createTypeSpecStylerWrapper(
+        typeSpecProperties,
+        nextTypeSpecProperties = null,
+    ) {
         const settings = {},
             dependencyMappings = [
                 [typeSpecProperties, "properties@"],
                 ["/font", "rootFont"],
-            ],
-            Constructor = UIDocumentTypeSpecStyler,
+            ];
+        if (
+            nextTypeSpecProperties !== null &&
+            nextTypeSpecProperties !== typeSpecProperties
+        )
+            dependencyMappings.push([
+                nextTypeSpecProperties,
+                "nextProperties@",
+            ]);
+        const Constructor = UIDocumentTypeSpecStyler,
             args = [this.node, this.node];
         return this._initWrapper(
             this._childrenWidgetBus,
@@ -190,15 +203,30 @@ export class UIDocumentElement extends _BaseContainerComponent {
 
     _provisionWidgets(/* compareResult */) {
         const pathOfTypes = this._getPathOfTypes(this.widgetBus.rootPath),
-            typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes),
-            oldId =
-                this._typeSpecStylerWrapper !== null
-                    ? this._widgets.indexOf(this._typeSpecStylerWrapper)
-                    : -1;
+            typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes);
+        // Compute the next sibling's typeSpecProperties for
+        // resolving lineHeightAfter/emAfter margin units.
+        let nextTypeSpecProperties = null;
+        const parentCollection = this.getEntry(this.widgetBus.rootPath.parent),
+            currentKey = this.widgetBus.rootPath.parts.at(-1),
+            currentIndex = parentCollection.indexOfKey(currentKey);
+        if (currentIndex >= 0 && currentIndex + 1 < parentCollection.size) {
+            const nextKey = parentCollection.keyOfIndex(currentIndex + 1),
+                nextPath = this.widgetBus.rootPath.parent.append(nextKey),
+                nextPathOfTypes = this._getPathOfTypes(nextPath);
+            nextTypeSpecProperties =
+                this._getTypeSpecPropertiesId(nextPathOfTypes);
+        }
+        const oldId =
+            this._typeSpecStylerWrapper !== null
+                ? this._widgets.indexOf(this._typeSpecStylerWrapper)
+                : -1;
         if (oldId === -1) {
             // inital
-            this._typeSpecStylerWrapper =
-                this._createTypeSpecStylerWrapper(typeSpecProperties);
+            this._typeSpecStylerWrapper = this._createTypeSpecStylerWrapper(
+                typeSpecProperties,
+                nextTypeSpecProperties,
+            );
             this._widgets.splice(0, 0, this._typeSpecStylerWrapper);
         } else {
             const oldWrapper = this._widgets[oldId];
@@ -207,8 +235,10 @@ export class UIDocumentElement extends _BaseContainerComponent {
                     "typeSpecProperties@",
                 ) !== typeSpecProperties
             ) {
-                const newWrapper =
-                    this._createTypeSpecStylerWrapper(typeSpecProperties);
+                const newWrapper = this._createTypeSpecStylerWrapper(
+                    typeSpecProperties,
+                    nextTypeSpecProperties,
+                );
                 this._widgets.splice(oldId, 1, newWrapper);
                 oldWrapper.destroy();
                 this._typeSpecStylerWrapper = newWrapper;
@@ -659,18 +689,85 @@ export class UIDocument extends _BaseContainerComponent {
     }
 }
 
+class UpdateLabelListener extends _BaseComponent {
+    update(changedMap) {
+        const element = this.widgetBus.getWidgetById(
+                BaseProseMirrorContext.ID_MAP.proseMirror,
+            ).element,
+            showLabels = changedMap.get("showNodeTypeSpecLabels").value;
+        element.classList[showLabels ? "add" : "remove"]("has-node-labels");
+    }
+}
+
 /**
  * This is basically the central control switchboard for the ProseMirror
  * integration. So far, especially the IDs are required by the components
  * to work and to interact.
  */
-export class ProseMirrorContext extends _BaseContainerComponent {
+
+export class BaseProseMirrorContext extends _BaseContainerComponent {
     static ID_MAP = Object.freeze({
         menu: "proseMirrorMenu",
         proseMirror: "proseMirror",
         subscriptions: "typeSpecSubscriptionsRegistry",
     });
+}
 
+export class RampProseMirrorContext extends BaseProseMirrorContext {
+    constructor(
+        widgetBus,
+        zones,
+        proseMirrorSettings,
+        originTypeSpecPath,
+        menuSettings,
+    ) {
+        super(widgetBus, zones, [
+            [
+                // IMPORTANT: must be before ProseMirror
+                { id: new.target.ID_MAP.menu },
+                [],
+                UIProseMirrorMenu,
+                zones,
+                originTypeSpecPath,
+                menuSettings,
+            ],
+            [
+                { ...proseMirrorSettings, id: new.target.ID_MAP.proseMirror },
+                [
+                    "proseMirrorSchema",
+                    "document",
+                    "nodeSpecToTypeSpec",
+                    "editingTypeSpec",
+                ],
+                ProseMirror,
+                proseMirrorDefaultSchema,
+                new.target.ID_MAP,
+                originTypeSpecPath,
+                ["editor-advanced", "has-node-labels"],
+            ],
+            [
+                { id: new.target.ID_MAP.subscriptions },
+                ["nodeSpecToTypeSpec", "typeSpec", "document"],
+                TypeSpecSubscriptions,
+                zones,
+                originTypeSpecPath,
+                { typeSpecLabels: true } /*nodeOutfitterOptions*/,
+            ],
+            [
+                {},
+                [
+                    [
+                        `typeSpecProperties@${originTypeSpecPath.toString()}`,
+                        "properties@",
+                    ],
+                ],
+                ProseMirrorGeneralDocumentStyler,
+            ],
+        ]);
+    }
+}
+
+export class TypeStageProseMirrorContext extends BaseProseMirrorContext {
     constructor(
         widgetBus,
         zones,
@@ -681,24 +778,38 @@ export class ProseMirrorContext extends _BaseContainerComponent {
         super(widgetBus, zones, [
             [
                 // IMPORTANT: must be before ProseMirror
-                { ...menuSettings, id: new.target.ID_MAP.menu },
-                ["nodeSpecToTypeSpec"],
+                { id: new.target.ID_MAP.menu },
+                [],
                 UIProseMirrorMenu,
+                zones,
                 originTypeSpecPath,
+                menuSettings,
             ],
             [
                 { ...proseMirrorSettings, id: new.target.ID_MAP.proseMirror },
-                ["proseMirrorSchema", "document"],
+                [
+                    "proseMirrorSchema",
+                    "document",
+                    "nodeSpecToTypeSpec",
+                    "editingTypeSpec",
+                ],
                 ProseMirror,
                 proseMirrorDefaultSchema,
                 new.target.ID_MAP,
+                originTypeSpecPath,
+                ["editor-advanced"],
             ],
+            [{}, ["showNodeTypeSpecLabels"], UpdateLabelListener],
             [
                 { id: new.target.ID_MAP.subscriptions },
-                ["nodeSpecToTypeSpec", "typeSpec"],
+                ["nodeSpecToTypeSpec", "typeSpec", "document"],
                 TypeSpecSubscriptions,
                 zones,
                 originTypeSpecPath,
+                {
+                    typeSpecLabels: () =>
+                        this.getEntry("./showNodeTypeSpecLabels").value,
+                } /*nodeOutfitterOptions*/,
             ],
             [
                 {},

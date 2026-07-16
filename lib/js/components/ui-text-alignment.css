@@ -1,0 +1,21 @@
+.ui_text-alignment {
+    .ui-button_text_alignment {
+        height: 3.5em;
+        width: 4em;
+        flex-wrap: wrap;
+        &.active {
+            color: white;
+            background: black;
+        }
+        &.inherited {
+            color: var(--button-text-color-disabled);
+        }
+        &.inherited.active {
+            color: white;
+            background: darkgray;
+        }
+        span {
+            display: block;
+        }
+    }
+}

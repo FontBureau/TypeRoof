@@ -7,26 +7,35 @@
 ICON_NAMES=(
     add
     arrow_forward
+    arrow_left_alt
+    arrow_right_alt
     chevron_right
     delete
     drag_pan
+    edit
+    edit_off
     format_align_center
     format_align_left
     format_align_right
+    format_bold
+    format_clear
+    format_italic
     info
     keyboard_arrow_down
     keyboard_arrow_up
     keyboard_double_arrow_left
     keyboard_double_arrow_right
     menu
+    open_in_full
     pause
     place_item
     play_arrow
     refresh
     remove
+    swap_horiz
     swap_vert
-    edit
-    edit_off
+    toggle_on
+    toggle_off
 )
 # Join the array elements using a comma, must be sorted alphabetically
 ICON_NAMES_ARGUMENT=$(IFS=$'\n';sorted=($(sort <<<"${ICON_NAMES[*]}"));IFS=,;echo "${sorted[*]}")

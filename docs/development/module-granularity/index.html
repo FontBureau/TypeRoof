@@ -66,7 +66,7 @@
 <ul>
 <li><strong><code>index.typeroof.jsx</code></strong> — <code>Model</code>, <code>Controller</code>, public exports.</li>
 <li><strong>A small handful of engine files</strong> — properties, generators, PPS maps, defaults, synthetic values, state machinery.</li>
-<li><strong>One UI file per controller zone</strong> — matches what <code>TypeSpecRampController.zones</code> (or equivalent) already enumerates.</li>
+<li><strong>One UI file per controller zone</strong> — matches what <code>TypeStageController.zones</code> (or equivalent) already enumerates.</li>
 <li><strong>Optionally one <code>shared</code> file</strong> for UI helpers used by multiple zones.</li>
 </ul>
 <p>A 4000+ line single file is a signal to split.
@@ -105,12 +105,12 @@ A folder with 30+ files in flat layout is a signal to consolidate.</p>
 <ul>
 <li><code>**/*.jsx</code> is globally allow-listed → <strong>every <code>.typeroof.jsx</code> file is prettier-formatted</strong>, wherever it lives.</li>
 <li><code>**/*.mjs</code> is <strong>not</strong> globally allow-listed → <code>.mjs</code> files are skipped by prettier unless a directory-specific allow-list covers them.</li>
-<li><code>**/ramp/*.*</code> is a blanket allow-list → inside <code>lib/js/components/layouts/ramp/</code>, prettier formats <em>all</em> extensions, including <code>.mjs</code>.</li>
+<li><code>**/type-stage/*.*</code> is a blanket allow-list → inside <code>lib/js/components/layouts/type-stage/</code>, prettier formats <em>all</em> extensions, including <code>.mjs</code>.</li>
 </ul>
 <p>Consequences worth knowing:</p>
 <ul>
 <li><strong>For new UI files anywhere:</strong> <code>.typeroof.jsx</code> is the right extension on both grounds — JSX is available, and prettier covers the file.</li>
-<li><strong>For new engine files:</strong> <code>.mjs</code> is technically correct (no JSX needed). If prettier coverage matters for a given file, either (a) place it under a directory that’s allow-listed (e.g. <code>ramp/</code>), or (b) extend <code>.prettierignore</code> to cover it explicitly — do not rename <code>.mjs</code> → <code>.typeroof.jsx</code> purely to obtain prettier coverage, that conflates the two concerns.</li>
+<li><strong>For new engine files:</strong> <code>.mjs</code> is technically correct (no JSX needed). If prettier coverage matters for a given file, either (a) place it under a directory that’s allow-listed (e.g. <code>type-stage/</code>), or (b) extend <code>.prettierignore</code> to cover it explicitly — do not rename <code>.mjs</code> → <code>.typeroof.jsx</code> purely to obtain prettier coverage, that conflates the two concerns.</li>
 </ul>
 <h3><a id="tiny-decision-table" class="heading_anchor" href="#tiny-decision-table" aria-hidden="true">#</a>Tiny decision table</h3>
 <table>
