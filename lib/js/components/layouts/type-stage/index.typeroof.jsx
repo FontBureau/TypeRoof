@@ -26,7 +26,7 @@ import {
     WasteBasketDropTarget,
     UICheckboxInput,
 } from "../../generic.mjs";
-import { SelectAndDragByOptions } from "../stage-and-actors.mjs";
+import { SelectAndDragByOptions } from "../motion-stage.mjs";
 import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
 import { GENERIC } from "../../registered-properties-definitions.mjs";
 import {

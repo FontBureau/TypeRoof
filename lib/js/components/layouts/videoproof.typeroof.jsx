@@ -93,7 +93,7 @@ import { UIColorChooser } from "../ui-color-chooser.mjs";
 
 import { DATA_TRANSFER_TYPES } from "../data-transfer-types.mjs";
 
-import { initAnimanion, UITimeControl } from "./stage-and-actors.mjs";
+import { initAnimanion, UITimeControl } from "./motion-stage.mjs";
 
 import { ContainerMeta } from "../actors/actors-meta.mjs";
 
@@ -2067,13 +2067,13 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                 // FIXME: "injectable" => this must update paths as well!
                 {
                     // injectable
-                    // not implemented: _getArgumentConfig http://localhost:8080/lib/js/components/layouts/stage-and-actors.mjs:2771
+                    // not implemented: _getArgumentConfig http://localhost:8080/lib/js/components/layouts/motion-stage.mjs:2771
                     updateDefaultsDependencies,
-                    // not implemented: _getArgumentConfig http://localhost:8080/lib/js/components/layouts/stage-and-actors.mjs:2775
+                    // not implemented: _getArgumentConfig http://localhost:8080/lib/js/components/layouts/motion-stage.mjs:2775
                     requireUpdateDefaults,
                     genericTypeToUIElement,
-                    // get: not implemented: UICharGroupContainer http://localhost:8080/lib/js/components/layouts/stage-and-actors.mjs:2955
-                    // use: not implemented:  _activateCustom http://localhost:8080/lib/js/components/layouts/stage-and-actors.mjs:3020
+                    // get: not implemented: UICharGroupContainer http://localhost:8080/lib/js/components/layouts/motion-stage.mjs:2955
+                    // use: not implemented:  _activateCustom http://localhost:8080/lib/js/components/layouts/motion-stage.mjs:3020
                     // Uncaught (in promise) Error: not implemented: get getDefaults(prefix:string:generic/charGroup, key:string:options, defaultVal:object:null)
                     getDefaults: this._getDefaults.bind(
                         this,
