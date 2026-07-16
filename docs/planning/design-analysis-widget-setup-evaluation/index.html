@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="critical-evaluation-self-describing-widget-setup" class="heading_anchor" href="#critical-evaluation-self-describing-widget-setup" aria-hidden="true">#</a>Critical Evaluation: Self-Describing Widget Setup</h1>
+<blockquote>
+<p><strong>Status: PROPOSAL / not implemented — part 2 of 3.</strong> As of 2026-07-16,
+neither the <code>static REQUIREMENTS</code> proposal reviewed here nor the
+model-declared UI-hints counter-proposal below exists in the codebase.
+This is the second document in a three-part series written 2026-02-25,
+all filed under <code>docs/planning/</code>:</p>
+<ol>
+<li><code>design-analysis-self-describing-widget-setup.md</code> — proposes
+<code>static REQUIREMENTS</code> on widget classes;</li>
+<li><strong>this file</strong> — critiques that proposal (symptom vs. root cause) and
+counter-proposes model-declared UI hints;</li>
+<li><code>design-analysis-composable-widget-system.md</code> — the revised
+synthesis (“Beyond REQUIREMENTS”), which <strong>supersedes the central
+theses of both earlier documents</strong>.</li>
+</ol>
+<p>Read as an evolving discussion; document 3 is the most current view.
+The analysis of <em>current</em> limitations remains accurate.</p>
+</blockquote>
+<h2><a id="is-the-static-requirements-proposal-a-good-idea" class="heading_anchor" href="#is-the-static-requirements-proposal-a-good-idea" aria-hidden="true">#</a>Is the <code>static REQUIREMENTS</code> Proposal a Good Idea?</h2>
+<p><strong>Short answer: It’s a reasonable idea but it addresses a symptom, not the root cause.</strong></p>
+<p>The proposal correctly identifies that widget setup knowledge is scattered. But the
+deeper question is: <em>why</em> is it scattered? And does moving <code>require()</code> arrays onto
+classes actually solve the real problems?</p>
+<hr>
+<h2><a id="what-the-proposal-gets-right" class="heading_anchor" href="#what-the-proposal-gets-right" aria-hidden="true">#</a>What the Proposal Gets Right</h2>
+<h3><a id="1-the-problem-is-real" class="heading_anchor" href="#1-the-problem-is-real" aria-hidden="true">#</a>1. The Problem Is Real</h3>
+<p>Widget construction in TypeRoof requires coordination between three concerns:</p>
+<ul>
+<li><strong>What data the widget needs</strong> (model paths, injectable services)</li>
+<li><strong>How that data maps to constructor parameters</strong> (resolution logic)</li>
+<li><strong>Where in the UI the widget lives</strong> (zone, rootPath, host element)</li>
+</ul>
+<p>Currently, concern #1 lives in <code>uiElementsMap</code> (for type-driven) or at ad-hoc
+call sites (for manual layout). Moving it to the class consolidates concern #1.</p>
+<h3><a id="2-require-is-already-the-right-abstraction" class="heading_anchor" href="#2-require-is-already-the-right-abstraction" aria-hidden="true">#</a>2. <code>require()</code> Is Already the Right Abstraction</h3>
+<p>The <code>InjectDependency</code> / <code>require()</code> pattern is a good intermediate
+representation. It names what’s needed without specifying how to get it.
+This is fundamentally correct.</p>
+<hr>
+<h2><a id="what-the-proposal-gets-wrong-or-incomplete" class="heading_anchor" href="#what-the-proposal-gets-wrong-or-incomplete" aria-hidden="true">#</a>What the Proposal Gets Wrong (or Incomplete)</h2>
+<h3><a id="1-it-doesnt-address-the-real-friction" class="heading_anchor" href="#1-it-doesnt-address-the-real-friction" aria-hidden="true">#</a>1. It Doesn’t Address the Real Friction</h3>
+<p>Looking at the actual pain during our implementation, the friction points were:</p>
+<table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>Would REQUIREMENTS fix it?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>padMode</code> not in <code>REGISTERED_GENERIC_KEYMOMENT_FIELDS</code></td>
+<td><strong>No</strong> — this is a filtering problem, not a resolution problem</td>
+</tr>
+<tr>
+<td>6 scattered registration points in <code>available-actors.mjs</code></td>
+<td><strong>No</strong> — unrelated to widget setup</td>
+</tr>
+<tr>
+<td><code>fixGridLineBreaks</code> vs <code>fixContextualLineBreaks</code></td>
+<td><strong>No</strong> — this is renderer logic</td>
+</tr>
+<tr>
+<td><code>fixed-lines</code> CSS class convention</td>
+<td><strong>No</strong> — this is implicit knowledge</td>
+</tr>
+</tbody>
+</table>
+<p>The proposal optimizes the <strong>type-driven UI path</strong> which <em>already works well</em>.
+The real problems are elsewhere.</p>
+<h3><a id="2-two-resolution-contexts-are-fundamentally-different" class="heading_anchor" href="#2-two-resolution-contexts-are-fundamentally-different" aria-hidden="true">#</a>2. Two Resolution Contexts Are Fundamentally Different</h3>
+<p>The type-driven path (<code>_defineGenericWidgets</code>) and the manual path (layout call
+sites) serve different purposes:</p>
+<p><strong>Type-driven path</strong>: “Given a model field of type X, automatically build a
+matching editor widget.” This is <em>generic</em> — the same resolution logic applies
+to any field of that type.</p>
+<p><strong>Manual path</strong>: “Build this specific widget with these specific bindings for
+this specific layout purpose.” This is <em>contextual</em> — the widget setup depends
+on the layout’s specific needs.</p>
+<p><code>static REQUIREMENTS</code> works well for the type-driven path (it already does via
+<code>uiElementsMap</code>). But for the manual path, the widget often needs different
+dependency mappings, different rootPaths, and different injectable bindings
+depending on <em>where</em> it’s used. REQUIREMENTS can’t capture that variance.</p>
+<h3><a id="3-the-_getargumentconfig-switch-case-is-a-service-locator" class="heading_anchor" href="#3-the-_getargumentconfig-switch-case-is-a-service-locator" aria-hidden="true">#</a>3. The <code>_getArgumentConfig</code> Switch-Case Is a Service Locator</h3>
+<p>The resolution engine (<code>_getArgumentConfig</code>) is essentially a service locator
+pattern — it resolves named dependencies from an ambient context (<code>injectable</code>,
+<code>ppsRecord</code>, <code>zone</code>, <code>fieldName</code>). Moving <code>require()</code> declarations to classes
+doesn’t change the fact that resolution depends on this context.</p>
+<p>The switch-case has 20+ cases and growing. Making it the universal resolution
+mechanism means every new requirement type needs a new case. This doesn’t scale
+well regardless of where the <code>require()</code> calls live.</p>
+<hr>
+<h2><a id="a-better-approach-lean-into-what-already-works" class="heading_anchor" href="#a-better-approach-lean-into-what-already-works" aria-hidden="true">#</a>A Better Approach: Lean Into What Already Works</h2>
+<h3><a id="observation-the-metamodel-already-knows-everything" class="heading_anchor" href="#observation-the-metamodel-already-knows-everything" aria-hidden="true">#</a>Observation: The Metamodel Already Knows Everything</h3>
+<p>TypeRoof’s metamodel is the real source of truth. When you write:</p>
+<pre class="language-javascript"><code class="language-javascript">VideoproofContextualActorModel <span class="token operator">=</span> _BaseActorModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>
+    <span class="token string">'VideoproofContextualActorModel'</span>
+  <span class="token punctuation">,</span> <span class="token operator">...</span>genericActorMixin
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'keyMoments'</span><span class="token punctuation">,</span> VideoproofContextualKeyMomentsModel<span class="token punctuation">]</span>
+  <span class="token punctuation">,</span> <span class="token operator">...</span>typographyActorMixin
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>The <code>fields</code> map on the resulting class contains all field names and their types.
+The <code>_defineGenericWidgets</code> function already iterates these fields. The only
+thing preventing automatic UI generation is the <strong>filter function</strong>:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token parameter">fieldName</span> <span class="token operator">=></span> <span class="token constant">REGISTERED_GENERIC_KEYMOMENT_FIELDS</span><span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span>fieldName<span class="token punctuation">)</span></code></pre>
+<h3><a id="the-root-problem-filtering-not-resolution" class="heading_anchor" href="#the-root-problem-filtering-not-resolution" aria-hidden="true">#</a>The Root Problem: Filtering, Not Resolution</h3>
+<p>The type-driven system can ALREADY resolve <code>PadModeModel</code> → <code>UISelectInput</code>.
+It can ALREADY resolve <code>StringOrEmptyModel</code> → <code>UILineOfTextOrEmptyInput</code>.
+The resolution works. <strong>The gate blocks it.</strong></p>
+<h3><a id="proposal-model-declared-ui-hints" class="heading_anchor" href="#proposal-model-declared-ui-hints" aria-hidden="true">#</a>Proposal: Model-Declared UI Hints</h3>
+<p>Instead of putting requirements on widget classes, put <strong>UI hints on the model</strong>:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// On the model field definition:</span>
+VideoproofContextualKeyMomentModel <span class="token operator">=</span> TypeClass<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>
+    <span class="token string">'VideoproofContextualKeyMomentModel'</span>
+  <span class="token punctuation">,</span> <span class="token operator">...</span>typographyKeyMomentModelMixin
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'charGroup'</span><span class="token punctuation">,</span> CharGroupModel<span class="token punctuation">]</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'padMode'</span><span class="token punctuation">,</span> PadModeOrEmptyModel<span class="token punctuation">]</span>        <span class="token comment">// type already determines UI</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'customPad'</span><span class="token punctuation">,</span> StringOrEmptyModel<span class="token punctuation">]</span>        <span class="token comment">// type already determines UI</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'showCellBoxes'</span><span class="token punctuation">,</span> BooleanDefaultTrueOrEmptyModel<span class="token punctuation">]</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'stageBackgroundColor'</span><span class="token punctuation">,</span> ColorModel<span class="token punctuation">]</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// The model TYPE is all that's needed for generic UI.</span>
+<span class="token comment">// No registration in REGISTERED_GENERIC_KEYMOMENT_FIELDS required.</span></code></pre>
+<p><strong>If the type-driven UI system has a mapping for a field’s type, that field
+should get a UI widget automatically.</strong> The opt-in gate should become an
+opt-out mechanism:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// Instead of allow-list:</span>
+<span class="token parameter">fieldName</span> <span class="token operator">=></span> <span class="token constant">REGISTERED_GENERIC_KEYMOMENT_FIELDS</span><span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span>fieldName<span class="token punctuation">)</span>
+
+<span class="token comment">// Use deny-list (for fields that explicitly should NOT get generic UI):</span>
+<span class="token parameter">fieldName</span> <span class="token operator">=></span> <span class="token operator">!</span><span class="token constant">EXCLUDED_FROM_GENERIC_UI</span><span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span>fieldName<span class="token punctuation">)</span>
+
+<span class="token comment">// Or even better — derive from type mappability:</span>
+<span class="token parameter">fieldName</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> FieldType <span class="token operator">=</span> TypeClass<span class="token punctuation">.</span>fields<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>fieldName<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token function">genericTypeToUIElement</span><span class="token punctuation">(</span>FieldType<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span> <span class="token operator">!==</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<h3><a id="why-this-is-better" class="heading_anchor" href="#why-this-is-better" aria-hidden="true">#</a>Why This Is Better</h3>
+<ol>
+<li><strong>Zero registration</strong>: Adding <code>padMode</code> to the model → UI appears automatically</li>
+<li><strong>Single source of truth</strong>: The metamodel field type IS the UI specification</li>
+<li><strong>Already mostly works</strong>: The resolution pipeline handles all standard types</li>
+<li><strong>Addresses the actual friction</strong>: The invisible gate was our real problem</li>
+<li><strong>No new abstraction</strong>: Uses existing type-driven resolution, just removes the gate</li>
+</ol>
+<h3><a id="what-about-non-standard-ui" class="heading_anchor" href="#what-about-non-standard-ui" aria-hidden="true">#</a>What About Non-Standard UI?</h3>
+<p>For cases where a field needs a custom widget (not the generic type-mapped one),
+the model field type can carry that information:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// Option A: Override in uiElementsMap (already works)</span>
+<span class="token comment">// CharGroupModel → UICharGroupContainer (not the generic struct handler)</span>
+<span class="token punctuation">[</span>CharGroupModel<span class="token punctuation">,</span> <span class="token punctuation">[</span>UICharGroupContainer<span class="token punctuation">,</span> <span class="token operator">...</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
+
+<span class="token comment">// Option B: Static override on the model class (new)</span>
+<span class="token comment">// This allows the MODEL to say "I need a specific editor"</span>
+CharGroupModel<span class="token punctuation">.</span><span class="token constant">UI_ELEMENT</span> <span class="token operator">=</span> UICharGroupContainer<span class="token punctuation">;</span>
+
+<span class="token comment">// Option C: Type-level annotation (future)</span>
+<span class="token comment">// The type itself declares its preferred editor</span>
+PadModeModel<span class="token punctuation">.</span><span class="token constant">EDITOR_HINT</span> <span class="token operator">=</span> <span class="token string">'select'</span><span class="token punctuation">;</span> <span class="token comment">// generic types don't need this</span>
+CustomComplexModel<span class="token punctuation">.</span><span class="token constant">EDITOR_HINT</span> <span class="token operator">=</span> UICustomEditor<span class="token punctuation">;</span> <span class="token comment">// specific override</span></code></pre>
+<hr>
+<h2><a id="combined-recommendation" class="heading_anchor" href="#combined-recommendation" aria-hidden="true">#</a>Combined Recommendation</h2>
+<h3><a id="tier-1-quick-wins-highest-impact-lowest-effort" class="heading_anchor" href="#tier-1-quick-wins-highest-impact-lowest-effort" aria-hidden="true">#</a>Tier 1: Quick Wins (Highest Impact, Lowest Effort)</h3>
+<p><strong>1. Remove the <code>REGISTERED_GENERIC_KEYMOMENT_FIELDS</code> gate</strong></p>
+<p>Replace the allow-list with type-mappability check:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// In motion-stage.mjs (formerly stage-and-actors.mjs)</span>
+<span class="token keyword">const</span> <span class="token function-variable function">isGenericUIAvailable</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">fieldName<span class="token punctuation">,</span> TypeClass</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> FieldType <span class="token operator">=</span> TypeClass<span class="token punctuation">.</span>fields<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>fieldName<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// Returns false for unmapped types, truthy for mapped ones</span>
+    <span class="token keyword">return</span> <span class="token function">genericTypeToUIElement</span><span class="token punctuation">(</span>FieldType<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span> <span class="token operator">!==</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+<p><strong>Impact</strong>: New model fields with standard types automatically get UI editors.
+Our <code>padMode</code> + <code>customPad</code> problem disappears permanently — for all future
+actors too.</p>
+<p><strong>Risk</strong>: Low. Fields with unmapped types simply won’t appear. Fields that
+previously had no UI (like internal model fields) would only appear if they
+have a type mapping, which standard internal fields (like sub-models,
+ordered maps) typically don’t have in <code>uiElementsMap</code>.</p>
+<p><strong>Caveat</strong>: Some fields that have type mappings might not be appropriate for
+generic UI in all contexts. A deny-list for specific exclusions handles this:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// Fields that HAVE type mappings but should NOT get generic UI</span>
+<span class="token keyword">const</span> <span class="token constant">EXCLUDE_FROM_GENERIC_UI</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Set</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'keyMoments'</span><span class="token punctuation">,</span> <span class="token string">'activeActors'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token function-variable function">isGenericUIAvailable</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">fieldName<span class="token punctuation">,</span> TypeClass</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token constant">EXCLUDE_FROM_GENERIC_UI</span><span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span>fieldName<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token keyword">return</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> FieldType <span class="token operator">=</span> TypeClass<span class="token punctuation">.</span>fields<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>fieldName<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token function">genericTypeToUIElement</span><span class="token punctuation">(</span>FieldType<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span> <span class="token operator">!==</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+<p><strong>2. Unify actor registration into a single declaration</strong></p>
+<p>Instead of 6 scattered integration points in <code>available-actors.mjs</code>:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// Single declaration per actor type</span>
+<span class="token keyword">const</span> <span class="token constant">ACTOR_DEFINITIONS</span> <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+        <span class="token literal-property property">typeKey</span><span class="token operator">:</span> <span class="token string">'VideoproofContextualActorModel'</span>
+      <span class="token punctuation">,</span> <span class="token literal-property property">label</span><span class="token operator">:</span> <span class="token string">'Videoproof Contextual'</span>
+      <span class="token punctuation">,</span> <span class="token literal-property property">Model</span><span class="token operator">:</span> VideoproofContextualActorModel
+      <span class="token punctuation">,</span> <span class="token literal-property property">Renderer</span><span class="token operator">:</span> VideoproofContextualActorRenderer
+      <span class="token punctuation">,</span> <span class="token literal-property property">isLeaf</span><span class="token operator">:</span> <span class="token boolean">true</span>
+      <span class="token punctuation">,</span> <span class="token literal-property property">isTypographic</span><span class="token operator">:</span> <span class="token boolean">true</span>
+      <span class="token punctuation">,</span> <span class="token literal-property property">hasFontSelect</span><span class="token operator">:</span> <span class="token boolean">true</span>
+      <span class="token punctuation">,</span> <span class="token literal-property property">zones</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'main'</span><span class="token punctuation">,</span> <span class="token string">'layer'</span><span class="token punctuation">]</span>
+      <span class="token punctuation">,</span> <span class="token literal-property property">dependencyMappings</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+            <span class="token punctuation">[</span><span class="token string">'/activeState/font'</span><span class="token punctuation">,</span> <span class="token string">'font'</span><span class="token punctuation">]</span>
+          <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'animationProperties@'</span><span class="token punctuation">,</span> <span class="token string">'animationProperties@'</span><span class="token punctuation">]</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">,</span> charGroupsData  <span class="token comment">// optional, for actors that use char groups</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">,</span> <span class="token comment">// ... other actors</span>
+<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+<span class="token comment">// Then derive everything from ACTOR_DEFINITIONS:</span>
+<span class="token comment">// initAvailableActorTypes, getActorWidgetSetup, getActorTreeNodeType,</span>
+<span class="token comment">// isTypographicActorTypeKey, getActorTypeKeySpecificWidgets</span></code></pre>
+<p><strong>Impact</strong>: Adding a new actor = adding one object to one array.</p>
+<h3><a id="tier-2-medium-term-good-idea-more-effort" class="heading_anchor" href="#tier-2-medium-term-good-idea-more-effort" aria-hidden="true">#</a>Tier 2: Medium-Term (Good Idea, More Effort)</h3>
+<p><strong>3. The <code>static REQUIREMENTS</code> proposal (from the design analysis)</strong></p>
+<p>This IS a good idea for the type-driven path specifically. But implement it
+AFTER Tier 1, because Tier 1 solves the immediate friction with less effort.</p>
+<p>The best use case for REQUIREMENTS is <strong>custom widgets that are reused in
+multiple contexts</strong> (like <code>UIColorChooser</code>, <code>UICharGroupContainer</code>). For
+simple type-mapped widgets (<code>UISelectInput</code>, <code>UILineOfTextInput</code>), the
+type-driven resolution already handles them.</p>
+<p><strong>4. Extract the <code>_getArgumentConfig</code> switch-case into a protocol</strong></p>
+<p>Instead of one giant switch-case, make requirement resolution pluggable:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// Each requirement type registers a resolver</span>
+<span class="token keyword">const</span> <span class="token constant">RESOLVERS</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token punctuation">(</span><span class="token punctuation">[</span>
+    <span class="token punctuation">[</span><span class="token string">'settings:rootPath'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">context</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+        context<span class="token punctuation">.</span>settings<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">'rootPath'</span><span class="token punctuation">,</span> Path<span class="token punctuation">.</span><span class="token function">fromParts</span><span class="token punctuation">(</span>Path<span class="token punctuation">.</span><span class="token constant">RELATIVE</span><span class="token punctuation">,</span> context<span class="token punctuation">.</span>fieldName<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">]</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'label'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">context</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token function">getRegisteredPropertySetup</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span>ppsRecord<span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token literal-property property">label</span><span class="token operator">:</span> context<span class="token punctuation">.</span>fieldName<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>label
+            <span class="token operator">||</span> context<span class="token punctuation">.</span>fieldName<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">]</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'items'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">context</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span>BaseModelType<span class="token punctuation">.</span>enumItems<span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token parameter">value</span> <span class="token operator">=></span> <span class="token punctuation">[</span>value<span class="token punctuation">,</span> value<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">]</span>
+  <span class="token punctuation">,</span> <span class="token comment">// ...</span>
+<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>This makes the resolution extensible without modifying <code>_getArgumentConfig</code>.</p>
+<h3><a id="tier-3-long-term-aspirational" class="heading_anchor" href="#tier-3-long-term-aspirational" aria-hidden="true">#</a>Tier 3: Long-Term (Aspirational)</h3>
+<p><strong>5. Model-driven UI generation from metamodel introspection</strong></p>
+<p>The ultimate direction: the metamodel’s type system carries enough information
+to generate appropriate editors for <em>any</em> model structure. The <code>uiElementsMap</code>
+becomes a curated set of overrides, not the primary mapping.</p>
+<p>This aligns with TypeRoof’s metamodel philosophy — the model is the source of
+truth, UI is derived from it.</p>
+<hr>
+<h2><a id="summary-strengthweakness-comparison" class="heading_anchor" href="#summary-strengthweakness-comparison" aria-hidden="true">#</a>Summary: Strength/Weakness Comparison</h2>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th style="text-align:center">Solves gate problem</th>
+<th style="text-align:center">Solves scattered setup</th>
+<th style="text-align:center">Effort</th>
+<th style="text-align:center">Risk</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>REGISTERED_GENERIC_KEYMOMENT_FIELDS</code> → deny-list</td>
+<td style="text-align:center">★★★★★</td>
+<td style="text-align:center">—</td>
+<td style="text-align:center">Low</td>
+<td style="text-align:center">Low</td>
+</tr>
+<tr>
+<td>Unified actor registration</td>
+<td style="text-align:center">—</td>
+<td style="text-align:center">★★★★★</td>
+<td style="text-align:center">Medium</td>
+<td style="text-align:center">Low</td>
+</tr>
+<tr>
+<td><code>static REQUIREMENTS</code> on widgets</td>
+<td style="text-align:center">★★</td>
+<td style="text-align:center">★★★</td>
+<td style="text-align:center">Medium</td>
+<td style="text-align:center">Medium</td>
+</tr>
+<tr>
+<td>Pluggable resolver protocol</td>
+<td style="text-align:center">—</td>
+<td style="text-align:center">★★★★</td>
+<td style="text-align:center">High</td>
+<td style="text-align:center">Medium</td>
+</tr>
+<tr>
+<td>Full model-driven UI</td>
+<td style="text-align:center">★★★★★</td>
+<td style="text-align:center">★★★★★</td>
+<td style="text-align:center">Very High</td>
+<td style="text-align:center">High</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Start with Tier 1. It solves the problems we actually hit.</strong></p>
+<hr>
+<h2><a id="final-thought" class="heading_anchor" href="#final-thought" aria-hidden="true">#</a>Final Thought</h2>
+<p>The <code>static REQUIREMENTS</code> proposal is architecturally sound but it’s solving
+a problem that’s secondary to the real friction. The real insight from our
+implementation experience is:</p>
+<blockquote>
+<p><strong>The type system already knows enough. The infrastructure just needs to
+trust it and get out of the way.</strong></p>
+</blockquote>
+<p>Removing the allow-list gate and unifying actor registration would have
+prevented every friction point we encountered — without any new abstraction.</p>
+<hr>
+<p><em>Generated: 2026-02-25, based on implementing VideoproofContextualActor</em>
+<em>and analyzing the full widget creation pipeline</em>
+<em>Filed under docs/planning/ 2026-07-16 as part 2 of the widget-setup series;</em>
+<em><code>stage-and-actors.mjs</code> → <code>motion-stage.mjs</code> reference updated.</em></p>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>

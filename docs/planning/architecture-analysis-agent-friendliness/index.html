@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="architecture-analysis-what-makes-typeroof-agent-friendly" class="heading_anchor" href="#architecture-analysis-what-makes-typeroof-agent-friendly" aria-hidden="true">#</a>Architecture Analysis: What Makes TypeRoof Agent-Friendly</h1>
+<h2><a id="context" class="heading_anchor" href="#context" aria-hidden="true">#</a>Context</h2>
+<blockquote>
+<p><strong>Status:</strong> Historical retrospective. Written 2026-02-25 during the
+(now merged) implementation of the <code>VideoproofContextualActor</code>, and
+lightly updated afterwards to keep file/line references current.
+The friction points and recommendations below are still open at the
+time of filing under <code>docs/planning/</code>.</p>
+</blockquote>
+<p>This analysis was written during the implementation of the <code>VideoproofContextualActor</code>
+for the TypeRoof shell. An AI agent (goose) successfully created the actor model,
+renderer, and registration — with iterative fixes — touching only 3 files and adding
+~370 lines of new code. This document examines <em>why</em> the architecture made that feasible
+and where friction remains.</p>
+<h2><a id="executive-summary" class="heading_anchor" href="#executive-summary" aria-hidden="true">#</a>Executive Summary</h2>
+<p>TypeRoof’s architecture is built on a small number of powerful, composable patterns.
+These patterns are <strong>highly regular</strong> — once an agent understands one actor, it can
+create another by following the same structural template. The metamodel system provides
+<strong>type-driven automation</strong> that eliminates boilerplate UI code. Together, these properties
+make the codebase unusually navigable for an AI agent.</p>
+<p>The main friction points are: implicit registration contracts spread across multiple
+files, CSS class conventions that are undocumented, and business logic that must be
+manually ported from legacy functional code into the actor pattern.</p>
+<hr>
+<h2><a id="part-1-what-worked-well" class="heading_anchor" href="#part-1-what-worked-well" aria-hidden="true">#</a>Part 1: What Worked Well</h2>
+<h3><a id="11-the-actor-pattern-is-highly-regular" class="heading_anchor" href="#11-the-actor-pattern-is-highly-regular" aria-hidden="true">#</a>1.1 The Actor Pattern is Highly Regular</h3>
+<p>Every actor in TypeRoof follows the same structural template:</p>
+<pre><code>Model  = _BaseActorModel.createClass(name, ...mixins, ['field', FieldType], ...)
+Renderer extends _BaseComponent { constructor, initTemplate, update }
+</code></pre>
+<p>This regularity means:</p>
+<ul>
+<li><strong>One example is sufficient.</strong> Reading <code>videoproof-array.mjs</code> gave the agent
+a complete blueprint for creating <code>videoproof-contextual.mjs</code>.</li>
+<li><strong>The pattern is copy-and-adapt</strong>, not invent-from-scratch. The agent could
+focus on the <em>differences</em> (pad modes, word formatting) rather than the <em>framework</em>.</li>
+<li><strong>Errors are structural, not semantic.</strong> When something was wrong (e.g., missing
+UI for padMode), the fix was adding a field name to a set — not redesigning logic.</li>
+</ul>
+<p><strong>Strength score: ★★★★★</strong>
+This is the single strongest architectural feature for agent-friendliness.</p>
+<h3><a id="12-the-metamodels-createclass-pattern" class="heading_anchor" href="#12-the-metamodels-createclass-pattern" aria-hidden="true">#</a>1.2 The Metamodel’s <code>createClass</code> Pattern</h3>
+<p>The metamodel uses a declarative, data-driven approach to model definition:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">const</span> MyModel <span class="token operator">=</span> _AbstractStructModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>
+    <span class="token string">'MyModel'</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'fieldName'</span><span class="token punctuation">,</span> FieldTypeModel<span class="token punctuation">]</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'otherField'</span><span class="token punctuation">,</span> OtherTypeModel<span class="token punctuation">]</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>Why this helps agents:</p>
+<ul>
+<li><strong>No class boilerplate.</strong> No constructor, no getter/setter methods, no manual
+serialization. The metamodel generates all of that.</li>
+<li><strong>Self-documenting.</strong> The field list IS the schema. An agent reading a <code>createClass</code>
+call immediately knows every field, its type, and its name.</li>
+<li><strong>Composable via mixins.</strong> <code>...genericActorMixin</code>, <code>...typographyActorMixin</code> etc.
+are spread into the field list. The agent can reuse them without understanding
+their internals.</li>
+<li><strong>Type-safe by construction.</strong> Field types are model classes, not strings or
+primitives. <code>PadModeOrEmptyModel</code> is unambiguous — it’s an enum-or-empty.</li>
+</ul>
+<p><strong>Strength score: ★★★★★</strong></p>
+<h3><a id="13-type-driven-ui-generation" class="heading_anchor" href="#13-type-driven-ui-generation" aria-hidden="true">#</a>1.3 Type-Driven UI Generation</h3>
+<p>The <code>genericTypeToUIElement</code> function in <code>type-driven-ui.mjs</code> maps model types
+to UI widgets automatically:</p>
+<table>
+<thead>
+<tr>
+<th>Model Type</th>
+<th>UI Widget</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_AbstractEnumModel</code></td>
+<td><code>UISelectInput</code> (dropdown)</td>
+</tr>
+<tr>
+<td><code>_AbstractNumberModel</code></td>
+<td><code>UINumberInput</code></td>
+</tr>
+<tr>
+<td><code>StringModel</code></td>
+<td><code>UILineOfTextInput</code></td>
+</tr>
+<tr>
+<td><code>BooleanModel</code></td>
+<td><code>UICheckboxInput</code></td>
+</tr>
+<tr>
+<td><code>ColorModel</code></td>
+<td>Color chooser</td>
+</tr>
+<tr>
+<td><code>*OrEmptyModel</code></td>
+<td>Above + empty/toggle variant</td>
+</tr>
+</tbody>
+</table>
+<p>This is enormously powerful for agent work because:</p>
+<ul>
+<li><strong>Adding a new field to the model automatically gets UI</strong> — no manual widget
+creation needed.</li>
+<li><strong>The mapping is centralized</strong> — one place to understand, not per-component.</li>
+<li><strong>New enum types (like <code>PadModeModel</code>) work without any UI code</strong> — the
+abstract parent type match handles it.</li>
+</ul>
+<p>The only requirement is that the field name appears in
+<code>REGISTERED_GENERIC_KEYMOMENT_FIELDS</code> — which was the one fix needed.</p>
+<p><strong>Strength score: ★★★★☆</strong> (one star lost for the registration requirement — see friction)</p>
+<h3><a id="14-centralized-actor-registration" class="heading_anchor" href="#14-centralized-actor-registration" aria-hidden="true">#</a>1.4 Centralized Actor Registration</h3>
+<p>All actor types are registered in one file (<code>available-actors.mjs</code>) with a
+predictable structure:</p>
+<ol>
+<li>Import the model and renderer</li>
+<li>Add to <code>initAvailableActorTypes</code> array</li>
+<li>Add to <code>getActorWidgetSetup</code> switch</li>
+<li>Add to <code>getActorTreeNodeType</code> (leaf or container)</li>
+<li>Add to <code>isTypographicActorTypeKey</code> set</li>
+<li>Add to <code>getActorTypeKeySpecificWidgets</code> list</li>
+</ol>
+<p>While this is 6 touch points (see friction), each one is <strong>trivially predictable</strong>
+from the existing entries. The agent copied the VideoproofArrayV2 pattern and
+changed the names.</p>
+<p><strong>Strength score: ★★★★☆</strong></p>
+<h3><a id="15-separation-of-concerns-model--renderer--layout" class="heading_anchor" href="#15-separation-of-concerns-model--renderer--layout" aria-hidden="true">#</a>1.5 Separation of Concerns: Model / Renderer / Layout</h3>
+<p>The clean separation means:</p>
+<ul>
+<li><strong>Model changes don’t require renderer changes</strong> (and vice versa)</li>
+<li><strong>Business logic is testable in isolation</strong> (the <code>_getWords</code> function is pure)</li>
+<li><strong>Layout/UI is a separate layer</strong> that consumes actors generically</li>
+</ul>
+<p>This allowed the agent to work in phases: model first, then renderer, then
+registration — each phase independently verifiable.</p>
+<p><strong>Strength score: ★★★★★</strong></p>
+<h3><a id="16-dedicated-line-break-functions-per-layout-type" class="heading_anchor" href="#16-dedicated-line-break-functions-per-layout-type" aria-hidden="true">#</a>1.6 Dedicated Line-Break Functions per Layout Type</h3>
+<p><code>affixed-line-breaks.mjs</code> exports both <code>fixGridLineBreaks</code> and
+<code>fixContextualLineBreaks</code> — clearly named, clearly separated. Switching
+from grid to contextual rendering was a single import change.</p>
+<p><strong>Strength score: ★★★★☆</strong></p>
+<hr>
+<h2><a id="part-2-where-friction-occurred" class="heading_anchor" href="#part-2-where-friction-occurred" aria-hidden="true">#</a>Part 2: Where Friction Occurred</h2>
+<h3><a id="21-the-registered_generic_keymoment_fields-gate" class="heading_anchor" href="#21-the-registered_generic_keymoment_fields-gate" aria-hidden="true">#</a>2.1 The <code>REGISTERED_GENERIC_KEYMOMENT_FIELDS</code> Gate</h3>
+<p><strong>Problem:</strong> Adding <code>padMode</code> and <code>customPad</code> fields to the model was not
+enough to get UI. The field names also had to be added to a hardcoded
+<code>FreezableSet</code> in <code>motion-stage.mjs</code> (line 421; formerly
+<code>stage-and-actors.mjs</code>, renamed since this analysis was written).</p>
+<p><strong>Why this caused friction:</strong></p>
+<ul>
+<li>The set is in a <em>different file</em> from both the model definition and the
+type-driven UI mapping.</li>
+<li>There’s no error or warning when a field is missing from the set — the
+UI simply doesn’t appear.</li>
+<li>The agent had to trace the <code>_defineGenericWidgets</code> → <code>isAllowedFieldName</code>
+→ <code>REGISTERED_GENERIC_KEYMOMENT_FIELDS</code> chain to find the gate.</li>
+</ul>
+<p><strong>Impact:</strong> This was the primary debugging issue in the implementation.
+The model was correct, the type-driven UI mapping was correct, but the
+field names weren’t in the allowlist.</p>
+<p><strong>Recommendation:</strong></p>
+<ul>
+<li><strong>Option A (ideal):</strong> Make the registration automatic. If a field’s type
+has a UI mapping in <code>genericTypeToUIElement</code>, it should appear in the
+key moment editor without explicit registration.</li>
+<li><strong>Option B (pragmatic):</strong> Move the field set closer to the model definitions,
+or derive it from the model’s field list. Each actor model could export its
+own set of generic keymoment fields.</li>
+<li><strong>Option C (minimal):</strong> Add a comment in the <code>createClass</code> pattern documentation
+stating: “New fields also need registration in
+<code>REGISTERED_GENERIC_KEYMOMENT_FIELDS</code>.”</li>
+</ul>
+<h3><a id="22-six-registration-points-in-available-actorsmjs" class="heading_anchor" href="#22-six-registration-points-in-available-actorsmjs" aria-hidden="true">#</a>2.2 Six Registration Points in available-actors.mjs</h3>
+<p><strong>Problem:</strong> Adding a new actor type requires changes in 6 separate locations
+within <code>available-actors.mjs</code>. Missing any one causes silent failures or
+incomplete behavior.</p>
+<p><strong>Why this caused friction:</strong></p>
+<ul>
+<li>Each registration point follows a slightly different pattern (array entry,
+switch case, set membership, array membership).</li>
+<li>There’s no validation that all 6 are consistent.</li>
+<li>The agent had to manually identify all 6 by reading the entire file.</li>
+</ul>
+<p><strong>Recommendation:</strong></p>
+<ul>
+<li><strong>Option A (ideal):</strong> Single registration object per actor type:<pre class="language-javascript"><code class="language-javascript"><span class="token function">registerActorType</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+    <span class="token literal-property property">key</span><span class="token operator">:</span> <span class="token string">'VideoproofContextual'</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">label</span><span class="token operator">:</span> <span class="token string">'Videoproof Contextual'</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">Model</span><span class="token operator">:</span> VideoproofContextualActorModel<span class="token punctuation">,</span>
+    <span class="token literal-property property">Renderer</span><span class="token operator">:</span> VideoproofContextualActorRenderer<span class="token punctuation">,</span>
+    <span class="token literal-property property">treeNodeType</span><span class="token operator">:</span> <span class="token string">'leaf'</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">isTypographic</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">specificWidgets</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'FontSelect'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">charGroupsData</span><span class="token operator">:</span> charGroupsData<span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+</li>
+<li><strong>Option B (pragmatic):</strong> A checklist comment at the top of the file listing
+all required registration points.</li>
+</ul>
+<h3><a id="23-css-class-conventions-are-implicit" class="heading_anchor" href="#23-css-class-conventions-are-implicit" aria-hidden="true">#</a>2.3 CSS Class Conventions Are Implicit</h3>
+<p><strong>Problem:</strong> The contextual renderer needed <code>fixed-lines</code> in addition to
+<code>fixed-line-breaks</code> for proper inline text flow. This was discovered only
+by reading CSS comments (“used in contextual/kerning mode”).</p>
+<p><strong>Why this caused friction:</strong></p>
+<ul>
+<li>CSS class names are strings — no type checking, no import, no documentation.</li>
+<li>The relationship between <code>.fixed-line-breaks</code> and <code>.fixed-lines</code> is not
+obvious from the names alone.</li>
+<li>The agent initially used only <code>fixed-line-breaks</code> (copying from the array
+actor), which produced incorrect rendering.</li>
+</ul>
+<p><strong>Recommendation:</strong></p>
+<ul>
+<li><strong>Option A:</strong> Document CSS class contracts in the renderer’s JSDoc or in
+a CSS architecture document.</li>
+<li><strong>Option B:</strong> Use CSS custom properties or data attributes that are more
+self-documenting: <code>data-layout=&quot;contextual&quot;</code> or <code>data-line-break-mode=&quot;contextual&quot;</code>.</li>
+<li><strong>Option C:</strong> Have the <code>fixContextualLineBreaks</code> function add/remove the
+required CSS classes itself, rather than requiring them in the template.</li>
+</ul>
+<h3><a id="24-legacy-business-logic-requires-manual-porting" class="heading_anchor" href="#24-legacy-business-logic-requires-manual-porting" aria-hidden="true">#</a>2.4 Legacy Business Logic Requires Manual Porting</h3>
+<p><strong>Problem:</strong> The legacy <code>videoproof-contextual.mjs</code> uses a functional style
+with closures and passed-in callbacks (<code>getCharsForKey</code>, <code>fixLineBreaks</code>,
+<code>showExtended</code>, <code>extendedCharGroups</code>). The shell version uses a different
+API (<code>getCharsForSelectUI</code>, <code>getExtendedChars</code>, model-driven properties).</p>
+<p><strong>Why this caused friction:</strong></p>
+<ul>
+<li>Function signatures changed between legacy and shell (<code>getCharsForKey</code> →
+<code>getCharsForSelectUI</code>).</li>
+<li>Extended character groups are accessed differently (object parameter →
+<code>getExtendedChars</code> function).</li>
+<li>The agent had to understand both APIs and translate between them.</li>
+</ul>
+<p><strong>Recommendation:</strong></p>
+<ul>
+<li><strong>Option A (long-term):</strong> When creating a V2 of a layout, leave a migration
+guide comment in the legacy file explaining the API mapping.</li>
+<li><strong>Option B:</strong> Create adapter functions that bridge legacy and shell APIs,
+making porting mechanical rather than interpretive.</li>
+</ul>
+<hr>
+<h2><a id="part-3-architectural-properties-that-enable-ai-agents" class="heading_anchor" href="#part-3-architectural-properties-that-enable-ai-agents" aria-hidden="true">#</a>Part 3: Architectural Properties That Enable AI Agents</h2>
+<h3><a id="31-pattern-regularity-most-important" class="heading_anchor" href="#31-pattern-regularity-most-important" aria-hidden="true">#</a>3.1 Pattern Regularity (Most Important)</h3>
+<p>The single most important property is <strong>pattern regularity</strong> — when every
+actor follows the same structural template, an agent needs to understand
+the pattern once and can then apply it N times. TypeRoof excels here.</p>
+<p><strong>How to strengthen:</strong></p>
+<ul>
+<li>Keep the actor pattern consistent as new actor types are added.</li>
+<li>Document the pattern explicitly (a “how to create a new actor” guide).</li>
+<li>Consider code generation or templates for the boilerplate parts.</li>
+</ul>
+<h3><a id="32-declarative-over-imperative" class="heading_anchor" href="#32-declarative-over-imperative" aria-hidden="true">#</a>3.2 Declarative Over Imperative</h3>
+<p><code>createClass</code> declarations, type-to-UI mappings, and mixin composition are
+all declarative. Declarative code is easier for agents because:</p>
+<ul>
+<li>The intent is visible in the structure, not hidden in control flow.</li>
+<li>There are fewer ways to get it wrong.</li>
+<li>Changes are additive (add a field) rather than surgical (modify a method).</li>
+</ul>
+<p><strong>How to strengthen:</strong></p>
+<ul>
+<li>Continue favoring declarative patterns for new features.</li>
+<li>Move remaining imperative registration (the 6 points in available-actors)
+toward declarative registration.</li>
+</ul>
+<h3><a id="33-discoverability-via-naming-conventions" class="heading_anchor" href="#33-discoverability-via-naming-conventions" aria-hidden="true">#</a>3.3 Discoverability via Naming Conventions</h3>
+<p>Consistent naming helps agents navigate:</p>
+<ul>
+<li><code>*Model</code> = data model class</li>
+<li><code>*Renderer</code> / <code>*ActorRenderer</code> = rendering component</li>
+<li><code>*Mixin</code> = composable field set</li>
+<li><code>*OrEmptyModel</code> = optional/nullable variant</li>
+<li><code>fix*LineBreaks</code> = line-break algorithm</li>
+</ul>
+<p><strong>How to strengthen:</strong></p>
+<ul>
+<li>Maintain these conventions strictly.</li>
+<li>Add similar conventions for CSS classes (e.g., <code>actor_renderer-{type}</code>
+is already good).</li>
+</ul>
+<h3><a id="34-idempotent-pure-functions" class="heading_anchor" href="#34-idempotent-pure-functions" aria-hidden="true">#</a>3.4 Idempotent Pure Functions</h3>
+<p>The business logic functions (<code>_getWords</code>, <code>_formatAuto</code>, <code>_kernPaddingGen</code>)
+are pure — no side effects, no global state. This matches the project’s
+coding style guidelines and makes them:</p>
+<ul>
+<li>Easy to understand in isolation</li>
+<li>Safe to copy and modify</li>
+<li>Independently testable</li>
+</ul>
+<p><strong>How to strengthen:</strong></p>
+<ul>
+<li>Keep business logic as pure functions, separate from renderer classes.</li>
+<li>Consider moving shared business logic to utility modules.</li>
+</ul>
+<h3><a id="35-single-source-of-truth-for-types" class="heading_anchor" href="#35-single-source-of-truth-for-types" aria-hidden="true">#</a>3.5 Single Source of Truth for Types</h3>
+<p>The metamodel ensures each type is defined once:</p>
+<ul>
+<li><code>PadModeModel</code> is defined once with its enum values.</li>
+<li><code>CharGroupModel</code> is defined once and imported by both array and contextual actors.</li>
+<li>Type-to-UI mapping is defined once in <code>type-driven-ui.mjs</code>.</li>
+</ul>
+<p>This prevents inconsistencies that would confuse an agent.</p>
+<hr>
+<h2><a id="part-4-summary-scorecard" class="heading_anchor" href="#part-4-summary-scorecard" aria-hidden="true">#</a>Part 4: Summary Scorecard</h2>
+<table>
+<thead>
+<tr>
+<th>Architectural Property</th>
+<th>Agent-Friendliness</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Actor pattern regularity</td>
+<td>★★★★★</td>
+<td>One example = complete blueprint</td>
+</tr>
+<tr>
+<td>Declarative <code>createClass</code></td>
+<td>★★★★★</td>
+<td>Self-documenting schema</td>
+</tr>
+<tr>
+<td>Type-driven UI generation</td>
+<td>★★★★☆</td>
+<td>Powerful but gated by field registration</td>
+</tr>
+<tr>
+<td>Model/Renderer separation</td>
+<td>★★★★★</td>
+<td>Clean phases of work</td>
+</tr>
+<tr>
+<td>Centralized registration</td>
+<td>★★★★☆</td>
+<td>Predictable but 6 touch points</td>
+</tr>
+<tr>
+<td>Pure business logic</td>
+<td>★★★★★</td>
+<td>Easy to port and adapt</td>
+</tr>
+<tr>
+<td>CSS conventions</td>
+<td>★★★☆☆</td>
+<td>Implicit, discovered by reading CSS</td>
+</tr>
+<tr>
+<td>Legacy → Shell migration</td>
+<td>★★★☆☆</td>
+<td>API differences require interpretation</td>
+</tr>
+<tr>
+<td>Error feedback</td>
+<td>★★☆☆☆</td>
+<td>Silent failures when registration incomplete</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td>★★★☆☆</td>
+<td>Code is readable but guides are sparse</td>
+</tr>
+</tbody>
+</table>
+<h2><a id="part-5-top-3-recommendations" class="heading_anchor" href="#part-5-top-3-recommendations" aria-hidden="true">#</a>Part 5: Top 3 Recommendations</h2>
+<h3><a id="1-unify-actor-registration-high-impact-medium-effort" class="heading_anchor" href="#1-unify-actor-registration-high-impact-medium-effort" aria-hidden="true">#</a>1. Unify Actor Registration (High Impact, Medium Effort)</h3>
+<p>Replace the 6 scattered registration points with a single declarative
+registration call per actor type. This eliminates the most common class
+of agent (and human) errors.</p>
+<h3><a id="2-auto-derive-generic-keymoment-fields-high-impact-low-effort" class="heading_anchor" href="#2-auto-derive-generic-keymoment-fields-high-impact-low-effort" aria-hidden="true">#</a>2. Auto-derive Generic Keymoment Fields (High Impact, Low Effort)</h3>
+<p>Instead of maintaining <code>REGISTERED_GENERIC_KEYMOMENT_FIELDS</code> manually,
+derive it from the keymoment model’s field list, filtering by fields that
+have a <code>genericTypeToUIElement</code> mapping. This eliminates the “invisible gate”
+problem entirely.</p>
+<h3><a id="3-document-css-class-contracts-medium-impact-low-effort" class="heading_anchor" href="#3-document-css-class-contracts-medium-impact-low-effort" aria-hidden="true">#</a>3. Document CSS Class Contracts (Medium Impact, Low Effort)</h3>
+<p>Add a brief comment block in each renderer’s TEMPLATE explaining which CSS
+classes are required and what they do. Alternatively, create a CSS architecture
+document mapping class combinations to visual behaviors.</p>
+<hr>
+<p><em>Generated: 2026-02-25, during implementation of VideoproofContextualActor</em>
+<em>Original branch: feature/videoproof-contextual (since merged)</em>
+<em>Files touched: 3 (1 new, 2 modified)</em>
+<em>Lines added: ~370 new + ~36 modified</em>
+<em>Filed under docs/planning/ 2026-07-16; <code>stage-and-actors.mjs</code> → <code>motion-stage.mjs</code> references updated.</em></p>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>

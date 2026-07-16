@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="design-analysis-self-describing-widget-setup" class="heading_anchor" href="#design-analysis-self-describing-widget-setup" aria-hidden="true">#</a>Design Analysis: Self-Describing Widget Setup</h1>
+<blockquote>
+<p><strong>Status: PROPOSAL / not implemented — part 1 of 3.</strong> As of 2026-07-16,
+<code>static REQUIREMENTS</code>, <code>static DEPENDENCY_MAPPINGS</code>, and
+<code>resolveWidgetSetup()</code> do <strong>not</strong> exist in the codebase; the snippets
+below are a <em>proposed</em> API. This is the first document in a three-part
+series written 2026-02-25, all filed under <code>docs/planning/</code>:</p>
+<ol>
+<li><strong>this file</strong> — proposes <code>static REQUIREMENTS</code> on widget classes;</li>
+<li><code>design-analysis-widget-setup-evaluation.md</code> — critiques this
+proposal, arguing it treats a symptom and counter-proposing
+model-declared UI hints;</li>
+<li><code>design-analysis-composable-widget-system.md</code> — the revised
+synthesis (“Beyond REQUIREMENTS”), which <strong>supersedes the central
+theses of both earlier documents</strong> and introduces <code>static INTERFACE</code>.</li>
+</ol>
+<p>Read as an evolving discussion; document 3 is the most current view.
+The analysis of <em>current</em> limitations remains accurate.</p>
+</blockquote>
+<h2><a id="problem-statement" class="heading_anchor" href="#problem-statement" aria-hidden="true">#</a>Problem Statement</h2>
+<p>In TypeRoof’s current architecture, widget construction knowledge is <strong>split between
+two locations</strong>:</p>
+<ol>
+<li><strong>The widget class</strong> — knows its own constructor signature (<code>widgetBus, ...args</code>)</li>
+<li><strong>The call site</strong> — knows how to resolve those args from context (settings,
+dependency mappings, model types, injectable services)</li>
+</ol>
+<p>This means every place that builds a widget must redundantly encode:</p>
+<ul>
+<li>Which settings keys to set (zone, rootPath, id)</li>
+<li>Which model paths map to which internal names</li>
+<li>Which constructor arguments to provide and in what order</li>
+<li>Which injectable services to resolve</li>
+</ul>
+<p>The <code>require()</code> / <code>InjectDependency</code> pattern in <code>type-driven-ui-basics.mjs</code>
+partially addresses this for the type-driven UI pipeline, but it exists only in
+the centralized <code>uiElementsMap</code> — not on the widgets themselves.</p>
+<h3><a id="concrete-example-the-current-split" class="heading_anchor" href="#concrete-example-the-current-split" aria-hidden="true">#</a>Concrete Example: The Current Split</h3>
+<p><strong>Widget definition</strong> (<code>generic.mjs</code>):</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// UIToggleButton knows it needs these args:</span>
+<span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">widgetBus<span class="token punctuation">,</span> classToken<span class="token punctuation">,</span> labelIsOn<span class="token punctuation">,</span> labelIsOff<span class="token punctuation">,</span> title</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token operator">...</span> <span class="token punctuation">}</span></code></pre>
+<p><strong>Type-driven setup</strong> (<code>type-driven-ui.mjs</code>, centralized registry):</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token punctuation">[</span>BooleanModel<span class="token punctuation">,</span> <span class="token punctuation">[</span>UIToggleButton
+    <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'settings:internalPropertyName'</span><span class="token punctuation">,</span> <span class="token string">'boolean'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'classToken'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'label'</span><span class="token punctuation">,</span> <span class="token parameter">val</span><span class="token operator">=></span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">turn </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>val<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> off</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span>
+    <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'label'</span><span class="token punctuation">,</span> <span class="token parameter">val</span><span class="token operator">=></span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">turn </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>val<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> on</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span>
+    <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'label'</span><span class="token punctuation">,</span> <span class="token parameter">val</span><span class="token operator">=></span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Toggle </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>val<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span>
+<span class="token punctuation">]</span><span class="token punctuation">]</span></code></pre>
+<p><strong>Manual call site</strong> (<code>videoproof-array-v2.mjs</code>, since renamed to
+<code>videoproof.typeroof.jsx</code>; ad-hoc):</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token punctuation">[</span>
+    <span class="token punctuation">{</span> <span class="token literal-property property">zone</span><span class="token operator">:</span> <span class="token string">'main'</span><span class="token punctuation">,</span> <span class="token literal-property property">rootPath</span><span class="token operator">:</span> Path<span class="token punctuation">.</span><span class="token function">fromParts</span><span class="token punctuation">(</span><span class="token string">'.'</span><span class="token punctuation">,</span> <span class="token string">'keyMoments'</span><span class="token punctuation">,</span> <span class="token string">'0'</span><span class="token punctuation">,</span> <span class="token string">'textColor'</span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token comment">// dependency mappings - caller must know!</span>
+  <span class="token punctuation">,</span> UIColorChooser
+  <span class="token punctuation">,</span> zones
+  <span class="token punctuation">,</span> <span class="token string">'Text Color'</span>
+  <span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_getDefaults</span><span class="token punctuation">.</span><span class="token function">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> <span class="token operator">...</span><span class="token punctuation">)</span>
+  <span class="token punctuation">,</span> updateDefaultsDependencies
+  <span class="token punctuation">,</span> requireUpdateDefaults
+<span class="token punctuation">]</span></code></pre>
+<p>The type-driven path (<code>uiElementsMap</code> → <code>_getArgumentConfig</code> → <code>_defineGenericWidgets</code>)
+resolves <code>require()</code> objects at widget-build time. But the ad-hoc path in layout files
+has no such resolution — the caller must manually construct the entire setup array.</p>
+<hr>
+<h2><a id="proposed-design-widget-declared-requirements" class="heading_anchor" href="#proposed-design-widget-declared-requirements" aria-hidden="true">#</a>Proposed Design: Widget-Declared Requirements</h2>
+<h3><a id="core-idea" class="heading_anchor" href="#core-idea" aria-hidden="true">#</a>Core Idea</h3>
+<p>Move the <code>require()</code>-based setup declarations <strong>onto the widget class itself</strong>
+as a static property. The widget class declares what it needs; the container
+resolves those needs at construction time.</p>
+<h3><a id="how-it-would-look" class="heading_anchor" href="#how-it-would-look" aria-hidden="true">#</a>How It Would Look</h3>
+<h4><a id="on-the-widget-class" class="heading_anchor" href="#on-the-widget-class" aria-hidden="true">#</a>On the Widget Class</h4>
+<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">UIToggleButton</span> <span class="token keyword">extends</span> <span class="token class-name">_BaseComponent</span> <span class="token punctuation">{</span>
+    <span class="token comment">// jshint ignore:start</span>
+    <span class="token keyword">static</span> <span class="token constant">REQUIREMENTS</span> <span class="token operator">=</span> <span class="token punctuation">[</span>
+        <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'settings:internalPropertyName'</span><span class="token punctuation">,</span> <span class="token string">'boolean'</span><span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'classToken'</span><span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'label'</span><span class="token punctuation">,</span> <span class="token parameter">val</span><span class="token operator">=></span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">turn </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>val<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> off</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'label'</span><span class="token punctuation">,</span> <span class="token parameter">val</span><span class="token operator">=></span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">turn </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>val<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> on</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'label'</span><span class="token punctuation">,</span> <span class="token parameter">val</span><span class="token operator">=></span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Toggle </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>val<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span>
+    <span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token comment">// jshint ignore:end</span>
+
+    <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">widgetBus<span class="token punctuation">,</span> classToken<span class="token punctuation">,</span> labelIsOn<span class="token punctuation">,</span> labelIsOff<span class="token punctuation">,</span> title</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token operator">...</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">UIColorChooser</span> <span class="token keyword">extends</span> <span class="token class-name">_BaseContainerComponent</span> <span class="token punctuation">{</span>
+    <span class="token comment">// jshint ignore:start</span>
+    <span class="token keyword">static</span> <span class="token constant">REQUIREMENTS</span> <span class="token operator">=</span> <span class="token punctuation">[</span>
+        <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'settings:rootPath'</span><span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'zones'</span><span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'label'</span><span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'getDefault'</span><span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'updateDefaultsDependencies'</span><span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'raw:requireUpdateDefaults'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token comment">// jshint ignore:end</span>
+
+    <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">widgetBus<span class="token punctuation">,</span> zones<span class="token punctuation">,</span> label<span class="token punctuation">,</span> getDefault<span class="token punctuation">,</span>
+                updateDefaultsDependencies<span class="token punctuation">,</span> requireUpdateDefaults</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token operator">...</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<h4><a id="at-the-call-site-simplified" class="heading_anchor" href="#at-the-call-site-simplified" aria-hidden="true">#</a>At the Call Site (Simplified)</h4>
+<p>Instead of manually building <code>[settings, dependencyMappings, Constructor, ...args]</code>:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// Option A: Fully automatic from REQUIREMENTS</span>
+<span class="token keyword">const</span> widgetDef <span class="token operator">=</span> <span class="token function">resolveWidgetSetup</span><span class="token punctuation">(</span>UIColorChooser<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">zone</span><span class="token operator">:</span> <span class="token string">'main'</span>
+  <span class="token punctuation">,</span> <span class="token literal-property property">rootPath</span><span class="token operator">:</span> Path<span class="token punctuation">.</span><span class="token function">fromParts</span><span class="token punctuation">(</span><span class="token string">'.'</span><span class="token punctuation">,</span> <span class="token string">'keyMoments'</span><span class="token punctuation">,</span> <span class="token string">'0'</span><span class="token punctuation">,</span> <span class="token string">'textColor'</span><span class="token punctuation">)</span>
+  <span class="token punctuation">,</span> injectable
+  <span class="token punctuation">,</span> ppsRecord
+  <span class="token punctuation">,</span> <span class="token literal-property property">fieldName</span><span class="token operator">:</span> <span class="token string">'textColor'</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// Returns: [settings, dependencyMappings, UIColorChooser, ...resolvedArgs]</span>
+
+<span class="token comment">// Option B: Use REQUIREMENTS as defaults, override specific args</span>
+<span class="token keyword">const</span> widgetDef <span class="token operator">=</span> <span class="token function">resolveWidgetSetup</span><span class="token punctuation">(</span>UIColorChooser<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">zone</span><span class="token operator">:</span> <span class="token string">'main'</span>
+  <span class="token punctuation">,</span> <span class="token literal-property property">rootPath</span><span class="token operator">:</span> Path<span class="token punctuation">.</span><span class="token function">fromParts</span><span class="token punctuation">(</span><span class="token string">'.'</span><span class="token punctuation">,</span> <span class="token string">'keyMoments'</span><span class="token punctuation">,</span> <span class="token string">'0'</span><span class="token punctuation">,</span> <span class="token string">'textColor'</span><span class="token punctuation">)</span>
+  <span class="token punctuation">,</span> <span class="token literal-property property">overrides</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">label</span><span class="token operator">:</span> <span class="token string">'Text Color'</span> <span class="token punctuation">}</span>
+  <span class="token punctuation">,</span> injectable
+  <span class="token punctuation">,</span> ppsRecord
+  <span class="token punctuation">,</span> <span class="token literal-property property">fieldName</span><span class="token operator">:</span> <span class="token string">'textColor'</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<h4><a id="in-the-type-driven-registry-simplified" class="heading_anchor" href="#in-the-type-driven-registry-simplified" aria-hidden="true">#</a>In the Type-Driven Registry (Simplified)</h4>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// Before: uiElementsMap must duplicate what the widget already knows</span>
+<span class="token punctuation">[</span>BooleanModel<span class="token punctuation">,</span> <span class="token punctuation">[</span>UIToggleButton
+    <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'settings:internalPropertyName'</span><span class="token punctuation">,</span> <span class="token string">'boolean'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'classToken'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'label'</span><span class="token punctuation">,</span> <span class="token parameter">val</span><span class="token operator">=></span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">turn </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>val<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> off</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span>
+    <span class="token punctuation">,</span> <span class="token operator">...</span>
+<span class="token punctuation">]</span><span class="token punctuation">]</span>
+
+<span class="token comment">// After: uiElementsMap can reference the widget's own REQUIREMENTS</span>
+<span class="token comment">// or override specific ones</span>
+<span class="token punctuation">[</span>BooleanModel<span class="token punctuation">,</span> UIToggleButton<span class="token punctuation">]</span>  <span class="token comment">// uses static REQUIREMENTS as-is</span>
+
+<span class="token comment">// Or with overrides for model-specific customizations:</span>
+<span class="token punctuation">[</span>BooleanModel<span class="token punctuation">,</span> <span class="token punctuation">[</span>UIToggleButton<span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token function-variable function">labelIsOn</span><span class="token operator">:</span> <span class="token parameter">val</span><span class="token operator">=></span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">turn </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>val<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> off</span><span class="token template-punctuation string">`</span></span> <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">]</span></code></pre>
+<hr>
+<h2><a id="detailed-design" class="heading_anchor" href="#detailed-design" aria-hidden="true">#</a>Detailed Design</h2>
+<h3><a id="1-enhanced-injectdependency-require" class="heading_anchor" href="#1-enhanced-injectdependency-require" aria-hidden="true">#</a>1. Enhanced <code>InjectDependency</code> (require)</h3>
+<p>The existing <code>require()</code> function creates <code>InjectDependency</code> objects with
+<code>name</code> and <code>payload</code>. This can be extended:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">InjectDependency</span> <span class="token punctuation">{</span>
+    <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">name<span class="token punctuation">,</span> payload<span class="token operator">=</span><span class="token keyword">null</span><span class="token punctuation">,</span> typeHint<span class="token operator">=</span>_NOTDEF</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>name <span class="token operator">=</span> name<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>payload <span class="token operator">=</span> payload<span class="token punctuation">;</span>
+        <span class="token comment">// NEW: type constraint for validation</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>typeHint <span class="token operator">=</span> typeHint<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// Existing — still works</span>
+<span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'label'</span><span class="token punctuation">)</span>
+<span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'settings:internalPropertyName'</span><span class="token punctuation">,</span> <span class="token string">'value'</span><span class="token punctuation">)</span>
+
+<span class="token comment">// Enhanced — with type hints for validation and documentation</span>
+<span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'label'</span><span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">,</span> String<span class="token punctuation">)</span>
+<span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'settings:internalPropertyName'</span><span class="token punctuation">,</span> <span class="token string">'value'</span><span class="token punctuation">,</span> <span class="token string">'dependencyMapping'</span><span class="token punctuation">)</span>
+<span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'zones'</span><span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">,</span> Map<span class="token punctuation">)</span></code></pre>
+<h3><a id="2-requirements-static-property" class="heading_anchor" href="#2-requirements-static-property" aria-hidden="true">#</a>2. <code>REQUIREMENTS</code> Static Property</h3>
+<p>Each widget class declares its requirements as a static array:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">class</span> <span class="token class-name">MyWidget</span> <span class="token keyword">extends</span> <span class="token class-name">_BaseComponent</span> <span class="token punctuation">{</span>
+    <span class="token keyword">static</span> <span class="token constant">REQUIREMENTS</span> <span class="token operator">=</span> <span class="token punctuation">[</span>
+        <span class="token comment">// Each entry is an InjectDependency or a literal value</span>
+        <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'settings:internalPropertyName'</span><span class="token punctuation">,</span> <span class="token string">'value'</span><span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'label'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token comment">// Constructor params match REQUIREMENTS order (after widgetBus):</span>
+    <span class="token function">constructor</span><span class="token punctuation">(</span>widgetBus<span class="token punctuation">,</span> <span class="token comment">/* resolved from REQUIREMENTS */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token operator">...</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p><strong>Convention</strong>: REQUIREMENTS entries correspond positionally to constructor
+arguments after <code>widgetBus</code>. The resolution system processes each entry
+and passes the result as a constructor argument.</p>
+<h3><a id="3-dependency_mappings-static-property" class="heading_anchor" href="#3-dependency_mappings-static-property" aria-hidden="true">#</a>3. <code>DEPENDENCY_MAPPINGS</code> Static Property</h3>
+<p>For widgets that need model-path-to-internal-name mappings:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">class</span> <span class="token class-name">MyWidget</span> <span class="token keyword">extends</span> <span class="token class-name">_BaseComponent</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Admissible model types this widget can consume</span>
+    <span class="token keyword">static</span> <span class="token constant">ADMISSIBLE_TYPES</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Set</span><span class="token punctuation">(</span><span class="token punctuation">[</span>PadModeModel<span class="token punctuation">,</span> _AbstractEnumModel<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Default dependency mappings (can be overridden)</span>
+    <span class="token keyword">static</span> <span class="token constant">DEFAULT_DEPENDENCY_MAPPINGS</span> <span class="token operator">=</span> <span class="token punctuation">[</span>
+        <span class="token comment">// [externalPath, internalName]  — or auto-derived from model type</span>
+    <span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<h3><a id="4-resolution-function" class="heading_anchor" href="#4-resolution-function" aria-hidden="true">#</a>4. Resolution Function</h3>
+<p>A new function in <code>basics.mjs</code> or <code>type-driven-ui-basics.mjs</code>:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">/**
+ * Resolve a widget's REQUIREMENTS against a context to produce
+ * a standard widget setup array.
+ *
+ * @param {typeof _BaseComponent} WidgetClass
+ * @param {Object} context - { zone, rootPath, injectable, ppsRecord,
+ *                              fieldName, overrides }
+ * @returns {Array} [settings, dependencyMappings, WidgetClass, ...args]
+ */</span>
+<span class="token keyword">export</span> <span class="token keyword">function</span> <span class="token function">resolveWidgetSetup</span><span class="token punctuation">(</span><span class="token parameter">WidgetClass<span class="token punctuation">,</span> context</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> requirements <span class="token operator">=</span> WidgetClass<span class="token punctuation">.</span><span class="token constant">REQUIREMENTS</span> <span class="token operator">||</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> settings <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> dependencyMappings <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> args <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span>zone<span class="token punctuation">)</span>
+        settings<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">'zone'</span><span class="token punctuation">,</span> context<span class="token punctuation">.</span>zone<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span>rootPath<span class="token punctuation">)</span>
+        settings<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">'rootPath'</span><span class="token punctuation">,</span> context<span class="token punctuation">.</span>rootPath<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">const</span> requirement <span class="token keyword">of</span> requirements<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token operator">!</span><span class="token punctuation">(</span>requirement <span class="token keyword">instanceof</span> <span class="token class-name">InjectDependency</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment">// Literal value — pass through</span>
+            args<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span>overrides<span class="token operator">?.</span><span class="token punctuation">[</span>requirement<span class="token punctuation">]</span> <span class="token operator">??</span> requirement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">continue</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment">// Delegate to existing _getArgumentConfig logic</span>
+        <span class="token keyword">const</span> <span class="token punctuation">[</span>argSettings<span class="token punctuation">,</span> argDeps<span class="token punctuation">,</span> argArgs<span class="token punctuation">]</span> <span class="token operator">=</span>
+            <span class="token function">_resolveRequirement</span><span class="token punctuation">(</span>requirement<span class="token punctuation">,</span> context<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token punctuation">[</span>k<span class="token punctuation">,</span> v<span class="token punctuation">]</span> <span class="token keyword">of</span> argSettings<span class="token punctuation">)</span> settings<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span>k<span class="token punctuation">,</span> v<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token punctuation">[</span>k<span class="token punctuation">,</span> v<span class="token punctuation">]</span> <span class="token keyword">of</span> argDeps<span class="token punctuation">)</span> dependencyMappings<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span>k<span class="token punctuation">,</span> v<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        args<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token operator">...</span>argArgs<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token punctuation">[</span>
+        Object<span class="token punctuation">.</span><span class="token function">fromEntries</span><span class="token punctuation">(</span>settings<span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> Array<span class="token punctuation">.</span><span class="token function">from</span><span class="token punctuation">(</span>dependencyMappings<span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> WidgetClass
+      <span class="token punctuation">,</span> <span class="token operator">...</span>args
+    <span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>The key insight is that <code>_resolveRequirement</code> reuses the <strong>existing</strong>
+<code>_getArgumentConfig</code> switch-case logic. No new resolution mechanism
+needed — just a new entry point.</p>
+<hr>
+<h2><a id="where-to-implement" class="heading_anchor" href="#where-to-implement" aria-hidden="true">#</a>Where to Implement</h2>
+<h3><a id="phase-1-add-requirements-to-widget-classes-non-breaking" class="heading_anchor" href="#phase-1-add-requirements-to-widget-classes-non-breaking" aria-hidden="true">#</a>Phase 1: Add REQUIREMENTS to Widget Classes (Non-Breaking)</h3>
+<p><strong>Files</strong>: <code>lib/js/components/generic.mjs</code>, <code>lib/js/components/ui-color-chooser.mjs</code>,
+<code>lib/js/components/ui-char-groups.mjs</code>, etc.</p>
+<ul>
+<li>Add <code>static REQUIREMENTS = [...]</code> to each widget class</li>
+<li>This is purely additive — existing code continues to work</li>
+<li>The REQUIREMENTS array mirrors what <code>uiElementsMap</code> currently declares</li>
+</ul>
+<h3><a id="phase-2-add-resolvewidgetsetup-function" class="heading_anchor" href="#phase-2-add-resolvewidgetsetup-function" aria-hidden="true">#</a>Phase 2: Add <code>resolveWidgetSetup</code> Function</h3>
+<p><strong>File</strong>: <code>lib/js/components/type-driven-ui-basics.mjs</code></p>
+<ul>
+<li>Extract the resolution logic from <code>_getArgumentConfig</code> into a standalone function</li>
+<li>The existing <code>_getArgumentConfig</code> method can delegate to this function</li>
+<li><code>_BaseTypeDrivenContainerComponent._defineGenericWidget</code> can optionally
+use <code>WidgetClass.REQUIREMENTS</code> as a fallback when no <code>uiElementsMap</code> entry exists</li>
+</ul>
+<h3><a id="phase-3-simplify-uielementsmap" class="heading_anchor" href="#phase-3-simplify-uielementsmap" aria-hidden="true">#</a>Phase 3: Simplify <code>uiElementsMap</code></h3>
+<p><strong>File</strong>: <code>lib/js/components/type-driven-ui.mjs</code></p>
+<ul>
+<li>For widgets where <code>REQUIREMENTS</code> matches the <code>uiElementsMap</code> entry exactly,
+the map entry can be simplified to just <code>[ModelType, WidgetClass]</code></li>
+<li>For widgets with model-specific overrides, keep the explicit entries</li>
+</ul>
+<h3><a id="phase-4-simplify-layout-call-sites" class="heading_anchor" href="#phase-4-simplify-layout-call-sites" aria-hidden="true">#</a>Phase 4: Simplify Layout Call Sites</h3>
+<p><strong>Files</strong>: <code>lib/js/components/layouts/videoproof.typeroof.jsx</code> (formerly
+<code>videoproof-array-v2.mjs</code>), <code>lib/js/components/layouts/motion-stage.mjs</code>
+(formerly <code>stage-and-actors.mjs</code>), etc.</p>
+<ul>
+<li>Replace manual <code>[settings, deps, Constructor, ...args]</code> arrays
+with <code>resolveWidgetSetup(Constructor, context)</code> calls</li>
+<li>This is the biggest ergonomic win — layout files become dramatically simpler</li>
+</ul>
+<h3><a id="phase-5-componentwrapper-integration" class="heading_anchor" href="#phase-5-componentwrapper-integration" aria-hidden="true">#</a>Phase 5: ComponentWrapper Integration</h3>
+<p><strong>File</strong>: <code>lib/js/components/basics.mjs</code></p>
+<p><code>ComponentWrapper</code> is the natural place to integrate widget-declared requirements
+because it already handles:</p>
+<ul>
+<li>Dependency mapping resolution (<code>absPathDependencies</code>)</li>
+<li><code>rootPath</code> management</li>
+<li>Widget creation (<code>create()</code>)</li>
+<li>Widget lifecycle (create/destroy/reinsert)</li>
+</ul>
+<p>The <code>_CommonContainerComponent._initWrapper</code> method (line 805) could be enhanced:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token function">_initWrapper</span><span class="token punctuation">(</span><span class="token parameter">childrenWidgetBus<span class="token punctuation">,</span> settings<span class="token punctuation">,</span> dependencyMappings<span class="token punctuation">,</span> Constructor<span class="token punctuation">,</span> <span class="token operator">...</span>args</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// NEW: If Constructor has REQUIREMENTS and args are empty,</span>
+    <span class="token comment">//      auto-resolve from REQUIREMENTS</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>Constructor<span class="token punctuation">.</span><span class="token constant">REQUIREMENTS</span> <span class="token operator">&amp;&amp;</span> args<span class="token punctuation">.</span>length <span class="token operator">===</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> resolved <span class="token operator">=</span> <span class="token function">resolveWidgetSetup</span><span class="token punctuation">(</span>Constructor<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+            <span class="token operator">...</span>settings
+          <span class="token punctuation">,</span> <span class="token literal-property property">injectable</span><span class="token operator">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_injectable  <span class="token comment">// or however injectable is accessed</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment">// Use resolved settings/deps/args</span>
+        <span class="token punctuation">[</span>settings<span class="token punctuation">,</span> dependencyMappings<span class="token punctuation">,</span> <span class="token punctuation">,</span> <span class="token operator">...</span>args<span class="token punctuation">]</span> <span class="token operator">=</span> resolved<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">const</span> hostElement <span class="token operator">=</span> settings<span class="token punctuation">.</span>zone
+        <span class="token operator">?</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_zones<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>settings<span class="token punctuation">.</span>zone<span class="token punctuation">)</span>
+        <span class="token operator">:</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+    <span class="token comment">// ... rest unchanged</span>
+<span class="token punctuation">}</span></code></pre>
+<hr>
+<h2><a id="strengths" class="heading_anchor" href="#strengths" aria-hidden="true">#</a>Strengths</h2>
+<h3><a id="1-self-documenting-widgets" class="heading_anchor" href="#1-self-documenting-widgets" aria-hidden="true">#</a>1. Self-Documenting Widgets</h3>
+<p>Each widget class tells you exactly what it needs. No need to search
+<code>uiElementsMap</code>, layout files, or <code>getActorWidgetSetup</code> to understand
+a widget’s requirements.</p>
+<h3><a id="2-single-source-of-truth" class="heading_anchor" href="#2-single-source-of-truth" aria-hidden="true">#</a>2. Single Source of Truth</h3>
+<p>Requirements live on the class — <code>uiElementsMap</code> and call sites become
+consumers of that truth rather than independent sources that can diverge.</p>
+<h3><a id="3-dry-eliminates-redundant-setup-arrays" class="heading_anchor" href="#3-dry-eliminates-redundant-setup-arrays" aria-hidden="true">#</a>3. DRY: Eliminates Redundant Setup Arrays</h3>
+<p>The most common pattern in layout files is manually constructing the
+<code>[settings, deps, Constructor, ...args]</code> tuple. With REQUIREMENTS on
+the class, this becomes a single function call.</p>
+<h3><a id="4-backward-compatible" class="heading_anchor" href="#4-backward-compatible" aria-hidden="true">#</a>4. Backward Compatible</h3>
+<ul>
+<li>Widgets without <code>REQUIREMENTS</code> work exactly as before</li>
+<li><code>uiElementsMap</code> entries override <code>REQUIREMENTS</code> when present</li>
+<li>Layout files can mix old and new patterns during migration</li>
+<li><code>ComponentWrapper</code> doesn’t change its external API</li>
+</ul>
+<h3><a id="5-enables-tooling-and-validation" class="heading_anchor" href="#5-enables-tooling-and-validation" aria-hidden="true">#</a>5. Enables Tooling and Validation</h3>
+<p>With requirements declared on classes:</p>
+<ul>
+<li>A validator could check that all REQUIREMENTS are satisfiable in a given context</li>
+<li>Documentation can be auto-generated from REQUIREMENTS</li>
+<li>Agents can inspect <code>WidgetClass.REQUIREMENTS</code> to understand what to provide</li>
+</ul>
+<h3><a id="6-natural-extension-of-existing-patterns" class="heading_anchor" href="#6-natural-extension-of-existing-patterns" aria-hidden="true">#</a>6. Natural Extension of Existing Patterns</h3>
+<p>The <code>require()</code> / <code>InjectDependency</code> system already exists. This proposal
+just moves where the <code>require()</code> calls live — from the registry to the class.</p>
+<hr>
+<h2><a id="weaknesses" class="heading_anchor" href="#weaknesses" aria-hidden="true">#</a>Weaknesses</h2>
+<h3><a id="1-context-sensitivity" class="heading_anchor" href="#1-context-sensitivity" aria-hidden="true">#</a>1. Context Sensitivity</h3>
+<p>Some widgets need different setups depending on context. For example,
+<code>UIColorChooser</code> in a key moment editor needs <code>updateDefaultsDependencies</code>
+resolved from the parent’s injectable, but the same class used in a
+standalone color picker might have different defaults.</p>
+<p><strong>Mitigation</strong>: REQUIREMENTS define the <em>shape</em> of what’s needed (via
+<code>require()</code> names), not the <em>values</em>. The resolution context provides
+values. Overrides handle special cases.</p>
+<h3><a id="2-constructor-argument-ordering" class="heading_anchor" href="#2-constructor-argument-ordering" aria-hidden="true">#</a>2. Constructor Argument Ordering</h3>
+<p>REQUIREMENTS must match constructor parameter order exactly. If a
+constructor is refactored, REQUIREMENTS must change too.</p>
+<p><strong>Mitigation</strong>: This is already true for <code>uiElementsMap</code> — it’s just
+relocating the coupling. TypeScript types could enforce the contract.
+Alternatively, a named-parameter pattern (Map or object) could replace
+positional arguments in the future.</p>
+<h3><a id="3-composite-requirements-are-complex" class="heading_anchor" href="#3-composite-requirements-are-complex" aria-hidden="true">#</a>3. Composite Requirements Are Complex</h3>
+<p>Some requirements have compound effects — <code>require('requireUpdateDefaults')</code>
+both adds dependency mappings AND injects an argument. This compound
+behavior is currently handled by the switch-case in <code>_getArgumentConfig</code>.
+Moving requirements to the class doesn’t simplify this complexity.</p>
+<p><strong>Mitigation</strong>: The resolution function delegates to the same <code>_getArgumentConfig</code>
+logic. The complexity is contained, not duplicated.</p>
+<h3><a id="4-inheritance-complications" class="heading_anchor" href="#4-inheritance-complications" aria-hidden="true">#</a>4. Inheritance Complications</h3>
+<p>If <code>class SpecialSelect extends UISelectInput</code>, should <code>REQUIREMENTS</code>
+be inherited? Overridden? Merged?</p>
+<p><strong>Mitigation</strong>: Use standard JavaScript static property semantics:
+subclass defines its own <code>REQUIREMENTS</code> or inherits from parent.
+The <code>createClass</code> pattern (used for <code>UISelectInput</code>) would need to
+propagate REQUIREMENTS from the wrapped class.</p>
+<h3><a id="5-two-resolution-paths-during-migration" class="heading_anchor" href="#5-two-resolution-paths-during-migration" aria-hidden="true">#</a>5. Two Resolution Paths During Migration</h3>
+<p>Until all widgets have REQUIREMENTS, the system must support both
+<code>uiElementsMap</code>-driven and <code>REQUIREMENTS</code>-driven resolution.</p>
+<p><strong>Mitigation</strong>: <code>uiElementsMap</code> takes precedence. <code>REQUIREMENTS</code> is
+the fallback. This is a transitional cost, not a permanent one.</p>
+<h3><a id="6-the-createclass-wrapper-pattern" class="heading_anchor" href="#6-the-createclass-wrapper-pattern" aria-hidden="true">#</a>6. The <code>createClass</code> Wrapper Pattern</h3>
+<p>Many UI widgets are created via <code>_UIAbstractPlainInputWrapper.createClass()</code>:</p>
+<pre class="language-javascript"><code class="language-javascript">UISelectInput <span class="token operator">=</span> _UIAbstractPlainInputWrapper<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>
+    <span class="token string">'UISelectInput'</span><span class="token punctuation">,</span> _AbstractPlainSelectInput<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>These wrapper classes would need a way to derive REQUIREMENTS from their
+wrapped inner class, or declare their own. This adds complexity to the
+<code>createClass</code> factory.</p>
+<p><strong>Mitigation</strong>: The <code>createClass</code> factory can copy/adapt REQUIREMENTS from
+the inner class, similar to how it already wraps the constructor.</p>
+<hr>
+<h2><a id="comparison-current-vs-proposed" class="heading_anchor" href="#comparison-current-vs-proposed" aria-hidden="true">#</a>Comparison: Current vs Proposed</h2>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Current</th>
+<th>Proposed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Widget setup knowledge</td>
+<td>Split: class + registry + call site</td>
+<td>Primarily on class</td>
+</tr>
+<tr>
+<td>Adding new widget type</td>
+<td>Edit class + registry + all call sites</td>
+<td>Edit class (REQUIREMENTS), registry optional</td>
+</tr>
+<tr>
+<td>Adding new field to model</td>
+<td>Edit model + REGISTERED_FIELDS + maybe registry</td>
+<td>Edit model + (auto-discovered if REQUIREMENTS exist)</td>
+</tr>
+<tr>
+<td>Call site complexity</td>
+<td>Full tuple: <code>[settings, deps, Class, ...args]</code></td>
+<td><code>resolveWidgetSetup(Class, context)</code></td>
+</tr>
+<tr>
+<td>Discoverability</td>
+<td>Search multiple files</td>
+<td>Read <code>WidgetClass.REQUIREMENTS</code></td>
+</tr>
+<tr>
+<td>Validation</td>
+<td>Runtime errors when args mismatch</td>
+<td>Could be checked statically</td>
+</tr>
+<tr>
+<td>Migration cost</td>
+<td>N/A</td>
+<td>Gradual: add REQUIREMENTS to classes over time</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2><a id="interaction-with-registered_generic_keymoment_fields" class="heading_anchor" href="#interaction-with-registered_generic_keymoment_fields" aria-hidden="true">#</a>Interaction with <code>REGISTERED_GENERIC_KEYMOMENT_FIELDS</code></h2>
+<p>The gatekeeper set <code>REGISTERED_GENERIC_KEYMOMENT_FIELDS</code> in <code>motion-stage.mjs</code>
+(formerly <code>stage-and-actors.mjs</code>)
+could eventually become unnecessary if the type-driven UI system can automatically
+determine which fields have valid UI mappings.</p>
+<p>With REQUIREMENTS on widget classes and types mapped in <code>uiElementsMap</code>, the
+<code>_defineGenericWidgets</code> method could check:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// Instead of:</span>
+<span class="token parameter">fieldName</span> <span class="token operator">=></span> <span class="token constant">REGISTERED_GENERIC_KEYMOMENT_FIELDS</span><span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span>fieldName<span class="token punctuation">)</span>
+
+<span class="token comment">// Could become:</span>
+<span class="token parameter">fieldName</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> FieldType <span class="token operator">=</span> TypeClass<span class="token punctuation">.</span>fields<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>fieldName<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token function">genericTypeToUIElement</span><span class="token punctuation">(</span>FieldType<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span> <span class="token operator">!==</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>This would eliminate the “invisible gate” problem entirely — if a type has a
+UI mapping, its fields automatically get editors.</p>
+<hr>
+<h2><a id="recommendation" class="heading_anchor" href="#recommendation" aria-hidden="true">#</a>Recommendation</h2>
+<h3><a id="start-with-phase-1--phase-2" class="heading_anchor" href="#start-with-phase-1--phase-2" aria-hidden="true">#</a>Start with Phase 1 + Phase 2</h3>
+<ol>
+<li><strong>Add <code>static REQUIREMENTS</code></strong> to the most commonly used widgets
+(<code>UIToggleButton</code>, <code>UIColorChooser</code>, <code>UICharGroupContainer</code>)</li>
+<li><strong>Add <code>resolveWidgetSetup()</code></strong> to <code>type-driven-ui-basics.mjs</code></li>
+<li><strong>Test</strong> by converting one layout file’s widget setup to use the new function</li>
+</ol>
+<p>This validates the design with minimal risk. The existing system continues to
+work unchanged. New code can opt into the simpler pattern.</p>
+<h3><a id="later-phase-3-5" class="heading_anchor" href="#later-phase-3-5" aria-hidden="true">#</a>Later: Phase 3-5</h3>
+<p>Once the pattern proves itself:</p>
+<ul>
+<li>Simplify <code>uiElementsMap</code> entries</li>
+<li>Convert layout call sites</li>
+<li>Integrate into <code>ComponentWrapper._initWrapper</code></li>
+<li>Consider auto-deriving <code>REGISTERED_GENERIC_KEYMOMENT_FIELDS</code></li>
+</ul>
+<hr>
+<p><em>Generated: 2026-02-25, based on analysis of TypeRoof widget architecture</em>
+<em>Key files studied: basics.mjs (ComponentWrapper, _CommonContainerComponent),</em>
+<em>type-driven-ui-basics.mjs (require, InjectDependency, _getArgumentConfig,</em>
+<em>_defineGenericWidgets, createTypeToUIElementFunction), type-driven-ui.mjs</em>
+<em>(uiElementsMap), generic.mjs (UI widget classes), videoproof-array-v2.mjs,</em>
+<em>stage-and-actors.mjs (layout widget setup patterns)</em>
+<em>Note: videoproof-array-v2.mjs → videoproof.typeroof.jsx and</em>
+<em>stage-and-actors.mjs → motion-stage.mjs since this was written.</em>
+<em>Filed under docs/planning/ 2026-07-16 as part 1 of the widget-setup series.</em></p>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>

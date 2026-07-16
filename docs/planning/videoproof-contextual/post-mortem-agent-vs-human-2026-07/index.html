@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="post-mortem-videoproofcontextual--the-model-led-rewrite-vs-the-human-finish" class="heading_anchor" href="#post-mortem-videoproofcontextual--the-model-led-rewrite-vs-the-human-finish" aria-hidden="true">#</a>Post-Mortem: VideoproofContextual — the Model-Led Rewrite vs. the Human Finish</h1>
+<p><em>Written 2026-07-16. Retrospective on the <code>VideoproofContextualActor</code> effort,
+Feb–Jun 2026. Grounded in <code>git log</code> over the contextual paths; numbers below
+are reproducible from history.</em></p>
+<h2><a id="why-this-document-exists" class="heading_anchor" href="#why-this-document-exists" aria-hidden="true">#</a>Why this document exists</h2>
+<p>The <code>docs/planning/videoproof-contextual/</code> directory contains two upbeat
+planning artifacts from the model-led phase:</p>
+<ul>
+<li><code>rewrite-plan.md</code> — a phase-by-phase plan that marks phases 1–9c “✅ Done”.</li>
+<li><code>ui-usability-plan-2026-03-16.md</code> — a tidy usability plan for the nested
+template editor.</li>
+</ul>
+<p>Read on their own, those documents tell a story of a smooth, phased,
+mostly-completed agent rewrite. <strong>That is not what happened.</strong> The honest
+story is: an agent produced a large scaffold quickly, that scaffold then
+required a long, sustained human effort to become correct and usable, and
+the majority of the shipped design decisions came <em>after</em> the model was set
+aside. This post-mortem records that so the planning docs are not mistaken
+for the whole picture.</p>
+<h2><a id="the-numbers" class="heading_anchor" href="#the-numbers" aria-hidden="true">#</a>The numbers</h2>
+<p>Restricting to the contextual actor + template UI paths, from the first
+agent commit (2026-02-27) onward:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Agent (<code>Agent of Lasse Fister</code>)</th>
+<th>Human (<code>Lasse Fister</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Commits</td>
+<td>32</td>
+<td>59</td>
+</tr>
+<tr>
+<td>Lines added</td>
+<td>~3,701</td>
+<td>~5,966</td>
+</tr>
+<tr>
+<td>Lines removed</td>
+<td>~1,404</td>
+<td>~3,373</td>
+</tr>
+<tr>
+<td>Net</td>
+<td>+2,297</td>
+<td>+2,593</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Initial agent commit (44c6e4a7):</strong> one file, 366 lines, “new actor
+created by agent.”</li>
+<li><strong>Agent era:</strong> 2026-02-27 → 2026-03-26 (~1 month, front-loaded).</li>
+<li><strong>Human era:</strong> 2026-03-11 → 2026-06-17 and beyond (~3+ months, overlapping
+then fully taking over).</li>
+<li><strong>Current shipped size:</strong> ~2,145 lines across <code>actors/videoproof-contextual/</code>
+(<code>layout.mjs</code> 320, <code>models.mjs</code> 345, <code>template.mjs</code> 369, <code>index.typeroof.jsx</code>
+638) plus <code>ui-contextual-template.typeroof.jsx</code> (473).</li>
+</ul>
+<p>The human removed roughly <strong>as many lines as the agent originally added
+(−3,373)</strong> while adding nearly twice as much (+5,966). In other words, the
+final actor is not “the agent’s scaffold, polished” — it is largely a
+different body of code that grew on top of, and by displacing, the scaffold.</p>
+<h2><a id="timeline-in-three-acts" class="heading_anchor" href="#timeline-in-three-acts" aria-hidden="true">#</a>Timeline in three acts</h2>
+<h3><a id="act-1--model-led-scaffold-feb-27--mar-12" class="heading_anchor" href="#act-1--model-led-scaffold-feb-27--mar-12" aria-hidden="true">#</a>Act 1 — Model-led scaffold (Feb 27 – ~Mar 12)</h3>
+<p>The agent generated the pattern compiler, selector/template engine, model
+definitions, and wired the actor, in labelled “Phase 1–9c” commits. This was
+genuinely fast at producing <em>structure</em>. <code>rewrite-plan.md</code> was written and
+maintained <em>by the agent</em> during this act, which is why it reads as a clean
+ledger of completed phases.</p>
+<p>The trouble is already visible inside this act, in the agent’s own commit
+subjects:</p>
+<ul>
+<li><code>fix: correct critical bugs in template engine integration</code> (Mar 10)</li>
+<li><code>refactor: remove ad-hoc template spec format, replace with TODOs</code> (Mar 10)</li>
+<li><code>Fix compilePattern return value destructuring …</code> (Mar 12)</li>
+<li><code>[videoproof-contextual] TODO: full cell rendering causes an unresponsive browser</code> (Mar 12, <strong>human</strong> commit — a correctness/perf problem in the
+generated renderer).</li>
+</ul>
+<h3><a id="act-2--handover--overlap-mar-11--mar-26" class="heading_anchor" href="#act-2--handover--overlap-mar-11--mar-26" aria-hidden="true">#</a>Act 2 — Handover / overlap (~Mar 11 – Mar 26)</h3>
+<p>Human commits begin interleaving with agent commits (“some cleaning up and
+refactoring”, “some cleanup”, “flesh out the CoherenceFunction”). The last
+agent-authored commits are algorithmic fixes to its own earlier output:</p>
+<ul>
+<li><code>computeFontSizeAndLayout: binary search replacing broken iteration</code> (Mar 24)</li>
+<li><code>wordIndexToLine: binary search over sorted lineStarts</code> (Mar 24)</li>
+</ul>
+<p>i.e. the closing agent work was <em>repairing broken iteration it had written</em>.
+After <code>Add UIArgIndexInput</code> (Mar 26) there are <strong>no further agent commits</strong>.</p>
+<h3><a id="act-3--human-redesign--finish-mar-17--jun-17" class="heading_anchor" href="#act-3--human-redesign--finish-mar-17--jun-17" aria-hidden="true">#</a>Act 3 — Human redesign &amp; finish (Mar 17 – Jun 17)</h3>
+<p>This is where the bulk of the real design happened, and where the tone of the
+commit log changes from “Phase N done” to targeted correctness and modelling
+work. Representative human commits:</p>
+<ul>
+<li><code>fix cases of halluzinated propertyRoot declarations</code> (Apr 8) — cleaning up
+model-invented paths that did not correspond to anything.</li>
+<li><code>AND/OR Combinators are now distinct types, not one type with a distinctive enum</code> (Mar 29) — a core modelling decision the agent had gotten wrong.</li>
+<li><code>don't use multiple charGroups in the simple selector: the AND combinator can achieve the same thing</code> (Mar 29) — simplifying the agent’s design.</li>
+<li><code>FIX: UIContextualTemplateContainer: inject contentsZoneElement as a widget so label, widgets order is correct</code> (May 1).</li>
+<li><code>put template metamodel instance directly into processed properties</code> (May 18)
+— a substantial rework of how the template participates in the properties
+system.</li>
+<li>Extraction of <code>applyPresets</code>/<code>presets.mjs</code>, argument-marker redesign
+(<code>\1</code>, <code>\2</code>), caching of <code>compileTemplate</code>, scrolling behaviour, colour and
+cell-box features (May–Jun).</li>
+</ul>
+<p>The “REVIEW:” commits (Mar 17) and repeated prettier/eslint passes also show
+the generated code did not match project conventions (jshint headers, an
+eslint <code>no-unused-vars</code> pattern that masked unused vars containing <code>h</code>, etc.).</p>
+<h2><a id="what-the-model-was-good-at-and-what-it-cost" class="heading_anchor" href="#what-the-model-was-good-at-and-what-it-cost" aria-hidden="true">#</a>What the model was good at, and what it cost</h2>
+<p><strong>Good at:</strong> producing a <em>plausible, large, phased scaffold</em> fast. One month
+to ~3.7k lines of structure that compiled and ran. It correctly leaned on
+existing reference patterns (AxesMath dynamic types, StylePatch dispatch) that
+were pointed at it in <code>rewrite-plan.md</code>.</p>
+<p><strong>Cost:</strong></p>
+<ul>
+<li><strong>Hallucinated structure</strong> — <code>propertyRoot</code> declarations and paths that
+didn’t exist, needing explicit human cleanup (Apr 8).</li>
+<li><strong>Wrong core modelling</strong> — combinators as an enum instead of distinct types;
+redundant charGroups in the simple selector; both later reversed by hand.</li>
+<li><strong>Broken algorithms shipped as “done”</strong> — iteration bugs in layout/line
+computation, only fixed via binary-search rewrites at the very end of the
+agent era.</li>
+<li><strong>Convention drift</strong> — jshint/eslint/prettier noise, awkward container
+wiring.</li>
+<li><strong>Misleading self-reported status</strong> — the agent authored the “✅ Done”
+ledger, so the plan overstated completeness. Phase 10 (“Built-in templates”)
+is still 🔲 open to this day, and much of what was marked done was
+subsequently reworked.</li>
+</ul>
+<p>The net effect: the scaffold was a <strong>starting point that had to be paid down</strong>,
+not a finished feature. The human effort (3+ months, ~6k added / ~3.4k removed)
+was not “polish” — it was redesign, correctness, and usability work that
+constitutes the actual shipped actor.</p>
+<h2><a id="about-the-two-planning-documents" class="heading_anchor" href="#about-the-two-planning-documents" aria-hidden="true">#</a>About the two planning documents</h2>
+<ul>
+<li><code>rewrite-plan.md</code> is a useful <strong>historical record of the model-led phase</strong>
+and its intended architecture, but its “✅ Done” ledger reflects the agent’s
+optimistic self-report, not the final state. It should be read together with
+this post-mortem.</li>
+<li><code>ui-usability-plan-2026-03-16.md</code> describes summary-first collapsed views and
+AxesMath-style expand-on-edit for the nested editor. Those ideas <em>were</em>
+eventually realised in the shipped code (<code>_getSelectorSummary</code>,
+<code>UICharsSelectorSummary</code>, <code>getCharGroupSummaryFromModel</code>, <code>Collapsible</code> usage
+in <code>ui-contextual-template.typeroof.jsx</code>) — but as part of the human-led Act
+3, not as a discrete tracked deliverable. It is kept as a historical artifact
+of intent, not as an authoritative record of how the work was done.</li>
+</ul>
+<p>Neither document should be relabelled a clean “done.” They are preserved as
+artifacts of the model-led phase; this post-mortem is the corrective narrative.</p>
+<h2><a id="lessons-for-the-next-model-led-attempt" class="heading_anchor" href="#lessons-for-the-next-model-led-attempt" aria-hidden="true">#</a>Lessons (for the next model-led attempt)</h2>
+<ol>
+<li><strong>Do not let the agent be the author of its own status ledger.</strong> The “Phase
+N ✅ Done” file was written by the same process doing the work; it measured
+activity, not correctness.</li>
+<li><strong>Treat a large generated scaffold as debt, not equity.</strong> Budget for the
+possibility that most of it will be removed. Here, ~90% of the agent’s added
+lines were eventually removed or displaced.</li>
+<li><strong>Core modelling decisions are the expensive part and the part the model got
+wrong</strong> (enum-vs-types, selector cardinality, property paths). Those deserve
+human design <em>before</em> generation, not correction after.</li>
+<li><strong>“Runs” ≠ “correct.”</strong> Broken iteration and an unresponsive full-render
+both shipped in code marked done.</li>
+<li><strong>Small, verifiable steps beat phased mega-scaffolds.</strong> The durable parts of
+the final actor came from many targeted human commits, each locally
+reviewable — the opposite of the front-loaded agent burst.</li>
+</ol>
+<hr>
+<p><em>Reproduce the figures:</em></p>
+<pre class="language-sh"><code class="language-sh"><span class="token function">git</span> log <span class="token parameter variable">--author</span><span class="token operator">=</span><span class="token string">"Agent of Lasse Fister"</span> <span class="token parameter variable">--since</span><span class="token operator">=</span><span class="token number">2026</span>-02-27 <span class="token parameter variable">--pretty</span><span class="token operator">=</span>tformat: <span class="token punctuation">\</span>
+  <span class="token parameter variable">--numstat</span> -- <span class="token string">'*videoproof-contextual*'</span> <span class="token string">'*ui-contextual-template*'</span> <span class="token punctuation">\</span>
+  <span class="token operator">|</span> <span class="token function">awk</span> <span class="token string">'NF==3{a+=$1;d+=$2} END{printf "+%d -%d\n",a,d}'</span>
+<span class="token function">git</span> log <span class="token parameter variable">--author</span><span class="token operator">=</span><span class="token string">"Lasse Fister"</span> <span class="token parameter variable">--since</span><span class="token operator">=</span><span class="token number">2026</span>-02-27 <span class="token parameter variable">--pretty</span><span class="token operator">=</span>tformat: <span class="token punctuation">\</span>
+  <span class="token parameter variable">--numstat</span> -- <span class="token string">'*videoproof-contextual*'</span> <span class="token string">'*ui-contextual-template*'</span> <span class="token punctuation">\</span>
+  <span class="token operator">|</span> <span class="token function">awk</span> <span class="token string">'NF==3{a+=$1;d+=$2} END{printf "+%d -%d\n",a,d}'</span></code></pre>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="videoproof-contextual--ui-usability-plan-2026-03-16" class="heading_anchor" href="#videoproof-contextual--ui-usability-plan-2026-03-16" aria-hidden="true">#</a>Videoproof Contextual — UI Usability Plan (2026-03-16)</h1>
+<h2><a id="scope" class="heading_anchor" href="#scope" aria-hidden="true">#</a>Scope</h2>
+<p>Improve usability of the nested contextual template editor, especially around:</p>
+<ul>
+<li><code>TemplateRulesModel</code></li>
+<li><code>UIContextualTemplateContainer</code></li>
+<li><code>UICharsSelectorContainer</code></li>
+<li>nested <code>CharGroupsListModel</code> / <code>UICharGroupContainer</code></li>
+</ul>
+<p>Primary issue: users lose overview in deeply nested editing flows.</p>
+<h2><a id="operator-constraints-session" class="heading_anchor" href="#operator-constraints-session" aria-hidden="true">#</a>Operator Constraints (Session)</h2>
+<ul>
+<li>Work <strong>minimalistically</strong>.</li>
+<li>Keep implementation <strong>DRY</strong>.</li>
+<li>If DRY requires changing a superclass / shared pattern, prefer that over local duplication.</li>
+<li><strong>Do not treat <code>_UIBaseList</code> reorder/add/remove behavior as a concern</strong> in this scope.</li>
+<li>If <code>_UIBaseList</code> issues appear, they will be prompted explicitly by operator.</li>
+</ul>
+<h2><a id="implementation-strategy" class="heading_anchor" href="#implementation-strategy" aria-hidden="true">#</a>Implementation Strategy</h2>
+<h3><a id="step-1--summary-first-collapsed-views-low-risk" class="heading_anchor" href="#step-1--summary-first-collapsed-views-low-risk" aria-hidden="true">#</a>Step 1 — Summary-first collapsed views (low risk)</h3>
+<p>Add concise collapsed labels at key nesting points so users can scan structure quickly.</p>
+<p>Targets:</p>
+<ul>
+<li>Rule item summary (pattern + selector summary)</li>
+<li>Selector summary (type + key parameters)</li>
+<li>Char group summary (option/custom + extended indicator)</li>
+</ul>
+<p>Expected result:</p>
+<ul>
+<li>Better overview without changing model logic.</li>
+</ul>
+<h3><a id="step-2--reuse-existing-expandcollapse-patterns" class="heading_anchor" href="#step-2--reuse-existing-expandcollapse-patterns" aria-hidden="true">#</a>Step 2 — Reuse existing expand/collapse patterns</h3>
+<p>Adopt existing proven UI behavior patterns (Axes-Math-style focus/edit affordance) where applicable:</p>
+<ul>
+<li>expand when actively editing</li>
+<li>remain compact when inactive</li>
+</ul>
+<p>Keep behavior conservative and minimal; avoid speculative global event orchestration.</p>
+<h3><a id="step-3--dry-extraction-only-where-repetition-appears" class="heading_anchor" href="#step-3--dry-extraction-only-where-repetition-appears" aria-hidden="true">#</a>Step 3 — DRY extraction only where repetition appears</h3>
+<p>If repeated summary/collapse code appears across containers/items:</p>
+<ul>
+<li>extract helper(s) or small mixin at shared layer</li>
+<li>avoid broad refactors unrelated to contextual template usability</li>
+</ul>
+<h2><a id="non-goals-for-now" class="heading_anchor" href="#non-goals-for-now" aria-hidden="true">#</a>Non-Goals (for now)</h2>
+<ul>
+<li><code>_UIBaseList</code> internals</li>
+<li>broad event system redesign</li>
+<li>unrelated actor rendering/performance changes</li>
+</ul>
+<h2><a id="acceptance-criteria" class="heading_anchor" href="#acceptance-criteria" aria-hidden="true">#</a>Acceptance Criteria</h2>
+<ul>
+<li>Nested template UI is scannable in collapsed mode.</li>
+<li>Users can identify current selector/char-group values without expanding everything.</li>
+<li>Editing path can be expanded with minimal visual noise.</li>
+<li>Changes are minimal and DRY, with shared abstractions only when clearly justified.</li>
+</ul>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>

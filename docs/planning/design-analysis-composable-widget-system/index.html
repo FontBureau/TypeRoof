@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="design-analysis-composable-widget-system" class="heading_anchor" href="#design-analysis-composable-widget-system" aria-hidden="true">#</a>Design Analysis: Composable Widget System</h1>
+<h2><a id="revised-evaluation--beyond-requirements" class="heading_anchor" href="#revised-evaluation--beyond-requirements" aria-hidden="true">#</a>Revised Evaluation — Beyond REQUIREMENTS</h2>
+<blockquote>
+<p><strong>Status: PROPOSAL / not implemented.</strong> As of 2026-07-16, <code>static INTERFACE</code> and <code>static REQUIREMENTS</code> on widgets do <strong>not</strong> exist in the
+codebase, and neither does the <code>widget()</code> / <code>field()</code> / <code>group()</code> recipe
+DSL described below. The code snippets in this document illustrate a
+<em>proposed</em> API — they are not descriptions of current behaviour. The
+analysis of the <em>current</em> limitations (stringly-typed dependency
+mappings, the flat 1:1 <code>_defineGenericWidgets</code>, <code>uiElementsMap</code> as the
+reuse baseline) is accurate at the time of writing. Treat this as an RFC.</p>
+<p><em>Originally generated 2026-02-25; filed under <code>docs/planning/</code> 2026-07-16.</em></p>
+<p><strong>Part 3 of 3 — the most current view in the widget-setup series.</strong> The
+“Corrections Applied” section below overrules the central theses of the
+two prior iterations: <code>design-analysis-self-describing-widget-setup.md</code>
+(part 1, proposes <code>static REQUIREMENTS</code>) and
+<code>design-analysis-widget-setup-evaluation.md</code> (part 2, critiques part 1
+and proposes model-declared UI hints).</p>
+</blockquote>
+<h3><a id="corrections-applied" class="heading_anchor" href="#corrections-applied" aria-hidden="true">#</a>Corrections Applied</h3>
+<ol>
+<li>The <code>REGISTERED_GENERIC_KEYMOMENT_FIELDS</code> friction is a minor annoyance,
+not the central problem. The real design challenge is composability.</li>
+<li>The 1:1 field→widget assumption is wrong. Real cardinalities are 1:1,
+1:N, N:1, and 0:1. The recipe primitive must be widget-centric.</li>
+<li>Widget-declared typed interfaces enable smart tooling, user-facing
+composition, and alternative widget implementations for the same data.</li>
+</ol>
+<hr>
+<h2><a id="the-gap-no-middle-ground" class="heading_anchor" href="#the-gap-no-middle-ground" aria-hidden="true">#</a>The Gap: No Middle Ground</h2>
+<p>TypeRoof currently has two widget construction modes:</p>
+<h3><a id="mode-1-full-auto--_definegenericwidgets-" class="heading_anchor" href="#mode-1-full-auto--_definegenericwidgets-" aria-hidden="true">#</a>Mode 1: Full Auto (<code>_defineGenericWidgets</code>)</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_defineGenericWidgets</span><span class="token punctuation">(</span>
+    TypeClass
+  <span class="token punctuation">,</span> <span class="token parameter">fieldName</span> <span class="token operator">=></span> allowList<span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span>fieldName<span class="token punctuation">)</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token literal-property property">zone</span><span class="token operator">:</span> <span class="token string">'local'</span><span class="token punctuation">}</span>
+  <span class="token punctuation">,</span> <span class="token constant">GENERIC</span>
+  <span class="token punctuation">,</span> injectable
+<span class="token punctuation">)</span></code></pre>
+<p><strong>Strength</strong>: Zero boilerplate per field.
+<strong>Weakness</strong>: Flat list. No grouping, no ordering, no interstitials.
+Iterates fields one-by-one — assumes 1:1 field→widget.</p>
+<h3><a id="mode-2-full-manual" class="heading_anchor" href="#mode-2-full-manual" aria-hidden="true">#</a>Mode 2: Full Manual</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token punctuation">[</span>
+    <span class="token punctuation">{</span><span class="token literal-property property">zone</span><span class="token operator">:</span> <span class="token string">'main'</span><span class="token punctuation">,</span> <span class="token literal-property property">rootPath</span><span class="token operator">:</span> Path<span class="token punctuation">.</span><span class="token function">fromParts</span><span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token string">'fontSize'</span><span class="token punctuation">,</span> <span class="token string">'value'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'/font'</span><span class="token punctuation">,</span> <span class="token string">'font'</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
+  <span class="token punctuation">,</span> UIColorChooser
+  <span class="token punctuation">,</span> zones<span class="token punctuation">,</span> <span class="token string">'Text Color'</span><span class="token punctuation">,</span> getDefaults<span class="token punctuation">,</span> updateDefaultsDependencies<span class="token punctuation">,</span> requireUpdateDefaults
+<span class="token punctuation">]</span></code></pre>
+<p><strong>Strength</strong>: Total control.
+<strong>Weakness</strong>: Verbose, error-prone, requires deep internal knowledge.</p>
+<h3><a id="the-missing-middle" class="heading_anchor" href="#the-missing-middle" aria-hidden="true">#</a>The Missing Middle</h3>
+<pre><code>┌─────────────────────────────────┐
+│ Section: &quot;Typography&quot;           │  ← label/container
+│ ┌─────────────────────────────┐ │
+│ │ [auto: font selector]       │ │  ← type-driven
+│ │ [auto: font size]           │ │  ← type-driven
+│ └─────────────────────────────┘ │
+│ ── separator ──                 │  ← interstitial
+│ Section: &quot;Contextual Settings&quot;  │  ← label/container
+│ ┌─────────────────────────────┐ │
+│ │ [auto: padMode]             │ │  ← type-driven
+│ │ [auto: customPad]           │ │  ← conditional visibility
+│ │ [auto: charGroup]           │ │  ← complex: 1:N
+│ └─────────────────────────────┘ │
+│ ── separator ──                 │  ← interstitial
+│ Section: &quot;Appearance&quot;           │  ← label/container
+│ ┌─────────────────────────────┐ │
+│ │ [custom: color picker]      │ │  ← manual override
+│ │ [auto: showCellBoxes]       │ │  ← type-driven
+│ └─────────────────────────────┘ │
+└─────────────────────────────────┘
+</code></pre>
+<hr>
+<h2><a id="field--widget-cardinality-matters" class="heading_anchor" href="#field--widget-cardinality-matters" aria-hidden="true">#</a>Field ≠ Widget: Cardinality Matters</h2>
+<h3><a id="real-cardinality-patterns" class="heading_anchor" href="#real-cardinality-patterns" aria-hidden="true">#</a>Real Cardinality Patterns</h3>
+<p><strong>1:1 — Field → Widget</strong> (common, simple)
+<code>padMode</code> → one select dropdown. The happy path.</p>
+<p><strong>1:N — Field → Multiple Widgets</strong> (complex fields)
+<code>charGroup</code> → <code>UICharGroupContainer</code> builds multiple sub-widgets internally.
+The field is complex enough to warrant an entire sub-UI.</p>
+<p><strong>N:1 — Multiple Fields → One Widget</strong> (composite controls)
+<code>FontSelect</code> reads <code>activeFontKey</code> (to select) + <code>options</code> (to populate
+the dropdown). It consumes two model paths through one widget.</p>
+<p><code>UIColorChooser</code> reads/writes through its rootPath but also consumes
+<code>animationProperties@</code> via <code>requireUpdateDefaults</code> for defaults.</p>
+<p><strong>0:1 — No Field → Widget</strong> (derived/action UI)
+Preview displays, action buttons, computed status indicators.</p>
+<h3><a id="the-typing-gap" class="heading_anchor" href="#the-typing-gap" aria-hidden="true">#</a>The Typing Gap</h3>
+<p>Currently, dependency mappings are untyped string pairs:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// ComponentWrapper receives:</span>
+rawDependencyMapping <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">[</span><span class="token string">'fontSize'</span><span class="token punctuation">,</span> <span class="token string">'value'</span><span class="token punctuation">]</span>     <span class="token comment">// external 'fontSize' → internal 'value'</span>
+  <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'/font'</span><span class="token punctuation">,</span> <span class="token string">'font'</span><span class="token punctuation">]</span>        <span class="token comment">// external '/font' → internal 'font'</span>
+<span class="token punctuation">]</span></code></pre>
+<p>The widget knows it calls <code>this.getEntry('value')</code> and
+<code>this.getEntry('font')</code> — but nothing declares <strong>what types</strong> those
+entries should be. The binding is stringly-typed.</p>
+<hr>
+<h2><a id="proposed-addition-typed-widget-interfaces" class="heading_anchor" href="#proposed-addition-typed-widget-interfaces" aria-hidden="true">#</a>Proposed Addition: Typed Widget Interfaces</h2>
+<h3><a id="core-idea" class="heading_anchor" href="#core-idea" aria-hidden="true">#</a>Core Idea</h3>
+<p>Each widget declares its <strong>typed interface</strong> — what bindings it accepts,
+what types it expects on each, and what role each binding serves.</p>
+<h3><a id="what-exists-today-implicit" class="heading_anchor" href="#what-exists-today-implicit" aria-hidden="true">#</a>What Exists Today (Implicit)</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// FontSelect implicitly expects:</span>
+<span class="token comment">//   'activeFontKey' — a ForeignKey-ish string value (read/write)</span>
+<span class="token comment">//   'options'       — a list/map of available fonts (read-only)</span>
+<span class="token comment">// But this is only discoverable by reading the source:</span>
+<span class="token function">update</span><span class="token punctuation">(</span><span class="token parameter">changed</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>changed<span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span><span class="token string">'options'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>          <span class="token comment">// ← implicit: needs 'options'</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_updateOptions</span><span class="token punctuation">(</span>changed<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">'options'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>changed<span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span><span class="token string">'activeFontKey'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>    <span class="token comment">// ← implicit: needs 'activeFontKey'</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_updateValue</span><span class="token punctuation">(</span>changed<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">'activeFontKey'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// UIToggleButton implicitly expects:</span>
+<span class="token comment">//   'boolean' — a BooleanModel value (read/write)</span>
+<span class="token function">update</span><span class="token punctuation">(</span><span class="token parameter">changedMap</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>changedMap<span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span><span class="token string">'boolean'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>       <span class="token comment">// ← implicit: needs 'boolean'</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>_ui<span class="token punctuation">.</span><span class="token function">update</span><span class="token punctuation">(</span>changedMap<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">'boolean'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<h3><a id="what-could-exist-explicit" class="heading_anchor" href="#what-could-exist-explicit" aria-hidden="true">#</a>What Could Exist (Explicit)</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">FontSelect</span> <span class="token keyword">extends</span> <span class="token class-name">_BaseComponent</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Typed interface declaration</span>
+    <span class="token keyword">static</span> <span class="token constant">INTERFACE</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">activeFontKey</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token literal-property property">type</span><span class="token operator">:</span> StringModel       <span class="token comment">// or ForeignKeyModel</span>
+          <span class="token punctuation">,</span> <span class="token literal-property property">role</span><span class="token operator">:</span> <span class="token string">'value'</span>           <span class="token comment">// semantic: this is the primary editable value</span>
+          <span class="token punctuation">,</span> <span class="token literal-property property">access</span><span class="token operator">:</span> <span class="token string">'read-write'</span>
+          <span class="token punctuation">,</span> <span class="token literal-property property">required</span><span class="token operator">:</span> <span class="token boolean">true</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">,</span> <span class="token literal-property property">options</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token literal-property property">type</span><span class="token operator">:</span> InstalledFontsModel  <span class="token comment">// or a compatible type</span>
+          <span class="token punctuation">,</span> <span class="token literal-property property">role</span><span class="token operator">:</span> <span class="token string">'options'</span>         <span class="token comment">// semantic: populates choices</span>
+          <span class="token punctuation">,</span> <span class="token literal-property property">access</span><span class="token operator">:</span> <span class="token string">'read-only'</span>
+          <span class="token punctuation">,</span> <span class="token literal-property property">required</span><span class="token operator">:</span> <span class="token boolean">true</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token comment">// ...</span>
+<span class="token punctuation">}</span></code></pre>
+<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">UIToggleButton</span> <span class="token keyword">extends</span> <span class="token class-name">_BaseComponent</span> <span class="token punctuation">{</span>
+    <span class="token keyword">static</span> <span class="token constant">INTERFACE</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">boolean</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token literal-property property">type</span><span class="token operator">:</span> BooleanModel
+          <span class="token punctuation">,</span> <span class="token literal-property property">role</span><span class="token operator">:</span> <span class="token string">'value'</span>
+          <span class="token punctuation">,</span> <span class="token literal-property property">access</span><span class="token operator">:</span> <span class="token string">'read-write'</span>
+          <span class="token punctuation">,</span> <span class="token literal-property property">required</span><span class="token operator">:</span> <span class="token boolean">true</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token comment">// ...</span>
+<span class="token punctuation">}</span></code></pre>
+<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">UIResetButton</span> <span class="token keyword">extends</span> <span class="token class-name">_BaseComponent</span> <span class="token punctuation">{</span>
+    <span class="token keyword">static</span> <span class="token constant">INTERFACE</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">target</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token literal-property property">type</span><span class="token operator">:</span> _AbstractStructModel  <span class="token comment">// accepts any struct</span>
+          <span class="token punctuation">,</span> <span class="token literal-property property">role</span><span class="token operator">:</span> <span class="token string">'action-target'</span>
+          <span class="token punctuation">,</span> <span class="token literal-property property">access</span><span class="token operator">:</span> <span class="token string">'write-only'</span>        <span class="token comment">// never reads, only resets</span>
+          <span class="token punctuation">,</span> <span class="token literal-property property">required</span><span class="token operator">:</span> <span class="token boolean">true</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">UIColorChooser</span> <span class="token keyword">extends</span> <span class="token class-name">_BaseContainerComponent</span> <span class="token punctuation">{</span>
+    <span class="token keyword">static</span> <span class="token constant">INTERFACE</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">color</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token literal-property property">type</span><span class="token operator">:</span> ColorModel
+          <span class="token punctuation">,</span> <span class="token literal-property property">role</span><span class="token operator">:</span> <span class="token string">'value'</span>
+          <span class="token punctuation">,</span> <span class="token literal-property property">access</span><span class="token operator">:</span> <span class="token string">'read-write'</span>
+          <span class="token punctuation">,</span> <span class="token literal-property property">required</span><span class="token operator">:</span> <span class="token boolean">true</span>
+          <span class="token punctuation">,</span> <span class="token literal-property property">isRootPath</span><span class="token operator">:</span> <span class="token boolean">true</span>  <span class="token comment">// this binding sets the rootPath</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token comment">// Constructor args are separate from bindings</span>
+    <span class="token keyword">static</span> <span class="token constant">REQUIREMENTS</span> <span class="token operator">=</span> <span class="token punctuation">[</span>
+        <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'settings:rootPath'</span><span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'zones'</span><span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'label'</span><span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'getDefault'</span><span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'updateDefaultsDependencies'</span><span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'raw:requireUpdateDefaults'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<h3><a id="access-modes" class="heading_anchor" href="#access-modes" aria-hidden="true">#</a>Access Modes</h3>
+<p>Widget bindings have three access modes:</p>
+<table>
+<thead>
+<tr>
+<th>Access</th>
+<th style="text-align:center">Reads model?</th>
+<th style="text-align:center">Writes model?</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>read-only</code></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td>Preview display, status indicator, font metrics viewer</td>
+</tr>
+<tr>
+<td><code>write-only</code></td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">✅</td>
+<td>Action button, file picker that sets a path, reset trigger</td>
+</tr>
+<tr>
+<td><code>read-write</code></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td>Most form inputs (select, text, toggle, color chooser)</td>
+</tr>
+</tbody>
+</table>
+<p>This distinction matters for user-facing composition:</p>
+<ul>
+<li><strong>read-only</strong> widgets are <em>displays</em> — they show data</li>
+<li><strong>write-only</strong> widgets are <em>actions</em> — they produce values without reflecting state</li>
+<li><strong>read-write</strong> widgets are <em>editors</em> — the standard interactive control</li>
+</ul>
+<p>A user composing an interface could filter: “Show me widgets that can
+<em>display</em> this font metric” vs “Show me widgets that can <em>edit</em> this color.”</p>
+<h3><a id="interface-vs-requirements-different-concerns" class="heading_anchor" href="#interface-vs-requirements-different-concerns" aria-hidden="true">#</a>INTERFACE vs REQUIREMENTS: Different Concerns</h3>
+<p>These serve <strong>different purposes</strong> and are not redundant:</p>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>INTERFACE</th>
+<th>REQUIREMENTS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>What it describes</strong></td>
+<td>Data bindings (model paths → widget)</td>
+<td>Constructor parameters</td>
+</tr>
+<tr>
+<td><strong>When it’s used</strong></td>
+<td>Runtime: wiring model state to widget updates</td>
+<td>Build time: creating the widget instance</td>
+</tr>
+<tr>
+<td><strong>Cardinality</strong></td>
+<td>Maps internal names to expected types</td>
+<td>Positional constructor args</td>
+</tr>
+<tr>
+<td><strong>Purpose</strong></td>
+<td>Compatibility checking, smart suggestions</td>
+<td>Dependency resolution</td>
+</tr>
+<tr>
+<td><strong>User-facing</strong></td>
+<td>Yes: “which widgets work with this data?”</td>
+<td>No: internal plumbing</td>
+</tr>
+</tbody>
+</table>
+<p>A widget’s INTERFACE says: “I consume a <code>BooleanModel</code> on my <code>boolean</code> binding.”
+A widget’s REQUIREMENTS says: “My constructor needs a <code>label</code> string and a <code>classToken</code>.”</p>
+<p><strong>INTERFACE is about data flow. REQUIREMENTS is about instantiation.</strong></p>
+<hr>
+<h2><a id="what-typed-interfaces-enable" class="heading_anchor" href="#what-typed-interfaces-enable" aria-hidden="true">#</a>What Typed Interfaces Enable</h2>
+<h3><a id="1-smart-widget-suggestions" class="heading_anchor" href="#1-smart-widget-suggestions" aria-hidden="true">#</a>1. Smart Widget Suggestions</h3>
+<p>Given a model field of type <code>ColorModel</code>, a recipe builder can query:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function">findCompatibleWidgets</span><span class="token punctuation">(</span><span class="token parameter">modelType</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token constant">ALL_WIDGETS</span><span class="token punctuation">.</span><span class="token function">filter</span><span class="token punctuation">(</span><span class="token parameter"><span class="token constant">W</span></span> <span class="token operator">=></span>
+        Object<span class="token punctuation">.</span><span class="token function">values</span><span class="token punctuation">(</span><span class="token constant">W</span><span class="token punctuation">.</span><span class="token constant">INTERFACE</span> <span class="token operator">||</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">some</span><span class="token punctuation">(</span><span class="token parameter">binding</span> <span class="token operator">=></span>
+            binding<span class="token punctuation">.</span>role <span class="token operator">===</span> <span class="token string">'value'</span>
+            <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>modelType <span class="token operator">===</span> binding<span class="token punctuation">.</span>type
+                <span class="token operator">||</span> modelType<span class="token punctuation">.</span>prototype <span class="token keyword">instanceof</span> <span class="token class-name">binding<span class="token punctuation">.</span>type</span><span class="token punctuation">)</span>
+        <span class="token punctuation">)</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token function">findCompatibleWidgets</span><span class="token punctuation">(</span>ColorModel<span class="token punctuation">)</span>
+<span class="token comment">// → [UIColorChooser, UISimpleColorPicker, UIColorSliders, ...]</span></code></pre>
+<p>A user building a custom interface gets presented: “For this color field,
+you can use: Color Chooser (full), Simple Color Picker, or Color Sliders.”</p>
+<h3><a id="2-alternative-implementations" class="heading_anchor" href="#2-alternative-implementations" aria-hidden="true">#</a>2. Alternative Implementations</h3>
+<p>Different widgets for the same data type — user preference:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// All three accept BooleanModel on 'boolean' binding:</span>
+<span class="token keyword">class</span> <span class="token class-name">UIToggleButton</span> <span class="token punctuation">{</span> <span class="token keyword">static</span> <span class="token constant">INTERFACE</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">boolean</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">type</span><span class="token operator">:</span> BooleanModel<span class="token punctuation">,</span> <span class="token literal-property property">role</span><span class="token operator">:</span> <span class="token string">'value'</span> <span class="token punctuation">}</span> <span class="token punctuation">}</span> <span class="token punctuation">}</span>
+<span class="token keyword">class</span> <span class="token class-name">UICheckbox</span>     <span class="token punctuation">{</span> <span class="token keyword">static</span> <span class="token constant">INTERFACE</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">boolean</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">type</span><span class="token operator">:</span> BooleanModel<span class="token punctuation">,</span> <span class="token literal-property property">role</span><span class="token operator">:</span> <span class="token string">'value'</span> <span class="token punctuation">}</span> <span class="token punctuation">}</span> <span class="token punctuation">}</span>
+<span class="token keyword">class</span> <span class="token class-name">UISwitch</span>       <span class="token punctuation">{</span> <span class="token keyword">static</span> <span class="token constant">INTERFACE</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">boolean</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">type</span><span class="token operator">:</span> BooleanModel<span class="token punctuation">,</span> <span class="token literal-property property">role</span><span class="token operator">:</span> <span class="token string">'value'</span> <span class="token punctuation">}</span> <span class="token punctuation">}</span> <span class="token punctuation">}</span></code></pre>
+<p>In a recipe:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token function">field</span><span class="token punctuation">(</span><span class="token string">'showCellBoxes'</span><span class="token punctuation">)</span>                          <span class="token comment">// default: system picks</span>
+<span class="token function">field</span><span class="token punctuation">(</span><span class="token string">'showCellBoxes'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">prefer</span><span class="token operator">:</span> UISwitch <span class="token punctuation">}</span><span class="token punctuation">)</span>    <span class="token comment">// user override: switch style</span></code></pre>
+<h3><a id="3-composite-binding-validation" class="heading_anchor" href="#3-composite-binding-validation" aria-hidden="true">#</a>3. Composite Binding Validation</h3>
+<p>For N:1 widgets, INTERFACE declares all required bindings:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">class</span> <span class="token class-name">UIPositionPicker</span> <span class="token keyword">extends</span> <span class="token class-name">_BaseComponent</span> <span class="token punctuation">{</span>
+    <span class="token keyword">static</span> <span class="token constant">INTERFACE</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">x</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">type</span><span class="token operator">:</span> NumberModel<span class="token punctuation">,</span> <span class="token literal-property property">role</span><span class="token operator">:</span> <span class="token string">'coordinate'</span><span class="token punctuation">,</span> <span class="token literal-property property">access</span><span class="token operator">:</span> <span class="token string">'read-write'</span><span class="token punctuation">,</span> <span class="token literal-property property">required</span><span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span>
+      <span class="token punctuation">,</span> <span class="token literal-property property">y</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">type</span><span class="token operator">:</span> NumberModel<span class="token punctuation">,</span> <span class="token literal-property property">role</span><span class="token operator">:</span> <span class="token string">'coordinate'</span><span class="token punctuation">,</span> <span class="token literal-property property">access</span><span class="token operator">:</span> <span class="token string">'read-write'</span><span class="token punctuation">,</span> <span class="token literal-property property">required</span><span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>A recipe builder can validate that both bindings are satisfied:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token function">widget</span><span class="token punctuation">(</span>UIPositionPicker<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">bindings</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">x</span><span class="token operator">:</span> <span class="token string">'positionX'</span><span class="token punctuation">,</span> <span class="token literal-property property">y</span><span class="token operator">:</span> <span class="token string">'positionY'</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token comment">// Validator checks: positionX is NumberModel ✓, positionY is NumberModel ✓</span></code></pre>
+<h3><a id="4-auto-generated-dependency-mappings" class="heading_anchor" href="#4-auto-generated-dependency-mappings" aria-hidden="true">#</a>4. Auto-Generated Dependency Mappings</h3>
+<p>If INTERFACE declares what internal names the widget uses, and the recipe
+declares which model paths to bind, the dependency mappings can be
+auto-generated:</p>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// Instead of manually writing:</span>
+<span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token string">'fontSize'</span><span class="token punctuation">,</span> <span class="token string">'value'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'/font'</span><span class="token punctuation">,</span> <span class="token string">'font'</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
+
+<span class="token comment">// The recipe processor generates it from:</span>
+<span class="token function">widget</span><span class="token punctuation">(</span>UINumberInput<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">bindings</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">value</span><span class="token operator">:</span> <span class="token string">'fontSize'</span> <span class="token punctuation">}</span>
+    <span class="token comment">// font not needed for UINumberInput</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token comment">// → dependencyMappings = [['fontSize', 'value']]</span></code></pre>
+<h3><a id="5-discoverability-for-agents-and-tools" class="heading_anchor" href="#5-discoverability-for-agents-and-tools" aria-hidden="true">#</a>5. Discoverability for Agents and Tools</h3>
+<p>An agent (like me) implementing a new layout can ask:
+“What widgets accept <code>PadModeModel</code>?” instead of searching source code.</p>
+<p>A documentation generator can produce widget catalogs:
+“FontSelect: requires <code>activeFontKey</code> (StringModel, read-write) and
+<code>options</code> (InstalledFontsModel, read-only).”</p>
+<hr>
+<h2><a id="revised-recipe-syntax-with-typed-bindings" class="heading_anchor" href="#revised-recipe-syntax-with-typed-bindings" aria-hidden="true">#</a>Revised Recipe Syntax with Typed Bindings</h2>
+<h3><a id="the-primitive-widget" class="heading_anchor" href="#the-primitive-widget" aria-hidden="true">#</a>The Primitive: <code>widget()</code></h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// Fully explicit — N:1 binding, validated by INTERFACE</span>
+<span class="token function">widget</span><span class="token punctuation">(</span>UIPositionPicker<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">bindings</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">x</span><span class="token operator">:</span> <span class="token string">'positionX'</span><span class="token punctuation">,</span> <span class="token literal-property property">y</span><span class="token operator">:</span> <span class="token string">'positionY'</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+<h3><a id="the-sugar-field" class="heading_anchor" href="#the-sugar-field" aria-hidden="true">#</a>The Sugar: <code>field()</code></h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// 1:1 — auto-resolves widget from model type</span>
+<span class="token function">field</span><span class="token punctuation">(</span><span class="token string">'padMode'</span><span class="token punctuation">)</span>
+
+<span class="token comment">// 1:1 with preference — user chose a specific widget style</span>
+<span class="token function">field</span><span class="token punctuation">(</span><span class="token string">'padMode'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">prefer</span><span class="token operator">:</span> UIRadioGroup <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token comment">// 1:1 with conditional visibility</span>
+<span class="token function">field</span><span class="token punctuation">(</span><span class="token string">'customPad'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">visibleWhen</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">field</span><span class="token operator">:</span> <span class="token string">'padMode'</span><span class="token punctuation">,</span> <span class="token literal-property property">notEquals</span><span class="token operator">:</span> <span class="token string">'empty'</span> <span class="token punctuation">}</span> <span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+<p>When <code>field()</code> is processed:</p>
+<ol>
+<li>Look up field type from model (<code>PadModeOrEmptyModel</code>)</li>
+<li>Find all widgets with compatible INTERFACE (via <code>role: 'value'</code>)</li>
+<li>Use <code>prefer</code> if specified, otherwise use <code>uiElementsMap</code> default</li>
+<li>Auto-generate dependency mapping from INTERFACE</li>
+</ol>
+<h3><a id="structural-elements" class="heading_anchor" href="#structural-elements" aria-hidden="true">#</a>Structural Elements</h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token function">group</span><span class="token punctuation">(</span><span class="token string">'Contextual Settings'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span>
+    <span class="token function">field</span><span class="token punctuation">(</span><span class="token string">'charGroup'</span><span class="token punctuation">)</span>
+  <span class="token punctuation">,</span> <span class="token function">field</span><span class="token punctuation">(</span><span class="token string">'padMode'</span><span class="token punctuation">)</span>
+  <span class="token punctuation">,</span> <span class="token function">field</span><span class="token punctuation">(</span><span class="token string">'customPad'</span><span class="token punctuation">)</span>
+<span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token function">separator</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token function">autoFields</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">exclude</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'keyMoments'</span><span class="token punctuation">]</span> <span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+<h3><a id="the-catch-all-autofields" class="heading_anchor" href="#the-catch-all-autofields" aria-hidden="true">#</a>The Catch-All: <code>autoFields()</code></h3>
+<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// Iterate remaining model fields, find compatible widgets, auto-bind</span>
+<span class="token function">autoFields</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+    <span class="token literal-property property">exclude</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'keyMoments'</span><span class="token punctuation">,</span> <span class="token string">'activeActors'</span><span class="token punctuation">]</span>
+  <span class="token punctuation">,</span> <span class="token literal-property property">preferenceMap</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token string-property property">'showCellBoxes'</span><span class="token operator">:</span> UISwitch  <span class="token comment">// user preference for this field</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+<hr>
+<h2><a id="architecture-how-it-all-connects" class="heading_anchor" href="#architecture-how-it-all-connects" aria-hidden="true">#</a>Architecture: How It All Connects</h2>
+<pre><code>┌──────────────────────┐
+│ Model (metamodel)    │  Fields with types (PadModeModel, ColorModel, ...)
+└──────────┬───────────┘
+           │ &quot;What data exists?&quot;
+           ▼
+┌──────────────────────┐
+│ Widget INTERFACE     │  Typed bindings (what data each widget accepts)
+└──────────┬───────────┘
+           │ &quot;Which widgets are compatible?&quot;
+           ▼
+┌──────────────────────┐
+│ Recipe               │  Composition (field, widget, group, separator)
+│                      │  with optional user preferences
+└──────────┬───────────┘
+           │ &quot;How should widgets be arranged?&quot;
+           ▼
+┌──────────────────────┐
+│ Recipe Processor     │  Resolves bindings, validates types, generates
+│                      │  widget setup arrays using _getWidgetConfig
+└──────────┬───────────┘
+           │ &quot;Build the actual widgets&quot;
+           ▼
+┌──────────────────────┐
+│ ComponentWrapper     │  Manages lifecycle, rootPath, dependency mapping
+│ + _initWidgets       │  (existing infrastructure — unchanged)
+└──────────────────────┘
+</code></pre>
+<h3><a id="data-flow-for-smart-suggestions-user-generated-ui" class="heading_anchor" href="#data-flow-for-smart-suggestions-user-generated-ui" aria-hidden="true">#</a>Data Flow for Smart Suggestions (User-Generated UI)</h3>
+<pre><code>User selects model field &quot;stageBackgroundColor&quot;
+    │
+    ▼
+System reads: TypeClass.fields.get('stageBackgroundColor') → ColorModel
+    │
+    ▼
+System queries: findCompatibleWidgets(ColorModel)
+    │ Checks each widget's static INTERFACE for role:'value'
+    │ with type === ColorModel or type instanceof compatible
+    ▼
+Presents options:
+    ┌─────────────────────────────────┐
+    │ ○ Color Chooser (full editor)   │  UIColorChooser
+    │ ○ Simple Swatch                 │  UIColorSwatch
+    │ ○ Color Sliders (RGB/HSL)       │  UIColorSliders
+    │ ○ Hex Input                     │  UIColorHexInput
+    └─────────────────────────────────┘
+User picks → recipe stores preference → renders chosen widget
+</code></pre>
+<hr>
+<h2><a id="implementation-strategy" class="heading_anchor" href="#implementation-strategy" aria-hidden="true">#</a>Implementation Strategy</h2>
+<h3><a id="what-exists-and-reuse" class="heading_anchor" href="#what-exists-and-reuse" aria-hidden="true">#</a>What Exists and Reuse</h3>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Already exists as</th>
+<th>Proposed evolution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Type → Widget mapping</td>
+<td><code>uiElementsMap</code></td>
+<td>INTERFACE enables discovery + alternatives</td>
+</tr>
+<tr>
+<td>Dependency resolution</td>
+<td><code>_getArgumentConfig</code> switch</td>
+<td>Unchanged — recipes produce same output</td>
+</tr>
+<tr>
+<td>Widget lifecycle</td>
+<td><code>ComponentWrapper</code></td>
+<td>Unchanged — consumes same setup arrays</td>
+</tr>
+<tr>
+<td>Model type info</td>
+<td><code>TypeClass.fields</code></td>
+<td>Unchanged — recipes read from it</td>
+</tr>
+<tr>
+<td>Named dependencies</td>
+<td><code>require()</code> / <code>InjectDependency</code></td>
+<td>REQUIREMENTS = same pattern, on class</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="new-additions" class="heading_anchor" href="#new-additions" aria-hidden="true">#</a>New Additions</h3>
+<table>
+<thead>
+<tr>
+<th>Addition</th>
+<th>Purpose</th>
+<th>Effort</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>static INTERFACE</code> on widgets</td>
+<td>Typed binding declarations</td>
+<td>Low per widget, gradual</td>
+</tr>
+<tr>
+<td><code>processRecipe()</code> function</td>
+<td>Recipe → widget setup arrays</td>
+<td>Medium (new file)</td>
+</tr>
+<tr>
+<td><code>findCompatibleWidgets()</code></td>
+<td>INTERFACE-based widget discovery</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>Recipe elements (<code>field</code>, <code>widget</code>, <code>group</code>, etc.)</td>
+<td>Composition DSL</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>Binding validator</td>
+<td>Type-check recipe bindings vs INTERFACE</td>
+<td>Low</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="phased-rollout" class="heading_anchor" href="#phased-rollout" aria-hidden="true">#</a>Phased Rollout</h3>
+<p><strong>Phase 1: INTERFACE declarations</strong> (non-breaking, additive)
+Add <code>static INTERFACE</code> to key widgets: UIToggleButton, FontSelect,
+UIColorChooser, UISelectInput, UILineOfTextInput, UINumberInput.
+This is pure documentation initially — nothing consumes it yet.</p>
+<p><strong>Phase 2: Recipe infrastructure</strong> (new file, non-breaking)
+Create <code>widget-recipes.mjs</code> with recipe elements and processor.
+Convert one layout to recipes as proof of concept.</p>
+<p><strong>Phase 3: <code>findCompatibleWidgets</code></strong> (enables smart suggestions)
+Build the widget discovery function that queries INTERFACE.
+This is the foundation for user-generated interfaces.</p>
+<p><strong>Phase 4: REQUIREMENTS</strong> (optional, enhances recipes)
+Add <code>static REQUIREMENTS</code> to complex widgets where it saves
+significant boilerplate in <code>custom()</code> recipe elements.</p>
+<p><strong>Phase 5: User-facing recipe builder</strong> (the endgame)
+Visual tool that reads model fields, presents compatible widgets,
+and produces serializable recipes.</p>
+<hr>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p>Three complementary concepts, each independently useful:</p>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>What it solves</th>
+<th style="text-align:center">User-facing?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>INTERFACE</strong></td>
+<td>“What data does this widget accept?” — typed bindings</td>
+<td style="text-align:center">★★★★★</td>
+</tr>
+<tr>
+<td><strong>Recipes</strong></td>
+<td>“How should widgets be composed?” — structure + ordering</td>
+<td style="text-align:center">★★★★</td>
+</tr>
+<tr>
+<td><strong>REQUIREMENTS</strong></td>
+<td>“How is this widget instantiated?” — constructor args</td>
+<td style="text-align:center">★★</td>
+</tr>
+</tbody>
+</table>
+<p><strong>INTERFACE is the most impactful for user-generated interfaces</strong> because it
+answers the question users actually ask: “What can I use to edit this field?”</p>
+<p><strong>Recipes are the most impactful for developer ergonomics</strong> because they
+eliminate the manual widget setup boilerplate while supporting composition.</p>
+<p><strong>REQUIREMENTS is the most impactful for DRY</strong> because it eliminates
+duplicate <code>require()</code> declarations between <code>uiElementsMap</code> and call sites.</p>
+<p>Together they form a complete composable widget system:</p>
+<ul>
+<li><strong>INTERFACE</strong> = what each widget can do (capability)</li>
+<li><strong>Recipes</strong> = how widgets are arranged (composition)</li>
+<li><strong>REQUIREMENTS</strong> = how widgets are built (instantiation)</li>
+</ul>
+<hr>
+<p><em>Generated: 2026-02-25</em>
+<em>Key insights:</em>
+<em>- Field ≠ Widget: cardinalities are 1:1, 1:N, N:1, 0:1</em>
+<em>- Widget typed interfaces enable smart suggestions for user-generated UI</em>
+<em>- INTERFACE (capability) ≠ REQUIREMENTS (instantiation) — different concerns</em>
+<em>- <code>uiElementsMap</code> becomes one consumer of INTERFACE, not the only source</em></p>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>
