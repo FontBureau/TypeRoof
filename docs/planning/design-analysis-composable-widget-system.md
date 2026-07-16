@@ -11,6 +11,13 @@
 > reuse baseline) is accurate at the time of writing. Treat this as an RFC.
 >
 > *Originally generated 2026-02-25; filed under `docs/planning/` 2026-07-16.*
+>
+> **Part 3 of 3 — the most current view in the widget-setup series.** The
+> "Corrections Applied" section below overrules the central theses of the
+> two prior iterations: `design-analysis-self-describing-widget-setup.md`
+> (part 1, proposes `static REQUIREMENTS`) and
+> `design-analysis-widget-setup-evaluation.md` (part 2, critiques part 1
+> and proposes model-declared UI hints).
 
 ### Corrections Applied
 
