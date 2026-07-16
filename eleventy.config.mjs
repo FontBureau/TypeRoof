@@ -79,6 +79,14 @@ export default function (eleventyConfig) {
         }
     );
 
+    // Single source of truth for the "created with an agent" banner:
+    // expose the hyphenated `agent-created` front-matter key under a
+    // Nunjucks-friendly name so the layout can inject the note.
+    eleventyConfig.addGlobalData('eleventyComputed.agentCreated', ()=>{
+        return data=>Boolean(data['agent-created']);
+        }
+    );
+
     // This creates directory listings for docs/states_lib
     const libDir = 'docs/states_lib'
    , directoryTemplate = `# States Library{% if page.url != "/${libDir}/" %}: {{page.url | remove: "/${libDir}" | remove_last: "/" }}{% endif %}

@@ -5,9 +5,8 @@ eleventyNavigation:
   key: assessment-pre-typing
   title: Metamodel - Assessment Pre Strict Typing
   order: 1
+agent-created: true
 ---
-
-** This file was created with an agent. **
 
 # {{title}}
 

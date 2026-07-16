@@ -5,9 +5,8 @@ eleventyNavigation:
   key: compositor-roadmap
   title: Compositor - Concepts and Roadmap
   order: 10
+agent-created: true
 ---
-
-** This file was created with an agent. **
 
 # {{title}}
 

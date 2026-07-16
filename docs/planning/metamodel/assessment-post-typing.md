@@ -5,9 +5,8 @@ eleventyNavigation:
   key: assessment-post-typing
   title: Metamodel - Assessment Post Strict Typing
   order: 2
+agent-created: true
 ---
-
-** This file was created with an agent. **
 
 # {{title}}
 

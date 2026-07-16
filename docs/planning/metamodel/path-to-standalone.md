@@ -5,9 +5,8 @@ eleventyNavigation:
   key: path-to-standalone
   title: Metamodel - Path to a Standalone Library
   order: 1
+agent-created: true
 ---
-
-** This file was created with an agent. **
 
 # {{title}}
 
