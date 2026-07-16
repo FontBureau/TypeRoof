@@ -1,4 +1,4 @@
-# TypeRoof -- Stage and Actors -- Screen Recordings
+# TypeRoof -- Motion Stage -- Screen Recordings
 
 Screen recordings to document and share progress of the animation editor are in a
 

@@ -201,7 +201,7 @@ document manager
     paint-order: stroke;
 }
 
-.stage_and_actors {
+.motion_stage {
     /* It's important, that the inner size of the stage has
      * the exact width/height dimensions.
      */
@@ -210,12 +210,12 @@ document manager
     border-inline-start-width: 0;
 }
 
-.stage_and_actors-wrapper {
+.motion_stage-wrapper {
     position: relative;
     overflow: hidden;
 }
 
-.stage_and_actors-wrapper::before {
+.motion_stage-wrapper::before {
     content: "";
     display: block;
     position: absolute;
@@ -228,7 +228,7 @@ document manager
     background-image: var(--transparency-indicator-bg-image);
 }
 
-.stage_and_actors-wrapper > .stage_and_actors-layer-top {
+.motion_stage-wrapper > .motion_stage-layer-top {
     width: 100%;
     height: 100%;
     position: absolute;
@@ -237,7 +237,7 @@ document manager
     z-index: 0;
 }
 
-.stage_and_actors-layer-sub {
+.motion_stage-layer-sub {
     position: absolute;
     overflow: visible;
 }
@@ -1028,7 +1028,7 @@ select and drag
      * This way it scrolls vertically within the stage.
      * FIXME:CAUTION: May be too simplistic and require rethinking but
      * looks good so far. In a stand-alone layout, as opposed to in the
-     * stage-and-actors layout, we might need a different handling.
+     * motion-stage layout, we might need a different handling.
      * I.e. in the case of usage within an movie/film-like
      * non-interactive animation, it is wrong to add manual scrolling to
      * this! However, so far there's no distinction made between
