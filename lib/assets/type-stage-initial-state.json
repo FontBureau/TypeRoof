@@ -26,6 +26,12 @@
       [
         "0",
         {
+          "blockMargins": {
+              "start": {
+              "unit": "baseEm",
+              "value": "2.00000"
+            }
+          },
           "relativeFontSize": "4.571428571",
           "autoOPSZ": "1",
           "axesLocations": [
