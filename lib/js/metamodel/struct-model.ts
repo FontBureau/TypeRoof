@@ -123,7 +123,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
     // Instance properties (set via Object.defineProperty in constructor)
     declare _value: FreezableMap<string, _BaseModel>;
     // @ts-expect-error — overrides base accessor with instance property set via Object.defineProperty
-    declare override dependencies: Readonly<Record<string, unknown>>;
+    declare dependencies: Readonly<Record<string, unknown>>;
     declare [_LOCAL_PROXIES]: LocalProxies;
     declare [_PRIMARY_SERIALIZED_VALUE]?: [
         FreezableMap<string, unknown>,
