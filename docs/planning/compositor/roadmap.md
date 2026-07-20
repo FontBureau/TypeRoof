@@ -897,3 +897,60 @@ Build for correctness first. Optimize for speed when measurement demands it.
 parametric typographic scope resolution feel natural and inevitable to the
 developer using it. The eight capabilities should feel like one coherent idea,
 not eight bolted-together features.
+
+## Addendum 2026-07-20 — Runions, invalidation, discrete steps, hot/cold partition
+
+### Runion terminology mapping
+
+The *one primitive* (a function with declared dependencies, resolved via
+topological sort) is what we now call a **runion**: a named, culture-
+overridable decision unit in the mantra — declared dependencies (possibly
+none), coherent output, implementation anywhere. Mapping:
+
+- `SyntheticValue` (TypeSpecnion) and `DependentValue` (Animanion) = runions.
+- Algorithm registries / dynamic models (`LeadingAlgorithmModel`,
+  `COLUMN_GAP_ALGORITHMS`) = runion selection **in the data**.
+- **Platform runions** — e.g. CSS `text-align: start` + `direction` — are
+  runions implemented by the browser; the registry may select them, the graph
+  does not execute them.
+- **Zero-input runions** (dependency list `[]`, e.g. a manual override) are
+  the identity element: pure source nodes, same node type, arity zero.
+
+### Invalidation via StateComparison
+
+"Recompute only affected parts" is not aspirational: the metamodel already
+reports what changed (`StateComparison`, changed-dependency sets). The
+compositor subscribes to those sets and dirty-marks only the dependent
+subgraph. No separate change-detection layer.
+
+### Discrete runion outputs: the step policy
+
+Runion results can be discrete (column counts, algorithm selections, script
+runion sets) — they cannot lerp, they **step**. Policy: discrete nodes hold
+their cached value during animation until the change-driven side re-resolves
+and publishes a new step; consumers see hold-then-step, never interpolated
+nonsense (no 2.4 columns). Crossfade/hold-settled UX is a consumer concern,
+built on top of the step stream.
+
+### Hot/cold partition: `t` is the only volatile input
+
+Every dependency node is change-driven except `t`, which flows every frame.
+Reachability from `t` partitions the graph:
+
+- **Cold** (not reachable from `t`): runions, inheritance, config, keyMoments.
+  Recomputed only on StateComparison; fully cached.
+- **Hot** (reachable from `t`): interpolations and their dependents.
+  Dirty-marked each `requestAnimationFrame`; reads cold-cached inputs.
+
+Per-frame cost is then proportional to the animated subgraph (handfuls of
+lerps), which is the strongest argument for staying in TypeScript and
+deferring Rust. The discrete/continuous boundary and the hot/cold boundary
+are the same line. Three cost tiers emerge: **platform (free), cold
+(change-driven), hot (frame-driven)** — keep the hot tier small.
+
+### Signature
+
+    model: moonshotai/kimi-k3
+    provider: openrouter
+    agent: goose v1.41.0
+
