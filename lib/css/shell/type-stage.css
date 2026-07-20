@@ -174,23 +174,61 @@ prosemirror
 WIP add viewer/static document renderer
 *******************************************************************************/
 
-
 .typeroof-main > .typeroof-layout {
     display: flex;
     flex-direction: row-reverse;
     justify-content: flex-end;
 }
+
 .ui_prosemirror_host {
     /* temporary, to fit the viewer next to it */
     width: fit-content;
     height: fit-content;
 }
-.typeroof-document {
-  background: rebeccapurple;
-  height: fit-content;
-  width: fit-content;
+
+/** .Prosemirror applies these via the vendor CSS, we can't allow the
+ *  features manipulation
+ */
+.ProseMirror {
+    font-variant-ligatures: normal;
+    font-feature-settings: normal;
 }
+
+.typeroof-document {
+    /** .Prosemirror applies these via the vendor CSS
+     * But in the form:
+     *      word-wrap: break-word;
+     *      white-space: pre-wrap;
+     *      white-space: break-spaces;
+     *      -webkit-font-variant-ligatures: none;
+     *      font-variant-ligatures: none;
+     **/
+    overflow-wrap: break-word;
+    font-variant-ligatures: none;
+
+    /*
+     *  Don't apply these from Prosemirror:
+        font-variant-ligatures: none;
+        font-feature-settings: "liga" 0;
+    */
+    height: fit-content;
+    width: fit-content;
+
+    /* ProseMirror does this, primarily it renders subsequent spaces instead of collapsing them. */
+    white-space: break-spaces;
+}
+
 .typeroof-document-element {
-  padding: var(--margin-block-start) 0 var(--margin-block-end) 0;
-  line-height: var(--line-height);
+    padding: var(--space-before) 0 var(--space-after) 0;
+    line-height: var(--line-height);
+
+    /* In order to achive a pixel-perfect match between the prosemirror
+     * elements and the document, this switches the layout engine to treat
+     * element heights the same (especially in chrome). This is basically
+     * a hack and if we are not viewing documents side by side, one rendered
+     * with prosemirror, one with this, it wouldn't matter much. prosemirror
+     * uses display grid on the inner elements, and they contain
+     * instrumentation that we can't change easily.
+     */
+    display: table;
 }

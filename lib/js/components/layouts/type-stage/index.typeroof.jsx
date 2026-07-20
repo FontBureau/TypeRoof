@@ -375,11 +375,11 @@ class TypeStageController extends _BaseContainerComponent {
             [
                 {
                     zone: "layout",
-                    relativeRootPath: Path.fromParts(".","document")
+                    relativeRootPath: Path.fromParts(".", "document"),
                 },
                 [
-                    ['../proseMirrorSchema/nodes', 'nodeSpec'],
-                    ['../nodeSpecToTypeSpec', 'nodeSpecToTypeSpec'],
+                    ["../proseMirrorSchema/nodes", "nodeSpec"],
+                    ["../nodeSpecToTypeSpec", "nodeSpecToTypeSpec"],
                 ],
                 UIDocumentViewer,
                 zones,

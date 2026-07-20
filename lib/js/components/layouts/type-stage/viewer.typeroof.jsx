@@ -10,12 +10,8 @@ import {
     UIDocumentStyleStyler,
     UIDocumentUnkownStyleStyler,
 } from "../../prosemirror/type-spec.typeroof.jsx";
-import {
-    getTypeSpecPropertiesIdMethod,
-} from "../../prosemirror/integration.typeroof.jsx";
+import { getTypeSpecPropertiesIdMethod } from "../../prosemirror/integration.typeroof.jsx";
 import { schemaSpec as proseMirrorDefaultSchema } from "../../prosemirror/default-schema";
-
-
 
 class GenericUpdater extends _BaseComponent {
     constructor(widgetBus, updateHandlerFn) {
@@ -168,12 +164,11 @@ export class UIDocumentElement extends _BaseContainerComponent {
         // resolving lineHeightAfter/emAfter margin units.
         let nextTypeSpecProperties = null;
         const parentCollection = this.getEntry(this.widgetBus.rootPath.parent),
-            currentKey = this.widgetBus.rootPath.parts.at(-1)
-            ;
-        console.log(`${this}._provisionWidgets parentCollection:${this.widgetBus.rootPath.parent} currentKey:${currentKey} parentCollection`, parentCollection);
-        const currentIndex = parentCollection.keyToIndex(currentKey);
-        if (currentIndex >= 0 && currentIndex + 1 < parentCollection.size) {
-            const nextKey = parentCollection.keyOfIndex(currentIndex + 1),
+            currentKey = this.widgetBus.rootPath.parts.at(-1),
+            currentIndex = parentCollection.indexOfKey(currentKey),
+            nextIndex = currentIndex + 1;
+        if (currentIndex >= 0 && nextIndex < parentCollection.size) {
+            const nextKey = `${nextIndex}`,
                 nextPath = this.widgetBus.rootPath.parent.append(nextKey),
                 nextPathOfTypes = this._getPathOfTypes(nextPath);
             nextTypeSpecProperties =
@@ -621,7 +616,6 @@ export class UIDocumentViewer extends _BaseContainerComponent {
         originTypeSpecPath,
         baseClass = "typeroof-document",
     ) {
-        console.log('UIDocumentViewer Hello World')
         const documentContainer = widgetBus.domTool.createElement("article", {
             class: baseClass,
         });

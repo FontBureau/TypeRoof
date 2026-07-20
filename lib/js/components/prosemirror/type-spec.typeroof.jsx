@@ -303,7 +303,7 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                 getDefault = (property) => {
                     if (property.startsWith(`${GENERIC}blockMargins/`)) {
                         // FIXME: this is a hack!
-                        return [true, 0];
+                        return [true, `0pt`];
                     }
                     return [true, getRegisteredPropertySetup(property).default];
                 };
