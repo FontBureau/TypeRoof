@@ -49,6 +49,7 @@ import {
     NodeSpecPropertiesManager,
 } from "./node-specs.typeroof.jsx";
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
+import { UIDocumentViewer } from "./viewer.typeroof.jsx";
 
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
@@ -360,19 +361,6 @@ class TypeStageController extends _BaseContainerComponent {
                 StylePatchPropertiesManager,
                 new Map([...zones, ["main", stylePatchesManagerContainer]]),
             ],
-            //  , [
-            //        {
-            //            zone: 'layout'
-            //          , relativeRootPath: Path.fromParts('.','document')
-            //        }
-            //      , [
-            //              ['../proseMirrorSchema/nodes', 'nodeSpec']
-            //            , ['../nodeSpecToTypeSpec', 'nodeSpecToTypeSpec']
-            //        ]
-            //      , UIDocument
-            //      , zones
-            //      , originTypeSpecPath
-            //    ]
             [
                 {},
                 [],
@@ -383,6 +371,20 @@ class TypeStageController extends _BaseContainerComponent {
                 originTypeSpecPath,
                 // menuSettings
                 { zone: "prose-mirror-editor-menu" },
+            ],
+            [
+                {
+                    zone: "layout",
+                    relativeRootPath: Path.fromParts(".","document")
+                },
+                [
+                    ['../proseMirrorSchema/nodes', 'nodeSpec'],
+                    ['../nodeSpecToTypeSpec', 'nodeSpecToTypeSpec'],
+                ],
+                UIDocumentViewer,
+                zones,
+                originTypeSpecPath,
+                // baseClass = "typeroof-document",
             ],
             [
                 { zone: "editor-manager" },

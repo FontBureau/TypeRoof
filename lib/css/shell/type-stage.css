@@ -169,3 +169,28 @@ prosemirror
         }
     }
 }
+
+/******************************************************************************
+WIP add viewer/static document renderer
+*******************************************************************************/
+
+
+.typeroof-main > .typeroof-layout {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+.ui_prosemirror_host {
+    /* temporary, to fit the viewer next to it */
+    width: fit-content;
+    height: fit-content;
+}
+.typeroof-document {
+  background: rebeccapurple;
+  height: fit-content;
+  width: fit-content;
+}
+.typeroof-document-element {
+  padding: var(--margin-block-start) 0 var(--margin-block-end) 0;
+  line-height: var(--line-height);
+}
