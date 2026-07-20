@@ -925,8 +925,12 @@ subgraph. No separate change-detection layer.
 
 ### Discrete runion outputs: the step policy
 
-Runion results can be discrete (column counts, algorithm selections, script
-runion sets) — they cannot lerp, they **step**. Policy: discrete nodes hold
+Discreteness is a **per-runion, per-output property**, not a blanket rule:
+column counts, algorithm selections and script runion sets are discrete —
+they cannot lerp, they **step**. Other runions are continuous (auto-leading
+returns a float; XTRA width, optical size) and lerp freely like any animated
+property. Each runion declares which of its outputs are discrete vs.
+continuous. Policy for the discrete subset: discrete nodes hold
 their cached value during animation until the change-driven side re-resolves
 and publishes a new step; consumers see hold-then-step, never interpolated
 nonsense (no 2.4 columns). Crossfade/hold-settled UX is a consumer concern,
