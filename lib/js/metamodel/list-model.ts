@@ -457,6 +457,23 @@ export class _AbstractListModel extends _BaseContainerModel {
         return [index, null];
     }
 
+    indexOfKey(key: string | number | symbol | undefined): number;
+    indexOfKey<D>(
+        key: string | number | symbol | undefined,
+        defaultReturn: D,
+    ): number | D;
+    indexOfKey(
+        key: string | number | symbol | undefined,
+        defaultReturn: unknown = _NOTDEF,
+    ) {
+        const [index, message] = this.keyToIndex(key);
+        if (index === null) {
+            if (defaultReturn !== _NOTDEF) return defaultReturn;
+            throw new Error(message);
+        }
+        return index;
+    }
+
     indexOf(item: _BaseModel, fromIndex?: number): number {
         return this._value.indexOf(item, fromIndex);
     }
