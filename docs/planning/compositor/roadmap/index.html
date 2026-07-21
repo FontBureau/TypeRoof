@@ -30,7 +30,10 @@
 <li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
 <li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
 <li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
-<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li></ul></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-2026-07/">Metamodel: 2026-07</a></li>
+<li><a href="/TypeRoof/docs/planning/columns/REPORT/">Columns: Runion Report</a></li>
+<li><a href="/TypeRoof/docs/planning/overview/architectural-overview/">Architectural Overview</a></li></ul></li>
 <li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li></ul></li>
 <li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
 <li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
@@ -887,6 +890,56 @@ Rust excels at fast — when there’s measurable computation to optimize.</p>
 parametric typographic scope resolution feel natural and inevitable to the
 developer using it. The eight capabilities should feel like one coherent idea,
 not eight bolted-together features.</p>
+<h2><a id="addendum-2026-07-20--runions-invalidation-discrete-steps-hotcold-partition" class="heading_anchor" href="#addendum-2026-07-20--runions-invalidation-discrete-steps-hotcold-partition" aria-hidden="true">#</a>Addendum 2026-07-20 — Runions, invalidation, discrete steps, hot/cold partition</h2>
+<h3><a id="runion-terminology-mapping" class="heading_anchor" href="#runion-terminology-mapping" aria-hidden="true">#</a>Runion terminology mapping</h3>
+<p>The <em>one primitive</em> (a function with declared dependencies, resolved via
+topological sort) is what we now call a <strong>runion</strong>: a named, culture-
+overridable decision unit in the mantra — declared dependencies (possibly
+none), coherent output, implementation anywhere. Mapping:</p>
+<ul>
+<li><code>SyntheticValue</code> (TypeSpecnion) and <code>DependentValue</code> (Animanion) = runions.</li>
+<li>Algorithm registries / dynamic models (<code>LeadingAlgorithmModel</code>,
+<code>COLUMN_GAP_ALGORITHMS</code>) = runion selection <strong>in the data</strong>.</li>
+<li><strong>Platform runions</strong> — e.g. CSS <code>text-align: start</code> + <code>direction</code> — are
+runions implemented by the browser; the registry may select them, the graph
+does not execute them.</li>
+<li><strong>Zero-input runions</strong> (dependency list <code>[]</code>, e.g. a manual override) are
+the identity element: pure source nodes, same node type, arity zero.</li>
+</ul>
+<h3><a id="invalidation-via-statecomparison" class="heading_anchor" href="#invalidation-via-statecomparison" aria-hidden="true">#</a>Invalidation via StateComparison</h3>
+<p>“Recompute only affected parts” is not aspirational: the metamodel already
+reports what changed (<code>StateComparison</code>, changed-dependency sets). The
+compositor subscribes to those sets and dirty-marks only the dependent
+subgraph. No separate change-detection layer.</p>
+<h3><a id="discrete-runion-outputs-the-step-policy" class="heading_anchor" href="#discrete-runion-outputs-the-step-policy" aria-hidden="true">#</a>Discrete runion outputs: the step policy</h3>
+<p>Discreteness is a <strong>per-runion, per-output property</strong>, not a blanket rule:
+column counts, algorithm selections and script runion sets are discrete —
+they cannot lerp, they <strong>step</strong>. Other runions are continuous (auto-leading
+returns a float; XTRA width, optical size) and lerp freely like any animated
+property. Each runion declares which of its outputs are discrete vs.
+continuous. Policy for the discrete subset: discrete nodes hold
+their cached value during animation until the change-driven side re-resolves
+and publishes a new step; consumers see hold-then-step, never interpolated
+nonsense (no 2.4 columns). Crossfade/hold-settled UX is a consumer concern,
+built on top of the step stream.</p>
+<h3><a id="hotcold-partition-t-is-the-only-volatile-input" class="heading_anchor" href="#hotcold-partition-t-is-the-only-volatile-input" aria-hidden="true">#</a>Hot/cold partition: <code>t</code> is the only volatile input</h3>
+<p>Every dependency node is change-driven except <code>t</code>, which flows every frame.
+Reachability from <code>t</code> partitions the graph:</p>
+<ul>
+<li><strong>Cold</strong> (not reachable from <code>t</code>): runions, inheritance, config, keyMoments.
+Recomputed only on StateComparison; fully cached.</li>
+<li><strong>Hot</strong> (reachable from <code>t</code>): interpolations and their dependents.
+Dirty-marked each <code>requestAnimationFrame</code>; reads cold-cached inputs.</li>
+</ul>
+<p>Per-frame cost is then proportional to the animated subgraph (handfuls of
+lerps), which is the strongest argument for staying in TypeScript and
+deferring Rust. The discrete/continuous boundary and the hot/cold boundary
+are the same line. Three cost tiers emerge: <strong>platform (free), cold
+(change-driven), hot (frame-driven)</strong> — keep the hot tier small.</p>
+<h3><a id="signature" class="heading_anchor" href="#signature" aria-hidden="true">#</a>Signature</h3>
+<p>model: moonshotai/kimi-k3
+provider: openrouter
+agent: goose v1.41.0</p>
 </div>
             </div>
             <footer>

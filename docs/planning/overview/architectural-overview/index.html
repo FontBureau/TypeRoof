@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Architectural Overview — Vision to Software - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-2026-07/">Metamodel: 2026-07</a></li>
+<li><a href="/TypeRoof/docs/planning/columns/REPORT/">Columns: Runion Report</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/overview/architectural-overview/">Architectural Overview</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="architectural-overview--vision-to-software" class="heading_anchor" href="#architectural-overview--vision-to-software" aria-hidden="true">#</a>Architectural Overview — Vision to Software</h1>
+<p>This is the broad map: the idea the project is derived from, how the software
+architecture follows from that idea, and how the major pieces — metamodel,
+runions, mantra, compositor, shell — slot together on the technical side.
+A separate, more hands-on article will follow, describing how the app is
+engineered and how data flows through it in practice.</p>
+<h2><a id="the-mantra" class="heading_anchor" href="#the-mantra" aria-hidden="true">#</a>The Mantra</h2>
+<p>Some decisions have to be made before other decisions. Typesetting is a
+chain of interdependent choices where each step constrains the solution
+space of the next:</p>
+<pre><code>Language → Script → Typeface → Portal-Size → Columns → Leading → Justification → …
+</code></pre>
+<ul>
+<li><strong>Language and Script</strong> select the typographic culture: conventions,
+defaults, and which runion set applies.</li>
+<li><strong>Typeface</strong> selects which capabilities exist — e.g. parametric axes such
+as XTRA only enter the chain if the font provides them.</li>
+<li><strong>Portal-Size</strong> (screen, window, page) defines the available space.</li>
+<li><strong>Columns</strong> decide how that space is divided; this fixes the line length.</li>
+<li><strong>Leading</strong> follows from line length and typeface.</li>
+<li><strong>Justification</strong> operates on what columns and leading have produced —
+balancing word spacing, hyphenation, and parametric width (XTRA) instead
+of merely stretching spaces.</li>
+</ul>
+<p>Two properties define the mantra:</p>
+<ol>
+<li><strong>It is a recitation order, not a menu.</strong> Saying it out of order produces
+garbage — justification cannot precede the line length it justifies.</li>
+<li><strong>Change propagates forward, never backward.</strong> Switch the typeface and
+everything downstream re-resolves; upstream stays untouched.</li>
+</ol>
+<p>The mantra is the founding sentence of TypeRoof. Everything else is derived.</p>
+<h2><a id="the-metamodel-is-a-result-of-the-mantra" class="heading_anchor" href="#the-metamodel-is-a-result-of-the-mantra" aria-hidden="true">#</a>The Metamodel is a Result of the Mantra</h2>
+<p>The metamodel (see <code>metamodel/assessment-2026-07.md</code>) is not a generic state
+library that happened to fit typography. It is the mantra’s requirements
+written as infrastructure:</p>
+<table>
+<thead>
+<tr>
+<th>Mantra requirement</th>
+<th>Metamodel mechanism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Decisions depend on earlier decisions</td>
+<td>Static dependency declarations + <code>topologicalSortKahn</code>: values resolve in dependency order, cycles are errors (<code>CYCLIC DEPENDENCIES ERROR</code>)</td>
+</tr>
+<tr>
+<td>Change propagates forward</td>
+<td>Draft/metamorphose lifecycle: touch one node, dependents re-run in topological order; upstream is untouched</td>
+</tr>
+<tr>
+<td>Decisions must be configurable, per culture</td>
+<td>Dynamic models (<code>createDynamicModel</code>): the <em>choice of algorithm is in the data</em></td>
+</tr>
+<tr>
+<td>Invalid intermediate states must be impossible</td>
+<td>Descriptor state machines, <code>LIFECYCLE ERROR</code> guards, immutable frozen states</td>
+</tr>
+<tr>
+<td>State must persist and travel</td>
+<td>Serialization, foreign keys with referential integrity, coherence functions enforcing invariants</td>
+</tr>
+</tbody>
+</table>
+<p>That is why the module reads as <em>designed, not accidental</em>: it was derived
+from a single prior idea.</p>
+<h2><a id="runions-the-nodes-of-the-mantra" class="heading_anchor" href="#runions-the-nodes-of-the-mantra" aria-hidden="true">#</a>Runions: the Nodes of the Mantra</h2>
+<p>A <strong>runion</strong> is a unit of derived decision-making: it takes resolved inputs
+plus configuration and produces a set of coherent typographic values.
+Example — the column runion (staged in <code>columns/column-layout.mjs</code>): from
+available width and a per-language config it derives column count, column
+gap, and both margins, balancing line length against whitespace and
+distributing the remainder gracefully.</p>
+<p>Runions are:</p>
+<ul>
+<li><strong>Pluggable</strong> — algorithm registries (<code>COLUMN_GAP_ALGORITHMS</code>,
+<code>LeadingAlgorithmModel</code>) select the implementation from the data. New
+runions are registered, never hardcoded.</li>
+<li><strong>Culturally keyed</strong> — configuration is internationalized by design
+(<code>COLUMN_CONFIG_I18N</code>): German and English column conventions differ;
+Arabic, CJK and Indic runion sets follow the same pattern. Culture is the
+default, not the prison — users can override.</li>
+<li><strong>Pure and defensive</strong> — no side effects, <code>null</code> on degenerate input; safe
+to re-run at animation frame rate.</li>
+</ul>
+<h2><a id="the-vision-slotted-together" class="heading_anchor" href="#the-vision-slotted-together" aria-hidden="true">#</a>The Vision, Slotted Together</h2>
+<pre><code>content (documents, live sources)          ← e.g. Wikipedia, loaded live
+    ↓
+metamodel (state: documents, config, animation keyMoments)
+    ↓   mantra order, dependency-resolved
+runions (columns → leading → justification/XTRA …)
+    ↓   resolved, culture-aware values
+compositor (inheritance cascade + keyMoment interpolation, per frame)
+    ↓
+consumers (glyph rendering, text layout, UI)
+</code></pre>
+<h3><a id="industry-grade-typesetting-in-replacement-territory" class="heading_anchor" href="#industry-grade-typesetting-in-replacement-territory" aria-hidden="true">#</a>Industry-grade typesetting (In replacement territory)</h3>
+<p>Line breaking, justification, hyphenation, parametric width adjustment —
+built as runions on top of the column/leading decisions, in mantra order.
+Justification incorporating the XTRA axis replaces space-stretching with
+per-glyph, font-designer-intelligent width adjustment.</p>
+<h3><a id="unparalleled-i18n" class="heading_anchor" href="#unparalleled-i18n" aria-hidden="true">#</a>Unparalleled I18N</h3>
+<p>Script- and language-specific runions, selected by the data. The mantra is a
+fixed skeleton; per-script graphs can interpose culture-specific decisions
+(kashida after XTRA; CJK line-breaking before columns).</p>
+<h3><a id="first-class-parametric-variable-fonts" class="heading_anchor" href="#first-class-parametric-variable-fonts" aria-hidden="true">#</a>First-class parametric variable fonts</h3>
+<p>AmstelVar, RobotoDelta and their dozens of parametric axes become usable
+through high-level automations controlled by a few parameters — runions
+compressing 40 sliders into intent (<em>make it sturdier</em>).</p>
+<h3><a id="the-most-complete-responsive-typography" class="heading_anchor" href="#the-most-complete-responsive-typography" aria-hidden="true">#</a>The most complete responsive typography</h3>
+<p>Layouts are <em>optimized</em>, not breakpoint-tweaked: the mantra re-recites
+against portal size continuously. Same content — phone, desktop, print page:
+one engine, three optimal layouts, zero manual adjustment.</p>
+<h3><a id="the-compositor-the-last-big-architectural-challenge" class="heading_anchor" href="#the-compositor-the-last-big-architectural-challenge" aria-hidden="true">#</a>The Compositor: the last big architectural challenge</h3>
+<p>Between metamodel and consumers sits the compositor (see
+<code>compositor/roadmap.md</code>): inheritance resolution (CSS-like cascade over
+arbitrary model properties), scope computation, live interpolation between
+keyMoments, and incremental updates. It is the mantra made temporal: during
+animation the mantra re-recites per frame, and the compositor must make that
+fast (incremental invalidation across inheritance depth <em>and</em> time) and
+graceful (discrete runion results, e.g. column counts, step rather than
+lerp). Architecture A — all in TypeScript, sharing the metamodel runtime —
+keeps the single dependency story intact.</p>
+<h2><a id="status-and-next-bricks" class="heading_anchor" href="#status-and-next-bricks" aria-hidden="true">#</a>Status and Next Bricks</h2>
+<ul>
+<li>Column runion: designed and staged (<code>columns/</code>), awaiting promotion to <code>lib/</code>.</li>
+<li>Justification runion with XTRA: next in mantra order.</li>
+<li>Wikipedia live demo: one article, multiple portal sizes, script-appropriate
+runions — the vision exercised end-to-end.</li>
+<li>Compositor: architectural decision and build-out per its roadmap.</li>
+</ul>
+<h2><a id="signature" class="heading_anchor" href="#signature" aria-hidden="true">#</a>Signature</h2>
+<p>model: moonshotai/kimi-k3
+provider: openrouter
+agent: goose v1.41.0</p>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>

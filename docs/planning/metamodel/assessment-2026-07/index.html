@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Assessment of the Metamodel Module — 2026-07 - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/metamodel/assessment-2026-07/">Metamodel: 2026-07</a></li>
+<li><a href="/TypeRoof/docs/planning/columns/REPORT/">Columns: Runion Report</a></li>
+<li><a href="/TypeRoof/docs/planning/overview/architectural-overview/">Architectural Overview</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="assessment-of-the-metamodel-module--2026-07" class="heading_anchor" href="#assessment-of-the-metamodel-module--2026-07" aria-hidden="true">#</a>Assessment of the Metamodel Module — 2026-07</h1>
+<h2><a id="context" class="heading_anchor" href="#context" aria-hidden="true">#</a>Context</h2>
+<p>Third assessment in the series (see <em>Related documents</em>). Where the post-typing
+assessment evaluated the strict-TypeScript conversion, this one is a verified
+current-state snapshot: every metric was measured from the tree on 2026-07-19,
+not carried over. It adds a definition of the <em>descriptor state machine</em>
+pattern, a re-verification of earlier claims, a delta analysis, and a ranked
+risk list.</p>
+<h2><a id="term-descriptor-state-machine" class="heading_anchor" href="#term-descriptor-state-machine" aria-hidden="true">#</a>Term: descriptor state machine</h2>
+<p>A <strong>descriptor state machine</strong> is a state machine whose states are encoded not
+in a field’s <em>value</em> but in a property’s <em>descriptor</em> — its kind (accessor vs.
+data) and its flags (<code>writable</code>, <code>configurable</code>) — with transitions performed
+by <code>Object.defineProperty</code> redefinition.</p>
+<p>In <code>_AbstractStructModel</code>, <code>dependencies</code> (and <code>_value</code>) progress through three
+descriptor states:</p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Descriptor</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Primal</td>
+<td>own <strong>accessor</strong> whose getter throws <code>LIFECYCLE ERROR</code> when read before draft mode; in draft mode it delegates to <code>this[OLD_STATE].dependencies</code>; <code>configurable: true</code></td>
+<td>reading is illegal in primal state</td>
+</tr>
+<tr>
+<td>Draft / metamorphose</td>
+<td>redefined as <strong>data property</strong>: <code>value: Object.freeze(dependenciesData), writable: true, configurable: true</code></td>
+<td>dependencies materialized for comparison against <code>OLD_STATE</code></td>
+</tr>
+<tr>
+<td>Locked (<code>#_lockAndFreeze</code>)</td>
+<td>redefined: <code>writable: false, configurable: false</code></td>
+<td>irreversibly immutable; <code>OLD_STATE</code> is deleted for GC</td>
+</tr>
+</tbody>
+</table>
+<p>Properties of the pattern:</p>
+<ul>
+<li><strong>State is the descriptor, not a value</strong> — the object’s own shape <em>is</em> its
+phase. Illegal reads fail at the property level, without explicit state
+checks at call sites.</li>
+<li><strong>Guards are throwing accessors</strong> — fail-fast is built into the state, not
+bolted on.</li>
+<li><strong><code>configurable</code> is the ratchet</strong> — <code>true → true → false</code> makes the final
+freeze irreversible; earlier phases must stay redefinable.</li>
+<li><strong>Not expressible in class syntax</strong> — no class construct installs
+per-instance, phase-varying property kinds. Typing therefore requires
+<code>declare</code> plus a scoped <code>@ts-expect-error</code> (TS2610: instance property
+overrides base accessor). The suppression monitors the one formal symptom;
+if the base contract is ever refactored, tsc reports the unused directive
+and forces a human to re-read this machine.</li>
+</ul>
+<p>The pattern is deliberate machinery, not accidental complexity — but it is one
+of three exotic idioms (with symbol-keyed protocols and generator-based
+resource resolution) a newcomer must learn before their first <code>get()</code>.</p>
+<h2><a id="vitals-verified-2026-07-19" class="heading_anchor" href="#vitals-verified-2026-07-19" aria-hidden="true">#</a>Vitals (verified 2026-07-19)</h2>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Files / LOC / functions / classes</td>
+<td>22 / 8,907 / 268 / 37</td>
+</tr>
+<tr>
+<td>Language</td>
+<td>100% TypeScript, <code>strict</code> + <code>noUncheckedIndexedAccess</code>, typecheck clean</td>
+</tr>
+<tr>
+<td>External runtime dependencies</td>
+<td>0 — every import is <code>./</code>-relative; pure leaf module</td>
+</tr>
+<tr>
+<td>Consumption</td>
+<td>one-line facade <code>lib/js/metamodel.mjs</code> + one direct importer</td>
+</tr>
+<tr>
+<td>Type-escape hatches</td>
+<td>1 <code>@ts-expect-error</code>, 0 <code>@ts-ignore</code>, 0 <code>as any</code>, 2 intentional <code>: any</code>, 28 non-null assertions; 72 <code>as unknown as</code> (documented post-typing)</td>
+</tr>
+<tr>
+<td>Tests covering the metamodel</td>
+<td>0 — the repo’s first vitest tests (added 2026-07) cover <code>type-specnion</code> only</td>
+</tr>
+<tr>
+<td>Error culture</td>
+<td>152 <code>throw new</code> across 15 distinct error classes</td>
+</tr>
+<tr>
+<td>Comment density</td>
+<td>~23%</td>
+</tr>
+<tr>
+<td>Internal protocols</td>
+<td>20+ <code>Symbol(...)</code> keys (dunder-style inter-object protocols)</td>
+</tr>
+</tbody>
+</table>
+<h2><a id="what-it-is" class="heading_anchor" href="#what-it-is" aria-hidden="true">#</a>What it is</h2>
+<p>Closer to a small relational state engine than a frontend state manager:
+immutable persistent states, copy-on-write drafts, a primal→draft→frozen
+lifecycle, topological dependency resolution, foreign keys with constraints,
+coherence functions (cascading invariant triggers), structural diffing, and
+generator-based async resource resolution. See <code>path-to-standalone.md</code> for the
+comparison against Redux/MobX/Zustand — most of these features have no
+counterpart there.</p>
+<h2><a id="architecture" class="heading_anchor" href="#architecture" aria-hidden="true">#</a>Architecture</h2>
+<pre><code>util / type-utils / topological-sort    foundations
+base-model.ts (780L)                    _BaseModel, _BaseSimpleModel/_BaseContainerModel,
+                                        FreezableMap/Set, serialization drivers
+scalar models                           number, enum, simple, simple-or-empty, generic
+container models                        struct (1580L) · ordered-map (954L) · list (596L) · dynamic-struct (686L)
+machinery                               potential-write-proxy · compare · coherence-function ·
+                                        foreign-key · links · accessors · path · serialization
+metamodel.ts (211L)                     curated export hub with an explicit don't-pollute policy
+</code></pre>
+<p>Shallow hierarchy; concrete classes are produced by <code>createClass</code> factories.
+Hub-and-spoke: <code>_AbstractStructModel</code> is the gravitational center — its <code>get</code>
+is called from 50 sites, <code>has</code> from 44, <code>set</code> from 30.</p>
+<h2><a id="strengths" class="heading_anchor" href="#strengths" aria-hidden="true">#</a>Strengths</h2>
+<ol>
+<li><strong>Boundary discipline.</strong> Zero external dependencies, one-line facade,
+curated hub exports. A library that happens to live in this repo; the
+standalone-extraction path is real.</li>
+<li><strong>Type-conversion quality.</strong> 443 → 0 errors with a single suppression in
+8.9k lines, and that one is a TypeScript grammar gap (no syntax for a
+type-only instance accessor), not evasion. The typing pass itself found
+three real bugs — evidence it enforced contracts rather than annotating.</li>
+<li><strong>Fail-fast error culture.</strong> 152 throws with a 15-class taxonomy
+(TYPE/VALUE/KEY/LIFECYCLE/CONSTRAINT/…); lifecycle guards make misuse loud.</li>
+<li><strong>Deliberate machinery.</strong> The descriptor state machine, the <code>_IS_DRAFT_MARKER</code>
+/ <code>_GET_DRAFT_FOR_PROXY</code> symbol protocols, and copy-on-write escalation are
+designed, documented in comments, and internally consistent.</li>
+<li><strong>Alive and improving.</strong> Recent history: coherence functions learned to
+depend on each other (topological execution order), <code>ENSURE_DRAFT</code> for
+explicit draft creation, compare/descendant enumeration fixes, better
+accessor error messages.</li>
+</ol>
+<h2><a id="risks-ranked" class="heading_anchor" href="#risks-ranked" aria-hidden="true">#</a>Risks (ranked)</h2>
+<ol>
+<li><strong>Zero test coverage — the elephant.</strong> 8.9k LOC of state-machine code with
+nothing executing it in CI. Fresh proof of the cost: the
+<code>resolveSyntheticProperties</code> drop-check bug (fixed 2026-07) survived
+because no test ran the code. The three bugs the typing pass found were
+static-analysis luck, not coverage.</li>
+<li><strong>Complexity concentration.</strong> struct + ordered-map + base = 3,314 LOC (37%)
+in three files; struct-model alone carries 12 TODO/FIXME, several
+substantive (external-dependency mutability, key-constraint timing). The
+core is still moving while untested.</li>
+<li><strong>Indirection cost.</strong> Symbol protocols + descriptor programming +
+generator-based resolution raise the bus factor; three exotic idioms before
+a newcomer’s first <code>get()</code>.</li>
+<li><strong>Latent semantic overloads.</strong> <code>dependencies</code> means a set of names on the
+base class but a name→value record on struct instances — a Liskov-flavored
+overload, currently latent (no polymorphic consumer mixes the two). Likely
+not unique in a module this size; worth one audit pass for siblings.</li>
+<li><strong>72 <code>as unknown as</code> double-casts</strong> (documented post-typing). Each tells
+the compiler rather than asks it; concentrated risk if invariants shift.</li>
+</ol>
+<h2><a id="delta-vs-the-post-typing-assessment" class="heading_anchor" href="#delta-vs-the-post-typing-assessment" aria-hidden="true">#</a>Delta vs. the post-typing assessment</h2>
+<ul>
+<li><strong>+~700 LOC</strong> (~8,200 → 8,907): coherence functions matured,
+<code>potential-write-proxy</code> (540L) added and hardened, compare fixed.</li>
+<li><strong>Claims re-verified:</strong> 0 type errors holds; the 2 intentional <code>any</code> hold;
+the single <code>@ts-expect-error</code> is now <em>legal</em> TypeScript (the illegal
+<code>declare override</code> combo, TS1243, was removed 2026-07 after it broke node’s
+type-stripping parser and vitest’s transform path).</li>
+<li><strong>Unchanged:</strong> metamodel tests = 0; top-3 file concentration persists. The
+module became better-typed and more capable, not more verifiable.</li>
+</ul>
+<h2><a id="recommendations" class="heading_anchor" href="#recommendations" aria-hidden="true">#</a>Recommendations</h2>
+<ol>
+<li><strong>Cash in the vitest setup (highest leverage).</strong> The runner is wired and
+proven. Write characterization tests around the lifecycle core:
+primal→draft→frozen transitions, the <code>dependencies</code> descriptor states,
+<code>#_lockAndFreeze</code>, topological init order. ~20 tests would cover the paths
+every feature depends on.</li>
+<li><strong>Document the descriptor state machine with a diagram</strong> — it is the
+module’s central idea and currently lives only in code (and in this
+document’s definition).</li>
+<li><strong>Do not split struct-model yet</strong> — it is a hub, not a junk drawer.
+Revisit once tests make the surgery safe.</li>
+<li><strong>Audit <code>dependencies</code>-style overloads once</strong> — cheap, now that the
+pattern’s signature is known.</li>
+<li><strong>Standalone extraction:</strong> the boundary is already clean; the missing
+pieces are tests and a README, not refactoring.</li>
+</ol>
+<h2><a id="related-documents" class="heading_anchor" href="#related-documents" aria-hidden="true">#</a>Related documents</h2>
+<ul>
+<li><code>assessment-pre-typing.md</code> — after the monolith→multi-file refactor</li>
+<li><code>assessment-post-typing.md</code> — after the strict-TypeScript pass</li>
+<li><code>path-to-standalone.md</code> — could this be a library?</li>
+<li><code>../agentic-artefacts/thoughts/plan/2026-02-23-metamodel-typing-plan.md</code> — the typing program</li>
+</ul>
+<h2><a id="signature" class="heading_anchor" href="#signature" aria-hidden="true">#</a>Signature</h2>
+<p>model: moonshotai/kimi-k3
+provider: openrouter
+agent: goose v1.41.0</p>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>

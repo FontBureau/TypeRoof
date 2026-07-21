@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Columns Runion — Analysis &amp; Design Report - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-2026-07/">Metamodel: 2026-07</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/columns/REPORT/">Columns: Runion Report</a></li>
+<li><a href="/TypeRoof/docs/planning/overview/architectural-overview/">Architectural Overview</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="columns-runion--analysis--design-report" class="heading_anchor" href="#columns-runion--analysis--design-report" aria-hidden="true">#</a>Columns Runion — Analysis &amp; Design Report</h1>
+<p>Status: planning. Code lives in <code>column-layout.mjs</code> next to this report, not yet wired into <code>lib/</code>.</p>
+<h2><a id="1-goal" class="heading_anchor" href="#1-goal" aria-hidden="true">#</a>1. Goal</h2>
+<p>A runion (<code>runion_01_columns</code>) consumed via <code>SyntheticValue</code> that derives
+<code>{ columns, lineLengthEn, columnGapEn, marginLeftEn, marginRightEn }</code> from
+<code>availableWidthEn</code> plus a locale-aware configuration, replacing the legacy
+<code>_runion_01_columns</code> and overriding the user-settable <code>generic/columnWidth</code>
+when the algorithm is active.</p>
+<h2><a id="2-analysis-of-the-legacy-version" class="heading_anchor" href="#2-analysis-of-the-legacy-version" aria-hidden="true">#</a>2. Analysis of the legacy version</h2>
+<p>Strategy: <strong>pass 1</strong> — fewest columns whose natural line length lands in
+<code>(min, max]</code>; <strong>pass 2</strong> — most columns not below min, line capped at
+<code>maxLineLength</code>, remainder split into padding 3/5 left, 2/5 right.</p>
+<p>Simulated transition map (legacy EN config, widths in EN):</p>
+<table>
+<thead>
+<tr>
+<th>Width</th>
+<th>Result</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0–65</td>
+<td>1 col, fit</td>
+<td></td>
+</tr>
+<tr>
+<td>65.5–69</td>
+<td>1 col capped 65, pad &lt;= 4</td>
+<td>dead zone (2x33 excluded by exclusive min)</td>
+</tr>
+<tr>
+<td>69.5–133</td>
+<td>2 cols, 33.25 to 65</td>
+<td></td>
+</tr>
+<tr>
+<td>133.5–155</td>
+<td>3 cols, 42.8 to 50</td>
+<td></td>
+</tr>
+<tr>
+<td>155.5–166</td>
+<td>4 cols, 37.4 to 40</td>
+<td></td>
+</tr>
+<tr>
+<td>166.5+</td>
+<td>4 cols capped 40</td>
+<td>padding unbounded (234 EN at W=400)</td>
+</tr>
+</tbody>
+</table>
+<p>DE config: dead zone 65.5–87.5 (up to <strong>22 EN</strong> padding while 2x41.5 is
+rejected 0.5 under min), plus a 3-col pad zone 155.5–174.5.</p>
+<p>Issues found (legacy): throws on width &lt;= 0; exclusive-min knife-edge at
+exactly 69 EN; implicit pass-2 invariant; positional return value;
+top-level <code>minLineLength</code>/<code>maxLineLength</code> duplicate the columns array;
+hardcoded 3/5-2/5 split; dead zones not detected; dead data (1-col gap);
+config param misnamed (<code>columnConfig</code> = the columns array).</p>
+<h2><a id="3-decisions-operator-2026-07-19" class="heading_anchor" href="#3-decisions-operator-2026-07-19" aria-hidden="true">#</a>3. Decisions (operator, 2026-07-19)</h2>
+<ol>
+<li><strong>Inclusive min</strong> (<code>lineLengthEn &gt;= min</code>).</li>
+<li>Dead zones: <strong>fewer columns + padding</strong>; config is followed strictly, no soft-min.</li>
+<li>Margins unbounded; split ratio <strong>configurable</strong> (default 3/5, 2/5); optional
+<code>growColumns: N | Infinity</code> keeps adding columns using the last config entry.</li>
+<li>Gap = <strong>pluggable algorithm</strong> (<code>constant</code>, <code>linear</code>, future); <code>linear</code> =
+two <code>(columnWidth, gap)</code> points + slope + clamp (same math as <code>runion_01_lineHeight</code>).</li>
+<li>Wiring mirrors leading (<code>createDynamicModel</code> algorithm choice) and overrides
+user <code>columnWidth</code>; <code>availableWidth</code> is assumed to be available as a property.</li>
+<li>Gap points: <code>a=[33-&gt;2]</code>, <code>b=[65-&gt;3]</code>, clamp <code>[2, 3]</code>.</li>
+<li>Registry keeps room for other gap algorithms (see 4).</li>
+</ol>
+<h2><a id="4-config-compact-json-serializable" class="heading_anchor" href="#4-config-compact-json-serializable" aria-hidden="true">#</a>4. Config (compact, JSON-serializable)</h2>
+<pre class="language-js"><code class="language-js"><span class="token punctuation">{</span> <span class="token literal-property property">minLineHeight</span><span class="token operator">:</span> <span class="token number">1.1</span><span class="token punctuation">,</span> <span class="token literal-property property">maxLineHeight</span><span class="token operator">:</span> <span class="token number">1.3</span>     <span class="token comment">// for the leading runion</span>
+<span class="token punctuation">,</span> <span class="token literal-property property">minLineLength</span><span class="token operator">:</span> <span class="token number">33</span>                          <span class="token comment">// EN, counts >= 2; 1 col always allowed</span>
+<span class="token punctuation">,</span> <span class="token literal-property property">columns</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token number">65</span><span class="token punctuation">,</span> <span class="token number">65</span><span class="token punctuation">,</span> <span class="token number">50</span><span class="token punctuation">,</span> <span class="token number">40</span><span class="token punctuation">]</span>                  <span class="token comment">// maxLineLength per count; length = max</span>
+<span class="token punctuation">,</span> <span class="token literal-property property">growColumns</span><span class="token operator">:</span> <span class="token boolean">false</span>                         <span class="token comment">// false | N | Infinity</span>
+<span class="token punctuation">,</span> <span class="token literal-property property">columnGap</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">algorithm</span><span class="token operator">:</span> <span class="token string">"linear"</span>
+             <span class="token punctuation">,</span> <span class="token literal-property property">a</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">columnWidth</span><span class="token operator">:</span> <span class="token number">33</span><span class="token punctuation">,</span> <span class="token literal-property property">gap</span><span class="token operator">:</span> <span class="token number">2</span> <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token literal-property property">b</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">columnWidth</span><span class="token operator">:</span> <span class="token number">65</span><span class="token punctuation">,</span> <span class="token literal-property property">gap</span><span class="token operator">:</span> <span class="token number">3</span> <span class="token punctuation">}</span>
+             <span class="token punctuation">,</span> <span class="token literal-property property">min</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token literal-property property">max</span><span class="token operator">:</span> <span class="token number">3</span> <span class="token punctuation">}</span>
+<span class="token punctuation">,</span> <span class="token literal-property property">paddingRatio</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token number">3</span><span class="token operator">/</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">/</span><span class="token number">5</span><span class="token punctuation">]</span> <span class="token punctuation">}</span></code></pre>
+<p>DE shrinks to <code>{ minLineLength: 42, columns: [65, 65, 50, 45] }</code> + link to
+<code>Latn-en</code>. Removed redundancy: top-level min/maxLineLength, repeated per-count
+mins, dead 1-col gap entry. JSON-able data addresses the i18n explicit-link
+TODO. Registration stays with the existing <code>addToI18NConfig</code> plumbing (ported
+unchanged); <code>normalizeColumnConfig</code> expands + freezes at query time,
+<code>validateColumnConfig</code> throws early on bad input and <strong>warns about dead zones</strong>
+(would have caught the DE 65–87 zone).</p>
+<h2><a id="5-gap-interpolation-and-the-circularity" class="heading_anchor" href="#5-gap-interpolation-and-the-circularity" aria-hidden="true">#</a>5. Gap interpolation and the circularity</h2>
+<p>Gap depends on line length, line length depends on gap. For <code>linear</code> an exact
+fixed-point solve is used (<code>n*line + (n-1)*gap(line) = W</code>, piecewise-linear,
+monotone, hence unique solution; clamp fallback provably consistent). Verified
+numerically: width identity error &lt;= 5.7e-14 over W in [1,400], n in [1,4].
+Algorithms without an exact <code>solve</code> get a one-refinement fallback. Effect on
+transitions (EN): 1-&gt;2 at 68.25 (was 69.5), 2-&gt;3 at 133.25, 3-&gt;4 at 155.25;
+dead zone shrinks to (65, 68].</p>
+<h2><a id="6-metamodel-proposal-configuration" class="heading_anchor" href="#6-metamodel-proposal-configuration" aria-hidden="true">#</a>6. Metamodel proposal (configuration)</h2>
+<p>Mirrors the leading pattern (<code>AutoLinearLeadingModel</code> vs gap points,
+<code>createDynamicModel</code> for algorithm choice):</p>
+<pre class="language-js"><code class="language-js"><span class="token punctuation">,</span> ColumnGapPointModel <span class="token operator">=</span> _AbstractStructModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>
+      <span class="token string">"ColumnGapPointModel"</span>
+    <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">"columnWidth"</span><span class="token punctuation">,</span> ColumnWidthModel<span class="token punctuation">]</span>
+    <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">"gap"</span><span class="token punctuation">,</span> ColumnWidthModel<span class="token punctuation">]</span><span class="token punctuation">)</span>              <span class="token comment">// or a dedicated GapNumberModel</span>
+<span class="token punctuation">,</span> LinearColumnGapModel <span class="token operator">=</span> _AbstractStructModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>
+      <span class="token string">"LinearColumnGapModel"</span>
+    <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">"a"</span><span class="token punctuation">,</span> ColumnGapPointModel<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">"b"</span><span class="token punctuation">,</span> ColumnGapPointModel<span class="token punctuation">]</span>
+    <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">"minGap"</span><span class="token punctuation">,</span> ColumnWidthOrEmptyModel<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">"maxGap"</span><span class="token punctuation">,</span> ColumnWidthOrEmptyModel<span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token punctuation">,</span> ConstantColumnGapModel <span class="token operator">=</span> _AbstractStructModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>
+      <span class="token string">"ConstantColumnGapModel"</span>
+    <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">"value"</span><span class="token punctuation">,</span> ColumnWidthModel<span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token punctuation">,</span> <span class="token punctuation">{</span> ColumnGapAlgorithmModel<span class="token punctuation">,</span> createColumnGapAlgorithm
+  <span class="token punctuation">,</span> deserializeColumnGapAlgorithmModel <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">createDynamicModel</span><span class="token punctuation">(</span>
+      <span class="token string">"ColumnGapAlgorithm"</span>
+    <span class="token punctuation">,</span> <span class="token punctuation">[</span> <span class="token punctuation">[</span><span class="token string">"constant"</span><span class="token punctuation">,</span> <span class="token string">"Constant"</span><span class="token punctuation">,</span> ConstantColumnGapModel<span class="token punctuation">]</span>
+      <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">"linear"</span><span class="token punctuation">,</span> <span class="token string">"Linear"</span><span class="token punctuation">,</span> LinearColumnGapModel<span class="token punctuation">]</span> <span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre>
+<p>The typeSpec-level algorithm choice (overrides user <code>columnWidth</code> when active):</p>
+<pre class="language-js"><code class="language-js"><span class="token punctuation">,</span> Runion01ColumnsModel <span class="token operator">=</span> _AbstractStructModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>
+      <span class="token string">"Runion01ColumnsModel"</span>
+      <span class="token comment">// all OrEmpty: per-instance overrides of the locale config</span>
+    <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">"minLineLength"</span><span class="token punctuation">,</span> ColumnWidthOrEmptyModel<span class="token punctuation">]</span>
+    <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">"columnGap"</span><span class="token punctuation">,</span> ColumnGapAlgorithmOrEmptyModel<span class="token punctuation">]</span>  <span class="token comment">// or required w/ default</span>
+    <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">"paddingRatioStart"</span><span class="token punctuation">,</span> PercentNumberOrEmptyModel<span class="token punctuation">]</span>
+    <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">"growColumns"</span><span class="token punctuation">,</span> NumberOrEmptyModel<span class="token punctuation">]</span><span class="token punctuation">)</span>           <span class="token comment">// Infinity: TBD how</span>
+<span class="token punctuation">,</span> ManualColumnWidthModel <span class="token operator">=</span> _AbstractStructModel<span class="token punctuation">.</span><span class="token function">createClass</span><span class="token punctuation">(</span>
+      <span class="token string">"ManualColumnWidthModel"</span>
+    <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">"columnWidth"</span><span class="token punctuation">,</span> ColumnWidthOrEmptyModel<span class="token punctuation">]</span><span class="token punctuation">)</span>      <span class="token comment">// current field moves here</span>
+<span class="token punctuation">,</span> <span class="token punctuation">{</span> ColumnsAlgorithmModel<span class="token punctuation">,</span> createColumnsAlgorithm
+  <span class="token punctuation">,</span> deserializeColumnsAlgorithmModel <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">createDynamicModel</span><span class="token punctuation">(</span>
+      <span class="token string">"ColumnsAlgorithm"</span>
+    <span class="token punctuation">,</span> <span class="token punctuation">[</span> <span class="token punctuation">[</span><span class="token string">"ManualColumnWidth"</span><span class="token punctuation">,</span> <span class="token string">"Manual"</span><span class="token punctuation">,</span> ManualColumnWidthModel<span class="token punctuation">]</span>
+      <span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">"Runion01Columns"</span><span class="token punctuation">,</span> <span class="token string">"Runion 01"</span><span class="token punctuation">,</span> Runion01ColumnsModel<span class="token punctuation">]</span> <span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre>
+<p>Notes: <code>columns</code> (per-count maxes) could be an <code>_AbstractListModel</code> of
+<code>ColumnWidthModel</code> if modeled at all — recommend keeping it in the i18n config
+only, not per-typeSpec. <code>Infinity</code> has no natural metamodel representation —
+options: a boolean <code>growColumnsUnbounded</code> or a sentinel; decide when modeling.
+Legacy data migration: existing typeSpecs default to <code>ManualColumnWidth</code>
+(backwards compatible).</p>
+<h2><a id="7-properties-generatorsmjs-proposal" class="heading_anchor" href="#7-properties-generatorsmjs-proposal" aria-hidden="true">#</a>7. properties-generators.mjs proposal</h2>
+<p>New <code>columnsGen</code>, sibling of <code>leadingGen</code>, same shape:</p>
+<pre class="language-js"><code class="language-js"><span class="token keyword">function</span><span class="token operator">*</span> <span class="token function">columnsGen</span><span class="token punctuation">(</span><span class="token parameter">outerTypespecnionAPI<span class="token punctuation">,</span> hostInstance</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// read columnsAlgorithm field; ForeignKey.NULL = inherit (like leadingGen)</span>
+    <span class="token comment">// "ManualColumnWidth": current broom-wagon behavior moves here</span>
+    <span class="token comment">//   (yield generic/columnWidth from the field if set)</span>
+    <span class="token comment">// "Runion01Columns":</span>
+    <span class="token comment">//   - locale from hostInstance languageTag -> getFromI18NConfig(COLUMN_CONFIG_I18N, locale)</span>
+    <span class="token comment">//   - merge per-instance overrides from the model onto the locale config</span>
+    <span class="token comment">//   - yield ["columns/config", normalizeColumnConfig(merged)]   (plain data)</span>
+    <span class="token comment">//   - yield ["columns/setup", new SyntheticValue(runion_01_columns,</span>
+    <span class="token comment">//         [`${GENERIC}availableWidth`, "columns/config"])]</span>
+    <span class="token comment">//   - extractors (SyntheticValue chains are supported, cf. fontSize -> opsz):</span>
+    <span class="token comment">//       ${GENERIC}columnWidth &lt;- setup.lineLengthEn   // AutoLinearLeading keeps working</span>
+    <span class="token comment">//       columns/count, columns/gap, columns/marginLeft, columns/marginRight</span>
+<span class="token punctuation">}</span></code></pre>
+<p>If <code>columns/setup</code> resolves to <code>null</code> (degenerate width), the extractor chain
+is dropped gracefully by the existing resolution rule.</p>
+<h2><a id="8-drive-by-findings-not-introduced-by-this-work" class="heading_anchor" href="#8-drive-by-findings-not-introduced-by-this-work" aria-hidden="true">#</a>8. Drive-by findings (not introduced by this work)</h2>
+<ul>
+<li><strong>Bug in <code>type-specnion.mjs</code> <code>resolveSyntheticProperties</code></strong>: the drop-check
+uses <code>arguments.length !== synthProp.dependencies.length</code> — <code>arguments</code> of the
+static method is always 2, so the check is bogus; and after
+<code>resultMap.delete(propertyName)</code> execution continues and <code>synthProp.call(...args)</code>
+may re-set a partially resolved property. Should be <code>args.length !== ...</code> plus
+<code>continue</code>. Recommend a separate fix + test.</li>
+<li>Legacy i18n plumbing (<code>normalizeLocale</code>/<code>validateLocale</code>/<code>deepKeys</code>/
+<code>getFromI18NConfig</code>) ports as-is; <code>localeToLabel</code>/<code>localeToValue</code> docstrings
+are copy-pasted and do not describe their difference.</li>
+</ul>
+<h2><a id="9-open-points" class="heading_anchor" href="#9-open-points" aria-hidden="true">#</a>9. Open points</h2>
+<ul>
+<li><code>availableWidth</code> property: name/unit (pt vs EN) — assumed provided by the stage.</li>
+<li><code>Infinity</code> modeling for <code>growColumns</code> (see section 6).</li>
+<li>Whether per-count gap overrides are ever needed (escape hatch exists in the
+normalized runtime form; not modeled).</li>
+<li>UI for the algorithm choice (analogous to the leading UI) — out of scope here.</li>
+</ul>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>
