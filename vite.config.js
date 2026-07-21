@@ -103,10 +103,10 @@ export default defineConfig({
                 legacy: resolve(__dirname, "legacy.html"),
                 player: resolve(__dirname, "app/player/index.html"),
             },
+            output: {
+                keepNames: true,
+            },
         },
-    },
-    esbuild: {
-        keepNames: true,
     },
     // Path resolution
     resolve: {
