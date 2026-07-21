@@ -1,4 +1,4 @@
-import { defineConfig, transformWithEsbuild } from "vite";
+import { defineConfig, transformWithOxc } from "vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,14 +17,15 @@ export default defineConfig({
                 if (!id.endsWith(".typeroof.jsx")) return null;
 
                 // => {code: ..., map: ...}
-                return await transformWithEsbuild(code, id, {
-                    loader: "jsx",
-                    // Explicitly sets 'h' as the JSX factory => we will define
-                    // this in the local scope.
-                    jsxFactory: "h",
-                    jsxFragment: "Fragment", // NOT DEFINED so far
-                    sourcemap: true,
-                    // Add other esbuild options here if needed, like target
+                return await transformWithOxc(code, id, {
+                    jsx: {
+                        runtime: "classic",
+                        // 'jsxFactory' maps to 'pragma'
+                        pragma: "h",
+                        // 'jsxFragment' maps to 'pragmaFrag'
+                        pragmaFrag: "Fragment",
+                    },
+                    sourceMap: true,
                 });
             },
         },
@@ -96,7 +97,7 @@ export default defineConfig({
         outDir: "dist",
         assetsDir: "assets",
         target: "esnext",
-        rollupOptions: {
+        rolldownOptions: {
             input: {
                 shell: resolve(__dirname, "shell.html"),
                 legacy: resolve(__dirname, "legacy.html"),

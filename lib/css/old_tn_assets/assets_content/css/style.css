@@ -2270,7 +2270,7 @@ Tag Listings ----- */
 		margin: 0.5rem 0 0.5rem;
 	}
 
-	.matrix-module-full .matrix-module-content p:not('metadata') {
+	.matrix-module-full .matrix-module-content p:not(.metadata) {
 		font-family: RobotoFlex, sans-serif;
 		font-variation-settings: "opsz" 24;
 		font-size: 1.5rem;
