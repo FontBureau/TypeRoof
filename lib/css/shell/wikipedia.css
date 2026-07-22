@@ -1,0 +1,55 @@
+@import url("./main.css");
+
+/******************************************************************************
+override variables
+*******************************************************************************/
+
+:root {
+    overflow: hidden;
+
+    --gap-size: 0;
+    --list-item-odd-bg: #121212;
+    --list-item-even-bg: #333;
+    --background-color: #121212;
+    --text-color: #fff;
+    --input-border-color: #ccc;
+    --fieldset-border-color: #666;
+    --button-bg-color: #000;
+    --button-border-color: #ccc;
+    --button-border-color-hover: #fff;
+    --button-border-color-disabled: #666;
+    --button-text-color-disabled: #666;
+    --menu-button-bg-color-hover: #333;
+    --sidebar-bg-color: #121212bb;
+}
+
+/******************************************************************************
+wrapper
+*******************************************************************************/
+
+body > .wrapper > *:not(.typeroof-main) {
+    position: relative;
+    z-index: 2;
+}
+
+.typeroof-layout {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+.wrapper:not(.visible) > *:not(.typeroof-main) {
+    visibility: hidden;
+}
+
+/******************************************************************************
+etc
+*******************************************************************************/
+
+.general-settings {
+    border-top: 1px solid var(--fieldset-border-color);
+    padding: 1em;
+}
