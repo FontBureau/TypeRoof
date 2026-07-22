@@ -1,7 +1,7 @@
 import { defineConfig, transformWithOxc } from "vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import browserslist from "browserslist";
-import { dirname, resolve } from "node:path";
+import { dirname, extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url)),
@@ -62,6 +62,30 @@ export default defineConfig({
                 });
             },
         },
+        {
+            // Dev-server only: serve the app entry points (and their assets)
+            // also without the basePath prefix, e.g. /app/player/index.html
+            name: "typeroof:dev-direct-entry-urls",
+            configureServer(server) {
+                server.middlewares.use((req, _res, next) => {
+                    // accept both unprefixed and basePath-prefixed URLs
+                    const url = (req.url ?? "").startsWith(basePath)
+                        ? `/${(req.url ?? "").slice(basePath.length)}`
+                        : (req.url ?? "");
+                    if (!/^\/(app|lib)(\/|$)/.test(url)) return next();
+                    const [pathname, search] = url.split("?");
+                    const normalized =
+                        pathname.endsWith("/") || extname(pathname)
+                            ? pathname
+                            : `${pathname}/`;
+                    req.url =
+                        basePath +
+                        normalized.slice(1) +
+                        (search ? `?${search}` : "");
+                    next();
+                });
+            },
+        },
         viteStaticCopy({
             targets: [
                 // Only copy non-JS assets as static files
@@ -86,21 +110,28 @@ export default defineConfig({
         port: 3000,
         open: `${basePath}shell.html`,
         proxy: {
-            // Only proxy documentation routes to Eleventy, not lib/ assets or Vite internals
-            [`^${basePath}(docs|live|index\\.html|README|legacy\\.html)`]: {
+            // Eleventy dev-server live-reload: client script + websocket
+            "/.11ty": {
                 target: "http://localhost:8080",
-                changeOrigin: true,
-                configure: (proxy /*, options*/) => {
-                    proxy.on("error", (err, req, res) => {
-                        // Handle gracefully when Eleventy isn't running
-                        console.log(
-                            "Proxy error (Eleventy may not be running):",
-                            err.message,
-                        );
-                        res.writeHead(502, {
-                            "Content-Type": "text/html",
-                        });
-                        res.end(`<!DOCTYPE html>
+                ws: true,
+            },
+            // Everything else under basePath that isn't owned by Vite is
+            // documentation content served by Eleventy
+            [`^${basePath}(?!@|node_modules/|app/|lib/|shell\\.html|legacy\\.html)`]:
+                {
+                    target: "http://localhost:8080",
+                    changeOrigin: true,
+                    configure: (proxy /*, options*/) => {
+                        proxy.on("error", (err, req, res) => {
+                            // Handle gracefully when Eleventy isn't running
+                            console.log(
+                                "Proxy error (Eleventy may not be running):",
+                                err.message,
+                            );
+                            res.writeHead(502, {
+                                "Content-Type": "text/html",
+                            });
+                            res.end(`<!DOCTYPE html>
               <html lang="en">
                 <head>
                   <meta charset="utf-8" />
@@ -116,12 +147,9 @@ export default defineConfig({
                 </body>
               </html>
             `);
-                    });
-                    proxy.on("proxyReq", (proxyReq, req /*, res*/) => {
-                        console.log("Proxying request to Eleventy:", req.url);
-                    });
+                        });
+                    },
                 },
-            },
         },
     },
 
