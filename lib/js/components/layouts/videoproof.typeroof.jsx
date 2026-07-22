@@ -103,8 +103,9 @@ import {
     AxesMathLocationsSumModel,
     createAxesMathItem,
     applyAxesMathLocations,
-    UIAxesMath,
-} from "../axes-math.mjs";
+} from "../axes-math-models.mjs";
+
+import { UIAxesMath } from "../axes-math.mjs";
 
 import { UIOTFeaturesChooserCollapsible as UIOTFeaturesChooser } from "../ui-opentype-features.typeroof.jsx";
 
