@@ -6,6 +6,10 @@
 @import url("./docs.css");
 @import url("./type-stage.css");
 
+.hidden {
+    display: none !important;
+}
+
 /******************************************************************************
 material symbols
 *******************************************************************************/
@@ -1958,11 +1962,22 @@ prosemirror menu
     }
 }
 
-.ui_prose_mirror_menu-simple {
+/******************************************************************************
+styles floating menu
+*******************************************************************************/
+
+.ui-styles-floating-menu {
+    background-color: #eee;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: rgb(0 0 0 / 10%) 0 0.25em 0.5em;
     display: flex;
     gap: 0.25em;
     height: auto;
     margin-bottom: 1em;
+    padding: 0.25em;
+    position: fixed;
+    z-index: 2;
 
     .ui_prose_mirror_menu-container-blocks,
     .typeroof-ui-label {
@@ -1974,9 +1989,8 @@ prosemirror menu
         padding: 0.25rem;
 
         &.active {
-            color: white;
-            background: var(--button-active-color);
             border-color: var(--button-active-color);
+            outline: 1px solid var(--button-active-color);
         }
     }
 

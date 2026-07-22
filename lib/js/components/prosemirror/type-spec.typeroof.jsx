@@ -1824,116 +1824,132 @@ export class UIProseMirrorMenu extends _IDPublisherMixin(
     }
 }
 
-export class UIBoldItalicMenu extends _BaseComponent {
+class UIStylesFloatingMenu extends _BaseComponent {
     constructor(widgetBus, originTypeSpecPath) {
         super(widgetBus);
         this._originTypeSpecPath = originTypeSpecPath;
-        this._styleToButton = new Map();
-        [this.element] = this._initTemplate();
+        this._onSelectInstance = this._onSelectInstance.bind(this);
+        this._onWindowPointerDown = this._onWindowPointerDown.bind(this);
+        this._reposition = this._reposition.bind(this);
+        [this.element, this._select] = this._initTemplate();
     }
 
     _getTemplate(h) {
         return (
-            <div class="ui_prose_mirror_menu-simple">
-                <button type="button" data-style="bold">
-                    <span class="material-symbols-outlined">format_bold</span>
-                </button>
-                <button type="button" data-style="italic">
-                    <span class="material-symbols-outlined">format_italic</span>
-                </button>
+            <div class="ui-styles-floating-menu">
+                <select></select>
             </div>
         );
     }
 
     _initTemplate() {
-        const container = this._getTemplate(this._domTool.h),
-            boldButton = container.querySelector("[data-style=bold]"),
-            italicButton = container.querySelector("[data-style=italic]");
+        const container = this._getTemplate(this._domTool.h);
+        const select = container.querySelector("select");
         this._insertElement(container);
-        this._styleToButton.set("bold", boldButton);
-        this._styleToButton.set("italic", italicButton);
-        container.addEventListener(
-            "pointerdown",
-            this._stylesClickHandler.bind(this),
-        );
-        return [container];
+        select.addEventListener("change", this._onSelectInstance);
+        return [container, select];
     }
 
-    _stylesClickHandler(event) {
-        event.preventDefault();
-        const button = event.target.closest("button");
-        if (!button) return;
-        const styleName = button.getAttribute("data-style");
-        if (!this._styleToButton.has(styleName) || !this._editorView) return;
-        if (button.disabled) return;
+    _onSelectInstance() {
+        if (!this._editorView) return;
 
-        const { dispatch, state } = this._editorView,
-            markType = state.schema.marks["generic-style"],
-            [, activeMarks] = getActiveNodesAndMarks(state),
-            genericStyleMark = state.schema.marks["generic-style"],
-            activeStyles = activeMarks.get(genericStyleMark) || [],
-            activeStylesSeparated = Array.from(activeStyles).flatMap((s) =>
-                s.split(" "),
-            );
-        let newStyleName = activeStylesSeparated.includes(styleName)
-            ? activeStylesSeparated.filter((s) => s !== styleName).join(" ")
-            : activeStylesSeparated.concat(styleName).toSorted().join(" ");
-
-        // newStyleName must not be "" (the empty string). The result of
-        // no mark is achieved by removing the active mark, and that is the
-        // job of `toggleMark`. In the case of an "" newStyleName should
-        // just be styleName and toggleMark will remove it.
-        if (newStyleName === "") newStyleName = styleName;
+        const { dispatch, state } = this._editorView;
+        const markType = state.schema.marks["generic-style"];
+        const styleName = this._select.value;
 
         toggleMark(
             markType,
-            { "data-style-name": newStyleName },
+            { "data-style-name": styleName },
             {},
         )(state, dispatch);
+    }
+
+    _onWindowPointerDown(e) {
+        if (e.target.closest(".ProseMirror")) return;
+        if (e.target.closest(`.${this.element.className}`)) return;
+        this._hide();
+    }
+
+    _hide() {
+        this.element.classList.add("hidden");
+        window.removeEventListener("pointerdown", this._onWindowPointerDown);
+    }
+
+    _show() {
+        this.element.classList.remove("hidden");
+        window.addEventListener("pointerdown", this._onWindowPointerDown);
+        this._reposition();
+    }
+
+    _reposition() {
+        const { state } = this._editorView;
+        const { from } = state.selection;
+        const coords = this._editorView.coordsAtPos(from);
+        this.element.style.left = `${coords.left}px`;
+        this.element.style.top = `${coords.bottom}px`;
+        if (!this.element.classList.contains("hidden")) {
+            requestAnimationFrame(this._reposition);
+        }
     }
 
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
     _getTypeSpecs = getTypeSpecsMethod;
 
+    _updateDropdown() {
+        this._select.replaceChildren();
+
+        const font = this.getEntry("font").value;
+        if (font.instances.length === 0) return;
+
+        const index = font.fontObject.variation.getDefaultInstanceIndex();
+        this._defaultValue = font.instances[index][0].toLowerCase();
+
+        font.instances.forEach((instance) => {
+            const option = this._domTool.createElement("option");
+            const value = instance[0].toLowerCase();
+            option.value = value;
+            option.textContent = instance[0];
+            option.selected = value === this._defaultValue;
+            this._select.append(option);
+        });
+    }
+
     updateView(view) {
         if (!view) return;
 
         this._editorView = view;
-        const state = this._editorView.state,
-            setsOfStyles = new Map(),
-            allStylesSuperSet = new Set(["bold", "italic", "bold italic"]),
-            commonSubSet = new Set();
+        if (this._select.childElementCount === 0) return;
 
-        for (const style of allStylesSuperSet) {
-            if (
-                setsOfStyles.values().every((stylesSet) => stylesSet.has(style))
-            ) {
-                commonSubSet.add(style);
-            }
+        const { state } = this._editorView;
+        const [, activeMarks] = getActiveNodesAndMarks(state);
+        const genericStyleMark = state.schema.marks["generic-style"];
+        const activeStyles = activeMarks.get(genericStyleMark);
+        this._select.value = activeStyles
+            ? Array.from(activeStyles)[0]
+            : this._defaultValue;
+
+        if (state.selection.empty) {
+            this._hide();
+            return;
         }
 
-        const [, activeMarks] = getActiveNodesAndMarks(state),
-            genericStyleMark = state.schema.marks["generic-style"],
-            activeStyles = activeMarks.get(genericStyleMark) || [],
-            activeStylesSeparated = new Set(
-                Array.from(activeStyles).flatMap((s) => s.split(" ")),
-            );
-        for (const styleName of allStylesSuperSet) {
-            const button = this._styleToButton.get(styleName);
-            if (!button) continue;
-
-            button.disabled = !commonSubSet.has(styleName);
-            button.classList[
-                activeStylesSeparated.has(styleName) ? "add" : "remove"
-            ]("active");
-        }
+        this._show();
     }
 
     destroyView() {
         this._editorView = null;
     }
 
+    destroy() {
+        this._select.removeEventListener("change", this._onSelectInstance);
+        window.removeEventListener("pointerdown", this._onWindowPointerDown);
+    }
+
     update(changedMap) {
+        if (changedMap.has("font")) {
+            this._updateDropdown();
+        }
+
         if (changedMap.has("nodeSpecToTypeSpec")) {
             this.updateView(this._editorView);
         }
