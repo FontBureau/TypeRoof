@@ -84,7 +84,6 @@ export class _AbstractGenericModel extends _BaseSimpleModel {
         // this way name will naturally become class.name.
         const result = {
             [className]: class extends this {
-                // jshint ignore: start
                 static sanitizeFN =
                     config.sanitizeFN === _NOTDEF ? null : config.sanitizeFN;
                 static validateFN =
@@ -99,7 +98,6 @@ export class _AbstractGenericModel extends _BaseSimpleModel {
                     config.deserializeFN === _NOTDEF
                         ? null
                         : config.deserializeFN;
-                // jshint ignore: end
             },
         };
         const Model = result[className]!;

@@ -179,7 +179,6 @@ export const typeSpecTypeToUIElement = createTypeToUIElementFunction(
     genericTypeToUIElement,
 );
 export class TypeSpecPropertiesManager extends _CommonContainerComponent {
-    // jshint ignore:start
     /**
      * could be as well:
      * initialUpdate(...args){
@@ -188,7 +187,7 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
      */
     initialUpdate =
         _BaseDynamicCollectionContainerComponent.prototype.initialUpdate;
-    // jshint ignore:end
+
     constructor(widgetBus, zones) {
         // provision widgets dynamically!
         super(widgetBus, zones);

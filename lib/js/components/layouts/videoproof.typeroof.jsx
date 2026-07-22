@@ -1,6 +1,3 @@
-/* jshint esversion: 11, browser: true, unused:true, undef:true, laxcomma: true, laxbreak: true, devel: true, elision: true*/
-/* jshint -W008 */ // leading dot in decimals...
-/* jshint -W028 */ // labels on if statement
 import {
     Path,
     getEntry,
@@ -1307,14 +1304,13 @@ const VideoproofModel = _BaseLayoutModel.createClass(
     ),
 );
 export class UIAlignment extends _BaseComponent {
-    //jshint ignore:start
     static TEMPLATE = `<div class="ui_alignment">
     <label class="radio-main-label">Cell Alignment</label>
 </div>`;
     static TEMPLATE_OPTION = `<label class="ui_alignment-radio_label">
         <input name="alignment" type="radio">
         <span class="ui_alignment-radio_icon"></span></label>`;
-    //jshint ignore:end
+
     constructor(widgetBus, getDefault) {
         super(widgetBus);
         this._getDefault = getDefault;

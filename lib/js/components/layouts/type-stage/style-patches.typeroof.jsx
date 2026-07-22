@@ -460,7 +460,6 @@ class SimpleSelect extends _BaseComponent {
 }
 
 export class UIStylePatchesMap extends _UIBaseMap {
-    // jshint ignore: start
     static ROOT_CLASS = `ui_style_patches_map`;
     static BASE_CLASSES = [...super.BASE_CLASSES, super.ROOT_CLASS];
     static TYPE_CLASS_PART = null;
@@ -492,7 +491,7 @@ export class UIStylePatchesMap extends _UIBaseMap {
         widgets.splice(1, 0, select);
         return widgets;
     }
-    // jshint ignore: end
+
     _createWrapperValue(keyId, key) {
         const childWidgetBus = this._childrenWidgetBus,
             settings = {

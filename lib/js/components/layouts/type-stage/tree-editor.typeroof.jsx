@@ -35,9 +35,8 @@ function _uniqueKey(keys) {
  * The type of the children is totally different.
  */
 export class _BaseTreeEditor extends _BaseComponent {
-    // jshint ignore:start
     static TEMPLATE = `<div class="tree_editor stage-manager_actors">(initial)</div>`;
-    // jshint ignore:end
+
     constructor(widgetBus, dataTransferTypes) {
         super(widgetBus);
         this._dataTransferTypes = Object.freeze(
