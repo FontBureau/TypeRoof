@@ -1806,10 +1806,9 @@ export class UIProseMirrorMenu extends _IDPublisherMixin(
             ],
             [
                 { ...menuSettings, id: new.target.ID_MAP.menuStyles },
-                ["typeSpec", "nodeSpecToTypeSpec"],
-                UIProseMirrorMenuStyles,
+                ["nodeSpecToTypeSpec", ["/font", "font"]],
+                UIStylesFloatingMenu,
                 originTypeSpecPath,
-                "Styles:",
             ],
         ];
         super(widgetBus, zones, widgets);
