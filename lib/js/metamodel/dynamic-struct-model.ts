@@ -108,7 +108,6 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
 
         const result = {
             [className]: class extends this {
-                // jshint ignore: start
                 static BaseType: typeof _AbstractStructModel | null = BaseType;
                 static availableTypesDependencyName: string | null =
                     availableTypesDependencyName;
@@ -120,7 +119,6 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
                         ...dependenciesNames,
                     ]),
                 );
-                // jshint ignore: end
             },
         };
         // Can't override class.Model anymore, would be possible w/o the freeze.

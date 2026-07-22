@@ -180,7 +180,6 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
 
         // this way name will naturally become class.name.
         const result = {
-            // jshint ignore: start
             [className]: class extends this {
                 static override Model: typeof _BaseModel = Model;
                 static override ORDERING =
@@ -198,7 +197,6 @@ export class _AbstractOrderedMapModel extends _BaseContainerModel {
                         ? null
                         : config.validateKeyFn;
             },
-            // jshint ignore: end
         };
         // Can't override class.Model anymore, would be possible w/o the freeze.
         // Maybe only fix "Model" property?

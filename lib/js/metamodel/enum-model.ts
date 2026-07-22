@@ -52,10 +52,8 @@ export class _AbstractEnumModel extends _BaseSimpleModel {
         // this way name will naturally become class.name.
         const result = {
             [className]: class extends this {
-                // jshint ignore: start
                 static enumItems = enumItems_;
                 static defaultValue = defaultValue;
-                // jshint ignore: end
             },
         };
         const Model = result[className]!;

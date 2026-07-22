@@ -253,14 +253,12 @@ export class ForeignKey {
     }
 
     [FOREIGN_KEY_SET_NULL](/*targetContainer, currentKeyValue*/): KeyValue {
-        // jshint unused: vars
         return this.NULL;
     }
 
     [FOREIGN_KEY_SET_DEFAULT_FIRST](
         targetContainer: _BaseContainerModel /*, currentKeyValue*/,
     ): string {
-        // jshint unused: vars
         const firstKey = getFirst<string, typeof FOREIGN_KEY_NULL>(
             targetContainer.keys(),
             FOREIGN_KEY_NULL,
@@ -277,14 +275,12 @@ export class ForeignKey {
     [FOREIGN_KEY_SET_DEFAULT_FIRST_OR_NULL](
         targetContainer: _BaseContainerModel /*, currentKeyValue*/,
     ): KeyValue {
-        // jshint unused: vars
         return getFirst(targetContainer.keys(), this.NULL);
     }
 
     [FOREIGN_KEY_SET_DEFAULT_LAST](
         targetContainer: _BaseContainerModel /*, currentKeyValue*/,
     ): string {
-        // jshint unused: vars
         const lastKey = getLast(targetContainer.keys(), this.NULL);
         if (lastKey === this.NULL)
             throw keyConstraintError(
@@ -298,14 +294,12 @@ export class ForeignKey {
     [FOREIGN_KEY_SET_DEFAULT_LAST_OR_NULL](
         targetContainer: _BaseContainerModel /*, currentKeyValue*/,
     ): KeyValue {
-        // jshint unused: vars
         return getLast(targetContainer.keys(), this.NULL);
     }
 
     [FOREIGN_KEY_SET_DEFAULT_VALUE](
         targetContainer: _BaseContainerModel /*, currentKeyValue*/,
     ): KeyValue {
-        // jshint unused: vars
         if (
             typeof this.defaultValue !== "string" ||
             !targetContainer.has(this.defaultValue)
@@ -322,7 +316,6 @@ export class ForeignKey {
     [FOREIGN_KEY_SET_DEFAULT_VALUE_OR_NULL](
         targetContainer: _BaseContainerModel /*, currentKeyValue*/,
     ): KeyValue {
-        // jshint unused: vars
         if (
             typeof this.defaultValue !== "string" ||
             !targetContainer.has(this.defaultValue)

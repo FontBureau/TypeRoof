@@ -105,7 +105,7 @@ export class StyleLinksMeta extends _BaseDynamicMapContainerComponent {
 }
 
 export class TypeSpecChildrenMeta extends _BaseDynamicMapContainerComponent {
-    [HANDLE_CHANGED_AS_NEW] = true; // jshint ignore:line
+    [HANDLE_CHANGED_AS_NEW] = true;
     constructor(
         widgetBus,
         zones,

@@ -430,9 +430,8 @@ const mac =
     typeof navigator != "undefined" ? /Mac/.test(navigator.platform) : false;
 
 export class ProseMirror extends _BaseComponent {
-    //jshint ignore:start
     static TEMPLATE = `<div class="ui_prosemirror_host"></div>`;
-    //jshint ignore:end
+
     constructor(
         widgetBus,
         /*SchemaSpec: */ proseMirrorDefaultSchema,
