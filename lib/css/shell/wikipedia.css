@@ -5,22 +5,7 @@ override variables
 *******************************************************************************/
 
 :root {
-    overflow: hidden;
-
-    --gap-size: 0;
-    --list-item-odd-bg: #121212;
-    --list-item-even-bg: #333;
-    --background-color: #121212;
-    --text-color: #fff;
-    --input-border-color: #ccc;
-    --fieldset-border-color: #666;
-    --button-bg-color: #000;
-    --button-border-color: #ccc;
-    --button-border-color-hover: #fff;
-    --button-border-color-disabled: #666;
-    --button-text-color-disabled: #666;
-    --menu-button-bg-color-hover: #333;
-    --sidebar-bg-color: #121212bb;
+    --sidebar-bg-color: #eeeeeef0;
 }
 
 /******************************************************************************
