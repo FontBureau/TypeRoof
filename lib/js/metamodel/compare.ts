@@ -448,7 +448,7 @@ export function* compare(
 }
 
 export class StateComparison {
-    static COMPARE_STATUSES = COMPARE_STATUSES; // jshint ignore:line
+    static COMPARE_STATUSES = COMPARE_STATUSES;
 
     declare readonly oldState: _BaseModel | null;
     declare readonly newState: _BaseModel;

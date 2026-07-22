@@ -125,7 +125,6 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
         // this way name will naturally become class.name.
         const result = {
             [className]: class extends this {
-                // jshint ignore: start
                 static minVal = config.min === _NOTDEF ? null : config.min;
                 static maxVal = config.max === _NOTDEF ? null : config.max;
                 static toFixedDigits =
@@ -141,7 +140,6 @@ export class _AbstractNumberModel extends _BaseSimpleModel {
                 static validateFN =
                     config.validateFN === _NOTDEF ? null : config.validateFN;
                 static sanitzeByDefault = config.sanitzeByDefault;
-                // jshint ignore: end
             },
         };
         const Model = result[className]!;

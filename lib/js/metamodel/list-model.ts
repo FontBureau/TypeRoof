@@ -57,14 +57,11 @@ export class _AbstractListModel extends _BaseContainerModel {
     }
 
     static createClass(className: string, Model: typeof _BaseModel) {
-        // jshint unused: vars
         // this way name will naturally become class.name.
         const result = {
-            // jshint ignore: start
             [className]: class extends this {
                 static Model = Model;
             },
-            // jshint ignore: end
         };
         // Can't override class.Model anymore, would be possible w/o the freeze.
         Object.freeze(result[className]);

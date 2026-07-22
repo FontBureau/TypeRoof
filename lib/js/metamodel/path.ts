@@ -1,12 +1,10 @@
 import { PATH_SEPARATOR } from "./util.ts";
 
 export class Path {
-    // jshint ignore: start
     static SEPARATOR = PATH_SEPARATOR;
     static RELATIVE = ".";
     static ROOT = "/";
     static PARENT = "..";
-    // jshint ignore: end
 
     declare readonly parts: readonly string[];
     declare readonly explicitAnchoring: string | null;

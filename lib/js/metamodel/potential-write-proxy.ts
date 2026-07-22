@@ -97,13 +97,11 @@ function _requiresPotentialWriteProxy(item: unknown): item is _BaseModel {
 // exported for debugging!
 export class _PotentialWriteProxy {
     // Re-attached from util.ts for backward compatibility.
-    // jshint ignore: start
     static IS_PROXY = IS_PROXY;
     static GET_IMMUTABLE = GET_IMMUTABLE;
     static GET_DRAFT = GET_DRAFT;
     static ENSURE_DRAFT = ENSURE_DRAFT;
     static GET = GET;
-    // jshint ignore: end
     static isProxy = isProxy;
 
     // Instance properties set in constructor

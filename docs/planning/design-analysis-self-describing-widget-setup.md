@@ -99,7 +99,6 @@ resolves those needs at construction time.
 
 ```javascript
 export class UIToggleButton extends _BaseComponent {
-    // jshint ignore:start
     static REQUIREMENTS = [
         require('settings:internalPropertyName', 'boolean')
       , require('classToken')
@@ -107,7 +106,6 @@ export class UIToggleButton extends _BaseComponent {
       , require('label', val=>`turn ${val} on`)
       , require('label', val=>`Toggle ${val}`)
     ];
-    // jshint ignore:end
 
     constructor(widgetBus, classToken, labelIsOn, labelIsOff, title) { ... }
 }
@@ -115,7 +113,6 @@ export class UIToggleButton extends _BaseComponent {
 
 ```javascript
 export class UIColorChooser extends _BaseContainerComponent {
-    // jshint ignore:start
     static REQUIREMENTS = [
         require('settings:rootPath')
       , require('zones')
@@ -124,7 +121,6 @@ export class UIColorChooser extends _BaseContainerComponent {
       , require('updateDefaultsDependencies')
       , require('raw:requireUpdateDefaults')
     ];
-    // jshint ignore:end
 
     constructor(widgetBus, zones, label, getDefault,
                 updateDefaultsDependencies, requireUpdateDefaults) { ... }

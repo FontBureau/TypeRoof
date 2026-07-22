@@ -226,7 +226,6 @@ export class _AbstractStructModel extends _BaseContainerModel {
             result = {
                 [className]: class extends this {
                     // All of the static dependencies will get frozen (Object.freeze)
-                    // jshint ignore: start
                     static fields = fields;
                     static foreignKeys = foreignKeys;
                     static links = links;
@@ -241,7 +240,6 @@ export class _AbstractStructModel extends _BaseContainerModel {
                     // These are the names of the dependencies of the class.
                     static dependencies = dependencies;
                     static initOrder = initOrder;
-                    // jshint ignore: end
                 },
             },
             NewClass = result[className]!;
@@ -368,7 +366,6 @@ export class _AbstractStructModel extends _BaseContainerModel {
         );
 
         populateSet(dependencies, [
-            //jshint ignore: line
             // Via internalizedDependencies, these are allways
             // external even if this class itself defines one
             // of these names. This is so that this element

@@ -350,7 +350,7 @@ export abstract class _BaseModel {
         });
     }
 
-    static dependencies = EMPTY_SET; // jshint ignore:line
+    static dependencies = EMPTY_SET;
 
     get dependencies() {
         return EMPTY_SET;
