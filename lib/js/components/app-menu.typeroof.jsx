@@ -1,4 +1,4 @@
-import { _BaseContainerComponent } from "./basics.mjs";
+import { _BaseContainerComponent } from "./basics/component.mjs";
 import { GenericSelect, StaticNode } from "./generic.mjs";
 import { UIDialogManageState } from "./ui-dialog-manage-state.mjs";
 import { UIDialogOpeners } from "./ui-dialog-openers.mjs";

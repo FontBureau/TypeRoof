@@ -2,7 +2,7 @@ import {
     _BaseComponent,
     _BaseContainerComponent,
     _BaseDynamicMapContainerComponent,
-} from "../../basics.mjs";
+} from "../../basics/component.mjs";
 import { Path, _AbstractListModel } from "../../../metamodel.mjs";
 import { COLOR } from "../../registered-properties-definitions.mjs";
 import { actorApplyCSSColors } from "../../actors/properties-util.mjs";

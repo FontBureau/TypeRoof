@@ -1,4 +1,4 @@
-import { _BaseComponent } from "./basics.mjs";
+import { _BaseComponent } from "./basics/component.mjs";
 
 const isIncludedFont = (data) => data[1].value.origin.type === "from-url";
 const isLocalFont = (data) => data[1].value.origin.type === "from-file";

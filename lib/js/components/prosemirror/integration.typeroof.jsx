@@ -6,7 +6,7 @@ import {
     fromMetaModelJSON,
 } from "./models.typeroof.jsx";
 
-import { _BaseComponent } from "../basics.mjs";
+import { _BaseComponent } from "../basics/component.mjs";
 
 import { Schema /*, DOMParser*/ } from "prosemirror-model";
 import { EditorState, Plugin } from "prosemirror-state";

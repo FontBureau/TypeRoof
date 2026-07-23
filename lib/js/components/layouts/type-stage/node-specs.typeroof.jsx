@@ -1,4 +1,4 @@
-import { _UIBaseMap } from "../../basics.mjs";
+import { _UIBaseMap } from "../../basics/ui-map.mjs";
 import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
 import {
     MapSelectButton,

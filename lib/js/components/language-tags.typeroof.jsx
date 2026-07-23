@@ -11,9 +11,9 @@ import { LANGUAGE } from "./registered-properties-definitions.mjs";
 import {
     _BaseContainerComponent,
     _BaseComponent,
-    connectLabelWithInput,
-    setupTooltip,
-} from "./basics.mjs";
+} from "./basics/component.mjs";
+
+import { connectLabelWithInput, setupTooltip } from "./basics/dom-helpers.mjs";
 
 import { require } from "./dependency-injection";
 

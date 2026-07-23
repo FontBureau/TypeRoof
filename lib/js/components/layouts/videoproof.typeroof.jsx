@@ -16,8 +16,9 @@ import {
     _BaseDynamicCollectionContainerComponent,
     _BaseComponent,
     SimpleProtocolHandler,
-    UIButton,
-} from "../basics.mjs";
+} from "../basics/component.mjs";
+
+import { UIButton } from "../basics/ui-button.mjs";
 
 import {
     DynamicTag,

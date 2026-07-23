@@ -1,9 +1,11 @@
 import {
-    _UIBaseList,
-    _UIBaseMap,
     _BaseComponent,
     _BaseContainerComponent,
-} from "../../basics.mjs";
+} from "../../basics/component.mjs";
+
+import { _UIBaseMap } from "../../basics/ui-map.mjs";
+
+import { _UIBaseList } from "../../basics/ui-list.mjs";
 import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
 import {
     StylePatchModel,
