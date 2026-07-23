@@ -1,15 +1,3 @@
-export async function loadWikipediaPage(title: string) {
-    const url = `https://en.wikipedia.org/w/rest.php/v1/page/${title}/html`;
-    return fetch(url)
-        .then((response) => response.text())
-        .then((contents) => {
-            const parser = new DOMParser();
-            const newDoc = parser.parseFromString(contents, "text/html");
-            const result = convertDocument(newDoc);
-            return result;
-        });
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 // types
 
@@ -40,7 +28,7 @@ type Result =
 ////////////////////////////////////////////////////////////////////////////////
 // functions
 
-function convertDocument(doc: Document): Result {
+export function convertDocument(doc: Document): Result {
     const result1 = convertNode(doc.body);
     if (result1 === null) throw new Error("Unexpected result: null.");
     if (Array.isArray(result1)) throw new Error("Unexpected result: array.");
