@@ -3,7 +3,7 @@ import {
     _BaseComponent,
     UPDATE_STRATEGY,
     UPDATE_STRATEGY_COMPARE,
-} from "./basics.mjs";
+} from "./basics/component.mjs";
 
 import React, {
     useEffect,

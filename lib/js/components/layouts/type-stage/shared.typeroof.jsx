@@ -2,7 +2,7 @@ import { DynamicTag } from "../../generic.mjs";
 import {
     _CommonContainerComponent,
     _BaseDynamicCollectionContainerComponent,
-} from "../../basics.mjs";
+} from "../../basics/component.mjs";
 import { Path, getEntry } from "../../../metamodel.mjs";
 import { StaticTag } from "../../generic.mjs";
 

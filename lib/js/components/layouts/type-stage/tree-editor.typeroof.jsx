@@ -1,4 +1,4 @@
-import { _BaseComponent } from "../../basics.mjs";
+import { _BaseComponent } from "../../basics/component.mjs";
 import { createIcon } from "../../icons.mjs";
 import { Path, getEntry } from "../../../metamodel.mjs";
 import { TypeSpecModel } from "../../type-spec-models.mjs";

@@ -1,4 +1,4 @@
-import { _BaseComponent } from "../../basics.mjs";
+import { _BaseComponent } from "../../basics/component.mjs";
 import { SPECIFIC } from "../../registered-properties-definitions.mjs";
 import { HierarchicalScopeTypeSpecnion } from "./type-specnion.mjs";
 import { STYLE_PATCH_PROPERTIES_GENERATORS } from "./properties-generators.mjs";

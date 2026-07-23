@@ -2,7 +2,7 @@ import {
     _BaseContainerComponent,
     _BaseDynamicMapContainerComponent,
     HANDLE_CHANGED_AS_NEW,
-} from "../../basics.mjs";
+} from "../../basics/component.mjs";
 import { Path } from "../../../metamodel.mjs";
 import {
     TypeSpecLiveProperties,

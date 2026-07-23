@@ -1,6 +1,8 @@
 import { Path } from "../metamodel.mjs";
 
-import { _BaseContainerComponent, UIButton } from "./basics.mjs";
+import { _BaseContainerComponent } from "./basics/component.mjs";
+
+import { UIButton } from "./basics/ui-button.mjs";
 
 import { StaticNode } from "./generic.mjs";
 
