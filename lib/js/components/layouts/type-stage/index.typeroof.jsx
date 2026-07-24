@@ -287,10 +287,13 @@ class TypeStageController extends _BaseContainerComponent {
                 ],
             ],
             [
-                { zone: "type_spec-manager" },
+                {
+                    zone: "type_spec-manager",
+                    relativeRootPath: typeSpecRelativePath,
+                },
                 [
-                    ["typeSpec/children", "activeActors"],
-                    ["editingTypeSpec", "editingActor"],
+                    ['children', 'activeActors'],
+                    [widgetBus.rootPath.append("editingTypeSpec").toString(), "editingActor"],
                 ],
                 TypeSpecTreeEditor,
                 {
@@ -298,6 +301,7 @@ class TypeStageController extends _BaseContainerComponent {
                     PATH: DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_PATH,
                     CREATE: DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_CREATE,
                 },
+                Path.fromParts(".", "children"),
             ],
             [
                 {
