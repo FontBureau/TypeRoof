@@ -64,6 +64,9 @@ app menu
         font-size: 1em;
         font-variation-settings: "opsz" 10;
         font-weight: 1000;
+        &:last-child {
+            margin-left: 0;
+        }
     }
 
     > label {
