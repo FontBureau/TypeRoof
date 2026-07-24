@@ -11,6 +11,7 @@ ICON_NAMES=(
     arrow_left_alt
     arrow_right_alt
     chevron_right
+    close
     delete
     drag_pan
     edit
@@ -33,6 +34,7 @@ ICON_NAMES=(
     play_arrow
     refresh
     remove
+    settings
     swap_horiz
     swap_vert
     toggle_on

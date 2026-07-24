@@ -12,7 +12,7 @@ override variables
 wrapper
 *******************************************************************************/
 
-body > .wrapper > *:not(.typeroof-main) {
+.typeroof-ui_sidebar {
     position: relative;
     z-index: 2;
 }
@@ -26,15 +26,32 @@ body > .wrapper > *:not(.typeroof-main) {
     height: 100vh;
 }
 
-/* quick and dirty "active corner" menu, the left side is active*/
-.typeroof-ui_sidebar{
-    width: 100%;
-    transition: all .2s ease-in;
+.ui-button-show_settings {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    border: none;
+    border-radius: 5em;
 
-    &:not(:hover) {
-        width: .5em;
-        overflow: hidden;
-        opacity: 0;
+    .settings-visible & {
+        display: none;
+    }
+}
+
+.ui-button-close_settings {
+    float: right;
+    margin: 1em;
+}
+
+.typeroof-ui_sidebar {
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease-in;
+
+    .settings-visible & {
+        opacity: 1;
+        visibility: visible;
     }
 }
 
