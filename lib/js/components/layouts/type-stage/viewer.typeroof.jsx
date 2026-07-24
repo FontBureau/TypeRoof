@@ -2,7 +2,7 @@ import {
     _BaseComponent,
     _BaseContainerComponent,
     _BaseDynamicMapContainerComponent,
-} from "../../basics.mjs";
+} from "../../basics/component.mjs";
 import { Path, _AbstractListModel } from "../../../metamodel.mjs";
 import { _BaseDropTarget } from "../../generic.mjs";
 import {
