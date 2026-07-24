@@ -4,9 +4,11 @@ import {
     _BaseComponent,
     _BaseContainerComponent,
     _BaseDynamicCollectionContainerComponent,
-    _UIBaseListContainerItem,
-    _UIAbstractPlainInputWrapper,
-} from "./basics.mjs";
+} from "./basics/component.mjs";
+
+import { _UIAbstractPlainInputWrapper } from "./basics/input-wrappers.mjs";
+
+import { _UIBaseListContainerItem } from "./basics/ui-list.mjs";
 
 import {
     StaticNode,

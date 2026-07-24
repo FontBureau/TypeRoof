@@ -1,7 +1,7 @@
 import {
     _CommonContainerComponent,
     _BaseDynamicCollectionContainerComponent,
-} from "../../basics.mjs";
+} from "../../basics/component.mjs";
 import { Path, getEntry, ForeignKey } from "../../../metamodel.mjs";
 import {
     UILineOfTextInput,

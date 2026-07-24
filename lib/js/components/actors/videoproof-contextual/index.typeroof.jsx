@@ -1,4 +1,4 @@
-import { _BaseComponent } from "../../basics.mjs";
+import { _BaseComponent } from "../../basics/component.mjs";
 
 import {
     measureWordWidths,

@@ -1,7 +1,7 @@
 import {
     _BaseContainerComponent,
     SimpleProtocolHandler,
-} from "../../basics.mjs";
+} from "../../basics/component.mjs";
 import { _BaseLayoutModel } from "../../main-model.mjs";
 import {
     PathModelOrEmpty,

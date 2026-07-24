@@ -1,4 +1,4 @@
-import { _BaseContainerComponent } from "./basics.mjs";
+import { _BaseContainerComponent } from "./basics/component.mjs";
 
 import { require } from "./dependency-injection.mjs";
 

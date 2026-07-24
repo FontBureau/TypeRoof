@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Large File Investigation — Split Candidates - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <header>
+                <h1>TypeRoof</h1>
+            </header>
+            <div class="typeroof-ui_sidebar">
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Landing Page</a><ul><li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/large-file-investigation-260723/">Large File Investigation</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-2026-07/">Metamodel: 2026-07</a></li>
+<li><a href="/TypeRoof/docs/planning/columns/REPORT/">Columns: Runion Report</a></li>
+<li><a href="/TypeRoof/docs/planning/overview/architectural-overview/">Architectural Overview</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li></ul></li>
+<li><a href="/TypeRoof/docs/states_lib/">States Library</a><ul><li><a href="/TypeRoof/docs/states_lib/demos/">/demos</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                </nav>
+                <h3>Applications</h3>
+                <ul class="typeroof-ui_sidebar-app_links">
+                    <li><a href="../../../shell">TypeRoof Shell</a></li>
+                    <li><a href="../../../legacy">TypeRoof Legacy</a></li>
+                </ul>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="large-file-investigation--split-candidates" class="heading_anchor" href="#large-file-investigation--split-candidates" aria-hidden="true">#</a>Large File Investigation — Split Candidates</h1>
+<blockquote>
+<p><strong>Status:</strong> Analysis, 2026-07-23. A survey of the codebase against
+<code>docs/development/module-granularity.md</code>, ranking large files by how good a
+split candidate they are. No code was changed.</p>
+</blockquote>
+<h2><a id="method" class="heading_anchor" href="#method" aria-hidden="true">#</a>Method</h2>
+<p>Every <code>.mjs</code> / <code>.js</code> / <code>.jsx</code> / <code>.ts</code> / <code>.tsx</code> file was measured, then the large
+ones were checked against the two things the guideline actually cares about:</p>
+<ul>
+<li><strong>Internal seams</strong> — does a region of the file reference the rest of it? Measured
+by counting cross-region symbol references, not by eyeballing the class list.</li>
+<li><strong>Consumer independence</strong> — do different callers import different halves? Measured
+by resolving every relative import in the repo and tallying imported symbol names.</li>
+</ul>
+<h2><a id="tier-1--clear-wins" class="heading_anchor" href="#tier-1--clear-wins" aria-hidden="true">#</a>Tier 1 — clear wins</h2>
+<h3><a id="1-libjscomponentsbasicsmjs--3595-lines-55-importers" class="heading_anchor" href="#1-libjscomponentsbasicsmjs--3595-lines-55-importers" aria-hidden="true">#</a>1. <code>lib/js/components/basics.mjs</code> — 3595 lines, 55 importers</h3>
+<p>Two subsystems in one file: a component framework and a widget library. The tier
+direction is <em>already clean</em> — lines 1–1659 (the framework) contain <strong>zero</strong>
+references to any UI symbol below them.</p>
+<table>
+<thead>
+<tr>
+<th>Region</th>
+<th>Lines</th>
+<th>Coupling found</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Framework core — <code>UPDATE_STRATEGY*</code>, <code>_BaseComponent</code>, <code>SimpleProtocolHandler</code>, <code>ComponentWrapper</code>, <code>_CommonContainerComponent</code>, <code>_BaseContainerComponent</code>, dynamic collection/map containers</td>
+<td>1–1659</td>
+<td>self-contained; <code>_NOTDEF</code> / <code>DEFAULT</code> / <code>ComponentWrapper</code> never escape</td>
+</tr>
+<tr>
+<td>Map widgets — <code>UIBaseMapKey</code>, <code>UIButton</code>, <code>_UIBaseMap</code></td>
+<td>1660–2700</td>
+<td>uses <code>_DialogBase</code> + <code>_setClassesHelperMethod</code></td>
+</tr>
+<tr>
+<td><code>_DialogBase</code>, <code>connectLabelWithInput</code>, input wrappers</td>
+<td>2701–2803, 3518–3595</td>
+<td>leaf</td>
+</tr>
+<tr>
+<td>Drag/drop + list — <code>DRAGHANDLE_TEMPLATE</code>, the five <code>_*Method</code> helpers, <code>_UIBaseListItem</code>, <code>_UIBaseList</code></td>
+<td>2804–3517</td>
+<td><strong>fully self-contained</strong>, 715 lines</td>
+</tr>
+</tbody>
+</table>
+<p>Import counts confirm the seam matters. Distinct symbols imported across the repo:</p>
+<pre><code> 36 _BaseComponent
+ 31 _BaseContainerComponent
+ 10 _BaseDynamicCollectionContainerComponent
+  9 SimpleProtocolHandler
+  7 UPDATE_STRATEGY
+  5 _DialogBase
+  4 _UIBaseMap / _CommonContainerComponent / UPDATE_STRATEGY_NO_UPDATE
+  3 _UIBaseList / _UIBaseListContainerItem / _BaseDynamicMapContainerComponent
+    / _UIAbstractPlainInputWrapper / UIButton / HANDLE_CHANGED_AS_NEW
+    / UPDATE_STRATEGY_COMPARE
+  2 _UIAbstractPlainOrEmptyInputWrapper / setupTooltip
+  1 connectLabelWithInput / UIBaseMapKey
+</code></pre>
+<p>Most of the 55 importers pull in 3.6k lines to get the framework.</p>
+<p>Two things to get right:</p>
+<ul>
+<li><code>_setClassesHelperMethod</code> is used by <em>both</em> the map and list regions. Promote it
+to a shared leaf module — do not pick a home for it (guideline rule 4).</li>
+<li>Keep <code>_BaseDynamicCollectionContainerComponent</code> and
+<code>_BaseDynamicMapContainerComponent</code> <strong>with</strong> the core. Base class plus subclass
+sharing non-trivial provisioning protocol is exactly the guideline’s
+“keep together” case.</li>
+</ul>
+<h3><a id="2-libjscomponentslayoutsmotion-stagemjs--2768-lines-26-sibling-imports" class="heading_anchor" href="#2-libjscomponentslayoutsmotion-stagemjs--2768-lines-26-sibling-imports" aria-hidden="true">#</a>2. <code>lib/js/components/layouts/motion-stage.mjs</code> — 2768 lines, 26 sibling imports</h3>
+<p>Convert to a folder, mirroring <code>lib/js/components/layouts/type-stage/</code>, which is
+already decomposed into 15 files.</p>
+<ul>
+<li><strong>Engine</strong>, lines 1–495: <code>StageSizeNumberModel</code>, the <code>REGISTERED_*</code> maps,
+<code>openTypeFeaturesGen</code> (L377), <code>initAnimanion</code> (L484).</li>
+<li><strong>UI zones</strong>, which map almost 1:1 onto controllers: <code>StageManager</code>,
+key moments (1077–1988), <code>PropertiesManager</code>, time controls (2470–2584),
+<code>MotionStageController</code>.</li>
+</ul>
+<h3><a id="3-libjscomponentslayoutstype-tools-gridmjs--2218-lines-30-sibling-imports" class="heading_anchor" href="#3-libjscomponentslayoutstype-tools-gridmjs--2218-lines-30-sibling-imports" aria-hidden="true">#</a>3. <code>lib/js/components/layouts/type-tools-grid.mjs</code> — 2218 lines, 30 sibling imports</h3>
+<p>The highest sibling-import count in the codebase — the guideline’s own proxy
+metric, flagged.</p>
+<ul>
+<li><strong>Engine:</strong> models + deserializer (1–500), PPS maps (502–627), axis-location
+generators (1356–1594), grid defaults / <code>_applyDimensions</code> (1595–1714).</li>
+<li><strong>UI:</strong> dimension sequence, tensor controller, grid scaffold / cells / grid,
+controller.</li>
+</ul>
+<h3><a id="4-libjscomponentslayoutsvideoprooftyperoofjsx--2396-lines" class="heading_anchor" href="#4-libjscomponentslayoutsvideoprooftyperoofjsx--2396-lines" aria-hidden="true">#</a>4. <code>lib/js/components/layouts/videoproof.typeroof.jsx</code> — 2396 lines</h3>
+<p>Three independent clusters:</p>
+<ul>
+<li>Layer drag &amp; drop subsystem (130–806).</li>
+<li><code>VideoproofModel</code> + actor-structure helpers (807–1305) — pure engine, so <code>.mjs</code>.</li>
+<li>Hue / color helpers (1640–1827) — another engine cluster.</li>
+</ul>
+<h2><a id="tier-2--good-lower-urgency" class="heading_anchor" href="#tier-2--good-lower-urgency" aria-hidden="true">#</a>Tier 2 — good, lower urgency</h2>
+<ul>
+<li><strong><code>lib/js/components/axes-math.mjs</code></strong> (1263) — textbook engine/UI seam at line 502.
+A clean two-file split, the lowest-risk item in this document.</li>
+<li><strong><code>lib/js/components/type-spec-fundamentals.mjs</code></strong> (1407) — two parallel link-map
+subsystems, seam at line 699.</li>
+<li><strong><code>lib/js/components/animation-animanion.mjs</code></strong> (1210) — an engine file that ends
+with two <code>_BaseComponent</code> subclasses (883–1210). That is a tier violation;
+splitting there fixes it.</li>
+<li><strong><code>lib/js/shell.mjs</code></strong> (1662) — <code>FontManager</code> (80–601) vs <code>ShellController</code>.
+Borderline: <code>FontManager</code> is private to the file, which the guideline says
+argues for keeping it.</li>
+<li><strong><code>lib/js/components/generic.mjs</code></strong> (1257, 32 importers) — a flat catalogue of
+small independent widgets. The only real seam is the drop-target pair
+(1106–1257). A weak candidate despite the size.</li>
+</ul>
+<h2><a id="explicitly-not-worth-splitting" class="heading_anchor" href="#explicitly-not-worth-splitting" aria-hidden="true">#</a>Explicitly not worth splitting</h2>
+<ul>
+<li><strong><code>lib/js/legacy/videoproof-controller.mjs</code></strong> — 7637 lines, the largest file in the
+repo, but legacy with a single importer (<code>lib/js/legacy/main.mjs:1</code>). Effort spent
+on code on its way out.</li>
+<li><strong><code>lib/js/ot-feature-info.mjs</code></strong> (1047) — one annotated data table. Size without
+complexity; a reader forms the mental model immediately.</li>
+<li><strong><code>lib/js/metamodel/</code></strong> — already a folder of ~10 files. <code>struct-model.ts</code> (1577)
+is one cohesive class.</li>
+</ul>
+<h2><a id="two-issues-found-in-the-guideline-document" class="heading_anchor" href="#two-issues-found-in-the-guideline-document" aria-hidden="true">#</a>Two issues found in the guideline document</h2>
+<ul>
+<li>
+<p>The reference at <code>docs/development/module-granularity.md:118</code> points to
+<code>docs/planning/ramp-layout-coupling-based-decomposition.md</code>, which does not exist.</p>
+</li>
+<li>
+<p>Line 92 lists only <code>**/type-stage/*.*</code> as a directory allow-list. <code>.prettierignore</code>
+also has <code>**/ramp/*.*</code>, <code>lib/js/components/**/videoproof-contextual/*</code> and
+<code>lib/js/components/presets.mjs</code>.</p>
+<p>This matters for the Tier 1 items: if <code>basics.mjs</code> becomes a <code>basics/</code> folder of
+<code>.mjs</code> engine files, it needs a matching allow-list entry or those files silently
+drop out of prettier coverage.</p>
+</li>
+</ul>
+</div>
+            </div>
+            <footer>
+                <ul>
+                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
+                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
+                </ul>
+            </footer>
+        </div> <!-- wrapper -->
+    </body>
+</html>

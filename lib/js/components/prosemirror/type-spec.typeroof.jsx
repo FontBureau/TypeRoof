@@ -4,7 +4,7 @@ import {
     _CommonContainerComponent,
     _BaseComponent,
     _BaseContainerComponent,
-} from "../basics.mjs";
+} from "../basics/component.mjs";
 
 import {
     converter as culoriConverter,
