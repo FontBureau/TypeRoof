@@ -77,11 +77,11 @@ const INLINE_TAGS: ReadonlySet<string> = new Set([
 // critical examiner can see we keep the metadata. A dedicated node
 // type may replace this later; the branch is deliberately separate
 // to keep that path open (operator decision 2026-07-24).
-const MW_EMPTY_ELT_CLASS = "mw-empty-elt";
-
+const MW_EMPTY_ELT = ".mw-empty-elt",
+    MW_INLINE_CITATION = `sup[typeof="mw:Extension/ref"]`;
 // Elements matching any of these selectors are patched through as raw
 // atoms (raw_html_block / raw_html_inline by context), no descent.
-const SELECTORS_TO_RAW_HTML = [`.${MW_EMPTY_ELT_CLASS}`].join(", ");
+const SELECTORS_TO_RAW_HTML = [MW_EMPTY_ELT, MW_INLINE_CITATION].join(", ");
 
 export interface IngestionReport {
     // mark-set histogram, e.g. { "[bold, italic]": 2, "[bold]": 1, "[]": 5 }
