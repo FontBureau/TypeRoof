@@ -391,8 +391,12 @@
                   "570"
                 ],
                 [
-                  "r",
-                  "140"
+                  "width",
+                  "280"
+                ],
+                [
+                  "height",
+                  "50"
                 ]
               ],
               "fillColor": {
@@ -406,7 +410,7 @@
             }
           ]
         },
-        "actorTypeKey": "CircleActorModel"
+        "actorTypeKey": "EllipseActorModel"
       },
       {
         "instance": {
