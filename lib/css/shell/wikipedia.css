@@ -26,8 +26,16 @@ body > .wrapper > *:not(.typeroof-main) {
     height: 100vh;
 }
 
-.wrapper:not(.visible) > *:not(.typeroof-main) {
-    visibility: hidden;
+/* quick and dirty "active corner" menu, the left side is active*/
+.typeroof-ui_sidebar{
+    width: 100%;
+    transition: all .2s ease-in;
+
+    &:not(:hover) {
+        width: .5em;
+        overflow: hidden;
+        opacity: 0;
+    }
 }
 
 /******************************************************************************
