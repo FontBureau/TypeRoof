@@ -37,7 +37,7 @@ export const nodes = {
         },
     } as NodeSpec,
 
-    // TODO: may require a unknonw-type than can contain block children as well.
+    // NOTE: companions for block and inline content exist below: unknown_block and unknown_inline.
     unknown: {
         attrs: { "unknown-type": { default: "???", validate: "string" } },
         content: "inline*",
@@ -69,6 +69,95 @@ export const nodes = {
                     `UNKNOWN NODE-TYPE: ${node.attrs["unknown-type"]}`,
                 ],
                 ["div", 0],
+            ];
+        },
+    } as NodeSpec,
+
+    // Reserved catch-all for DOM subtrees the ingestion engine does
+    // not (yet) traverse: keeps the raw HTML verbatim. No sanitization.
+    raw_html_block: {
+        atom: true,
+        group: "block",
+        attrs: { html: { default: "", validate: "string" } },
+        parseDOM: [
+            {
+                tag: "div[data-raw-html-block]",
+                getAttrs(dom: HTMLElement) {
+                    return { html: dom.innerHTML };
+                },
+            },
+        ],
+        toDOM(node: Node) {
+            // actual HTML injection, no sanitization (operator decision);
+            // lime outline for quick identification
+            const div = document.createElement("div");
+            div.setAttribute("data-raw-html-block", "");
+            div.style.outline = "2px solid lime";
+            div.innerHTML = node.attrs.html;
+            return div;
+        },
+    } as NodeSpec,
+
+    // Block companion to `unknown` (TODO above): unknown node types
+    // whose content is block-level.
+    unknown_block: {
+        attrs: { "unknown-type": { default: "???", validate: "string" } },
+        content: "block*",
+        group: "block",
+        parseDOM: [
+            {
+                tag: "div[data-unknown-block-type]",
+                getAttrs(dom: HTMLElement) {
+                    return {
+                        "unknown-type": dom.getAttribute(
+                            "data-unknown-block-type",
+                        ),
+                    };
+                },
+            },
+        ],
+        toDOM(node: Node) {
+            return [
+                "div",
+                { "data-unknown-block-type": node.attrs["unknown-type"] },
+                [
+                    "strong",
+                    { class: "message" },
+                    `UNKNOWN BLOCK NODE-TYPE: ${node.attrs["unknown-type"]}`,
+                ],
+                ["div", 0],
+            ];
+        },
+    } as NodeSpec,
+
+    // Inline companion to `unknown`: HTML inline elements are not
+    // necessarily marks; PM inline nodes carry them (nestable, with attrs).
+    unknown_inline: {
+        attrs: { "unknown-type": { default: "???", validate: "string" } },
+        content: "inline*",
+        group: "inline",
+        inline: true,
+        parseDOM: [
+            {
+                tag: "span[data-unknown-inline-type]",
+                getAttrs(dom: HTMLElement) {
+                    return {
+                        "unknown-type": dom.getAttribute(
+                            "data-unknown-inline-type",
+                        ),
+                    };
+                },
+            },
+        ],
+        toDOM(node: Node) {
+            // unobtrusive: keeps text flow, identity via attribute/title
+            return [
+                "span",
+                {
+                    "data-unknown-inline-type": node.attrs["unknown-type"],
+                    title: `UNKNOWN INLINE NODE-TYPE: ${node.attrs["unknown-type"]}`,
+                },
+                0,
             ];
         },
     } as NodeSpec,

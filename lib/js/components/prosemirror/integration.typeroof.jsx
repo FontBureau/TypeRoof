@@ -328,6 +328,14 @@ function mapSetBiDirectional(map, valA, valB) {
     map.set(valB, valA);
 }
 
+// Reserved node types that stand in for node types missing from the
+// schema; the original typeKey is kept in the "unknown-type" attr.
+const UNKNOWN_NODE_TYPES = new Set([
+    "unknown",
+    "unknown_block",
+    "unknown_inline",
+]);
+
 export function createProseMirrorSchemaFromMetaModel(
     /*SchemaSpec: */ proseMirrorDefaultSchema,
     /*ProseMirrorSchemaModel*/ proseMirrorSchema,
@@ -618,7 +626,8 @@ export class ProseMirror extends _BaseComponent {
     _rawCreateMetamodelNode(cacheMap /* null or a map*/, pmNode, dependencies) {
         const draft = NodeModel.createPrimalDraft(dependencies),
             typeName =
-                pmNode.type.name === "unknown" && "unknown-type" in pmNode.attrs
+                UNKNOWN_NODE_TYPES.has(pmNode.type.name) &&
+                "unknown-type" in pmNode.attrs
                     ? pmNode.attrs["unknown-type"]
                     : pmNode.type.name;
         draft.get("typeKey").value = typeName;
@@ -652,9 +661,9 @@ export class ProseMirror extends _BaseComponent {
         const attrsDraft = draft.get("attrs");
         for (const [name, value] of Object.entries(pmNode.attrs)) {
             if (
-                pmNode.type.name === "unknown" &&
+                UNKNOWN_NODE_TYPES.has(pmNode.type.name) &&
                 name === "unknown-type" &&
-                typeName !== "unknown"
+                !UNKNOWN_NODE_TYPES.has(typeName)
             )
                 // Only skip this value if we actually transferred it
                 // to the type of the node (typeName).
@@ -669,6 +678,7 @@ export class ProseMirror extends _BaseComponent {
         cacheMap /* null or a map*/,
         metamodelNode,
         schema,
+        inInlineContext = false,
     ) {
         const type = metamodelNode.get("typeKey").value;
         let newNode;
@@ -708,11 +718,20 @@ export class ProseMirror extends _BaseComponent {
         } else {
             const mmContent = metamodelNode.get("content"),
                 content = [];
+            // Children are in inline context when this node has inline
+            // content (textblock) or is itself inline. Unknown types fall
+            // back to `unknown` whose content is inline* — hence true.
+            const pmType = type in schema.nodes ? schema.nodes[type] : null,
+                childInlineContext =
+                    pmType === null
+                        ? true
+                        : pmType.inlineContent || pmType.isInline;
             for (const [, /*index*/ mmChildNode] of mmContent) {
                 const child = this._createProseMirrorNode(
                     cacheMap,
                     mmChildNode,
                     schema,
+                    childInlineContext,
                 );
                 content.push(child);
             }
@@ -750,8 +769,20 @@ export class ProseMirror extends _BaseComponent {
             // allowing both: inline and block content!
             let pmTypeName = type;
             if (!(type in schema.nodes)) {
-                //schema.node(type)
-                pmTypeName = "unknown";
+                const hasBlock = content.some((child) => child.isBlock),
+                    hasInline = content.some((child) => child.isInline);
+                if (hasBlock && hasInline)
+                    // log-and-crash (operator decision): schema.node below
+                    // will throw on the invalid content mix.
+                    console.error(
+                        `${this} PROSEMIRROR: unknown type "${type}" has` +
+                            " mixed block/inline content; schema.node will likely throw.",
+                    );
+                pmTypeName = hasBlock
+                    ? "unknown_block"
+                    : inInlineContext
+                      ? "unknown_inline"
+                      : "unknown";
                 // caution: this attr should not be put into the metamodel!
                 if (attrs === null) attrs = {};
                 attrs["unknown-type"] = type;
@@ -792,7 +823,12 @@ export class ProseMirror extends _BaseComponent {
      * The former, however, is crucial to keep the identity of the
      * metamodel <-> prosemirror nodes in sync.
      */
-    _createProseMirrorNode(cacheMap /* null or a map*/, metamodelNode, schema) {
+    _createProseMirrorNode(
+        cacheMap /* null or a map*/,
+        metamodelNode,
+        schema,
+        inInlineContext = false,
+    ) {
         if (cacheMap !== null && cacheMap.has(metamodelNode))
             return cacheMap.get(metamodelNode);
 
@@ -800,6 +836,7 @@ export class ProseMirror extends _BaseComponent {
             cacheMap,
             metamodelNode,
             schema,
+            inInlineContext,
         );
 
         if (cacheMap !== null)
