@@ -17,6 +17,7 @@ const { NodeModel, toMetaModelJSON } = models as {
 // observation, not from upfront assumptions.
 const KNOWN_BLOCK_TAGS: Readonly<Record<string, string>> = {
     BODY: "doc",
+    SECTION: "section",
     P: "paragraph",
     H1: "heading-1",
     H2: "heading-2",
