@@ -15,6 +15,8 @@ const { NodeModel, toMetaModelJSON } = models as {
 
 // Operator-confirmed initial known-set (2026-07-24). Evolves from
 // observation, not from upfront assumptions.
+// SECTION stays a block: sections structure the article and their
+// children are blocks only (see block-context catch-all below).
 const KNOWN_BLOCK_TAGS: Readonly<Record<string, string>> = {
     BODY: "doc",
     SECTION: "section",
@@ -69,16 +71,35 @@ const INLINE_TAGS: ReadonlySet<string> = new Set([
     "DEL",
 ]);
 
+// Wikipedia metadata islands (Parsoid's "mw-empty-elt"): spans — and
+// occasionally ps — carrying link/meta/style children with metadata.
+// Patched through as raw atoms, preserving outerHTML verbatim, so a
+// critical examiner can see we keep the metadata. A dedicated node
+// type may replace this later; the branch is deliberately separate
+// to keep that path open (operator decision 2026-07-24).
+const MW_EMPTY_ELT_CLASS = "mw-empty-elt";
+
+// Elements matching any of these selectors are patched through as raw
+// atoms (raw_html_block / raw_html_inline by context), no descent.
+const SELECTORS_TO_RAW_HTML = [`.${MW_EMPTY_ELT_CLASS}`].join(", ");
+
 export interface IngestionReport {
     // mark-set histogram, e.g. { "[bold, italic]": 2, "[bold]": 1, "[]": 5 }
     markSets: Record<string, number>;
-    // tag -> count of raw_html_block catch-all emissions
+    // tag -> count of raw_html_block catch-all emissions (block context)
     catchAllBlocks: Record<string, number>;
+    // tag -> count of raw_html_inline catch-all emissions (inline context)
+    catchAllInline: Record<string, number>;
     // tag -> count of inline-node emissions
     inlineNodes: Record<string, number>;
+    // tag -> count of mw-empty-elt atoms emitted (metadata preserved)
+    mwEmptyElts: Record<string, number>;
     // "tag.attr" -> count of collected-but-skipped mark element attrs
     skippedMarkAttrs: Record<string, number>;
     skippedEmptyTexts: number;
+    // non-empty text nodes found directly in block context; each was
+    // wrapped in a paragraph so block containers hold blocks only
+    wrappedStrayTexts: number;
 }
 
 export interface IngestionOptions {
@@ -117,23 +138,39 @@ interface Ctx {
     transparent: ReadonlySet<string>;
 }
 
+// Emit a raw_html atom preserving the element's outerHTML verbatim.
+function emitRawHtmlAtom(el: Element, inInline: boolean, out: any[]): string {
+    const nodeTypeKey = inInline ? "raw_html_inline" : "raw_html_block";
+    const draft = newNodeDraft(nodeTypeKey);
+    draft.get("attrs").set("html", toMetaModelJSON(el.outerHTML, {}));
+    out.push(draft.metamorphose());
+    return nodeTypeKey;
+}
+
 // Ingest children of `el` directly into `out` (pass-through).
 function ingestChildrenInto(
     el: Node,
     marks: string[],
     out: any[],
     ctx: Ctx,
+    inInline: boolean,
 ): void {
     for (const child of Array.from(el.childNodes))
-        ingestNode(child, marks, out, ctx);
+        ingestNode(child, marks, out, ctx, inInline);
 }
 
 // Ingest children of `el` as the content of a new container draft.
-function fillContent(draft: any, el: Node, marks: string[], ctx: Ctx): void {
+function fillContent(
+    draft: any,
+    el: Node,
+    marks: string[],
+    ctx: Ctx,
+    inInline: boolean,
+): void {
     const content = draft.get("content");
     for (const child of Array.from(el.childNodes)) {
         const out: any[] = [];
-        ingestNode(child, marks, out, ctx);
+        ingestNode(child, marks, out, ctx, inInline);
         for (const item of out) content.push(item);
     }
 }
@@ -143,6 +180,7 @@ function ingestNode(
     marks: string[],
     out: any[],
     ctx: Ctx,
+    inInline: boolean,
 ): void {
     const { report } = ctx;
 
@@ -154,12 +192,21 @@ function ingestNode(
             return;
         }
         count(report.markSets, markSetKey(marks));
-        const draft = newNodeDraft("text");
-        draft.get("text").value = text;
-        const marksList = draft.get("marks");
+        const textDraft = newNodeDraft("text");
+        textDraft.get("text").value = text;
+        const marksList = textDraft.get("marks");
         for (const m of marks)
-            marksList.push(newGenericStyleMarkDraft(draft, m));
-        out.push(draft.metamorphose());
+            marksList.push(newGenericStyleMarkDraft(textDraft, m));
+        if (!inInline) {
+            // Stray text in block context (e.g. directly in <section>):
+            // wrap in a paragraph — block containers hold blocks only.
+            report.wrappedStrayTexts++;
+            const paragraphDraft = newNodeDraft("paragraph");
+            paragraphDraft.get("content").push(textDraft.metamorphose());
+            out.push(paragraphDraft.metamorphose());
+            return;
+        }
+        out.push(textDraft.metamorphose());
         return;
     }
 
@@ -170,21 +217,55 @@ function ingestNode(
     const el = domNode as Element;
     const tag = el.tagName;
 
+    // raw-atom shortcut first: even a <p class="mw-empty-elt"> is patched
+    // through as an atom, never expanded.
+    if (el.matches(SELECTORS_TO_RAW_HTML)) {
+        count(report.mwEmptyElts, tag);
+        emitRawHtmlAtom(el, inInline, out);
+        return;
+    }
+
+    if (ctx.transparent.has(tag)) {
+        ingestChildrenInto(el, marks, out, ctx, inInline);
+        return;
+    }
+
     const knownBlockTypeKey = KNOWN_BLOCK_TAGS[tag];
     if (knownBlockTypeKey !== undefined) {
         const draft = newNodeDraft(knownBlockTypeKey);
-        // marks do not cross block boundaries
-        fillContent(draft, el, [], ctx);
+        // marks do not cross block boundaries; textblocks have inline content
+        const childInline =
+            knownBlockTypeKey === "paragraph" ||
+            knownBlockTypeKey.startsWith("heading-");
+        fillContent(draft, el, [], ctx, childInline);
         out.push(draft.metamorphose());
         return;
     }
+
+    if (!inInline) {
+        // Block containers (doc, section, ...) hold blocks only
+        // (operator decision 2026-07-24): everything that is not a
+        // known block — inline tags, mark tags, BR, unknowns — is
+        // pruned into raw_html_block. Log-and-crash showed inline
+        // nodes under sections crash PM's unknown_block ("block*").
+        count(report.catchAllBlocks, tag);
+        console.log(
+            `[ingest] catch-all <${tag.toLowerCase()}> -> raw_html_block,` +
+                ` parent <${el.parentElement?.tagName.toLowerCase() ?? "?"}>:`,
+            el.outerHTML.slice(0, 200),
+        );
+        emitRawHtmlAtom(el, false, out);
+        return;
+    }
+
+    // --- inline context (inside paragraph/heading) ---
 
     const knownMarkStyle = KNOWN_MARK_TAGS[tag];
     if (knownMarkStyle !== undefined) {
         // collect attrs, log them, skip them (operator decision)
         for (const attr of Array.from(el.attributes))
             count(report.skippedMarkAttrs, `${tag.toLowerCase()}.${attr.name}`);
-        ingestChildrenInto(el, [...marks, knownMarkStyle], out, ctx);
+        ingestChildrenInto(el, [...marks, knownMarkStyle], out, ctx, inInline);
         return;
     }
 
@@ -193,32 +274,34 @@ function ingestNode(
         return;
     }
 
-    if (ctx.transparent.has(tag)) {
-        ingestChildrenInto(el, marks, out, ctx);
-        return;
-    }
-
     if (INLINE_TAGS.has(tag)) {
         count(report.inlineNodes, tag);
         const draft = newNodeDraft(tag.toLowerCase());
-        fillContent(draft, el, marks, ctx);
+        fillContent(draft, el, marks, ctx, true);
         out.push(draft.metamorphose());
         return;
     }
 
-    // catch-all: prune the branch, keep the raw HTML verbatim
-    count(report.catchAllBlocks, tag);
-    const draft = newNodeDraft("raw_html_block");
-    draft.get("attrs").set("html", toMetaModelJSON(el.outerHTML, {}));
-    out.push(draft.metamorphose());
+    // catch-all in inline context: never emit a block node here
+    // (Wikipedia puts link/style/meta inside paragraphs).
+    count(report.catchAllInline, tag);
+    console.log(
+        `[ingest] catch-all <${tag.toLowerCase()}> -> raw_html_inline,` +
+            ` parent <${el.parentElement?.tagName.toLowerCase() ?? "?"}>:`,
+        el.outerHTML.slice(0, 200),
+    );
+    emitRawHtmlAtom(el, true, out);
 }
 
 function logReport(report: IngestionReport): void {
     console.log("[ingest] mark sets:", report.markSets);
     console.log("[ingest] raw_html_block catch-all:", report.catchAllBlocks);
+    console.log("[ingest] raw_html_inline catch-all:", report.catchAllInline);
     console.log("[ingest] inline nodes:", report.inlineNodes);
+    console.log("[ingest] mw-empty-elt atoms:", report.mwEmptyElts);
     console.log("[ingest] skipped mark attrs:", report.skippedMarkAttrs);
     console.log("[ingest] skipped empty texts:", report.skippedEmptyTexts);
+    console.log("[ingest] wrapped stray texts:", report.wrappedStrayTexts);
 }
 
 export function ingestWikipediaDocument(
@@ -229,16 +312,19 @@ export function ingestWikipediaDocument(
         report: {
             markSets: {},
             catchAllBlocks: {},
+            catchAllInline: {},
             inlineNodes: {},
+            mwEmptyElts: {},
             skippedMarkAttrs: {},
             skippedEmptyTexts: 0,
+            wrappedStrayTexts: 0,
         },
         transparent: new Set(
             (options.transparentContainers ?? []).map((t) => t.toUpperCase()),
         ),
     };
     const draft = newNodeDraft("doc");
-    fillContent(draft, doc.body, [], ctx);
+    fillContent(draft, doc.body, [], ctx, false);
     const document = draft.metamorphose();
     logReport(ctx.report);
     return { document, report: ctx.report };

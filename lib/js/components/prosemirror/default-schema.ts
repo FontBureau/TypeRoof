@@ -98,6 +98,30 @@ export const nodes = {
         },
     } as NodeSpec,
 
+    // Inline variant of raw_html_block: catch-all in inline context
+    // (e.g. link/meta/style inside paragraphs).
+    raw_html_inline: {
+        atom: true,
+        group: "inline",
+        inline: true,
+        attrs: { html: { default: "", validate: "string" } },
+        parseDOM: [
+            {
+                tag: "span[data-raw-html-inline]",
+                getAttrs(dom: HTMLElement) {
+                    return { html: dom.innerHTML };
+                },
+            },
+        ],
+        toDOM(node: Node) {
+            const span = document.createElement("span");
+            span.setAttribute("data-raw-html-inline", "");
+            span.style.outline = "2px solid lime";
+            span.innerHTML = node.attrs.html;
+            return span;
+        },
+    } as NodeSpec,
+
     // Block companion to `unknown` (TODO above): unknown node types
     // whose content is block-level.
     unknown_block: {
