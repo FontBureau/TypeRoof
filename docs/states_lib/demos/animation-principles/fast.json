@@ -1,0 +1,320 @@
+{
+  "activeState": {
+    "t": "0",
+    "duration": "2",
+    "keyMoments": [
+      {
+        "label": "Key Moment 1",
+        "duration": "1",
+        "easing": "linear",
+        "isActive": "1",
+        "stageBackgroundColor": {
+          "instance": {
+            "R": "67.84314",
+            "G": "21.17647",
+            "B": "12.15686"
+          },
+          "colorTypeKey": "RGB"
+        }
+      }
+    ],
+    "activeActors": [
+      {
+        "instance": {
+          "label": "ground",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "y",
+                  "240"
+                ],
+                [
+                  "height",
+                  "80"
+                ],
+                [
+                  "width",
+                  "1280"
+                ]
+              ],
+              "fillColor": {
+                "instance": {
+                  "R": "34.11765",
+                  "G": "10.58824",
+                  "B": "5.88235"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "RectangleActorModel"
+      },
+      {
+        "instance": {
+          "label": "wall",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "1200"
+                ],
+                [
+                  "y",
+                  "80"
+                ],
+                [
+                  "width",
+                  "80"
+                ],
+                [
+                  "height",
+                  "160"
+                ]
+              ],
+              "fillColor": {
+                "instance": {
+                  "R": "34.11765",
+                  "G": "10.58824",
+                  "B": "5.88235"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "RectangleActorModel"
+      },
+      {
+        "instance": {
+          "label": "movement",
+          "keyMoments": [
+            {
+              "label": "initial",
+              "duration": "0",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "x",
+                  "128"
+                ],
+                [
+                  "y",
+                  "-57"
+                ]
+              ]
+            },
+            {
+              "label": "anticipation",
+              "duration": "30",
+              "easing": "easeOutCubic",
+              "numericProperties": [
+                [
+                  "x",
+                  "90"
+                ],
+                [
+                  "y",
+                  "-55"
+                ]
+              ]
+            },
+            {
+              "label": "forward",
+              "duration": "50",
+              "easing": "easeInCubic",
+              "numericProperties": [
+                [
+                  "x",
+                  "1036"
+                ],
+                [
+                  "y",
+                  "-60"
+                ]
+              ]
+            },
+            {
+              "label": "final",
+              "duration": "20",
+              "easing": "easeOutCubic",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "998"
+                ],
+                [
+                  "y",
+                  "-57"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "",
+                "keyMoments": [
+                  {
+                    "label": "initial",
+                    "duration": "0",
+                    "easing": "easeOutQuad",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "x",
+                        "0"
+                      ]
+                    ],
+                    "axesLocations": [
+                      [
+                        "wght",
+                        "700"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "slnt",
+                        "0"
+                      ]
+                    ],
+                    "fontSize": "54",
+                    "textColor": {
+                      "instance": {
+                        "R": "98.43137",
+                        "G": "92.54902",
+                        "B": "91.37255"
+                      },
+                      "colorTypeKey": "RGB"
+                    },
+                    "textRun": "Fast",
+                    "positioningVertical": "bottom"
+                  },
+                  {
+                    "label": "anticipation",
+                    "duration": "30",
+                    "easing": "easeOutCubic",
+                    "axesLocations": [
+                      [
+                        "YTDE",
+                        "-203"
+                      ],
+                      [
+                        "slnt",
+                        "0"
+                      ],
+                      [
+                        "wdth",
+                        "75"
+                      ],
+                      [
+                        "wght",
+                        "650"
+                      ]
+                    ],
+                    "fontSize": "60"
+                  },
+                  {
+                    "label": "forward",
+                    "duration": "50",
+                    "easing": "easeInCubic",
+                    "axesLocations": [
+                      [
+                        "wght",
+                        "750"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "YTDE",
+                        "-203"
+                      ],
+                      [
+                        "slnt",
+                        "-10"
+                      ]
+                    ],
+                    "fontSize": "48"
+                  },
+                  {
+                    "label": "hit",
+                    "duration": "5",
+                    "easing": "easeOutCubic",
+                    "axesLocations": [
+                      [
+                        "wght",
+                        "650"
+                      ],
+                      [
+                        "wdth",
+                        "50"
+                      ],
+                      [
+                        "YTDE",
+                        "-203"
+                      ],
+                      [
+                        "slnt",
+                        "0"
+                      ]
+                    ],
+                    "fontSize": "60"
+                  },
+                  {
+                    "label": "final",
+                    "duration": "15",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "slnt",
+                        "0"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "54"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      }
+    ],
+    "width": "1280",
+    "height": "320",
+    "zoomLevel": {
+      "type": "app-default",
+      "scaling": "100.00000"
+    },
+    "editingActor": "./2"
+  },
+  "activeLayoutKey": "MotionStage",
+  "activeFontKey": "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"
+}
