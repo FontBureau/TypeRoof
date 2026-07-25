@@ -114,26 +114,34 @@ export function initTypeSpecCoherenceFn(DEFAULT_STATE) {
         },
     );
 }
-const TypeStageModel = _BaseLayoutModel.createClass(
+
+export function createTypeStageModelVariantWithDefaults(name, DEFAULT_STATE) {
+    return _BaseLayoutModel.createClass(
+        name,
+        // The root TypeSpec
+        ["typeSpec", TypeSpecModel],
+        ["editingTypeSpec", PathModelOrEmpty],
+        // could potentially be a struct with some coherence logic etc.
+        // for the actual data
+        ["stylePatchesSource", StylePatchesMapModel],
+        ["editingStylePatch", PathModelOrEmpty],
+        ["proseMirrorSchema", ProseMirrorSchemaModel],
+        ["editingNodeSpecPath", PathModelOrEmpty],
+        ["nodeSpecToTypeSpec", NodeSpecToTypeSpecMapModel],
+        // the root of all typeSpecs
+        ["document", NodeModel],
+        ["showParameters", BooleanModel],
+        ["showNodeTypeSpecLabels", BooleanModel],
+        initTypeSpecCoherenceFn(DEFAULT_STATE),
+        // fixme: add a coherence function to ensure the link paths in nodeSpecToTypeSpec
+        // are explicitly relative, i.e. start with a "./" not "/". could eventually also
+        // start with "../"
+    );
+}
+
+const TypeStageModel = createTypeStageModelVariantWithDefaults(
     "TypeStageModel",
-    // The root TypeSpec
-    ["typeSpec", TypeSpecModel],
-    ["editingTypeSpec", PathModelOrEmpty],
-    // could potentially be a struct with some coherence logic etc.
-    // for the actual data
-    ["stylePatchesSource", StylePatchesMapModel],
-    ["editingStylePatch", PathModelOrEmpty],
-    ["proseMirrorSchema", ProseMirrorSchemaModel],
-    ["editingNodeSpecPath", PathModelOrEmpty],
-    ["nodeSpecToTypeSpec", NodeSpecToTypeSpecMapModel],
-    // the root of all typeSpecs
-    ["document", NodeModel],
-    ["showParameters", BooleanModel],
-    ["showNodeTypeSpecLabels", BooleanModel],
-    initTypeSpecCoherenceFn(DEFAULT_STATE),
-    // fixme: add a coherence function to ensure the link paths in nodeSpecToTypeSpec
-    // are explicitly relative, i.e. start with a "./" not "/". could eventually also
-    // start with "../"
+    DEFAULT_STATE,
 );
 
 class TypeStageController extends _BaseContainerComponent {
@@ -292,8 +300,11 @@ class TypeStageController extends _BaseContainerComponent {
                     relativeRootPath: typeSpecRelativePath,
                 },
                 [
-                    ['children', 'activeActors'],
-                    [widgetBus.rootPath.append("editingTypeSpec").toString(), "editingActor"],
+                    ["children", "activeActors"],
+                    [
+                        widgetBus.rootPath.append("editingTypeSpec").toString(),
+                        "editingActor",
+                    ],
                 ],
                 TypeSpecTreeEditor,
                 {
@@ -487,3 +498,4 @@ class TypeStageController extends _BaseContainerComponent {
 }
 
 export { TypeStageModel as Model, TypeStageController as Controller };
+export default { Model: TypeStageModel, Controller: TypeStageController };

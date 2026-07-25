@@ -1,0 +1,286 @@
+{
+  "typeSpec": {
+    "columnWidth": "53.0",
+    "languageTag": {
+      "language": "en"
+    },
+    "baseFontSize": "14",
+    "textColor": {
+      "instance": {
+        "L": "0.00000",
+        "C": "0.00000",
+        "alpha": "100.00000"
+      },
+      "colorTypeKey": "OKLCH"
+    },
+    "backgroundColor": {
+      "instance": {
+        "L": "100.00000",
+        "C": "0.00000",
+        "alpha": "100.00000"
+      },
+      "colorTypeKey": "OKLCH"
+    },
+    "autoOPSZ": "1",
+    "children": [
+      [
+        "0",
+        {
+          "blockMargins": {
+              "start": {
+              "unit": "baseEm",
+              "value": "2.00000"
+            }
+          },
+          "relativeFontSize": "4.571428571",
+          "autoOPSZ": "1",
+          "axesLocations": [
+            [
+              "wght",
+              "700"
+            ]
+          ],
+          "label": "Headline 1"
+        }
+      ],
+      [
+        "1",
+        {
+          "relativeFontSize": "1.785714286",
+          "autoOPSZ": "1",
+          "axesLocations": [
+            [
+              "wght",
+              "600"
+            ]
+          ],
+          "label": "Headline 2"
+        }
+      ],
+      [
+        "2",
+        {
+          "relativeFontSize": "1.285714286",
+          "autoOPSZ": "1",
+          "axesLocations": [
+            [
+              "wght",
+              "550"
+            ]
+          ],
+          "label": "Headline 3"
+        }
+      ],
+      [
+        "3",
+        {
+          "relativeFontSize": "1.285714286",
+          "autoOPSZ": "1",
+          "label": "Text 1",
+          "stylePatches": [
+            [
+              "italic",
+              "italic"
+            ],
+            [
+              "bold",
+              "bold"
+            ],
+            [
+              "bold italic",
+              "bold italic"
+            ]
+          ]
+        }
+      ],
+      [
+        "4",
+        {
+          "autoOPSZ": "1",
+          "label": "Text 2",
+          "stylePatches": [
+            [
+              "italic",
+              "italic"
+            ],
+            [
+              "bold",
+              "bold"
+            ],
+            [
+              "bold italic",
+              "bold italic"
+            ]
+          ]
+        }
+      ]
+    ],
+    "label": ""
+  },
+  "stylePatchesSource": [
+    [
+      "italic",
+      {
+        "instance": {
+          "axesLocations": [
+            [
+              "slnt",
+              {
+                "logicalValue": "min"
+              }
+            ]
+          ]
+        },
+        "stylePatchTypeKey": "SimpleStylePatch"
+      }
+    ],
+    [
+      "bold",
+      {
+        "instance": {
+          "axesLocations": [
+            [
+              "wght",
+              {
+                "logicalValue": "number",
+                "numericValue": "700"
+              }
+            ]
+          ]
+        },
+        "stylePatchTypeKey": "SimpleStylePatch"
+      }
+    ],
+    [
+      "bold italic",
+      {
+        "instance": {
+          "styles": [
+            "bold",
+            "italic"
+          ]
+        },
+        "stylePatchTypeKey": "CompositeStylePatch"
+      }
+    ]
+  ],
+  "nodeSpecToTypeSpec": [
+    [
+      "heading-1",
+      {
+          "link": "./children/0",
+          "label": "H1"
+      }
+    ],
+    [
+      "heading-2",
+      {
+          "link": "./children/1",
+          "label": "H2"
+      }
+    ],
+    [
+      "heading-3",
+      {
+          "link": "./children/2",
+          "label": "H3"
+      }
+    ],
+    [
+      "paragraph",
+      {
+          "link": "./children/3",
+          "label": "T1"
+      }
+    ],
+    [
+      "paragraph-2",
+      {
+            "link": "./children/4",
+            "label": "T2"
+      }
+    ]
+  ],
+  "document": {
+    "typeKey": "doc",
+    "content": [
+      {
+        "typeKey": "heading-1",
+        "content": [
+          {
+            "typeKey": "text",
+            "text": "Typography"
+          }
+        ]
+      }
+    ]
+  },
+  "proseMirrorSchema": {
+    "nodes": [
+      [
+        "section",
+        {
+          "content": "block*",
+          "group": "block",
+          "tag": "section",
+          "definingAsContext": "1",
+          "definingForContent": "1"
+        }
+      ],
+      [
+        "paragraph-2",
+        {
+          "content": "inline*",
+          "group": "block",
+          "tag": "p"
+        }
+      ],
+      [
+        "heading-1",
+        {
+          "content": "inline*",
+          "group": "block",
+          "tag": "h1",
+          "definingAsContext": "1",
+          "definingForContent": "1"
+        }
+      ],
+      [
+        "heading-2",
+        {
+          "content": "inline*",
+          "group": "block",
+          "tag": "h2",
+          "definingAsContext": "1",
+          "definingForContent": "1"
+        }
+      ],
+      [
+        "heading-3",
+        {
+          "content": "inline*",
+          "group": "block",
+          "tag": "h3",
+          "definingAsContext": "1",
+          "definingForContent": "1"
+        }
+      ],
+      [
+        "paragraph",
+        {
+          "content": "inline*",
+          "group": "block",
+          "tag": "p"
+        }
+      ]
+    ],
+    "marks": [
+      [
+        "strong",
+        {
+          "tag": "strong"
+        }
+      ]
+    ]
+  }
+}

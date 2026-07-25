@@ -241,7 +241,8 @@ export class _BaseTreeEditor extends _BaseComponent {
             const relativeSourcePath = event.dataTransfer.getData(
                     this.DATA_TRANSFER_TYPES.PATH,
                 ),
-                sourcePath = this.widgetBus.rootPath.appendString(relativeSourcePath);
+                sourcePath =
+                    this.widgetBus.rootPath.appendString(relativeSourcePath);
             return this._move(sourcePath, targetPath, insertPosition);
         } else if (type === this.DATA_TRANSFER_TYPES.CREATE) {
             const typeKey = event.dataTransfer.getData(
