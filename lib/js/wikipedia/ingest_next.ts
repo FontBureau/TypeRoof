@@ -77,7 +77,12 @@ const INLINE_TAGS: ReadonlySet<string> = new Set([
 // critical examiner can see we keep the metadata. A dedicated node
 // type may replace this later; the branch is deliberately separate
 // to keep that path open (operator decision 2026-07-24).
+
+// elements witht he class .mw-empty-elt can safely be ignored for our
+// purposes, probably if we can't make them transparent we will skip
+// them on ingest.
 const MW_EMPTY_ELT = ".mw-empty-elt",
+    // these are the cite links into the footnotes, e.g. [5]
     MW_INLINE_CITATION = `sup[typeof="mw:Extension/ref"]`;
 // Elements matching any of these selectors are patched through as raw
 // atoms (raw_html_block / raw_html_inline by context), no descent.
