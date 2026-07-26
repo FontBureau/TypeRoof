@@ -284,12 +284,14 @@ class ProsemirrorMarkView {
     constructor(widgetBus, subscriptionsId, mark /*, view, inline*/) {
         this.widgetBus = widgetBus;
         this._subscriptionsId = subscriptionsId;
-        // TODO: a more direct API in widgetBus for this wouldn't hurt
-        // e.g. getTagForType
-        const // mmNodeSpec = this.widgetBus.getLinked(node.type.schema).get('nodes').get(node.type.name)
-            tag = "span",
+        // Reserved marks (e.g. generic-style) are not in the metamodel
+        // marks map; fall back to the legacy span/data-style-name shape.
+        const tag = this._getTag(mark),
             element = widgetBus.domTool.createElement(tag, {
-                "data-style-name": mark.attrs["data-style-name"],
+                "data-mark-type": mark.type.name,
+                ...(mark.type.name === "generic-style"
+                    ? { "data-style-name": mark.attrs["data-style-name"] }
+                    : {}),
             });
         this.dom = element;
         this._stylerDOM = element;
@@ -302,6 +304,18 @@ class ProsemirrorMarkView {
         if (subscriptionsWidget === null) return;
         subscriptionsWidget.subscribeMark(this._stylerDOM, mark);
     }
+
+    _getTag(mark) {
+        const fallback = "span";
+        const mmSchema = this.widgetBus.getLinked(mark.type.schema);
+        if (!mmSchema) return fallback;
+        const mmMarks = mmSchema.get("marks");
+        if (!mmMarks.has(mark.type.name)) return fallback;
+        const mmMarkSpec = mmMarks.get(mark.type.name);
+        if (mmMarkSpec.get("tag").isEmpty) return fallback;
+        return mmMarkSpec.get("tag").value;
+    }
+
     destroy() {
         this.widgetBus
             .getWidgetById(this._subscriptionsId, null)
@@ -964,6 +978,30 @@ export class ProseMirror extends _BaseComponent {
                     }
                 }
                 newProps.nodeViews[nodeName] = this._createGenericNodeView;
+            }
+
+            const oldMarkViews = this.view.props.markViews || {},
+                schemaMarks = proseMirrorSchema.get("marks");
+            for (const markName of schemaMarks.keys()) {
+                if (markName in oldMarkViews)
+                    // Nothing to do
+                    continue;
+
+                // this mark requires a new markView
+                if (!("markViews" in newProps)) {
+                    newProps.markViews = {};
+                    for (const [oldMarkName, oldMarkView] of Object.entries(
+                        oldMarkViews,
+                    )) {
+                        // Filter out removed markViews, but keep reserved
+                        // marks (e.g. generic-style): check the built PM
+                        // schema, not the metamodel map.
+                        if (!(oldMarkName in schema.marks)) continue;
+                        // Copy still required
+                        newProps.markViews[oldMarkName] = oldMarkView;
+                    }
+                }
+                newProps.markViews[markName] = this._createGenericMarkView;
             }
 
             // NOTE: it is required to rebuild all of the proseMirror doc
