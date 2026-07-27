@@ -107,11 +107,41 @@ export interface IngestionReport {
     wrappedStrayTexts: number;
 }
 
+export interface SemanticMark {
+    // mark typeKey in the schema
+    name: string;
+    // attribute names to harvest from the DOM element (1:1 attr-name
+    // mapping, as created by createProseMirrorSchemaFromMetaModel)
+    attrs: string[];
+}
+
 export interface IngestionOptions {
     // Tag names treated as transparent containers (children pass
     // through, no node emitted). Initially empty — the transparency
     // decision is deferred until real articles have been examined.
     transparentContainers?: string[];
+    // The metamodel schema (ProseMirrorSchemaModel): marks it defines
+    // are emitted for their tags (see semanticMarksFromSchema),
+    // everything else falls back to generic-style.
+    proseMirrorSchema?: any;
+}
+
+// Derive htmlTag (lowercase) -> SemanticMark from the metamodel schema
+// (ProseMirrorSchemaModel), mirroring the generated parseDOM rules.
+// Marks without a tag are not reachable by ingest.
+export function semanticMarksFromSchema(
+    proseMirrorSchema: any,
+): Record<string, SemanticMark> {
+    const result: Record<string, SemanticMark> = {};
+    for (const [name, markSpec] of proseMirrorSchema.get("marks")) {
+        const tag = markSpec.get("tag");
+        if (tag.isEmpty || tag.value === "") continue;
+        result[tag.value.toLowerCase()] = {
+            name,
+            attrs: Array.from(markSpec.get("attrs").keys()),
+        };
+    }
+    return result;
 }
 
 function newNodeDraft(typeKey: string): any {
@@ -130,17 +160,42 @@ function newGenericStyleMarkDraft(nodeDraft: any, styleName: string): any {
     return markDraft;
 }
 
-function markSetKey(marks: string[]): string {
-    return `[${[...new Set(marks)].sort().join(", ")}]`;
+function newSemanticMarkDraft(
+    nodeDraft: any,
+    name: string,
+    attrs: Record<string, string>,
+): any {
+    const marksList = nodeDraft.get("marks");
+    const markDraft = marksList.constructor.Model.createPrimalDraft({});
+    markDraft.get("typeKey").value = name;
+    const attrsDraft = markDraft.get("attrs");
+    for (const [attrName, value] of Object.entries(attrs))
+        attrsDraft.set(attrName, toMetaModelJSON(value, {}));
+    return markDraft;
+}
+
+function markSetKey(marks: MarkDesc[]): string {
+    const names = marks.map((mark) =>
+        mark.kind === "style" ? mark.styleName : mark.name,
+    );
+    return `[${[...new Set(names)].sort().join(", ")}]`;
 }
 
 function count(record: Record<string, number>, key: string): void {
     record[key] = (record[key] ?? 0) + 1;
 }
 
+// Marks accumulate while descending: either a style name
+// (expressed via the generic-style mark) or a schema-defined
+// (semantic) mark with its harvested attrs.
+type MarkDesc =
+    | { kind: "style"; styleName: string }
+    | { kind: "mark"; name: string; attrs: Record<string, string> };
+
 interface Ctx {
     report: IngestionReport;
     transparent: ReadonlySet<string>;
+    semanticMarks: Readonly<Record<string, SemanticMark>>;
 }
 
 // Emit a raw_html atom preserving the element's outerHTML verbatim.
@@ -155,7 +210,7 @@ function emitRawHtmlAtom(el: Element, inInline: boolean, out: any[]): string {
 // Ingest children of `el` directly into `out` (pass-through).
 function ingestChildrenInto(
     el: Node,
-    marks: string[],
+    marks: MarkDesc[],
     out: any[],
     ctx: Ctx,
     inInline: boolean,
@@ -168,7 +223,7 @@ function ingestChildrenInto(
 function fillContent(
     draft: any,
     el: Node,
-    marks: string[],
+    marks: MarkDesc[],
     ctx: Ctx,
     inInline: boolean,
 ): void {
@@ -182,7 +237,7 @@ function fillContent(
 
 function ingestNode(
     domNode: Node,
-    marks: string[],
+    marks: MarkDesc[],
     out: any[],
     ctx: Ctx,
     inInline: boolean,
@@ -201,7 +256,11 @@ function ingestNode(
         textDraft.get("text").value = text;
         const marksList = textDraft.get("marks");
         for (const m of marks)
-            marksList.push(newGenericStyleMarkDraft(textDraft, m));
+            marksList.push(
+                m.kind === "style"
+                    ? newGenericStyleMarkDraft(textDraft, m.styleName)
+                    : newSemanticMarkDraft(textDraft, m.name, m.attrs),
+            );
         if (!inInline) {
             // Stray text in block context (e.g. directly in <section>):
             // wrap in a paragraph — block containers hold blocks only.
@@ -267,10 +326,41 @@ function ingestNode(
 
     const knownMarkStyle = KNOWN_MARK_TAGS[tag];
     if (knownMarkStyle !== undefined) {
-        // collect attrs, log them, skip them (operator decision)
+        const semanticMark = ctx.semanticMarks[tag.toLowerCase()];
+        if (semanticMark !== undefined) {
+            // Emit the schema-defined mark; harvest the attrs declared
+            // by the mark spec, count and skip the rest.
+            const attrs: Record<string, string> = {};
+            for (const attrName of semanticMark.attrs) {
+                const value = el.getAttribute(attrName);
+                if (value !== null) attrs[attrName] = value;
+            }
+            for (const attr of Array.from(el.attributes))
+                if (!(attr.name in attrs))
+                    count(
+                        report.skippedMarkAttrs,
+                        `${tag.toLowerCase()}.${attr.name}`,
+                    );
+            ingestChildrenInto(
+                el,
+                [...marks, { kind: "mark", name: semanticMark.name, attrs }],
+                out,
+                ctx,
+                inInline,
+            );
+            return;
+        }
+        // generic-style fallback: collect attrs, log them, skip them
+        // (operator decision)
         for (const attr of Array.from(el.attributes))
             count(report.skippedMarkAttrs, `${tag.toLowerCase()}.${attr.name}`);
-        ingestChildrenInto(el, [...marks, knownMarkStyle], out, ctx, inInline);
+        ingestChildrenInto(
+            el,
+            [...marks, { kind: "style", styleName: knownMarkStyle }],
+            out,
+            ctx,
+            inInline,
+        );
         return;
     }
 
@@ -327,6 +417,9 @@ export function ingestWikipediaDocument(
         transparent: new Set(
             (options.transparentContainers ?? []).map((t) => t.toUpperCase()),
         ),
+        semanticMarks: options.proseMirrorSchema
+            ? semanticMarksFromSchema(options.proseMirrorSchema)
+            : {},
     };
     const draft = newNodeDraft("doc");
     fillContent(draft, doc.body, [], ctx, false);
