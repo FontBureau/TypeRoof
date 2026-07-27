@@ -1445,7 +1445,8 @@ select and drag
 
 .ui_node_spec_map-tools,
 .ui_style_patches_map-tools,
-.ui_links_map-tools {
+.ui_links_map-tools,
+.ui_mark_spec_map-tools {
     & > * {
         display: initial;
     }

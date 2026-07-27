@@ -14,13 +14,13 @@ import { Path } from "../../../metamodel.mjs";
 import { _NOTDEF, getFallback } from "./defaults.mjs";
 import { UITypeDrivenContainer } from "../../type-driven-ui-basics.mjs";
 import { genericTypeToUIElement } from "../../type-driven-ui.mjs";
-import { NODESPEC_PPS_MAP } from "./pps-maps.mjs";
+import { NODESPEC_PPS_MAP, MARKSPEC_PPS_MAP } from "./pps-maps.mjs";
 
 /**
  * Here's a good lesson, compared to typeSpecGetDefaults this is trivial,
  * because we don't have liveProperties
  */
-function nodeSpecGetDefaults(
+function specGetDefaults(
     ppsRecord,
     fieldName,
     /*BaseModelType.*/ modelDefaultValue = _NOTDEF,
@@ -29,16 +29,31 @@ function nodeSpecGetDefaults(
     return getFallback(fullKey, modelDefaultValue);
 }
 
-export class NodeSpecPropertiesManager extends _BaseByPathContainerComponent {
-    constructor(widgetBus, _zones) {
+/**
+ * Shared implementation for the NodeSpec and MarkSpec properties
+ * managers, configured via the constructor arguments of the subclasses.
+ */
+class _BaseSpecPropertiesManager extends _BaseByPathContainerComponent {
+    constructor(
+        widgetBus,
+        _zones,
+        className,
+        pathEntryName,
+        specLabel,
+        specDocURL,
+        ppsMap,
+    ) {
         super(
             widgetBus,
             _zones,
-            "ui_node_spec-properties_manager", // className
-            "nodeSpecPath", // pathEntryName
+            className,
+            pathEntryName,
             "childrenOrderedMap", // childrenMapEntryName
             null, // typeKeyName=null
         );
+        this._specLabel = specLabel;
+        this._specDocURL = specDocURL;
+        this._ppsMap = ppsMap;
     }
 
     _createEmptyWrappers() {
@@ -49,7 +64,7 @@ export class NodeSpecPropertiesManager extends _BaseByPathContainerComponent {
                 StaticTag,
                 "span",
                 {},
-                "(Select a NodeSpec)",
+                `(Select a ${this._specLabel})`,
             ],
         ];
         return widgets.map((widgetArgs) =>
@@ -69,7 +84,7 @@ export class NodeSpecPropertiesManager extends _BaseByPathContainerComponent {
                     StaticTag,
                     "h3",
                     {},
-                    `NodeSpec: ${key}`,
+                    `${this._specLabel}: ${key}`,
                 ],
                 [
                     {
@@ -83,9 +98,9 @@ export class NodeSpecPropertiesManager extends _BaseByPathContainerComponent {
                         <a
                             target="_blank"
                             rel="noreferrer"
-                            href="https://prosemirror.net/docs/ref/#model.NodeSpec"
+                            href={this._specDocURL}
                         >
-                            ProseMirror interface NodeSpec
+                            ProseMirror interface {this._specLabel}
                         </a>
                         .
                     </p>,
@@ -93,7 +108,7 @@ export class NodeSpecPropertiesManager extends _BaseByPathContainerComponent {
             ];
 
         const injectable = {
-            getDefaults: nodeSpecGetDefaults,
+            getDefaults: specGetDefaults,
             // Using updateDefaultsDependencies (with typeSpecProperties@) in here causes an error:
             //          via VideoproofController constructor initial resources: Error:
             //          KEY ERROR not found identifier "typeSpecProperties@/activeState/typeSpec/textColor"
@@ -112,7 +127,7 @@ export class NodeSpecPropertiesManager extends _BaseByPathContainerComponent {
             UITypeDrivenContainer,
             this._zones,
             injectable,
-            NODESPEC_PPS_MAP,
+            this._ppsMap,
         ]);
         return widgets.map((widgetArgs) =>
             this._initWrapper(this._childrenWidgetBus, ...widgetArgs),
@@ -120,7 +135,37 @@ export class NodeSpecPropertiesManager extends _BaseByPathContainerComponent {
     }
 }
 
+export class NodeSpecPropertiesManager extends _BaseSpecPropertiesManager {
+    constructor(widgetBus, _zones) {
+        super(
+            widgetBus,
+            _zones,
+            "ui_node_spec-properties_manager", // className
+            "nodeSpecPath", // pathEntryName
+            "NodeSpec", // specLabel
+            "https://prosemirror.net/docs/ref/#model.NodeSpec", // specDocURL
+            NODESPEC_PPS_MAP,
+        );
+    }
+}
+
+export class MarkSpecPropertiesManager extends _BaseSpecPropertiesManager {
+    constructor(widgetBus, _zones) {
+        super(
+            widgetBus,
+            _zones,
+            "ui_mark_spec-properties_manager", // className
+            "markSpecPath", // pathEntryName
+            "MarkSpec", // specLabel
+            "https://prosemirror.net/docs/ref/#model.MarkSpec", // specDocURL
+            MARKSPEC_PPS_MAP,
+        );
+    }
+}
+
 // based on a copy of UIStylePatchesMap
+// Also the base of UIMarkSpecMap, hence the SPEC_LABEL/PATH_ENTRY_NAME
+// configuration statics.
 export class UINodeSpecMap extends _UIBaseMap {
     static ROOT_CLASS = `ui_node_spec_map`;
     static BASE_CLASSES = [...super.BASE_CLASSES, super.ROOT_CLASS];
@@ -128,14 +173,16 @@ export class UINodeSpecMap extends _UIBaseMap {
     static VISUAL_ORDER_STRATEGY = _UIBaseMap.VISUAL_ORDER_STRATEGY_NATURAL;
     static KEY_ADD_BUTTON_LABEL = "create";
     static KEY_DATA_TRANSFER_TYPE =
-        DATA_TRANSFER_TYPES.PROSEMIROOR_NODE_SPEC_PATH;
+        DATA_TRANSFER_TYPES.PROSEMIRROR_NODE_SPEC_PATH;
+    static SPEC_LABEL = "NodeSpec";
+    static PATH_ENTRY_NAME = "nodeSpecPath";
 
     get _initialWidgets() {
         const wasteBasket = [
             { zone: "local" },
             [[".", "rootCollection"]],
             WasteBasketDropTarget,
-            "Delete NodeSpec",
+            `Delete ${this.constructor.SPEC_LABEL}`,
             "",
             [this.constructor.KEY_DATA_TRANSFER_TYPE],
         ];
@@ -151,7 +198,12 @@ export class UINodeSpecMap extends _UIBaseMap {
                 zone: keyId,
             },
             dependencyMappings = [
-                [this.widgetBus.getExternalName("nodeSpecPath"), "activePath"],
+                [
+                    this.widgetBus.getExternalName(
+                        this.constructor.PATH_ENTRY_NAME,
+                    ),
+                    "activePath",
+                ],
             ],
             Constructor = MapSelectButton,
             args = [
@@ -173,11 +225,19 @@ export class UINodeSpecMap extends _UIBaseMap {
     _onClickHandler(key) {
         this._changeState(() => {
             const path = Path.fromParts(".", key),
-                selected = this.getEntry("nodeSpecPath");
+                selected = this.getEntry(this.constructor.PATH_ENTRY_NAME);
             // this is a toggle
             if (!selected.isEmpty && selected.value.equals(path))
                 selected.clear();
             else selected.value = path;
         });
     }
+}
+
+export class UIMarkSpecMap extends UINodeSpecMap {
+    static ROOT_CLASS = `ui_mark_spec_map`;
+    static KEY_DATA_TRANSFER_TYPE =
+        DATA_TRANSFER_TYPES.PROSEMIRROR_MARK_SPEC_PATH;
+    static SPEC_LABEL = "MarkSpec";
+    static PATH_ENTRY_NAME = "markSpecPath";
 }

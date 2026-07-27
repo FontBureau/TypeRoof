@@ -47,6 +47,8 @@ import { TypeStageProseMirrorContext } from "./prosemirror.typeroof.jsx";
 import {
     UINodeSpecMap,
     NodeSpecPropertiesManager,
+    UIMarkSpecMap,
+    MarkSpecPropertiesManager,
 } from "./node-specs.typeroof.jsx";
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 import { UIDocumentViewer } from "./viewer.typeroof.jsx";
@@ -127,6 +129,7 @@ export function createTypeStageModelVariantWithDefaults(name, DEFAULT_STATE) {
         ["editingStylePatch", PathModelOrEmpty],
         ["proseMirrorSchema", ProseMirrorSchemaModel],
         ["editingNodeSpecPath", PathModelOrEmpty],
+        ["editingMarkSpecPath", PathModelOrEmpty],
         ["nodeSpecToTypeSpec", NodeSpecToTypeSpecMapModel],
         // the root of all typeSpecs
         ["document", NodeModel],
@@ -170,6 +173,9 @@ class TypeStageController extends _BaseContainerComponent {
             nodeSpecManagerContainer = widgetBus.domTool.createElement("div", {
                 class: "node_spec-manager",
             }),
+            markSpecManagerContainer = widgetBus.domTool.createElement("div", {
+                class: "mark_spec-manager",
+            }),
             // To have this first within editorManagerContainer.
             proseMirrorEditorMenuContainer = widgetBus.domTool.createElement(
                 "div",
@@ -188,6 +194,7 @@ class TypeStageController extends _BaseContainerComponent {
                 ["properties-manager", propertiesManagerContainer],
                 ["style_patches-manager", stylePatchesManagerContainer],
                 ["node_spec-manager", nodeSpecManagerContainer],
+                ["mark_spec-manager", markSpecManagerContainer],
                 ["editor-manager", editorManagerContainer],
                 ["prose-mirror-editor-menu", proseMirrorEditorMenuContainer],
             ]),
@@ -467,6 +474,36 @@ class TypeStageController extends _BaseContainerComponent {
                 [], // eventHandlers
                 "NodeSpec to TypeSpec",
                 true, // dragEntries (dragAndDrop)
+            ],
+            [
+                { zone: "main" },
+                [],
+                Collapsible,
+                "MarkSpecs",
+                markSpecManagerContainer,
+            ],
+            [
+                { zone: "mark_spec-manager" },
+                [
+                    ["./proseMirrorSchema/marks", "childrenOrderedMap"],
+                    ["editingMarkSpecPath", "markSpecPath"],
+                ],
+                UIMarkSpecMap,
+                new Map([...zones, ["main", markSpecManagerContainer]]),
+                [], // eventHandlers
+                "MarkSpec-Map",
+                true, // dragEntries (dragAndDrop)
+            ],
+            [
+                {
+                    zone: "mark_spec-manager",
+                },
+                [
+                    ["./proseMirrorSchema/marks", "childrenOrderedMap"],
+                    ["editingMarkSpecPath", "markSpecPath"],
+                ],
+                MarkSpecPropertiesManager,
+                new Map([...zones, ["main", markSpecManagerContainer]]),
             ],
         ];
         this._initWidgets(widgets);
