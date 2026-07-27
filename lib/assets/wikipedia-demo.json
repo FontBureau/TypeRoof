@@ -45,32 +45,32 @@
           "autoOPSZ": "1",
           "label": "T1",
           "stylePatches": [
-            ["italic", "italic"],
-            ["bold", "bold"],
-            ["bold italic", "bold italic"],
-            ["link", "link"],
-            ["abbr", "abbr"],
-            ["bdi", "bdi"],
-            ["cite", "cite"],
-            ["code", "code"],
-            ["small", "small"],
-            ["sup", "sup"]
+            ["italic", {"stylePatch": "italic"}],
+            ["bold", {"stylePatch": "bold"}],
+            ["bold italic", {"stylePatch": "bold italic"}],
+            ["link", {"stylePatch": "link"}],
+            ["abbr", {"stylePatch": "abbr"}],
+            ["bdi", {"stylePatch": "bdi"}],
+            ["cite", {"stylePatch": "cite"}],
+            ["code", {"stylePatch": "code"}],
+            ["small", {"stylePatch": "small"}],
+            ["sup", {"stylePatch": "sup"}]
           ]
       }],
       ["4", {
           "autoOPSZ": "1",
           "label": "T2",
           "stylePatches": [
-            ["italic", "italic"],
-            ["bold", "bold"],
-            ["bold italic", "bold italic"],
-            ["link", "link"],
-            ["abbr", "abbr"],
-            ["bdi", "bdi"],
-            ["cite", "cite"],
-            ["code", "code"],
-            ["small", "small"],
-            ["sup", "sup"]
+            ["italic", {"stylePatch": "italic"}],
+            ["bold", {"stylePatch": "bold"}],
+            ["bold italic", {"stylePatch": "bold italic"}],
+            ["link", {"stylePatch": "link"}],
+            ["abbr", {"stylePatch": "abbr"}],
+            ["bdi", {"stylePatch": "bdi"}],
+            ["cite", {"stylePatch": "cite"}],
+            ["code", {"stylePatch": "code"}],
+            ["small", {"stylePatch": "small"}],
+            ["sup", {"stylePatch": "sup"}]
           ]
       }]
     ],

@@ -47,6 +47,8 @@ import {
     getTypeSpecsMethod,
 } from "./integration.typeroof.jsx";
 
+import { getStylePatchLinkForMark } from "../type-spec-models.mjs";
+
 export function typeSpecGetFontMethod(changedMap, propertyValuesMap) {
     const fontPPSRecord = ProcessedPropertiesSystemMap.createSimpleRecord(
         SPECIFIC,
@@ -823,6 +825,22 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         return dependencies;
     }
 
+    _getTypeSpecForPropertiesId(typeSpecPropertiesId) {
+        const typeSpecPath = typeSpecPropertiesId.slice(
+            "typeSpecProperties@".length,
+        );
+        return this.getEntry(Path.fromString(typeSpecPath));
+    }
+
+    _getStylePatchLinkForMark(typeSpecProperties, mark) {
+        return getStylePatchLinkForMark(
+            this._getTypeSpecForPropertiesId(typeSpecProperties).get(
+                "stylePatches",
+            ),
+            mark,
+        );
+    }
+
     _getStyleLinkPropertiesId(typeSpecProperties, styleLink) {
         const typeSpecPath = typeSpecProperties.slice(
                 "typeSpecProperties@".length,
@@ -908,7 +926,10 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             ),
             styleLinkPropertiesId = this._getStyleLinkPropertiesId(
                 parentSubscription.typeSpecProperties,
-                mark.attrs["data-style-name"],
+                this._getStylePatchLinkForMark(
+                    parentSubscription.typeSpecProperties,
+                    mark,
+                ),
             ),
             styleSubscription = this._createStyleSubscription(
                 domElement,
@@ -1284,7 +1305,10 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                         this._styleSubscribers.get(styleDOMElement),
                     styleLinkPropertiesId = this._getStyleLinkPropertiesId(
                         subscription.typeSpecProperties,
-                        oldStyleSubscription.mark.attrs["data-style-name"],
+                        this._getStylePatchLinkForMark(
+                            subscription.typeSpecProperties,
+                            oldStyleSubscription.mark,
+                        ),
                     );
                 requiresUpdate.set(styleDOMElement, [
                     subscription,
@@ -1300,7 +1324,10 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             const { parentSubscription, mark } = styleSubscription,
                 styleLinkPropertiesId = this._getStyleLinkPropertiesId(
                     parentSubscription.typeSpecProperties,
-                    mark.attrs["data-style-name"],
+                    this._getStylePatchLinkForMark(
+                        parentSubscription.typeSpecProperties,
+                        mark,
+                    ),
                 );
             if (
                 styleLinkPropertiesId ===

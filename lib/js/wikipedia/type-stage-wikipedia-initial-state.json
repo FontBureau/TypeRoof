@@ -27,7 +27,7 @@
         "0",
         {
           "blockMargins": {
-              "start": {
+            "start": {
               "unit": "baseEm",
               "value": "2.00000"
             }
@@ -80,15 +80,21 @@
           "stylePatches": [
             [
               "italic",
-              "italic"
+              {
+                "stylePatch": "italic"
+              }
             ],
             [
               "bold",
-              "bold"
+              {
+                "stylePatch": "bold"
+              }
             ],
             [
               "bold italic",
-              "bold italic"
+              {
+                "stylePatch": "bold italic"
+              }
             ]
           ]
         }
@@ -101,15 +107,21 @@
           "stylePatches": [
             [
               "italic",
-              "italic"
+              {
+                "stylePatch": "italic"
+              }
             ],
             [
               "bold",
-              "bold"
+              {
+                "stylePatch": "bold"
+              }
             ],
             [
               "bold italic",
-              "bold italic"
+              {
+                "stylePatch": "bold italic"
+              }
             ]
           ]
         }
@@ -168,36 +180,36 @@
     [
       "heading-1",
       {
-          "link": "./children/0",
-          "label": "H1"
+        "link": "./children/0",
+        "label": "H1"
       }
     ],
     [
       "heading-2",
       {
-          "link": "./children/1",
-          "label": "H2"
+        "link": "./children/1",
+        "label": "H2"
       }
     ],
     [
       "heading-3",
       {
-          "link": "./children/2",
-          "label": "H3"
+        "link": "./children/2",
+        "label": "H3"
       }
     ],
     [
       "paragraph",
       {
-          "link": "./children/3",
-          "label": "T1"
+        "link": "./children/3",
+        "label": "T1"
       }
     ],
     [
       "paragraph-2",
       {
-            "link": "./children/4",
-            "label": "T2"
+        "link": "./children/4",
+        "label": "T2"
       }
     ]
   ],

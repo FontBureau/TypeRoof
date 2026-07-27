@@ -68,7 +68,7 @@ export class StyleLinksMeta extends _BaseDynamicMapContainerComponent {
                 this.widgetBus.getExternalName("stylePatchesSource"),
             ),
             keyItem = this.getEntry(rootPath),
-            key = keyItem.value;
+            key = keyItem.get("stylePatch").value;
         // key is an empty string in case of (NULL-STYLE)
         // in case key is not in stylePatchesSource ("miracle"):
         // "bold" is available
