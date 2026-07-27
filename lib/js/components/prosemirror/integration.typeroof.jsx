@@ -350,6 +350,94 @@ const UNKNOWN_NODE_TYPES = new Set([
     "unknown_inline",
 ]);
 
+// Convert an AttrValidateModel type to a ProseMirror `validate` string
+// (see model.AttributeSpec.validate), or null when ProseMirror can't
+// express it ("no-validation", "application-specific").
+function _attrValidateToPMValidate(validateType) {
+    switch (validateType) {
+        case "number":
+        case "string":
+        case "boolean":
+        case "null":
+        case "undefined":
+            return validateType;
+        default:
+            return null;
+    }
+}
+
+// Attr values live in the metamodel (AttributeSpecModel.default) and in
+// the DOM (getAttribute) as strings; coerce them to the validated type.
+function _coerceAttrValue(validateType, value) {
+    switch (validateType) {
+        case "number":
+            return Number(value);
+        case "boolean":
+            return value === "true";
+        case "null":
+            return null;
+        case "undefined":
+            return undefined;
+        default:
+            return value;
+    }
+}
+
+// Create ProseMirror attrs (Object<AttributeSpec>) from a metamodel
+// AttributeSpecMapModel. Returns null when no attributes are defined.
+function _createPMAttrs(attributeSpecMap) {
+    if (attributeSpecMap.size === 0) return null;
+    const attrs = {};
+    for (const [name, attributeSpec] of attributeSpecMap) {
+        const validateType = attributeSpec.get("validate").get("type").value,
+            attr = {
+                default: _coerceAttrValue(
+                    validateType,
+                    attributeSpec.get("default").value,
+                ),
+            },
+            validate = _attrValidateToPMValidate(validateType);
+        if (validate !== null) attr.validate = validate;
+        attrs[name] = attr;
+    }
+    return attrs;
+}
+
+// Read the declared attributes from a DOM element. Absent attributes are
+// left out, so the ProseMirror defaults apply. Attribute names map 1:1
+// to DOM attribute names.
+function _createGetAttrs(attributeSpecMap) {
+    return (dom) => {
+        const attrs = {};
+        for (const [name, attributeSpec] of attributeSpecMap) {
+            if (!dom.hasAttribute(name)) continue;
+            attrs[name] = _coerceAttrValue(
+                attributeSpec.get("validate").get("type").value,
+                dom.getAttribute(name),
+            );
+        }
+        return attrs;
+    };
+}
+
+// Serialize the declared attributes into the DOMOutputSpec, so HTML
+// output round-trips through the generated parseDOM rules.
+function _createToDOM(tag, attributeSpecMap) {
+    if (attributeSpecMap.size === 0)
+        return () => {
+            return [tag, 0];
+        };
+    return (node) => {
+        const attrs = {};
+        for (const name of attributeSpecMap.keys()) {
+            const value = node.attrs[name];
+            if (value === null || value === undefined) continue;
+            attrs[name] = value;
+        }
+        return [tag, attrs, 0];
+    };
+}
+
 export function createProseMirrorSchemaFromMetaModel(
     /*SchemaSpec: */ proseMirrorDefaultSchema,
     /*ProseMirrorSchemaModel*/ proseMirrorSchema,
@@ -371,12 +459,8 @@ export function createProseMirrorSchemaFromMetaModel(
         }
         const newNode = {};
         for (const [key, value] of nodeSpec) {
-            if (key === "attrs") {
-                console.warn(
-                    `PROSEMIRROR SKIPPING nodeSpec property "${key}" in dynamic schema definition`,
-                );
-                continue;
-            }
+            // handled below, after the 1:1 mappings
+            if (key === "attrs") continue;
             if (value.isEmpty) continue;
             if (key === "tag") continue;
             // => for 1:1 mappings
@@ -391,11 +475,15 @@ export function createProseMirrorSchemaFromMetaModel(
         } else {
             // NOTE: this does not at all control any collisions of
             // tag names! E.g. when two nodes use the tag-name p
-            newNode.parseDOM = [{ tag: tag.value }];
-            newNode.toDOM = () => {
-                return [tag.value, 0];
-            };
+            const attributeSpecMap = nodeSpec.get("attrs"),
+                parseDOMItem = { tag: tag.value };
+            if (attributeSpecMap.size)
+                parseDOMItem.getAttrs = _createGetAttrs(attributeSpecMap);
+            newNode.parseDOM = [parseDOMItem];
+            newNode.toDOM = _createToDOM(tag.value, attributeSpecMap);
         }
+        const pmAttrs = _createPMAttrs(nodeSpec.get("attrs"));
+        if (pmAttrs !== null) newNode.attrs = pmAttrs;
         schemaSpec.nodes[name] = newNode;
     }
     // Adding the proseMirrorDefaultSchema nodes after our nodes.
@@ -416,12 +504,8 @@ export function createProseMirrorSchemaFromMetaModel(
         }
         const newMark = {};
         for (const [key, value] of markSpec) {
-            if (key === "attrs") {
-                console.warn(
-                    `PROSEMIRROR SKIPPING markSpec property "${key}" in dynamic schema definition`,
-                );
-                continue;
-            }
+            // handled below, after the 1:1 mappings
+            if (key === "attrs") continue;
             if (value.isEmpty) continue;
             if (key === "tag") continue;
             // => for 1:1 mappings
@@ -435,11 +519,15 @@ export function createProseMirrorSchemaFromMetaModel(
         } else {
             // NOTE: this does not at all control any collisions of
             // tag names! E.g. when two nodes use the tag-name p
-            newMark.parseDOM = [{ tag: tag.value }];
-            newMark.toDOM = () => {
-                return [tag.value, 0];
-            };
+            const attributeSpecMap = markSpec.get("attrs"),
+                parseDOMItem = { tag: tag.value };
+            if (attributeSpecMap.size)
+                parseDOMItem.getAttrs = _createGetAttrs(attributeSpecMap);
+            newMark.parseDOM = [parseDOMItem];
+            newMark.toDOM = _createToDOM(tag.value, attributeSpecMap);
         }
+        const pmAttrs = _createPMAttrs(markSpec.get("attrs"));
+        if (pmAttrs !== null) newMark.attrs = pmAttrs;
         schemaSpec.marks[name] = newMark;
     }
     Object.assign(schemaSpec.marks, proseMirrorDefaultSchema.marks);
