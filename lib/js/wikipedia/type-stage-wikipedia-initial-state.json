@@ -292,6 +292,23 @@
         {
           "tag": "strong"
         }
+      ],
+      [
+        "link",
+        {
+          "attrs": [
+            [
+              "href",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ],
+          "tag": "a"
+        }
       ]
     ]
   }

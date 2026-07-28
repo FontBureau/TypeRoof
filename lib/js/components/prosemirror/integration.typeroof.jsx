@@ -273,7 +273,7 @@ class ProsemirrorNodeView {
     }
 }
 
-class ProsemirrorMarkView {
+export class ProsemirrorMarkView {
     // https://prosemirror.net/docs/ref/#view.MarkViewConstructor
     // type MarkViewConstructor = fn(
     //     mark: Mark,
@@ -296,6 +296,7 @@ class ProsemirrorMarkView {
         this.dom = element;
         this._stylerDOM = element;
         this.contentDOM = element;
+        this._applyDeclaredAttrs(mark);
 
         const subscriptionsWidget = widgetBus.getWidgetById(
             this._subscriptionsId,
@@ -303,6 +304,51 @@ class ProsemirrorMarkView {
         );
         if (subscriptionsWidget === null) return;
         subscriptionsWidget.subscribeMark(this._stylerDOM, mark);
+    }
+
+    // Set/remove the declared mark attrs on the DOM element (1:1
+    // attr-name mapping, like the generated toDOM). Reserved marks
+    // (generic-style) handle their attrs separately.
+    _applyDeclaredAttrs(mark) {
+        if (mark.type.name === "generic-style") return;
+        let attrNames = null;
+        const mmSchema = this.widgetBus.getLinked(mark.type.schema);
+        if (mmSchema) {
+            const mmMarks = mmSchema.get("marks");
+            if (mmMarks.has(mark.type.name))
+                attrNames = Array.from(
+                    mmMarks.get(mark.type.name).get("attrs").keys(),
+                );
+        }
+        // fall back to the PM mark spec's declared attrs (covers
+        // unlinked contexts)
+        if (attrNames === null)
+            attrNames = Object.keys(mark.type.spec.attrs ?? {});
+        for (const attrName of attrNames) {
+            const value = mark.attrs[attrName];
+            if (value === undefined || value === null)
+                this.dom.removeAttribute(attrName);
+            else this.dom.setAttribute(attrName, String(value));
+        }
+    }
+
+    // PM >= 1.42 calls this when the mark at this position changed (same
+    // type, possibly different attrs). Returning true reuses the view —
+    // the element, its styling subscription and style widget stay
+    // alive; returning false re-creates it.
+    update(mark) {
+        if (mark.type.name === "generic-style")
+            // A changed style name re-binds styling (and possibly the
+            // tag): re-create, so the subscriptions machinery re-resolves.
+            return (
+                mark.attrs["data-style-name"] ===
+                this.dom.getAttribute("data-style-name")
+            );
+        // Schema-defined marks: update the declared attrs in place; the
+        // styling subscription re-resolves by type name only, so its
+        // stored mark may stay stale harmlessly.
+        this._applyDeclaredAttrs(mark);
+        return true;
     }
 
     _getTag(mark) {
