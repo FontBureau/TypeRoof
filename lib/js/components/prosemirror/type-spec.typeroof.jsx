@@ -47,7 +47,10 @@ import {
     getTypeSpecsMethod,
 } from "./integration.typeroof.jsx";
 
-import { getStylePatchLinkForMark } from "../type-spec-models.mjs";
+import {
+    getStylePatchLinkForMark,
+    getStylePatchTagForIntent,
+} from "../type-spec-models.mjs";
 
 export function typeSpecGetFontMethod(changedMap, propertyValuesMap) {
     const fontPPSRecord = ProcessedPropertiesSystemMap.createSimpleRecord(
@@ -806,6 +809,8 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             this._checkNewlySubscribedMarks.bind(this),
         );
         this._styleSubscribers = new Map();
+        // Intent -> tag correction machinery (see _flushMarkTagCorrections)
+        this._markTagCorrectionFlushScheduled = false;
         this._nodeOutfitterOptions = Object.assign(
             {
                 typeSpecLabels: false,
@@ -838,6 +843,16 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 "stylePatches",
             ),
             mark,
+        );
+    }
+
+    // The tag an intent mark is bound to via the applicable
+    // TypeSpec's style-link edges, or null (renders as default span).
+    _resolveIntentTag(typeSpecProperties, mark) {
+        const typeSpec = this._getTypeSpecForPropertiesId(typeSpecProperties);
+        return getStylePatchTagForIntent(
+            typeSpec.get("stylePatches"),
+            mark.attrs["data-style-name"],
         );
     }
 
@@ -947,6 +962,91 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         );
     }
 
+    // ProseMirror creates mark views context-free: the tag binding
+    // of an intent mark (via the applicable TypeSpec) is only resolvable
+    // once the element is attached. Where the resolved tag differs from
+    // the element's tag, the element is swapped and PM's view desc is
+    // patched to it (see _swapMarkElement). Flushed from a microtask,
+    // so callers can schedule freely within update cycles.
+    _scheduleMarkTagCorrectionFlush() {
+        if (this._markTagCorrectionFlushScheduled) return;
+        this._markTagCorrectionFlushScheduled = true;
+        queueMicrotask(() => {
+            this._markTagCorrectionFlushScheduled = false;
+            this._flushMarkTagCorrections();
+        });
+    }
+
+    _flushMarkTagCorrections() {
+        const proseMirrorComponent = this.widgetBus.getWidgetById(
+            "proseMirror",
+            null,
+        );
+        if (
+            proseMirrorComponent === null ||
+            proseMirrorComponent.view.isDestroyed
+        )
+            return;
+        const view = proseMirrorComponent.view;
+        // The swaps are self-inflicted DOM changes; PM must not try to
+        // re-read the document from them (PM uses stop/start the same
+        // way internally).
+        view.domObserver.stop();
+        try {
+            // snapshot: swaps migrate subscriptions within the map
+            for (const [domElement, { mark, parentSubscription }] of Array.from(
+                this._styleSubscribers,
+            )) {
+                if (mark.type.name !== "generic-style") continue;
+                if (!domElement.isConnected) continue;
+                const tag =
+                    this._resolveIntentTag(
+                        parentSubscription.typeSpecProperties,
+                        mark,
+                    ) || "span";
+                if (tag === domElement.tagName.toLowerCase()) continue;
+                this._swapMarkElement(view, domElement, mark, tag);
+            }
+        } finally {
+            view.domObserver.start();
+        }
+    }
+
+    _findViewDescByDOM(viewDesc, dom) {
+        if (viewDesc.dom === dom) return viewDesc;
+        for (const child of viewDesc.children) {
+            const found = this._findViewDescByDOM(child, dom);
+            if (found !== null) return found;
+        }
+        return null;
+    }
+
+    _swapMarkElement(view, domElement, mark, tag) {
+        const desc = this._findViewDescByDOM(view.docView, domElement),
+            // desc.spec is the ProsemirrorMarkView (has _stylerDOM)
+            markView = desc === null ? null : desc.spec;
+        if (markView === null || !("_stylerDOM" in markView)) return;
+        const newElement = this.widgetBus.domTool.createElement(tag, {
+            "data-mark-type": mark.type.name,
+            "data-style-name": mark.attrs["data-style-name"],
+        });
+        // Move the content: PM's child view descs (text) reference the
+        // moved nodes, which stay valid.
+        while (domElement.firstChild)
+            newElement.appendChild(domElement.firstChild);
+        domElement.parentNode.replaceChild(newElement, domElement);
+        // Patch PM's book-keeping and the mark view to the new element,
+        // so text edits and destroy keep working on it.
+        desc.dom = newElement;
+        desc.contentDOM = newElement;
+        markView.dom = newElement;
+        markView.contentDOM = newElement;
+        markView._stylerDOM = newElement;
+        // Migrate the style subscription to the new element.
+        this.unsubscribeMark(domElement);
+        this._finalizeMarkSubscription(newElement, mark);
+    }
+
     _checkNewlySubscribedMarks(mutations_) {
         const mutations = Array.from(mutations_);
         while (mutations.length) {
@@ -985,6 +1085,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         }
         if (this._newlySubscribedMarks.size === 0)
             this._marksDomObserver.disconnect();
+        this._scheduleMarkTagCorrectionFlush();
     }
 
     _createTypeSpecStylerWrapper(
@@ -1370,6 +1471,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 styleSubscription,
             );
         }
+        this._scheduleMarkTagCorrectionFlush();
         return requiresFullInitialUpdate;
     }
 

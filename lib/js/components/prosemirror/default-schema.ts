@@ -193,6 +193,11 @@ export const marks = {
         attrs: { "data-style-name": { default: "", validate: "string" } },
         parseDOM: [
             {
+                // Higher than the PM default (50) and than any schema mark:
+                // elements rendered for an intent mark keep their
+                // data-style-name whatever their tag is (e.g. bound tags
+                // via style-link edges), and must re-parse as intent.
+                priority: 60,
                 tag: "*[data-style-name]",
                 getAttrs(dom: HTMLElement) {
                     return {

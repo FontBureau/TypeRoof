@@ -312,8 +312,18 @@ class ProsemirrorMarkView {
         const mmMarks = mmSchema.get("marks");
         if (!mmMarks.has(mark.type.name)) return fallback;
         const mmMarkSpec = mmMarks.get(mark.type.name);
-        if (mmMarkSpec.get("tag").isEmpty) return fallback;
+        if (mmMarkSpec.get("tag").isEmpty || mmMarkSpec.get("tag").value === "")
+            return fallback;
         return mmMarkSpec.get("tag").value;
+    }
+
+    // PM's domObserver also watches attribute changes; the styling
+    // machinery legitimately mutates attributes (style, lang) on this
+    // element. Those must not trigger a readDOMChange, which would
+    // re-parse the element through the schema (bound tags could be
+    // misinterpreted as schema marks).
+    ignoreMutation(mutation) {
+        return mutation.type === "attributes" && mutation.target === this.dom;
     }
 
     destroy() {
