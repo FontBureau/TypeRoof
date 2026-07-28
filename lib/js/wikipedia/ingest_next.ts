@@ -101,6 +101,9 @@ export interface IngestionReport {
     mwEmptyElts: Record<string, number>;
     // "tag.attr" -> count of collected-but-skipped mark element attrs
     skippedMarkAttrs: Record<string, number>;
+    // mark name -> count of markEmission rules that fell back to intent
+    // because the schema does not define the named mark
+    unresolvedMarkRules: Record<string, number>;
     skippedEmptyTexts: number;
     // non-empty text nodes found directly in block context; each was
     // wrapped in a paragraph so block containers hold blocks only
@@ -115,6 +118,20 @@ export interface SemanticMark {
     attrs: string[];
 }
 
+// How a mark-ish HTML tag is emitted into the document: as a
+// schema-defined (full-featured) mark with attrs harvested from the
+// element, or as intent (generic-style with data-style-name).
+export type MarkEmissionRule =
+    | { kind: "mark"; name: string }
+    | { kind: "generic"; styleName: string };
+
+// An ordered markEmission entry: the first selector matching the
+// element (element.matches) wins.
+export interface MarkEmissionRuleEntry {
+    selector: string;
+    rule: MarkEmissionRule;
+}
+
 export interface IngestionOptions {
     // Tag names treated as transparent containers (children pass
     // through, no node emitted). Initially empty — the transparency
@@ -124,6 +141,21 @@ export interface IngestionOptions {
     // are emitted for their tags (see semanticMarksFromSchema),
     // everything else falls back to generic-style.
     proseMirrorSchema?: any;
+    // Ordered [CSS selector, rule] pairs overriding the emission
+    // behavior for mark-ish elements (KNOWN_MARK_TAGS): the FIRST
+    // selector matching the element (element.matches) wins, so more
+    // specific selectors go first — e.g.
+    //   { selector: "b, strong", rule: { kind: "mark", name: "strong" } }
+    // emits <b>/<strong> as the schema-defined "strong" mark (attrs
+    // harvested), and
+    //   { selector: "i, em", rule: { kind: "generic", styleName: "italic" } }
+    // emits <i>/<em> as intent. Elements matched by no selector use
+    // the default: schema-defined mark when the schema provides one
+    // for the tag, else generic-style with the KNOWN_MARK_TAGS style
+    // name. A "mark" rule naming a mark the schema does not define
+    // falls back to intent with the rule name as style name and is
+    // counted in report.unresolvedMarkRules.
+    markEmission?: MarkEmissionRuleEntry[];
 }
 
 // Derive htmlTag (lowercase) -> SemanticMark from the metamodel schema
@@ -174,6 +206,54 @@ function newSemanticMarkDraft(
     return markDraft;
 }
 
+// Derive mark name -> declared attr names from the metamodel schema
+// (ProseMirrorSchemaModel), for attr harvest of explicitly configured
+// markEmission rules.
+function schemaMarkAttrsFromSchema(
+    proseMirrorSchema: any,
+): Record<string, string[]> {
+    const result: Record<string, string[]> = {};
+    for (const [name, markSpec] of proseMirrorSchema.get("marks"))
+        result[name] = Array.from(markSpec.get("attrs").keys());
+    return result;
+}
+
+type MarkEmission =
+    | { kind: "mark"; name: string; attrs: string[] }
+    | { kind: "style"; styleName: string };
+
+// Resolve how a mark-ish HTML tag (UPPERCASE) is emitted: an explicit
+// markEmission rule wins; else the schema-defined mark for the tag;
+// else generic-style intent with the KNOWN_MARK_TAGS style name.
+function resolveMarkEmission(
+    ctx: Ctx,
+    el: Element,
+    tag: string,
+    knownMarkStyle: string,
+): MarkEmission {
+    for (const { selector, rule } of ctx.markEmission) {
+        // first matching selector wins
+        if (!el.matches(selector)) continue;
+        if (rule.kind === "generic")
+            return { kind: "style", styleName: rule.styleName };
+        const attrs = ctx.schemaMarkAttrs[rule.name];
+        if (attrs !== undefined)
+            return { kind: "mark", name: rule.name, attrs };
+        // The rule names a mark the schema does not define: fall back
+        // to intent with the rule name and report it.
+        count(ctx.report.unresolvedMarkRules, rule.name);
+        return { kind: "style", styleName: rule.name };
+    }
+    const semanticMark = ctx.semanticMarks[tag.toLowerCase()];
+    if (semanticMark !== undefined)
+        return {
+            kind: "mark",
+            name: semanticMark.name,
+            attrs: semanticMark.attrs,
+        };
+    return { kind: "style", styleName: knownMarkStyle };
+}
+
 function markSetKey(marks: MarkDesc[]): string {
     const names = marks.map((mark) =>
         mark.kind === "style" ? mark.styleName : mark.name,
@@ -196,6 +276,8 @@ interface Ctx {
     report: IngestionReport;
     transparent: ReadonlySet<string>;
     semanticMarks: Readonly<Record<string, SemanticMark>>;
+    markEmission: readonly MarkEmissionRuleEntry[];
+    schemaMarkAttrs: Readonly<Record<string, string[]>>;
 }
 
 // Emit a raw_html atom preserving the element's outerHTML verbatim.
@@ -326,12 +408,12 @@ function ingestNode(
 
     const knownMarkStyle = KNOWN_MARK_TAGS[tag];
     if (knownMarkStyle !== undefined) {
-        const semanticMark = ctx.semanticMarks[tag.toLowerCase()];
-        if (semanticMark !== undefined) {
+        const emission = resolveMarkEmission(ctx, el, tag, knownMarkStyle);
+        if (emission.kind === "mark") {
             // Emit the schema-defined mark; harvest the attrs declared
             // by the mark spec, count and skip the rest.
             const attrs: Record<string, string> = {};
-            for (const attrName of semanticMark.attrs) {
+            for (const attrName of emission.attrs) {
                 const value = el.getAttribute(attrName);
                 if (value !== null) attrs[attrName] = value;
             }
@@ -343,7 +425,7 @@ function ingestNode(
                     );
             ingestChildrenInto(
                 el,
-                [...marks, { kind: "mark", name: semanticMark.name, attrs }],
+                [...marks, { kind: "mark", name: emission.name, attrs }],
                 out,
                 ctx,
                 inInline,
@@ -356,7 +438,7 @@ function ingestNode(
             count(report.skippedMarkAttrs, `${tag.toLowerCase()}.${attr.name}`);
         ingestChildrenInto(
             el,
-            [...marks, { kind: "style", styleName: knownMarkStyle }],
+            [...marks, { kind: "style", styleName: emission.styleName }],
             out,
             ctx,
             inInline,
@@ -399,7 +481,7 @@ function logReport(report: IngestionReport): void {
     console.log("[ingest] wrapped stray texts:", report.wrappedStrayTexts);
 }
 
-export function ingestWikipediaDocument(
+export function ingestDOM(
     doc: Document,
     options: IngestionOptions = {},
 ): { document: any; report: IngestionReport } {
@@ -411,6 +493,7 @@ export function ingestWikipediaDocument(
             inlineNodes: {},
             mwEmptyElts: {},
             skippedMarkAttrs: {},
+            unresolvedMarkRules: {},
             skippedEmptyTexts: 0,
             wrappedStrayTexts: 0,
         },
@@ -420,12 +503,55 @@ export function ingestWikipediaDocument(
         semanticMarks: options.proseMirrorSchema
             ? semanticMarksFromSchema(options.proseMirrorSchema)
             : {},
+        markEmission: options.markEmission ?? [],
+        schemaMarkAttrs: options.proseMirrorSchema
+            ? schemaMarkAttrsFromSchema(options.proseMirrorSchema)
+            : {},
     };
     const draft = newNodeDraft("doc");
     fillContent(draft, doc.body, [], ctx, false);
     const document = draft.metamorphose();
     logReport(ctx.report);
     return { document, report: ctx.report };
+}
+
+/**
+ * The Wikipedia one-shot ingest, configured for TypeRoof. Ingest is a
+ * one-shot operation; the caller should not have to know the options
+ * (the mechanism is ingestDOM). Only proseMirrorSchema comes from the
+ * live application state; everything else is decided here, once. This
+ * configuration also serves as the working example for every
+ * IngestionOptions field.
+ */
+export function ingestWikipediaDocument(
+    dom: Document,
+    proseMirrorSchema: any,
+): { document: any; report: IngestionReport } {
+    return ingestDOM(dom, {
+        // The metamodel schema (ProseMirrorSchemaModel): which marks
+        // exist. Schema marks are emitted for their tags by default;
+        // attrs declared by the mark spec are harvested.
+        proseMirrorSchema,
+
+        // HTML tags treated as transparent containers: their children
+        // pass through, no node is emitted for the element itself.
+        transparentContainers: [], //e.g. ["div"],
+
+        // Ordered [CSS selector, rule] pairs; the first selector
+        // matching the element (element.matches) wins.
+        markEmission: [
+            // <b> and <strong> become the schema-defined "strong" mark
+            // (the document "carries around" strong already; note <b>
+            // is NOT the schema tag, so it needs an explicit rule).
+            { selector: "b, strong", rule: { kind: "mark", name: "strong" } },
+            // There is no schema mark for <i>/<em>: they become
+            // generic-style intent with the style name "italic".
+            {
+                selector: "i, em",
+                rule: { kind: "generic", styleName: "italic" },
+            },
+        ],
+    });
 }
 
 /** @deprecated shim kept until main.mjs is rewired in Phase 3. */
@@ -438,5 +564,5 @@ export function traverseDom(
         domNode.nodeType === Node.DOCUMENT_NODE
             ? (domNode as Document)
             : domNode.ownerDocument;
-    if (doc) ingestWikipediaDocument(doc);
+    if (doc) ingestDOM(doc);
 }
