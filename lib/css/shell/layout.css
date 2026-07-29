@@ -114,4 +114,8 @@ app menu
             display: block;
         }
     }
+
+    .typeroof-app-menu-state_file_input {
+        display: none;
+    }
 }
