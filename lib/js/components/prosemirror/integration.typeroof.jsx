@@ -175,7 +175,7 @@ export function getTypeSpecsMethod(state) {
     return result;
 }
 
-class ProsemirrorNodeView {
+export class ProsemirrorNodeView {
     // the args are from https://prosemirror.net/docs/ref/#view.NodeViewConstructor
     // type NodeViewConstructor = fn(
     //     node: Node,
@@ -212,29 +212,41 @@ class ProsemirrorNodeView {
         // The outer DOM node that represents the document node.
         this.dom = element;
 
-        // FIXME: depending on the type of the outer node, this might
-        // better be a span.
-        const contentElement = widgetBus.domTool.createElement("div");
-        element.append(contentElement);
-        // For the subscription it is important that this element is
-        // the same as the contentDOM, the element that will be the parent
-        // of the marks.
-        this._stylerDOM = contentElement;
-        // The DOM node that should hold the node's content
-        // this is probably only required when this._stylerDOM != this.dom
-        // this is also part of the ProseMiror API
-        this.contentDOM = contentElement;
+        // Reproducing atoms (inferred: the node type declares an "html"
+        // attr) render wrapper-free: replayed outer attributes +
+        // verbatim innerHTML, no content element, no contentDOM.
+        this._isReproducing = "html" in (node.type.spec.attrs ?? {});
+        if (this._isReproducing) {
+            this._stylerDOM = this.dom;
+            _applyHtmlAttrsBag(this.dom, node.attrs.htmlAttrs);
+            this.dom.innerHTML = node.attrs.html;
+        } else {
+            // FIXME: depending on the type of the outer node, this might
+            // better be a span.
+            const contentElement = widgetBus.domTool.createElement("div");
+            element.append(contentElement);
+            // For the subscription it is important that this element is
+            // the same as the contentDOM, the element that will be the parent
+            // of the marks.
+            this._stylerDOM = contentElement;
+            // The DOM node that should hold the node's content
+            // this is probably only required when this._stylerDOM != this.dom
+            // this is also part of the ProseMiror API
+            this.contentDOM = contentElement;
+        }
         const subscriptionsWidget = widgetBus.getWidgetById(
             this._subscriptionsId,
             null,
         );
         if (subscriptionsWidget === null) return;
         // else: we have a subscriptions widget, hence, we can subscribe...
-        const structuralElements = {
-            // required to style e.g. the margins between paragraphs
-            outer: this.dom,
-            inner: this._stylerDOM,
-        };
+        const structuralElements = this._isReproducing
+            ? { outer: this.dom }
+            : {
+                  // required to style e.g. the margins between paragraphs
+                  outer: this.dom,
+                  inner: this._stylerDOM,
+              };
 
         subscriptionsWidget.subscribe(
             this._stylerDOM,
@@ -252,11 +264,15 @@ class ProsemirrorNodeView {
         this._node = node;
         this._decorations = decorations;
         this._innerDecorations = innerDecorations;
+        if (this._isReproducing) {
+            _applyHtmlAttrsBag(this.dom, node.attrs.htmlAttrs);
+            this.dom.innerHTML = node.attrs.html;
+        }
         const subscriptionsWidget = this.widgetBus.getWidgetById(
             this._subscriptionsId,
             null,
         );
-        if (subscriptionsWidget === null) return;
+        if (subscriptionsWidget === null) return this._isReproducing;
         subscriptionsWidget.updateSubscription(
             this._stylerDOM,
             node,
@@ -264,6 +280,18 @@ class ProsemirrorNodeView {
             innerDecorations,
         );
         return true;
+    }
+
+    // PM's domObserver also watches attribute changes; the styling
+    // machinery legitimately mutates attributes (style, lang) on this
+    // element. For reproducing atoms those must not trigger a
+    // readDOMChange (template: ProsemirrorMarkView.ignoreMutation).
+    ignoreMutation(mutation) {
+        return (
+            this._isReproducing &&
+            mutation.type === "attributes" &&
+            mutation.target === this.dom
+        );
     }
 
     destroy() {
@@ -494,6 +522,54 @@ function _createToDOM(tag, attributeSpecMap) {
     };
 }
 
+// Reproducing atoms (a node spec with an "html" attr): the guard
+// for the htmlAttrs bag. TypeRoof's core properties, on* handlers
+// and the style attribute must never be emitted from a bag nor
+// collected into one at parse time — the guard lives HERE, outside
+// ingest, by operator decision, so no ingest policy can emit them.
+const _HTML_ATTRS_GUARD =
+    /^(?:data-node-type|data-mark-type|data-style-name|on)|^style$/;
+
+function _applyHtmlAttrsBag(dom, bagJson) {
+    if (!bagJson) return;
+    let pairs = null;
+    try {
+        pairs = JSON.parse(bagJson);
+    } catch {
+        pairs = null;
+    }
+    if (!Array.isArray(pairs)) return;
+    for (const [name, value] of pairs) {
+        if (_HTML_ATTRS_GUARD.test(name)) continue;
+        dom.setAttribute(name, String(value));
+    }
+}
+
+function _createReproducingGetAttrs() {
+    return (dom) => {
+        const bag = [];
+        for (const attr of Array.from(dom.attributes)) {
+            if (_HTML_ATTRS_GUARD.test(attr.name)) continue;
+            bag.push([attr.name, attr.value]);
+        }
+        return {
+            html: dom.innerHTML,
+            htmlAttrs: bag.length ? JSON.stringify(bag) : "",
+        };
+    };
+}
+
+function _createReproducingToDOM(tag) {
+    return (node) => {
+        const element = document.createElement(tag);
+        _applyHtmlAttrsBag(element, node.attrs.htmlAttrs);
+        // verbatim reproduction, no sanitization (like raw_html,
+        // operator decision)
+        element.innerHTML = node.attrs.html;
+        return element;
+    };
+}
+
 export function createProseMirrorSchemaFromMetaModel(
     /*SchemaSpec: */ proseMirrorDefaultSchema,
     /*ProseMirrorSchemaModel*/ proseMirrorSchema,
@@ -539,10 +615,18 @@ export function createProseMirrorSchemaFromMetaModel(
                         ? selector.value
                         : tag.value,
                 parseDOMItem = { tag: parseTag };
-            if (attributeSpecMap.size)
-                parseDOMItem.getAttrs = _createGetAttrs(attributeSpecMap);
-            newNode.parseDOM = [parseDOMItem];
-            newNode.toDOM = _createToDOM(tag.value, attributeSpecMap);
+            if (attributeSpecMap.has("html")) {
+                // inferred reproducing atom (decision: presence of the
+                // html attr; may pivot to an explicit flag later)
+                parseDOMItem.getAttrs = _createReproducingGetAttrs();
+                newNode.parseDOM = [parseDOMItem];
+                newNode.toDOM = _createReproducingToDOM(tag.value);
+            } else {
+                if (attributeSpecMap.size)
+                    parseDOMItem.getAttrs = _createGetAttrs(attributeSpecMap);
+                newNode.parseDOM = [parseDOMItem];
+                newNode.toDOM = _createToDOM(tag.value, attributeSpecMap);
+            }
         }
         const pmAttrs = _createPMAttrs(nodeSpec.get("attrs"));
         if (pmAttrs !== null) newNode.attrs = pmAttrs;
