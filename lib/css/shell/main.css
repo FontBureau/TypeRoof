@@ -1628,6 +1628,12 @@ collapsible
     width: 100%;
 }
 
+.ui-dialog-manage_state {
+    input[type="file"] {
+        display: none;
+    }
+}
+
 .ui-dialog-manage_state-serialize_output {
     font-family: monospace;
     white-space: pre;
