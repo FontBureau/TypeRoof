@@ -284,6 +284,36 @@
           "group": "block",
           "tag": "p"
         }
+      ],
+      [
+        "cite-link",
+        {
+          "tag": "sup",
+          "selector": "sup[typeof=\"mw:Extension/ref\"]",
+          "inline": true,
+          "group": "inline",
+          "atom": true,
+          "attrs": [
+            [
+              "html",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ],
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
+        }
       ]
     ],
     "marks": [
