@@ -187,10 +187,17 @@ export const nodes = {
     } as NodeSpec,
 };
 
+import { collectHtmlAttrsToBag, htmlAttrsBagToSpec } from "./html-attrs.ts";
+
 export const marks = {
     "generic-style": {
         excludes: "_",
-        attrs: { "data-style-name": { default: "", validate: "string" } },
+        attrs: {
+            "data-style-name": { default: "", validate: "string" },
+            // editable-element attr replay (Q1): the collected
+            // attributes bag (guarded JSON string)
+            htmlAttrs: { default: "", validate: "string" },
+        },
         parseDOM: [
             {
                 // Higher than the PM default (50) and than any schema mark:
@@ -202,6 +209,9 @@ export const marks = {
                 getAttrs(dom: HTMLElement) {
                     return {
                         "data-style-name": dom.getAttribute("data-style-name"),
+                        // collect foreign attributes into the bag (the
+                        // guard excludes data-style-name itself)
+                        htmlAttrs: collectHtmlAttrsToBag(dom),
                     };
                 },
             },
@@ -209,7 +219,11 @@ export const marks = {
         toDOM(node) {
             return [
                 "span",
-                { "data-style-name": node.attrs["data-style-name"] },
+                // replay the collected attributes bag (guarded)
+                Object.assign(
+                    { "data-style-name": node.attrs["data-style-name"] },
+                    htmlAttrsBagToSpec(node.attrs.htmlAttrs),
+                ),
                 0,
             ];
         },

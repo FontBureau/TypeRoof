@@ -522,41 +522,16 @@ function _createToDOM(tag, attributeSpecMap) {
     };
 }
 
-// Reproducing atoms (a node spec with an "html" attr): the guard
-// for the htmlAttrs bag. TypeRoof's core properties, on* handlers
-// and the style attribute must never be emitted from a bag nor
-// collected into one at parse time — the guard lives HERE, outside
-// ingest, by operator decision, so no ingest policy can emit them.
-const _HTML_ATTRS_GUARD =
-    /^(?:data-node-type|data-mark-type|data-style-name|on)|^style$/;
-
-function _applyHtmlAttrsBag(dom, bagJson) {
-    if (!bagJson) return;
-    let pairs = null;
-    try {
-        pairs = JSON.parse(bagJson);
-    } catch {
-        pairs = null;
-    }
-    if (!Array.isArray(pairs)) return;
-    for (const [name, value] of pairs) {
-        if (_HTML_ATTRS_GUARD.test(name)) continue;
-        dom.setAttribute(name, String(value));
-    }
-}
+import {
+    applyHtmlAttrsBag as _applyHtmlAttrsBag,
+    collectHtmlAttrsToBag as _collectHtmlAttrsToBag,
+} from "./html-attrs.ts";
 
 function _createReproducingGetAttrs() {
-    return (dom) => {
-        const bag = [];
-        for (const attr of Array.from(dom.attributes)) {
-            if (_HTML_ATTRS_GUARD.test(attr.name)) continue;
-            bag.push([attr.name, attr.value]);
-        }
-        return {
-            html: dom.innerHTML,
-            htmlAttrs: bag.length ? JSON.stringify(bag) : "",
-        };
-    };
+    return (dom) => ({
+        html: dom.innerHTML,
+        htmlAttrs: _collectHtmlAttrsToBag(dom),
+    });
 }
 
 function _createReproducingToDOM(tag) {
