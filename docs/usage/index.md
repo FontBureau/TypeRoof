@@ -20,7 +20,7 @@ project to make it a good animation, proofing, and typesetting tool.
 ## Getting Started
 
 A couple of prepared "states" (JSON formatted text files) that can load
-into TypeRoof Shell are under [States Library/demos](/docs/states-library/demos).
+into TypeRoof Shell are under [States Library](/docs/states-library).
 This tutorial uses these states, along with lesson videos, to demonstrate
 how to use TypeRoof-Shell in its current form.
 
@@ -37,7 +37,7 @@ state, a requirement to, e.g., share it or save it in a file.
 #### Required Links:
  * [TypeRoof Shell](/shell)
  * State: [hello_good-bye.json](/docs/states-library/demos/hello_good-bye.json)
- * More States: [demos/ - States Library](/docs/states-library/demos/)
+ * More States: [States Library](/docs/states-library)
 
 *Duration **4:40** m:s*
 
