@@ -104,6 +104,8 @@ export interface IngestionReport {
     // mark name -> count of markEmission rules that fell back to intent
     // because the schema does not define the named mark
     unresolvedMarkRules: Record<string, number>;
+    // node typeKey -> count of reproducing-atom emissions (nodeEmission)
+    reproNodes: Record<string, number>;
     skippedEmptyTexts: number;
     // non-empty text nodes found directly in block context; each was
     // wrapped in a paragraph so block containers hold blocks only
@@ -132,6 +134,14 @@ export interface MarkEmissionRuleEntry {
     rule: MarkEmissionRule;
 }
 
+// A node-side emission entry: the first selector matching the element
+// (element.matches) routes it to the named node type. Ordered;
+// redundancy is OK — authors can declare safe fallbacks.
+export interface NodeEmissionEntry {
+    selector: string;
+    typeKey: string;
+}
+
 export interface IngestionOptions {
     // Tag names treated as transparent containers (children pass
     // through, no node emitted). Initially empty — the transparency
@@ -156,6 +166,13 @@ export interface IngestionOptions {
     // falls back to intent with the rule name as style name and is
     // counted in report.unresolvedMarkRules.
     markEmission?: MarkEmissionRuleEntry[];
+    // Ordered [CSS selector, typeKey] pairs routing elements to named
+    // node types (reproducing atoms): the FIRST selector matching the
+    // element (element.matches) wins; redundancy is OK — declare safe
+    // fallbacks. Elements matched by no entry fall back to
+    // schema-derived selectors (nodeSelectorsFromSchema), then to the
+    // existing chain (unknown_inline's raison d'être).
+    nodeEmission?: NodeEmissionEntry[];
 }
 
 // Derive htmlTag (lowercase) -> SemanticMark from the metamodel schema
@@ -218,6 +235,33 @@ function schemaMarkAttrsFromSchema(
     return result;
 }
 
+// Derive [{ selector, typeKey }] from node specs that carry a
+// non-empty selector. Deliberately NOT from tag-only specs: a tag
+// like paragraph's "p" would hijack KNOWN_BLOCK_TAGS.
+export function nodeSelectorsFromSchema(
+    proseMirrorSchema: any,
+): NodeEmissionEntry[] {
+    const result: NodeEmissionEntry[] = [];
+    for (const [typeKey, nodeSpec] of proseMirrorSchema.get("nodes")) {
+        const selector = nodeSpec.get("selector");
+        if (selector.isEmpty || selector.value === "") continue;
+        result.push({ selector: selector.value, typeKey });
+    }
+    return result;
+}
+
+// Resolve which named node type claims this element: the first
+// matching nodeEmission entry wins; else the first matching
+// schema-derived selector; else null (fall through to the existing
+// chain).
+function resolveNodeEmission(ctx: Ctx, el: Element): string | null {
+    for (const { selector, typeKey } of ctx.nodeEmission)
+        if (el.matches(selector)) return typeKey;
+    for (const { selector, typeKey } of ctx.nodeSelectors)
+        if (el.matches(selector)) return typeKey;
+    return null;
+}
+
 type MarkEmission =
     | { kind: "mark"; name: string; attrs: string[] }
     | { kind: "style"; styleName: string };
@@ -278,6 +322,8 @@ interface Ctx {
     semanticMarks: Readonly<Record<string, SemanticMark>>;
     markEmission: readonly MarkEmissionRuleEntry[];
     schemaMarkAttrs: Readonly<Record<string, string[]>>;
+    nodeEmission: readonly NodeEmissionEntry[];
+    nodeSelectors: readonly NodeEmissionEntry[];
 }
 
 // Emit a raw_html atom preserving the element's outerHTML verbatim.
@@ -365,6 +411,18 @@ function ingestNode(
 
     // raw-atom shortcut first: even a <p class="mw-empty-elt"> is patched
     // through as an atom, never expanded.
+    // A named node type may claim this element (reproducing atom):
+    // verbatim innerHTML for now; outer attributes are collected into
+    // htmlAttrs in Phase 3.
+    const claimedTypeKey = resolveNodeEmission(ctx, el);
+    if (claimedTypeKey !== null) {
+        count(report.reproNodes, claimedTypeKey);
+        const draft = newNodeDraft(claimedTypeKey);
+        draft.get("attrs").set("html", toMetaModelJSON(el.innerHTML, {}));
+        out.push(draft.metamorphose());
+        return;
+    }
+
     if (el.matches(SELECTORS_TO_RAW_HTML)) {
         count(report.mwEmptyElts, tag);
         emitRawHtmlAtom(el, inInline, out);
@@ -476,6 +534,7 @@ function logReport(report: IngestionReport): void {
     console.log("[ingest] raw_html_inline catch-all:", report.catchAllInline);
     console.log("[ingest] inline nodes:", report.inlineNodes);
     console.log("[ingest] mw-empty-elt atoms:", report.mwEmptyElts);
+    console.log("[ingest] reproducing nodes:", report.reproNodes);
     console.log("[ingest] skipped mark attrs:", report.skippedMarkAttrs);
     console.log("[ingest] skipped empty texts:", report.skippedEmptyTexts);
     console.log("[ingest] wrapped stray texts:", report.wrappedStrayTexts);
@@ -494,6 +553,7 @@ export function ingestDOM(
             mwEmptyElts: {},
             skippedMarkAttrs: {},
             unresolvedMarkRules: {},
+            reproNodes: {},
             skippedEmptyTexts: 0,
             wrappedStrayTexts: 0,
         },
@@ -504,6 +564,10 @@ export function ingestDOM(
             ? semanticMarksFromSchema(options.proseMirrorSchema)
             : {},
         markEmission: options.markEmission ?? [],
+        nodeEmission: options.nodeEmission ?? [],
+        nodeSelectors: options.proseMirrorSchema
+            ? nodeSelectorsFromSchema(options.proseMirrorSchema)
+            : [],
         schemaMarkAttrs: options.proseMirrorSchema
             ? schemaMarkAttrsFromSchema(options.proseMirrorSchema)
             : {},
@@ -549,6 +613,18 @@ export function ingestWikipediaDocument(
             {
                 selector: "i, em",
                 rule: { kind: "generic", styleName: "italic" },
+            },
+        ],
+
+        // Ordered [CSS selector, typeKey] pairs routing elements to
+        // named node types (reproducing atoms); first match wins,
+        // redundancy = declared fallbacks.
+        nodeEmission: [
+            // Wikipedia citations become "cite-link" atoms; other <sup>
+            // falls through to the existing chain (unknown_inline).
+            {
+                selector: 'sup[typeof="mw:Extension/ref"]',
+                typeKey: "cite-link",
             },
         ],
     });
