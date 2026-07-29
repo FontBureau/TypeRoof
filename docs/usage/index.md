@@ -104,7 +104,7 @@ Key Moments.
 #### Required Links:
 
  * [TypeRoof Shell](/shell)
- * State: [Lesson-Create_a_Simple_Animation-hello_goodbye.json](/docs/states-library/demos/Lesson-Create_a_Simple_Animation-hello_goodbye.json)
+ * State: [Create_a_Simple_Animation-hello_goodbye.json](/docs/states-library/lessons/Create_a_Simple_Animation-hello_goodbye.json)
 
 *Duration **25:14** m:s*
 
@@ -122,7 +122,7 @@ traversing from its "Regular" style to its "Mayhem" style.
  * [TypeRoof Shell](/shell)
  * The font file [DecovarAlpha-VF.ttf](https://github.com/googlefonts/decovar/raw/refs/heads/master/fonts/DecovarAlpha-VF.ttf)
    (link to the [GitHub Repository of Decovar](https://github.com/googlefonts/decovar))
- * Initial State: [Lesson-Animate_Color-decovar-necrovar.json](/docs/states-library/demos/Lesson-Animate_Color-decovar-necrovar.json)
+ * Initial State: [Animate_Color-decovar-necrovar.json](/docs/states-library/lessons/Animate_Color-decovar-necrovar.json)
  * Final State: [decovar-necrovar.json](/docs/states-library/demos/decovar-necrovar.json)
 
 *Duration **21:43** m:s*
