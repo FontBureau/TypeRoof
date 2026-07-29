@@ -1,7 +1,11 @@
+import { serialize } from "../metamodel.mjs";
 import { _BaseContainerComponent } from "./basics/component.mjs";
 import { GenericSelect, StaticNode } from "./generic.mjs";
-import { UIDialogManageState } from "./ui-dialog-manage-state.mjs";
-import { UIDialogOpeners } from "./ui-dialog-openers.mjs";
+import {
+    createStateFileName,
+    deserializeStateString,
+    downloadFile,
+} from "../utils/state-file.mjs";
 
 export class AppMenu extends _BaseContainerComponent {
     static OPENED_CLASS = "opened";
@@ -9,11 +13,30 @@ export class AppMenu extends _BaseContainerComponent {
     constructor(widgetBus, layoutGroups) {
         const h = widgetBus.domTool.h,
             mainElement = <div class="typeroof-app-menu"></div>,
-            menuTopElement = <li class="menu-top"></li>,
-            zones = new Map([
-                ["main", mainElement],
-                ["menu-top", menuTopElement],
-            ]);
+            stateFileInput = (
+                <input
+                    class="typeroof-app-menu-state_file_input"
+                    type="file"
+                    accept=".json,application/json"
+                    onChange={(event) => this._onSelectStateFile(event)}
+                />
+            ),
+            loadStateElement = (
+                <li class="menu-top">
+                    <button onClick={() => this._onClickLoadState()}>
+                        Load state...
+                    </button>
+                    {stateFileInput}
+                </li>
+            ),
+            saveStateElement = (
+                <li class="menu-top">
+                    <button onClick={() => this._onClickSaveState()}>
+                        Save state...
+                    </button>
+                </li>
+            ),
+            zones = new Map([["main", mainElement]]);
         widgetBus.insertElement(mainElement);
 
         const widgets = [
@@ -36,7 +59,8 @@ export class AppMenu extends _BaseContainerComponent {
                 [],
                 StaticNode,
                 <menu>
-                    {menuTopElement}
+                    {loadStateElement}
+                    {saveStateElement}
                     <hr />
                     <li>
                         <a
@@ -93,18 +117,69 @@ export class AppMenu extends _BaseContainerComponent {
                     return [groupKey, label, index];
                 },
             ],
-            [
-                { zone: "menu-top" },
-                [],
-                UIDialogOpeners,
-                [[UIDialogManageState, "Load / Save..."]],
-            ],
         ];
 
         super(widgetBus, zones, widgets);
 
         this._mainElement = mainElement;
+        this._stateFileInput = stateFileInput;
         document.addEventListener("click", this._onClickOutsideMenu.bind(this));
+    }
+
+    _onClickLoadState() {
+        // Reset, so selecting the same file again triggers a change event.
+        this._stateFileInput.value = "";
+        this._stateFileInput.click();
+    }
+
+    async _onSelectStateFile(event) {
+        const [file] = event.target.files || [];
+        if (!file) {
+            return;
+        }
+        try {
+            const serializedValue = await file.text();
+            const appState = this.getEntry("/");
+            const likeADraft = deserializeStateString(
+                appState.constructor,
+                serializedValue,
+            );
+            // => make sure this goes the async path
+            this.widgetBus.requireReviewResources();
+            await this.widgetBus.updateState(likeADraft);
+        } catch (error) {
+            this._reportError(`Loading state file "${file.name}"`, error);
+        }
+    }
+
+    _onClickSaveState() {
+        const [errors, serializedValue] = serialize(this.getEntry("/"));
+        if (errors.length) {
+            const messages = [];
+            for (const [path, error, ...more] of errors) {
+                console.error(
+                    new Error(`Serialize error at ./${path.join("/")}`, {
+                        cause: error,
+                    }),
+                    ...more,
+                );
+                messages.push(
+                    `${error.name}: ${error.message} at ./${path.join("/")}`,
+                );
+            }
+            this._reportError("Saving state file", messages.join("\n"));
+            return;
+        }
+        downloadFile(
+            this._domTool.document,
+            serializedValue,
+            createStateFileName(),
+        );
+    }
+
+    _reportError(label, error) {
+        console.error(new Error(`${label} FAILED`, { cause: error }));
+        this._domTool.window.alert(`${label} failed:\n${error}`);
     }
 
     _onClickToggler() {
