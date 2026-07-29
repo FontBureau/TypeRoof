@@ -39,7 +39,7 @@ export default function (eleventyConfig) {
     eleventyConfig.addPassthroughCopy("lib");
     eleventyConfig.addPassthroughCopy("docs/experiments");
     // These are not ignored .eleventyignore
-    eleventyConfig.addPassthroughCopy("docs/states_lib/**/*.json.txt");
+    eleventyConfig.addPassthroughCopy("docs/states-library/**/*.json.txt");
 
     // Include Vite build output (built shell.html and optimized assets)
     eleventyConfig.addPassthroughCopy({ "dist/shell.html": "shell.html" });
@@ -116,8 +116,8 @@ export default function (eleventyConfig) {
         return pages.map(prune);
     });
 
-    // This creates directory listings for docs/states_lib
-    const libDir = 'docs/states_lib'
+    // This creates directory listings for docs/states-library
+    const libDir = 'docs/states-library'
    , directoryTemplate = `# States Library{% if page.url != "/${libDir}/" %}: {{page.url | remove: "/${libDir}" | remove_last: "/" }}{% endif %}
 
 The **States Library** is a directory of states-data that one can load into [TypeRoof Shell](/shell)

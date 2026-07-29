@@ -2,10 +2,10 @@
 /**
  * Usage:
  *   # use https://fontbureau.github.io/TypeRoof/app/player
- *   $ ./scripts/create-clip-frames /docs/states_lib/demos/four-panels.json.txt ./clip_frames
+ *   $ ./scripts/create-clip-frames /docs/states-library/demos/four-panels.json.txt ./clip_frames
  *
  *   # With explicit url
- *   $ ./scripts/create-clip-frames --player-url=http://localhost:8080/app/player /docs/states_lib/demos/four-panels.json.txt ./clip_frames
+ *   $ ./scripts/create-clip-frames --player-url=http://localhost:8080/app/player /docs/states-library/demos/four-panels.json.txt ./clip_frames
  *
  */
 import path from 'node:path';
