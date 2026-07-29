@@ -217,6 +217,33 @@ function normalizeAttrPolicy(policy: HtmlAttrPolicy = {}): HtmlAttrPolicy {
 // string of [name, value] pairs (string, because PM attr equality is
 // shallow and nested objects would redraw-oscillate). Returns "" when
 // nothing is collected.
+// Whether the policy collects an attribute: NOT matched by
+// exclude AND matched by include (include undefined: accept all;
+// include []: reject all).
+function isCollected(
+    policy: HtmlAttrPolicy,
+    name: string,
+    value: string,
+): boolean {
+    if (matchesAny(policy.exclude, name, value)) return false;
+    if (
+        policy.include !== undefined &&
+        !matchesAny(policy.include, name, value)
+    )
+        return false;
+    return true;
+}
+
+// The names of the attributes the policy excludes (not collected),
+// for report.skippedMarkAttrs counting.
+function skippedHtmlAttrs(el: Element, policy: HtmlAttrPolicy = {}): string[] {
+    const skipped: string[] = [];
+    for (const attr of Array.from(el.attributes))
+        if (!isCollected(policy, attr.name, attr.value))
+            skipped.push(attr.name);
+    return skipped;
+}
+
 export function collectHtmlAttrs(
     el: Element,
     policy: HtmlAttrPolicy = {},
@@ -224,13 +251,7 @@ export function collectHtmlAttrs(
     const result: [string, string][] = [];
     for (const attr of Array.from(el.attributes)) {
         const { name, value } = attr;
-        if (matchesAny(policy.exclude, name, value)) continue;
-        // include undefined: accept all; include []: reject all
-        if (
-            policy.include !== undefined &&
-            !matchesAny(policy.include, name, value)
-        )
-            continue;
+        if (!isCollected(policy, name, value)) continue;
         result.push([name, value]);
     }
     return result.length ? JSON.stringify(result) : "";
@@ -299,13 +320,19 @@ function newNodeDraft(typeKey: string): any {
     return draft;
 }
 
-function newGenericStyleMarkDraft(nodeDraft: any, styleName: string): any {
+function newGenericStyleMarkDraft(
+    nodeDraft: any,
+    styleName: string,
+    htmlAttrs: string = "",
+): any {
     const marksList = nodeDraft.get("marks");
     const markDraft = marksList.constructor.Model.createPrimalDraft({});
     markDraft.get("typeKey").value = "generic-style";
     markDraft
         .get("attrs")
         .set("data-style-name", toMetaModelJSON(styleName, {}));
+    if (htmlAttrs !== "")
+        markDraft.get("attrs").set("htmlAttrs", toMetaModelJSON(htmlAttrs, {}));
     return markDraft;
 }
 
@@ -313,6 +340,7 @@ function newSemanticMarkDraft(
     nodeDraft: any,
     name: string,
     attrs: Record<string, string>,
+    htmlAttrs: string = "",
 ): any {
     const marksList = nodeDraft.get("marks");
     const markDraft = marksList.constructor.Model.createPrimalDraft({});
@@ -320,6 +348,8 @@ function newSemanticMarkDraft(
     const attrsDraft = markDraft.get("attrs");
     for (const [attrName, value] of Object.entries(attrs))
         attrsDraft.set(attrName, toMetaModelJSON(value, {}));
+    if (htmlAttrs !== "")
+        attrsDraft.set("htmlAttrs", toMetaModelJSON(htmlAttrs, {}));
     return markDraft;
 }
 
@@ -413,8 +443,13 @@ function count(record: Record<string, number>, key: string): void {
 // (expressed via the generic-style mark) or a schema-defined
 // (semantic) mark with its harvested attrs.
 type MarkDesc =
-    | { kind: "style"; styleName: string }
-    | { kind: "mark"; name: string; attrs: Record<string, string> };
+    | { kind: "style"; styleName: string; htmlAttrs: string }
+    | {
+          kind: "mark";
+          name: string;
+          attrs: Record<string, string>;
+          htmlAttrs: string;
+      };
 
 interface Ctx {
     report: IngestionReport;
@@ -487,8 +522,17 @@ function ingestNode(
         for (const m of marks)
             marksList.push(
                 m.kind === "style"
-                    ? newGenericStyleMarkDraft(textDraft, m.styleName)
-                    : newSemanticMarkDraft(textDraft, m.name, m.attrs),
+                    ? newGenericStyleMarkDraft(
+                          textDraft,
+                          m.styleName,
+                          m.htmlAttrs,
+                      )
+                    : newSemanticMarkDraft(
+                          textDraft,
+                          m.name,
+                          m.attrs,
+                          m.htmlAttrs,
+                      ),
             );
         if (!inInline) {
             // Stray text in block context (e.g. directly in <section>):
@@ -543,6 +587,19 @@ function ingestNode(
     const knownBlockTypeKey = KNOWN_BLOCK_TAGS[tag];
     if (knownBlockTypeKey !== undefined) {
         const draft = newNodeDraft(knownBlockTypeKey);
+        // collect outer attributes into the htmlAttrs bag (except on doc)
+        if (knownBlockTypeKey !== "doc") {
+            const htmlAttrs = collectHtmlAttrs(el, ctx.attrPolicy);
+            if (htmlAttrs !== "")
+                draft
+                    .get("attrs")
+                    .set("htmlAttrs", toMetaModelJSON(htmlAttrs, {}));
+            for (const attrName of skippedHtmlAttrs(el, ctx.attrPolicy))
+                count(
+                    report.skippedMarkAttrs,
+                    `${tag.toLowerCase()}.${attrName}`,
+                );
+        }
         // marks do not cross block boundaries; textblocks have inline content
         const childInline =
             knownBlockTypeKey === "paragraph" ||
@@ -581,28 +638,42 @@ function ingestNode(
                 const value = el.getAttribute(attrName);
                 if (value !== null) attrs[attrName] = value;
             }
-            for (const attr of Array.from(el.attributes))
-                if (!(attr.name in attrs))
-                    count(
-                        report.skippedMarkAttrs,
-                        `${tag.toLowerCase()}.${attr.name}`,
-                    );
+            for (const attrName of skippedHtmlAttrs(el, ctx.attrPolicy))
+                count(
+                    report.skippedMarkAttrs,
+                    `${tag.toLowerCase()}.${attrName}`,
+                );
             ingestChildrenInto(
                 el,
-                [...marks, { kind: "mark", name: emission.name, attrs }],
+                [
+                    ...marks,
+                    {
+                        kind: "mark",
+                        name: emission.name,
+                        attrs,
+                        htmlAttrs: collectHtmlAttrs(el, ctx.attrPolicy),
+                    },
+                ],
                 out,
                 ctx,
                 inInline,
             );
             return;
         }
-        // generic-style fallback: collect attrs, log them, skip them
-        // (operator decision)
-        for (const attr of Array.from(el.attributes))
-            count(report.skippedMarkAttrs, `${tag.toLowerCase()}.${attr.name}`);
+        // generic-style fallback: collect attrs into the htmlAttrs
+        // bag (policy); count only policy-excluded attrs.
+        for (const attrName of skippedHtmlAttrs(el, ctx.attrPolicy))
+            count(report.skippedMarkAttrs, `${tag.toLowerCase()}.${attrName}`);
         ingestChildrenInto(
             el,
-            [...marks, { kind: "style", styleName: emission.styleName }],
+            [
+                ...marks,
+                {
+                    kind: "style",
+                    styleName: emission.styleName,
+                    htmlAttrs: collectHtmlAttrs(el, ctx.attrPolicy),
+                },
+            ],
             out,
             ctx,
             inInline,
@@ -618,6 +689,11 @@ function ingestNode(
     if (INLINE_TAGS.has(tag)) {
         count(report.inlineNodes, tag);
         const draft = newNodeDraft(tag.toLowerCase());
+        const htmlAttrs = collectHtmlAttrs(el, ctx.attrPolicy);
+        if (htmlAttrs !== "")
+            draft.get("attrs").set("htmlAttrs", toMetaModelJSON(htmlAttrs, {}));
+        for (const attrName of skippedHtmlAttrs(el, ctx.attrPolicy))
+            count(report.skippedMarkAttrs, `${tag.toLowerCase()}.${attrName}`);
         fillContent(draft, el, marks, ctx, true);
         out.push(draft.metamorphose());
         return;
