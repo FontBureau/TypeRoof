@@ -236,7 +236,18 @@
           "group": "block",
           "tag": "section",
           "definingAsContext": "1",
-          "definingForContent": "1"
+          "definingForContent": "1",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
         }
       ],
       [
@@ -244,7 +255,18 @@
         {
           "content": "inline*",
           "group": "block",
-          "tag": "p"
+          "tag": "p",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
         }
       ],
       [
@@ -254,7 +276,18 @@
           "group": "block",
           "tag": "h1",
           "definingAsContext": "1",
-          "definingForContent": "1"
+          "definingForContent": "1",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
         }
       ],
       [
@@ -264,7 +297,18 @@
           "group": "block",
           "tag": "h2",
           "definingAsContext": "1",
-          "definingForContent": "1"
+          "definingForContent": "1",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
         }
       ],
       [
@@ -274,7 +318,18 @@
           "group": "block",
           "tag": "h3",
           "definingAsContext": "1",
-          "definingForContent": "1"
+          "definingForContent": "1",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
         }
       ],
       [
@@ -282,7 +337,18 @@
         {
           "content": "inline*",
           "group": "block",
-          "tag": "p"
+          "tag": "p",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
         }
       ],
       [
@@ -329,6 +395,15 @@
           "attrs": [
             [
               "href",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ],
+            [
+              "htmlAttrs",
               {
                 "default": "",
                 "validate": {
