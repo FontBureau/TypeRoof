@@ -16,7 +16,7 @@ export default function (/*configData*/) {
                         else if(file.endsWith('.json.njk')) {
                             // CAUTION:
                             // I assume that the njk file defines:
-                            //      "permalink": "{{filePathStem}}.json.txt",
+                            //      "permalink": "{{filePathStem}}.json",
                             name = file; // keeping the source name
                             file = file.slice(0, -'.njk'.length)//remove.njk
                         }

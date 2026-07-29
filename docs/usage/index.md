@@ -36,7 +36,7 @@ state, a requirement to, e.g., share it or save it in a file.
 
 #### Required Links:
  * [TypeRoof Shell](/shell)
- * State: [hello_good-bye.json.txt](/docs/states-library/demos/hello_good-bye.json.txt)
+ * State: [hello_good-bye.json](/docs/states-library/demos/hello_good-bye.json)
  * More States: [demos/ - States Library](/docs/states-library/demos/)
 
 *Duration **4:40** m:s*
@@ -76,7 +76,7 @@ from the app again.
  * [TypeRoof Shell](/shell)
  * The font file [DecovarAlpha-VF.ttf](https://github.com/googlefonts/decovar/raw/refs/heads/master/fonts/DecovarAlpha-VF.ttf)
    (link to the [GitHub Repository of Decovar](https://github.com/googlefonts/decovar))
- * State: [decovar-specimen.json.txt](/docs/states-library/demos/decovar-specimen.json.txt)
+ * State: [decovar-specimen.json](/docs/states-library/demos/decovar-specimen.json)
 
 *Duration **4:34** m:s*
 
@@ -104,7 +104,7 @@ Key Moments.
 #### Required Links:
 
  * [TypeRoof Shell](/shell)
- * State: [Lesson-Create_a_Simple_Animation-hello_goodbye.json.txt](/docs/states-library/demos/Lesson-Create_a_Simple_Animation-hello_goodbye.json.txt)
+ * State: [Lesson-Create_a_Simple_Animation-hello_goodbye.json](/docs/states-library/demos/Lesson-Create_a_Simple_Animation-hello_goodbye.json)
 
 *Duration **25:14** m:s*
 
@@ -122,8 +122,8 @@ traversing from its "Regular" style to its "Mayhem" style.
  * [TypeRoof Shell](/shell)
  * The font file [DecovarAlpha-VF.ttf](https://github.com/googlefonts/decovar/raw/refs/heads/master/fonts/DecovarAlpha-VF.ttf)
    (link to the [GitHub Repository of Decovar](https://github.com/googlefonts/decovar))
- * Initial State: [Lesson-Animate_Color-decovar-necrovar.json.txt](/docs/states-library/demos/Lesson-Animate_Color-decovar-necrovar.json.txt)
- * Final State: [decovar-necrovar.json.txt](/docs/states-library/demos/decovar-necrovar.json.txt)
+ * Initial State: [Lesson-Animate_Color-decovar-necrovar.json](/docs/states-library/demos/Lesson-Animate_Color-decovar-necrovar.json)
+ * Final State: [decovar-necrovar.json](/docs/states-library/demos/decovar-necrovar.json)
 
 *Duration **21:43** m:s*
 
@@ -152,7 +152,7 @@ defines other property defaults.
  * [TypeRoof Shell](/shell)
  * The font file [DecovarAlpha-VF.ttf](https://github.com/googlefonts/decovar/raw/refs/heads/master/fonts/DecovarAlpha-VF.ttf)
    (link to the [GitHub Repository of Decovar](https://github.com/googlefonts/decovar))
- * State: [decovar-specimen.json.txt](/docs/states-library/demos/decovar-specimen.json.txt)
+ * State: [decovar-specimen.json](/docs/states-library/demos/decovar-specimen.json)
 
 *Duration **20:29** m:s*
 
