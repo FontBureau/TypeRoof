@@ -22,7 +22,7 @@ export class AppMenu extends _BaseContainerComponent {
                 />
             ),
             loadStateElement = (
-                <li class="menu-top">
+                <li>
                     <button onClick={() => this._onClickLoadState()}>
                         Load state...
                     </button>
@@ -30,7 +30,7 @@ export class AppMenu extends _BaseContainerComponent {
                 </li>
             ),
             saveStateElement = (
-                <li class="menu-top">
+                <li>
                     <button onClick={() => this._onClickSaveState()}>
                         Save state...
                     </button>
