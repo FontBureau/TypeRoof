@@ -221,6 +221,10 @@ export class ProsemirrorNodeView {
             _applyHtmlAttrsBag(this.dom, node.attrs.htmlAttrs);
             this.dom.innerHTML = node.attrs.html;
         } else {
+            // editable attr replay: collected outer attributes on the
+            // outer element (guarded; the content element is untouched)
+            if (node.attrs.htmlAttrs)
+                _applyHtmlAttrsBag(this.dom, node.attrs.htmlAttrs);
             // FIXME: depending on the type of the outer node, this might
             // better be a span.
             const contentElement = widgetBus.domTool.createElement("div");
@@ -272,6 +276,10 @@ export class ProsemirrorNodeView {
             this._subscriptionsId,
             null,
         );
+        if (!this._isReproducing && node.attrs.htmlAttrs) {
+            // editable attr replay: re-apply the bag on the outer element
+            _applyHtmlAttrsBag(this.dom, node.attrs.htmlAttrs);
+        }
         if (subscriptionsWidget === null) return this._isReproducing;
         subscriptionsWidget.updateSubscription(
             this._stylerDOM,
@@ -325,6 +333,10 @@ export class ProsemirrorMarkView {
         this._stylerDOM = element;
         this.contentDOM = element;
         this._applyDeclaredAttrs(mark);
+        // replay the collected attributes bag (generic-style and
+        // schema marks alike; guarded)
+        if (mark.attrs.htmlAttrs)
+            _applyHtmlAttrsBag(this.dom, mark.attrs.htmlAttrs);
 
         const subscriptionsWidget = widgetBus.getWidgetById(
             this._subscriptionsId,
@@ -365,6 +377,8 @@ export class ProsemirrorMarkView {
     // the element, its styling subscription and style widget stay
     // alive; returning false re-creates it.
     update(mark) {
+        if (mark.attrs.htmlAttrs)
+            _applyHtmlAttrsBag(this.dom, mark.attrs.htmlAttrs);
         if (mark.type.name === "generic-style")
             // A changed style name re-binds styling (and possibly the
             // tag): re-create, so the subscriptions machinery re-resolves.

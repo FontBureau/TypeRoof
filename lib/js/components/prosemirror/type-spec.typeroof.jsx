@@ -52,6 +52,8 @@ import {
     getStylePatchTagForIntent,
 } from "../type-spec-models.mjs";
 
+import { applyHtmlAttrsBag as _applyHtmlAttrsBag } from "./html-attrs.ts";
+
 export function typeSpecGetFontMethod(changedMap, propertyValuesMap) {
     const fontPPSRecord = ProcessedPropertiesSystemMap.createSimpleRecord(
         SPECIFIC,
@@ -1043,6 +1045,9 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             "data-mark-type": mark.type.name,
             "data-style-name": mark.attrs["data-style-name"],
         });
+        // preserve collected attributes across the swap
+        if (mark.attrs.htmlAttrs)
+            _applyHtmlAttrsBag(newElement, mark.attrs.htmlAttrs);
         // Move the content: PM's child view descs (text) reference the
         // moved nodes, which stay valid.
         while (domElement.firstChild)
