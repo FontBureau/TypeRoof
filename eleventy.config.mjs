@@ -39,7 +39,7 @@ export default function (eleventyConfig) {
     eleventyConfig.addPassthroughCopy("lib");
     eleventyConfig.addPassthroughCopy("docs/experiments");
     // These are not ignored .eleventyignore
-    eleventyConfig.addPassthroughCopy("docs/states-library/**/*.json.txt");
+    eleventyConfig.addPassthroughCopy("docs/states-library/**/*.json");
 
     // Include Vite build output (built shell.html and optimized assets)
     eleventyConfig.addPassthroughCopy({ "dist/shell.html": "shell.html" });
