@@ -13,7 +13,7 @@ export default function (/*configData*/) {
                         if(fs.statSync(path.join(dirname, file)).isDirectory()){
                             name = `/${file}`
                         }
-                        else if(file.endsWith('.json.txt.njk')) {
+                        else if(file.endsWith('.json.njk')) {
                             // CAUTION:
                             // I assume that the njk file defines:
                             //      "permalink": "{{filePathStem}}.json.txt",
