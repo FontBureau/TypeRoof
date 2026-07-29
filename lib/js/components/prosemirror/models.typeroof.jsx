@@ -154,6 +154,12 @@ export const // We don't do  prosemirror SchemaSpec yet, but we may need it to a
         // specialized in HTML-Tags
         ["tag", StringOrEmptyModel],
 
+        // CAUTION: this is not part of ProseMirror model.NodeSpec
+        // A CSS selector for this node type: drives ingest matching and
+        // the generated parseDOM rule (selector ?? tag); it may cover
+        // several source/output shapes via :is().
+        ["selector", StringOrEmptyModel],
+
         // inline⁠?: boolean
         // Should be set to true for inline nodes. (Implied for text nodes.)
         ["inline", BooleanModel],

@@ -518,7 +518,7 @@ export function createProseMirrorSchemaFromMetaModel(
             // handled below, after the 1:1 mappings
             if (key === "attrs") continue;
             if (value.isEmpty) continue;
-            if (key === "tag") continue;
+            if (key === "tag" || key === "selector") continue;
             // => for 1:1 mappings
             newNode[key] = value.value;
         }
@@ -532,7 +532,13 @@ export function createProseMirrorSchemaFromMetaModel(
             // NOTE: this does not at all control any collisions of
             // tag names! E.g. when two nodes use the tag-name p
             const attributeSpecMap = nodeSpec.get("attrs"),
-                parseDOMItem = { tag: tag.value };
+                selector = nodeSpec.get("selector"),
+                // parseDOM matches on the selector if set, else the tag
+                parseTag =
+                    !selector.isEmpty && selector.value !== ""
+                        ? selector.value
+                        : tag.value,
+                parseDOMItem = { tag: parseTag };
             if (attributeSpecMap.size)
                 parseDOMItem.getAttrs = _createGetAttrs(attributeSpecMap);
             newNode.parseDOM = [parseDOMItem];
