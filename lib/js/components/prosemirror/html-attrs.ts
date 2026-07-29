@@ -1,6 +1,6 @@
 // Shared htmlAttrs bag helpers: the guard and the
 // collect/replay primitives for both reproducing atoms and
-// editable-element attr replay (Q1). The guard lives HERE, outside
+// editable-element attr replay. The guard lives HERE, outside
 // ingest, by operator decision: TypeRoof's core properties, on*
 // handlers and the style attribute must never be emitted from a bag
 // nor collected into one at parse time.
@@ -9,10 +9,14 @@ export const HTML_ATTRS_GUARD =
 
 // Collect an element's attributes into the htmlAttrs bag form (a JSON
 // string of [name, value] pairs, guarded), "" when empty.
-export function collectHtmlAttrsToBag(dom: Element): string {
+export function collectHtmlAttrsToBag(
+    dom: Element,
+    skip?: (name: string) => boolean,
+): string {
     const bag: [string, string][] = [];
     for (const attr of Array.from(dom.attributes)) {
         if (HTML_ATTRS_GUARD.test(attr.name)) continue;
+        if (skip !== undefined && skip(attr.name)) continue;
         bag.push([attr.name, attr.value]);
     }
     return bag.length ? JSON.stringify(bag) : "";

@@ -557,8 +557,7 @@ function ingestNode(
     // raw-atom shortcut first: even a <p class="mw-empty-elt"> is patched
     // through as an atom, never expanded.
     // A named node type may claim this element (reproducing atom):
-    // verbatim innerHTML for now; outer attributes are collected into
-    // htmlAttrs in Phase 3.
+    // verbatim innerHTML and the collected htmlAttrs bag.
     const claimedTypeKey = resolveNodeEmission(ctx, el);
     if (claimedTypeKey !== null) {
         count(report.reproNodes, claimedTypeKey);
@@ -830,7 +829,7 @@ export function ingestWikipediaDocument(
     });
 }
 
-/** @deprecated shim kept until main.mjs is rewired in Phase 3. */
+/** @deprecated shim, kept for compatibility. */
 export function traverseDom(
     domNode: Node,
     _activeMarks: string[],

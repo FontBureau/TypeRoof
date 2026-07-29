@@ -194,7 +194,7 @@ export const marks = {
         excludes: "_",
         attrs: {
             "data-style-name": { default: "", validate: "string" },
-            // editable-element attr replay (Q1): the collected
+            // editable-element attr replay: the collected
             // attributes bag (guarded JSON string)
             htmlAttrs: { default: "", validate: "string" },
         },

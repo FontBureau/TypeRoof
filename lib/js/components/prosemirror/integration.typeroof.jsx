@@ -525,7 +525,44 @@ function _createToDOM(tag, attributeSpecMap) {
 import {
     applyHtmlAttrsBag as _applyHtmlAttrsBag,
     collectHtmlAttrsToBag as _collectHtmlAttrsToBag,
+    htmlAttrsBagToSpec as _htmlAttrsBagToSpec,
 } from "./html-attrs.ts";
+
+// Editable attr replay (inferred by a declared htmlAttrs attr):
+// declared attrs coerce 1:1 as before; foreign attributes collect
+// into the bag (guarded, minus declared names).
+function _createEditableGetAttrs(attributeSpecMap) {
+    const declaredGetAttrs = _createGetAttrs(attributeSpecMap),
+        // DOM attribute names are always lowercase, declared names
+        // may not be (e.g. htmlAttrs): compare lowercased.
+        declaredNamesLower = new Set(
+            Array.from(attributeSpecMap.keys(), (name) => name.toLowerCase()),
+        );
+    return (dom) =>
+        Object.assign(declaredGetAttrs(dom), {
+            htmlAttrs: _collectHtmlAttrsToBag(dom, (name) =>
+                declaredNamesLower.has(name),
+            ),
+        });
+}
+
+// Declared attrs serialize 1:1 (except the bag itself); the bag is
+// replayed as individual attributes.
+function _createEditableToDOM(tag, attributeSpecMap) {
+    const declaredToDOM = _createToDOM(tag, attributeSpecMap);
+    return (node) => {
+        const [outTag, outAttrs, hole] = declaredToDOM(node);
+        if (outAttrs) delete outAttrs.htmlAttrs;
+        return [
+            outTag,
+            Object.assign(
+                outAttrs ?? {},
+                _htmlAttrsBagToSpec(node.attrs.htmlAttrs),
+            ),
+            hole,
+        ];
+    };
+}
 
 function _createReproducingGetAttrs() {
     return (dom) => ({
@@ -596,6 +633,16 @@ export function createProseMirrorSchemaFromMetaModel(
                 parseDOMItem.getAttrs = _createReproducingGetAttrs();
                 newNode.parseDOM = [parseDOMItem];
                 newNode.toDOM = _createReproducingToDOM(tag.value);
+            } else if (attributeSpecMap.has("htmlAttrs")) {
+                // inferred editable attr replay: declared
+                // 1:1 coercion + collect foreign attrs into the bag
+                parseDOMItem.getAttrs =
+                    _createEditableGetAttrs(attributeSpecMap);
+                newNode.parseDOM = [parseDOMItem];
+                newNode.toDOM = _createEditableToDOM(
+                    tag.value,
+                    attributeSpecMap,
+                );
             } else {
                 if (attributeSpecMap.size)
                     parseDOMItem.getAttrs = _createGetAttrs(attributeSpecMap);
@@ -642,10 +689,16 @@ export function createProseMirrorSchemaFromMetaModel(
             // tag names! E.g. when two nodes use the tag-name p
             const attributeSpecMap = markSpec.get("attrs"),
                 parseDOMItem = { tag: tag.value };
-            if (attributeSpecMap.size)
+            if (attributeSpecMap.has("htmlAttrs"))
+                // inferred editable attr replay
+                parseDOMItem.getAttrs =
+                    _createEditableGetAttrs(attributeSpecMap);
+            else if (attributeSpecMap.size)
                 parseDOMItem.getAttrs = _createGetAttrs(attributeSpecMap);
             newMark.parseDOM = [parseDOMItem];
-            newMark.toDOM = _createToDOM(tag.value, attributeSpecMap);
+            newMark.toDOM = attributeSpecMap.has("htmlAttrs")
+                ? _createEditableToDOM(tag.value, attributeSpecMap)
+                : _createToDOM(tag.value, attributeSpecMap);
         }
         const pmAttrs = _createPMAttrs(markSpec.get("attrs"));
         if (pmAttrs !== null) newMark.attrs = pmAttrs;
