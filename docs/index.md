@@ -31,7 +31,7 @@ vanilla JavaScript and a few specialized dependencies. We are looking for
 a community of users and developers who are interested in shaping its future.
 
 <iframe
-    src="/app/player#[autoplay]from-url:/TypeRoof/docs/states_lib/demos/zooming.json.txt"
+    src="/app/player#[autoplay]from-url:/TypeRoof/docs/states-library/demos/zooming.json.txt"
     width="60%"
     style="aspect-ratio: 1/1"
     allowfullscreen="true"
@@ -52,7 +52,7 @@ The video at the top of this article is embedded using the iframe code below:
 
 ```
 <iframe
-    src="/TypeRoof/app/player#[autoplay]from-url:/TypeRoof/docs/states_lib/demos/zooming.json.txt"
+    src="/TypeRoof/app/player#[autoplay]from-url:/TypeRoof/docs/states-library/demos/zooming.json.txt"
     width="60%"
     style="aspect-ratio: 1/1"
     allowfullscreen="true"
