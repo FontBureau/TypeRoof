@@ -240,13 +240,13 @@ export class ProsemirrorNodeView {
         );
         if (subscriptionsWidget === null) return;
         // else: we have a subscriptions widget, hence, we can subscribe...
-        const structuralElements = this._isReproducing
-            ? { outer: this.dom }
-            : {
-                  // required to style e.g. the margins between paragraphs
-                  outer: this.dom,
-                  inner: this._stylerDOM,
-              };
+        const structuralElements = {
+            // required to style e.g. the margins between paragraphs
+            outer: this.dom,
+            // for reproducing atoms outer === inner (an anticipated
+            // case in UIDocumentNodeOutfitter)
+            inner: this._stylerDOM,
+        };
 
         subscriptionsWidget.subscribe(
             this._stylerDOM,

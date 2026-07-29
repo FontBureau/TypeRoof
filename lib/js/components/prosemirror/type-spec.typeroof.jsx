@@ -481,14 +481,13 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         getPos,
         nodeOutfitterOptions = { typeSpecLabels: false },
     ) {
-        // If structuralElements.outer === structuralElements.inner
-        // the contents of outer must be purely managed by prosemirror
-        // and hence it would be plainly wrong to create a zone for
-        // another widget to use.
-        const zones =
-            structuralElements.outer !== structuralElements.inner
-                ? new Map([..._zones, ["outer", structuralElements.outer]])
-                : _zones;
+        // The outer zone must exist for wrapper initialization even
+        // when structuralElements.outer === structuralElements.inner
+        // (e.g. reproducing atoms): _initWrapper resolves zones eagerly,
+        // and the activationTests of the outer-zone widgets
+        // (UIParametersDisplay, NodeTypeSpecLabel) prevent actual use
+        // in that case — nothing is inserted into the element.
+        const zones = new Map([..._zones, ["outer", structuralElements.outer]]);
 
         super(widgetBus, zones);
         this._structuralElements = structuralElements;
@@ -516,7 +515,14 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
             [
                 {
                     zone: "outer",
-                    activationTest: () => this.getEntry("showParameters").value,
+                    // outer === inner (e.g. reproducing atoms): the outer
+                    // zone doesn't exist, widgets must not activate;
+                    // their contents are view-managed, inserting would
+                    // corrupt them (and trigger PM reparses).
+                    activationTest: () =>
+                        this._structuralElements.outer !==
+                            this._structuralElements.inner &&
+                        this.getEntry("showParameters").value,
                 },
                 [
                     [
@@ -537,6 +543,13 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                     // the  activationTest will only return true if the value
                     // of the option is strictly `true`;
                     activationTest: () => {
+                        // see UIParametersDisplay above: no outer zone
+                        // when outer === inner
+                        if (
+                            this._structuralElements.outer ===
+                            this._structuralElements.inner
+                        )
+                            return false;
                         if (
                             typeof this._nodeOutfitterOptions
                                 ?.typeSpecLabels === "function"
