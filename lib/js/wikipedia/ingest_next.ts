@@ -142,6 +142,100 @@ export interface NodeEmissionEntry {
     typeKey: string;
 }
 
+// A matcher for attribute names (exact string or RegExp test), or a
+// [nameMatcher, valueMatcher] pair matching name AND value, e.g.
+// ["id", /^mw/] matches id="mw123".
+export type HtmlAttrMatcher =
+    | string
+    | RegExp
+    | [string | RegExp, string | RegExp];
+
+// Policy for collecting an element's outer attributes into the
+// htmlAttrs bag of reproducing atoms. Conjunctive rule: an attribute
+// is collected iff it is NOT matched by exclude AND is matched by
+// include. include: undefined means accept all (default), include: []
+// rejects all (kill-switch); exclude: undefined/[] excludes nothing.
+// NOTE: TypeRoof's core properties (data-node-type, data-mark-type,
+// data-style-name) and on* handlers are additionally guarded at
+// replay time, outside ingest — no policy can emit them.
+export interface HtmlAttrPolicy {
+    include?: HtmlAttrMatcher[];
+    exclude?: HtmlAttrMatcher[];
+}
+
+function matchOne(
+    matcher: HtmlAttrMatcher,
+    name: string,
+    value: string,
+): boolean {
+    if (typeof matcher === "string") return matcher === name;
+    if (matcher instanceof RegExp) return matcher.test(name);
+    const [nameMatcher, valueMatcher] = matcher;
+    return (
+        matchOne(nameMatcher, name, value) &&
+        matchOne(valueMatcher, value, value)
+    );
+}
+
+function matchesAny(
+    matchers: readonly HtmlAttrMatcher[] | undefined,
+    name: string,
+    value: string,
+): boolean {
+    if (matchers === undefined) return false;
+    for (const matcher of matchers)
+        if (matchOne(matcher, name, value)) return true;
+    return false;
+}
+
+// Clone regexps without the stateful g/y flags (lastIndex mutation
+// would make repeated tests order-dependent).
+function cloneRegExp(re: RegExp): RegExp {
+    return new RegExp(re.source, re.flags.replace(/[gy]/g, ""));
+}
+
+function cloneMatcher(matcher: HtmlAttrMatcher): HtmlAttrMatcher {
+    if (matcher instanceof RegExp) return cloneRegExp(matcher);
+    if (Array.isArray(matcher))
+        return matcher.map((m) =>
+            m instanceof RegExp ? cloneRegExp(m) : m,
+        ) as HtmlAttrMatcher;
+    return matcher;
+}
+
+// Normalize a policy once (clones regexps).
+function normalizeAttrPolicy(policy: HtmlAttrPolicy = {}): HtmlAttrPolicy {
+    const result: HtmlAttrPolicy = {};
+    if (policy.include !== undefined)
+        result.include = policy.include.map(cloneMatcher);
+    if (policy.exclude !== undefined)
+        result.exclude = policy.exclude.map(cloneMatcher);
+    return result;
+}
+
+// Collect an element's attributes into the htmlAttrs bag: a JSON
+// string of [name, value] pairs (string, because PM attr equality is
+// shallow and nested objects would redraw-oscillate). Returns "" when
+// nothing is collected.
+export function collectHtmlAttrs(
+    el: Element,
+    policy: HtmlAttrPolicy = {},
+): string {
+    const result: [string, string][] = [];
+    for (const attr of Array.from(el.attributes)) {
+        const { name, value } = attr;
+        if (matchesAny(policy.exclude, name, value)) continue;
+        // include undefined: accept all; include []: reject all
+        if (
+            policy.include !== undefined &&
+            !matchesAny(policy.include, name, value)
+        )
+            continue;
+        result.push([name, value]);
+    }
+    return result.length ? JSON.stringify(result) : "";
+}
+
 export interface IngestionOptions {
     // Tag names treated as transparent containers (children pass
     // through, no node emitted). Initially empty — the transparency
@@ -173,6 +267,12 @@ export interface IngestionOptions {
     // schema-derived selectors (nodeSelectorsFromSchema), then to the
     // existing chain (unknown_inline's raison d'être).
     nodeEmission?: NodeEmissionEntry[];
+    // Policy for collecting outer attributes into the htmlAttrs bag
+    // of reproducing atoms (see HtmlAttrPolicy): conjunctive
+    // include/exclude matcher lists. The configured variant bakes in:
+    // accept all except style (collides with TypeRoof styling),
+    // on* handlers and TypeRoof's own markers.
+    attrPolicy?: HtmlAttrPolicy;
 }
 
 // Derive htmlTag (lowercase) -> SemanticMark from the metamodel schema
@@ -324,6 +424,7 @@ interface Ctx {
     schemaMarkAttrs: Readonly<Record<string, string[]>>;
     nodeEmission: readonly NodeEmissionEntry[];
     nodeSelectors: readonly NodeEmissionEntry[];
+    attrPolicy: HtmlAttrPolicy;
 }
 
 // Emit a raw_html atom preserving the element's outerHTML verbatim.
@@ -417,8 +518,13 @@ function ingestNode(
     const claimedTypeKey = resolveNodeEmission(ctx, el);
     if (claimedTypeKey !== null) {
         count(report.reproNodes, claimedTypeKey);
-        const draft = newNodeDraft(claimedTypeKey);
-        draft.get("attrs").set("html", toMetaModelJSON(el.innerHTML, {}));
+        const draft = newNodeDraft(claimedTypeKey),
+            attrsDraft = draft.get("attrs");
+        attrsDraft.set("html", toMetaModelJSON(el.innerHTML, {}));
+        attrsDraft.set(
+            "htmlAttrs",
+            toMetaModelJSON(collectHtmlAttrs(el, ctx.attrPolicy), {}),
+        );
         out.push(draft.metamorphose());
         return;
     }
@@ -565,6 +671,7 @@ export function ingestDOM(
             : {},
         markEmission: options.markEmission ?? [],
         nodeEmission: options.nodeEmission ?? [],
+        attrPolicy: normalizeAttrPolicy(options.attrPolicy),
         nodeSelectors: options.proseMirrorSchema
             ? nodeSelectorsFromSchema(options.proseMirrorSchema)
             : [],
@@ -627,6 +734,23 @@ export function ingestWikipediaDocument(
                 typeKey: "cite-link",
             },
         ],
+
+        // Policy for collecting outer attributes into the htmlAttrs
+        // bag of reproducing atoms: accept all except what collides
+        // with TypeRoof (styling, own markers) and on* handlers.
+        // Ids are kept (Wikipedia ids are mw-prefixed). TypeRoof's
+        // core markers and on* are additionally guarded at replay
+        // time, outside ingest.
+        attrPolicy: {
+            include: [/.*/],
+            exclude: [
+                "style",
+                /^on/,
+                "data-node-type",
+                "data-mark-type",
+                "data-style-name",
+            ],
+        },
     });
 }
 
