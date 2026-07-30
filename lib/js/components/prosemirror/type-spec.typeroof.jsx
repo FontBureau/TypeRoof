@@ -15,6 +15,7 @@ import {
 import { getColorFromPropertyValuesMap, enhanceContrast } from "../color.mjs";
 
 import { getRegisteredPropertySetup } from "../registered-properties.mjs";
+import { getStyleLinks } from "../registered-properties-definitions.mjs";
 
 import {
     COLOR,
@@ -845,18 +846,32 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         return dependencies;
     }
 
-    _getTypeSpecForPropertiesId(typeSpecPropertiesId) {
-        const typeSpecPath = typeSpecPropertiesId.slice(
-            "typeSpecProperties@".length,
+    // The effective (inherited and local) style-link edges of the
+    // TypeSpec identified by a typeSpecProperties@ id, as a Map of
+    // key => StylePatchLinkModel. Tombstoned (unlinked) edges are
+    // excluded by getStyleLinks.
+    _getEffectiveStyleLinks(typeSpecProperties) {
+        const protocolHandlerImplementation =
+            this.widgetBus.getProtocolHandlerImplementation(
+                "typeSpecProperties@",
+                null,
+            );
+        if (protocolHandlerImplementation === null)
+            throw new Error(
+                `KEY ERROR ProtocolHandler for identifier "typeSpecProperties@" not found.`,
+            );
+        if (!protocolHandlerImplementation.hasRegistered(typeSpecProperties))
+            return new Map();
+        const typeSpecLiveProperties =
+            protocolHandlerImplementation.getRegistered(typeSpecProperties);
+        return getStyleLinks(
+            typeSpecLiveProperties.typeSpecnion.getProperties(),
         );
-        return this.getEntry(Path.fromString(typeSpecPath));
     }
 
     _getStylePatchLinkForMark(typeSpecProperties, mark) {
         return getStylePatchLinkForMark(
-            this._getTypeSpecForPropertiesId(typeSpecProperties).get(
-                "stylePatches",
-            ),
+            this._getEffectiveStyleLinks(typeSpecProperties),
             mark,
         );
     }
@@ -864,9 +879,8 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
     // The tag an intent mark is bound to via the applicable
     // TypeSpec's style-link edges, or null (renders as default span).
     _resolveIntentTag(typeSpecProperties, mark) {
-        const typeSpec = this._getTypeSpecForPropertiesId(typeSpecProperties);
         return getStylePatchTagForIntent(
-            typeSpec.get("stylePatches"),
+            this._getEffectiveStyleLinks(typeSpecProperties),
             mark.attrs["data-style-name"],
         );
     }
