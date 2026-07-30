@@ -48,14 +48,11 @@ app menu
 *******************************************************************************/
 
 .typeroof-app-menu {
+    border-bottom: 1px solid var(--fieldset-border-color);
     display: flex;
     align-items: center;
-    gap: 0.5em;
+    gap: 1em;
     padding: 1em;
-
-    > :last-child {
-        margin-left: auto;
-    }
 
     > button {
         background: none;
@@ -73,47 +70,55 @@ app menu
         min-width: 0;
     }
 
-    > menu {
-        display: none;
-        position: absolute;
-        top: 3em;
-        left: 1em;
-        background-color: var(--button-bg-color);
-        border: 1px solid var(--input-border-color);
-        box-shadow: 0 4px 10px rgb(0 0 0 / 25%);
-        padding: 0.5em;
+    > .typeroof-app-menu-item {
+        position: relative;
 
-        ul,
-        li {
-            display: flex;
-            list-style: none;
-            margin: 0 !important;
+        > button {
+            background: none;
+            border: 0;
             padding: 0;
         }
 
-        a,
-        button {
-            background: none;
-            border: 0;
-            border-radius: 0;
-            display: block;
-            flex-grow: 1;
-            font-size: 1em;
-            height: auto;
-            padding: 0.5em;
-            padding-right: 1.5em;
-            text-align: left;
-            text-decoration: none;
-
-            &:hover {
-                background-color: var(--menu-button-bg-color-hover);
-            }
-        }
-    }
-
-    &.opened {
         > menu {
-            display: block;
+            display: none;
+            position: absolute;
+            top: 2em;
+            left: 0;
+            background-color: var(--button-bg-color);
+            border: 1px solid var(--input-border-color);
+            box-shadow: 0 4px 10px rgb(0 0 0 / 25%);
+            padding: 0.5em;
+
+            &.opened {
+                display: block;
+            }
+
+            ul,
+            li {
+                display: flex;
+                list-style: none;
+                margin: 0 !important;
+                padding: 0;
+            }
+
+            a,
+            button {
+                background: none;
+                border: 0;
+                border-radius: 0;
+                display: block;
+                flex-grow: 1;
+                font-size: 1em;
+                height: auto;
+                padding: 0.5em;
+                padding-right: 1.5em;
+                text-align: left;
+                text-decoration: none;
+
+                &:hover {
+                    background-color: var(--menu-button-bg-color-hover);
+                }
+            }
         }
     }
 
