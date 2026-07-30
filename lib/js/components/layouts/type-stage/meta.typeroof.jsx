@@ -4,6 +4,7 @@ import {
     HANDLE_CHANGED_AS_NEW,
 } from "../../basics/component.mjs";
 import { Path } from "../../../metamodel.mjs";
+import { getStyleLinks } from "../../registered-properties-definitions.mjs";
 import {
     TypeSpecLiveProperties,
     StylePatchSourceLiveProperties,
@@ -52,26 +53,36 @@ export class StylePatchSourcesMeta extends _BaseDynamicMapContainerComponent {
     }
 }
 
-export class StyleLinksMeta extends _BaseDynamicMapContainerComponent {
-    // important here, as we use the value of each entry in the path
-    // of the stylePatchProperties@
-    [HANDLE_CHANGED_AS_NEW] = true;
+export class StyleLinksMeta extends _BaseContainerComponent {
     constructor(widgetBus, zones) {
-        super(widgetBus, zones);
+        super(widgetBus, zones, []);
+        this._keyToWidget = new Map();
+        this._keyToEdge = new Map();
+    }
+    // required, otherwise with empty widgets, this won't receive updates.
+    get dependencies() {
+        const dependencies = super.dependencies;
+        for (const externalName of this.widgetBus.wrapper.dependencyReverseMapping.values())
+            dependencies.add(externalName);
+        return dependencies;
+    }
+    get modelDependencies() {
+        const dependencies = super.modelDependencies;
+        for (const externalName of this.widgetBus.wrapper.dependencyMapping.keys())
+            dependencies.add(externalName);
+        return dependencies;
     }
     /**
      * return => [settings, dependencyMappings, Constructor, ...args];
      */
-    _getWidgetSetup(rootPath) {
-        // console.log(`${this}._getWidgetSetup rootPath: ${rootPath}`); // /activeState/typeSpec/stylePatches/bold
+    _getWidgetSetup(rootPath, edge) {
         const stylePatchesSourcePath = Path.fromString(
                 this.widgetBus.getExternalName("stylePatchesSource"),
             ),
-            keyItem = this.getEntry(rootPath),
-            key = keyItem.get("stylePatch").value;
-        // key is an empty string in case of (NULL-STYLE)
-        // in case key is not in stylePatchesSource ("miracle"):
-        // "bold" is available
+            key = edge.get("stylePatch").value;
+        // key is an empty string in case of NULL-STYLE (mode 'null-style')
+        // or when the key is not in stylePatchesSource ("miracle"):
+        // the style is available, but no patch is applied.
         return [
             {
                 rootPath,
@@ -90,10 +101,10 @@ export class StyleLinksMeta extends _BaseDynamicMapContainerComponent {
             StyleLinkLiveProperties,
         ];
     }
-    _createWrapper(rootPath) {
+    _createWrapper(rootPath, edge) {
         const childWidgetBus = this._childrenWidgetBus,
             [settings, dependencyMappings, Constructor, ...args] =
-                this._getWidgetSetup(rootPath);
+                this._getWidgetSetup(rootPath, edge);
         return this._initWrapper(
             childWidgetBus,
             settings,
@@ -101,6 +112,80 @@ export class StyleLinksMeta extends _BaseDynamicMapContainerComponent {
             Constructor,
             ...args,
         );
+    }
+    /**
+     * Provision one StyleLinkLiveProperties per effective style-link edge
+     * of this TypeSpec. Effective edges are carried by the typeSpecnion
+     * properties stream (styleLinks/<key>), i.e. inherited edges are
+     * included. Tombstoned keys are excluded by getStyleLinks, hence no
+     * styleLinkProperties@ handler is registered for them and consumers
+     * fall back to unknown-style handling ("the absence is the
+     * inheritance").
+     */
+    _provisionWidgets(compareResult) {
+        const requiresFullInitialUpdate = new Set();
+        let typeSpecProperties;
+        if (compareResult === undefined)
+            // initial update (via _BaseContainerComponent.initialUpdate)
+            typeSpecProperties = this.getEntry("typeSpecProperties@");
+        else {
+            const changedMap =
+                this.widgetBus.wrapper.getChangedMapFromCompareResult(
+                    compareResult.isInitial,
+                    compareResult,
+                );
+            if (!changedMap.has("typeSpecProperties@"))
+                return requiresFullInitialUpdate;
+            typeSpecProperties = changedMap.get("typeSpecProperties@");
+        }
+        const effectiveLinks =
+                typeSpecProperties === null
+                    ? new Map()
+                    : getStyleLinks(
+                          typeSpecProperties.typeSpecnion.getProperties(),
+                      ),
+            deletedWidgets = new Set(this._widgets),
+            newWidgets = [];
+        for (const [key, edge] of effectiveLinks) {
+            const currentWrapper = this._keyToWidget.get(key);
+            if (
+                currentWrapper !== undefined &&
+                this._keyToEdge.get(key) === edge
+            ) {
+                // unchanged edge
+                newWidgets.push(currentWrapper);
+                deletedWidgets.delete(currentWrapper);
+                continue;
+            }
+            // new or changed edge: (re)create the wrapper
+            const widgetWrapper = this._createWrapper(
+                this.widgetBus.rootPath.append("stylePatches", key),
+                edge,
+            );
+            this._keyToWidget.set(key, widgetWrapper);
+            this._keyToEdge.set(key, edge);
+            newWidgets.push(widgetWrapper);
+        }
+        for (const widgetWrapper of deletedWidgets)
+            this._destroyWidget(widgetWrapper);
+        for (const key of this._keyToWidget.keys())
+            if (!effectiveLinks.has(key)) {
+                this._keyToWidget.delete(key);
+                this._keyToEdge.delete(key);
+            }
+        this._widgets.splice(0, Infinity, ...newWidgets);
+        for (const widgetWrapper of this._widgets) {
+            if (widgetWrapper.widget === null) {
+                this._createWidget(widgetWrapper);
+                requiresFullInitialUpdate.add(widgetWrapper);
+            }
+        }
+        return requiresFullInitialUpdate;
+    }
+    destroy() {
+        super.destroy();
+        this._keyToWidget.clear();
+        this._keyToEdge.clear();
     }
 }
 
@@ -195,7 +280,10 @@ export class TypeSpecMeta extends _BaseContainerComponent {
                         widgetBus.getExternalName("stylePatchesSource"),
                         "stylePatchesSource",
                     ],
-                    ["stylePatches", "collection"],
+                    [
+                        `typeSpecProperties@${widgetBus.rootPath.toString()}`,
+                        "typeSpecProperties@",
+                    ],
                 ],
                 StyleLinksMeta,
                 zones,
