@@ -6,6 +6,7 @@
 
 ICON_NAMES=(
     add
+    arrow_drop_down
     arrow_forward
     arrow_left_alt
     arrow_right_alt
