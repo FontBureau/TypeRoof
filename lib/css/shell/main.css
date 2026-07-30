@@ -20,10 +20,10 @@ material symbols
 }
 
 /******************************************************************************
-fonts manager
+layout and font
 *******************************************************************************/
 
-.fonts-manager {
+.layout-and-font {
     padding: 1em;
 }
 
@@ -83,7 +83,7 @@ fonts manager
 layout select
 *******************************************************************************/
 
-.ui_layout_select {
+.layout-and-font {
     select {
         font-size: 1.2em;
         height: auto;
@@ -92,10 +92,6 @@ layout select
             font-size: 0.8rem;
         }
     }
-}
-
-.ui_layout_select-label {
-    display: none;
 }
 
 /******************************************************************************
@@ -2184,7 +2180,7 @@ select menus...
 /**************************************************************************** */
 
 .ui_type_spec_select-select,
-.ui_font-select_select {
+:not(.layout-and-font) > .ui_font-select > .ui_font-select_select {
     /* This made long options overflow and break, the overflow options
      * below did not have an effect (in Chrome).
      * value `auto` restores expected behavior.
