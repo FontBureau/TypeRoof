@@ -1,16 +1,77 @@
 import { serialize } from "../metamodel.mjs";
-import { _BaseContainerComponent } from "./basics/component.mjs";
-import { GenericSelect, StaticNode } from "./generic.mjs";
+import {
+    _BaseComponent,
+    _BaseContainerComponent,
+} from "./basics/component.mjs";
+import { StaticNode } from "./generic.mjs";
 import {
     createStateFileName,
     deserializeStateString,
     downloadFile,
 } from "../utils/state-file.mjs";
 
-export class AppMenu extends _BaseContainerComponent {
+/**
+ * A menu button ("toggler") together with the menu it opens and closes,
+ * both wrapped into a root element.
+ */
+class AppMenuItem extends _BaseComponent {
+    static BASE_CLASS = "typeroof-app-menu-item";
     static OPENED_CLASS = "opened";
 
-    constructor(widgetBus, layoutGroups) {
+    constructor(widgetBus, label, menuElement) {
+        super(widgetBus);
+        this._menu = menuElement;
+        [this.element, this._toggler] = this.initTemplate(label);
+        this._setOpen(false);
+    }
+
+    initTemplate(label) {
+        const h = this._domTool.h;
+        const toggler = (
+            <button aria-expanded="false" onClick={() => this._toggle()}>
+                {label}{" "}
+                <span class="material-symbols-outlined">arrow_drop_down</span>
+            </button>
+        );
+        const element = (
+            <div class={AppMenuItem.BASE_CLASS}>
+                {toggler}
+                {this._menu}
+            </div>
+        );
+        this._insertElement(element);
+        return [element, toggler];
+    }
+
+    get _isOpen() {
+        return this._toggler.getAttribute("aria-expanded") === "true";
+    }
+
+    /**
+     * Whether node is this item or a descendant of it, i.e. whether a
+     * click on node is a click on this menu item.
+     */
+    contains(node) {
+        return this.element.contains(node);
+    }
+
+    _setOpen(isOpen) {
+        this._toggler.setAttribute("aria-expanded", isOpen);
+        this._menu.setAttribute("aria-hidden", !isOpen);
+        this._menu.classList.toggle(AppMenuItem.OPENED_CLASS, isOpen);
+    }
+
+    _toggle() {
+        this._setOpen(!this._isOpen);
+    }
+
+    close() {
+        this._setOpen(false);
+    }
+}
+
+export class AppMenu extends _BaseContainerComponent {
+    constructor(widgetBus) {
         const h = widgetBus.domTool.h,
             mainElement = <div class="typeroof-app-menu"></div>,
             stateFileInput = (
@@ -39,29 +100,23 @@ export class AppMenu extends _BaseContainerComponent {
             zones = new Map([["main", mainElement]]);
         widgetBus.insertElement(mainElement);
 
-        const widgets = [
+        const menuItemWidgets = [
             [
-                {
-                    zone: "main",
-                    id: "toggler",
-                },
+                { zone: "main", id: "menu-file" },
                 [],
-                StaticNode,
-                <button onClick={() => this._onClickToggler()}>
-                    <span class="material-symbols-outlined">menu</span>
-                </button>,
-            ],
-            [
-                {
-                    zone: "main",
-                    id: "menu",
-                },
-                [],
-                StaticNode,
+                AppMenuItem,
+                "File",
                 <menu>
                     {loadStateElement}
                     {saveStateElement}
-                    <hr />
+                </menu>,
+            ],
+            [
+                { zone: "main", id: "menu-help" },
+                [],
+                AppMenuItem,
+                "Help",
+                <menu>
                     <li>
                         <a
                             href="/TypeRoof/docs"
@@ -91,39 +146,30 @@ export class AppMenu extends _BaseContainerComponent {
                     </li>
                 </menu>,
             ],
+        ];
+
+        const widgets = [
             [{ zone: "main" }, [], StaticNode, <h1>TypeRoof</h1>],
-            [
-                { zone: "main" },
-                [
-                    ["availableLayouts", "options"],
-                    ["activeLayoutKey", "value"],
-                ],
-                GenericSelect,
-                "ui_layout_select", // baseClass
-                "", // labelContent
-                (key, availableLayout) => {
-                    return availableLayout.get("label").value;
-                }, // optionGetLabel
-                [], //allowNull
-                null, //onChangeFn
-                (availableLayout) => {
-                    // optionGetGroup
-                    var groupKey = availableLayout.get("groupKey").value,
-                        // => empty label should not be an actual group, just output directly into default/root?
-                        // that way there's no difference in the UI between different groups when they have the
-                        // empty label, also, no different ordering.
-                        label = layoutGroups[groupKey].label || "",
-                        index = layoutGroups[groupKey].index;
-                    return [groupKey, label, index];
-                },
-            ],
+            ...menuItemWidgets,
         ];
 
         super(widgetBus, zones, widgets);
 
-        this._mainElement = mainElement;
         this._stateFileInput = stateFileInput;
-        document.addEventListener("click", this._onClickOutsideMenu.bind(this));
+        this._menuItemIds = menuItemWidgets.map(([settings]) => settings.id);
+        this._onClickDocumentHandler = this._onClickDocument.bind(this);
+        this._domTool.document.addEventListener(
+            "click",
+            this._onClickDocumentHandler,
+        );
+    }
+
+    destroy() {
+        this._domTool.document.removeEventListener(
+            "click",
+            this._onClickDocumentHandler,
+        );
+        super.destroy();
     }
 
     _onClickLoadState() {
@@ -182,28 +228,18 @@ export class AppMenu extends _BaseContainerComponent {
         this._domTool.window.alert(`${label} failed:\n${error}`);
     }
 
-    _onClickToggler() {
-        const toggler = this.getWidgetById("toggler").node;
-        const menu = this.getWidgetById("menu").node;
-        const wasOpen = toggler.getAttribute("aria-expanded") === "true";
-        const isOpen = !wasOpen;
-        toggler.setAttribute("aria-expanded", isOpen);
-        menu.setAttribute("aria-hidden", !isOpen);
-        if (isOpen) {
-            this._mainElement.classList.add(AppMenu.OPENED_CLASS);
-        } else {
-            this._mainElement.classList.remove(AppMenu.OPENED_CLASS);
-        }
-    }
-
-    _onClickOutsideMenu(e) {
-        const isOutside = !this._mainElement.contains(e.target);
-        if (isOutside) {
-            const toggler = this.getWidgetById("toggler").node;
-            const menu = this.getWidgetById("menu").node;
-            toggler.setAttribute("aria-expanded", false);
-            menu.setAttribute("aria-hidden", true);
-            this._mainElement.classList.remove(AppMenu.OPENED_CLASS);
+    /**
+     * Close each menu that was not clicked itself. The toggler of a clicked
+     * menu item handles that item on its own, thus e.g. opening the "Help"
+     * menu closes the "File" menu.
+     */
+    _onClickDocument(event) {
+        for (const id of this._menuItemIds) {
+            // null when the widget is not created (yet).
+            const menuItem = this.getWidgetById(id, null);
+            if (menuItem !== null && !menuItem.contains(event.target)) {
+                menuItem.close();
+            }
         }
     }
 }
