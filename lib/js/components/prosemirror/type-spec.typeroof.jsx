@@ -49,7 +49,7 @@ import {
 } from "./integration.typeroof.jsx";
 
 import {
-    getStylePatchLinkForMark,
+    getStylePatchLinkForIntent,
     getStylePatchTagForIntent,
 } from "../type-spec-models.mjs";
 
@@ -870,9 +870,14 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
     }
 
     _getStylePatchLinkForMark(typeSpecProperties, mark) {
-        return getStylePatchLinkForMark(
+        const styleName = mark.attrs["data-style-name"];
+        if (styleName === undefined)
+            // schema marks: resolved from markStyleLinks in Phase 2;
+            // deliberately NOT via the intent map (no cross-matching)
+            return null;
+        return getStylePatchLinkForIntent(
             this._getEffectiveStyleLinks(typeSpecProperties),
-            mark,
+            styleName,
         );
     }
 
@@ -886,6 +891,9 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
     }
 
     _getStyleLinkPropertiesId(typeSpecProperties, styleLink) {
+        if (styleLink === null)
+            // no applicable edge: the unknown-style fallback applies
+            return null;
         const typeSpecPath = typeSpecProperties.slice(
                 "typeSpecProperties@".length,
             ),
@@ -1830,7 +1838,7 @@ export class UIProseMirrorMenuStyles extends _BaseComponent {
             commonSubSet = new Set();
 
         for (const [typeSpec, path] of typeSpecs) {
-            const stylePatches = typeSpec.get("stylePatches");
+            const stylePatches = typeSpec.get("intentStyleLinks");
             // console.log(
             //   `${path} :: ${typeSpec.get("label").value} STYLES:`,
             //   ...stylePatches.keys(),

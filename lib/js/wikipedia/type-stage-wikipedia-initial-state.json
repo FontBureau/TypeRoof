@@ -77,7 +77,7 @@
           "relativeFontSize": "1.285714286",
           "autoOPSZ": "1",
           "label": "Text 1",
-          "stylePatches": [
+          "intentStyleLinks": [
             [
               "italic",
               {
@@ -104,7 +104,7 @@
         {
           "autoOPSZ": "1",
           "label": "Text 2",
-          "stylePatches": [
+          "intentStyleLinks": [
             [
               "italic",
               {

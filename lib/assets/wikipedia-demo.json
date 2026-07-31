@@ -44,7 +44,7 @@
           "relativeFontSize": "1.285714286",
           "autoOPSZ": "1",
           "label": "T1",
-          "stylePatches": [
+          "intentStyleLinks": [
             ["italic", {"stylePatch": "italic"}],
             ["bold", {"stylePatch": "bold"}],
             ["bold italic", {"stylePatch": "bold italic"}],
@@ -60,7 +60,7 @@
       ["4", {
           "autoOPSZ": "1",
           "label": "T2",
-          "stylePatches": [
+          "intentStyleLinks": [
             ["italic", {"stylePatch": "italic"}],
             ["bold", {"stylePatch": "bold"}],
             ["bold italic", {"stylePatch": "bold italic"}],
