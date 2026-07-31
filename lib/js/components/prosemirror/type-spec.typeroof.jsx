@@ -897,7 +897,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         const typeSpecPath = typeSpecProperties.slice(
                 "typeSpecProperties@".length,
             ),
-            styleLinkPropertiesId = `styleLinkProperties@${Path.fromParts(typeSpecPath, "stylePatches", styleLink)}`,
+            styleLinkPropertiesId = `styleLinkProperties@${Path.fromParts(typeSpecPath, "intentStyleLinks", styleLink)}`,
             protocolHandlerImplementation =
                 this.widgetBus.getProtocolHandlerImplementation(
                     "styleLinkProperties@",

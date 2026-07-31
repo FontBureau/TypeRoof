@@ -4,7 +4,11 @@ import {
     HANDLE_CHANGED_AS_NEW,
 } from "../../basics/component.mjs";
 import { Path } from "../../../metamodel.mjs";
-import { getStyleLinks } from "../../registered-properties-definitions.mjs";
+import {
+    getStyleLinks,
+    INTENT_STYLE_LINKS,
+    MARK_STYLE_LINKS,
+} from "../../registered-properties-definitions.mjs";
 import {
     TypeSpecLiveProperties,
     StylePatchSourceLiveProperties,
@@ -54,8 +58,10 @@ export class StylePatchSourcesMeta extends _BaseDynamicMapContainerComponent {
 }
 
 export class StyleLinksMeta extends _BaseContainerComponent {
-    constructor(widgetBus, zones) {
+    constructor(widgetBus, zones, fieldName, prefix) {
         super(widgetBus, zones, []);
+        this._fieldName = fieldName;
+        this._prefix = prefix;
         this._keyToWidget = new Map();
         this._keyToEdge = new Map();
     }
@@ -143,6 +149,7 @@ export class StyleLinksMeta extends _BaseContainerComponent {
                     ? new Map()
                     : getStyleLinks(
                           typeSpecProperties.typeSpecnion.getProperties(),
+                          this._prefix,
                       ),
             deletedWidgets = new Set(this._widgets),
             newWidgets = [];
@@ -159,7 +166,7 @@ export class StyleLinksMeta extends _BaseContainerComponent {
             }
             // new or changed edge: (re)create the wrapper
             const widgetWrapper = this._createWrapper(
-                this.widgetBus.rootPath.append("stylePatches", key),
+                this.widgetBus.rootPath.append(this._fieldName, key),
                 edge,
             );
             this._keyToWidget.set(key, widgetWrapper);
@@ -287,6 +294,25 @@ export class TypeSpecMeta extends _BaseContainerComponent {
                 ],
                 StyleLinksMeta,
                 zones,
+                "intentStyleLinks",
+                INTENT_STYLE_LINKS,
+            ],
+            [
+                {},
+                [
+                    [
+                        widgetBus.getExternalName("stylePatchesSource"),
+                        "stylePatchesSource",
+                    ],
+                    [
+                        `typeSpecProperties@${widgetBus.rootPath.toString()}`,
+                        "typeSpecProperties@",
+                    ],
+                ],
+                StyleLinksMeta,
+                zones,
+                "markStyleLinks",
+                MARK_STYLE_LINKS,
             ],
             [
                 {},

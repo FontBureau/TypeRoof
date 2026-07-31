@@ -295,7 +295,7 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
     }
 
     _getStyleLinkPropertiesId(typeSpecPropertiesPath, styleLink) {
-        const styleLinkPropertiesId = `styleLinkProperties@${typeSpecPropertiesPath.append("stylePatches", styleLink)}`,
+        const styleLinkPropertiesId = `styleLinkProperties@${typeSpecPropertiesPath.append("intentStyleLinks", styleLink)}`,
             protocolHandlerImplementation =
                 this.widgetBus.getProtocolHandlerImplementation(
                     "styleLinkProperties@",
