@@ -15,7 +15,11 @@ import {
 import { getColorFromPropertyValuesMap, enhanceContrast } from "../color.mjs";
 
 import { getRegisteredPropertySetup } from "../registered-properties.mjs";
-import { getStyleLinks } from "../registered-properties-definitions.mjs";
+import {
+    getStyleLinks,
+    INTENT_STYLE_LINKS,
+    MARK_STYLE_LINKS,
+} from "../registered-properties-definitions.mjs";
 
 import {
     COLOR,
@@ -50,6 +54,7 @@ import {
 
 import {
     getStylePatchLinkForIntent,
+    getStylePatchLinkForMark,
     getStylePatchTagForIntent,
 } from "../type-spec-models.mjs";
 
@@ -850,7 +855,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
     // TypeSpec identified by a typeSpecProperties@ id, as a Map of
     // key => StylePatchLinkModel. Tombstoned (unlinked) edges are
     // excluded by getStyleLinks.
-    _getEffectiveStyleLinks(typeSpecProperties) {
+    _getEffectiveStyleLinks(typeSpecProperties, prefix = INTENT_STYLE_LINKS) {
         const protocolHandlerImplementation =
             this.widgetBus.getProtocolHandlerImplementation(
                 "typeSpecProperties@",
@@ -866,19 +871,31 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             protocolHandlerImplementation.getRegistered(typeSpecProperties);
         return getStyleLinks(
             typeSpecLiveProperties.typeSpecnion.getProperties(),
+            prefix,
         );
     }
 
+    // The applicable style-link for a mark, as [fieldName, key] or null.
+    // Intents resolve from intentStyleLinks (by data-style-name), schema
+    // marks from markStyleLinks (by mark type name); the field name is
+    // required to build the styleLinkProperties@ id path.
     _getStylePatchLinkForMark(typeSpecProperties, mark) {
         const styleName = mark.attrs["data-style-name"];
-        if (styleName === undefined)
-            // schema marks: resolved from markStyleLinks in Phase 2;
-            // deliberately NOT via the intent map (no cross-matching)
-            return null;
-        return getStylePatchLinkForIntent(
-            this._getEffectiveStyleLinks(typeSpecProperties),
-            styleName,
+        if (styleName !== undefined) {
+            const key = getStylePatchLinkForIntent(
+                this._getEffectiveStyleLinks(
+                    typeSpecProperties,
+                    INTENT_STYLE_LINKS,
+                ),
+                styleName,
+            );
+            return key === null ? null : ["intentStyleLinks", key];
+        }
+        const key = getStylePatchLinkForMark(
+            this._getEffectiveStyleLinks(typeSpecProperties, MARK_STYLE_LINKS),
+            mark,
         );
+        return key === null ? null : ["markStyleLinks", key];
     }
 
     // The tag an intent mark is bound to via the applicable
@@ -890,14 +907,19 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         );
     }
 
-    _getStyleLinkPropertiesId(typeSpecProperties, styleLink) {
-        if (styleLink === null)
+    _getStyleLinkPropertiesId(typeSpecProperties, styleLinkEntry) {
+        if (styleLinkEntry === null)
             // no applicable edge: the unknown-style fallback applies
             return null;
-        const typeSpecPath = typeSpecProperties.slice(
+        const [fieldName, styleLink] = styleLinkEntry,
+            typeSpecPath = typeSpecProperties.slice(
                 "typeSpecProperties@".length,
             ),
-            styleLinkPropertiesId = `styleLinkProperties@${Path.fromParts(typeSpecPath, "intentStyleLinks", styleLink)}`,
+            styleLinkPropertiesId = `styleLinkProperties@${Path.fromParts(
+                typeSpecPath,
+                fieldName,
+                styleLink,
+            )}`,
             protocolHandlerImplementation =
                 this.widgetBus.getProtocolHandlerImplementation(
                     "styleLinkProperties@",
@@ -907,11 +929,9 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             throw new Error(
                 `KEY ERROR ProtocolHandler for identifier "styleLinkProperties@" not found.`,
             );
-        // check if styleLinkPropertiesId exists, otherwise return null
-        if (protocolHandlerImplementation.hasRegistered(styleLinkPropertiesId))
-            return styleLinkPropertiesId;
-        return null;
-        // throw new Error(`KEY ERROR styleLinkPropertiesId "${styleLinkPropertiesId}" not found in styleLinkProperties@.`);
+        if (!protocolHandlerImplementation.hasRegistered(styleLinkPropertiesId))
+            return null;
+        return styleLinkPropertiesId;
     }
 
     _createStyleStylerWrapper(styleLinkProperties, domElemment) {
