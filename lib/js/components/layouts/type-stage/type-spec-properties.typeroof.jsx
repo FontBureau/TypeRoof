@@ -52,6 +52,11 @@ import { UITextAlignment } from "../../ui-text-alignment.typeroof.jsx";
 
 import { UIColorChooserTwoColorsWithSwap } from "../../ui-color-chooser.mjs";
 
+import {
+    UIStylePatchesLinksContainer,
+    UIMarkStyleLinksContainer,
+} from "../../type-spec-fundamentals.mjs";
+
 class UIFontLabel extends DynamicTag {
     constructor(
         widgetBus,
@@ -280,6 +285,10 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 // however, we keep this in here so sections.rest does
                 // not contain the colors either.
                 color: ["textColor", "backgroundColor"],
+                // Style links are rendered as a compound UI (both link
+                // maps in one collapsible, below); listing them here
+                // keeps them out of sections.rest (color precedent).
+                styleLinks: ["intentStyleLinks", "markStyleLinks"],
             },
             h = this._domTool.h;
         {
@@ -429,6 +438,34 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                     ],
                 ],
                 this._getCollapsibleState("typespec_color_collapsible", true), // open
+                false, // scroll
+            ],
+            [
+                { zone: "main", id: "typespec_style_links_collapsible" },
+                [],
+                CollapsibleContainer,
+                this._zones,
+                "Style Links",
+                "minimal",
+                "typespec_style_links", //classNameParticle
+                [
+                    [
+                        { rootPath: typeSpecPath, zone: "main" },
+                        [],
+                        UIStylePatchesLinksContainer,
+                        require("raw:zones"),
+                    ],
+                    [
+                        { rootPath: typeSpecPath, zone: "main" },
+                        [],
+                        UIMarkStyleLinksContainer,
+                        require("raw:zones"),
+                    ],
+                ],
+                this._getCollapsibleState(
+                    "typespec_style_links_collapsible",
+                    false,
+                ), // open
                 false, // scroll
             ],
             filteredTypeDriven([...sections.rest], true),
