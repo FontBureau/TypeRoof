@@ -1445,7 +1445,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         // Here are some edge-cases we need to cover here:
         // - When a used typeSpec e.g. get's move. here doc/paragraph-2
         //   to docs/paragraph-1/paragraph-2
-        // - When a used stylePatches link e.g. "italic" is renamed e.g. to "italicx"
+        // - When a used intentStyleLinks link e.g. "italic" is renamed e.g. to "italicx"
         const requiresUpdate = new Map();
         for (const [domElement, subscription] of this._subscribers) {
             const updates = this._updateWidget(domElement, subscription);
@@ -1858,15 +1858,15 @@ export class UIProseMirrorMenuStyles extends _BaseComponent {
             commonSubSet = new Set();
 
         for (const [typeSpec, path] of typeSpecs) {
-            const stylePatches = typeSpec.get("intentStyleLinks");
+            const intentStyleLinks = typeSpec.get("intentStyleLinks");
             // console.log(
             //   `${path} :: ${typeSpec.get("label").value} STYLES:`,
-            //   ...stylePatches.keys(),
+            //   ...intentStyleLinks.keys(),
             // );
             // OK so these keys are the options that we are going to present
 
-            setsOfStyles.set(typeSpec, new Set(stylePatches.keys()));
-            for (const style of stylePatches.keys())
+            setsOfStyles.set(typeSpec, new Set(intentStyleLinks.keys()));
+            for (const style of intentStyleLinks.keys())
                 allStylesSuperSet.add(style);
         }
         for (const style of allStylesSuperSet) {
@@ -1893,7 +1893,7 @@ export class UIProseMirrorMenuStyles extends _BaseComponent {
         //               in the current context, should not be displayed at all
 
         // FIXME: we should define an order and keep it stable...
-        // i.e. stylePatches has an inherent order but before, the typeSpecs
+        // i.e. intentStyleLinks has an inherent order but before, the typeSpecs
         // could have, i.e. in order of appearance, maybe depth-first, but
         // it's not readily accessible for us.
 

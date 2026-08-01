@@ -122,7 +122,8 @@ export class StyleLinksMeta extends _BaseContainerComponent {
     /**
      * Provision one StyleLinkLiveProperties per effective style-link edge
      * of this TypeSpec. Effective edges are carried by the typeSpecnion
-     * properties stream (styleLinks/<key>), i.e. inherited edges are
+     * properties stream (intentStyleLinks/<key> resp.
+     * markStyleLinks/<key>), i.e. inherited edges are
      * included. Tombstoned keys are excluded by getStyleLinks, hence no
      * styleLinkProperties@ handler is registered for them and consumers
      * fall back to unknown-style handling ("the absence is the
