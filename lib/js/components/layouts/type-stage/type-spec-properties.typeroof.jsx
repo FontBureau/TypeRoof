@@ -451,13 +451,21 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 [
                     [
                         { rootPath: typeSpecPath, zone: "main" },
-                        [],
+                        [
+                            [".", "typeSpecPath"],
+                            ["./intentStyleLinks", "localStyleLinks"],
+                            ["./stylePatchesSource", "stylesSourceMap"],
+                        ],
                         UIStylePatchesLinksContainer,
                         require("raw:zones"),
                     ],
                     [
                         { rootPath: typeSpecPath, zone: "main" },
-                        [],
+                        [
+                            [".", "typeSpecPath"],
+                            ["./markStyleLinks", "localStyleLinks"],
+                            ["./stylePatchesSource", "stylesSourceMap"],
+                        ],
                         UIMarkStyleLinksContainer,
                         require("raw:zones"),
                     ],
