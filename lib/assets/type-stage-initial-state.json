@@ -1,9 +1,9 @@
 {
   "typeSpec": {
-    "columnWidth": "53.0",
     "languageTag": {
       "language": "en"
     },
+    "columnWidth": "53.0",
     "baseFontSize": "14",
     "textColor": {
       "instance": {
@@ -30,6 +30,10 @@
             "start": {
               "unit": "baseEm",
               "value": "2.00000"
+            },
+            "end": {
+              "unit": "lineHeightAfter",
+              "value": "1.00000"
             }
           },
           "relativeFontSize": "4.571428571",
@@ -40,35 +44,44 @@
               "700"
             ]
           ],
+          "children": [
+            [
+              "1",
+              {
+                "blockMargins": {
+                  "start": {
+                    "value": "0.00000"
+                  }
+                },
+                "relativeFontSize": "1.785714286",
+                "autoOPSZ": "1",
+                "axesLocations": [
+                  [
+                    "wght",
+                    "600"
+                  ]
+                ],
+                "children": [
+                  [
+                    "2",
+                    {
+                      "relativeFontSize": "1.285714286",
+                      "autoOPSZ": "1",
+                      "axesLocations": [
+                        [
+                          "wght",
+                          "550"
+                        ]
+                      ],
+                      "label": "Headline 3"
+                    }
+                  ]
+                ],
+                "label": "Headline 2"
+              }
+            ]
+          ],
           "label": "Headline 1"
-        }
-      ],
-      [
-        "1",
-        {
-          "relativeFontSize": "1.785714286",
-          "autoOPSZ": "1",
-          "axesLocations": [
-            [
-              "wght",
-              "600"
-            ]
-          ],
-          "label": "Headline 2"
-        }
-      ],
-      [
-        "2",
-        {
-          "relativeFontSize": "1.285714286",
-          "autoOPSZ": "1",
-          "axesLocations": [
-            [
-              "wght",
-              "550"
-            ]
-          ],
-          "label": "Headline 3"
         }
       ],
       [
@@ -76,59 +89,58 @@
         {
           "relativeFontSize": "1.285714286",
           "autoOPSZ": "1",
-          "label": "Text 1",
-          "intentStyleLinks": [
+          "children": [
             [
-              "italic",
+              "4",
               {
-                "stylePatch": "italic"
-              }
-            ],
-            [
-              "bold",
-              {
-                "stylePatch": "bold"
-              }
-            ],
-            [
-              "bold italic",
-              {
-                "stylePatch": "bold italic"
+                "relativeFontSize": "1",
+                "autoOPSZ": "1",
+                "label": "Text 2"
               }
             ]
-          ]
-        }
-      ],
-      [
-        "4",
-        {
-          "autoOPSZ": "1",
-          "label": "Text 2",
-          "intentStyleLinks": [
-            [
-              "italic",
-              {
-                "stylePatch": "italic"
-              }
-            ],
-            [
-              "bold",
-              {
-                "stylePatch": "bold"
-              }
-            ],
-            [
-              "bold italic",
-              {
-                "stylePatch": "bold italic"
-              }
-            ]
-          ]
+          ],
+          "label": "Text 1"
         }
       ]
     ],
-    "label": ""
+    "label": "",
+    "intentStyleLinks": [
+      [
+        "italic",
+        {
+          "stylePatch": "italic",
+          "mode": "link",
+          "tag": "em"
+        }
+      ],
+      [
+        "bold",
+        {
+          "stylePatch": "bold",
+          "mode": "link",
+          "tag": "strong"
+        }
+      ],
+      [
+        "bold italic",
+        {
+          "stylePatch": "bold italic",
+          "mode": "link",
+          "tag": "strong"
+        }
+      ]
+    ],
+    "markStyleLinks": [
+      [
+        "strong",
+        {
+          "stylePatch": "bold",
+          "mode": "link"
+        }
+      ]
+    ]
   },
+  "editingTypeSpec": "./children/0/children/1",
   "stylePatchesSource": [
     [
       "italic",
@@ -187,14 +199,14 @@
     [
       "heading-2",
       {
-        "link": "./children/1",
+        "link": "./children/0/children/1",
         "label": "H2"
       }
     ],
     [
       "heading-3",
       {
-        "link": "./children/2",
+        "link": "./children/0/children/1/children/2",
         "label": "H3"
       }
     ],
@@ -208,7 +220,7 @@
     [
       "paragraph-2",
       {
-        "link": "./children/4",
+        "link": "./children/3/children/4",
         "label": "T2"
       }
     ]
