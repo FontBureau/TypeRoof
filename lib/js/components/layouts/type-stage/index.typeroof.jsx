@@ -325,7 +325,7 @@ class TypeStageController extends _BaseContainerComponent {
                 {
                     zone: "type_spec-manager",
                 },
-                [["typeSpec/children", "rootCollection"]],
+                [["typeSpec", "rootCollection"]],
                 WasteBasketDropTarget,
                 "Delete",
                 "", //'drag and drop into trash-bin.'
