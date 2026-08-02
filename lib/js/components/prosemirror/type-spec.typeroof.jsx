@@ -1045,11 +1045,20 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         )
             return;
         const view = proseMirrorComponent.view;
+        // stop() defers the flush (setTimeout) when mutation records are
+        // pending; by then swapped-out elements are detached and the
+        // deferred flush crashes in localPosFromDOM. Flush first, while
+        // everything is still connected (and ignoreMutation still matches
+        // the styler's attribute writes), so stop() has nothing to defer.
+        view.domObserver.flush();
         // The swaps are self-inflicted DOM changes; PM must not try to
         // re-read the document from them (PM uses stop/start the same
-        // way internally).
-        view.domObserver.stop();
-        try {
+        // way internally). _updateDOM stops the domObserver for the whole
+        // loop; nested _updateDOM calls (unsubscribeMark, _finalizeMark-
+        // Subscription) pass through via the _updateDOMContext guard, so
+        // the observer is not re-connected mid-swap (which queued records
+        // targeting detached elements and crashed the deferred flush).
+        this._updateDOM(() => {
             // snapshot: swaps migrate subscriptions within the map
             for (const [domElement, { mark, parentSubscription }] of Array.from(
                 this._styleSubscribers,
@@ -1064,9 +1073,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 if (tag === domElement.tagName.toLowerCase()) continue;
                 this._swapMarkElement(view, domElement, mark, tag);
             }
-        } finally {
-            view.domObserver.start();
-        }
+        });
     }
 
     _findViewDescByDOM(viewDesc, dom) {
@@ -1549,7 +1556,8 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         if (this._viewDomObserver === null)
             this._viewDomObserver =
                 this.widgetBus.getWidgetById("proseMirror").view.domObserver;
-        if (this._viewDomObserverIsStoppped) return fn();
+        if (this._viewDomObserverIsStoppped || this._updateDOMContext)
+            return fn();
         this._viewDomObserver.stop();
         this._updateDOMContext = true;
         try {
