@@ -2113,9 +2113,22 @@ export class UIBoldItalicMenu extends _BaseComponent {
 
         this._editorView = view;
         const state = this._editorView.state,
+            typeSpecs = this._getTypeSpecs(state),
             setsOfStyles = new Map(),
             allStylesSuperSet = new Set(["bold", "italic", "bold italic"]),
             commonSubSet = new Set();
+
+        for (const [typeSpec, path] of typeSpecs) {
+            // The effective (inherited and local) intent style-links of
+            // the TypeSpec; tombstoned edges are excluded by getStyleLinks,
+            // NULL-styles are included and selectable.
+            const intentStyleLinks = _getEffectiveStyleLinks(
+                this.widgetBus,
+                `typeSpecProperties@${path}`,
+                INTENT_STYLE_LINKS,
+            );
+            setsOfStyles.set(typeSpec, new Set(intentStyleLinks.keys()));
+        }
 
         for (const style of allStylesSuperSet) {
             if (
@@ -2147,7 +2160,10 @@ export class UIBoldItalicMenu extends _BaseComponent {
     }
 
     update(changedMap) {
-        if (changedMap.has("nodeSpecToTypeSpec")) {
+        if (
+            changedMap.has("typeSpec") ||
+            changedMap.has("nodeSpecToTypeSpec")
+        ) {
             this.updateView(this._editorView);
         }
     }
