@@ -342,15 +342,13 @@ base map items
     }
 
     > [class*="_map-item-value"] {
-        min-width: 5em;
-
         &.active {
             font-weight: 700;
         }
     }
 
-    > [class*="_map-item-drag_handle"] {
-        order: -1;
+    > :is([class*="_map-item-drag_handle"], .ui_button-remove) {
+        order: 10;
     }
 }
 

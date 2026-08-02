@@ -4,12 +4,7 @@ import {
     MapSelectButton,
     _BaseByPathContainerComponent,
 } from "./shared.typeroof.jsx";
-import { identity } from "../../../util.mjs";
-import {
-    WasteBasketDropTarget,
-    StaticTag,
-    StaticNode,
-} from "../../generic.mjs";
+import { StaticTag, StaticNode } from "../../generic.mjs";
 import { Path } from "../../../metamodel.mjs";
 import { _NOTDEF, getFallback } from "./defaults.mjs";
 import { UITypeDrivenContainer } from "../../type-driven-ui-basics.mjs";
@@ -177,20 +172,6 @@ export class UINodeSpecMap extends _UIBaseMap {
     static SPEC_LABEL = "NodeSpec";
     static PATH_ENTRY_NAME = "nodeSpecPath";
 
-    get _initialWidgets() {
-        const wasteBasket = [
-            { zone: "local" },
-            [[".", "rootCollection"]],
-            WasteBasketDropTarget,
-            `Delete ${this.constructor.SPEC_LABEL}`,
-            "",
-            [this.constructor.KEY_DATA_TRANSFER_TYPE],
-        ];
-        const widgets = super._initialWidgets;
-        widgets.splice(Infinity, 0, wasteBasket);
-        return widgets;
-    }
-
     _createWrapperValue(keyId, key) {
         const childWidgetBus = this._childrenWidgetBus,
             settings = {
@@ -207,11 +188,8 @@ export class UINodeSpecMap extends _UIBaseMap {
             ],
             Constructor = MapSelectButton,
             args = [
-                "button",
-                { class: "ui_node_spec_map-item-value" },
                 [["click", (/*event*/) => this._onClickHandler(key)]],
-                identity,
-                "Edit",
+                ["ui_node_spec_map-item-value"],
             ];
         return this._initWrapper(
             childWidgetBus,

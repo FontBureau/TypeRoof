@@ -327,7 +327,7 @@ class TypeStageController extends _BaseContainerComponent {
                 },
                 [["typeSpec", "rootCollection"]],
                 WasteBasketDropTarget,
-                "Delete",
+                "Drop here to delete",
                 "", //'drag and drop into trash-bin.'
                 [DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_PATH],
             ],
@@ -355,21 +355,7 @@ class TypeStageController extends _BaseContainerComponent {
                 [], // eventHandlers
                 null, // label 'Style Patches'
                 true, // dragAndDrop
-            ],
-            [
-                {
-                    zone: "style_patches-manager",
-                },
-                [["typeSpec/children", "rootCollection"]],
-                WasteBasketDropTarget,
-                "Delete",
-                "", //'drag and drop into trash-bin.'
-                [
-                    DATA_TRANSFER_TYPES.TYPE_SPEC_STYLE_PATCH_PATH,
-                    DATA_TRANSFER_TYPES.TYPE_SPEC_STYLE_PATCH_LINK_PATH,
-                    // to delete the axesLocations values coming from UIAxesMathLocation
-                    DATA_TRANSFER_TYPES.AXESMATH_LOCATION_VALUE_PATH,
-                ],
+                true, // deletableEntries
             ],
             [
                 {
@@ -440,6 +426,7 @@ class TypeStageController extends _BaseContainerComponent {
                 [], // eventHandlers
                 "NodeSpec-Map",
                 true, // dragEntries (dragAndDrop)
+                true, // deletableEntries
             ],
             [
                 {
@@ -474,6 +461,7 @@ class TypeStageController extends _BaseContainerComponent {
                 [], // eventHandlers
                 "NodeSpec to TypeSpec",
                 true, // dragEntries (dragAndDrop)
+                true, // deletableEntries
             ],
             [
                 { zone: "main" },
@@ -493,6 +481,7 @@ class TypeStageController extends _BaseContainerComponent {
                 [], // eventHandlers
                 "MarkSpec-Map",
                 true, // dragEntries (dragAndDrop)
+                true, // deletableEntries
             ],
             [
                 {

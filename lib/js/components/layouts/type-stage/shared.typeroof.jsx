@@ -1,16 +1,39 @@
-import { DynamicTag } from "../../generic.mjs";
 import {
+    _BaseComponent,
     _CommonContainerComponent,
     _BaseDynamicCollectionContainerComponent,
 } from "../../basics/component.mjs";
+import { createIcon } from "../../icons.mjs";
 import { Path, getEntry } from "../../../metamodel.mjs";
 import { StaticTag } from "../../generic.mjs";
 
-export class MapSelectButton extends DynamicTag {
-    constructor(widgetBus, tag, attr, eventListeners, ...restArgs) {
-        super(widgetBus, tag, attr, ...restArgs);
+export class MapSelectButton extends _BaseComponent {
+    constructor(
+        widgetBus,
+        eventListeners = [],
+        classes = [],
+        labels = {
+            unselect: createIcon("edit_off"),
+            select: createIcon("edit"),
+        },
+    ) {
+        super(widgetBus);
+        [this.element] = this._initTemplate(eventListeners, classes);
+        this._labels = labels;
+        this._activeState = null;
+    }
+
+    _getTemplate(h) {
+        return <button class="ui_map_select_button">(initial)</button>;
+    }
+
+    _initTemplate(eventListeners = [], classes = []) {
+        const element = this._getTemplate(this._domTool.h);
         for (const eventListener of eventListeners)
-            this.element.addEventListener(...eventListener);
+            element.addEventListener(...eventListener);
+        for (const class_ of classes) element.classList.add(class_);
+        this._insertElement(element);
+        return [element];
     }
 
     _setActive(pathEntry) {
@@ -21,20 +44,21 @@ export class MapSelectButton extends DynamicTag {
                 selectedKey = path.parts.at(-1); // ./key
             shouldBeActive = myKey === selectedKey;
         }
-        this.element.classList[shouldBeActive ? "add" : "remove"]("active");
+        if (this._activeState !== shouldBeActive) {
+            this.element.classList[shouldBeActive ? "add" : "remove"]("active");
+            this._activeState = shouldBeActive;
+            this._domTool.clear(this.element);
+            const label =
+                this._labels[this._activeState ? "unselect" : "select"];
+            this._domTool.appendChildren(this.element, label ?? "Select");
+        }
     }
 
     update(changedMap) {
-        super.update(changedMap);
         if (changedMap.has("activePath")) {
             const pathEntry = changedMap.get("activePath");
             this._setActive(pathEntry);
         }
-
-        if (changedMap.has("data"))
-            this.element.textContent = this._formatter(
-                changedMap.get("data").value,
-            );
     }
 }
 

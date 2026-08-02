@@ -18,13 +18,7 @@ import {
     NodeSpecToTypeSpecMapModel,
     NodeModel,
 } from "../../prosemirror/models.typeroof.jsx";
-import {
-    Collapsible,
-    WasteBasketDropTarget,
-    UICheckboxInput,
-    GenericSelect,
-} from "../../generic.mjs";
-import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
+import { Collapsible, UICheckboxInput, GenericSelect } from "../../generic.mjs";
 import { GENERIC } from "../../registered-properties-definitions.mjs";
 import {
     isInheritingPropertyFn,
@@ -398,21 +392,7 @@ class RampController extends _BaseContainerComponent {
                 [], // eventHandlers
                 null, // label 'Style Patches'
                 true, // dragAndDrop
-            ],
-            [
-                {
-                    zone: "style_patches-manager",
-                },
-                [["typeSpec/children", "rootCollection"]],
-                WasteBasketDropTarget,
-                "Delete",
-                "", //'drag and drop into trash-bin.'
-                [
-                    DATA_TRANSFER_TYPES.TYPE_SPEC_STYLE_PATCH_PATH,
-                    DATA_TRANSFER_TYPES.TYPE_SPEC_STYLE_PATCH_LINK_PATH,
-                    // to delete the axesLocations values coming from UIAxesMathLocation
-                    DATA_TRANSFER_TYPES.AXESMATH_LOCATION_VALUE_PATH,
-                ],
+                true, // deletableEntries
             ],
             [
                 {
