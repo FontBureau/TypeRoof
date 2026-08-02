@@ -851,26 +851,10 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         return dependencies;
     }
 
-    // The effective (inherited and local) style-link edges of the
-    // TypeSpec identified by a typeSpecProperties@ id, as a Map of
-    // key => StylePatchLinkModel. Tombstoned (unlinked) edges are
-    // excluded by getStyleLinks.
     _getEffectiveStyleLinks(typeSpecProperties, prefix = INTENT_STYLE_LINKS) {
-        const protocolHandlerImplementation =
-            this.widgetBus.getProtocolHandlerImplementation(
-                "typeSpecProperties@",
-                null,
-            );
-        if (protocolHandlerImplementation === null)
-            throw new Error(
-                `KEY ERROR ProtocolHandler for identifier "typeSpecProperties@" not found.`,
-            );
-        if (!protocolHandlerImplementation.hasRegistered(typeSpecProperties))
-            return new Map();
-        const typeSpecLiveProperties =
-            protocolHandlerImplementation.getRegistered(typeSpecProperties);
-        return getStyleLinks(
-            typeSpecLiveProperties.typeSpecnion.getProperties(),
+        return _getEffectiveStyleLinks(
+            this.widgetBus,
+            typeSpecProperties,
             prefix,
         );
     }
@@ -1573,6 +1557,31 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
     }
 }
 
+// The effective (inherited and local) style-link edges of the
+// TypeSpec identified by a typeSpecProperties@ id, as a Map of
+// key => StylePatchLinkModel. Tombstoned (unlinked) edges are
+// excluded by getStyleLinks.
+function _getEffectiveStyleLinks(
+    widgetBus,
+    typeSpecProperties,
+    prefix = INTENT_STYLE_LINKS,
+) {
+    const protocolHandlerImplementation =
+        widgetBus.getProtocolHandlerImplementation("typeSpecProperties@", null);
+    if (protocolHandlerImplementation === null)
+        throw new Error(
+            `KEY ERROR ProtocolHandler for identifier "typeSpecProperties@" not found.`,
+        );
+    if (!protocolHandlerImplementation.hasRegistered(typeSpecProperties))
+        return new Map();
+    const typeSpecLiveProperties =
+        protocolHandlerImplementation.getRegistered(typeSpecProperties);
+    return getStyleLinks(
+        typeSpecLiveProperties.typeSpecnion.getProperties(),
+        prefix,
+    );
+}
+
 function _addMark(map, mark) {
     if (!map.has(mark.type)) map.set(mark.type, new Set());
     if ("data-style-name" in mark.attrs)
@@ -1866,11 +1875,14 @@ export class UIProseMirrorMenuStyles extends _BaseComponent {
             commonSubSet = new Set();
 
         for (const [typeSpec, path] of typeSpecs) {
-            const intentStyleLinks = typeSpec.get("intentStyleLinks");
-            // console.log(
-            //   `${path} :: ${typeSpec.get("label").value} STYLES:`,
-            //   ...intentStyleLinks.keys(),
-            // );
+            // The effective (inherited and local) intent style-links of
+            // the TypeSpec; tombstoned edges are excluded by getStyleLinks,
+            // NULL-styles are included and selectable.
+            const intentStyleLinks = _getEffectiveStyleLinks(
+                this.widgetBus,
+                `typeSpecProperties@${path}`,
+                INTENT_STYLE_LINKS,
+            );
             // OK so these keys are the options that we are going to present
 
             setsOfStyles.set(typeSpec, new Set(intentStyleLinks.keys()));
@@ -1941,7 +1953,11 @@ export class UIProseMirrorMenuStyles extends _BaseComponent {
     }
 
     update(changedMap) {
-        if (changedMap.has("typeSpec") && this._editorView) {
+        if (
+            (changedMap.has("typeSpec") ||
+                changedMap.has("nodeSpecToTypeSpec")) &&
+            this._editorView
+        ) {
             // Especially the order of styles could be different, this reorders:
             // it's however interesting, that the typeSpec are not read from
             // here, maybe we should use another update mechanism via
