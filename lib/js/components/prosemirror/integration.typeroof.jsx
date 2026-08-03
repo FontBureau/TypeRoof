@@ -205,21 +205,28 @@ export class ProsemirrorNodeView {
                 .getLinked(node.type.schema)
                 .get("nodes")
                 .get(node.type.name),
-            tag = mmNodeSpec.get("tag").value,
+            specTag = mmNodeSpec.get("tag").value;
+        // Reproducing atoms (inferred: the node type declares an "html"
+        // attr) render wrapper-free: replayed outer attributes +
+        // verbatim innerHTML, no content element, no contentDOM. Their
+        // element tag may be reproduced from the source (htmlTag).
+        this._isReproducing = "html" in (node.type.spec.attrs ?? {});
+        this._specTag = specTag;
+        const tag = this._isReproducing
+                ? _reproducingTag(node, specTag)
+                : specTag,
             element = widgetBus.domTool.createElement(tag, {
                 "data-node-type": node.type.name,
             });
         // The outer DOM node that represents the document node.
         this.dom = element;
 
-        // Reproducing atoms (inferred: the node type declares an "html"
-        // attr) render wrapper-free: replayed outer attributes +
-        // verbatim innerHTML, no content element, no contentDOM.
-        this._isReproducing = "html" in (node.type.spec.attrs ?? {});
         if (this._isReproducing) {
             this._stylerDOM = this.dom;
             _applyHtmlAttrsBag(this.dom, node.attrs.htmlAttrs);
-            this.dom.innerHTML = node.attrs.html;
+            // skipped when empty: the reproduced tag may be a void
+            // element (e.g. <img>), which has no content
+            if (node.attrs.html) this.dom.innerHTML = node.attrs.html;
         } else {
             // editable attr replay: collected outer attributes on the
             // outer element (guarded; the content element is untouched)
@@ -269,8 +276,17 @@ export class ProsemirrorNodeView {
         this._decorations = decorations;
         this._innerDecorations = innerDecorations;
         if (this._isReproducing) {
+            // A changed reproduced tag can't be patched in place: the
+            // element itself is wrong. Rejecting the update makes PM
+            // discard this view and build a new one.
+            if (
+                _reproducingTag(node, this._specTag) !==
+                this.dom.tagName.toLowerCase()
+            )
+                return false;
             _applyHtmlAttrsBag(this.dom, node.attrs.htmlAttrs);
-            this.dom.innerHTML = node.attrs.html;
+            // see the constructor: void elements have no content
+            if (node.attrs.html) this.dom.innerHTML = node.attrs.html;
         }
         const subscriptionsWidget = this.widgetBus.getWidgetById(
             this._subscriptionsId,
@@ -578,20 +594,36 @@ function _createEditableToDOM(tag, attributeSpecMap) {
     };
 }
 
-function _createReproducingGetAttrs() {
-    return (dom) => ({
-        html: dom.innerHTML,
-        htmlAttrs: _collectHtmlAttrsToBag(dom),
-    });
+// The tag a reproducing atom renders as: the reproduced source tag
+// when the node carries one, else the tag declared by its node spec.
+function _reproducingTag(node, specTag) {
+    return node.attrs.htmlTag || specTag;
+}
+
+// A reproducing atom whose spec declares the "htmlTag" attr also
+// reproduces the tag of the element it matched — its selector may
+// match several tags (e.g. figcontent: <a>, <img>, <pre>). The spec
+// tag stays the fallback for nodes created without an htmlTag.
+function _createReproducingGetAttrs(attributeSpecMap) {
+    const reproducesTag = attributeSpecMap.has("htmlTag");
+    return (dom) => {
+        const attrs = {
+            html: dom.innerHTML,
+            htmlAttrs: _collectHtmlAttrsToBag(dom),
+        };
+        if (reproducesTag) attrs.htmlTag = dom.tagName.toLowerCase();
+        return attrs;
+    };
 }
 
 function _createReproducingToDOM(tag) {
     return (node) => {
-        const element = document.createElement(tag);
+        const element = document.createElement(_reproducingTag(node, tag));
         _applyHtmlAttrsBag(element, node.attrs.htmlAttrs);
         // verbatim reproduction, no sanitization (like raw_html,
-        // operator decision)
-        element.innerHTML = node.attrs.html;
+        // operator decision). Skipped when empty: the reproduced tag
+        // may be a void element (e.g. <img>), which has no content.
+        if (node.attrs.html) element.innerHTML = node.attrs.html;
         return element;
     };
 }
@@ -644,7 +676,8 @@ export function createProseMirrorSchemaFromMetaModel(
             if (attributeSpecMap.has("html")) {
                 // inferred reproducing atom (decision: presence of the
                 // html attr; may pivot to an explicit flag later)
-                parseDOMItem.getAttrs = _createReproducingGetAttrs();
+                parseDOMItem.getAttrs =
+                    _createReproducingGetAttrs(attributeSpecMap);
                 newNode.parseDOM = [parseDOMItem];
                 newNode.toDOM = _createReproducingToDOM(tag.value);
             } else if (attributeSpecMap.has("htmlAttrs")) {

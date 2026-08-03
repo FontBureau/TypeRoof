@@ -483,6 +483,15 @@
               }
             ],
             [
+              "htmlTag",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ],
+            [
               "htmlAttrs",
               {
                 "default": "",

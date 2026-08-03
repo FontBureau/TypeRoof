@@ -31,7 +31,7 @@ const KNOWN_BLOCK_TAGS: Readonly<Record<string, string>> = {
     H6: "heading-6",
     UL: "ul",
     FIGURE: "figure",
-    FIGCAPTION: "figcaption"
+    FIGCAPTION: "figcaption",
 };
 
 const KNOWN_MARK_TAGS: Readonly<Record<string, string>> = {
@@ -369,6 +369,19 @@ function schemaMarkAttrsFromSchema(
     return result;
 }
 
+// Derive node typeKey -> declared attr names from the metamodel
+// schema (ProseMirrorSchemaModel). Reproducing atoms opt into
+// reproducing their source tag by declaring the "htmlTag" attr;
+// setting an attr the spec does not declare would be a schema error.
+function schemaNodeAttrsFromSchema(
+    proseMirrorSchema: any,
+): Record<string, Set<string>> {
+    const result: Record<string, Set<string>> = {};
+    for (const [typeKey, nodeSpec] of proseMirrorSchema.get("nodes"))
+        result[typeKey] = new Set(nodeSpec.get("attrs").keys());
+    return result;
+}
+
 // Derive [{ selector, typeKey }] from node specs that carry a
 // non-empty selector. Deliberately NOT from tag-only specs: a tag
 // like paragraph's "p" would hijack KNOWN_BLOCK_TAGS.
@@ -461,6 +474,7 @@ interface Ctx {
     semanticMarks: Readonly<Record<string, SemanticMark>>;
     markEmission: readonly MarkEmissionRuleEntry[];
     schemaMarkAttrs: Readonly<Record<string, string[]>>;
+    schemaNodeAttrs: Readonly<Record<string, ReadonlySet<string>>>;
     nodeEmission: readonly NodeEmissionEntry[];
     nodeSelectors: readonly NodeEmissionEntry[];
     attrPolicy: HtmlAttrPolicy;
@@ -621,6 +635,13 @@ function ingestNode(
             "htmlAttrs",
             toMetaModelJSON(collectHtmlAttrs(el, ctx.attrPolicy), {}),
         );
+        // A reproducing atom that claims elements of varying tags —
+        // e.g. "figcontent", matching an <a>-wrapped <img>, a bare
+        // <img> or a <pre> — declares the "htmlTag" attr; then the
+        // source tag is reproduced as well, and the spec tag only
+        // serves as the fallback (see _createReproducingToDOM).
+        if (ctx.schemaNodeAttrs[claimedTypeKey]?.has("htmlTag"))
+            attrsDraft.set("htmlTag", toMetaModelJSON(tag.toLowerCase(), {}));
         out.push(draft.metamorphose());
         return;
     }
@@ -815,6 +836,9 @@ export function ingestDOM(
         schemaMarkAttrs: options.proseMirrorSchema
             ? schemaMarkAttrsFromSchema(options.proseMirrorSchema)
             : {},
+        schemaNodeAttrs: options.proseMirrorSchema
+            ? schemaNodeAttrsFromSchema(options.proseMirrorSchema)
+            : {},
     };
     const draft = newNodeDraft("doc");
     fillContent(draft, doc.body, [], ctx, false);
@@ -872,9 +896,9 @@ export function ingestWikipediaDocument(
                 typeKey: "cite-link",
             },
             {
-                selector: 'figure > :not(figcaption)',
-                typeKey: 'figcontent'
-            }
+                selector: "figure > :not(figcaption)",
+                typeKey: "figcontent",
+            },
         ],
 
         // Policy for collecting outer attributes into the htmlAttrs
