@@ -31,8 +31,26 @@ const KNOWN_BLOCK_TAGS: Readonly<Record<string, string>> = {
     H6: "heading-6",
     UL: "ul",
     FIGURE: "figure",
+    // Captions are treated as inline-only (operator decision
+    // 2026-08-03), like a paragraph: the schema gives figcaption
+    // "inline*". Should captions carrying block children turn up in
+    // the wild, the way forward is the <li> precedent — split into
+    // figcaption-inline/figcaption-block decided by the children (see
+    // ingestListItem) — not a widening of this type.
     FIGCAPTION: "figcaption",
 };
+
+// Textblocks assumed when ingesting without a schema (ingestDOM
+// without options.proseMirrorSchema): mirrors the inline-content node
+// types of the wikipedia state, so ingest behaves the same either way.
+const FALLBACK_INLINE_CONTENT_NODES: ReadonlySet<string> = new Set([
+    "paragraph",
+    "paragraph-2",
+    "heading-1",
+    "heading-2",
+    "heading-3",
+    "figcaption",
+]);
 
 const KNOWN_MARK_TAGS: Readonly<Record<string, string>> = {
     B: "bold",
@@ -382,6 +400,26 @@ function schemaNodeAttrsFromSchema(
     return result;
 }
 
+// Derive the set of node typeKeys with inline content ("inline*",
+// "inline+") from the metamodel schema — the textblocks, whose
+// children are ingested in inline context so that marks apply.
+// Schema-derived rather than hard-coded: a new textblock needs its
+// schema entry only, no ingest edit (see childInline in ingestNode).
+// A schema that declares no inline-content node carries no node
+// information to go by — e.g. a marks-only schema — and yields the
+// fallback rather than a document with no textblock at all.
+function inlineContentNodesFromSchema(
+    proseMirrorSchema: any,
+): ReadonlySet<string> {
+    const result = new Set<string>();
+    for (const [typeKey, nodeSpec] of proseMirrorSchema.get("nodes")) {
+        const content = nodeSpec.get("content");
+        if (!content.isEmpty && /^inline[*+]$/.test(content.value))
+            result.add(typeKey);
+    }
+    return result.size ? result : FALLBACK_INLINE_CONTENT_NODES;
+}
+
 // Derive [{ selector, typeKey }] from node specs that carry a
 // non-empty selector. Deliberately NOT from tag-only specs: a tag
 // like paragraph's "p" would hijack KNOWN_BLOCK_TAGS.
@@ -475,6 +513,7 @@ interface Ctx {
     markEmission: readonly MarkEmissionRuleEntry[];
     schemaMarkAttrs: Readonly<Record<string, string[]>>;
     schemaNodeAttrs: Readonly<Record<string, ReadonlySet<string>>>;
+    inlineContentNodes: ReadonlySet<string>;
     nodeEmission: readonly NodeEmissionEntry[];
     nodeSelectors: readonly NodeEmissionEntry[];
     attrPolicy: HtmlAttrPolicy;
@@ -682,10 +721,9 @@ function ingestNode(
                     `${tag.toLowerCase()}.${attrName}`,
                 );
         }
-        // marks do not cross block boundaries; textblocks have inline content
-        const childInline =
-            knownBlockTypeKey === "paragraph" ||
-            knownBlockTypeKey.startsWith("heading-");
+        // marks do not cross block boundaries; textblocks have inline
+        // content — which types those are comes from the schema.
+        const childInline = ctx.inlineContentNodes.has(knownBlockTypeKey);
         fillContent(draft, el, [], ctx, childInline);
         out.push(draft.metamorphose());
         return;
@@ -839,6 +877,9 @@ export function ingestDOM(
         schemaNodeAttrs: options.proseMirrorSchema
             ? schemaNodeAttrsFromSchema(options.proseMirrorSchema)
             : {},
+        inlineContentNodes: options.proseMirrorSchema
+            ? inlineContentNodesFromSchema(options.proseMirrorSchema)
+            : FALLBACK_INLINE_CONTENT_NODES,
     };
     const draft = newNodeDraft("doc");
     fillContent(draft, doc.body, [], ctx, false);

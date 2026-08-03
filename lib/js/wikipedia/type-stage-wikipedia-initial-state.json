@@ -506,7 +506,7 @@
       [
         "figcaption",
         {
-          "content": "block*",
+          "content": "inline*",
           "group": "block",
           "tag": "figcaption",
           "attrs": [
