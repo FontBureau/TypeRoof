@@ -20,7 +20,6 @@ const { NodeModel, toMetaModelJSON } = models as {
 // UL (2026-08-03): unordered list; its LI children are handled by a
 // dedicated branch (ingestListItem), hence LI is not in this table.
 const KNOWN_BLOCK_TAGS: Readonly<Record<string, string>> = {
-    BODY: "doc",
     SECTION: "section",
     P: "paragraph",
     H1: "heading-1",
@@ -119,10 +118,12 @@ export interface IngestionReport {
     catchAllInline: Record<string, number>;
     // tag -> count of inline-node emissions
     inlineNodes: Record<string, number>;
-    // tag -> count of mw-empty-elt atoms emitted (metadata preserved)
-    mwEmptyElts: Record<string, number>;
-    // "tag.attr" -> count of collected-but-skipped mark element attrs
-    skippedMarkAttrs: Record<string, number>;
+    // tag -> count of raw_html atoms emitted for elements matching
+    // SELECTORS_TO_RAW_HTML (e.g. mw-empty-elt metadata islands)
+    rawAtoms: Record<string, number>;
+    // "tag.attr" -> count of policy-excluded (not collected) element
+    // attrs — fed by blocks, marks, inline nodes and list items alike
+    skippedHtmlAttrs: Record<string, number>;
     // mark name -> count of markEmission rules that fell back to intent
     // because the schema does not define the named mark
     unresolvedMarkRules: Record<string, number>;
@@ -257,8 +258,11 @@ function isCollected(
 }
 
 // The names of the attributes the policy excludes (not collected),
-// for report.skippedMarkAttrs counting.
-function skippedHtmlAttrs(el: Element, policy: HtmlAttrPolicy = {}): string[] {
+// for report.skippedHtmlAttrs counting.
+function policyExcludedAttrNames(
+    el: Element,
+    policy: HtmlAttrPolicy = {},
+): string[] {
     const skipped: string[] = [];
     for (const attr of Array.from(el.attributes))
         if (!isCollected(policy, attr.name, attr.value))
@@ -342,31 +346,18 @@ function newNodeDraft(typeKey: string): any {
     return draft;
 }
 
-function newGenericStyleMarkDraft(
-    nodeDraft: any,
-    styleName: string,
-    htmlAttrs: string = "",
-): any {
-    const marksList = nodeDraft.get("marks");
-    const markDraft = marksList.constructor.Model.createPrimalDraft({});
-    markDraft.get("typeKey").value = "generic-style";
-    markDraft
-        .get("attrs")
-        .set("data-style-name", toMetaModelJSON(styleName, {}));
-    if (htmlAttrs !== "")
-        markDraft.get("attrs").set("htmlAttrs", toMetaModelJSON(htmlAttrs, {}));
-    return markDraft;
-}
-
-function newSemanticMarkDraft(
-    nodeDraft: any,
-    name: string,
+// Create a mark draft for `marksList`: typeKey plus attrs (values via
+// toMetaModelJSON); a non-empty htmlAttrs bag is appended last.
+// Generic-style intent is expressed through this too: typeKey
+// "generic-style" with a "data-style-name" attr.
+function newMarkDraft(
+    marksList: any,
+    typeKey: string,
     attrs: Record<string, string>,
     htmlAttrs: string = "",
 ): any {
-    const marksList = nodeDraft.get("marks");
     const markDraft = marksList.constructor.Model.createPrimalDraft({});
-    markDraft.get("typeKey").value = name;
+    markDraft.get("typeKey").value = typeKey;
     const attrsDraft = markDraft.get("attrs");
     for (const [attrName, value] of Object.entries(attrs))
         attrsDraft.set(attrName, toMetaModelJSON(value, {}));
@@ -418,6 +409,36 @@ function inlineContentNodesFromSchema(
             result.add(typeKey);
     }
     return result.size ? result : FALLBACK_INLINE_CONTENT_NODES;
+}
+
+// One pass over the schema options: everything ingest derives from
+// the metamodel schema, with the no-schema defaults in one place
+// (replaces five guarded ternaries in ingestDOM).
+function deriveSchemaFacts(
+    proseMirrorSchema: any,
+): Pick<
+    Ctx,
+    | "semanticMarks"
+    | "schemaMarkAttrs"
+    | "schemaNodeAttrs"
+    | "inlineContentNodes"
+    | "nodeSelectors"
+> {
+    if (!proseMirrorSchema)
+        return {
+            semanticMarks: {},
+            schemaMarkAttrs: {},
+            schemaNodeAttrs: {},
+            inlineContentNodes: FALLBACK_INLINE_CONTENT_NODES,
+            nodeSelectors: [],
+        };
+    return {
+        semanticMarks: semanticMarksFromSchema(proseMirrorSchema),
+        schemaMarkAttrs: schemaMarkAttrsFromSchema(proseMirrorSchema),
+        schemaNodeAttrs: schemaNodeAttrsFromSchema(proseMirrorSchema),
+        inlineContentNodes: inlineContentNodesFromSchema(proseMirrorSchema),
+        nodeSelectors: nodeSelectorsFromSchema(proseMirrorSchema),
+    };
 }
 
 // Derive [{ selector, typeKey }] from node specs that carry a
@@ -519,6 +540,40 @@ interface Ctx {
     attrPolicy: HtmlAttrPolicy;
 }
 
+// Count the attributes the policy excludes on `el` into
+// report.skippedHtmlAttrs, keyed "tag.attr".
+function countSkippedHtmlAttrs(ctx: Ctx, el: Element): void {
+    const tagLabel = el.tagName.toLowerCase();
+    for (const attrName of policyExcludedAttrNames(el, ctx.attrPolicy))
+        count(ctx.report.skippedHtmlAttrs, `${tagLabel}.${attrName}`);
+}
+
+// Collect el's outer attributes into the draft's htmlAttrs bag (only
+// when non-empty) and count the policy-excluded ones. NOT used by the
+// reproducing-atom branch, which sets the bag unconditionally (the
+// spec declares the attr) and does not count exclusions — the atom
+// reproduces, it does not edit.
+function setHtmlAttrsBag(draft: any, el: Element, ctx: Ctx): void {
+    const htmlAttrs = collectHtmlAttrs(el, ctx.attrPolicy);
+    if (htmlAttrs !== "")
+        draft.get("attrs").set("htmlAttrs", toMetaModelJSON(htmlAttrs, {}));
+    countSkippedHtmlAttrs(ctx, el);
+}
+
+// Harvest the attr values declared by a mark spec from the element
+// (missing attributes are omitted).
+function harvestDeclaredAttrs(
+    el: Element,
+    names: readonly string[],
+): Record<string, string> {
+    const result: Record<string, string> = {};
+    for (const name of names) {
+        const value = el.getAttribute(name);
+        if (value !== null) result[name] = value;
+    }
+    return result;
+}
+
 // Emit a raw_html atom preserving the element's outerHTML verbatim.
 function emitRawHtmlAtom(el: Element, inInline: boolean, out: any[]): string {
     const nodeTypeKey = inInline ? "raw_html_inline" : "raw_html_block";
@@ -548,12 +603,10 @@ function fillContent(
     ctx: Ctx,
     inInline: boolean,
 ): void {
+    const out: any[] = [];
+    ingestChildrenInto(el, marks, out, ctx, inInline);
     const content = draft.get("content");
-    for (const child of Array.from(el.childNodes)) {
-        const out: any[] = [];
-        ingestNode(child, marks, out, ctx, inInline);
-        for (const item of out) content.push(item);
-    }
+    for (const item of out) content.push(item);
 }
 
 // Ingest a <li> element in block context (operator decision
@@ -566,17 +619,12 @@ function fillContent(
 // literally named "li" would shadow the group in content
 // expressions — prosemirror-model resolves type names first.)
 function ingestListItem(el: Element, out: any[], ctx: Ctx): void {
-    const { report } = ctx;
     const isBlockChild = (child: Node): boolean =>
         child.nodeType === Node.ELEMENT_NODE &&
         KNOWN_BLOCK_TAGS[(child as Element).tagName] !== undefined;
     const hasBlockChild = Array.from(el.childNodes).some(isBlockChild);
     const draft = newNodeDraft(hasBlockChild ? "li-block" : "li-inline");
-    const htmlAttrs = collectHtmlAttrs(el, ctx.attrPolicy);
-    if (htmlAttrs !== "")
-        draft.get("attrs").set("htmlAttrs", toMetaModelJSON(htmlAttrs, {}));
-    for (const attrName of skippedHtmlAttrs(el, ctx.attrPolicy))
-        count(report.skippedMarkAttrs, `li.${attrName}`);
+    setHtmlAttrsBag(draft, el, ctx);
     if (!hasBlockChild) {
         // marks do not cross block boundaries; li-inline has inline content
         fillContent(draft, el, [], ctx, true);
@@ -628,17 +676,13 @@ function ingestNode(
         for (const m of marks)
             marksList.push(
                 m.kind === "style"
-                    ? newGenericStyleMarkDraft(
-                          textDraft,
-                          m.styleName,
+                    ? newMarkDraft(
+                          marksList,
+                          "generic-style",
+                          { "data-style-name": m.styleName },
                           m.htmlAttrs,
                       )
-                    : newSemanticMarkDraft(
-                          textDraft,
-                          m.name,
-                          m.attrs,
-                          m.htmlAttrs,
-                      ),
+                    : newMarkDraft(marksList, m.name, m.attrs, m.htmlAttrs),
             );
         if (!inInline) {
             // Stray text in block context (e.g. directly in <section>):
@@ -686,7 +730,7 @@ function ingestNode(
     }
 
     if (el.matches(SELECTORS_TO_RAW_HTML)) {
-        count(report.mwEmptyElts, tag);
+        count(report.rawAtoms, tag);
         emitRawHtmlAtom(el, inInline, out);
         return;
     }
@@ -708,19 +752,7 @@ function ingestNode(
     const knownBlockTypeKey = KNOWN_BLOCK_TAGS[tag];
     if (knownBlockTypeKey !== undefined) {
         const draft = newNodeDraft(knownBlockTypeKey);
-        // collect outer attributes into the htmlAttrs bag (except on doc)
-        if (knownBlockTypeKey !== "doc") {
-            const htmlAttrs = collectHtmlAttrs(el, ctx.attrPolicy);
-            if (htmlAttrs !== "")
-                draft
-                    .get("attrs")
-                    .set("htmlAttrs", toMetaModelJSON(htmlAttrs, {}));
-            for (const attrName of skippedHtmlAttrs(el, ctx.attrPolicy))
-                count(
-                    report.skippedMarkAttrs,
-                    `${tag.toLowerCase()}.${attrName}`,
-                );
-        }
+        setHtmlAttrsBag(draft, el, ctx);
         // marks do not cross block boundaries; textblocks have inline
         // content — which types those are comes from the schema.
         const childInline = ctx.inlineContentNodes.has(knownBlockTypeKey);
@@ -749,55 +781,22 @@ function ingestNode(
 
     const knownMarkStyle = KNOWN_MARK_TAGS[tag];
     if (knownMarkStyle !== undefined) {
+        // No node: push a MarkDesc and descend. Schema-declared attrs
+        // are harvested for "mark" emissions; either way the policy
+        // collects the htmlAttrs bag and counts the excluded attrs.
         const emission = resolveMarkEmission(ctx, el, tag, knownMarkStyle);
-        if (emission.kind === "mark") {
-            // Emit the schema-defined mark; harvest the attrs declared
-            // by the mark spec, count and skip the rest.
-            const attrs: Record<string, string> = {};
-            for (const attrName of emission.attrs) {
-                const value = el.getAttribute(attrName);
-                if (value !== null) attrs[attrName] = value;
-            }
-            for (const attrName of skippedHtmlAttrs(el, ctx.attrPolicy))
-                count(
-                    report.skippedMarkAttrs,
-                    `${tag.toLowerCase()}.${attrName}`,
-                );
-            ingestChildrenInto(
-                el,
-                [
-                    ...marks,
-                    {
-                        kind: "mark",
-                        name: emission.name,
-                        attrs,
-                        htmlAttrs: collectHtmlAttrs(el, ctx.attrPolicy),
-                    },
-                ],
-                out,
-                ctx,
-                inInline,
-            );
-            return;
-        }
-        // generic-style fallback: collect attrs into the htmlAttrs
-        // bag (policy); count only policy-excluded attrs.
-        for (const attrName of skippedHtmlAttrs(el, ctx.attrPolicy))
-            count(report.skippedMarkAttrs, `${tag.toLowerCase()}.${attrName}`);
-        ingestChildrenInto(
-            el,
-            [
-                ...marks,
-                {
-                    kind: "style",
-                    styleName: emission.styleName,
-                    htmlAttrs: collectHtmlAttrs(el, ctx.attrPolicy),
-                },
-            ],
-            out,
-            ctx,
-            inInline,
-        );
+        const htmlAttrs = collectHtmlAttrs(el, ctx.attrPolicy);
+        const markDesc: MarkDesc =
+            emission.kind === "mark"
+                ? {
+                      kind: "mark",
+                      name: emission.name,
+                      attrs: harvestDeclaredAttrs(el, emission.attrs),
+                      htmlAttrs,
+                  }
+                : { kind: "style", styleName: emission.styleName, htmlAttrs };
+        countSkippedHtmlAttrs(ctx, el);
+        ingestChildrenInto(el, [...marks, markDesc], out, ctx, inInline);
         return;
     }
 
@@ -809,11 +808,7 @@ function ingestNode(
     if (INLINE_TAGS.has(tag)) {
         count(report.inlineNodes, tag);
         const draft = newNodeDraft(tag.toLowerCase());
-        const htmlAttrs = collectHtmlAttrs(el, ctx.attrPolicy);
-        if (htmlAttrs !== "")
-            draft.get("attrs").set("htmlAttrs", toMetaModelJSON(htmlAttrs, {}));
-        for (const attrName of skippedHtmlAttrs(el, ctx.attrPolicy))
-            count(report.skippedMarkAttrs, `${tag.toLowerCase()}.${attrName}`);
+        setHtmlAttrsBag(draft, el, ctx);
         fillContent(draft, el, marks, ctx, true);
         out.push(draft.metamorphose());
         return;
@@ -835,9 +830,10 @@ function logReport(report: IngestionReport): void {
     console.log("[ingest] raw_html_block catch-all:", report.catchAllBlocks);
     console.log("[ingest] raw_html_inline catch-all:", report.catchAllInline);
     console.log("[ingest] inline nodes:", report.inlineNodes);
-    console.log("[ingest] mw-empty-elt atoms:", report.mwEmptyElts);
+    console.log("[ingest] raw atoms:", report.rawAtoms);
     console.log("[ingest] reproducing nodes:", report.reproNodes);
-    console.log("[ingest] skipped mark attrs:", report.skippedMarkAttrs);
+    console.log("[ingest] skipped html attrs:", report.skippedHtmlAttrs);
+    console.log("[ingest] unresolved mark rules:", report.unresolvedMarkRules);
     console.log("[ingest] skipped empty texts:", report.skippedEmptyTexts);
     console.log("[ingest] wrapped stray texts:", report.wrappedStrayTexts);
 }
@@ -852,8 +848,8 @@ export function ingestDOM(
             catchAllBlocks: {},
             catchAllInline: {},
             inlineNodes: {},
-            mwEmptyElts: {},
-            skippedMarkAttrs: {},
+            rawAtoms: {},
+            skippedHtmlAttrs: {},
             unresolvedMarkRules: {},
             reproNodes: {},
             skippedEmptyTexts: 0,
@@ -862,24 +858,10 @@ export function ingestDOM(
         transparent: new Set(
             (options.transparentContainers ?? []).map((t) => t.toUpperCase()),
         ),
-        semanticMarks: options.proseMirrorSchema
-            ? semanticMarksFromSchema(options.proseMirrorSchema)
-            : {},
         markEmission: options.markEmission ?? [],
         nodeEmission: options.nodeEmission ?? [],
         attrPolicy: normalizeAttrPolicy(options.attrPolicy),
-        nodeSelectors: options.proseMirrorSchema
-            ? nodeSelectorsFromSchema(options.proseMirrorSchema)
-            : [],
-        schemaMarkAttrs: options.proseMirrorSchema
-            ? schemaMarkAttrsFromSchema(options.proseMirrorSchema)
-            : {},
-        schemaNodeAttrs: options.proseMirrorSchema
-            ? schemaNodeAttrsFromSchema(options.proseMirrorSchema)
-            : {},
-        inlineContentNodes: options.proseMirrorSchema
-            ? inlineContentNodesFromSchema(options.proseMirrorSchema)
-            : FALLBACK_INLINE_CONTENT_NODES,
+        ...deriveSchemaFacts(options.proseMirrorSchema),
     };
     const draft = newNodeDraft("doc");
     fillContent(draft, doc.body, [], ctx, false);
@@ -959,17 +941,4 @@ export function ingestWikipediaDocument(
             ],
         },
     });
-}
-
-/** @deprecated shim, kept for compatibility. */
-export function traverseDom(
-    domNode: Node,
-    _activeMarks: string[],
-    _outputNodes: unknown[],
-): void {
-    const doc =
-        domNode.nodeType === Node.DOCUMENT_NODE
-            ? (domNode as Document)
-            : domNode.ownerDocument;
-    if (doc) ingestDOM(doc);
 }
