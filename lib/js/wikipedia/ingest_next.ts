@@ -165,6 +165,63 @@ export interface NodeEmissionEntry {
     typeKey: string;
 }
 
+// Where an element is being ingested: as a child of a blocks-only
+// container ("block") or inside a textblock/mark descent ("inline").
+export type EmissionContext = "block" | "inline";
+
+// The unified rule vocabulary — how a matched element is emitted:
+// - block: a container/textblock node; inlineContent declares whether
+//   its children are inline (the no-schema fallback; the schema's
+//   content expression wins when it knows the typeKey).
+// - mark: a schema-defined mark, attrs harvested from the element;
+//   naming a mark the schema does not define falls back to intent
+//   (generic-style) and is counted in report.unresolvedMarkRules.
+// - generic: intent, the generic-style mark with data-style-name.
+// - inline-node: an inline node; typeKey defaults to the lowercased
+//   tag name (-> reserved unknown_inline via sync).
+// - atom: a reproducing atom (verbatim innerHTML + htmlAttrs bag).
+// - raw: a raw_html_block/raw_html_inline atom by context, outerHTML
+//   verbatim, no descent.
+// - void: a childless node, e.g. br -> hard_break.
+// - transparent: no node, children pass through.
+// - skip: nothing emitted, no descent.
+// - split-item: inlineTypeKey without block-level children, else
+//   blockTypeKey with inline runs lifted into paragraphs (e.g. li).
+export type EmissionRule =
+    | { kind: "block"; typeKey: string; inlineContent?: boolean }
+    | { kind: "mark"; name: string }
+    | { kind: "generic"; styleName: string }
+    | { kind: "inline-node"; typeKey?: string }
+    | { kind: "atom"; typeKey: string }
+    | { kind: "raw" }
+    | { kind: "void"; typeKey: string }
+    | { kind: "transparent" }
+    | { kind: "skip" }
+    | {
+          kind: "split-item";
+          inlineTypeKey: string;
+          blockTypeKey: string;
+      };
+
+// An ordered emission entry: the first entry whose rule fits the
+// current context and whose selector matches (element.matches) wins.
+// The optional context field narrows matching further; kind-intrinsic
+// fit applies regardless (mark/generic/inline-node/void are
+// inline-only; block/split-item are block-only; atom/raw/transparent/
+// skip fit both).
+export interface EmissionRuleEntry {
+    selector: string;
+    rule: EmissionRule;
+    context?: EmissionContext;
+}
+
+// Sink for ingest diagnostics (catch-all hits, the final report).
+export interface IngestLogger {
+    log(...args: unknown[]): void;
+}
+
+const NOOP_LOGGER: IngestLogger = { log: () => undefined };
+
 // A matcher for attribute names (exact string or RegExp test), or a
 // [nameMatcher, valueMatcher] pair matching name AND value, e.g.
 // ["id", /^mw/] matches id="mw123".
@@ -284,35 +341,33 @@ export function collectHtmlAttrs(
 }
 
 export interface IngestionOptions {
-    // Tag names treated as transparent containers (children pass
-    // through, no node emitted). Initially empty — the transparency
-    // decision is deferred until real articles have been examined.
+    // LEGACY (bridge): tag names treated as transparent containers
+    // (children pass through, no node emitted), translated into
+    // `transparent` entries of the rule table.
     transparentContainers?: string[];
     // The metamodel schema (ProseMirrorSchemaModel): marks it defines
     // are emitted for their tags (see semanticMarksFromSchema),
     // everything else falls back to generic-style.
     proseMirrorSchema?: any;
-    // Ordered [CSS selector, rule] pairs overriding the emission
-    // behavior for mark-ish elements (KNOWN_MARK_TAGS): the FIRST
-    // selector matching the element (element.matches) wins, so more
-    // specific selectors go first — e.g.
+    // LEGACY (bridge): ordered [CSS selector, rule] pairs for mark
+    // emission, translated into `mark`/`generic` entries of the rule
+    // table, before the schema-derived marks and the default styles —
+    // e.g.
     //   { selector: "b, strong", rule: { kind: "mark", name: "strong" } }
     // emits <b>/<strong> as the schema-defined "strong" mark (attrs
     // harvested), and
     //   { selector: "i, em", rule: { kind: "generic", styleName: "italic" } }
-    // emits <i>/<em> as intent. Elements matched by no selector use
-    // the default: schema-defined mark when the schema provides one
-    // for the tag, else generic-style with the KNOWN_MARK_TAGS style
-    // name. A "mark" rule naming a mark the schema does not define
-    // falls back to intent with the rule name as style name and is
-    // counted in report.unresolvedMarkRules.
+    // emits <i>/<em> as intent. A "mark" rule naming a mark the
+    // schema does not define falls back to intent with the rule name
+    // as style name and is counted in report.unresolvedMarkRules.
+    // Unlike the pre-rules engine, the selectors are no longer gated
+    // on a fixed mark-tag set: any element a selector matches in
+    // inline context is emitted accordingly.
     markEmission?: MarkEmissionRuleEntry[];
-    // Ordered [CSS selector, typeKey] pairs routing elements to named
-    // node types (reproducing atoms): the FIRST selector matching the
-    // element (element.matches) wins; redundancy is OK — declare safe
-    // fallbacks. Elements matched by no entry fall back to
-    // schema-derived selectors (nodeSelectorsFromSchema), then to the
-    // existing chain (unknown_inline's raison d'être).
+    // LEGACY (bridge): ordered [CSS selector, typeKey] pairs routing
+    // elements to named node types, translated into `atom` entries at
+    // the top of the rule table (before the schema-derived
+    // selectors); redundancy is OK — declare safe fallbacks.
     nodeEmission?: NodeEmissionEntry[];
     // Policy for collecting outer attributes into the htmlAttrs bag
     // of reproducing atoms (see HtmlAttrPolicy): conjunctive
@@ -320,6 +375,17 @@ export interface IngestionOptions {
     // accept all except style (collides with TypeRoof styling),
     // on* handlers and TypeRoof's own markers.
     attrPolicy?: HtmlAttrPolicy;
+    // The ordered emission table (see EmissionRuleEntry): consulted
+    // FIRST, before the translated legacy options above
+    // (nodeEmission, markEmission, transparentContainers — bridge,
+    // they dissolve into this table), the schema-derived rules
+    // (node-spec selectors -> atom, mark tags -> mark) and the
+    // built-in DEFAULT_RULES. Elements matching nothing fall to the
+    // context catch-all (raw_html_block / raw_html_inline).
+    emissionRules?: EmissionRuleEntry[];
+    // Diagnostics sink; silent by default. The wikipedia variant
+    // passes `console`.
+    logger?: IngestLogger;
 }
 
 // Derive htmlTag (lowercase) -> SemanticMark from the metamodel schema
@@ -411,25 +477,24 @@ function inlineContentNodesFromSchema(
     return result.size ? result : FALLBACK_INLINE_CONTENT_NODES;
 }
 
-// One pass over the schema options: everything ingest derives from
-// the metamodel schema, with the no-schema defaults in one place
-// (replaces five guarded ternaries in ingestDOM).
-function deriveSchemaFacts(
-    proseMirrorSchema: any,
-): Pick<
-    Ctx,
-    | "semanticMarks"
-    | "schemaMarkAttrs"
-    | "schemaNodeAttrs"
-    | "inlineContentNodes"
-    | "nodeSelectors"
-> {
+// Everything ingest derives from the metamodel schema, in one pass.
+// inlineContentNodes is null without a schema: block rules then fall
+// back to their own inlineContent flag (see the block emission).
+interface SchemaFacts {
+    semanticMarks: Readonly<Record<string, SemanticMark>>;
+    schemaMarkAttrs: Readonly<Record<string, string[]>>;
+    schemaNodeAttrs: Readonly<Record<string, ReadonlySet<string>>>;
+    inlineContentNodes: ReadonlySet<string> | null;
+    nodeSelectors: readonly NodeEmissionEntry[];
+}
+
+function deriveSchemaFacts(proseMirrorSchema: any): SchemaFacts {
     if (!proseMirrorSchema)
         return {
             semanticMarks: {},
             schemaMarkAttrs: {},
             schemaNodeAttrs: {},
-            inlineContentNodes: FALLBACK_INLINE_CONTENT_NODES,
+            inlineContentNodes: null,
             nodeSelectors: [],
         };
     return {
@@ -456,52 +521,151 @@ export function nodeSelectorsFromSchema(
     return result;
 }
 
-// Resolve which named node type claims this element: the first
-// matching nodeEmission entry wins; else the first matching
-// schema-derived selector; else null (fall through to the existing
-// chain).
-function resolveNodeEmission(ctx: Ctx, el: Element): string | null {
-    for (const { selector, typeKey } of ctx.nodeEmission)
-        if (el.matches(selector)) return typeKey;
-    for (const { selector, typeKey } of ctx.nodeSelectors)
-        if (el.matches(selector)) return typeKey;
+// The built-in defaults (bridge): the former hardcoded dispatch
+// chain, translated 1:1 into emission-rule segments. buildRuleTable
+// interleaves them with the explicit and schema-derived entries in
+// the old chain's precedence order. A later phase moves the setup
+// out of the engine, next to ingestWikipediaDocument.
+const RAW_METADATA_RULES: readonly EmissionRuleEntry[] = [
+    // metadata islands etc.: raw atoms, no descent (see the comment
+    // at SELECTORS_TO_RAW_HTML)
+    { selector: SELECTORS_TO_RAW_HTML, rule: { kind: "raw" } },
+];
+const LIST_RULES: readonly EmissionRuleEntry[] = [
+    // <li> directly under <ul>: li-inline or li-block, decided by the
+    // children (see emitSplitItem). A stray <li> matches nothing and
+    // falls to the catch-alls, which emit schema-safe raw_html atoms.
+    {
+        selector: "ul > li",
+        rule: {
+            kind: "split-item",
+            inlineTypeKey: "li-inline",
+            blockTypeKey: "li-block",
+        },
+    },
+];
+const BLOCK_RULES: readonly EmissionRuleEntry[] = Object.entries(
+    KNOWN_BLOCK_TAGS,
+).map(
+    ([tagName, typeKey]): EmissionRuleEntry => ({
+        selector: tagName.toLowerCase(),
+        rule: {
+            kind: "block",
+            typeKey,
+            // the no-schema fallback flag; the schema's content
+            // expression wins when it knows the typeKey
+            inlineContent: FALLBACK_INLINE_CONTENT_NODES.has(typeKey),
+        },
+    }),
+);
+const MARK_STYLE_RULES: readonly EmissionRuleEntry[] = Object.entries(
+    KNOWN_MARK_TAGS,
+).map(
+    ([tagName, styleName]): EmissionRuleEntry => ({
+        selector: tagName.toLowerCase(),
+        rule: { kind: "generic", styleName },
+    }),
+);
+const INLINE_RULES: readonly EmissionRuleEntry[] = [
+    { selector: "br", rule: { kind: "void", typeKey: "hard_break" } },
+    {
+        selector: Array.from(INLINE_TAGS, (t) => t.toLowerCase()).join(", "),
+        rule: { kind: "inline-node" },
+    },
+];
+
+// Kind-intrinsic context fit (see EmissionRuleEntry), narrowed
+// further by an entry's optional context field.
+function ruleFitsContext(entry: EmissionRuleEntry, inInline: boolean): boolean {
+    if (
+        entry.context !== undefined &&
+        (entry.context === "inline") !== inInline
+    )
+        return false;
+    switch (entry.rule.kind) {
+        case "mark":
+        case "generic":
+        case "inline-node":
+        case "void":
+            return inInline;
+        case "block":
+        case "split-item":
+            return !inInline;
+        default:
+            // atom, raw, transparent, skip
+            return true;
+    }
+}
+
+// The one ordered lookup: first entry that fits the context and
+// matches the element wins; null falls to the context catch-all.
+// Pure — no reporting side effects (also used for classification,
+// see emitSplitItem).
+function findMatchingRule(
+    ctx: Ctx,
+    el: Element,
+    inInline: boolean,
+): EmissionRule | null {
+    for (const entry of ctx.rules) {
+        if (!ruleFitsContext(entry, inInline)) continue;
+        if (el.matches(entry.selector)) return entry.rule;
+    }
     return null;
 }
 
-type MarkEmission =
-    | { kind: "mark"; name: string; attrs: string[] }
-    | { kind: "style"; styleName: string };
-
-// Resolve how a mark-ish HTML tag (UPPERCASE) is emitted: an explicit
-// markEmission rule wins; else the schema-defined mark for the tag;
-// else generic-style intent with the KNOWN_MARK_TAGS style name.
-function resolveMarkEmission(
-    ctx: Ctx,
-    el: Element,
-    tag: string,
-    knownMarkStyle: string,
-): MarkEmission {
-    for (const { selector, rule } of ctx.markEmission) {
-        // first matching selector wins
-        if (!el.matches(selector)) continue;
-        if (rule.kind === "generic")
-            return { kind: "style", styleName: rule.styleName };
-        const attrs = ctx.schemaMarkAttrs[rule.name];
-        if (attrs !== undefined)
-            return { kind: "mark", name: rule.name, attrs };
-        // The rule names a mark the schema does not define: fall back
-        // to intent with the rule name and report it.
-        count(ctx.report.unresolvedMarkRules, rule.name);
-        return { kind: "style", styleName: rule.name };
-    }
-    const semanticMark = ctx.semanticMarks[tag.toLowerCase()];
-    if (semanticMark !== undefined)
-        return {
-            kind: "mark",
-            name: semanticMark.name,
-            attrs: semanticMark.attrs,
-        };
-    return { kind: "style", styleName: knownMarkStyle };
+// Assemble the one ordered rule table, mirroring the old dispatch
+// chain's precedence exactly: explicit emissionRules win; the
+// translated legacy options (bridge — they dissolve into
+// emissionRules in a later phase) and the schema-derived rules
+// interleave with the default segments the way the old branches did:
+// atoms before raw, transparent after raw, markEmission before
+// schema marks before the default styles.
+function buildRuleTable(
+    options: IngestionOptions,
+    facts: SchemaFacts,
+): EmissionRuleEntry[] {
+    const legacyAtomRules = (options.nodeEmission ?? []).map(
+        ({ selector, typeKey }): EmissionRuleEntry => ({
+            selector,
+            rule: { kind: "atom", typeKey },
+        }),
+    );
+    // node specs with a selector claim their elements as reproducing
+    // atoms; marks with a tag are emitted for that tag
+    const schemaAtomRules = facts.nodeSelectors.map(
+        ({ selector, typeKey }): EmissionRuleEntry => ({
+            selector,
+            rule: { kind: "atom", typeKey },
+        }),
+    );
+    const transparentRules = (options.transparentContainers ?? []).map(
+        (tagName): EmissionRuleEntry => ({
+            selector: tagName.toLowerCase(),
+            rule: { kind: "transparent" },
+        }),
+    );
+    const legacyMarkRules = (options.markEmission ?? []).map(
+        ({ selector, rule }): EmissionRuleEntry => ({ selector, rule }),
+    );
+    const schemaMarkRules = Object.entries(facts.semanticMarks).map(
+        ([tagName, { name }]): EmissionRuleEntry => ({
+            selector: tagName,
+            rule: { kind: "mark", name },
+        }),
+    );
+    return [
+        ...(options.emissionRules ?? []),
+        ...legacyAtomRules,
+        ...schemaAtomRules,
+        ...RAW_METADATA_RULES,
+        ...transparentRules,
+        ...LIST_RULES,
+        ...BLOCK_RULES,
+        ...legacyMarkRules,
+        ...schemaMarkRules,
+        ...MARK_STYLE_RULES,
+        ...INLINE_RULES,
+    ];
 }
 
 function markSetKey(marks: MarkDesc[]): string {
@@ -529,15 +693,15 @@ type MarkDesc =
 
 interface Ctx {
     report: IngestionReport;
-    transparent: ReadonlySet<string>;
-    semanticMarks: Readonly<Record<string, SemanticMark>>;
-    markEmission: readonly MarkEmissionRuleEntry[];
+    // the one ordered emission table: explicit entries, then legacy
+    // translations, then schema-derived rules, then DEFAULT_RULES
+    rules: readonly EmissionRuleEntry[];
     schemaMarkAttrs: Readonly<Record<string, string[]>>;
     schemaNodeAttrs: Readonly<Record<string, ReadonlySet<string>>>;
-    inlineContentNodes: ReadonlySet<string>;
-    nodeEmission: readonly NodeEmissionEntry[];
-    nodeSelectors: readonly NodeEmissionEntry[];
+    // null without a schema (block rules use their inlineContent flag)
+    inlineContentNodes: ReadonlySet<string> | null;
     attrPolicy: HtmlAttrPolicy;
+    logger: IngestLogger;
 }
 
 // Count the attributes the policy excludes on `el` into
@@ -609,29 +773,46 @@ function fillContent(
     for (const item of out) content.push(item);
 }
 
-// Ingest a <li> element in block context (operator decision
-// 2026-08-03). Without block-level children it becomes "li-inline"
-// (inline content only). With block-level children — e.g. a nested
-// <ul> — it becomes "li-block", which holds blocks only, so the
-// inline runs between the blocks are lifted into paragraphs.
-// Both types share tag "li" and group "li"; the group keeps ul's
-// content expression ("li+") open for further li sorts. (A node type
-// literally named "li" would shadow the group in content
-// expressions — prosemirror-model resolves type names first.)
-function ingestListItem(el: Element, out: any[], ctx: Ctx): void {
-    const isBlockChild = (child: Node): boolean =>
-        child.nodeType === Node.ELEMENT_NODE &&
-        KNOWN_BLOCK_TAGS[(child as Element).tagName] !== undefined;
+// Emit a split-item element, e.g. <li> (operator decision
+// 2026-08-03). Without block-level children it becomes the
+// inlineTypeKey node (inline content only). With block-level
+// children — e.g. a nested <ul> — it becomes the blockTypeKey node,
+// which holds blocks only, so the inline runs between the blocks are
+// lifted into paragraphs. For li: both types share tag "li" and
+// group "li"; the group keeps ul's content expression ("li+") open
+// for further li sorts. (A node type literally named "li" would
+// shadow the group in content expressions — prosemirror-model
+// resolves type names first.)
+// A child counts as block-level iff it resolves to a block-only rule
+// kind in block context — i.e. iff dispatching it would emit a block.
+// (Context-flexible kinds like raw/atom join the inline runs, as
+// their dispatch accepts inline placement.)
+function emitSplitItem(
+    el: Element,
+    rule: Extract<EmissionRule, { kind: "split-item" }>,
+    out: any[],
+    ctx: Ctx,
+): void {
+    const isBlockChild = (child: Node): boolean => {
+        if (child.nodeType !== Node.ELEMENT_NODE) return false;
+        const childRule = findMatchingRule(ctx, child as Element, false);
+        return (
+            childRule !== null &&
+            (childRule.kind === "block" || childRule.kind === "split-item")
+        );
+    };
     const hasBlockChild = Array.from(el.childNodes).some(isBlockChild);
-    const draft = newNodeDraft(hasBlockChild ? "li-block" : "li-inline");
+    const draft = newNodeDraft(
+        hasBlockChild ? rule.blockTypeKey : rule.inlineTypeKey,
+    );
     setHtmlAttrsBag(draft, el, ctx);
     if (!hasBlockChild) {
-        // marks do not cross block boundaries; li-inline has inline content
+        // marks do not cross block boundaries; inline content only
         fillContent(draft, el, [], ctx, true);
         out.push(draft.metamorphose());
         return;
     }
-    // li-block: blocks only — lift each inline run into a paragraph.
+    // blockTypeKey: blocks only — lift each inline run into a paragraph.
     const content = draft.get("content");
     let run: any[] = [];
     const flushRun = (): void => {
@@ -702,146 +883,158 @@ function ingestNode(
         return;
 
     const el = domNode as Element;
-    const tag = el.tagName;
+    const rule = findMatchingRule(ctx, el, inInline);
 
-    // raw-atom shortcut first: even a <p class="mw-empty-elt"> is patched
-    // through as an atom, never expanded.
-    // A named node type may claim this element (reproducing atom):
-    // verbatim innerHTML and the collected htmlAttrs bag.
-    const claimedTypeKey = resolveNodeEmission(ctx, el);
-    if (claimedTypeKey !== null) {
-        count(report.reproNodes, claimedTypeKey);
-        const draft = newNodeDraft(claimedTypeKey),
-            attrsDraft = draft.get("attrs");
-        attrsDraft.set("html", toMetaModelJSON(el.innerHTML, {}));
-        attrsDraft.set(
-            "htmlAttrs",
-            toMetaModelJSON(collectHtmlAttrs(el, ctx.attrPolicy), {}),
+    if (rule === null) {
+        // Context catch-alls. Block containers hold blocks only
+        // (operator decision 2026-07-24): unmatched elements are
+        // pruned into raw_html_block — log-and-crash showed inline
+        // nodes under sections crash PM's unknown_block ("block*").
+        // In inline context never emit a block node here (Wikipedia
+        // puts link/style/meta inside paragraphs).
+        const tagLabel = el.tagName.toLowerCase(),
+            variant = inInline ? "raw_html_inline" : "raw_html_block";
+        count(
+            inInline ? report.catchAllInline : report.catchAllBlocks,
+            el.tagName,
         );
-        // A reproducing atom that claims elements of varying tags —
-        // e.g. "figcontent", matching an <a>-wrapped <img>, a bare
-        // <img> or a <pre> — declares the "htmlTag" attr; then the
-        // source tag is reproduced as well, and the spec tag only
-        // serves as the fallback (see _createReproducingToDOM).
-        if (ctx.schemaNodeAttrs[claimedTypeKey]?.has("htmlTag"))
-            attrsDraft.set("htmlTag", toMetaModelJSON(tag.toLowerCase(), {}));
-        out.push(draft.metamorphose());
-        return;
-    }
-
-    if (el.matches(SELECTORS_TO_RAW_HTML)) {
-        count(report.rawAtoms, tag);
+        ctx.logger.log(
+            `[ingest] catch-all <${tagLabel}> -> ${variant},` +
+                ` parent <${el.parentElement?.tagName.toLowerCase() ?? "?"}>:`,
+            el.outerHTML.slice(0, 200),
+        );
         emitRawHtmlAtom(el, inInline, out);
         return;
     }
 
-    if (ctx.transparent.has(tag)) {
-        ingestChildrenInto(el, marks, out, ctx, inInline);
-        return;
+    switch (rule.kind) {
+        case "atom": {
+            // A named node type claims this element (reproducing
+            // atom): verbatim innerHTML and the collected htmlAttrs
+            // bag — set unconditionally, no exclusion counting: the
+            // atom reproduces, it does not edit.
+            count(report.reproNodes, rule.typeKey);
+            const draft = newNodeDraft(rule.typeKey),
+                attrsDraft = draft.get("attrs");
+            attrsDraft.set("html", toMetaModelJSON(el.innerHTML, {}));
+            attrsDraft.set(
+                "htmlAttrs",
+                toMetaModelJSON(collectHtmlAttrs(el, ctx.attrPolicy), {}),
+            );
+            // A reproducing atom that claims elements of varying
+            // tags — e.g. "figcontent", matching an <a>-wrapped
+            // <img>, a bare <img> or a <pre> — declares the "htmlTag"
+            // attr; then the source tag is reproduced as well, and
+            // the spec tag only serves as the fallback (see
+            // _createReproducingToDOM).
+            if (ctx.schemaNodeAttrs[rule.typeKey]?.has("htmlTag"))
+                attrsDraft.set(
+                    "htmlTag",
+                    toMetaModelJSON(el.tagName.toLowerCase(), {}),
+                );
+            out.push(draft.metamorphose());
+            return;
+        }
+        case "raw":
+            // patched through verbatim, never expanded — even a
+            // <p class="mw-empty-elt">
+            count(report.rawAtoms, el.tagName);
+            emitRawHtmlAtom(el, inInline, out);
+            return;
+        case "transparent":
+            ingestChildrenInto(el, marks, out, ctx, inInline);
+            return;
+        case "skip":
+            return;
+        case "split-item":
+            emitSplitItem(el, rule, out, ctx);
+            return;
+        case "block": {
+            const draft = newNodeDraft(rule.typeKey);
+            setHtmlAttrsBag(draft, el, ctx);
+            // marks do not cross block boundaries; textblocks have
+            // inline content — which types those are comes from the
+            // schema when present, else from the rule's own flag.
+            const childInline =
+                ctx.inlineContentNodes !== null
+                    ? ctx.inlineContentNodes.has(rule.typeKey)
+                    : (rule.inlineContent ?? false);
+            fillContent(draft, el, [], ctx, childInline);
+            out.push(draft.metamorphose());
+            return;
+        }
+        case "mark":
+        case "generic": {
+            // No node: push a MarkDesc and descend. Schema-declared
+            // attrs are harvested for "mark" emissions; a "mark" rule
+            // naming a mark the schema does not define falls back to
+            // intent with the rule name and is reported. Either way
+            // the policy collects the htmlAttrs bag and counts the
+            // excluded attrs.
+            const htmlAttrs = collectHtmlAttrs(el, ctx.attrPolicy);
+            const declaredAttrs =
+                rule.kind === "mark"
+                    ? ctx.schemaMarkAttrs[rule.name]
+                    : undefined;
+            let markDesc: MarkDesc;
+            if (rule.kind === "mark" && declaredAttrs === undefined) {
+                count(report.unresolvedMarkRules, rule.name);
+                markDesc = {
+                    kind: "style",
+                    styleName: rule.name,
+                    htmlAttrs,
+                };
+            } else if (rule.kind === "mark")
+                markDesc = {
+                    kind: "mark",
+                    name: rule.name,
+                    attrs: harvestDeclaredAttrs(el, declaredAttrs ?? []),
+                    htmlAttrs,
+                };
+            else
+                markDesc = {
+                    kind: "style",
+                    styleName: rule.styleName,
+                    htmlAttrs,
+                };
+            countSkippedHtmlAttrs(ctx, el);
+            ingestChildrenInto(el, [...marks, markDesc], out, ctx, inInline);
+            return;
+        }
+        case "void":
+            out.push(newNodeDraft(rule.typeKey).metamorphose());
+            return;
+        case "inline-node": {
+            count(report.inlineNodes, el.tagName);
+            const draft = newNodeDraft(
+                rule.typeKey ?? el.tagName.toLowerCase(),
+            );
+            setHtmlAttrsBag(draft, el, ctx);
+            fillContent(draft, el, marks, ctx, true);
+            out.push(draft.metamorphose());
+            return;
+        }
     }
-
-    // <li> directly under <ul> in block context: "li-inline" or
-    // "li-block", decided by its children (see ingestListItem). A
-    // stray <li> (wrong parent, or in inline context) falls through
-    // to the catch-alls, which emit schema-safe raw_html atoms.
-    if (tag === "LI" && !inInline && el.parentElement?.tagName === "UL") {
-        ingestListItem(el, out, ctx);
-        return;
-    }
-
-    const knownBlockTypeKey = KNOWN_BLOCK_TAGS[tag];
-    if (knownBlockTypeKey !== undefined) {
-        const draft = newNodeDraft(knownBlockTypeKey);
-        setHtmlAttrsBag(draft, el, ctx);
-        // marks do not cross block boundaries; textblocks have inline
-        // content — which types those are comes from the schema.
-        const childInline = ctx.inlineContentNodes.has(knownBlockTypeKey);
-        fillContent(draft, el, [], ctx, childInline);
-        out.push(draft.metamorphose());
-        return;
-    }
-
-    if (!inInline) {
-        // Block containers (doc, section, ...) hold blocks only
-        // (operator decision 2026-07-24): everything that is not a
-        // known block — inline tags, mark tags, BR, unknowns — is
-        // pruned into raw_html_block. Log-and-crash showed inline
-        // nodes under sections crash PM's unknown_block ("block*").
-        count(report.catchAllBlocks, tag);
-        console.log(
-            `[ingest] catch-all <${tag.toLowerCase()}> -> raw_html_block,` +
-                ` parent <${el.parentElement?.tagName.toLowerCase() ?? "?"}>:`,
-            el.outerHTML.slice(0, 200),
-        );
-        emitRawHtmlAtom(el, false, out);
-        return;
-    }
-
-    // --- inline context (inside paragraph/heading) ---
-
-    const knownMarkStyle = KNOWN_MARK_TAGS[tag];
-    if (knownMarkStyle !== undefined) {
-        // No node: push a MarkDesc and descend. Schema-declared attrs
-        // are harvested for "mark" emissions; either way the policy
-        // collects the htmlAttrs bag and counts the excluded attrs.
-        const emission = resolveMarkEmission(ctx, el, tag, knownMarkStyle);
-        const htmlAttrs = collectHtmlAttrs(el, ctx.attrPolicy);
-        const markDesc: MarkDesc =
-            emission.kind === "mark"
-                ? {
-                      kind: "mark",
-                      name: emission.name,
-                      attrs: harvestDeclaredAttrs(el, emission.attrs),
-                      htmlAttrs,
-                  }
-                : { kind: "style", styleName: emission.styleName, htmlAttrs };
-        countSkippedHtmlAttrs(ctx, el);
-        ingestChildrenInto(el, [...marks, markDesc], out, ctx, inInline);
-        return;
-    }
-
-    if (tag === "BR") {
-        out.push(newNodeDraft("hard_break").metamorphose());
-        return;
-    }
-
-    if (INLINE_TAGS.has(tag)) {
-        count(report.inlineNodes, tag);
-        const draft = newNodeDraft(tag.toLowerCase());
-        setHtmlAttrsBag(draft, el, ctx);
-        fillContent(draft, el, marks, ctx, true);
-        out.push(draft.metamorphose());
-        return;
-    }
-
-    // catch-all in inline context: never emit a block node here
-    // (Wikipedia puts link/style/meta inside paragraphs).
-    count(report.catchAllInline, tag);
-    console.log(
-        `[ingest] catch-all <${tag.toLowerCase()}> -> raw_html_inline,` +
-            ` parent <${el.parentElement?.tagName.toLowerCase() ?? "?"}>:`,
-        el.outerHTML.slice(0, 200),
-    );
-    emitRawHtmlAtom(el, true, out);
 }
 
-function logReport(report: IngestionReport): void {
-    console.log("[ingest] mark sets:", report.markSets);
-    console.log("[ingest] raw_html_block catch-all:", report.catchAllBlocks);
-    console.log("[ingest] raw_html_inline catch-all:", report.catchAllInline);
-    console.log("[ingest] inline nodes:", report.inlineNodes);
-    console.log("[ingest] raw atoms:", report.rawAtoms);
-    console.log("[ingest] reproducing nodes:", report.reproNodes);
-    console.log("[ingest] skipped html attrs:", report.skippedHtmlAttrs);
-    console.log("[ingest] unresolved mark rules:", report.unresolvedMarkRules);
-    console.log("[ingest] skipped empty texts:", report.skippedEmptyTexts);
-    console.log("[ingest] wrapped stray texts:", report.wrappedStrayTexts);
+function logReport(logger: IngestLogger, report: IngestionReport): void {
+    logger.log("[ingest] mark sets:", report.markSets);
+    logger.log("[ingest] raw_html_block catch-all:", report.catchAllBlocks);
+    logger.log("[ingest] raw_html_inline catch-all:", report.catchAllInline);
+    logger.log("[ingest] inline nodes:", report.inlineNodes);
+    logger.log("[ingest] raw atoms:", report.rawAtoms);
+    logger.log("[ingest] reproducing nodes:", report.reproNodes);
+    logger.log("[ingest] skipped html attrs:", report.skippedHtmlAttrs);
+    logger.log("[ingest] unresolved mark rules:", report.unresolvedMarkRules);
+    logger.log("[ingest] skipped empty texts:", report.skippedEmptyTexts);
+    logger.log("[ingest] wrapped stray texts:", report.wrappedStrayTexts);
 }
 
 export function ingestDOM(
     doc: Document,
     options: IngestionOptions = {},
 ): { document: any; report: IngestionReport } {
+    const facts = deriveSchemaFacts(options.proseMirrorSchema);
     const ctx: Ctx = {
         report: {
             markSets: {},
@@ -855,18 +1048,17 @@ export function ingestDOM(
             skippedEmptyTexts: 0,
             wrappedStrayTexts: 0,
         },
-        transparent: new Set(
-            (options.transparentContainers ?? []).map((t) => t.toUpperCase()),
-        ),
-        markEmission: options.markEmission ?? [],
-        nodeEmission: options.nodeEmission ?? [],
+        rules: buildRuleTable(options, facts),
+        schemaMarkAttrs: facts.schemaMarkAttrs,
+        schemaNodeAttrs: facts.schemaNodeAttrs,
+        inlineContentNodes: facts.inlineContentNodes,
         attrPolicy: normalizeAttrPolicy(options.attrPolicy),
-        ...deriveSchemaFacts(options.proseMirrorSchema),
+        logger: options.logger ?? NOOP_LOGGER,
     };
     const draft = newNodeDraft("doc");
     fillContent(draft, doc.body, [], ctx, false);
     const document = draft.metamorphose();
-    logReport(ctx.report);
+    logReport(ctx.logger, ctx.report);
     return { document, report: ctx.report };
 }
 
@@ -887,6 +1079,10 @@ export function ingestWikipediaDocument(
         // exist. Schema marks are emitted for their tags by default;
         // attrs declared by the mark spec are harvested.
         proseMirrorSchema,
+
+        // Diagnostics: the demo wants the catch-all lines and the
+        // report on the console (the engine is silent by default).
+        logger: console,
 
         // HTML tags treated as transparent containers: their children
         // pass through, no node is emitted for the element itself.
