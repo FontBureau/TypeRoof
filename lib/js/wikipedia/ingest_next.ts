@@ -17,6 +17,8 @@ const { NodeModel, toMetaModelJSON } = models as {
 // observation, not from upfront assumptions.
 // SECTION stays a block: sections structure the article and their
 // children are blocks only (see block-context catch-all below).
+// UL (2026-08-03): unordered list; its LI children are handled by a
+// dedicated branch (ingestListItem), hence LI is not in this table.
 const KNOWN_BLOCK_TAGS: Readonly<Record<string, string>> = {
     BODY: "doc",
     SECTION: "section",
@@ -27,6 +29,9 @@ const KNOWN_BLOCK_TAGS: Readonly<Record<string, string>> = {
     H4: "heading-4",
     H5: "heading-5",
     H6: "heading-6",
+    UL: "ul",
+    FIGURE: "figure",
+    FIGCAPTION: "figcaption"
 };
 
 const KNOWN_MARK_TAGS: Readonly<Record<string, string>> = {
@@ -82,11 +87,10 @@ const INLINE_TAGS: ReadonlySet<string> = new Set([
 // purposes, probably if we can't make them transparent we will skip
 // them on ingest.
 const MW_EMPTY_ELT = ".mw-empty-elt",
-    // these are the cite links into the footnotes, e.g. [5]
-    MW_INLINE_CITATION = `sup[typeof="mw:Extension/ref"]`;
+    MW_META = "meta";
 // Elements matching any of these selectors are patched through as raw
 // atoms (raw_html_block / raw_html_inline by context), no descent.
-const SELECTORS_TO_RAW_HTML = [MW_EMPTY_ELT, MW_INLINE_CITATION].join(", ");
+const SELECTORS_TO_RAW_HTML = [MW_EMPTY_ELT, MW_META].join(", ");
 
 export interface IngestionReport {
     // mark-set histogram, e.g. { "[bold, italic]": 2, "[bold]": 1, "[]": 5 }
@@ -499,6 +503,55 @@ function fillContent(
     }
 }
 
+// Ingest a <li> element in block context (operator decision
+// 2026-08-03). Without block-level children it becomes "li-inline"
+// (inline content only). With block-level children — e.g. a nested
+// <ul> — it becomes "li-block", which holds blocks only, so the
+// inline runs between the blocks are lifted into paragraphs.
+// Both types share tag "li" and group "li"; the group keeps ul's
+// content expression ("li+") open for further li sorts. (A node type
+// literally named "li" would shadow the group in content
+// expressions — prosemirror-model resolves type names first.)
+function ingestListItem(el: Element, out: any[], ctx: Ctx): void {
+    const { report } = ctx;
+    const isBlockChild = (child: Node): boolean =>
+        child.nodeType === Node.ELEMENT_NODE &&
+        KNOWN_BLOCK_TAGS[(child as Element).tagName] !== undefined;
+    const hasBlockChild = Array.from(el.childNodes).some(isBlockChild);
+    const draft = newNodeDraft(hasBlockChild ? "li-block" : "li-inline");
+    const htmlAttrs = collectHtmlAttrs(el, ctx.attrPolicy);
+    if (htmlAttrs !== "")
+        draft.get("attrs").set("htmlAttrs", toMetaModelJSON(htmlAttrs, {}));
+    for (const attrName of skippedHtmlAttrs(el, ctx.attrPolicy))
+        count(report.skippedMarkAttrs, `li.${attrName}`);
+    if (!hasBlockChild) {
+        // marks do not cross block boundaries; li-inline has inline content
+        fillContent(draft, el, [], ctx, true);
+        out.push(draft.metamorphose());
+        return;
+    }
+    // li-block: blocks only — lift each inline run into a paragraph.
+    const content = draft.get("content");
+    let run: any[] = [];
+    const flushRun = (): void => {
+        if (!run.length) return;
+        const paragraphDraft = newNodeDraft("paragraph");
+        for (const item of run) paragraphDraft.get("content").push(item);
+        content.push(paragraphDraft.metamorphose());
+        run = [];
+    };
+    for (const child of Array.from(el.childNodes)) {
+        if (isBlockChild(child)) {
+            flushRun();
+            const blockOut: any[] = [];
+            ingestNode(child, [], blockOut, ctx, false);
+            for (const item of blockOut) content.push(item);
+        } else ingestNode(child, [], run, ctx, true);
+    }
+    flushRun();
+    out.push(draft.metamorphose());
+}
+
 function ingestNode(
     domNode: Node,
     marks: MarkDesc[],
@@ -580,6 +633,15 @@ function ingestNode(
 
     if (ctx.transparent.has(tag)) {
         ingestChildrenInto(el, marks, out, ctx, inInline);
+        return;
+    }
+
+    // <li> directly under <ul> in block context: "li-inline" or
+    // "li-block", decided by its children (see ingestListItem). A
+    // stray <li> (wrong parent, or in inline context) falls through
+    // to the catch-alls, which emit schema-safe raw_html atoms.
+    if (tag === "LI" && !inInline && el.parentElement?.tagName === "UL") {
+        ingestListItem(el, out, ctx);
         return;
     }
 
@@ -804,10 +866,15 @@ export function ingestWikipediaDocument(
         nodeEmission: [
             // Wikipedia citations become "cite-link" atoms; other <sup>
             // falls through to the existing chain (unknown_inline).
+            // these are the cite links into the footnotes, e.g. [5]
             {
                 selector: 'sup[typeof="mw:Extension/ref"]',
                 typeKey: "cite-link",
             },
+            {
+                selector: 'figure > :not(figcaption)',
+                typeKey: 'figcontent'
+            }
         ],
 
         // Policy for collecting outer attributes into the htmlAttrs

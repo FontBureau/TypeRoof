@@ -380,6 +380,138 @@
             ]
           ]
         }
+      ],
+      [
+        "ul",
+        {
+          "content": "li+",
+          "group": "block",
+          "tag": "ul",
+          "definingAsContext": "1",
+          "definingForContent": "1",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
+        }
+      ],
+      [
+        "li-inline",
+        {
+          "content": "inline*",
+          "group": "li",
+          "tag": "li",
+          "definingAsContext": "1",
+          "definingForContent": "1",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
+        }
+      ],
+      [
+        "li-block",
+        {
+          "content": "block+",
+          "group": "li",
+          "tag": "li",
+          "definingAsContext": "1",
+          "definingForContent": "1",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
+        }
+      ],
+      [
+        "figure",
+        {
+          "content": "figcaption figcontent | figcontent figcaption?",
+          "group": "block",
+          "tag": "figure",
+          "definingAsContext": "1",
+          "definingForContent": "1",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
+        }
+      ],
+      [
+        "figcontent",
+        {
+          "tag": "div",
+          "selector": "figure > :not(figcaption)",
+          "group": "block",
+          "atom": true,
+          "attrs": [
+            [
+              "html",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ],
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
+        }
+      ],
+      [
+        "figcaption",
+        {
+          "content": "block*",
+          "group": "block",
+          "tag": "figcaption",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
+        }
       ]
     ],
     "marks": [
