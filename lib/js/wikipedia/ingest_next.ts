@@ -42,10 +42,10 @@ export interface IngestionReport {
     // node typeKey -> count of reproducing-atom emissions (`atom` rules)
     reproNodes: Record<string, number>;
     skippedEmptyTexts: number;
-    // non-empty text nodes found directly in block context; each was
-    // wrapped in a liftedRunWrapper node (default "paragraph") so
-    // block containers hold blocks only
-    wrappedStrayTexts: number;
+    // inline runs lifted into liftedRunWrapper nodes in block
+    // context (see fillBlockContent) — tells a lot about the shape
+    // of the source
+    liftedRuns: number;
 }
 
 export interface SemanticMark {
@@ -84,7 +84,8 @@ export type EmissionContext = "block" | "inline";
 // - transparent: no node, children pass through.
 // - skip: nothing emitted, no descent.
 // - split-item: inlineTypeKey without block-level children, else
-//   blockTypeKey with inline runs lifted into paragraphs (e.g. li).
+//   blockTypeKey with inline runs lifted into liftedRunWrapper
+//   nodes (e.g. li -> li-inline/li-block).
 export type EmissionRule =
     | { kind: "block"; typeKey: string; inlineContent?: boolean }
     | { kind: "mark"; name: string }
@@ -571,65 +572,89 @@ function fillContent(
     for (const item of out) content.push(item);
 }
 
+// Whether a child joins an inline run in block context (scoped
+// run-lifting, operator decision 2026-08-03): text nodes always;
+// elements iff they resolve EXCLUSIVELY in inline context — a
+// block-context resolution (block, split-item, unrestricted atom,
+// raw, transparent, skip) keeps its block handling (a figcontent
+// atom must stay a direct child of figure, a raw metadata island
+// stays a raw_html_block). Elements resolving in NEITHER context are
+// not run members either: they break the run and fall to the loud
+// block catch-all — the discovery guarantee.
+function isRunMember(ctx: Ctx, child: Node): boolean {
+    if (child.nodeType === Node.TEXT_NODE) return true;
+    if (child.nodeType !== Node.ELEMENT_NODE) return false;
+    const el = child as Element;
+    return (
+        findMatchingRule(ctx, el, false) === null &&
+        findMatchingRule(ctx, el, true) !== null
+    );
+}
+
+// Fill block-only content (doc root, non-textblock `block` rules,
+// a split-item's block variant): consecutive run members (see
+// isRunMember) are ingested in inline context and lifted into ONE
+// liftedRunWrapper node per run — marks apply, hard_breaks stay
+// breaks, sentences stay sentences. Whitespace-only runs produce no
+// wrapper (the text branch skips empty texts, the flush guards on
+// content). Everything else is ingested in block context; comments
+// and processing instructions are dropped without breaking the run.
+// `sink` takes metamorphosed nodes: a content draft or a plain array.
+function fillBlockContent(sink: any, el: Node, ctx: Ctx): void {
+    let run: any[] = [];
+    const flushRun = (): void => {
+        if (!run.length) return;
+        const wrapperDraft = newNodeDraft(ctx.liftedRunWrapper);
+        for (const item of run) wrapperDraft.get("content").push(item);
+        sink.push(wrapperDraft.metamorphose());
+        ctx.report.liftedRuns++;
+        run = [];
+    };
+    for (const child of Array.from(el.childNodes)) {
+        if (isRunMember(ctx, child)) {
+            ingestNode(child, [], run, ctx, true);
+            continue;
+        }
+        if (child.nodeType !== Node.ELEMENT_NODE)
+            // comments, processing instructions: dropped, run intact
+            continue;
+        flushRun();
+        const blockOut: any[] = [];
+        ingestNode(child, [], blockOut, ctx, false);
+        for (const item of blockOut) sink.push(item);
+    }
+    flushRun();
+}
+
 // Emit a split-item element, e.g. <li> (operator decision
-// 2026-08-03). Without block-level children it becomes the
-// inlineTypeKey node (inline content only). With block-level
-// children — e.g. a nested <ul> — it becomes the blockTypeKey node,
-// which holds blocks only, so the inline runs between the blocks are
-// lifted into paragraphs. For li: both types share tag "li" and
-// group "li"; the group keeps ul's content expression ("li+") open
-// for further li sorts. (A node type literally named "li" would
-// shadow the group in content expressions — prosemirror-model
-// resolves type names first.)
-// A child counts as block-level iff it resolves to a block-only rule
-// kind in block context — i.e. iff dispatching it would emit a block.
-// (Context-flexible kinds like raw/atom join the inline runs, as
-// their dispatch accepts inline placement.)
+// 2026-08-03). With inline content only (every element child is a
+// run member, see isRunMember) it becomes the inlineTypeKey node.
+// Otherwise it becomes the blockTypeKey node, whose content is
+// filled by the general block filler — inline runs lifted, non-run
+// elements as blocks (including catch-all fallout for elements that
+// resolve nowhere, e.g. an unconfigured <table>). For li: both types
+// share tag "li" and group "li"; the group keeps ul's content
+// expression ("li+") open for further li sorts. (A node type
+// literally named "li" would shadow the group in content
+// expressions — prosemirror-model resolves type names first.)
 function emitSplitItem(
     el: Element,
     rule: Extract<EmissionRule, { kind: "split-item" }>,
     out: any[],
     ctx: Ctx,
 ): void {
-    const isBlockChild = (child: Node): boolean => {
-        if (child.nodeType !== Node.ELEMENT_NODE) return false;
-        const childRule = findMatchingRule(ctx, child as Element, false);
-        return (
-            childRule !== null &&
-            (childRule.kind === "block" || childRule.kind === "split-item")
-        );
-    };
-    const hasBlockChild = Array.from(el.childNodes).some(isBlockChild);
+    const hasBlockChild = Array.from(el.childNodes).some(
+        (child) =>
+            child.nodeType === Node.ELEMENT_NODE && !isRunMember(ctx, child),
+    );
     const draft = newNodeDraft(
         hasBlockChild ? rule.blockTypeKey : rule.inlineTypeKey,
     );
     setHtmlAttrsBag(draft, el, ctx);
-    if (!hasBlockChild) {
+    if (hasBlockChild) fillBlockContent(draft.get("content"), el, ctx);
+    else
         // marks do not cross block boundaries; inline content only
         fillContent(draft, el, [], ctx, true);
-        out.push(draft.metamorphose());
-        return;
-    }
-    // blockTypeKey: blocks only — lift each inline run into a
-    // liftedRunWrapper node.
-    const content = draft.get("content");
-    let run: any[] = [];
-    const flushRun = (): void => {
-        if (!run.length) return;
-        const wrapperDraft = newNodeDraft(ctx.liftedRunWrapper);
-        for (const item of run) wrapperDraft.get("content").push(item);
-        content.push(wrapperDraft.metamorphose());
-        run = [];
-    };
-    for (const child of Array.from(el.childNodes)) {
-        if (isBlockChild(child)) {
-            flushRun();
-            const blockOut: any[] = [];
-            ingestNode(child, [], blockOut, ctx, false);
-            for (const item of blockOut) content.push(item);
-        } else ingestNode(child, [], run, ctx, true);
-    }
-    flushRun();
     out.push(draft.metamorphose());
 }
 
@@ -664,16 +689,8 @@ function ingestNode(
                       )
                     : newMarkDraft(marksList, m.name, m.attrs, m.htmlAttrs),
             );
-        if (!inInline) {
-            // Stray text in block context (e.g. directly in
-            // <section>): wrap in a liftedRunWrapper node — block
-            // containers hold blocks only.
-            report.wrappedStrayTexts++;
-            const wrapperDraft = newNodeDraft(ctx.liftedRunWrapper);
-            wrapperDraft.get("content").push(textDraft.metamorphose());
-            out.push(wrapperDraft.metamorphose());
-            return;
-        }
+        // In block context, fillBlockContent gathers text into
+        // inline runs before this branch runs — no wrapping here.
         out.push(textDraft.metamorphose());
         return;
     }
@@ -742,7 +759,11 @@ function ingestNode(
             emitRawHtmlAtom(el, inInline, out);
             return;
         case "transparent":
-            ingestChildrenInto(el, marks, out, ctx, inInline);
+            // in block context the children need run-lifting too —
+            // text directly in a transparent container must not leak
+            // into block content unwrapped
+            if (inInline) ingestChildrenInto(el, marks, out, ctx, true);
+            else fillBlockContent(out, el, ctx);
             return;
         case "skip":
             return;
@@ -760,7 +781,8 @@ function ingestNode(
                 ctx.schemaNodeAttrs[rule.typeKey] !== undefined
                     ? ctx.inlineContentNodes.has(rule.typeKey)
                     : (rule.inlineContent ?? false);
-            fillContent(draft, el, [], ctx, childInline);
+            if (childInline) fillContent(draft, el, [], ctx, true);
+            else fillBlockContent(draft.get("content"), el, ctx);
             out.push(draft.metamorphose());
             return;
         }
@@ -828,7 +850,7 @@ function logReport(logger: IngestLogger, report: IngestionReport): void {
     logger.log("[ingest] skipped html attrs:", report.skippedHtmlAttrs);
     logger.log("[ingest] unresolved mark rules:", report.unresolvedMarkRules);
     logger.log("[ingest] skipped empty texts:", report.skippedEmptyTexts);
-    logger.log("[ingest] wrapped stray texts:", report.wrappedStrayTexts);
+    logger.log("[ingest] lifted runs:", report.liftedRuns);
 }
 
 export function ingestDOM(
@@ -847,7 +869,7 @@ export function ingestDOM(
             unresolvedMarkRules: {},
             reproNodes: {},
             skippedEmptyTexts: 0,
-            wrappedStrayTexts: 0,
+            liftedRuns: 0,
         },
         rules: options.emissionRules ?? [],
         schemaMarkAttrs: facts.schemaMarkAttrs,
@@ -858,7 +880,7 @@ export function ingestDOM(
         logger: options.logger ?? NOOP_LOGGER,
     };
     const draft = newNodeDraft("doc");
-    fillContent(draft, doc.body, [], ctx, false);
+    fillBlockContent(draft.get("content"), doc.body, ctx);
     const document = draft.metamorphose();
     logReport(ctx.logger, ctx.report);
     return { document, report: ctx.report };
