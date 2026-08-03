@@ -1,5 +1,13 @@
-// Wikipedia -> metamodel NodeModel ingestion engine (Phase 2).
+// DOM -> metamodel NodeModel ingestion engine.
 // Builds NodeModel drafts directly — no JSON intermediate.
+// The engine is empty: all element-handling policy arrives as one
+// ordered emission-rule table (IngestionOptions.emissionRules);
+// without rules everything falls to the raw_html catch-alls. The
+// schema contributes facts (attr harvesting, inline-content-ness),
+// not rules — rule derivation from the schema is explicit, via
+// atomRulesFromSchema/markRulesFromSchema, composed by the setup.
+// The Wikipedia setup lives at the bottom of this module, next to
+// ingestWikipediaDocument.
 // Self-contained by design: no reuse from ingest.ts, which this
 // module is meant to replace eventually.
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -13,102 +21,6 @@ const { NodeModel, toMetaModelJSON } = models as {
     toMetaModelJSON: (v: unknown, d: object) => unknown;
 };
 
-// Operator-confirmed initial known-set (2026-07-24). Evolves from
-// observation, not from upfront assumptions.
-// SECTION stays a block: sections structure the article and their
-// children are blocks only (see block-context catch-all below).
-// UL (2026-08-03): unordered list; its LI children are handled by a
-// dedicated branch (ingestListItem), hence LI is not in this table.
-const KNOWN_BLOCK_TAGS: Readonly<Record<string, string>> = {
-    SECTION: "section",
-    P: "paragraph",
-    H1: "heading-1",
-    H2: "heading-2",
-    H3: "heading-3",
-    H4: "heading-4",
-    H5: "heading-5",
-    H6: "heading-6",
-    UL: "ul",
-    FIGURE: "figure",
-    // Captions are treated as inline-only (operator decision
-    // 2026-08-03), like a paragraph: the schema gives figcaption
-    // "inline*". Should captions carrying block children turn up in
-    // the wild, the way forward is the <li> precedent — split into
-    // figcaption-inline/figcaption-block decided by the children (see
-    // ingestListItem) — not a widening of this type.
-    FIGCAPTION: "figcaption",
-};
-
-// Textblocks assumed when ingesting without a schema (ingestDOM
-// without options.proseMirrorSchema): mirrors the inline-content node
-// types of the wikipedia state, so ingest behaves the same either way.
-const FALLBACK_INLINE_CONTENT_NODES: ReadonlySet<string> = new Set([
-    "paragraph",
-    "paragraph-2",
-    "heading-1",
-    "heading-2",
-    "heading-3",
-    "figcaption",
-]);
-
-const KNOWN_MARK_TAGS: Readonly<Record<string, string>> = {
-    B: "bold",
-    STRONG: "bold",
-    EM: "italic",
-    I: "italic",
-    A: "link",
-};
-
-// HTML phrasing-content tags: inline elements. They are emitted as
-// inline NODES (typeKey = tag name, -> reserved unknown_inline via
-// sync), because HTML inline != mark (operator decision 2026-07-24).
-// Tags in KNOWN_MARK_TAGS above take precedence; BR is special-cased.
-const INLINE_TAGS: ReadonlySet<string> = new Set([
-    "ABBR",
-    "B",
-    "BDI",
-    "BDO",
-    "CITE",
-    "CODE",
-    "DATA",
-    "DFN",
-    "EM",
-    "I",
-    "KBD",
-    "MARK",
-    "Q",
-    "S",
-    "SAMP",
-    "SMALL",
-    "SPAN",
-    "STRONG",
-    "SUB",
-    "SUP",
-    "TIME",
-    "U",
-    "VAR",
-    "WBR",
-    "A",
-    "INS",
-    "DEL",
-]);
-
-// Wikipedia metadata islands (Parsoid's "mw-empty-elt"): spans — and
-// occasionally ps — carrying link/meta/style children with metadata.
-// Patched through as raw atoms, preserving outerHTML verbatim, so a
-// critical examiner can see we keep the metadata. A dedicated node
-// type may replace this later; the branch is deliberately separate
-// to keep that path open (operator decision 2026-07-24).
-
-// elements witht he class .mw-empty-elt can safely be ignored for our
-// purposes, probably if we can't make them transparent we will skip
-// them on ingest.
-const MW_EMPTY_ELT = ".mw-empty-elt",
-    MW_META = "meta";
-// Elements matching any of these selectors are patched through as raw
-// atoms (raw_html_block / raw_html_inline by context), no descent.
-const SELECTORS_TO_RAW_HTML = [MW_EMPTY_ELT, MW_META].join(", ");
-
 export interface IngestionReport {
     // mark-set histogram, e.g. { "[bold, italic]": 2, "[bold]": 1, "[]": 5 }
     markSets: Record<string, number>;
@@ -118,20 +30,21 @@ export interface IngestionReport {
     catchAllInline: Record<string, number>;
     // tag -> count of inline-node emissions
     inlineNodes: Record<string, number>;
-    // tag -> count of raw_html atoms emitted for elements matching
-    // SELECTORS_TO_RAW_HTML (e.g. mw-empty-elt metadata islands)
+    // tag -> count of raw_html atoms emitted by `raw` rules (e.g.
+    // mw-empty-elt metadata islands)
     rawAtoms: Record<string, number>;
     // "tag.attr" -> count of policy-excluded (not collected) element
     // attrs — fed by blocks, marks, inline nodes and list items alike
     skippedHtmlAttrs: Record<string, number>;
-    // mark name -> count of markEmission rules that fell back to intent
+    // mark name -> count of `mark` rules that fell back to intent
     // because the schema does not define the named mark
     unresolvedMarkRules: Record<string, number>;
-    // node typeKey -> count of reproducing-atom emissions (nodeEmission)
+    // node typeKey -> count of reproducing-atom emissions (`atom` rules)
     reproNodes: Record<string, number>;
     skippedEmptyTexts: number;
     // non-empty text nodes found directly in block context; each was
-    // wrapped in a paragraph so block containers hold blocks only
+    // wrapped in a liftedRunWrapper node (default "paragraph") so
+    // block containers hold blocks only
     wrappedStrayTexts: number;
 }
 
@@ -143,23 +56,8 @@ export interface SemanticMark {
     attrs: string[];
 }
 
-// How a mark-ish HTML tag is emitted into the document: as a
-// schema-defined (full-featured) mark with attrs harvested from the
-// element, or as intent (generic-style with data-style-name).
-export type MarkEmissionRule =
-    | { kind: "mark"; name: string }
-    | { kind: "generic"; styleName: string };
-
-// An ordered markEmission entry: the first selector matching the
-// element (element.matches) wins.
-export interface MarkEmissionRuleEntry {
-    selector: string;
-    rule: MarkEmissionRule;
-}
-
-// A node-side emission entry: the first selector matching the element
-// (element.matches) routes it to the named node type. Ordered;
-// redundancy is OK — authors can declare safe fallbacks.
+// A [selector, typeKey] pair as derived from schema node specs (see
+// nodeSelectorsFromSchema).
 export interface NodeEmissionEntry {
     selector: string;
     typeKey: string;
@@ -341,48 +239,30 @@ export function collectHtmlAttrs(
 }
 
 export interface IngestionOptions {
-    // LEGACY (bridge): tag names treated as transparent containers
-    // (children pass through, no node emitted), translated into
-    // `transparent` entries of the rule table.
-    transparentContainers?: string[];
-    // The metamodel schema (ProseMirrorSchemaModel): marks it defines
-    // are emitted for their tags (see semanticMarksFromSchema),
-    // everything else falls back to generic-style.
+    // The metamodel schema (ProseMirrorSchemaModel). Contributes
+    // FACTS, not rules: attr names to harvest for `mark` rules,
+    // declared node attrs (htmlTag opt-in of `atom` rules), and which
+    // block typeKeys hold inline content. To also derive rules from
+    // it, compose atomRulesFromSchema/markRulesFromSchema into
+    // emissionRules — the position in the table is the caller's
+    // decision (see ingestWikipediaDocument).
     proseMirrorSchema?: any;
-    // LEGACY (bridge): ordered [CSS selector, rule] pairs for mark
-    // emission, translated into `mark`/`generic` entries of the rule
-    // table, before the schema-derived marks and the default styles —
-    // e.g.
-    //   { selector: "b, strong", rule: { kind: "mark", name: "strong" } }
-    // emits <b>/<strong> as the schema-defined "strong" mark (attrs
-    // harvested), and
-    //   { selector: "i, em", rule: { kind: "generic", styleName: "italic" } }
-    // emits <i>/<em> as intent. A "mark" rule naming a mark the
-    // schema does not define falls back to intent with the rule name
-    // as style name and is counted in report.unresolvedMarkRules.
-    // Unlike the pre-rules engine, the selectors are no longer gated
-    // on a fixed mark-tag set: any element a selector matches in
-    // inline context is emitted accordingly.
-    markEmission?: MarkEmissionRuleEntry[];
-    // LEGACY (bridge): ordered [CSS selector, typeKey] pairs routing
-    // elements to named node types, translated into `atom` entries at
-    // the top of the rule table (before the schema-derived
-    // selectors); redundancy is OK — declare safe fallbacks.
-    nodeEmission?: NodeEmissionEntry[];
     // Policy for collecting outer attributes into the htmlAttrs bag
-    // of reproducing atoms (see HtmlAttrPolicy): conjunctive
-    // include/exclude matcher lists. The configured variant bakes in:
-    // accept all except style (collides with TypeRoof styling),
-    // on* handlers and TypeRoof's own markers.
+    // (see HtmlAttrPolicy): conjunctive include/exclude matcher
+    // lists. The configured variant bakes in: accept all except style
+    // (collides with TypeRoof styling), on* handlers and TypeRoof's
+    // own markers.
     attrPolicy?: HtmlAttrPolicy;
-    // The ordered emission table (see EmissionRuleEntry): consulted
-    // FIRST, before the translated legacy options above
-    // (nodeEmission, markEmission, transparentContainers — bridge,
-    // they dissolve into this table), the schema-derived rules
-    // (node-spec selectors -> atom, mark tags -> mark) and the
-    // built-in DEFAULT_RULES. Elements matching nothing fall to the
-    // context catch-all (raw_html_block / raw_html_inline).
+    // The ordered emission table (see EmissionRuleEntry) — the ONLY
+    // source of element-handling policy. Elements matching no entry
+    // fall to the context catch-all (raw_html_block /
+    // raw_html_inline). Empty/omitted: everything is caught (the
+    // empty-engine contract).
     emissionRules?: EmissionRuleEntry[];
+    // typeKey wrapping inline runs where blocks are required: stray
+    // text in block context and the inline runs inside a split-item's
+    // block variant. Default "paragraph".
+    liftedRunWrapper?: string;
     // Diagnostics sink; silent by default. The wikipedia variant
     // passes `console`.
     logger?: IngestLogger;
@@ -433,8 +313,7 @@ function newMarkDraft(
 }
 
 // Derive mark name -> declared attr names from the metamodel schema
-// (ProseMirrorSchemaModel), for attr harvest of explicitly configured
-// markEmission rules.
+// (ProseMirrorSchemaModel), for attr harvest of `mark` rules.
 function schemaMarkAttrsFromSchema(
     proseMirrorSchema: any,
 ): Record<string, string[]> {
@@ -461,10 +340,9 @@ function schemaNodeAttrsFromSchema(
 // "inline+") from the metamodel schema — the textblocks, whose
 // children are ingested in inline context so that marks apply.
 // Schema-derived rather than hard-coded: a new textblock needs its
-// schema entry only, no ingest edit (see childInline in ingestNode).
-// A schema that declares no inline-content node carries no node
-// information to go by — e.g. a marks-only schema — and yields the
-// fallback rather than a document with no textblock at all.
+// schema entry only, no rule edit. For typeKeys the schema does not
+// declare, block rules fall back to their own inlineContent flag
+// (see the block emission in ingestNode).
 function inlineContentNodesFromSchema(
     proseMirrorSchema: any,
 ): ReadonlySet<string> {
@@ -474,41 +352,37 @@ function inlineContentNodesFromSchema(
         if (!content.isEmpty && /^inline[*+]$/.test(content.value))
             result.add(typeKey);
     }
-    return result.size ? result : FALLBACK_INLINE_CONTENT_NODES;
+    return result;
 }
 
-// Everything ingest derives from the metamodel schema, in one pass.
-// inlineContentNodes is null without a schema: block rules then fall
-// back to their own inlineContent flag (see the block emission).
+// The FACTS ingest derives from the metamodel schema, in one pass —
+// deliberately no rules (see atomRulesFromSchema/markRulesFromSchema
+// for those). inlineContentNodes is null without a schema: block
+// rules then fall back to their own inlineContent flag (see the
+// block emission).
 interface SchemaFacts {
-    semanticMarks: Readonly<Record<string, SemanticMark>>;
     schemaMarkAttrs: Readonly<Record<string, string[]>>;
     schemaNodeAttrs: Readonly<Record<string, ReadonlySet<string>>>;
     inlineContentNodes: ReadonlySet<string> | null;
-    nodeSelectors: readonly NodeEmissionEntry[];
 }
 
 function deriveSchemaFacts(proseMirrorSchema: any): SchemaFacts {
     if (!proseMirrorSchema)
         return {
-            semanticMarks: {},
             schemaMarkAttrs: {},
             schemaNodeAttrs: {},
             inlineContentNodes: null,
-            nodeSelectors: [],
         };
     return {
-        semanticMarks: semanticMarksFromSchema(proseMirrorSchema),
         schemaMarkAttrs: schemaMarkAttrsFromSchema(proseMirrorSchema),
         schemaNodeAttrs: schemaNodeAttrsFromSchema(proseMirrorSchema),
         inlineContentNodes: inlineContentNodesFromSchema(proseMirrorSchema),
-        nodeSelectors: nodeSelectorsFromSchema(proseMirrorSchema),
     };
 }
 
 // Derive [{ selector, typeKey }] from node specs that carry a
 // non-empty selector. Deliberately NOT from tag-only specs: a tag
-// like paragraph's "p" would hijack KNOWN_BLOCK_TAGS.
+// like paragraph's "p" would hijack the block rules for that tag.
 export function nodeSelectorsFromSchema(
     proseMirrorSchema: any,
 ): NodeEmissionEntry[] {
@@ -521,58 +395,36 @@ export function nodeSelectorsFromSchema(
     return result;
 }
 
-// The built-in defaults (bridge): the former hardcoded dispatch
-// chain, translated 1:1 into emission-rule segments. buildRuleTable
-// interleaves them with the explicit and schema-derived entries in
-// the old chain's precedence order. A later phase moves the setup
-// out of the engine, next to ingestWikipediaDocument.
-const RAW_METADATA_RULES: readonly EmissionRuleEntry[] = [
-    // metadata islands etc.: raw atoms, no descent (see the comment
-    // at SELECTORS_TO_RAW_HTML)
-    { selector: SELECTORS_TO_RAW_HTML, rule: { kind: "raw" } },
-];
-const LIST_RULES: readonly EmissionRuleEntry[] = [
-    // <li> directly under <ul>: li-inline or li-block, decided by the
-    // children (see emitSplitItem). A stray <li> matches nothing and
-    // falls to the catch-alls, which emit schema-safe raw_html atoms.
-    {
-        selector: "ul > li",
-        rule: {
-            kind: "split-item",
-            inlineTypeKey: "li-inline",
-            blockTypeKey: "li-block",
-        },
-    },
-];
-const BLOCK_RULES: readonly EmissionRuleEntry[] = Object.entries(
-    KNOWN_BLOCK_TAGS,
-).map(
-    ([tagName, typeKey]): EmissionRuleEntry => ({
-        selector: tagName.toLowerCase(),
-        rule: {
-            kind: "block",
-            typeKey,
-            // the no-schema fallback flag; the schema's content
-            // expression wins when it knows the typeKey
-            inlineContent: FALLBACK_INLINE_CONTENT_NODES.has(typeKey),
-        },
-    }),
-);
-const MARK_STYLE_RULES: readonly EmissionRuleEntry[] = Object.entries(
-    KNOWN_MARK_TAGS,
-).map(
-    ([tagName, styleName]): EmissionRuleEntry => ({
-        selector: tagName.toLowerCase(),
-        rule: { kind: "generic", styleName },
-    }),
-);
-const INLINE_RULES: readonly EmissionRuleEntry[] = [
-    { selector: "br", rule: { kind: "void", typeKey: "hard_break" } },
-    {
-        selector: Array.from(INLINE_TAGS, (t) => t.toLowerCase()).join(", "),
-        rule: { kind: "inline-node" },
-    },
-];
+// Derive `atom` rule entries from the schema: node specs with a
+// selector claim their elements as reproducing atoms. Compose into
+// emissionRules where the setup wants them (see
+// ingestWikipediaDocument).
+export function atomRulesFromSchema(
+    proseMirrorSchema: any,
+): EmissionRuleEntry[] {
+    return nodeSelectorsFromSchema(proseMirrorSchema).map(
+        ({ selector, typeKey }): EmissionRuleEntry => ({
+            selector,
+            rule: { kind: "atom", typeKey },
+        }),
+    );
+}
+
+// Derive `mark` rule entries from the schema: marks with a tag are
+// emitted for that tag. Compose into emissionRules where the setup
+// wants them — typically after explicit mark rules, so those can
+// override, and before generic styles, so the schema wins over
+// intent for its tags.
+export function markRulesFromSchema(
+    proseMirrorSchema: any,
+): EmissionRuleEntry[] {
+    return Object.entries(semanticMarksFromSchema(proseMirrorSchema)).map(
+        ([tagName, { name }]): EmissionRuleEntry => ({
+            selector: tagName,
+            rule: { kind: "mark", name },
+        }),
+    );
+}
 
 // Kind-intrinsic context fit (see EmissionRuleEntry), narrowed
 // further by an entry's optional context field.
@@ -613,61 +465,6 @@ function findMatchingRule(
     return null;
 }
 
-// Assemble the one ordered rule table, mirroring the old dispatch
-// chain's precedence exactly: explicit emissionRules win; the
-// translated legacy options (bridge — they dissolve into
-// emissionRules in a later phase) and the schema-derived rules
-// interleave with the default segments the way the old branches did:
-// atoms before raw, transparent after raw, markEmission before
-// schema marks before the default styles.
-function buildRuleTable(
-    options: IngestionOptions,
-    facts: SchemaFacts,
-): EmissionRuleEntry[] {
-    const legacyAtomRules = (options.nodeEmission ?? []).map(
-        ({ selector, typeKey }): EmissionRuleEntry => ({
-            selector,
-            rule: { kind: "atom", typeKey },
-        }),
-    );
-    // node specs with a selector claim their elements as reproducing
-    // atoms; marks with a tag are emitted for that tag
-    const schemaAtomRules = facts.nodeSelectors.map(
-        ({ selector, typeKey }): EmissionRuleEntry => ({
-            selector,
-            rule: { kind: "atom", typeKey },
-        }),
-    );
-    const transparentRules = (options.transparentContainers ?? []).map(
-        (tagName): EmissionRuleEntry => ({
-            selector: tagName.toLowerCase(),
-            rule: { kind: "transparent" },
-        }),
-    );
-    const legacyMarkRules = (options.markEmission ?? []).map(
-        ({ selector, rule }): EmissionRuleEntry => ({ selector, rule }),
-    );
-    const schemaMarkRules = Object.entries(facts.semanticMarks).map(
-        ([tagName, { name }]): EmissionRuleEntry => ({
-            selector: tagName,
-            rule: { kind: "mark", name },
-        }),
-    );
-    return [
-        ...(options.emissionRules ?? []),
-        ...legacyAtomRules,
-        ...schemaAtomRules,
-        ...RAW_METADATA_RULES,
-        ...transparentRules,
-        ...LIST_RULES,
-        ...BLOCK_RULES,
-        ...legacyMarkRules,
-        ...schemaMarkRules,
-        ...MARK_STYLE_RULES,
-        ...INLINE_RULES,
-    ];
-}
-
 function markSetKey(marks: MarkDesc[]): string {
     const names = marks.map((mark) =>
         mark.kind === "style" ? mark.styleName : mark.name,
@@ -693,14 +490,15 @@ type MarkDesc =
 
 interface Ctx {
     report: IngestionReport;
-    // the one ordered emission table: explicit entries, then legacy
-    // translations, then schema-derived rules, then DEFAULT_RULES
+    // the one ordered emission table (options.emissionRules verbatim)
     rules: readonly EmissionRuleEntry[];
     schemaMarkAttrs: Readonly<Record<string, string[]>>;
     schemaNodeAttrs: Readonly<Record<string, ReadonlySet<string>>>;
     // null without a schema (block rules use their inlineContent flag)
     inlineContentNodes: ReadonlySet<string> | null;
     attrPolicy: HtmlAttrPolicy;
+    // wraps inline runs where blocks are required (options)
+    liftedRunWrapper: string;
     logger: IngestLogger;
 }
 
@@ -812,14 +610,15 @@ function emitSplitItem(
         out.push(draft.metamorphose());
         return;
     }
-    // blockTypeKey: blocks only — lift each inline run into a paragraph.
+    // blockTypeKey: blocks only — lift each inline run into a
+    // liftedRunWrapper node.
     const content = draft.get("content");
     let run: any[] = [];
     const flushRun = (): void => {
         if (!run.length) return;
-        const paragraphDraft = newNodeDraft("paragraph");
-        for (const item of run) paragraphDraft.get("content").push(item);
-        content.push(paragraphDraft.metamorphose());
+        const wrapperDraft = newNodeDraft(ctx.liftedRunWrapper);
+        for (const item of run) wrapperDraft.get("content").push(item);
+        content.push(wrapperDraft.metamorphose());
         run = [];
     };
     for (const child of Array.from(el.childNodes)) {
@@ -866,12 +665,13 @@ function ingestNode(
                     : newMarkDraft(marksList, m.name, m.attrs, m.htmlAttrs),
             );
         if (!inInline) {
-            // Stray text in block context (e.g. directly in <section>):
-            // wrap in a paragraph — block containers hold blocks only.
+            // Stray text in block context (e.g. directly in
+            // <section>): wrap in a liftedRunWrapper node — block
+            // containers hold blocks only.
             report.wrappedStrayTexts++;
-            const paragraphDraft = newNodeDraft("paragraph");
-            paragraphDraft.get("content").push(textDraft.metamorphose());
-            out.push(paragraphDraft.metamorphose());
+            const wrapperDraft = newNodeDraft(ctx.liftedRunWrapper);
+            wrapperDraft.get("content").push(textDraft.metamorphose());
+            out.push(wrapperDraft.metamorphose());
             return;
         }
         out.push(textDraft.metamorphose());
@@ -953,10 +753,11 @@ function ingestNode(
             const draft = newNodeDraft(rule.typeKey);
             setHtmlAttrsBag(draft, el, ctx);
             // marks do not cross block boundaries; textblocks have
-            // inline content — which types those are comes from the
-            // schema when present, else from the rule's own flag.
+            // inline content — the schema's content expression wins
+            // for typeKeys it declares, else the rule's own flag.
             const childInline =
-                ctx.inlineContentNodes !== null
+                ctx.inlineContentNodes !== null &&
+                ctx.schemaNodeAttrs[rule.typeKey] !== undefined
                     ? ctx.inlineContentNodes.has(rule.typeKey)
                     : (rule.inlineContent ?? false);
             fillContent(draft, el, [], ctx, childInline);
@@ -1048,11 +849,12 @@ export function ingestDOM(
             skippedEmptyTexts: 0,
             wrappedStrayTexts: 0,
         },
-        rules: buildRuleTable(options, facts),
+        rules: options.emissionRules ?? [],
         schemaMarkAttrs: facts.schemaMarkAttrs,
         schemaNodeAttrs: facts.schemaNodeAttrs,
         inlineContentNodes: facts.inlineContentNodes,
         attrPolicy: normalizeAttrPolicy(options.attrPolicy),
+        liftedRunWrapper: options.liftedRunWrapper ?? "paragraph",
         logger: options.logger ?? NOOP_LOGGER,
     };
     const draft = newNodeDraft("doc");
@@ -1061,6 +863,174 @@ export function ingestDOM(
     logReport(ctx.logger, ctx.report);
     return { document, report: ctx.report };
 }
+
+/**
+ * ============================================================
+ * SETUP — everything below is configuration, not engine.
+ * ============================================================
+ *
+ * The rule sets composed by ingestWikipediaDocument, exported so
+ * tests (and future setups) can reuse or recombine the segments.
+ * Ordering inside emissionRules is precedence: first fitting match
+ * wins.
+ */
+
+// Wikipedia metadata islands (Parsoid's "mw-empty-elt"): spans — and
+// occasionally ps — carrying link/meta/style children with metadata.
+// Patched through as raw atoms, preserving outerHTML verbatim, so a
+// critical examiner can see we keep the metadata. A dedicated node
+// type may replace this later (operator decision 2026-07-24); a
+// `skip` rule is the documented cheap alternative should they turn
+// out ignorable.
+export const WIKIPEDIA_RAW_RULES: readonly EmissionRuleEntry[] = [
+    { selector: ".mw-empty-elt, meta", rule: { kind: "raw" } },
+];
+
+// Reproducing atoms. These claims are also derivable from the state
+// schema (atomRulesFromSchema — the node specs carry the same
+// selectors); they are declared explicitly here so the setup is
+// complete on its own and does not silently change with the schema.
+export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
+    // Wikipedia citations (the [5]-style footnote links) become
+    // "cite-link" atoms; other <sup> falls through to the phrasing
+    // rules (-> inline node). Inline-only: a citation stray in block
+    // context degrades to the raw_html_block catch-all instead of
+    // crashing PM's block* content.
+    {
+        selector: 'sup[typeof="mw:Extension/ref"]',
+        rule: { kind: "atom", typeKey: "cite-link" },
+        context: "inline",
+    },
+    // figure content (thumb <a><img></a>, bare <img>, <pre>, ...):
+    // reproduced verbatim; the spec declares htmlTag, so the source
+    // tag survives round-trips.
+    {
+        selector: "figure > :not(figcaption)",
+        rule: { kind: "atom", typeKey: "figcontent" },
+    },
+];
+
+// Article structure. Operator-confirmed initial known-set
+// (2026-07-24), evolving from observation, not upfront assumptions.
+// SECTION holds blocks only: sections structure the article.
+// FIGCAPTION is inline-only like a paragraph (operator decision
+// 2026-08-03); should captions carrying block children turn up in
+// the wild, the way forward is the <li> precedent — a split-item
+// rule with figcaption-inline/figcaption-block — not a widening.
+// inlineContent flags are the no-schema fallback; the state schema's
+// content expressions win for the typeKeys they declare.
+export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
+    { selector: "section", rule: { kind: "block", typeKey: "section" } },
+    {
+        selector: "p",
+        rule: { kind: "block", typeKey: "paragraph", inlineContent: true },
+    },
+    ...([1, 2, 3, 4, 5, 6] as const).map(
+        (level): EmissionRuleEntry => ({
+            selector: `h${level}`,
+            rule: {
+                kind: "block",
+                typeKey: `heading-${level}`,
+                // the state schema declares heading-1..3; 4..6 land
+                // on unknown_block via sync either way
+                inlineContent: level <= 3,
+            },
+        }),
+    ),
+    { selector: "ul", rule: { kind: "block", typeKey: "ul" } },
+    // <li> directly under <ul>: li-inline or li-block, decided by
+    // the children (see emitSplitItem). A stray <li> matches nothing
+    // and falls to the catch-alls. Both types share tag "li" and
+    // group "li"; the group keeps ul's content expression ("li+")
+    // open for further li sorts. (A node type literally named "li"
+    // would shadow the group in content expressions —
+    // prosemirror-model resolves type names first.)
+    {
+        selector: "ul > li",
+        rule: {
+            kind: "split-item",
+            inlineTypeKey: "li-inline",
+            blockTypeKey: "li-block",
+        },
+    },
+    { selector: "figure", rule: { kind: "block", typeKey: "figure" } },
+    {
+        selector: "figcaption",
+        rule: { kind: "block", typeKey: "figcaption", inlineContent: true },
+    },
+];
+
+// Mark emission. First fitting match wins, so these precede the
+// generic styles in HTML_PHRASING_RULES for the same tags.
+export const WIKIPEDIA_MARK_RULES: readonly EmissionRuleEntry[] = [
+    // <b> and <strong> become the schema-defined "strong" mark (the
+    // document "carries around" strong already; note <b> is NOT the
+    // schema tag, so schema derivation alone would not cover it).
+    { selector: "b, strong", rule: { kind: "mark", name: "strong" } },
+    // There is no schema mark for <i>/<em>: they become
+    // generic-style intent with the style name "italic".
+    { selector: "i, em", rule: { kind: "generic", styleName: "italic" } },
+    // <a> becomes the schema-defined "link" mark (equivalent to what
+    // markRulesFromSchema would derive; explicit for completeness).
+    { selector: "a", rule: { kind: "mark", name: "link" } },
+];
+
+// Generic HTML phrasing content — not Wikipedia-specific. Inline
+// elements become inline NODES (typeKey = tag name, -> reserved
+// unknown_inline via sync), because HTML inline != mark (operator
+// decision 2026-07-24). Mark rules for the same tags must precede
+// this set. BR is a void: hard_break.
+export const HTML_PHRASING_RULES: readonly EmissionRuleEntry[] = [
+    { selector: "br", rule: { kind: "void", typeKey: "hard_break" } },
+    {
+        selector: [
+            "abbr",
+            "b",
+            "bdi",
+            "bdo",
+            "cite",
+            "code",
+            "data",
+            "dfn",
+            "em",
+            "i",
+            "kbd",
+            "mark",
+            "q",
+            "s",
+            "samp",
+            "small",
+            "span",
+            "strong",
+            "sub",
+            "sup",
+            "time",
+            "u",
+            "var",
+            "wbr",
+            "a",
+            "ins",
+            "del",
+        ].join(", "),
+        rule: { kind: "inline-node" },
+    },
+];
+
+// Policy for collecting outer attributes into the htmlAttrs bag:
+// accept all except what collides with TypeRoof (styling, own
+// markers) and on* handlers. Ids are kept (Wikipedia ids are
+// mw-prefixed). TypeRoof's core markers and on* are additionally
+// guarded at replay time, outside ingest.
+export const WIKIPEDIA_ATTR_POLICY: HtmlAttrPolicy = {
+    include: [/.*/],
+    exclude: [
+        "style",
+        /^on/,
+        "data-node-type",
+        "data-mark-type",
+        "data-style-name",
+    ],
+};
 
 /**
  * The Wikipedia one-shot ingest, configured for TypeRoof. Ingest is a
@@ -1075,66 +1045,33 @@ export function ingestWikipediaDocument(
     proseMirrorSchema: any,
 ): { document: any; report: IngestionReport } {
     return ingestDOM(dom, {
-        // The metamodel schema (ProseMirrorSchemaModel): which marks
-        // exist. Schema marks are emitted for their tags by default;
-        // attrs declared by the mark spec are harvested.
+        // The metamodel schema (ProseMirrorSchemaModel): contributes
+        // facts — attrs declared by mark specs are harvested for
+        // `mark` rules, node specs' htmlTag opt-in, textblock
+        // detection for `block` rules.
         proseMirrorSchema,
+
+        // The complete, ordered element-handling policy. Rules the
+        // schema could derive (atomRulesFromSchema/
+        // markRulesFromSchema) are declared explicitly instead: the
+        // setup should read as one document and not silently change
+        // with the schema.
+        emissionRules: [
+            ...WIKIPEDIA_RAW_RULES,
+            ...WIKIPEDIA_ATOM_RULES,
+            ...WIKIPEDIA_BLOCK_RULES,
+            ...WIKIPEDIA_MARK_RULES,
+            ...HTML_PHRASING_RULES,
+        ],
+
+        attrPolicy: WIKIPEDIA_ATTR_POLICY,
+
+        // Inline runs that need a block wrapper (stray text, li-block
+        // runs) become paragraphs.
+        liftedRunWrapper: "paragraph",
 
         // Diagnostics: the demo wants the catch-all lines and the
         // report on the console (the engine is silent by default).
         logger: console,
-
-        // HTML tags treated as transparent containers: their children
-        // pass through, no node is emitted for the element itself.
-        transparentContainers: [], //e.g. ["div"],
-
-        // Ordered [CSS selector, rule] pairs; the first selector
-        // matching the element (element.matches) wins.
-        markEmission: [
-            // <b> and <strong> become the schema-defined "strong" mark
-            // (the document "carries around" strong already; note <b>
-            // is NOT the schema tag, so it needs an explicit rule).
-            { selector: "b, strong", rule: { kind: "mark", name: "strong" } },
-            // There is no schema mark for <i>/<em>: they become
-            // generic-style intent with the style name "italic".
-            {
-                selector: "i, em",
-                rule: { kind: "generic", styleName: "italic" },
-            },
-        ],
-
-        // Ordered [CSS selector, typeKey] pairs routing elements to
-        // named node types (reproducing atoms); first match wins,
-        // redundancy = declared fallbacks.
-        nodeEmission: [
-            // Wikipedia citations become "cite-link" atoms; other <sup>
-            // falls through to the existing chain (unknown_inline).
-            // these are the cite links into the footnotes, e.g. [5]
-            {
-                selector: 'sup[typeof="mw:Extension/ref"]',
-                typeKey: "cite-link",
-            },
-            {
-                selector: "figure > :not(figcaption)",
-                typeKey: "figcontent",
-            },
-        ],
-
-        // Policy for collecting outer attributes into the htmlAttrs
-        // bag of reproducing atoms: accept all except what collides
-        // with TypeRoof (styling, own markers) and on* handlers.
-        // Ids are kept (Wikipedia ids are mw-prefixed). TypeRoof's
-        // core markers and on* are additionally guarded at replay
-        // time, outside ingest.
-        attrPolicy: {
-            include: [/.*/],
-            exclude: [
-                "style",
-                /^on/,
-                "data-node-type",
-                "data-mark-type",
-                "data-style-name",
-            ],
-        },
     });
 }
