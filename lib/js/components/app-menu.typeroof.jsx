@@ -173,7 +173,7 @@ export class AppMenu extends _BaseContainerComponent {
         downloadFile(
             this._domTool.document,
             serializedValue,
-            createStateFileName(),
+            createStateFileName(this.getEntry("activeLayoutKey").value),
         );
     }
 
