@@ -33,6 +33,8 @@ export interface IngestionReport {
     // tag -> count of raw_html atoms emitted by `raw` rules (e.g.
     // mw-empty-elt metadata islands)
     rawAtoms: Record<string, number>;
+    // tag -> count of skipped nodes
+    skippedNodes: Record<string, number>;
     // "tag.attr" -> count of policy-excluded (not collected) element
     // attrs — fed by blocks, marks, inline nodes and list items alike
     skippedHtmlAttrs: Record<string, number>;
@@ -766,6 +768,7 @@ function ingestNode(
             else fillBlockContent(out, el, ctx);
             return;
         case "skip":
+            count(report.skippedNodes, el.tagName);
             return;
         case "split-item":
             emitSplitItem(el, rule, out, ctx);
@@ -847,6 +850,7 @@ function logReport(logger: IngestLogger, report: IngestionReport): void {
     logger.log("[ingest] inline nodes:", report.inlineNodes);
     logger.log("[ingest] raw atoms:", report.rawAtoms);
     logger.log("[ingest] reproducing nodes:", report.reproNodes);
+    logger.log("[ingest] skipped nodes:", report.skippedNodes);
     logger.log("[ingest] skipped html attrs:", report.skippedHtmlAttrs);
     logger.log("[ingest] unresolved mark rules:", report.unresolvedMarkRules);
     logger.log("[ingest] skipped empty texts:", report.skippedEmptyTexts);
@@ -865,6 +869,7 @@ export function ingestDOM(
             catchAllInline: {},
             inlineNodes: {},
             rawAtoms: {},
+            skippedNodes: {},
             skippedHtmlAttrs: {},
             unresolvedMarkRules: {},
             reproNodes: {},
@@ -904,6 +909,11 @@ export function ingestDOM(
 // type may replace this later (operator decision 2026-07-24); a
 // `skip` rule is the documented cheap alternative should they turn
 // out ignorable.
+
+export const WIKIPEDIA_SKIP_RULES: readonly EmissionRuleEntry[] = [
+    { selector: "style", rule: { kind: "skip" } }
+];
+
 export const WIKIPEDIA_RAW_RULES: readonly EmissionRuleEntry[] = [
     { selector: ".mw-empty-elt, meta", rule: { kind: "raw" } },
 ];
@@ -1079,6 +1089,7 @@ export function ingestWikipediaDocument(
         // setup should read as one document and not silently change
         // with the schema.
         emissionRules: [
+            ...WIKIPEDIA_SKIP_RULES,
             ...WIKIPEDIA_RAW_RULES,
             ...WIKIPEDIA_ATOM_RULES,
             ...WIKIPEDIA_BLOCK_RULES,
