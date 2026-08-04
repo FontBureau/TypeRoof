@@ -382,6 +382,44 @@
         }
       ],
       [
+        "hatnote",
+        {
+          "content": "inline*",
+          "group": "block",
+          "tag": "div",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
+        }
+      ],
+      [
+        "shortdescription",
+        {
+          "content": "inline*",
+          "group": "block",
+          "tag": "div",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
+        }
+      ],
+      [
         "ul",
         {
           "content": "li+",

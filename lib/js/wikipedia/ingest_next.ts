@@ -1003,6 +1003,8 @@ export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
         selector: "figcaption",
         rule: { kind: "block", typeKey: "figcaption", inlineContent: true },
     },
+    { selector: ".hatnote", rule: { kind: "block", typeKey: "hatnote", inlineContent: true}},
+    { selector: ".shortdescription", rule: { kind: "block", typeKey: "shortdescription", inlineContent: true}}
 ];
 
 // Mark emission. First fitting match wins, so these precede the
