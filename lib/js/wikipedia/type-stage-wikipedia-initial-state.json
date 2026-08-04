@@ -251,6 +251,53 @@
         }
       ],
       [
+        "blockquote",
+        {
+          "content": "block*",
+          "group": "block",
+          "tag": "blockquote",
+          "definingAsContext": "1",
+          "definingForContent": "1",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
+        }
+      ],
+      [
+        "generic-block",
+        {
+          "content": "block*",
+          "group": "block",
+          "tag": "div",
+          "attrs": [
+            [
+              "htmlTag",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              },
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
+        }
+      ],
+      [
         "paragraph-2",
         {
           "content": "inline*",
@@ -420,7 +467,7 @@
         }
       ],
       [
-        "ul",
+        "list",
         {
           "content": "li+",
           "group": "block",
@@ -429,6 +476,13 @@
           "definingForContent": "1",
           "attrs": [
             [
+              "htmlTag",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              },
               "htmlAttrs",
               {
                 "default": "",
@@ -594,6 +648,25 @@
               "html",
               { "default": "", "validate": { "type": "string" } }
             ],
+            [
+              "htmlTag",
+              { "default": "", "validate": { "type": "string" } }
+            ],
+            [
+              "htmlAttrs",
+              { "default": "", "validate": { "type": "string" } }
+            ]
+          ]
+        }
+      ],
+      [
+        "generic-inline",
+        {
+          "tag": "span",
+          "content": "inline*",
+          "group": "inline",
+          "inline": true,
+          "attrs": [
             [
               "htmlTag",
               { "default": "", "validate": { "type": "string" } }

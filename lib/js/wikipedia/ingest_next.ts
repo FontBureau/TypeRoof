@@ -902,14 +902,39 @@ export function ingestDOM(
  * wins.
  */
 
-
 export const WIKIPEDIA_SKIP_RULES: readonly EmissionRuleEntry[] = [
-    { selector: "style", rule: { kind: "skip" } }
+    { selector: "style", rule: { kind: "skip" } },
+    // Wikipedia metadata islands (Parsoid's "mw-empty-elt"): spans — and
+    // occasionally <p>s — carrying link/meta/style children with metadata.
+    // We could keep them as atoms (see below commented out in WIKIPEDIA_ATOM_RULES
+    // but especially the <style> tags tamper with our styles and it is
+    // just simpler to ignore them for now.
+    {
+        selector:
+            ".mw-empty-elt, meta, [rel='mw:PageProp/Category'], [rel='mw-deduplicated-inline-style']",
+        rule: { kind: "skip" },
+    },
 ];
 
-export const WIKIPEDIA_RAW_RULES: readonly EmissionRuleEntry[] = [
-    // { selector: ".mw-empty-elt, meta", rule: { kind: "raw" } },
+export const WIKIPEDIA_TRANSPARENT_RULES: readonly EmissionRuleEntry[] = [
+    // a block that doesn't do anyting for us currently, we could keep it,
+    // to stay faithful to the source document, but droping it should
+    // be good enough for now.
+    // It carries the attributes: <div about="#mwt207" id="mwAro">
+    // Found this is within:
+    //      <section>
+    //          <h2#References
+    //          <section>
+    //              <h3#Citations
+    //              <div <-- our target>
+    //                  <div typeof="mw:Extension/references">
+    {
+        selector: 'div:has(> [typeof="mw:Extension/references"])',
+        rule: { kind: "transparent" },
+    },
 ];
+
+export const WIKIPEDIA_RAW_RULES: readonly EmissionRuleEntry[] = [];
 
 // Reproducing atoms. These claims are also derivable from the state
 // schema (atomRulesFromSchema — the node specs carry the same
@@ -934,24 +959,28 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
         rule: { kind: "atom", typeKey: "figcontent" },
     },
 
-    // Wikipedia metadata islands (Parsoid's "mw-empty-elt"): spans — and
-    // occasionally <p>s — carrying link/meta/style children with metadata.
-    // Patched through as reproducing atoms, preserving outerHTML verbatim,
-    // so a critical examiner can see we keep the metadata.
-    // `skip` rule is the documented cheap alternative should they turn
-    // out ignorable or harmful.
-    // <link> metadata islands (mw:PageProp/Category and
-    // mw-deduplicated-inline-style).
-    // We have two rules/containers depending on context.
+    // These types can be used to stay faithful to the source, depending
+    // on the context of the matching element, we use other reproducers
+    // {
+    //     selector: ".mw-empty-elt, meta, [rel='mw:PageProp/Category'], [rel='mw-deduplicated-inline-style']",
+    //     rule: { kind: "atom", typeKey: "reproduce-as-inline" },
+    //     context: "inline",
+    // },
+    // {
+    //     selector: ".mw-empty-elt, meta, [rel='mw:PageProp/Category'], [rel='mw-deduplicated-inline-style']",
+    //     rule: { kind: "atom", typeKey: "reproduce-as-block" },
+    //     context: "block",
+    // },
     {
-        selector: ".mw-empty-elt, meta, [rel='mw:PageProp/Category'], [rel='mw-deduplicated-inline-style']",
+        selector: ".mw-cite-backlink",
         rule: { kind: "atom", typeKey: "reproduce-as-inline" },
         context: "inline",
     },
+    // <bdi> is used for ISBN numbers in references of books
     {
-        selector: ".mw-empty-elt, meta, [rel='mw:PageProp/Category'], [rel='mw-deduplicated-inline-style']",
-        rule: { kind: "atom", typeKey: "reproduce-as-block" },
-        context: "block",
+        selector: "bdi",
+        rule: { kind: "atom", typeKey: "reproduce-as-inline" },
+        context: "inline",
     },
 ];
 
@@ -966,6 +995,7 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
 // content expressions win for the typeKeys they declare.
 export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
     { selector: "section", rule: { kind: "block", typeKey: "section" } },
+    { selector: "blockquote", rule: { kind: "block", typeKey: "blockquote" } },
     {
         selector: "p",
         rule: { kind: "block", typeKey: "paragraph", inlineContent: true },
@@ -982,8 +1012,8 @@ export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
             },
         }),
     ),
-    { selector: "ul", rule: { kind: "block", typeKey: "ul" } },
-    // <li> directly under <ul>: li-inline or li-block, decided by
+    { selector: "ol, ul", rule: { kind: "block", typeKey: "list" } },
+    // <li> directly under <ul> or <ol>: li-inline or li-block, decided by
     // the children (see emitSplitItem). A stray <li> matches nothing
     // and falls to the catch-alls. Both types share tag "li" and
     // group "li"; the group keeps ul's content expression ("li+")
@@ -991,7 +1021,7 @@ export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
     // would shadow the group in content expressions —
     // prosemirror-model resolves type names first.)
     {
-        selector: "ul > li",
+        selector: ":is(ul, ol) > li",
         rule: {
             kind: "split-item",
             inlineTypeKey: "li-inline",
@@ -1003,8 +1033,36 @@ export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
         selector: "figcaption",
         rule: { kind: "block", typeKey: "figcaption", inlineContent: true },
     },
-    { selector: ".hatnote", rule: { kind: "block", typeKey: "hatnote", inlineContent: true}},
-    { selector: ".shortdescription", rule: { kind: "block", typeKey: "shortdescription", inlineContent: true}}
+    {
+        selector: ".hatnote",
+        rule: { kind: "block", typeKey: "hatnote", inlineContent: true },
+    },
+    {
+        selector: ".shortdescription",
+        rule: {
+            kind: "block",
+            typeKey: "shortdescription",
+            inlineContent: true,
+        },
+    },
+    // generic-block: we keep these but not primarily for styling, only
+    // for structure '[typeof="mw:Extension/references"]'
+    {
+        selector: ".mw-references-wrap",
+        rule: { kind: "block", typeKey: "generic-block" },
+    },
+    {
+        selector: ".refbegin",
+        rule: { kind: "block", typeKey: "generic-block" },
+    },
+    {
+        selector: "cite",
+        rule: { kind: "inline-node", typeKey: "generic-inline" },
+    },
+    {
+        selector: ".mw-reference-text",
+        rule: { kind: "inline-node", typeKey: "generic-inline" },
+    },
 ];
 
 // Mark emission. First fitting match wins, so these precede the
@@ -1104,6 +1162,7 @@ export function ingestWikipediaDocument(
         // setup should read as one document and not silently change
         // with the schema.
         emissionRules: [
+            ...WIKIPEDIA_TRANSPARENT_RULES,
             ...WIKIPEDIA_SKIP_RULES,
             ...WIKIPEDIA_RAW_RULES,
             ...WIKIPEDIA_ATOM_RULES,
