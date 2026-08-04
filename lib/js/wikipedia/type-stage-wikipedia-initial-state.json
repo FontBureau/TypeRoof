@@ -521,6 +521,51 @@
             ]
           ]
         }
+      ],
+      [
+        "reproduce-as-inline",
+        {
+          "tag": "span",
+          "group": "inline",
+          "inline": true,
+          "atom": true,
+          "attrs": [
+            [
+              "html",
+              { "default": "", "validate": { "type": "string" } }
+            ],
+            [
+              "htmlTag",
+              { "default": "", "validate": { "type": "string" } }
+            ],
+            [
+              "htmlAttrs",
+              { "default": "", "validate": { "type": "string" } }
+            ]
+          ]
+        }
+      ],
+      [
+        "reproduce-as-block",
+        {
+          "tag": "div",
+          "group": "block",
+          "atom": true,
+          "attrs": [
+            [
+              "html",
+              { "default": "", "validate": { "type": "string" } }
+            ],
+            [
+              "htmlTag",
+              { "default": "", "validate": { "type": "string" } }
+            ],
+            [
+              "htmlAttrs",
+              { "default": "", "validate": { "type": "string" } }
+            ]
+          ]
+        }
       ]
     ],
     "marks": [

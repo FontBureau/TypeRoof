@@ -902,20 +902,13 @@ export function ingestDOM(
  * wins.
  */
 
-// Wikipedia metadata islands (Parsoid's "mw-empty-elt"): spans — and
-// occasionally ps — carrying link/meta/style children with metadata.
-// Patched through as raw atoms, preserving outerHTML verbatim, so a
-// critical examiner can see we keep the metadata. A dedicated node
-// type may replace this later (operator decision 2026-07-24); a
-// `skip` rule is the documented cheap alternative should they turn
-// out ignorable.
 
 export const WIKIPEDIA_SKIP_RULES: readonly EmissionRuleEntry[] = [
     { selector: "style", rule: { kind: "skip" } }
 ];
 
 export const WIKIPEDIA_RAW_RULES: readonly EmissionRuleEntry[] = [
-    { selector: ".mw-empty-elt, meta", rule: { kind: "raw" } },
+    // { selector: ".mw-empty-elt, meta", rule: { kind: "raw" } },
 ];
 
 // Reproducing atoms. These claims are also derivable from the state
@@ -939,6 +932,26 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
     {
         selector: "figure > :not(figcaption)",
         rule: { kind: "atom", typeKey: "figcontent" },
+    },
+
+    // Wikipedia metadata islands (Parsoid's "mw-empty-elt"): spans — and
+    // occasionally <p>s — carrying link/meta/style children with metadata.
+    // Patched through as reproducing atoms, preserving outerHTML verbatim,
+    // so a critical examiner can see we keep the metadata.
+    // `skip` rule is the documented cheap alternative should they turn
+    // out ignorable or harmful.
+    // <link> metadata islands (mw:PageProp/Category and
+    // mw-deduplicated-inline-style).
+    // We have two rules/containers depending on context.
+    {
+        selector: ".mw-empty-elt, meta, [rel='mw:PageProp/Category'], [rel='mw-deduplicated-inline-style']",
+        rule: { kind: "atom", typeKey: "reproduce-as-inline" },
+        context: "inline",
+    },
+    {
+        selector: ".mw-empty-elt, meta, [rel='mw:PageProp/Category'], [rel='mw-deduplicated-inline-style']",
+        rule: { kind: "atom", typeKey: "reproduce-as-block" },
+        context: "block",
     },
 ];
 
