@@ -636,6 +636,44 @@
         }
       ],
       [
+        "sidebox",
+        {
+          "content": "block*",
+          "group": "block",
+          "tag": "div",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
+        }
+      ],
+      [
+        "sideboxtext",
+        {
+          "content": "inline*",
+          "group": "block",
+          "tag": "div",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
+        }
+      ],
+      [
         "reproduce-as-inline",
         {
           "tag": "span",

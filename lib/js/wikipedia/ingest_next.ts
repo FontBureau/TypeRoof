@@ -948,6 +948,10 @@ export const WIKIPEDIA_TRANSPARENT_RULES: readonly EmissionRuleEntry[] = [
         selector: 'div:has(> [typeof="mw:Extension/references"])',
         rule: { kind: "transparent" },
     },
+    {
+        selector: ".side-box-flex",
+        rule: { kind: "transparent" },
+    },
 ];
 
 export const WIKIPEDIA_RAW_RULES: readonly EmissionRuleEntry[] = [];
@@ -1008,6 +1012,10 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
         rule: { kind: "atom", typeKey: "reproduce-as-inline" },
         context: "inline",
     },
+    {
+        selector: ".side-box-image",
+        rule: { kind: "atom", typeKey: "reproduce-as-block" },
+    },
 ];
 
 // Article structure. Operator-confirmed initial known-set
@@ -1058,6 +1066,14 @@ export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
     {
         selector: "figcaption",
         rule: { kind: "block", typeKey: "figcaption", inlineContent: true },
+    },
+    {
+        selector: ".side-box",
+        rule: { kind: "block", typeKey: "sidebox" },
+    },
+    {
+        selector: ".side-box-text",
+        rule: { kind: "block", typeKey: "sideboxtext", inlineContent: true },
     },
     {
         selector: ".hatnote",
