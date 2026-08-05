@@ -525,6 +525,19 @@ function setHtmlAttrsBag(draft: any, el: Element, ctx: Ctx): void {
     countSkippedHtmlAttrs(ctx, el);
 }
 
+function setHtmlTag(rule: EmissionRule, draft: any, el: Element, ctx: Ctx) {
+    if (
+        "typeKey" in rule &&
+        ctx.schemaNodeAttrs[rule.typeKey]?.has("htmlTag")
+    ) {
+        const attrsDraft = draft.get("attrs");
+        attrsDraft.set(
+            "htmlTag",
+            toMetaModelJSON(el.tagName.toLowerCase(), {}),
+        );
+    }
+}
+
 // Harvest the attr values declared by a mark spec from the element
 // (missing attributes are omitted).
 function harvestDeclaredAttrs(
@@ -653,6 +666,7 @@ function emitSplitItem(
         hasBlockChild ? rule.blockTypeKey : rule.inlineTypeKey,
     );
     setHtmlAttrsBag(draft, el, ctx);
+    setHtmlTag(rule, draft, el, ctx);
     if (hasBlockChild) fillBlockContent(draft.get("content"), el, ctx);
     else
         // marks do not cross block boundaries; inline content only
@@ -776,6 +790,7 @@ function ingestNode(
         case "block": {
             const draft = newNodeDraft(rule.typeKey);
             setHtmlAttrsBag(draft, el, ctx);
+            setHtmlTag(rule, draft, el, ctx);
             // marks do not cross block boundaries; textblocks have
             // inline content — the schema's content expression wins
             // for typeKeys it declares, else the rule's own flag.
@@ -836,6 +851,7 @@ function ingestNode(
                 rule.typeKey ?? el.tagName.toLowerCase(),
             );
             setHtmlAttrsBag(draft, el, ctx);
+            setHtmlTag(rule, draft, el, ctx);
             fillContent(draft, el, marks, ctx, true);
             out.push(draft.metamorphose());
             return;

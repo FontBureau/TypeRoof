@@ -212,9 +212,10 @@ export class ProsemirrorNodeView {
         // element tag may be reproduced from the source (htmlTag).
         this._isReproducing = "html" in (node.type.spec.attrs ?? {});
         this._specTag = specTag;
-        const tag = this._isReproducing
-                ? _reproducingTag(node, specTag)
-                : specTag,
+        const tag =
+                "htmlTag" in (node.type.spec.attrs ?? {})
+                    ? _reproducingTag(node, specTag)
+                    : specTag,
             element = widgetBus.domTool.createElement(tag, {
                 "data-node-type": node.type.name,
             });
