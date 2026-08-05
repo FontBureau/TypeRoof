@@ -1060,8 +1060,16 @@ export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
         rule: { kind: "inline-node", typeKey: "generic-inline" },
     },
     {
+        selector: '[typeof="mw:Entity"]',
+        rule: { kind: "inline-node", typeKey: "generic-inline" },
+    },
+    {
         selector: ".mw-reference-text",
         rule: { kind: "inline-node", typeKey: "generic-inline" },
+    },
+    {
+        selector: "q",
+        rule: { kind: "inline-node", typeKey: "quote" },
     },
 ];
 

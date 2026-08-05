@@ -429,6 +429,27 @@
         }
       ],
       [
+        "quote",
+        {
+          "tag": "q",
+          "content": "inline*",
+          "selector": "q",
+          "inline": true,
+          "group": "inline",
+          "attrs": [
+            [
+              "htmlAttrs",
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
+            ]
+          ]
+        }
+      ],
+      [
         "hatnote",
         {
           "content": "inline*",
