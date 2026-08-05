@@ -987,6 +987,11 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
         rule: { kind: "atom", typeKey: "reproduce-as-inline" },
         context: "inline",
     },
+    {
+        selector: '[typeof="mw:Entity"]',
+        rule: { kind: "atom", typeKey: "reproduce-as-inline" },
+        context: "inline",
+    },
 ];
 
 // Article structure. Operator-confirmed initial known-set
@@ -1062,10 +1067,6 @@ export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
     },
     {
         selector: "cite",
-        rule: { kind: "inline-node", typeKey: "generic-inline" },
-    },
-    {
-        selector: '[typeof="mw:Entity"]',
         rule: { kind: "inline-node", typeKey: "generic-inline" },
     },
     {
