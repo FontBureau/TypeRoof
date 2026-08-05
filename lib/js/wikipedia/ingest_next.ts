@@ -947,8 +947,13 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
     // context degrades to the raw_html_block catch-all instead of
     // crashing PM's block* content.
     {
-        selector: 'sup[typeof="mw:Extension/ref"]',
+        selector: "sup.reference",
         rule: { kind: "atom", typeKey: "cite-link" },
+        context: "inline",
+    },
+    {
+        selector: "sup:not(.reference)",
+        rule: { kind: "atom", typeKey: "reproduce-as-inline" },
         context: "inline",
     },
     // figure content (thumb <a><img></a>, bare <img>, <pre>, ...):
