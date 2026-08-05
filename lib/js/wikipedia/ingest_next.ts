@@ -578,19 +578,19 @@ function fillContent(
 // run-lifting, operator decision 2026-08-03): text nodes always;
 // elements iff they resolve EXCLUSIVELY in inline context — a
 // block-context resolution (block, split-item, unrestricted atom,
-// raw, transparent, skip) keeps its block handling (a figcontent
+// raw, transparent) keeps its block handling (a figcontent
 // atom must stay a direct child of figure, a raw metadata island
 // stays a raw_html_block). Elements resolving in NEITHER context are
 // not run members either: they break the run and fall to the loud
 // block catch-all — the discovery guarantee.
+// NOTE: skip is now treated as a run member as it won't play a role in the result
 function isRunMember(ctx: Ctx, child: Node): boolean {
     if (child.nodeType === Node.TEXT_NODE) return true;
     if (child.nodeType !== Node.ELEMENT_NODE) return false;
     const el = child as Element;
-    return (
-        findMatchingRule(ctx, el, false) === null &&
-        findMatchingRule(ctx, el, true) !== null
-    );
+    const inlineRule = findMatchingRule(ctx, el, true);
+    if (inlineRule?.kind === "skip") return true;
+    return findMatchingRule(ctx, el, false) === null && inlineRule !== null;
 }
 
 // Fill block-only content (doc root, non-textblock `block` rules,
