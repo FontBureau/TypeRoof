@@ -1016,6 +1016,18 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
         selector: ".side-box-image",
         rule: { kind: "atom", typeKey: "reproduce-as-block" },
     },
+    {
+        selector: ".navbox",
+        rule: { kind: "atom", typeKey: "navbox" },
+    },
+    // I was hoping to get some more styles for these boxes with this
+    // rule, as I'm not planning to style these, but so far, this doesn't
+    // look useful. keeping for observation ...
+    // seems like the rules may be too specific to match our navboxes
+    {
+        selector: ".navbox-styles",
+        rule: { kind: "atom", typeKey: "reproduce-as-block" },
+    },
 ];
 
 // Article structure. Operator-confirmed initial known-set
