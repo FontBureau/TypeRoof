@@ -1,7 +1,6 @@
 ---
 title: User Kit
 eleventyNavigation:
-  parent: Documentation
   key: User Kit
   title: User Kit
   order: 1
