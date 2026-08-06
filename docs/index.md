@@ -1,8 +1,8 @@
 ---
-title: Landing Page
+title: Home Page
 eleventyNavigation:
   key: Documentation
-  title: Landing Page
+  title: Home Page
 ---
 
 # TypeRoof Documentation
