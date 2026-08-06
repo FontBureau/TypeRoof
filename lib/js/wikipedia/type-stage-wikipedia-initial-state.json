@@ -1,9 +1,9 @@
 {
   "typeSpec": {
-    "columnWidth": "53.0",
     "languageTag": {
       "language": "en"
     },
+    "columnWidth": "53.0",
     "baseFontSize": "14",
     "textColor": {
       "instance": {
@@ -40,94 +40,171 @@
               "700"
             ]
           ],
+          "children": [
+            [
+              "1",
+              {
+                "relativeFontSize": "1.785714286",
+                "autoOPSZ": "1",
+                "axesLocations": [
+                  [
+                    "wght",
+                    "600"
+                  ]
+                ],
+                "children": [
+                  [
+                    "2",
+                    {
+                      "relativeFontSize": "1.285714286",
+                      "autoOPSZ": "1",
+                      "axesLocations": [
+                        [
+                          "wght",
+                          "550"
+                        ]
+                      ],
+                      "label": "Headline 3"
+                    }
+                  ]
+                ],
+                "label": "Headline 2"
+              }
+            ]
+          ],
           "label": "Headline 1"
-        }
-      ],
-      [
-        "1",
-        {
-          "relativeFontSize": "1.785714286",
-          "autoOPSZ": "1",
-          "axesLocations": [
-            [
-              "wght",
-              "600"
-            ]
-          ],
-          "label": "Headline 2"
-        }
-      ],
-      [
-        "2",
-        {
-          "relativeFontSize": "1.285714286",
-          "autoOPSZ": "1",
-          "axesLocations": [
-            [
-              "wght",
-              "550"
-            ]
-          ],
-          "label": "Headline 3"
         }
       ],
       [
         "3",
         {
           "relativeFontSize": "1.285714286",
+          "backgroundColor": {
+            "instance": {
+              "L": "100.00000",
+              "C": "34.00000",
+              "H": "0.2400000",
+              "alpha": "38.00000"
+            },
+            "colorTypeKey": "OKLCH"
+          },
           "autoOPSZ": "1",
+          "children": [
+            [
+              "4",
+              {
+                "backgroundColor": {
+                  "instance": {
+                    "L": "100.00000",
+                    "C": "60.00000",
+                    "alpha": "50.00000"
+                  },
+                  "colorTypeKey": "OKLCH"
+                },
+                "relativeFontSize": "1",
+                "autoOPSZ": "1",
+                "label": "Text 2",
+                "intentStyleLinks": [
+                  [
+                    "italic",
+                    {
+                      "stylePatch": "italic",
+                      "mode": "link"
+                    }
+                  ],
+                  [
+                    "bold",
+                    {
+                      "stylePatch": "bold",
+                      "mode": "link"
+                    }
+                  ],
+                  [
+                    "bold italic",
+                    {
+                      "stylePatch": "bold italic",
+                      "mode": "link"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ],
           "label": "Text 1",
           "intentStyleLinks": [
             [
               "italic",
               {
-                "stylePatch": "italic"
+                "stylePatch": "italic",
+                "mode": "link"
               }
             ],
             [
               "bold",
               {
-                "stylePatch": "bold"
+                "stylePatch": "bold",
+                "mode": "link"
               }
             ],
             [
               "bold italic",
               {
-                "stylePatch": "bold italic"
+                "stylePatch": "bold italic",
+                "mode": "link"
               }
             ]
           ]
         }
       ],
       [
-        "4",
+        "5",
         {
-          "autoOPSZ": "1",
-          "label": "Text 2",
-          "intentStyleLinks": [
-            [
-              "italic",
-              {
-                "stylePatch": "italic"
-              }
-            ],
-            [
-              "bold",
-              {
-                "stylePatch": "bold"
-              }
-            ],
-            [
-              "bold italic",
-              {
-                "stylePatch": "bold italic"
-              }
-            ]
-          ]
+          "backgroundColor": {
+            "instance": {
+              "L": "100.00000",
+              "C": "60.00000",
+              "H": "0.4100000",
+              "alpha": "57.00000"
+            },
+            "colorTypeKey": "OKLCH"
+          },
+          "label": "Generic"
         }
       ]
     ],
-    "label": ""
+    "label": "",
+    "intentStyleLinks": [
+      [
+        "italic",
+        {
+          "stylePatch": "italic",
+          "mode": "link"
+        }
+      ],
+      [
+        "bold",
+        {
+          "stylePatch": "bold",
+          "mode": "link"
+        }
+      ]
+    ],
+    "markStyleLinks": [
+      [
+        "link",
+        {
+          "stylePatch": "link",
+          "mode": "link"
+        }
+      ],
+      [
+        "strong",
+        {
+          "stylePatch": "bold italic",
+          "mode": "link"
+        }
+      ]
+    ]
   },
   "stylePatchesSource": [
     [
@@ -174,59 +251,26 @@
         },
         "stylePatchTypeKey": "CompositeStylePatch"
       }
-    ]
-  ],
-  "nodeSpecToTypeSpec": [
-    [
-      "heading-1",
-      {
-        "link": "./children/0",
-        "label": "H1"
-      }
     ],
     [
-      "heading-2",
+      "link",
       {
-        "link": "./children/1",
-        "label": "H2"
-      }
-    ],
-    [
-      "heading-3",
-      {
-        "link": "./children/2",
-        "label": "H3"
-      }
-    ],
-    [
-      "paragraph",
-      {
-        "link": "./children/3",
-        "label": "T1"
-      }
-    ],
-    [
-      "paragraph-2",
-      {
-        "link": "./children/4",
-        "label": "T2"
-      }
-    ]
-  ],
-  "document": {
-    "typeKey": "doc",
-    "content": [
-      {
-        "typeKey": "heading-1",
-        "content": [
-          {
-            "typeKey": "text",
-            "text": "Typography"
+        "instance": {
+          "textColor": {
+            "instance": {
+              "L": "60.00000",
+              "C": "46.00000",
+              "H": "0.6200000",
+              "alpha": "100.00000"
+            },
+            "colorTypeKey": "OKLCH"
           }
-        ]
+        },
+        "stylePatchTypeKey": "SimpleStylePatch"
       }
     ]
-  },
+  ],
+  "editingStylePatch": "./link",
   "proseMirrorSchema": {
     "nodes": [
       [
@@ -235,8 +279,6 @@
           "content": "block*",
           "group": "block",
           "tag": "section",
-          "definingAsContext": "1",
-          "definingForContent": "1",
           "attrs": [
             [
               "htmlAttrs",
@@ -247,7 +289,9 @@
                 }
               }
             ]
-          ]
+          ],
+          "definingAsContext": "1",
+          "definingForContent": "1"
         }
       ],
       [
@@ -256,8 +300,6 @@
           "content": "block*",
           "group": "block",
           "tag": "blockquote",
-          "definingAsContext": "1",
-          "definingForContent": "1",
           "attrs": [
             [
               "htmlAttrs",
@@ -268,7 +310,9 @@
                 }
               }
             ]
-          ]
+          ],
+          "definingAsContext": "1",
+          "definingForContent": "1"
         }
       ],
       [
@@ -280,13 +324,6 @@
           "attrs": [
             [
               "htmlTag",
-              {
-                "default": "",
-                "validate": {
-                  "type": "string"
-                }
-              },
-              "htmlAttrs",
               {
                 "default": "",
                 "validate": {
@@ -322,8 +359,6 @@
           "content": "inline*",
           "group": "block",
           "tag": "h1",
-          "definingAsContext": "1",
-          "definingForContent": "1",
           "attrs": [
             [
               "htmlAttrs",
@@ -334,7 +369,9 @@
                 }
               }
             ]
-          ]
+          ],
+          "definingAsContext": "1",
+          "definingForContent": "1"
         }
       ],
       [
@@ -343,8 +380,6 @@
           "content": "inline*",
           "group": "block",
           "tag": "h2",
-          "definingAsContext": "1",
-          "definingForContent": "1",
           "attrs": [
             [
               "htmlAttrs",
@@ -355,7 +390,9 @@
                 }
               }
             ]
-          ]
+          ],
+          "definingAsContext": "1",
+          "definingForContent": "1"
         }
       ],
       [
@@ -364,8 +401,6 @@
           "content": "inline*",
           "group": "block",
           "tag": "h3",
-          "definingAsContext": "1",
-          "definingForContent": "1",
           "attrs": [
             [
               "htmlAttrs",
@@ -376,7 +411,9 @@
                 }
               }
             ]
-          ]
+          ],
+          "definingAsContext": "1",
+          "definingForContent": "1"
         }
       ],
       [
@@ -401,11 +438,11 @@
       [
         "cite-link",
         {
+          "group": "inline",
           "tag": "sup",
           "selector": "sup[typeof=\"mw:Extension/ref\"]",
-          "inline": true,
-          "group": "inline",
-          "atom": true,
+          "inline": "1",
+          "atom": "1",
           "attrs": [
             [
               "html",
@@ -431,11 +468,11 @@
       [
         "quote",
         {
-          "tag": "q",
           "content": "inline*",
-          "selector": "q",
-          "inline": true,
           "group": "inline",
+          "tag": "q",
+          "selector": "q",
+          "inline": "1",
           "attrs": [
             [
               "htmlAttrs",
@@ -493,8 +530,6 @@
           "content": "li+",
           "group": "block",
           "tag": "ul",
-          "definingAsContext": "1",
-          "definingForContent": "1",
           "attrs": [
             [
               "htmlTag",
@@ -503,16 +538,11 @@
                 "validate": {
                   "type": "string"
                 }
-              },
-              "htmlAttrs",
-              {
-                "default": "",
-                "validate": {
-                  "type": "string"
-                }
               }
             ]
-          ]
+          ],
+          "definingAsContext": "1",
+          "definingForContent": "1"
         }
       ],
       [
@@ -521,8 +551,6 @@
           "content": "inline*",
           "group": "li",
           "tag": "li",
-          "definingAsContext": "1",
-          "definingForContent": "1",
           "attrs": [
             [
               "htmlAttrs",
@@ -533,7 +561,9 @@
                 }
               }
             ]
-          ]
+          ],
+          "definingAsContext": "1",
+          "definingForContent": "1"
         }
       ],
       [
@@ -542,8 +572,6 @@
           "content": "block+",
           "group": "li",
           "tag": "li",
-          "definingAsContext": "1",
-          "definingForContent": "1",
           "attrs": [
             [
               "htmlAttrs",
@@ -554,7 +582,9 @@
                 }
               }
             ]
-          ]
+          ],
+          "definingAsContext": "1",
+          "definingForContent": "1"
         }
       ],
       [
@@ -563,8 +593,6 @@
           "content": "figcaption figcontent | figcontent figcaption?",
           "group": "block",
           "tag": "figure",
-          "definingAsContext": "1",
-          "definingForContent": "1",
           "attrs": [
             [
               "htmlAttrs",
@@ -575,16 +603,18 @@
                 }
               }
             ]
-          ]
+          ],
+          "definingAsContext": "1",
+          "definingForContent": "1"
         }
       ],
       [
         "figcontent",
         {
+          "group": "block",
           "tag": "div",
           "selector": "figure > :not(figcaption)",
-          "group": "block",
-          "atom": true,
+          "atom": "1",
           "attrs": [
             [
               "html",
@@ -676,14 +706,19 @@
       [
         "navbox",
         {
-          "tag": "div",
           "content": "block*",
           "group": "block",
-          "atom": true,
+          "tag": "div",
+          "atom": "1",
           "attrs": [
             [
               "html",
-              { "default": "", "validate": { "type": "string" } }
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
             ],
             [
               "htmlTag",
@@ -696,7 +731,12 @@
             ],
             [
               "htmlAttrs",
-              { "default": "", "validate": { "type": "string" } }
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
             ]
           ]
         }
@@ -704,22 +744,37 @@
       [
         "reproduce-as-inline",
         {
-          "tag": "span",
           "group": "inline",
-          "inline": true,
-          "atom": true,
+          "tag": "span",
+          "inline": "1",
+          "atom": "1",
           "attrs": [
             [
               "html",
-              { "default": "", "validate": { "type": "string" } }
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
             ],
             [
               "htmlTag",
-              { "default": "", "validate": { "type": "string" } }
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
             ],
             [
               "htmlAttrs",
-              { "default": "", "validate": { "type": "string" } }
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
             ]
           ]
         }
@@ -727,21 +782,36 @@
       [
         "reproduce-as-block",
         {
-          "tag": "div",
           "group": "block",
-          "atom": true,
+          "tag": "div",
+          "atom": "1",
           "attrs": [
             [
               "html",
-              { "default": "", "validate": { "type": "string" } }
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
             ],
             [
               "htmlTag",
-              { "default": "", "validate": { "type": "string" } }
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
             ],
             [
               "htmlAttrs",
-              { "default": "", "validate": { "type": "string" } }
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
             ]
           ]
         }
@@ -749,18 +819,28 @@
       [
         "generic-inline",
         {
-          "tag": "span",
           "content": "inline*",
           "group": "inline",
-          "inline": true,
+          "tag": "span",
+          "inline": "1",
           "attrs": [
             [
               "htmlTag",
-              { "default": "", "validate": { "type": "string" } }
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
             ],
             [
               "htmlAttrs",
-              { "default": "", "validate": { "type": "string" } }
+              {
+                "default": "",
+                "validate": {
+                  "type": "string"
+                }
+              }
             ]
           ]
         }
@@ -799,6 +879,85 @@
           "tag": "a"
         }
       ]
+    ]
+  },
+  "nodeSpecToTypeSpec": [
+    [
+      "heading-1",
+      {
+        "link": "./children/0",
+        "label": "H1"
+      }
+    ],
+    [
+      "heading-2",
+      {
+        "link": "./children/0/children/1",
+        "label": "H2"
+      }
+    ],
+    [
+      "heading-3",
+      {
+        "link": "./children/0/children/1/children/2",
+        "label": "H3"
+      }
+    ],
+    [
+      "paragraph",
+      {
+        "link": "./children/3",
+        "label": "T1"
+      }
+    ],
+    [
+      "paragraph-2",
+      {
+        "link": "./children/3/children/4",
+        "label": "T2"
+      }
+    ],
+    [
+      "figcaption",
+      {
+        "link": "./children/3/children/4",
+        "label": ""
+      }
+    ],
+    [
+      "li-inline",
+      {
+        "link": "./children/3",
+        "label": ""
+      }
+    ],
+    [
+      "li-block",
+      {
+        "link": "./children/3",
+        "label": ""
+      }
+    ],
+    [
+      "generic-block",
+      {
+        "link": "./children/5",
+        "label": ""
+      }
+    ]
+  ],
+  "document": {
+    "typeKey": "doc",
+    "content": [
+      {
+        "typeKey": "heading-1",
+        "content": [
+          {
+            "typeKey": "text",
+            "text": "Typography"
+          }
+        ]
+      }
     ]
   }
 }
