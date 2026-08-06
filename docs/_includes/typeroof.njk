@@ -14,10 +14,8 @@
     </head>
     <body class="typeroof-docs">
         <div class="wrapper">
-            <header>
-                <h1>TypeRoof</h1>
-            </header>
             <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
                 <nav>
                     {{ collections.all
                         | eleventyNavigation
@@ -28,22 +26,21 @@
                         })
                         | safe
                     }}
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="{{rootPath}}/shell">TypeRoof Shell</a></li>
+                        <li><a href="{{rootPath}}/legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
                 </nav>
-                <h3>Applications</h3>
-                <ul class="typeroof-ui_sidebar-app_links">
-                    <li><a href="{{rootPath}}/shell">TypeRoof Shell</a></li>
-                    <li><a href="{{rootPath}}/legacy">TypeRoof Legacy</a></li>
-                </ul>
             </div>
             <div class="typeroof-main">
                 <div class='typeroof-docs_content'>{% if agentCreated %}<p class="agent-created-note">** This file was created with an agent. **</p>{% endif %}{{ content | safe }}</div>
             </div>
-            <footer>
-                <ul>
-                    <li><a href="https://github.com/FontBureau/TypeRoof">Source code on GitHub</a></li><!--
-                    --><li><a href="https://github.com/FontBureau/TypeRoof/issues">Bug reports &amp; feature&nbsp;requests</a></li>
-                </ul>
-            </footer>
         </div> <!-- wrapper -->
     </body>
 </html>
