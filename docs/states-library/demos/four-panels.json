@@ -155,8 +155,8 @@
                           "textColor": {
                             "instance": {
                               "L": "0.00000",
-                              "C": "45.00000",
-                              "H": "0.1800000"
+                              "C": "0.1800000",
+                              "H": "64.80000"
                             },
                             "colorTypeKey": "OKLCH"
                           }
@@ -197,8 +197,8 @@
                                 "fillColor": {
                                   "instance": {
                                     "L": "86.00000",
-                                    "C": "71.00000",
-                                    "H": "0.4200000"
+                                    "C": "0.2840000",
+                                    "H": "151.20000"
                                   },
                                   "colorTypeKey": "OKLCH"
                                 }
@@ -210,7 +210,7 @@
                                 "fillColor": {
                                   "instance": {
                                     "L": "33.00000",
-                                    "C": "20.00000"
+                                    "C": "0.0800000"
                                   },
                                   "colorTypeKey": "OKLCH"
                                 }
@@ -251,8 +251,8 @@
                                 ],
                                 "textColor": {
                                   "instance": {
-                                    "C": "45.00000",
-                                    "H": "0.0000000"
+                                    "C": "0.1800000",
+                                    "H": "0.00000"
                                   },
                                   "colorTypeKey": "OKLCH"
                                 },
@@ -749,7 +749,7 @@
                           "textColor": {
                             "instance": {
                               "L": "100.00000",
-                              "C": "0.00000"
+                              "C": "0.0000000"
                             },
                             "colorTypeKey": "OKLCH"
                           }
@@ -778,8 +778,8 @@
                                 "fillColor": {
                                   "instance": {
                                     "L": "34.00000",
-                                    "C": "55.00000",
-                                    "H": "0.0500000"
+                                    "C": "0.2200000",
+                                    "H": "18.00000"
                                   },
                                   "colorTypeKey": "OKLCH"
                                 }
@@ -909,7 +909,7 @@
                                       "fillColor": {
                                         "instance": {
                                           "L": "100.00000",
-                                          "C": "0.00000"
+                                          "C": "0.0000000"
                                         },
                                         "colorTypeKey": "OKLCH"
                                       }
@@ -967,8 +967,8 @@
                                       "textColor": {
                                         "instance": {
                                           "L": "34.00000",
-                                          "C": "55.00000",
-                                          "H": "0.0500000"
+                                          "C": "0.2200000",
+                                          "H": "18.00000"
                                         },
                                         "colorTypeKey": "OKLCH"
                                       },
@@ -1139,8 +1139,8 @@
                                 "fillColor": {
                                   "instance": {
                                     "L": "85.00000",
-                                    "C": "12.00000",
-                                    "H": "0.6200000"
+                                    "C": "0.0480000",
+                                    "H": "223.20000"
                                   },
                                   "colorTypeKey": "OKLCH"
                                 }
@@ -1195,8 +1195,8 @@
                                 "textColor": {
                                   "instance": {
                                     "L": "56.00000",
-                                    "C": "49.00000",
-                                    "H": "0.2000000",
+                                    "C": "0.1960000",
+                                    "H": "72.00000",
                                     "alpha": "0.00000"
                                   },
                                   "colorTypeKey": "OKLCH"
@@ -1226,7 +1226,7 @@
                                 ],
                                 "textColor": {
                                   "instance": {
-                                    "H": "0.7100000",
+                                    "H": "255.60000",
                                     "alpha": "2.00000"
                                   },
                                   "colorTypeKey": "OKLCH"
@@ -1309,8 +1309,8 @@
                                 "textColor": {
                                   "instance": {
                                     "L": "50.00000",
-                                    "C": "57.00000",
-                                    "H": "0.0000000"
+                                    "C": "0.2280000",
+                                    "H": "0.00000"
                                   },
                                   "colorTypeKey": "OKLCH"
                                 }
@@ -1328,7 +1328,7 @@
                                 ],
                                 "textColor": {
                                   "instance": {
-                                    "H": "1.0000000"
+                                    "H": "360.00000"
                                   },
                                   "colorTypeKey": "OKLCH"
                                 }
@@ -1918,8 +1918,8 @@
                                       "textColor": {
                                         "instance": {
                                           "L": "50.00000",
-                                          "C": "27.00000",
-                                          "H": "0.4000000"
+                                          "C": "0.1080000",
+                                          "H": "144.00000"
                                         },
                                         "colorTypeKey": "OKLCH"
                                       },
@@ -2112,8 +2112,8 @@
                                 "fillColor": {
                                   "instance": {
                                     "L": "94.00000",
-                                    "C": "72.00000",
-                                    "H": "0.2200000"
+                                    "C": "0.2880000",
+                                    "H": "79.20000"
                                   },
                                   "colorTypeKey": "OKLCH"
                                 }
@@ -2201,7 +2201,7 @@
                                       "textColor": {
                                         "instance": {
                                           "L": "61.00000",
-                                          "C": "47.00000",
+                                          "C": "0.1880000",
                                           "alpha": "49.00000"
                                         },
                                         "colorTypeKey": "OKLCH"
@@ -2223,7 +2223,7 @@
                                       "stageBackgroundColor": {
                                         "instance": {
                                           "L": "100.00000",
-                                          "C": "0.00000",
+                                          "C": "0.0000000",
                                           "alpha": "0.00000"
                                         },
                                         "colorTypeKey": "OKLCH"
@@ -2244,8 +2244,8 @@
                                             "textColor": {
                                               "instance": {
                                                 "L": "61.00000",
-                                                "C": "47.00000",
-                                                "H": "0.3500000",
+                                                "C": "0.1880000",
+                                                "H": "126.00000",
                                                 "alpha": "49.00000"
                                               },
                                               "colorTypeKey": "OKLCH"
@@ -2277,7 +2277,7 @@
                                             "textColor": {
                                               "instance": {
                                                 "L": "0.00000",
-                                                "C": "0.00000",
+                                                "C": "0.0000000",
                                                 "alpha": "87.00000"
                                               },
                                               "colorTypeKey": "OKLCH"
@@ -2350,7 +2350,7 @@
                                       "stageBackgroundColor": {
                                         "instance": {
                                           "L": "100.00000",
-                                          "C": "0.00000",
+                                          "C": "0.0000000",
                                           "alpha": "0.00000"
                                         },
                                         "colorTypeKey": "OKLCH"
@@ -2404,8 +2404,8 @@
                                       "textColor": {
                                         "instance": {
                                           "L": "50.00000",
-                                          "C": "78.00000",
-                                          "H": "0.7300000",
+                                          "C": "0.3120000",
+                                          "H": "262.80000",
                                           "alpha": "51.00000"
                                         },
                                         "colorTypeKey": "OKLCH"
@@ -2429,7 +2429,7 @@
                                             "backgroundColor": {
                                               "instance": {
                                                 "L": "100.00000",
-                                                "C": "0.00000",
+                                                "C": "0.0000000",
                                                 "alpha": "100.00000"
                                               },
                                               "colorTypeKey": "OKLCH"
@@ -2451,7 +2451,7 @@
                                             "autoOPSZ": "0",
                                             "textColor": {
                                               "instance": {
-                                                "H": "1.0000000"
+                                                "H": "360.00000"
                                               },
                                               "colorTypeKey": "OKLCH"
                                             }
