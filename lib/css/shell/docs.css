@@ -4,65 +4,68 @@ sidebar
 
 .typeroof-docs .typeroof-ui_sidebar {
     font-size: 0.8em;
-    font-variation-settings: "opsz" 10;
-    padding: 1em;
-}
+    font-optical-sizing: auto;
+    padding: 1em 2em;
 
-.typeroof-docs .typeroof-ui_sidebar a {
-    color: inherit;
-}
+    h1 {
+        font-size: 1.2em;
+    }
 
-.typeroof-docs .typeroof-ui_sidebar ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
+    a {
+        color: inherit;
+        text-decoration: none;
+    }
 
-.typeroof-docs .typeroof-ui_sidebar li > a {
-    display: inline-block;
-    padding: 0.4em 0;
-}
+    ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
 
-.typeroof-docs .typeroof-ui_sidebar li.active {
-    font-weight: 700;
-}
+    nav > ul > li > a {
+        font-size: 1.1em;
+    }
 
-.typeroof-docs .typeroof-ui_sidebar li.active > a {
-    text-decoration: none;
-}
+    ul > li {
+        padding: 0.3em 0;
 
-.typeroof-docs .typeroof-ui_sidebar li.active li:not(.active) {
-    font-weight: 400;
-}
+        > a {
+            display: inline-block;
+            margin-bottom: 0.2em;
+        }
+    }
 
-.typeroof-docs .typeroof-ui_sidebar li ul {
-    list-style: none;
-}
+    li.active {
+        > a {
+            font-weight: 700;
+        }
+    }
 
-.typeroof-docs .typeroof-ui_sidebar li ul li::before {
-    /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
-    font-family: "Material Symbols Outlined";
-    font-size: 1.4rem;
-    font-variation-settings: "wght" 200;
-    content: "\e5cc";
-    line-height: 0.8rem;
-    margin-left: -0.3em;
-    vertical-align: middle;
-}
+    li > ul > li {
+        padding: 0.2em 0;
 
-.typeroof-docs .typeroof-ui_sidebar li ul li ul {
-    margin-left: 0.5em;
-}
+        > ul {
+            margin-left: 1em;
+        }
 
-.typeroof-docs .typeroof-ui_sidebar nav {
-    margin-bottom: 2em;
-}
+        &::before {
+            /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
+            font-family: "Material Symbols Outlined";
+            font-size: 1.2rem;
+            font-variation-settings: "wght" 250;
+            content: "\e5cc";
+            line-height: 1.2rem;
+            margin-left: -0.4em;
+            vertical-align: middle;
+        }
+    }
 
-.typeroof-docs .typeroof-ui_sidebar h3 {
-    font-size: 1em;
-    font-weight: 600;
-    margin: 0;
-    margin-bottom: 0.5em;
+    h3 {
+        font-size: 1.1em;
+        font-weight: 600;
+        margin-top: 2em;
+        margin-bottom: 0.5em;
+    }
 }
 
 /******************************************************************************
