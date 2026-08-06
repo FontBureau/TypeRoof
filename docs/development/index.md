@@ -1,4 +1,5 @@
 ---
+title: Developer Kit
 eleventyNavigation:
   key: Developer Kit
   title: Developer Kit
