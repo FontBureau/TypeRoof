@@ -25,15 +25,15 @@
               "textColor": {
                 "instance": {
                   "L": "0.00000",
-                  "C": "0.00000"
+                  "C": "0.0000000"
                 },
                 "colorTypeKey": "OKLCH"
               },
               "backgroundColor": {
                 "instance": {
                   "L": "100.00000",
-                  "C": "0.00000",
-                  "H": "0.7100000",
+                  "C": "0.0000000",
+                  "H": "255.60000",
                   "alpha": "100.00000"
                 },
                 "colorTypeKey": "OKLCH"
@@ -53,15 +53,15 @@
               "textColor": {
                 "instance": {
                   "L": "88.00000",
-                  "C": "36.00000",
-                  "H": "0.1800000"
+                  "C": "0.1440000",
+                  "H": "64.80000"
                 },
                 "colorTypeKey": "OKLCH"
               },
               "backgroundColor": {
                 "instance": {
                   "L": "39.00000",
-                  "C": "48.00000"
+                  "C": "0.1920000"
                 },
                 "colorTypeKey": "OKLCH"
               }

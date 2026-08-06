@@ -20,7 +20,7 @@
               "backgroundColor": {
                 "instance": {
                   "L": "0.00000",
-                  "C": "0.00000",
+                  "C": "0.0000000",
                   "alpha": "100.00000"
                 },
                 "colorTypeKey": "OKLCH"
@@ -59,7 +59,7 @@
                     "textColor": {
                       "instance": {
                         "L": "100.00000",
-                        "C": "0.00000"
+                        "C": "0.0000000"
                       },
                       "colorTypeKey": "OKLCH"
                     }
@@ -191,8 +191,8 @@
                     "textColor": {
                       "instance": {
                         "L": "62.00000",
-                        "C": "0.00000",
-                        "H": "0.0000000",
+                        "C": "0.0000000",
+                        "H": "0.00000",
                         "alpha": "100.00000"
                       },
                       "colorTypeKey": "OKLCH"
