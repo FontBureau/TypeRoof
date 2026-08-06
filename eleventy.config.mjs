@@ -145,7 +145,8 @@ and learn how to load states into [TypeRoof Shell](/shell).
         // but there's no case so far.
         const isDirRoot = path === libDir
           , eleventyNavigation = {
-                key: isDirRoot ? directoryTitle : path.slice(libDir.length)
+                key: isDirRoot ? directoryTitle : path.slice(libDir.length),
+                order: 2
             }
           , documentTitle  = isDirRoot
                 ? directoryTitle
