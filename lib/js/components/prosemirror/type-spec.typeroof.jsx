@@ -1654,7 +1654,8 @@ export class UIProseMirrorMenuBlocks extends _BaseComponent {
                 linkParts.length === 0 || linkParts[0] === "children"
                     ? Path.fromParts(...linkParts)
                     : Path.fromParts("children", ...linkParts);
-        const typeSpecLabel = getEntry(typeSpec, path).get("label").value;
+        const linkedTypeSpec = getEntry(typeSpec, path, null),
+            typeSpecLabel = linkedTypeSpec !== null && linkedTypeSpec.get("label").value || "";
         return typeSpecLabel !== ""
             ? `${typeSpecLabel} [${blockName}]`
             : `[${blockName}]`;
