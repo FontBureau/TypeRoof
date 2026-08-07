@@ -10,6 +10,8 @@ import {
     downloadFile,
 } from "../utils/state-file.mjs";
 
+import { getRemovableFonts, UIDialogManageFonts } from "./font-loading.mjs";
+
 /**
  * A menu button ("toggler") together with the menu it opens and closes,
  * both wrapped into a root element.
@@ -97,6 +99,13 @@ export class AppMenu extends _BaseContainerComponent {
                     </button>
                 </li>
             ),
+            manageFontsElement = (
+                <li>
+                    <button onClick={() => this._onClickManageFonts()}>
+                        Manage fonts...
+                    </button>
+                </li>
+            ),
             zones = new Map([["main", mainElement]]);
         widgetBus.insertElement(mainElement);
 
@@ -109,6 +118,7 @@ export class AppMenu extends _BaseContainerComponent {
                 <menu>
                     {loadStateElement}
                     {saveStateElement}
+                    {manageFontsElement}
                 </menu>,
             ],
             [
@@ -156,6 +166,7 @@ export class AppMenu extends _BaseContainerComponent {
         super(widgetBus, zones, widgets);
 
         this._stateFileInput = stateFileInput;
+        this._manageFontsDialog = null;
         this._menuItemIds = menuItemWidgets.map(([settings]) => settings.id);
         this._onClickDocumentHandler = this._onClickDocument.bind(this);
         this._domTool.document.addEventListener(
@@ -221,6 +232,49 @@ export class AppMenu extends _BaseContainerComponent {
             serializedValue,
             createStateFileName(this.getEntry("activeLayoutKey").value),
         );
+    }
+
+    /**
+     * The manage fonts dialog is not part of the widget tree, hence it
+     * can't depend on availableFonts by itself and is updated from here,
+     * e.g. after a font was removed within the dialog.
+     */
+    update(compareResult) {
+        super.update(compareResult);
+        if (this._manageFontsDialog !== null) {
+            this._manageFontsDialog.setFonts(this._getRemovableFonts());
+        }
+    }
+
+    _getRemovableFonts() {
+        return getRemovableFonts(this.getEntry("availableFonts"));
+    }
+
+    async _removeFonts(fontNames) {
+        if (!fontNames.length) {
+            return;
+        }
+        return this.widgetBus.changeState(async () => {
+            const result = await this.widgetBus.removeFontsFromFiles(
+                ...fontNames,
+            );
+            return { result, augmented: true };
+        });
+    }
+
+    async _onClickManageFonts() {
+        const dialog = new UIDialogManageFonts(
+            this._domTool,
+            this.widgetBus,
+            (fontNames) => this._removeFonts(fontNames),
+        );
+        this._manageFontsDialog = dialog;
+        try {
+            return await dialog.show(this._getRemovableFonts());
+        } finally {
+            this._manageFontsDialog = null;
+            dialog.destroy();
+        }
     }
 
     _reportError(label, error) {
