@@ -852,7 +852,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
     }
 
     _getEffectiveStyleLinks(typeSpecProperties, prefix = INTENT_STYLE_LINKS) {
-        return _getEffectiveStyleLinks(
+        return getEffectiveStyleLinks(
             this.widgetBus,
             typeSpecProperties,
             prefix,
@@ -1561,7 +1561,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
 // TypeSpec identified by a typeSpecProperties@ id, as a Map of
 // key => StylePatchLinkModel. Tombstoned (unlinked) edges are
 // excluded by getStyleLinks.
-function _getEffectiveStyleLinks(
+export function getEffectiveStyleLinks(
     widgetBus,
     typeSpecProperties,
     prefix = INTENT_STYLE_LINKS,
@@ -1655,7 +1655,10 @@ export class UIProseMirrorMenuBlocks extends _BaseComponent {
                     ? Path.fromParts(...linkParts)
                     : Path.fromParts("children", ...linkParts);
         const linkedTypeSpec = getEntry(typeSpec, path, null),
-            typeSpecLabel = linkedTypeSpec !== null && linkedTypeSpec.get("label").value || "";
+            typeSpecLabel =
+                (linkedTypeSpec !== null &&
+                    linkedTypeSpec.get("label").value) ||
+                "";
         return typeSpecLabel !== ""
             ? `${typeSpecLabel} [${blockName}]`
             : `[${blockName}]`;
@@ -1879,7 +1882,7 @@ export class UIProseMirrorMenuStyles extends _BaseComponent {
             // The effective (inherited and local) intent style-links of
             // the TypeSpec; tombstoned edges are excluded by getStyleLinks,
             // NULL-styles are included and selectable.
-            const intentStyleLinks = _getEffectiveStyleLinks(
+            const intentStyleLinks = getEffectiveStyleLinks(
                 this.widgetBus,
                 `typeSpecProperties@${path}`,
                 INTENT_STYLE_LINKS,
@@ -2123,7 +2126,7 @@ export class UIBoldItalicMenu extends _BaseComponent {
             // The effective (inherited and local) intent style-links of
             // the TypeSpec; tombstoned edges are excluded by getStyleLinks,
             // NULL-styles are included and selectable.
-            const intentStyleLinks = _getEffectiveStyleLinks(
+            const intentStyleLinks = getEffectiveStyleLinks(
                 this.widgetBus,
                 `typeSpecProperties@${path}`,
                 INTENT_STYLE_LINKS,

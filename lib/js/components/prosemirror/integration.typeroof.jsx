@@ -3,7 +3,7 @@ import { FreezableSet, Path } from "../../metamodel.mjs";
 import {
     NodeModel,
     toMetaModelJSON,
-    fromMetaModelJSON,
+    readMetaModelJSONfromMap,
 } from "./models.typeroof.jsx";
 
 import { _BaseComponent } from "../basics/component.mjs";
@@ -416,10 +416,10 @@ export class ProsemirrorMarkView {
         if (!mmSchema) return fallback;
         const mmMarks = mmSchema.get("marks");
         if (!mmMarks.has(mark.type.name)) return fallback;
-        const mmMarkSpec = mmMarks.get(mark.type.name);
-        if (mmMarkSpec.get("tag").isEmpty || mmMarkSpec.get("tag").value === "")
-            return fallback;
-        return mmMarkSpec.get("tag").value;
+        const mmMarkSpec = mmMarks.get(mark.type.name),
+            tagOrEmpty = mmMarkSpec.get("tag");
+        if (tagOrEmpty.isEmpty || tagOrEmpty.value === "") return fallback;
+        return tagOrEmpty.value;
     }
 
     // PM's domObserver also watches attribute changes; the styling
@@ -1012,12 +1012,7 @@ export class ProseMirror extends _BaseComponent {
             // schema.mark(type: string | MarkType, attrs⁠?: Attrs) → Mark
             // Create a mark with the given type and attributes.
             const mmAttrs = mmMark.get("attrs");
-            let attrs = null;
-            if (mmAttrs.size) {
-                attrs = {};
-                for (const [name, value] of mmAttrs)
-                    attrs[name] = fromMetaModelJSON(value);
-            }
+            let attrs = readMetaModelJSONfromMap(mmAttrs);
             const mark = schema.mark(mmMark.get("typeKey").value, attrs);
             marks.push(mark);
         }
@@ -1076,13 +1071,7 @@ export class ProseMirror extends _BaseComponent {
             // We'll see how feasible that will be!
 
             const mmAttrs = metamodelNode.get("attrs");
-            let attrs = null;
-            if (mmAttrs.size) {
-                attrs = {};
-                for (const [name, value] of mmAttrs) {
-                    attrs[name] = fromMetaModelJSON(value);
-                }
-            }
+            let attrs = readMetaModelJSONfromMap(mmAttrs);
 
             // An alternative would be to create a type on the fly,
             // but that would require to update the schema, which at

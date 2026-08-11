@@ -648,6 +648,19 @@ export function toMetaModelJSON(value, dependencies = {}) {
         );
     return draft.metamorphose();
 }
+
+/**
+ * Convenience funtion especially to read ["attrs", AttrsMapModel]
+ * but it can be used for similar structures as well.
+ */
+export function readMetaModelJSONfromMap(jsonMapModel, empty = null) {
+    if (!jsonMapModel.size) return empty;
+    const result = {};
+    for (const [name, value] of jsonMapModel)
+        result[name] = fromMetaModelJSON(value);
+    return result;
+}
+
 // Quick test of the above:
 // console.log(fromMetaModelJSON(toMetaModelJSON({
 //     a: [1,2,3,{b:4,c:5}],

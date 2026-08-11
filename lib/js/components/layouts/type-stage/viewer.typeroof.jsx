@@ -9,9 +9,19 @@ import {
     UIDocumentTypeSpecStyler,
     UIDocumentStyleStyler,
     UIDocumentUnkownStyleStyler,
+    getEffectiveStyleLinks,
 } from "../../prosemirror/type-spec.typeroof.jsx";
 import { getTypeSpecPropertiesIdMethod } from "../../prosemirror/integration.typeroof.jsx";
 import { schemaSpec as proseMirrorDefaultSchema } from "../../prosemirror/default-schema";
+import { readMetaModelJSONfromMap } from "../../prosemirror/models.typeroof.jsx";
+
+import { applyHtmlAttrsBag } from "../../prosemirror/html-attrs.ts";
+
+import {
+    // getStyleLinks,
+    INTENT_STYLE_LINKS,
+    MARK_STYLE_LINKS,
+} from "../../registered-properties-definitions.mjs";
 
 class GenericUpdater extends _BaseComponent {
     constructor(widgetBus, updateHandlerFn) {
@@ -66,26 +76,57 @@ export class UIDocumentElement extends _BaseContainerComponent {
     constructor(
         widgetBus,
         _zones,
+        proseMirrorSchema,
         originTypeSpecPath,
         documentRootPath,
         baseClass = "typeroof-document-element",
     ) {
         const zones = new Map(_zones);
         super(widgetBus, zones);
-
-        // figure out the ta of the element
+        this._proseMirrorSchema = proseMirrorSchema;
+        // figure out the tag of the element
         const current = this.getEntry("."),
             typeKey = current.get("typeKey").value,
             nodeSpecMap = this.getEntry("nodeSpec");
         let tag = "div"; // default
+        let attributes = null;
+        let innerHtml = null;
         if (nodeSpecMap.has(typeKey)) {
             // FIXME: must update when this.typeKey or nodeSpec[typeKey] changes!
-            const nodeSpec = nodeSpecMap.get(typeKey);
-            tag = nodeSpec.get("tag", { value: tag }).value;
+            const nodeSpec = nodeSpecMap.get(typeKey),
+                attributeSpecMap = nodeSpec.get("attrs"),
+                attrs = readMetaModelJSONfromMap(current.get("attrs"), {});
+
+            if (attributeSpecMap.has("html") && attrs.html) {
+                // TODO: we should only do this when it is an atom
+                // also in integration.
+                innerHtml = attrs.html;
+                // also, maybe don't initialize UIDocumentNodes if this
+                // is a leaf node.
+            }
+
+            if (attributeSpecMap.has("htmlAttrs") && attrs.htmlAttrs)
+                attributes = attrs.htmlAttrs;
+
+            if (attributeSpecMap.has("htmlTag") && attrs.htmlTag)
+                tag = attrs.htmlTag;
+            else if (nodeSpec.has("tag")) {
+                const tagOrEmpty = nodeSpec.get("tag");
+                if (!tagOrEmpty.isEmpty && tagOrEmpty.value !== "")
+                    tag = tagOrEmpty.value;
+            }
         }
-        const localContainer = widgetBus.domTool.createElement(tag, {
-            class: `${baseClass}`,
-        });
+        this._treatAsLeaf = innerHtml !== null;
+        const localContainer = widgetBus.domTool.createElement(tag);
+
+        if (attributes) applyHtmlAttrsBag(localContainer, attributes);
+
+        if (innerHtml)
+            localContainer.append(
+                widgetBus.domTool.createFragmentFromHTML(innerHtml),
+            );
+
+        localContainer.classList.add(`${baseClass}`);
         zones.set("local", localContainer);
 
         this.node = localContainer;
@@ -95,25 +136,44 @@ export class UIDocumentElement extends _BaseContainerComponent {
         this._originTypeSpecPath = originTypeSpecPath;
         this._documentRootPath = documentRootPath;
         this._typeSpecStylerWrapper = null;
-        const widgets = [
-            [
-                {},
+
+        if (!this._treatAsLeaf) {
+            const widgets = [
                 [
-                    ["./content", "collection"],
-                    [this.widgetBus.getExternalName("nodeSpec"), "nodeSpec"],
+                    {},
                     [
-                        this.widgetBus.getExternalName("nodeSpecToTypeSpec"),
-                        "nodeSpecToTypeSpec",
+                        ["./content", "collection"],
+                        [
+                            this.widgetBus.getExternalName("nodeSpec"),
+                            "nodeSpec",
+                        ],
+                        [
+                            this.widgetBus.getExternalName("markSpec"),
+                            "markSpec",
+                        ],
+                        [
+                            this.widgetBus.getExternalName(
+                                "nodeSpecToTypeSpec",
+                            ),
+                            "nodeSpecToTypeSpec",
+                        ],
                     ],
+                    UIDocumentNodes,
+                    this._zones,
+                    this._proseMirrorSchema,
+                    this.nodesElement,
+                    originTypeSpecPath,
+                    documentRootPath,
                 ],
-                UIDocumentNodes,
-                this._zones,
-                this.nodesElement,
-                originTypeSpecPath,
-                documentRootPath,
-            ],
-        ];
-        this._initWidgets(widgets);
+            ];
+            this._initWidgets(widgets);
+        }
+    }
+
+    destroy() {
+        if (this.node?.parentElement)
+            this.node.parentElement.removeChild(this.node);
+        super.destroy();
     }
 
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
@@ -213,26 +273,60 @@ export class UIDocumentElement extends _BaseContainerComponent {
 // maybe only to receive updates?
 //     styleLinkProperties@
 export class UIDocumentTextRun extends _BaseContainerComponent {
-    constructor(widgetBus, zones, originTypeSpecPath, documentRootPath) {
+    constructor(
+        widgetBus,
+        zones,
+        proseMirrorSchema,
+        originTypeSpecPath,
+        documentRootPath,
+    ) {
         super(widgetBus, zones);
+        this._proseMirrorSchema = proseMirrorSchema;
         this.node = this._domTool.createTextNode("(initializing)");
         this.widgetBus.insertDocumentNode(this.node);
         this._originTypeSpecPath = originTypeSpecPath;
         this._documentRootPath = documentRootPath;
         this._stylerWrapper = null;
+        this._markWrappers = [];
         const widgets = [
             [{}, ["text"], GenericUpdater, this._updateNode.bind(this)],
         ];
         this._initWidgets(widgets);
+        this._initalWidgetsLength = this._widgets.length;
+    }
+
+    destroy() {
+        if (this.node?.parentElement)
+            this.node.parentElement.removeChild(this.node);
+        super.destroy();
     }
 
     _updateNode(changedMap) {
         if (changedMap.has("text")) {
             const { Node } = this._domTool.window,
                 text = changedMap.get("text").value;
-            if (this.node.nodeType === Node.TEXT_NODE)
-                this.node.data = text; // it's an element
-            else this.node.textContent = text;
+            if (this.node.nodeType === Node.TEXT_NODE) this.node.data = text;
+            else {
+                // drill down
+                let deepest = this.node;
+                while (deepest.firstElementChild)
+                    deepest = deepest.firstElementChild;
+                deepest.textContent = text;
+            }
+        }
+    }
+
+    getTextNode() {
+        const { Node } = this._domTool.window;
+        if (this.node.nodeType === Node.TEXT_NODE) return this.node;
+        else {
+            // drill down
+            let deepest = this.node;
+            while (deepest.firstElementChild)
+                deepest = deepest.firstElementChild;
+            // CAUTION it could be a comment etc., but so far we
+            // just assert there to be one node and that's the TEXT_NODE
+            return deepest.firstChild;
         }
     }
 
@@ -245,32 +339,7 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
         this.node = newNode;
     }
 
-    _setNodeToTextNode() {
-        const text = this.getEntry("text").value,
-            textNode = this._domTool.createTextNode(text);
-        this._swapNode(textNode);
-    }
-
-    _setNodeToElement(styleName) {
-        const text = this.getEntry("text").value,
-            element = this._domTool.createElement("span", {}, text);
-        if (styleName !== null)
-            element.setAttribute("data-style-name", styleName);
-        this._swapNode(element);
-    }
-
-    _createStylerWrapper(styleLinkProperties, styleName = null) {
-        const { Node } = this._domTool.window;
-        if (styleLinkProperties === null) {
-            // node to textNode
-            if (this.node.nodeType !== Node.TEXT_NODE)
-                this._setNodeToTextNode();
-            return null;
-        }
-
-        if (this.node.nodeType !== Node.ELEMENT_NODE)
-            this._setNodeToElement(styleName);
-
+    _createStylerWrapper(domElement, styleLinkProperties) {
         // node to element
         const settings = {},
             dependencyMappings =
@@ -284,7 +353,7 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
                 styleLinkProperties === null
                     ? UIDocumentUnkownStyleStyler
                     : UIDocumentStyleStyler,
-            args = [this.node];
+            args = [domElement];
         return this._initWrapper(
             this._childrenWidgetBus,
             settings,
@@ -294,8 +363,12 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
         );
     }
 
-    _getStyleLinkPropertiesId(typeSpecPropertiesPath, styleLink) {
-        const styleLinkPropertiesId = `styleLinkProperties@${typeSpecPropertiesPath.append("intentStyleLinks", styleLink)}`,
+    _getStyleLinkPropertiesId(
+        typeSpecPropertiesPath,
+        styleLinkType,
+        styleLink,
+    ) {
+        const styleLinkPropertiesId = `styleLinkProperties@${typeSpecPropertiesPath.append(styleLinkType, styleLink)}`,
             protocolHandlerImplementation =
                 this.widgetBus.getProtocolHandlerImplementation(
                     "styleLinkProperties@",
@@ -310,23 +383,167 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
         return null;
     }
 
-    _getStyleName(node) {
-        const marksList = node.get("marks");
-        for (const mark of marksList.value) {
-            const markType = mark.get("typeKey").value;
-            if (markType !== "generic-style") continue;
-            const attrs = mark.get("attrs");
-            if (!attrs.has("data-style-name")) continue;
-            const styleNameAttr = attrs.get("data-style-name");
-            if (styleNameAttr.get("type").value !== "string") continue;
-            return styleNameAttr.get("string").value;
+    _getEffectiveStyleLinks(typeSpecProperties, prefix = INTENT_STYLE_LINKS) {
+        return getEffectiveStyleLinks(
+            this.widgetBus,
+            typeSpecProperties, // `typeSpecProperties@${path}`,
+            prefix,
+        );
+    }
+
+    _getWrapMarks(typeSpecPropertiesPath) {
+        const node = this.getEntry("."),
+            marksList = node.get("marks"),
+            markSpec = this.getEntry("markSpec"),
+            typeSpecProperties = `typeSpecProperties@${typeSpecPropertiesPath}`,
+            result = [];
+        let intentStyleLinks = null,
+            markStyleLinks = null,
+            // current = null,
+            kind = null,
+            styleLinkName = null,
+            styleLinkType = null,
+            styleName = null;
+
+        // this._proseMirrorSchema.marks
+        // build from inside out:
+        for (const mark of marksList.value.toReversed()) {
+            const markType = mark.get("typeKey").value,
+                attrs = readMetaModelJSONfromMap(mark.get("attrs"), {});
+            let tag = "span",
+                htmlAttributes = false;
+
+            if (markType === "generic-style") {
+                kind = "intent";
+                htmlAttributes =
+                    "htmlAttrs" in
+                    this._proseMirrorSchema.marks["generic-style"];
+                // intent style ...
+                styleLinkName = attrs["data-style-name"] || null;
+                styleLinkType = "intentStyleLinks";
+                if (intentStyleLinks === null)
+                    intentStyleLinks = this._getEffectiveStyleLinks(
+                        typeSpecProperties,
+                        INTENT_STYLE_LINKS,
+                    );
+                // tag is on the edge
+                // or "span"
+                // from @typeSpec
+                // get the edge
+                if (intentStyleLinks.has(styleLinkName)) {
+                    const edge = intentStyleLinks.get(styleLinkName),
+                        tagOrEmpty = edge.get("tag");
+                    if (!tagOrEmpty.isEmpty && tagOrEmpty.value !== "")
+                        // otherwise it remains "span"
+                        tag = tagOrEmpty.value;
+                    styleName = edge.get("stylePatch").value;
+                }
+            } else if (markType in this._proseMirrorSchema.marks) {
+                kind = "native";
+                const pmMarkSpec = this._proseMirrorSchema.marks[markType];
+                htmlAttributes = "htmlAttrs" in pmMarkSpec;
+                if ("tag" in pmMarkSpec && pmMarkSpec.tag !== "")
+                    tag = pmMarkSpec.tag;
+            } else if (markSpec.has(markType)) {
+                // mark style ...
+                kind = "mark";
+                const mmMarkSpec = markSpec.get(markType),
+                    tagOrEmpty = mmMarkSpec.get("tag");
+                if (!tagOrEmpty.isEmpty && tagOrEmpty.value !== "")
+                    tag = tagOrEmpty.value;
+                htmlAttributes = mmMarkSpec.get("attrs").has("htmlAttrs");
+            }
+            if (kind === "native" || kind === "mark") {
+                styleLinkType = "markStyleLinks";
+                styleLinkName = markType;
+                if (markStyleLinks === null)
+                    markStyleLinks = this._getEffectiveStyleLinks(
+                        typeSpecProperties,
+                        MARK_STYLE_LINKS,
+                    );
+                if (markStyleLinks.has(markType)) {
+                    const edge = markStyleLinks.get(markType);
+                    styleName = edge.get("stylePatch").value;
+                }
+            }
+
+            result.push({
+                kind,
+                tag,
+                markType,
+                styleLinkName, // markElement.setAttribute("data-style-name", styleLinkName)
+                htmlAttributesBag:
+                    htmlAttributes && attrs.htmlAttrs ? attrs.htmlAttrs : null,
+                styleLinkType,
+                styleName,
+            });
         }
-        return null;
+        return result;
+    }
+
+    _wrapResultsAreEqual(wrapResultsA, wrapResultsB) {
+        if (wrapResultsA.length !== wrapResultsB.length) return false;
+        for (let i = 0, l = wrapResultsA.length; i < l; i++) {
+            const wrapperA = wrapResultsA[i],
+                wrapperB = wrapResultsB[i],
+                allKeys = new Set([
+                    ...Object.keys(wrapperA),
+                    ...Object.keys(wrapperB),
+                ]);
+            for (const key of allKeys) {
+                if (wrapperA[key] !== wrapperB[key]) return false;
+            }
+        }
+        return true;
+    }
+
+    static _MARK_ELEMENT = Symbol("_MARK_ELEMENT");
+    _createWrapperDOM(wrapResults) {
+        let current = null;
+        const _MARK_ELEMENT = this.constructor._MARK_ELEMENT;
+        for (const wrapper of wrapResults) {
+            const { tag, styleLinkName, markType, htmlAttributesBag } = wrapper,
+                markElement = this._domTool.createElement(tag);
+            if (htmlAttributesBag)
+                applyHtmlAttrsBag(markElement, htmlAttributesBag);
+            if (styleLinkName)
+                markElement.setAttribute("data-style-name", styleLinkName);
+            if (markType) markElement.setAttribute("data-mark-type", markType);
+            if (current) markElement.append(current);
+            current = markElement;
+            // using a symbol as key, so compare will ignore it by default;
+            wrapper[_MARK_ELEMENT] = markElement;
+        }
+    }
+
+    _createStylerWidgets(typeSpecPropertiesPath, wrapResults) {
+        const stylerWidgets = [],
+            _MARK_ELEMENT = this.constructor._MARK_ELEMENT;
+        for (const wrapper of wrapResults) {
+            const { styleLinkName, styleLinkType } = wrapper,
+                domElement = wrapper[_MARK_ELEMENT];
+            // if not skipped we will apply UIDocumentUnkownStyleStyler,
+            // which may be wrong as well, e.g. when tags/elements are
+            // purely semantic HTML that we don't want to style.
+            if (!styleLinkName) continue;
+            const styleLinkPropertiesId = this._getStyleLinkPropertiesId(
+                    typeSpecPropertiesPath,
+                    styleLinkType,
+                    styleLinkName,
+                ),
+                widgetWrapper = this._createStylerWrapper(
+                    domElement,
+                    styleLinkPropertiesId,
+                );
+            stylerWidgets.push(widgetWrapper);
+        }
+        return stylerWidgets;
     }
 
     _provisionWidgets(...args /* compareResult */) {
-        // 0, -1: don't include the current "text" type
-        const pathOfTypes = this._getPathOfTypes(this.widgetBus.rootPath).slice(
+        const requiresFullInitialUpdate = new Set(),
+            // 0, -1: don't include the current "text" type
+            pathOfTypes = this._getPathOfTypes(this.widgetBus.rootPath).slice(
                 0,
                 -1,
             ),
@@ -334,51 +551,51 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
                 pathOfTypes,
                 true /*asPath*/,
             ),
-            node = this.getEntry("."),
-            styleName = this._getStyleName(node),
-            styleLinkPropertiesId =
-                styleName === null
-                    ? null
-                    : this._getStyleLinkPropertiesId(
-                          typeSpecPropertiesPath,
-                          styleName,
-                      ),
-            oldId =
-                this._stylerWrapper !== null
-                    ? this._widgets.indexOf(this._stylerWrapper)
-                    : -1;
-        if (oldId === -1) {
-            // inital
-            this._stylerWrapper = this._createStylerWrapper(
-                styleLinkPropertiesId,
-                styleName,
-            );
-            if (this._stylerWrapper !== null)
-                this._widgets.splice(0, 0, this._stylerWrapper);
-        } else {
-            const oldWrapper = this._widgets[oldId];
-            if (
-                oldWrapper.dependencyReverseMapping.get(
-                    "styleLinkProperties@",
-                ) !== styleLinkPropertiesId
-            ) {
-                const newWrapper = this._createStylerWrapper(
-                    styleLinkPropertiesId,
-                    styleName,
+            wrapResults = this._getWrapMarks(typeSpecPropertiesPath);
+        if (!this._wrapResultsAreEqual(this._markWrappers, wrapResults)) {
+            const textNode = this.getTextNode(),
+                newWidgetWrappers = [];
+            if (wrapResults.length === 0) this._swapNode(textNode);
+            else {
+                this._createWrapperDOM(wrapResults);
+                newWidgetWrappers.push(
+                    ...this._createStylerWidgets(
+                        typeSpecPropertiesPath,
+                        wrapResults,
+                    ),
                 );
-                if (newWrapper === null) this._widgets.splice(oldId, 1);
-                else this._widgets.splice(oldId, 1, newWrapper);
-                oldWrapper.destroy();
-                this._stylerWrapper = newWrapper;
+                this._swapNode(
+                    wrapResults.at(-1)[this.constructor._MARK_ELEMENT],
+                );
+                wrapResults[0][this.constructor._MARK_ELEMENT].append(textNode);
+                this._markWrappers = wrapResults;
             }
+            const deleted = this._widgets.splice(
+                this._initalWidgetsLength,
+                Infinity,
+                ...newWidgetWrappers,
+            );
+            for (const widgetWrapper of deleted)
+                this._destroyWidget(widgetWrapper);
+            for (const widgetWrapper of newWidgetWrappers)
+                requiresFullInitialUpdate.add(widgetWrapper);
         }
-        return super._provisionWidgets(...args);
+        for (const widgetWrapper of super._provisionWidgets(...args))
+            requiresFullInitialUpdate.add(widgetWrapper);
+        return requiresFullInitialUpdate;
     }
 }
 
 export class UIDocumentNode extends _BaseContainerComponent {
-    constructor(widgetBus, zones, originTypeSpecPath, documentRootPath) {
+    constructor(
+        widgetBus,
+        zones,
+        proseMirrorSchema,
+        originTypeSpecPath,
+        documentRootPath,
+    ) {
         super(widgetBus, zones);
+        this._proseMirrorSchema = proseMirrorSchema;
         this._originTypeSpecPath = originTypeSpecPath;
         this._documentRootPath = documentRootPath;
         this._currentTypeKey = null;
@@ -394,6 +611,7 @@ export class UIDocumentNode extends _BaseContainerComponent {
             dependencyMappings = [
                 "text",
                 [this.widgetBus.getExternalName("nodeSpec"), "nodeSpec"],
+                [this.widgetBus.getExternalName("markSpec"), "markSpec"],
                 [
                     this.widgetBus.getExternalName("nodeSpecToTypeSpec"),
                     "nodeSpecToTypeSpec",
@@ -404,6 +622,7 @@ export class UIDocumentNode extends _BaseContainerComponent {
             dependencyMappings = [
                 ["./content", "nodes"],
                 [this.widgetBus.getExternalName("nodeSpec"), "nodeSpec"],
+                [this.widgetBus.getExternalName("markSpec"), "markSpec"],
                 [
                     this.widgetBus.getExternalName("nodeSpecToTypeSpec"),
                     "nodeSpecToTypeSpec",
@@ -414,6 +633,7 @@ export class UIDocumentNode extends _BaseContainerComponent {
 
         const args = [
                 this._zones,
+                this._proseMirrorSchema,
                 this._originTypeSpecPath,
                 this._documentRootPath,
             ],
@@ -449,11 +669,13 @@ export class UIDocumentNodes extends _BaseDynamicMapContainerComponent {
     constructor(
         widgetBus,
         zones,
+        proseMirrorSchema,
         nodesElement,
         originTypeSpecPath,
         documentRootPath,
     ) {
         super(widgetBus, zones);
+        this._proseMirrorSchema = proseMirrorSchema;
         this._nodesElement = nodesElement;
         this._nodeSlots = new Map();
         this._originTypeSpecPath = originTypeSpecPath;
@@ -586,6 +808,7 @@ export class UIDocumentNodes extends _BaseDynamicMapContainerComponent {
             dependencyMappings = [
                 [this.widgetBus.getExternalName("collection"), "collection"],
                 [this.widgetBus.getExternalName("nodeSpec"), "nodeSpec"],
+                [this.widgetBus.getExternalName("markSpec"), "markSpec"],
                 [
                     this.widgetBus.getExternalName("nodeSpecToTypeSpec"),
                     "nodeSpecToTypeSpec",
@@ -594,6 +817,7 @@ export class UIDocumentNodes extends _BaseDynamicMapContainerComponent {
             Constructor = UIDocumentNode,
             args = [
                 this._zones,
+                this._proseMirrorSchema,
                 this._originTypeSpecPath,
                 this._documentRootPath,
             ],
@@ -628,6 +852,7 @@ export class UIDocumentViewer extends _BaseContainerComponent {
                 [
                     ["content", "collection"],
                     [this.widgetBus.getExternalName("nodeSpec"), "nodeSpec"],
+                    [this.widgetBus.getExternalName("markSpec"), "markSpec"],
                     [
                         this.widgetBus.getExternalName("nodeSpecToTypeSpec"),
                         "nodeSpecToTypeSpec",
@@ -635,6 +860,7 @@ export class UIDocumentViewer extends _BaseContainerComponent {
                 ],
                 UIDocumentNodes,
                 this._zones,
+                proseMirrorDefaultSchema,
                 this.nodesElement,
                 originTypeSpecPath,
                 this.widgetBus.rootPath, // documentRootPath

@@ -387,6 +387,7 @@ class TypeStageController extends _BaseContainerComponent {
                 },
                 [
                     ["../proseMirrorSchema/nodes", "nodeSpec"],
+                    ["../proseMirrorSchema/marks", "markSpec"],
                     ["../nodeSpecToTypeSpec", "nodeSpecToTypeSpec"],
                 ],
                 UIDocumentViewer,
