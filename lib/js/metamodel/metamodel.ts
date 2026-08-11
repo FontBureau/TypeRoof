@@ -10,6 +10,7 @@ import {
     isDeliberateResourceResolveError,
     keyConstraintError,
     isDraftKeyError,
+    GENERATED_DATA,
 } from "./base-model.ts";
 
 // These are the exports from ./base-model.ts that are used beyond this
@@ -28,6 +29,7 @@ export {
     _BaseContainerModel,
     _BaseSimpleModel,
     SERIALIZE_FORMAT_OBJECT,
+    GENERATED_DATA,
 };
 
 import { CoherenceFunction } from "./coherence-function.ts";
