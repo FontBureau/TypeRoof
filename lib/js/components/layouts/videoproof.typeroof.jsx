@@ -7,6 +7,7 @@ import {
     CoherenceFunction,
     StaticDependency,
     BooleanDefaultTrueModel,
+    GENERATED_DATA,
 } from "../../metamodel.mjs";
 
 import { zip } from "../../util.mjs";
@@ -1226,6 +1227,50 @@ const VideoproofModel = _BaseLayoutModel.createClass(
                     font,
                     duration,
                 );
+            }
+        },
+    ),
+    CoherenceFunction.create(
+        [
+            "updateRap", // so generated keyMoments have been applied already
+            "activeActors",
+        ],
+        function initCellKeyMoments({ activeActors }) {
+            // The keyMoments of the cell actors are generated data (see
+            // applyAxesMathLocations: keyMoments[GENERATED_DATA] = 'axesMath')
+            // and hence they are not serialized. When a state is loaded
+            // from a serialization, updateRap may not re-create them,
+            // however, the cell actor UI expects keyMoments[0] to always
+            // exist, so we restore that invariant here.
+            const cellsPath = "0/instance/activeActors/0/instance/activeActors",
+                cells = getEntry(
+                    unwrapPotentialWriteProxy(activeActors),
+                    cellsPath,
+                    null,
+                );
+            if (cells === null)
+                // Nothing to do
+                return;
+            for (const key of cells.ownKeys()) {
+                const instance = getEntry(cells, `${key}/instance`);
+                if (
+                    !instance.has("keyMoments") ||
+                    instance.get("keyMoments").size !== 0
+                )
+                    continue;
+                const keyMomentsDraft = getDraftEntry(
+                        unwrapPotentialWriteProxy(activeActors, "ensureDraft"),
+                        `${cellsPath}/${key}/instance/keyMoments`,
+                    ),
+                    KeyMomentModel = keyMomentsDraft.constructor.Model;
+                keyMomentsDraft.push(
+                    KeyMomentModel.createPrimalDraft(
+                        keyMomentsDraft.dependencies,
+                    ),
+                );
+                // Like in applyAxesMathLocations: generated data must
+                // not be serialized.
+                keyMomentsDraft[GENERATED_DATA] = "axesMath";
             }
         },
     ),
