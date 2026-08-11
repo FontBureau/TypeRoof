@@ -85,6 +85,7 @@ app menu
 
         ul,
         li {
+            display: flex;
             list-style: none;
             margin: 0 !important;
             padding: 0;
@@ -96,6 +97,7 @@ app menu
             border: 0;
             border-radius: 0;
             display: block;
+            flex-grow: 1;
             font-size: 1em;
             height: auto;
             padding: 0.5em;
@@ -113,5 +115,9 @@ app menu
         > menu {
             display: block;
         }
+    }
+
+    .typeroof-app-menu-state_file_input {
+        display: none;
     }
 }

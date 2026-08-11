@@ -1628,45 +1628,6 @@ collapsible
     width: 100%;
 }
 
-.ui-dialog-manage_state-serialize_output {
-    font-family: monospace;
-    white-space: pre;
-    width: 80vw;
-    min-height: 10em;
-    display: block;
-    overflow: auto;
-}
-
-.ui-dialog-manage_state-message-status_reset {
-    display: none;
-}
-
-:is(
-        .ui-dialog-manage_state-message-status_success,
-        .ui-dialog-manage_state-message-status_fail
-    )
-    .ui-dialog-manage_state-message-process_label::after {
-    text-transform: uppercase;
-    color: white;
-    margin-left: 0.3em;
-
-    /* top/bottom padding seems to work nicely in the <legend> context */
-    padding: 0.3em;
-    font-weight: bolder;
-}
-
-.ui-dialog-manage_state-message-status_success
-    .ui-dialog-manage_state-message-process_label::after {
-    content: "succeeded";
-    background: darkgreen;
-}
-
-.ui-dialog-manage_state-message-status_fail
-    .ui-dialog-manage_state-message-process_label::after {
-    content: "failed";
-    background: darkred;
-}
-
 .ui_missing-ui_element {
     --border-spec: 1px dashed red;
 
