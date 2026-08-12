@@ -1117,6 +1117,9 @@ const VideoproofModel = _BaseLayoutModel.createClass(
                 // self contained when copied e.g. to motion-stage.
                 // This creates a duplication of the information in
                 // the global font key.
+                // TODO: when copying actors between layouts is implemented,
+                // GENERATED_DATA markers must be stripped on the way out,
+                // see the NOTE in applyAxesMathLocations in axes-math.mjs.
                 getVideoproofActorDraft("localActiveFontKey").set(
                     font.value.fullName,
                 );
