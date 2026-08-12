@@ -7,6 +7,7 @@ import {
     CoherenceFunction,
     StaticDependency,
     BooleanDefaultTrueModel,
+    GENERATED_DATA,
 } from "../../metamodel.mjs";
 
 import { zip } from "../../util.mjs";
@@ -1116,6 +1117,9 @@ const VideoproofModel = _BaseLayoutModel.createClass(
                 // self contained when copied e.g. to motion-stage.
                 // This creates a duplication of the information in
                 // the global font key.
+                // TODO: when copying actors between layouts is implemented,
+                // GENERATED_DATA markers must be stripped on the way out,
+                // see the NOTE in applyAxesMathLocations in axes-math.mjs.
                 getVideoproofActorDraft("localActiveFontKey").set(
                     font.value.fullName,
                 );
@@ -1203,13 +1207,33 @@ const VideoproofModel = _BaseLayoutModel.createClass(
                     videoproofActor.isDraft &&
                     videoproofActor.has("activeActors") &&
                     videoproofActor.get("activeActors").isDraft,
-                looksLikeNew = videoproofActor.get("keyMoments").size <= 1;
+                keyMoments = videoproofActor.get("keyMoments"),
+                looksLikeNew = keyMoments.size <= 1,
+                // Legacy states, serialized before keyMoments ownership
+                // became per-entry, contain the generated animation
+                // keyMoments unmarked, as if they were user data. They are
+                // detected here and regenerated from axesMath below;
+                // keyMoments[0], the property-setting keyMoment with the
+                // user settings, is preserved by the regeneration.
+                hasLegacyKeyMoments =
+                    keyMoments.size > 1 &&
+                    !Object.hasOwn(
+                        unwrapPotentialWriteProxy(keyMoments.get("1")),
+                        GENERATED_DATA,
+                    );
             if (
                 looksLikeNew ||
+                hasLegacyKeyMoments ||
                 childrenPotentiallyRequireKeyMoments ||
                 axesMath.isDraft ||
                 fontHasChanged
             ) {
+                if (hasLegacyKeyMoments)
+                    console.warn(
+                        "VideoproofModel: migrating legacy state: animation " +
+                            "keyMoments are regenerated from axesMath, user " +
+                            "settings on keyMoments[0] are preserved.",
+                    );
                 const videoproofActorDraft = videoproofActor.isDraft
                     ? videoproofActor
                     : getDraftEntry(
@@ -1225,6 +1249,46 @@ const VideoproofModel = _BaseLayoutModel.createClass(
                     installedFonts,
                     font,
                     duration,
+                );
+            }
+        },
+    ),
+    CoherenceFunction.create(
+        [
+            "updateRap", // so generated keyMoments have been applied already
+            "activeActors",
+        ],
+        function initCellKeyMoments({ activeActors }) {
+            // keyMoments[0] of the cell actors is the property-setting
+            // keyMoment (user data) and the cell actor UI expects it to
+            // always exist. It can be missing after loading a state
+            // (e.g. serialized before cell keyMoments were user data),
+            // so we restore that invariant here.
+            const cellsPath = "0/instance/activeActors/0/instance/activeActors",
+                cells = getEntry(
+                    unwrapPotentialWriteProxy(activeActors),
+                    cellsPath,
+                    null,
+                );
+            if (cells === null)
+                // Nothing to do
+                return;
+            for (const key of cells.ownKeys()) {
+                const instance = getEntry(cells, `${key}/instance`);
+                if (
+                    !instance.has("keyMoments") ||
+                    instance.get("keyMoments").size !== 0
+                )
+                    continue;
+                const keyMomentsDraft = getDraftEntry(
+                        unwrapPotentialWriteProxy(activeActors, "ensureDraft"),
+                        `${cellsPath}/${key}/instance/keyMoments`,
+                    ),
+                    KeyMomentModel = keyMomentsDraft.constructor.Model;
+                keyMomentsDraft.push(
+                    KeyMomentModel.createPrimalDraft(
+                        keyMomentsDraft.dependencies,
+                    ),
                 );
             }
         },

@@ -603,13 +603,28 @@ class InitialStateComparison extends StateComparison {
             paths =
                 dependencies === null
                     ? this._getPathsFromState(newState, anchoring)
-                    : // This way it's not guaranteed that the paths do exist
-                      // in newState, but it is very quick and only creates
-                      // entries for the required dependencies.
-                      (Array.from(dependencies!.keys()).map(
-                          Path.fromString,
-                          Path,
-                      ) as Path[]);
+                    : // This way it's very quick and only creates entries
+                      // for the required dependencies, however, it's not
+                      // guaranteed that the paths do exist in newState.
+                      // E.g. a widget can depend on a list item that is
+                      // not present in newState. Paths that can't be
+                      // resolved are skipped, as they would break
+                      // _getRootChangedMap.
+                      (
+                          Array.from(dependencies!.keys()).map(
+                              Path.fromString,
+                              Path,
+                          ) as Path[]
+                      ).filter((pathInstance) => {
+                          const exists =
+                              getEntry(newState, pathInstance, null) !== null;
+                          if (!exists)
+                              console.warn(
+                                  `InitialStateComparison: skipping dependency ` +
+                                      `path, can't be resolved in newState: ${pathInstance.toString()}`,
+                              );
+                          return exists;
+                      });
         for (const pathInstance of paths)
             compareResultEntries.push([
                 COMPARE_STATUSES.NEW,
