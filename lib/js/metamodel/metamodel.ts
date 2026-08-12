@@ -11,6 +11,7 @@ import {
     keyConstraintError,
     isDraftKeyError,
     GENERATED_DATA,
+    SERIALIZE,
 } from "./base-model.ts";
 
 // These are the exports from ./base-model.ts that are used beyond this
@@ -30,6 +31,7 @@ export {
     _BaseSimpleModel,
     SERIALIZE_FORMAT_OBJECT,
     GENERATED_DATA,
+    SERIALIZE,
 };
 
 import { CoherenceFunction } from "./coherence-function.ts";
