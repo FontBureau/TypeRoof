@@ -7,7 +7,6 @@ import {
     CoherenceFunction,
     StaticDependency,
     BooleanDefaultTrueModel,
-    GENERATED_DATA,
 } from "../../metamodel.mjs";
 
 import { zip } from "../../util.mjs";
@@ -1239,12 +1238,11 @@ const VideoproofModel = _BaseLayoutModel.createClass(
             "activeActors",
         ],
         function initCellKeyMoments({ activeActors }) {
-            // The keyMoments of the cell actors are generated data (see
-            // applyAxesMathLocations: keyMoments[GENERATED_DATA] = 'axesMath')
-            // and hence they are not serialized. When a state is loaded
-            // from a serialization, updateRap may not re-create them,
-            // however, the cell actor UI expects keyMoments[0] to always
-            // exist, so we restore that invariant here.
+            // keyMoments[0] of the cell actors is the property-setting
+            // keyMoment (user data) and the cell actor UI expects it to
+            // always exist. It can be missing after loading a state
+            // (e.g. serialized before cell keyMoments were user data),
+            // so we restore that invariant here.
             const cellsPath = "0/instance/activeActors/0/instance/activeActors",
                 cells = getEntry(
                     unwrapPotentialWriteProxy(activeActors),
@@ -1271,9 +1269,6 @@ const VideoproofModel = _BaseLayoutModel.createClass(
                         keyMomentsDraft.dependencies,
                     ),
                 );
-                // Like in applyAxesMathLocations: generated data must
-                // not be serialized.
-                keyMomentsDraft[GENERATED_DATA] = "axesMath";
             }
         },
     ),
