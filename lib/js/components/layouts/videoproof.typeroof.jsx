@@ -7,6 +7,7 @@ import {
     CoherenceFunction,
     StaticDependency,
     BooleanDefaultTrueModel,
+    GENERATED_DATA,
 } from "../../metamodel.mjs";
 
 import { zip } from "../../util.mjs";
@@ -1206,13 +1207,33 @@ const VideoproofModel = _BaseLayoutModel.createClass(
                     videoproofActor.isDraft &&
                     videoproofActor.has("activeActors") &&
                     videoproofActor.get("activeActors").isDraft,
-                looksLikeNew = videoproofActor.get("keyMoments").size <= 1;
+                keyMoments = videoproofActor.get("keyMoments"),
+                looksLikeNew = keyMoments.size <= 1,
+                // Legacy states, serialized before keyMoments ownership
+                // became per-entry, contain the generated animation
+                // keyMoments unmarked, as if they were user data. They are
+                // detected here and regenerated from axesMath below;
+                // keyMoments[0], the property-setting keyMoment with the
+                // user settings, is preserved by the regeneration.
+                hasLegacyKeyMoments =
+                    keyMoments.size > 1 &&
+                    !Object.hasOwn(
+                        unwrapPotentialWriteProxy(keyMoments.get("1")),
+                        GENERATED_DATA,
+                    );
             if (
                 looksLikeNew ||
+                hasLegacyKeyMoments ||
                 childrenPotentiallyRequireKeyMoments ||
                 axesMath.isDraft ||
                 fontHasChanged
             ) {
+                if (hasLegacyKeyMoments)
+                    console.warn(
+                        "VideoproofModel: migrating legacy state: animation " +
+                            "keyMoments are regenerated from axesMath, user " +
+                            "settings on keyMoments[0] are preserved.",
+                    );
                 const videoproofActorDraft = videoproofActor.isDraft
                     ? videoproofActor
                     : getDraftEntry(
