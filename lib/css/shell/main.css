@@ -25,6 +25,25 @@ layout and font
 
 .layout-and-font {
     padding: 1em;
+
+    .ui_font-select_label,
+    .ui_generic_select-label {
+        text-align: right;
+        width: 14% !important;
+    }
+
+    .ui_font-select_select {
+        &,
+        &::picker(select) {
+            /* stylelint-disable-next-line declaration-property-value-no-unknown */
+            appearance: base-select;
+            flex-shrink: 100;
+        }
+    }
+
+    .ui_font-select_label {
+        display: initial;
+    }
 }
 
 .fonts-manager-list {
@@ -874,6 +893,7 @@ ui plain select
 *******************************************************************************/
 
 .number-and-range-input,
+.ui_font-select,
 .ui_generic_select,
 .ui_plain_select {
     align-items: center;
@@ -2180,7 +2200,7 @@ select menus...
 /**************************************************************************** */
 
 .ui_type_spec_select-select,
-:not(.layout-and-font) > .ui_font-select > .ui_font-select_select {
+.ui_font-select_select {
     /* This made long options overflow and break, the overflow options
      * below did not have an effect (in Chrome).
      * value `auto` restores expected behavior.
@@ -2192,4 +2212,8 @@ select menus...
 
     width: 100%;
     text-overflow: ellipsis;
+}
+
+.ui_font-select_label {
+    display: none;
 }
