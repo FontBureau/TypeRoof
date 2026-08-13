@@ -87,6 +87,38 @@ function _getMMChildIsBlock(proseMirrorNodeSpec, mmNodeSpecMap, mmNode) {
     return false;
 }
 
+// Approximation of prosemirror-model's compiled NodeType.inlineContent
+// for raw node specs (metamodel NodeSpecModel and PM default-schema
+// NodeSpec alike): inline nodes — and nodes whose content expression
+// mentions the inline group — put their children into an inline context.
+// TODO: `/\binline\b/` won't catch expressions that reach inline content
+// only via a custom group name; the spec editor lets users define custom
+// inline-ish groups, so we should be more complete here!
+function _specChildrenInInlineContext(inlineFlag, contentExpr) {
+    return (
+        !!inlineFlag ||
+        (typeof contentExpr === "string" && /\binline\b/.test(contentExpr))
+    );
+}
+
+// Shared derivation of the "reproducing" rendering directives from a
+// node's attrs; hasAttr(name) reports whether the spec (metamodel
+// AttributeSpecMapModel or PM AttributeSpecs object) declares the attr.
+// Mirrors integration's conventions: html → verbatim inner HTML
+// (_createReproducingToDOM), htmlAttrs → attribute bag, htmlTag →
+// reproduce the matched element's tag (_reproducingTag).
+function _getRenderingAttrDirectives(hasAttr, attrs) {
+    return {
+        // TODO: html should only be used when it is an atom, also in
+        // integration. Also, maybe don't initialize UIDocumentNodes if
+        // this is a leaf node.
+        innerHtml: hasAttr("html") && attrs.html ? attrs.html : null,
+        attributes:
+            hasAttr("htmlAttrs") && attrs.htmlAttrs ? attrs.htmlAttrs : null,
+        htmlTag: hasAttr("htmlTag") && attrs.htmlTag ? attrs.htmlTag : null,
+    };
+}
+
 // This should inject it's own e.g. <p> element.
 // It's interesting, the "nodesContainer" might have to change when the
 // typeSpec changes! Thus, creating nodesContainer in the constructor might
@@ -117,64 +149,44 @@ export class UIDocumentElement extends _BaseContainerComponent {
         let innerHtml = null;
         // block-context default, like prosemirror/integration's default param
         let childrenInInlineContext = false;
-        let additionalAttrs = false;
+        // known types get data-node-type; _determineUnknownType overrides
+        // this with the data-unknown-* attribute of the resolved type
+        let additionalAttrs = { "data-node-type": typeKey };
 
         if (nodeSpecMap.has(typeKey)) {
             // FIXME: must update when this.typeKey or nodeSpec[typeKey] changes!
             const nodeSpec = nodeSpecMap.get(typeKey),
                 attributeSpecMap = nodeSpec.get("attrs"),
-                attrs = readMetaModelJSONfromMap(current.get("attrs"), {});
+                attrs = readMetaModelJSONfromMap(current.get("attrs"), {}),
+                renderingDirectives = _getRenderingAttrDirectives(
+                    (name) => attributeSpecMap.has(name),
+                    attrs,
+                );
 
-            if (attributeSpecMap.has("html") && attrs.html) {
-                // TODO: we should only do this when it is an atom
-                // also in integration.
-                innerHtml = attrs.html;
-                // also, maybe don't initialize UIDocumentNodes if this
-                // is a leaf node.
-            }
+            innerHtml = renderingDirectives.innerHtml;
+            attributes = renderingDirectives.attributes;
 
-            if (attributeSpecMap.has("htmlAttrs") && attrs.htmlAttrs)
-                attributes = attrs.htmlAttrs;
-
-            if (attributeSpecMap.has("htmlTag") && attrs.htmlTag)
-                tag = attrs.htmlTag;
-            else if (nodeSpec.has("tag")) {
+            if (renderingDirectives.htmlTag !== null)
+                tag = renderingDirectives.htmlTag;
+            else {
                 const tagOrEmpty = nodeSpec.get("tag");
                 if (!tagOrEmpty.isEmpty && tagOrEmpty.value !== "")
                     tag = tagOrEmpty.value;
             }
 
             const contentExpr = nodeSpec.get("content");
-            childrenInInlineContext =
-                nodeSpec.get("inline").value ||
-                // TODO: Limit to be aware of: `/\binline\b/` won't
-                // catch expressions that reach inline content only via
-                // a custom group name or similar. For most specs (`inline*`,
-                // `block+`, empty) it's exact;
-                // BUT the spec editor lets users define custom inline-ish groups,
-                // we should be more complete here!
-                (!contentExpr.isEmpty && /\binline\b/.test(contentExpr.value));
-            additionalAttrs = { "data-node-type": typeKey };
+            childrenInInlineContext = _specChildrenInInlineContext(
+                nodeSpec.get("inline").value,
+                contentExpr.isEmpty ? null : contentExpr.value,
+            );
         }
         // could be directly in this._defaultSchemaSpec.nodes
         else {
-            // This is a stub, especially, we are not going to run
-            // `schema.toDOM(pmNode)` soon, as it would require to turn
-            // this node and all of it's children into PM-nodes (see _rawCreateProseMirrorNode)
-            // and there's not a lot of precedent, so it would be very
-            // speculative.
-            //
-            // Let's orient on hard_break, as that is a real world case:
-            // hard_break: {
-            //      inline: true,
-            //      group: "inline",
-            //      selectable: false,
-            //      parseDOM: [{ tag: "br" }],
-            //      toDOM() {
-            //          return brDOM;
-            //      },
-            // } as NodeSpec,
-
+            // Mirrors ProseMirror._rawCreateProseMirrorNode in
+            // prosemirror/integration.typeroof.jsx, but renders directly
+            // from the raw specs; see default-schema.ts for the specs
+            // handled here (e.g. hard_break, unknown, unknown_block,
+            // unknown_inline).
             const attrs = readMetaModelJSONfromMap(current.get("attrs"), {});
             // Look at prosemirror/integration.typeroof.jsx ProseMirror._rawCreateProseMirrorNode
             const _determineUnknownType = (typeKey, current) => {
@@ -207,7 +219,7 @@ export class UIDocumentElement extends _BaseContainerComponent {
                         `${this} unknown type "${typeKey}" has` +
                             " mixed block/inline content; ProseMirror will likely throw.",
                     );
-                const [pmTypeName, additionalAttrs] = hasBlock
+                const [pmTypeName, unknownAttrs] = hasBlock
                     ? ["unknown_block", { "data-unknown-block-type": typeKey }]
                     : this._context.inInlineContext
                       ? [
@@ -218,39 +230,34 @@ export class UIDocumentElement extends _BaseContainerComponent {
                 return [
                     pmTypeName,
                     this._defaultSchemaSpec.nodes[pmTypeName],
-                    additionalAttrs,
+                    unknownAttrs,
                 ];
             };
 
-            const [, /*pmTypeName */ nodeSpec, additionalAttrs_] =
+            const [, /*pmTypeName*/ nodeSpec, unknownAttrs] =
                     typeKey in this._defaultSchemaSpec.nodes
                         ? [
                               typeKey,
                               this._defaultSchemaSpec.nodes[typeKey],
-                              { "data-node-type": typeKey },
+                              null,
                           ]
-                        : _determineUnknownType(typeKey, current, attrs),
-                attributeSpec = nodeSpec?.attrs || {};
-            childrenInInlineContext =
-                !!nodeSpec.inline ||
-                // See TODO comment in the brach above about the
-                // validity of this check!
-                (typeof nodeSpec.content === "string" &&
-                    /\binline\b/.test(nodeSpec.content));
+                        : _determineUnknownType(typeKey, current),
+                attributeSpec = nodeSpec?.attrs || {},
+                renderingDirectives = _getRenderingAttrDirectives(
+                    (name) => name in attributeSpec,
+                    attrs,
+                );
 
-            additionalAttrs = additionalAttrs_;
-            if (attributeSpec.html && attrs.html) {
-                // TODO: we should only do this when it is an atom
-                // also in integration.
-                innerHtml = attrs.html;
-                // also, maybe don't initialize UIDocumentNodes if this
-                // is a leaf node.
-            }
+            if (unknownAttrs !== null) additionalAttrs = unknownAttrs;
+            childrenInInlineContext = _specChildrenInInlineContext(
+                nodeSpec.inline,
+                nodeSpec.content,
+            );
+            innerHtml = renderingDirectives.innerHtml;
+            attributes = renderingDirectives.attributes;
 
-            if (attributeSpec.htmlAttrs && attrs.htmlAttrs)
-                attributes = attrs.htmlAttrs;
-
-            if (attributeSpec.htmlTag && attrs.htmlTag) tag = attrs.htmlTag;
+            if (renderingDirectives.htmlTag !== null)
+                tag = renderingDirectives.htmlTag;
             else if (nodeSpec.toDOM) {
                 const domSpec = nodeSpec.toDOM({ attrs }); // duck typing!
                 if (Array.isArray(domSpec)) tag = domSpec[0];
