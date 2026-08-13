@@ -74,6 +74,7 @@ etc
         }
     }
 
+    [data-node-type="reproduce-as-inline"],
     sup[data-node-type="cite-link"] {
         /* FIXME: can be set via UI/TypeSpec */
         padding: 0; /* var(--space-before) 0 var(--space-after) 0; */
