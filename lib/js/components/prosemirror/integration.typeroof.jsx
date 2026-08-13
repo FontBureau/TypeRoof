@@ -235,7 +235,9 @@ export class ProsemirrorNodeView {
                 _applyHtmlAttrsBag(this.dom, node.attrs.htmlAttrs);
             // FIXME: depending on the type of the outer node, this might
             // better be a span.
-            const contentElement = widgetBus.domTool.createElement("div");
+            const contentElement = widgetBus.domTool.createElement("div", {
+                "data-node-content": "",
+            });
             element.append(contentElement);
             // For the subscription it is important that this element is
             // the same as the contentDOM, the element that will be the parent

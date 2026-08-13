@@ -63,3 +63,20 @@ etc
     border-top: 1px solid var(--fieldset-border-color);
     padding: 1em;
 }
+
+:is(.ProseMirror, .typeroof-document) {
+    a[data-node-type="figcontent"] {
+        padding: var(--space-before) 0 var(--space-after) 0;
+
+        &,
+        img {
+            display: block;
+        }
+    }
+
+    sup[data-node-type="cite-link"] {
+        /* FIXME: can be set via UI/TypeSpec */
+        padding: 0; /* var(--space-before) 0 var(--space-after) 0; */
+        display: inline;
+    }
+}

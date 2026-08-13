@@ -12,7 +12,7 @@ import {
     getEffectiveStyleLinks,
 } from "../../prosemirror/type-spec.typeroof.jsx";
 import { getTypeSpecPropertiesIdMethod } from "../../prosemirror/integration.typeroof.jsx";
-import { schemaSpec as proseMirrorDefaultSchema } from "../../prosemirror/default-schema";
+import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
 import { readMetaModelJSONfromMap } from "../../prosemirror/models.typeroof.jsx";
 
 import { applyHtmlAttrsBag } from "../../prosemirror/html-attrs.ts";
@@ -64,6 +64,29 @@ export class UIDocumentElementTypeSpecDropTarget extends _BaseDropTarget {
     }
 }
 
+// Return true if it is block or false if it is inline.
+// ProseNirror Model NodeType:
+//      this.isBlock = !(spec.inline || name == "text")
+// and:
+//      get isInline() { return !this.isBlock }
+function _getMMChildIsBlock(proseMirrorNodeSpec, mmNodeSpecMap, mmNode) {
+    const typeKey = mmNode.get("typeKey").value;
+    if (typeKey === "text") return false;
+    if (mmNodeSpecMap.has(typeKey)) {
+        const mmNodeSpec = mmNodeSpecMap.get(typeKey);
+        return !mmNodeSpec.get("inline").value;
+    }
+    if (proseMirrorNodeSpec[typeKey]) {
+        const pmNodeSpec = proseMirrorNodeSpec[typeKey];
+        return !pmNodeSpec.inline; // spec.inline is optional; !undefined === true → block
+    }
+    // unknown to both: block iff its own content contains a block child
+    for (const grandChild of mmNode.get("content").value)
+        if (_getMMChildIsBlock(proseMirrorNodeSpec, mmNodeSpecMap, grandChild))
+            return true;
+    return false;
+}
+
 // This should inject it's own e.g. <p> element.
 // It's interesting, the "nodesContainer" might have to change when the
 // typeSpec changes! Thus, creating nodesContainer in the constructor might
@@ -76,14 +99,15 @@ export class UIDocumentElement extends _BaseContainerComponent {
     constructor(
         widgetBus,
         _zones,
-        proseMirrorSchema,
+        defaultSchemaSpec,
         originTypeSpecPath,
         documentRootPath,
-        baseClass = "typeroof-document-element",
+        context = { inInlineContext: false },
     ) {
         const zones = new Map(_zones);
         super(widgetBus, zones);
-        this._proseMirrorSchema = proseMirrorSchema;
+        this._defaultSchemaSpec = defaultSchemaSpec;
+        this._context = context;
         // figure out the tag of the element
         const current = this.getEntry("."),
             typeKey = current.get("typeKey").value,
@@ -91,6 +115,10 @@ export class UIDocumentElement extends _BaseContainerComponent {
         let tag = "div"; // default
         let attributes = null;
         let innerHtml = null;
+        // block-context default, like prosemirror/integration's default param
+        let childrenInInlineContext = false;
+        let additionalAttrs = false;
+
         if (nodeSpecMap.has(typeKey)) {
             // FIXME: must update when this.typeKey or nodeSpec[typeKey] changes!
             const nodeSpec = nodeSpecMap.get(typeKey),
@@ -115,18 +143,142 @@ export class UIDocumentElement extends _BaseContainerComponent {
                 if (!tagOrEmpty.isEmpty && tagOrEmpty.value !== "")
                     tag = tagOrEmpty.value;
             }
+
+            const contentExpr = nodeSpec.get("content");
+            childrenInInlineContext =
+                nodeSpec.get("inline").value ||
+                // TODO: Limit to be aware of: `/\binline\b/` won't
+                // catch expressions that reach inline content only via
+                // a custom group name or similar. For most specs (`inline*`,
+                // `block+`, empty) it's exact;
+                // BUT the spec editor lets users define custom inline-ish groups,
+                // we should be more complete here!
+                (!contentExpr.isEmpty && /\binline\b/.test(contentExpr.value));
+            additionalAttrs = { "data-node-type": typeKey };
         }
+        // could be directly in this._defaultSchemaSpec.nodes
+        else {
+            // This is a stub, especially, we are not going to run
+            // `schema.toDOM(pmNode)` soon, as it would require to turn
+            // this node and all of it's children into PM-nodes (see _rawCreateProseMirrorNode)
+            // and there's not a lot of precedent, so it would be very
+            // speculative.
+            //
+            // Let's orient on hard_break, as that is a real world case:
+            // hard_break: {
+            //      inline: true,
+            //      group: "inline",
+            //      selectable: false,
+            //      parseDOM: [{ tag: "br" }],
+            //      toDOM() {
+            //          return brDOM;
+            //      },
+            // } as NodeSpec,
+
+            const attrs = readMetaModelJSONfromMap(current.get("attrs"), {});
+            // Look at prosemirror/integration.typeroof.jsx ProseMirror._rawCreateProseMirrorNode
+            const _determineUnknownType = (typeKey, current) => {
+                const childrenBlockType = {
+                    hasBlock: false,
+                    hasInline: false,
+                };
+                for (const mmChild of current.get("content").value) {
+                    const block = _getMMChildIsBlock(
+                        this._defaultSchemaSpec.nodes,
+                        nodeSpecMap,
+                        mmChild,
+                    );
+                    if (block) {
+                        childrenBlockType.hasBlock = true;
+                        if (childrenBlockType.hasInline) break; // shortcut
+                    } else {
+                        childrenBlockType.hasInline = true;
+                        if (childrenBlockType.hasBlock) break; // shortcut
+                    }
+                }
+                const { hasBlock, hasInline } = childrenBlockType;
+
+                // NOTE: this renderer won't crash, ProseMirror doesn't
+                // accept that, but here we don't have a problem.
+                if (hasBlock && hasInline)
+                    // log-and-crash (operator decision): schema.node below
+                    // will throw on the invalid content mix.
+                    console.warn(
+                        `${this} unknown type "${typeKey}" has` +
+                            " mixed block/inline content; ProseMirror will likely throw.",
+                    );
+                const [pmTypeName, additionalAttrs] = hasBlock
+                    ? ["unknown_block", { "data-unknown-block-type": typeKey }]
+                    : this._context.inInlineContext
+                      ? [
+                            "unknown_inline",
+                            { "data-unknown-inline-type": typeKey },
+                        ]
+                      : ["unknown", { "data-unknown-type": typeKey }];
+                return [
+                    pmTypeName,
+                    this._defaultSchemaSpec.nodes[pmTypeName],
+                    additionalAttrs,
+                ];
+            };
+
+            const [, /*pmTypeName */ nodeSpec, additionalAttrs_] =
+                    typeKey in this._defaultSchemaSpec.nodes
+                        ? [
+                              typeKey,
+                              this._defaultSchemaSpec.nodes[typeKey],
+                              { "data-node-type": typeKey },
+                          ]
+                        : _determineUnknownType(typeKey, current, attrs),
+                attributeSpec = nodeSpec?.attrs || {};
+            childrenInInlineContext =
+                !!nodeSpec.inline ||
+                // See TODO comment in the brach above about the
+                // validity of this check!
+                (typeof nodeSpec.content === "string" &&
+                    /\binline\b/.test(nodeSpec.content));
+
+            additionalAttrs = additionalAttrs_;
+            if (attributeSpec.html && attrs.html) {
+                // TODO: we should only do this when it is an atom
+                // also in integration.
+                innerHtml = attrs.html;
+                // also, maybe don't initialize UIDocumentNodes if this
+                // is a leaf node.
+            }
+
+            if (attributeSpec.htmlAttrs && attrs.htmlAttrs)
+                attributes = attrs.htmlAttrs;
+
+            if (attributeSpec.htmlTag && attrs.htmlTag) tag = attrs.htmlTag;
+            else if (nodeSpec.toDOM) {
+                const domSpec = nodeSpec.toDOM({ attrs }); // duck typing!
+                if (Array.isArray(domSpec)) tag = domSpec[0];
+                else if (domSpec?.nodeType === Node.ELEMENT_NODE)
+                    tag = domSpec.tagName.toLowerCase();
+            }
+        }
+
+        const childrenContext = {
+            ...this._context,
+            inInlineContext: childrenInInlineContext,
+        };
+
         this._treatAsLeaf = innerHtml !== null;
         const localContainer = widgetBus.domTool.createElement(tag);
 
         if (attributes) applyHtmlAttrsBag(localContainer, attributes);
+
+        if (additionalAttrs) {
+            for (const [name, value] of Object.entries(additionalAttrs))
+                localContainer.setAttribute(name, value);
+        }
 
         if (innerHtml)
             localContainer.append(
                 widgetBus.domTool.createFragmentFromHTML(innerHtml),
             );
 
-        localContainer.classList.add(`${baseClass}`);
         zones.set("local", localContainer);
 
         this.node = localContainer;
@@ -160,10 +312,11 @@ export class UIDocumentElement extends _BaseContainerComponent {
                     ],
                     UIDocumentNodes,
                     this._zones,
-                    this._proseMirrorSchema,
+                    this._defaultSchemaSpec,
                     this.nodesElement,
                     originTypeSpecPath,
                     documentRootPath,
+                    childrenContext, // context
                 ],
             ];
             this._initWidgets(widgets);
@@ -276,12 +429,12 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
     constructor(
         widgetBus,
         zones,
-        proseMirrorSchema,
+        defaultSchemaSpec,
         originTypeSpecPath,
         documentRootPath,
     ) {
         super(widgetBus, zones);
-        this._proseMirrorSchema = proseMirrorSchema;
+        this._defaultSchemaSpec = defaultSchemaSpec;
         this.node = this._domTool.createTextNode("(initializing)");
         this.widgetBus.insertDocumentNode(this.node);
         this._originTypeSpecPath = originTypeSpecPath;
@@ -405,7 +558,7 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
             styleLinkType = null,
             styleName = null;
 
-        // this._proseMirrorSchema.marks
+        // this._defaultSchemaSpec.marks
         // build from inside out:
         for (const mark of marksList.value.toReversed()) {
             const markType = mark.get("typeKey").value,
@@ -417,7 +570,7 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
                 kind = "intent";
                 htmlAttributes =
                     "htmlAttrs" in
-                    this._proseMirrorSchema.marks["generic-style"];
+                    this._defaultSchemaSpec.marks["generic-style"];
                 // intent style ...
                 styleLinkName = attrs["data-style-name"] || null;
                 styleLinkType = "intentStyleLinks";
@@ -438,9 +591,9 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
                         tag = tagOrEmpty.value;
                     styleName = edge.get("stylePatch").value;
                 }
-            } else if (markType in this._proseMirrorSchema.marks) {
+            } else if (markType in this._defaultSchemaSpec.marks) {
                 kind = "native";
-                const pmMarkSpec = this._proseMirrorSchema.marks[markType];
+                const pmMarkSpec = this._defaultSchemaSpec.marks[markType];
                 htmlAttributes = "htmlAttrs" in pmMarkSpec;
                 if ("tag" in pmMarkSpec && pmMarkSpec.tag !== "")
                     tag = pmMarkSpec.tag;
@@ -590,22 +743,25 @@ export class UIDocumentNode extends _BaseContainerComponent {
     constructor(
         widgetBus,
         zones,
-        proseMirrorSchema,
+        defaultSchemaSpec,
         originTypeSpecPath,
         documentRootPath,
+        context,
     ) {
         super(widgetBus, zones);
-        this._proseMirrorSchema = proseMirrorSchema;
+        this._defaultSchemaSpec = defaultSchemaSpec;
         this._originTypeSpecPath = originTypeSpecPath;
         this._documentRootPath = documentRootPath;
+        this._context = context;
         this._currentTypeKey = null;
     }
 
     _createWrapperForType(typeKey) {
         const settings = {
-            rootPath: Path.fromParts("."),
-            id: "contentWidget",
-        };
+                rootPath: Path.fromParts("."),
+                id: "contentWidget",
+            },
+            moreArgs = [];
         let Constructor, dependencyMappings;
         if (typeKey === "text") {
             dependencyMappings = [
@@ -629,13 +785,15 @@ export class UIDocumentNode extends _BaseContainerComponent {
                 ],
             ];
             Constructor = UIDocumentElement;
+            moreArgs.push(this._context);
         }
 
         const args = [
                 this._zones,
-                this._proseMirrorSchema,
+                this._defaultSchemaSpec,
                 this._originTypeSpecPath,
                 this._documentRootPath,
+                ...moreArgs,
             ],
             childWidgetBus = this._childrenWidgetBus;
         return this._initWrapper(
@@ -669,17 +827,19 @@ export class UIDocumentNodes extends _BaseDynamicMapContainerComponent {
     constructor(
         widgetBus,
         zones,
-        proseMirrorSchema,
+        defaultSchemaSpec,
         nodesElement,
         originTypeSpecPath,
         documentRootPath,
+        context,
     ) {
         super(widgetBus, zones);
-        this._proseMirrorSchema = proseMirrorSchema;
+        this._defaultSchemaSpec = defaultSchemaSpec;
         this._nodesElement = nodesElement;
         this._nodeSlots = new Map();
         this._originTypeSpecPath = originTypeSpecPath;
         this._documentRootPath = documentRootPath;
+        this._context = context;
 
         const insertNodeIntoSlot = this._insertNodeIntoSlot.bind(this);
         this._childrenWidgetBus.insertDocumentNode = function (node) {
@@ -817,9 +977,10 @@ export class UIDocumentNodes extends _BaseDynamicMapContainerComponent {
             Constructor = UIDocumentNode,
             args = [
                 this._zones,
-                this._proseMirrorSchema,
+                this._defaultSchemaSpec,
                 this._originTypeSpecPath,
                 this._documentRootPath,
+                this._context,
             ],
             childWidgetBus = Object.create(this._childrenWidgetBus); // inherit
         childWidgetBus.nodeKey = key;
@@ -860,10 +1021,11 @@ export class UIDocumentViewer extends _BaseContainerComponent {
                 ],
                 UIDocumentNodes,
                 this._zones,
-                proseMirrorDefaultSchema,
+                proseMirrorDefaultSchemaSpec,
                 this.nodesElement,
                 originTypeSpecPath,
                 this.widgetBus.rootPath, // documentRootPath
+                { inInlineContext: false }, // context
             ],
         ];
         this._initWidgets(widgets);
