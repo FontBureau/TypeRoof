@@ -242,7 +242,10 @@ export class AppMenu extends _BaseContainerComponent {
     update(compareResult) {
         super.update(compareResult);
         if (this._manageFontsDialog !== null) {
-            this._manageFontsDialog.setFonts(this._getRemovableFonts());
+            this._manageFontsDialog.setFonts(
+                this._getRemovableFonts(),
+                this.getEntry("installedFonts").value,
+            );
         }
     }
 
@@ -270,7 +273,10 @@ export class AppMenu extends _BaseContainerComponent {
         );
         this._manageFontsDialog = dialog;
         try {
-            return await dialog.show(this._getRemovableFonts());
+            return await dialog.show(
+                this._getRemovableFonts(),
+                this.getEntry("installedFonts").value,
+            );
         } finally {
             this._manageFontsDialog = null;
             dialog.destroy();
