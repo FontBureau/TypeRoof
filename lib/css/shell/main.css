@@ -46,19 +46,28 @@ layout and font
     }
 }
 
-.fonts-manager-list {
-    margin: 0 0 0.5em !important;
+/******************************************************************************
+dialog manage fonts
+*******************************************************************************/
+
+dialog {
+    min-width: 50vw;
+    margin: 0;
+    top: 10vh;
+    left: 50%;
+    translate: -50% 0;
+
+    h4 {
+        margin-top: 0;
+    }
+}
+
+.dialog-fonts {
+    margin: 1em 0;
     padding: 0;
     background-color: var(--background-color);
     border: 1px solid var(--input-border-color);
     max-height: 15rem;
-    overflow-y: scroll;
-
-    > div {
-        font-size: 0.9em;
-        font-weight: 700;
-        padding: 0.5em 0.75em;
-    }
 
     ul {
         list-style: none;
@@ -68,32 +77,15 @@ layout and font
 
     li {
         background-color: var(--list-item-odd-bg);
+        font-size: 0.9em;
         display: flex;
         align-items: center;
+        gap: 1em;
         justify-content: space-between;
+        padding: 0.5em;
 
         &:nth-child(odd) {
             background-color: var(--list-item-even-bg);
-        }
-
-        &.selected {
-            font-weight: bold;
-        }
-
-        > button {
-            background: none;
-            border: 0;
-            flex-direction: column;
-            font-weight: inherit;
-            align-items: start;
-            height: auto;
-            padding: 0.75em;
-            text-align: left;
-            text-wrap: wrap;
-
-            > .version {
-                font-size: 0.9em;
-            }
         }
     }
 }
@@ -1878,14 +1870,6 @@ dimension sequence
     > .ui_opentype_features_chooser {
         margin-top: 2em;
     }
-}
-
-/**************************************************************************** */
-
-.dialog-multi_select_fonts {
-    list-style: none;
-    margin: 0 0 1rem;
-    padding: 0;
 }
 
 /******************************************************************************
