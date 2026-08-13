@@ -51,7 +51,9 @@ dialog manage fonts
 *******************************************************************************/
 
 dialog {
-    min-width: 50vw;
+    width: 50vw;
+    min-width: 400px;
+    max-width: 700px;
     margin: 0;
     top: 10vh;
     left: 50%;
@@ -67,7 +69,8 @@ dialog {
     padding: 0;
     background-color: var(--background-color);
     border: 1px solid var(--input-border-color);
-    max-height: 15rem;
+    height: 15rem;
+    overflow-y: scroll;
 
     ul {
         list-style: none;
@@ -81,7 +84,7 @@ dialog {
         display: flex;
         align-items: center;
         gap: 1em;
-        justify-content: space-between;
+        justify-content: start;
         padding: 0.5em;
 
         &:nth-child(odd) {

@@ -165,10 +165,11 @@ button:not(:disabled):hover {
 button:disabled {
     border-color: var(--button-border-color-disabled);
     color: var(--button-text-color-disabled);
+    cursor: not-allowed;
 
     > span {
         color: var(--button-border-color-disabled);
-        cursor: default;
+        pointer-events: none;
     }
 }
 
