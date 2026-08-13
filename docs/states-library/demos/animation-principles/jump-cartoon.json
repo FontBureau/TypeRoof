@@ -1,0 +1,576 @@
+{
+  "activeState": {
+    "t": "0",
+    "duration": "1.2",
+    "perpetual": "1",
+    "keyMoments": [
+      {
+        "label": "Key Moment 1",
+        "duration": "1",
+        "easing": "linear",
+        "isActive": "1",
+        "stageBackgroundColor": {
+          "instance": {
+            "R": "0.00000",
+            "G": "69.53125",
+            "B": "99.60938"
+          },
+          "colorTypeKey": "RGB"
+        }
+      }
+    ],
+    "activeActors": [
+      {
+        "instance": {
+          "label": "cloud1",
+          "activeActors": [
+            {
+              "instance": {
+                "label": "a",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "40"
+                      ],
+                      [
+                        "y",
+                        "50"
+                      ],
+                      [
+                        "r",
+                        "50"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "57.03125",
+                        "G": "82.42188",
+                        "B": "99.60938"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "CircleActorModel"
+            },
+            {
+              "instance": {
+                "label": "b",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "100"
+                      ],
+                      [
+                        "y",
+                        "40"
+                      ],
+                      [
+                        "r",
+                        "60"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "57.03125",
+                        "G": "82.42188",
+                        "B": "99.60938"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "CircleActorModel"
+            },
+            {
+              "instance": {
+                "label": "c",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "190"
+                      ],
+                      [
+                        "y",
+                        "60"
+                      ],
+                      [
+                        "r",
+                        "40"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "57.03125",
+                        "G": "82.42188",
+                        "B": "99.60938"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "CircleActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "cloud2",
+          "activeActors": [
+            {
+              "instance": {
+                "label": "a",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "520"
+                      ],
+                      [
+                        "y",
+                        "90"
+                      ],
+                      [
+                        "r",
+                        "35"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "57.03125",
+                        "G": "82.42188",
+                        "B": "99.60938"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "CircleActorModel"
+            },
+            {
+              "instance": {
+                "label": "b",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "560"
+                      ],
+                      [
+                        "y",
+                        "80"
+                      ],
+                      [
+                        "r",
+                        "45"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "57.03125",
+                        "G": "82.42188",
+                        "B": "99.60938"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "CircleActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "tree1",
+          "activeActors": [
+            {
+              "instance": {
+                "label": "a",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "-40"
+                      ],
+                      [
+                        "y",
+                        "410"
+                      ],
+                      [
+                        "r",
+                        "55"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "16.01563",
+                        "G": "46.09375",
+                        "B": "44.92188"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "CircleActorModel"
+            },
+            {
+              "instance": {
+                "label": "b",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "1",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "30"
+                      ],
+                      [
+                        "y",
+                        "420"
+                      ],
+                      [
+                        "r",
+                        "50"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "16.01563",
+                        "G": "46.09375",
+                        "B": "44.92188"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "CircleActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "tree2",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "640"
+                ],
+                [
+                  "y",
+                  "400"
+                ],
+                [
+                  "r",
+                  "60"
+                ]
+              ],
+              "fillColor": {
+                "instance": {
+                  "R": "16.01563",
+                  "G": "46.09375",
+                  "B": "44.92188"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "CircleActorModel"
+      },
+      {
+        "instance": {
+          "label": "ground",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "width",
+                  "720"
+                ],
+                [
+                  "height",
+                  "220"
+                ],
+                [
+                  "x",
+                  "0"
+                ],
+                [
+                  "y",
+                  "500"
+                ]
+              ],
+              "fillColor": {
+                "instance": {
+                  "R": "17.18750",
+                  "G": "51.95313",
+                  "B": "50.39063"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "RectangleActorModel"
+      },
+      {
+        "instance": {
+          "label": "focus",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "220"
+                ],
+                [
+                  "y",
+                  "570"
+                ],
+                [
+                  "width",
+                  "280"
+                ],
+                [
+                  "height",
+                  "50"
+                ]
+              ],
+              "fillColor": {
+                "instance": {
+                  "R": "8.98438",
+                  "G": "39.06250",
+                  "B": "37.89063"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "EllipseActorModel"
+      },
+      {
+        "instance": {
+          "isLoop": "1",
+          "label": "",
+          "keyMoments": [
+            {
+              "label": "Impact",
+              "duration": "10",
+              "easing": "easeOutQuad",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "width",
+                  "300"
+                ],
+                [
+                  "x",
+                  "210"
+                ],
+                [
+                  "y",
+                  "100"
+                ]
+              ],
+              "axesLocations": [
+                [
+                  "opsz",
+                  "43"
+                ],
+                [
+                  "wght",
+                  "900"
+                ],
+                [
+                  "wdth",
+                  "155"
+                ],
+                [
+                  "YTDE",
+                  "-98"
+                ]
+              ],
+              "fontSize": "43.2",
+              "textColor": {
+                "instance": {
+                  "R": "100.00000",
+                  "G": "100.00000",
+                  "B": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              },
+              "textRun": "Jump",
+              "textAlign": "center",
+              "positioningVertical": "bottom"
+            },
+            {
+              "label": " Push off",
+              "duration": "15",
+              "easing": "easeInSine",
+              "numericProperties": [
+                [
+                  "y",
+                  "200"
+                ]
+              ],
+              "axesLocations": [
+                [
+                  "opsz",
+                  "82.8"
+                ],
+                [
+                  "wght",
+                  "650"
+                ],
+                [
+                  "wdth",
+                  "25"
+                ],
+                [
+                  "YTDE",
+                  "-203"
+                ]
+              ],
+              "fontSize": "62.1"
+            },
+            {
+              "label": "Apex",
+              "duration": "35",
+              "easing": "easeOutSine",
+              "numericProperties": [
+                [
+                  "y",
+                  "420"
+                ]
+              ],
+              "axesLocations": [
+                [
+                  "wght",
+                  "700"
+                ],
+                [
+                  "wdth",
+                  "100"
+                ],
+                [
+                  "opsz",
+                  "72"
+                ],
+                [
+                  "YTDE",
+                  "-203"
+                ]
+              ],
+              "fontSize": "54"
+            },
+            {
+              "label": "Falling",
+              "duration": "40",
+              "easing": "easeInSine",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "y",
+                  "165"
+                ]
+              ],
+              "axesLocations": [
+                [
+                  "opsz",
+                  "82.8"
+                ],
+                [
+                  "wght",
+                  "650"
+                ],
+                [
+                  "wdth",
+                  "25"
+                ],
+                [
+                  "YTDE",
+                  "-203"
+                ]
+              ],
+              "fontSize": "62.1"
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      }
+    ],
+    "width": "720",
+    "height": "720",
+    "zoomLevel": {
+      "type": "app-default",
+      "scaling": "100.00000"
+    },
+    "editingActor": "./6"
+  },
+  "activeLayoutKey": "MotionStage",
+  "activeFontKey": "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"
+}
