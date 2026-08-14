@@ -241,12 +241,10 @@ export class AppMenu extends _BaseContainerComponent {
      */
     update(compareResult) {
         super.update(compareResult);
-        if (this._manageFontsDialog !== null) {
-            this._manageFontsDialog.setFonts(
-                this._getRemovableFonts(),
-                this.getEntry("installedFonts").value,
-            );
-        }
+        this._manageFontsDialog?.setFonts(
+            this._getRemovableFonts(),
+            this.getEntry("installedFonts").value,
+        );
     }
 
     _getRemovableFonts() {
@@ -297,7 +295,7 @@ export class AppMenu extends _BaseContainerComponent {
         for (const id of this._menuItemIds) {
             // null when the widget is not created (yet).
             const menuItem = this.getWidgetById(id, null);
-            if (menuItem !== null && !menuItem.contains(event.target)) {
+            if (!menuItem?.contains(event.target)) {
                 menuItem.close();
             }
         }
