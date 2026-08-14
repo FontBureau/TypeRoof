@@ -152,6 +152,10 @@ export class UIDocumentElement extends _BaseContainerComponent {
         // known types get data-node-type; _determineUnknownType overrides
         // this with the data-unknown-* attribute of the resolved type
         let additionalAttrs = { "data-node-type": typeKey };
+        // ProseMirror parity: per-node typeSpec styling (the nodeViews in
+        // integration) exists only for node types of the metamodel schema;
+        // default-schema-only and unknown-resolved types get none.
+        this._hasTypeSpecStyling = nodeSpecMap.has(typeKey);
 
         if (nodeSpecMap.has(typeKey)) {
             // FIXME: must update when this.typeKey or nodeSpec[typeKey] changes!
@@ -269,6 +273,9 @@ export class UIDocumentElement extends _BaseContainerComponent {
         const childrenContext = {
             ...this._context,
             inInlineContext: childrenInInlineContext,
+            // the immediate parent element decides mark styling, mirroring
+            // ProseMirror where marks attach only to subscribed nodeViews
+            hasTypeSpecStyling: this._hasTypeSpecStyling,
         };
 
         this._treatAsLeaf = innerHtml !== null;
@@ -295,10 +302,6 @@ export class UIDocumentElement extends _BaseContainerComponent {
         this._originTypeSpecPath = originTypeSpecPath;
         this._documentRootPath = documentRootPath;
         this._typeSpecStylerWrapper = null;
-        // ProseMirror parity: per-node typeSpec styling (the nodeViews in
-        // integration) exists only for node types of the metamodel schema;
-        // default-schema-only and unknown-resolved types get none.
-        this._hasTypeSpecStyling = nodeSpecMap.has(typeKey);
 
         if (!this._treatAsLeaf) {
             const widgets = [
@@ -452,9 +455,11 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
         defaultSchemaSpec,
         originTypeSpecPath,
         documentRootPath,
+        context,
     ) {
         super(widgetBus, zones);
         this._defaultSchemaSpec = defaultSchemaSpec;
+        this._context = context;
         this.node = this._domTool.createTextNode("(initializing)");
         this.widgetBus.insertDocumentNode(this.node);
         this._originTypeSpecPath = originTypeSpecPath;
@@ -577,6 +582,11 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
             styleLinkName = null,
             styleLinkType = null,
             styleName = null;
+        // ProseMirror parity: when the enclosing node has no associated
+        // typeSpec (cf. _hasTypeSpecStyling in UIDocumentElement), style
+        // links are not resolved — marks render with their plain
+        // spec-derived tag and attributes, and receive no styler.
+        const applyStyleLinks = this._context.hasTypeSpecStyling !== false;
 
         // this._defaultSchemaSpec.marks
         // build from inside out:
@@ -594,22 +604,24 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
                 // intent style ...
                 styleLinkName = attrs["data-style-name"] || null;
                 styleLinkType = "intentStyleLinks";
-                if (intentStyleLinks === null)
-                    intentStyleLinks = this._getEffectiveStyleLinks(
-                        typeSpecProperties,
-                        INTENT_STYLE_LINKS,
-                    );
-                // tag is on the edge
-                // or "span"
-                // from @typeSpec
-                // get the edge
-                if (intentStyleLinks.has(styleLinkName)) {
-                    const edge = intentStyleLinks.get(styleLinkName),
-                        tagOrEmpty = edge.get("tag");
-                    if (!tagOrEmpty.isEmpty && tagOrEmpty.value !== "")
-                        // otherwise it remains "span"
-                        tag = tagOrEmpty.value;
-                    styleName = edge.get("stylePatch").value;
+                if (applyStyleLinks) {
+                    if (intentStyleLinks === null)
+                        intentStyleLinks = this._getEffectiveStyleLinks(
+                            typeSpecProperties,
+                            INTENT_STYLE_LINKS,
+                        );
+                    // tag is on the edge
+                    // or "span"
+                    // from @typeSpec
+                    // get the edge
+                    if (intentStyleLinks.has(styleLinkName)) {
+                        const edge = intentStyleLinks.get(styleLinkName),
+                            tagOrEmpty = edge.get("tag");
+                        if (!tagOrEmpty.isEmpty && tagOrEmpty.value !== "")
+                            // otherwise it remains "span"
+                            tag = tagOrEmpty.value;
+                        styleName = edge.get("stylePatch").value;
+                    }
                 }
             } else if (markType in this._defaultSchemaSpec.marks) {
                 kind = "native";
@@ -629,14 +641,16 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
             if (kind === "native" || kind === "mark") {
                 styleLinkType = "markStyleLinks";
                 styleLinkName = markType;
-                if (markStyleLinks === null)
-                    markStyleLinks = this._getEffectiveStyleLinks(
-                        typeSpecProperties,
-                        MARK_STYLE_LINKS,
-                    );
-                if (markStyleLinks.has(markType)) {
-                    const edge = markStyleLinks.get(markType);
-                    styleName = edge.get("stylePatch").value;
+                if (applyStyleLinks) {
+                    if (markStyleLinks === null)
+                        markStyleLinks = this._getEffectiveStyleLinks(
+                            typeSpecProperties,
+                            MARK_STYLE_LINKS,
+                        );
+                    if (markStyleLinks.has(markType)) {
+                        const edge = markStyleLinks.get(markType);
+                        styleName = edge.get("stylePatch").value;
+                    }
                 }
             }
 
@@ -692,6 +706,9 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
     _createStylerWidgets(typeSpecPropertiesPath, wrapResults) {
         const stylerWidgets = [],
             _MARK_ELEMENT = this.constructor._MARK_ELEMENT;
+        // ProseMirror parity: no typeSpec on the enclosing node,
+        // no style-link styler for its marks.
+        if (this._context.hasTypeSpecStyling === false) return stylerWidgets;
         for (const wrapper of wrapResults) {
             const { styleLinkName, styleLinkType } = wrapper,
                 domElement = wrapper[_MARK_ELEMENT];
@@ -805,8 +822,8 @@ export class UIDocumentNode extends _BaseContainerComponent {
                 ],
             ];
             Constructor = UIDocumentElement;
-            moreArgs.push(this._context);
         }
+        moreArgs.push(this._context);
 
         const args = [
                 this._zones,
