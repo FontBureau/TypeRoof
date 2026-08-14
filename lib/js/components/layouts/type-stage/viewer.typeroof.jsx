@@ -295,6 +295,10 @@ export class UIDocumentElement extends _BaseContainerComponent {
         this._originTypeSpecPath = originTypeSpecPath;
         this._documentRootPath = documentRootPath;
         this._typeSpecStylerWrapper = null;
+        // ProseMirror parity: per-node typeSpec styling (the nodeViews in
+        // integration) exists only for node types of the metamodel schema;
+        // default-schema-only and unknown-resolved types get none.
+        this._hasTypeSpecStyling = nodeSpecMap.has(typeKey);
 
         if (!this._treatAsLeaf) {
             const widgets = [
@@ -378,10 +382,20 @@ export class UIDocumentElement extends _BaseContainerComponent {
     }
 
     _provisionWidgets(/* compareResult */) {
+        if (this._hasTypeSpecStyling) this._provisionTypeSpecStyler();
+        return super._provisionWidgets();
+    }
+
+    _provisionTypeSpecStyler() {
         const pathOfTypes = this._getPathOfTypes(this.widgetBus.rootPath),
             typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes);
         // Compute the next sibling's typeSpecProperties for
         // resolving lineHeightAfter/emAfter margin units.
+        // TODO (parity edge case): this uses the sibling's original
+        // typeKey; when the sibling's type is unknown, ProseMirror
+        // resolves no per-node typeSpec for it. Fixing this requires
+        // resolving the sibling's effective type (cf. the
+        // _determineUnknownType classification) — parked for now.
         let nextTypeSpecProperties = null;
         const parentCollection = this.getEntry(this.widgetBus.rootPath.parent),
             currentKey = this.widgetBus.rootPath.parts.at(-1),
@@ -421,7 +435,6 @@ export class UIDocumentElement extends _BaseContainerComponent {
                 this._typeSpecStylerWrapper = newWrapper;
             }
         }
-        return super._provisionWidgets();
     }
 }
 
