@@ -1,0 +1,1131 @@
+{
+  "activeState": {
+    "t": "0",
+    "duration": "8",
+    "perpetual": "1",
+    "activeActors": [
+      {
+        "instance": {
+          "label": "size8",
+          "keyMoments": [
+            {
+              "label": "moment1",
+              "duration": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "30"
+                ],
+                [
+                  "y",
+                  "610"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "line1",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "autoOPSZ": "1",
+                    "fontSize": "8",
+                    "textRun": "Sed ut perspiciatis unde omnis iste natus error"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line2",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "12"
+                      ]
+                    ],
+                    "autoOPSZ": "1",
+                    "fontSize": "8",
+                    "textRun": "sit voluptatem accusantium doloremque"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line3",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "24"
+                      ]
+                    ],
+                    "autoOPSZ": "1",
+                    "fontSize": "8",
+                    "textRun": "laudantium, totam rem aperiam, eaque"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line4",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "36"
+                      ]
+                    ],
+                    "autoOPSZ": "1",
+                    "fontSize": "8",
+                    "textRun": "ipsa quae ab illo inventore veritatis"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "size10",
+          "keyMoments": [
+            {
+              "label": "moment1",
+              "duration": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "30"
+                ],
+                [
+                  "y",
+                  "520"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "line1",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "autoOPSZ": "1",
+                    "fontSize": "10",
+                    "textRun": "Duis aute irure dolor in reprehenderit"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line2",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "15"
+                      ]
+                    ],
+                    "autoOPSZ": "1",
+                    "fontSize": "10",
+                    "textRun": "in voluptate velit esse cillum"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line3",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "30"
+                      ]
+                    ],
+                    "autoOPSZ": "1",
+                    "fontSize": "10",
+                    "textRun": "dolore eu fugiat nulla pariatur"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line4",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "45"
+                      ]
+                    ],
+                    "autoOPSZ": "1",
+                    "fontSize": "10",
+                    "textRun": "excepteur sint occaecat cupidatat non proident"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "size12",
+          "keyMoments": [
+            {
+              "label": "moment1",
+              "duration": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "30"
+                ],
+                [
+                  "y",
+                  "435"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "line1",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "autoOPSZ": "1",
+                    "fontSize": "12",
+                    "textRun": "Ut enim ad minim veniam, quis"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line2",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "18"
+                      ]
+                    ],
+                    "autoOPSZ": "1",
+                    "fontSize": "12",
+                    "textRun": "nostrud exercitation ullamco laboris"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line3",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "36"
+                      ]
+                    ],
+                    "autoOPSZ": "1",
+                    "fontSize": "12",
+                    "textRun": "nisi ut aliquip ex ea commodo"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "size16",
+          "keyMoments": [
+            {
+              "label": "moment1",
+              "duration": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "30"
+                ],
+                [
+                  "y",
+                  "330"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "line1",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "autoOPSZ": "1",
+                    "fontSize": "16",
+                    "textRun": "Lorem ipsum dolor sit amet"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line2",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "24"
+                      ]
+                    ],
+                    "autoOPSZ": "1",
+                    "fontSize": "16",
+                    "textRun": "consectetur adipiscing elit"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line3",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "48"
+                      ]
+                    ],
+                    "autoOPSZ": "1",
+                    "fontSize": "16",
+                    "textRun": "sed do eiusmod tempor incidid"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "size36",
+          "keyMoments": [
+            {
+              "label": "moment1",
+              "duration": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "373"
+                ],
+                [
+                  "y",
+                  "570"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "line1",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "autoOPSZ": "1",
+                    "fontSize": "36",
+                    "textRun": "Domesticate"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line2",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "50"
+                      ]
+                    ],
+                    "autoOPSZ": "1",
+                    "fontSize": "36",
+                    "textRun": "County Road"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "size48",
+          "keyMoments": [
+            {
+              "label": "moment1",
+              "duration": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "372"
+                ],
+                [
+                  "y",
+                  "410"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "line1",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "autoOPSZ": "1",
+                    "fontSize": "48",
+                    "textRun": "Compositor"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line2",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "65"
+                      ]
+                    ],
+                    "autoOPSZ": "1",
+                    "fontSize": "48",
+                    "textRun": "Marks Date"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "size60",
+          "keyMoments": [
+            {
+              "label": "moment1",
+              "duration": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "371"
+                ],
+                [
+                  "y",
+                  "220"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "line1",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "autoOPSZ": "1",
+                    "fontSize": "60",
+                    "textRun": "Narcotic"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line2",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "80"
+                      ]
+                    ],
+                    "autoOPSZ": "1",
+                    "fontSize": "60",
+                    "textRun": "Shocking"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "size72",
+          "keyMoments": [
+            {
+              "label": "moment1",
+              "duration": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "370"
+                ],
+                [
+                  "y",
+                  "8"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "line1",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "autoOPSZ": "1",
+                    "fontSize": "72",
+                    "textRun": "Founded"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line2",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "92"
+                      ]
+                    ],
+                    "autoOPSZ": "1",
+                    "fontSize": "72",
+                    "textRun": "Remains"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "box",
+          "keyMoments": [
+            {
+              "label": "default",
+              "duration": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "30"
+                ],
+                [
+                  "y",
+                  "30"
+                ]
+              ],
+              "autoOPSZ": "1",
+              "axesLocations": [
+                [
+                  "wdth",
+                  "100"
+                ],
+                [
+                  "wght",
+                  "400"
+                ]
+              ],
+              "fontSize": "24",
+              "textAlign": "center"
+            },
+            {
+              "label": "default",
+              "duration": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "30"
+                ],
+                [
+                  "y",
+                  "30"
+                ]
+              ],
+              "autoOPSZ": "1",
+              "axesLocations": [
+                [
+                  "wdth",
+                  "100"
+                ],
+                [
+                  "wght",
+                  "400"
+                ]
+              ],
+              "fontSize": "24",
+              "textAlign": "center"
+            },
+            {
+              "label": "wght 100",
+              "duration": "1",
+              "axesLocations": [
+                [
+                  "wght",
+                  "100"
+                ]
+              ]
+            },
+            {
+              "label": "default",
+              "duration": "1",
+              "autoOPSZ": "1",
+              "axesLocations": [
+                [
+                  "wdth",
+                  "100"
+                ],
+                [
+                  "wght",
+                  "400"
+                ]
+              ]
+            },
+            {
+              "label": "wght 1000",
+              "duration": "1",
+              "axesLocations": [
+                [
+                  "wght",
+                  "1000"
+                ]
+              ]
+            },
+            {
+              "label": "default",
+              "duration": "1",
+              "autoOPSZ": "1",
+              "axesLocations": [
+                [
+                  "wght",
+                  "400"
+                ],
+                [
+                  "wdth",
+                  "100"
+                ]
+              ]
+            },
+            {
+              "label": "default",
+              "duration": "1",
+              "autoOPSZ": "1",
+              "axesLocations": [
+                [
+                  "wdth",
+                  "100"
+                ],
+                [
+                  "wght",
+                  "400"
+                ]
+              ]
+            },
+            {
+              "label": "wdth 25",
+              "duration": "1",
+              "axesLocations": [
+                [
+                  "wdth",
+                  "25"
+                ]
+              ]
+            },
+            {
+              "label": "default",
+              "duration": "1",
+              "autoOPSZ": "1",
+              "axesLocations": [
+                [
+                  "wdth",
+                  "100"
+                ],
+                [
+                  "wght",
+                  "400"
+                ]
+              ]
+            },
+            {
+              "label": "wdth 151",
+              "duration": "1",
+              "axesLocations": [
+                [
+                  "wdth",
+                  "151"
+                ]
+              ]
+            },
+            {
+              "label": "default",
+              "duration": "1",
+              "autoOPSZ": "1",
+              "axesLocations": [
+                [
+                  "wdth",
+                  "100"
+                ],
+                [
+                  "wght",
+                  "400"
+                ]
+              ]
+            },
+            {
+              "label": "default",
+              "duration": "1",
+              "autoOPSZ": "1",
+              "axesLocations": [
+                [
+                  "wdth",
+                  "100"
+                ],
+                [
+                  "wght",
+                  "400"
+                ]
+              ]
+            },
+            {
+              "label": "opsz 8",
+              "duration": "1",
+              "axesLocations": [
+                [
+                  "opsz",
+                  "8"
+                ]
+              ]
+            },
+            {
+              "label": "default",
+              "duration": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "30"
+                ],
+                [
+                  "y",
+                  "30"
+                ]
+              ],
+              "autoOPSZ": "1",
+              "axesLocations": [
+                [
+                  "wdth",
+                  "100"
+                ],
+                [
+                  "wght",
+                  "400"
+                ]
+              ],
+              "fontSize": "24",
+              "textAlign": "center"
+            },
+            {
+              "label": "opsz 144",
+              "duration": "1",
+              "axesLocations": [
+                [
+                  "opsz",
+                  "144"
+                ]
+              ]
+            },
+            {
+              "label": "default",
+              "duration": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "30"
+                ],
+                [
+                  "y",
+                  "30"
+                ]
+              ],
+              "autoOPSZ": "1",
+              "axesLocations": [
+                [
+                  "wdth",
+                  "100"
+                ],
+                [
+                  "wght",
+                  "400"
+                ]
+              ],
+              "fontSize": "24",
+              "textAlign": "center"
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "line1",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "10"
+                      ],
+                      [
+                        "y",
+                        "10"
+                      ],
+                      [
+                        "width",
+                        "280"
+                      ]
+                    ],
+                    "textRun": "A B C D E F G H"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line2",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "10"
+                      ],
+                      [
+                        "y",
+                        "50"
+                      ],
+                      [
+                        "width",
+                        "280"
+                      ]
+                    ],
+                    "textRun": "I J K L M N O P"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line3",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "10"
+                      ],
+                      [
+                        "y",
+                        "90"
+                      ],
+                      [
+                        "width",
+                        "280"
+                      ]
+                    ],
+                    "textRun": "Q R S T U V W"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line4",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "10"
+                      ],
+                      [
+                        "y",
+                        "130"
+                      ],
+                      [
+                        "width",
+                        "280"
+                      ]
+                    ],
+                    "textRun": "X Y Z & $ 1 2 3"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line5",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "10"
+                      ],
+                      [
+                        "y",
+                        "170"
+                      ],
+                      [
+                        "width",
+                        "280"
+                      ]
+                    ],
+                    "textRun": "3 4 5 6 7 8 9 0"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "line6",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "10"
+                      ],
+                      [
+                        "y",
+                        "210"
+                      ],
+                      [
+                        "width",
+                        "280"
+                      ]
+                    ],
+                    "textRun": ". , - ' : ; ! ? # @"
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            },
+            {
+              "instance": {
+                "label": "border",
+                "keyMoments": [
+                  {
+                    "label": "moment1",
+                    "duration": "1",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "300"
+                      ],
+                      [
+                        "height",
+                        "270"
+                      ]
+                    ],
+                    "strokeColor": {
+                      "instance": {
+                        "R": "0.00000",
+                        "G": "0.00000",
+                        "B": "0.00000",
+                        "alpha": "100.00000"
+                      },
+                      "colorTypeKey": "RGB"
+                    },
+                    "fillColor": {
+                      "instance": {
+                        "R": "0.00000",
+                        "G": "0.00000",
+                        "B": "0.00000",
+                        "alpha": "0.00000"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      }
+    ],
+    "width": "720",
+    "height": "720",
+    "zoomLevel": {
+      "type": "app-default",
+      "scaling": "100.00000"
+    },
+    "editingActor": "./0"
+  },
+  "activeLayoutKey": "StageAndActors",
+  "activeFontKey": "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"
+}
