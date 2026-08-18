@@ -1,0 +1,335 @@
+{
+  "activeState": {
+    "t": "0",
+    "duration": "1.2",
+    "perpetual": "1",
+    "keyMoments": [
+      {
+        "label": "Key Moment 1",
+        "duration": "1",
+        "easing": "linear",
+        "isActive": "1",
+        "stageBackgroundColor": {
+          "instance": {
+            "R": "83.92157",
+            "G": "95.29412",
+            "B": "100.00000"
+          },
+          "colorTypeKey": "RGB"
+        }
+      }
+    ],
+    "activeActors": [
+      {
+        "instance": {
+          "label": "cloud",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "540"
+                ],
+                [
+                  "y",
+                  "300"
+                ],
+                [
+                  "r",
+                  "180"
+                ]
+              ],
+              "fillColor": {
+                "instance": {
+                  "R": "93.33333",
+                  "G": "98.82353",
+                  "B": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "CircleActorModel"
+      },
+      {
+        "instance": {
+          "label": "tree",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "-120"
+                ],
+                [
+                  "y",
+                  "360"
+                ],
+                [
+                  "r",
+                  "120"
+                ]
+              ],
+              "fillColor": {
+                "instance": {
+                  "R": "59.21569",
+                  "G": "77.25490",
+                  "B": "76.47059"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "CircleActorModel"
+      },
+      {
+        "instance": {
+          "label": "horizon",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "width",
+                  "720"
+                ],
+                [
+                  "height",
+                  "240"
+                ],
+                [
+                  "x",
+                  "0"
+                ],
+                [
+                  "y",
+                  "480"
+                ]
+              ],
+              "fillColor": {
+                "instance": {
+                  "R": "58.98438",
+                  "G": "76.95313",
+                  "B": "76.17188"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "RectangleActorModel"
+      },
+      {
+        "instance": {
+          "label": "ground",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "width",
+                  "720"
+                ],
+                [
+                  "height",
+                  "120"
+                ],
+                [
+                  "x",
+                  "0"
+                ],
+                [
+                  "y",
+                  "600"
+                ]
+              ],
+              "fillColor": {
+                "instance": {
+                  "R": "48.04688",
+                  "G": "69.53125",
+                  "B": "68.75000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "RectangleActorModel"
+      },
+      {
+        "instance": {
+          "isLoop": "1",
+          "label": "",
+          "keyMoments": [
+            {
+              "label": "Impact",
+              "duration": "10",
+              "easing": "easeOutQuad",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "width",
+                  "300"
+                ],
+                [
+                  "x",
+                  "88"
+                ],
+                [
+                  "y",
+                  "100"
+                ]
+              ],
+              "axesLocations": [
+                [
+                  "opsz",
+                  "43"
+                ],
+                [
+                  "wght",
+                  "900"
+                ],
+                [
+                  "wdth",
+                  "155"
+                ],
+                [
+                  "YTDE",
+                  "-98"
+                ]
+              ],
+              "fontSize": "43.2",
+              "textColor": {
+                "instance": {
+                  "R": "10.15000",
+                  "G": "19.92000",
+                  "B": "30.07000"
+                },
+                "colorTypeKey": "RGB"
+              },
+              "textRun": "Jump",
+              "textAlign": "center",
+              "positioningVertical": "bottom"
+            },
+            {
+              "label": " Push off",
+              "duration": "15",
+              "easing": "easeInSine",
+              "numericProperties": [
+                [
+                  "y",
+                  "200"
+                ]
+              ],
+              "axesLocations": [
+                [
+                  "opsz",
+                  "82.8"
+                ],
+                [
+                  "wght",
+                  "650"
+                ],
+                [
+                  "wdth",
+                  "25"
+                ],
+                [
+                  "YTDE",
+                  "-203"
+                ]
+              ],
+              "fontSize": "62.1"
+            },
+            {
+              "label": "Apex",
+              "duration": "35",
+              "easing": "easeOutSine",
+              "numericProperties": [
+                [
+                  "y",
+                  "420"
+                ]
+              ],
+              "axesLocations": [
+                [
+                  "wght",
+                  "700"
+                ],
+                [
+                  "wdth",
+                  "100"
+                ],
+                [
+                  "opsz",
+                  "72"
+                ],
+                [
+                  "YTDE",
+                  "-203"
+                ]
+              ],
+              "fontSize": "54"
+            },
+            {
+              "label": "Falling",
+              "duration": "40",
+              "easing": "easeInSine",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "y",
+                  "165"
+                ]
+              ],
+              "axesLocations": [
+                [
+                  "opsz",
+                  "82.8"
+                ],
+                [
+                  "wght",
+                  "650"
+                ],
+                [
+                  "wdth",
+                  "25"
+                ],
+                [
+                  "YTDE",
+                  "-203"
+                ]
+              ],
+              "fontSize": "62.1"
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      }
+    ],
+    "width": "720",
+    "height": "720",
+    "zoomLevel": {
+      "type": "app-default",
+      "scaling": "100.00000"
+    }
+  },
+  "activeLayoutKey": "MotionStage",
+  "activeFontKey": "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"
+}
