@@ -20,26 +20,57 @@ material symbols
 }
 
 /******************************************************************************
-fonts manager
+layout and font
 *******************************************************************************/
 
-.fonts-manager {
+.layout-and-font {
     padding: 1em;
+
+    .ui_font-select_label,
+    .ui_generic_select-label {
+        text-align: right;
+        width: 14% !important;
+    }
+
+    .ui_font-select_select {
+        &,
+        &::picker(select) {
+            /* stylelint-disable-next-line declaration-property-value-no-unknown */
+            appearance: base-select;
+            flex-shrink: 100;
+        }
+    }
+
+    .ui_font-select_label {
+        display: initial;
+    }
 }
 
-.fonts-manager-list {
-    margin: 0 0 0.5em !important;
+/******************************************************************************
+dialog manage fonts
+*******************************************************************************/
+
+dialog {
+    width: 50vw;
+    min-width: 400px;
+    max-width: 700px;
+    margin: 0;
+    top: 10vh;
+    left: 50%;
+    translate: -50% 0;
+
+    h4 {
+        margin-top: 0;
+    }
+}
+
+.dialog-fonts {
+    margin: 1em 0;
     padding: 0;
     background-color: var(--background-color);
     border: 1px solid var(--input-border-color);
-    max-height: 15rem;
+    height: 15rem;
     overflow-y: scroll;
-
-    > div {
-        font-size: 0.9em;
-        font-weight: 700;
-        padding: 0.5em 0.75em;
-    }
 
     ul {
         list-style: none;
@@ -49,32 +80,15 @@ fonts manager
 
     li {
         background-color: var(--list-item-odd-bg);
+        font-size: 0.9em;
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        gap: 1em;
+        justify-content: start;
+        padding: 0.5em;
 
         &:nth-child(odd) {
             background-color: var(--list-item-even-bg);
-        }
-
-        &.selected {
-            font-weight: bold;
-        }
-
-        > button {
-            background: none;
-            border: 0;
-            flex-direction: column;
-            font-weight: inherit;
-            align-items: start;
-            height: auto;
-            padding: 0.75em;
-            text-align: left;
-            text-wrap: wrap;
-
-            > .version {
-                font-size: 0.9em;
-            }
         }
     }
 }
@@ -83,7 +97,7 @@ fonts manager
 layout select
 *******************************************************************************/
 
-.ui_layout_select {
+.layout-and-font {
     select {
         font-size: 1.2em;
         height: auto;
@@ -92,10 +106,6 @@ layout select
             font-size: 0.8rem;
         }
     }
-}
-
-.ui_layout_select-label {
-    display: none;
 }
 
 /******************************************************************************
@@ -878,6 +888,7 @@ ui plain select
 *******************************************************************************/
 
 .number-and-range-input,
+.ui_font-select,
 .ui_generic_select,
 .ui_plain_select {
     align-items: center;
@@ -1864,14 +1875,6 @@ dimension sequence
     }
 }
 
-/**************************************************************************** */
-
-.dialog-multi_select_fonts {
-    list-style: none;
-    margin: 0 0 1rem;
-    padding: 0;
-}
-
 /******************************************************************************
 prosemirror menu
 *******************************************************************************/
@@ -2196,4 +2199,8 @@ select menus...
 
     width: 100%;
     text-overflow: ellipsis;
+}
+
+.ui_font-select_label {
+    display: none;
 }
