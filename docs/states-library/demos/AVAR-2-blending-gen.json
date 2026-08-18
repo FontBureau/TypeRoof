@@ -13,17 +13,17 @@
         "autoOPSZ": "0",
         "textColor": {
           "instance": {
-            "R": "100.00000",
-            "G": "100.00000",
-            "B": "100.00000"
+            "R": "255",
+            "G": "255",
+            "B": "255"
           },
           "colorTypeKey": "RGB"
         },
         "stageBackgroundColor": {
           "instance": {
-            "R": "0.00000",
-            "G": "34.00000",
-            "B": "64.00000"
+            "R": "0",
+            "G": "87",
+            "B": "163"
           },
           "colorTypeKey": "RGB"
         }
@@ -233,7 +233,7 @@
               ],
               "autoOPSZ": "1",
               "fontSize": "30",
-              "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"},
+              "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"},
               "positioningVertical": "bottom"
             }
           ],
@@ -271,9 +271,9 @@
                     ],
                     "fillColor": {
                       "instance": {
-                        "R": "12.90000",
-                        "G": "27.06000",
-                        "B": "40.00000"
+                        "R": "33",
+                        "G": "69",
+                        "B": "102"
                       },
                       "colorTypeKey": "RGB"
                     }
@@ -308,8 +308,8 @@
                     "fillColor": {
                       "instance": {
                         "L": "55.00000",
-                        "C": "4.90749",
-                        "H": "0.7242320"
+                        "C": "0.0196300",
+                        "H": "260.72352"
                       },
                       "colorTypeKey": "OKLCH"
                     }
@@ -427,32 +427,32 @@
                       ]
                     ],
                     "autoOPSZ": "0",
-                    "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                    "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                   },
                   {
                     "label": "Inactive Wait",
                     "duration": "5.5",
-                    "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                    "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                   },
                   {
                     "label": "Active",
                     "duration": 0,
-                    "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                    "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                   },
                   {
                     "label": "Active Wait",
                     "duration": "1",
-                    "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                    "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                   },
                   {
                     "label": "Inactive",
                     "duration": 0,
-                    "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                    "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                   },
                   {
                     "label": "Inactive Wait",
                     "duration": "1.5",
-                    "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                    "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                   }
                 ],
                 "activeActors": [
@@ -479,32 +479,32 @@
                             ]
                           ],
                           "textRun": "  User Axes",
-                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.0000000","H": "0.00000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive Wait",
                           "duration": "5.5",
-                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.0000000","H": "0.00000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Active",
                           "duration": "0",
-                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "50.00000"},"colorTypeKey": "OKLCH"}
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.0000000","H": "0.00000","alpha": "50.00000"},"colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Active Wait",
                           "duration": "1",
-                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "50.00000"},"colorTypeKey": "OKLCH"}
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.0000000","H": "0.00000","alpha": "50.00000"},"colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive Wait",
                           "duration": "0",
-                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.0000000","H": "0.00000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive wait",
                           "duration": "1.5",
-                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.0000000","H": "0.00000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
                         }
                       ]
                     },
@@ -529,7 +529,7 @@
                           "textRun": "    Size 14    Weight 400    Width 100    Slant 0",
                           "textAlign": "left",
                           "positioningVertical": "bottom",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive Wait",
@@ -537,7 +537,7 @@
                           "isActive": "0",
                           "autoOPSZ": "0",
                           "textRun": "    Size 14    Weight 400    Width 100    Slant 0",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Result Active",
@@ -545,23 +545,23 @@
                           "isActive": "0",
                           "autoOPSZ": "0",
                           "textRun": "    Size 14    Weight 250    Width 33   Slant 0",
-                          "textColor": {"instance": {"L": "100.00000", "C": "100.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.4000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Highlight",
                           "duration": "1",
-                          "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive",
                           "duration": 0,
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive Wait",
                           "duration": 1.5,
                           "textRun": "    Size 14    Weight 250    Width 33   Slant 0",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         }
                       ]
                     },
@@ -587,22 +587,22 @@
                       ]
                     ],
                     "autoOPSZ": "0",
-                    "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                    "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                   },
                   {
                     "label": "Inactive Wait",
                     "duration": "6.5",
-                    "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                    "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                   },
                   {
                     "label": "Active",
                     "duration": 0,
-                    "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                    "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                   },
                   {
                     "label": "Active Wait",
                     "duration": "1.5",
-                    "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                    "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                   }
                 ],
                 "activeActors": [
@@ -629,22 +629,22 @@
                             ]
                           ],
                           "textRun": "  Finessables",
-                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.0000000","H": "0.00000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive Wait",
                           "duration": "6.5",
-                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.0000000","H": "0.00000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Active",
                           "duration": "0",
-                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "50.00000"},"colorTypeKey": "OKLCH"}
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.0000000","H": "0.00000","alpha": "50.00000"},"colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Active Wait",
                           "duration": "1.5",
-                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "50.00000"},"colorTypeKey": "OKLCH"}
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.0000000","H": "0.00000","alpha": "50.00000"},"colorTypeKey": "OKLCH"}
                         }
                       ]
                     },
@@ -733,22 +733,22 @@
                           ],
                           "autoOPSZ": "0",
                           "textRun": "yStem",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive wait",
                           "duration": "6.5",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Active",
                           "duration": "0",
-                          "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "highlight",
                           "duration": "1.5",
-                          "textColor": {"instance": {"L": "100.00000", "C": "100.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.4000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         }
                       ]
                     },
@@ -796,32 +796,32 @@
                       ]
                     ],
                     "autoOPSZ": "0",
-                    "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                    "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                   },
                   {
                     "label": "Init Wait",
                     "duration": "0.5",
-                    "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                    "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                   },
                   {
                     "label": "Active",
                     "duration": "0",
-                    "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                    "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                   },
                                     {
                     "label": "Active Wait",
                     "duration": "5",
-                    "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                    "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                   },
                   {
                     "label": "Inactive",
                     "duration": "0",
-                    "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                    "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                   },
                   {
                     "label": "Inactive Wait",
                     "duration": "2.5",
-                    "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                    "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                   }
                 ],
                 "activeActors": [
@@ -848,32 +848,32 @@
                             ]
                           ],
                           "textRun": "  Constructables",
-                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.0000000","H": "0.00000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive Wait",
                           "duration": "0.5",
-                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.0000000","H": "0.00000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Active",
                           "duration": "0",
-                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "50.00000"},"colorTypeKey": "OKLCH"}
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.0000000","H": "0.00000","alpha": "50.00000"},"colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Active Wait",
                           "duration": "5",
-                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "50.00000"},"colorTypeKey": "OKLCH"}
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.0000000","H": "0.00000","alpha": "50.00000"},"colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive",
                           "duration": "0",
-                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.0000000","H": "0.00000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive Wait",
                           "duration": "2.5",
-                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.00000","H": "0.0000000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
+                          "backgroundColor": {"instance": {"L": "100.00000","C": "0.0000000","H": "0.00000","alpha": "20.00000"},"colorTypeKey": "OKLCH"}
                         }
                       ]
                     },
@@ -896,42 +896,42 @@
                           ],
                           "autoOPSZ": "0",
                           "textRun": "XOUC",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive wait",
                           "duration": "0.5",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Active",
                           "duration": "0",
-                          "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "highlight",
                           "duration": "1.5",
-                          "textColor": {"instance": {"L": "100.00000", "C": "100.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.4000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive",
                           "duration": "0",
-                          "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive Wait",
                           "duration": "3.5",
-                          "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive",
                           "duration": "0",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive Wait",
                           "duration": "2.5",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         }
                       ]
                     },
@@ -954,47 +954,47 @@
                           ],
                           "autoOPSZ": "0",
                           "textRun": "YOUC",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive wait",
                           "duration": "0.5",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Active",
                           "duration": "0",
-                          "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Active Wait",
                           "duration": "1.5",
-                          "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Highlight",
                           "duration": "1.5",
-                          "textColor": {"instance": {"L": "100.00000", "C": "100.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.4000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Active",
                           "duration": "0",
-                          "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Active Wait",
                           "duration": "2",
-                          "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive",
                           "duration": "0",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive Wait",
                           "duration": "2.5",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         }
                       ]
                     },
@@ -1017,47 +1017,47 @@
                           ],
                           "autoOPSZ": "0",
                           "textRun": "XTUC",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive wait",
                           "duration": "0.5",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Active",
                           "duration": "0",
-                          "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Active Wait",
                           "duration": "3",
-                          "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Highlight",
                           "duration": "1.5",
-                          "textColor": {"instance": {"L": "100.00000", "C": "100.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.4000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Active",
                           "duration": "0",
-                          "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Active Wait",
                           "duration": "0.5",
-                          "textColor": {"instance": {"L": "100.00000", "C": "0.00000", "H": "0.12000"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "100.00000", "C": "0.0000000", "H": "43.20000"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive",
                           "duration": "0",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         },
                         {
                           "label": "Inactive Wait",
                           "duration": "2.5",
-                          "textColor": {"instance": {"L": "84.31682", "C": "4.90749", "H": "0.7242320"}, "colorTypeKey": "OKLCH"}
+                          "textColor": {"instance": {"L": "84.31682", "C": "0.0196300", "H": "260.72352"}, "colorTypeKey": "OKLCH"}
                         }
                       ]
                     },
@@ -1078,9 +1078,9 @@
                     "isActive": "0",
                     "fillColor": {
                       "instance": {
-                        "R": "100.00000",
-                        "G": "100.00000",
-                        "B": "100.00000"
+                        "R": "255",
+                        "G": "255",
+                        "B": "255"
                       },
                       "colorTypeKey": "RGB"
                     }
