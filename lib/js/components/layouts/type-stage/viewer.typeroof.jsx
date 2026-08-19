@@ -385,8 +385,14 @@ export class UIDocumentElement extends _BaseContainerComponent {
     }
 
     _provisionWidgets(/* compareResult */) {
-        if (this._hasTypeSpecStyling) this._provisionTypeSpecStyler();
-        return super._provisionWidgets();
+        const requiresFullInitialUpdate = new Set();
+        if (this._hasTypeSpecStyling) {
+            const wrapper = this._provisionTypeSpecStyler();
+            if (wrapper) requiresFullInitialUpdate.add(wrapper);
+        }
+        for (const wrapper of super._provisionWidgets())
+            requiresFullInitialUpdate.add(wrapper);
+        return requiresFullInitialUpdate;
     }
 
     _provisionTypeSpecStyler() {
@@ -422,12 +428,12 @@ export class UIDocumentElement extends _BaseContainerComponent {
                 nextTypeSpecProperties,
             );
             this._widgets.splice(0, 0, this._typeSpecStylerWrapper);
+            return this._typeSpecStylerWrapper;
         } else {
             const oldWrapper = this._widgets[oldId];
             if (
-                oldWrapper.dependencyReverseMapping.get(
-                    "typeSpecProperties@",
-                ) !== typeSpecProperties
+                oldWrapper.dependencyReverseMapping.get("properties@") !==
+                typeSpecProperties
             ) {
                 const newWrapper = this._createTypeSpecStylerWrapper(
                     typeSpecProperties,
@@ -436,8 +442,10 @@ export class UIDocumentElement extends _BaseContainerComponent {
                 this._widgets.splice(oldId, 1, newWrapper);
                 oldWrapper.destroy();
                 this._typeSpecStylerWrapper = newWrapper;
+                return this._typeSpecStylerWrapper;
             }
         }
+        return null;
     }
 }
 
