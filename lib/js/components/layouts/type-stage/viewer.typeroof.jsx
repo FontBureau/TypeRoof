@@ -270,12 +270,23 @@ export class UIDocumentElement extends _BaseContainerComponent {
             }
         }
 
+        // pathOfTypes: the typeKeys from the document root node down to
+        // (and including) this node's own typeKey. Passed down via context
+        // so descendants don't have to walk up the model (a getEntry per
+        // ancestor, i.e. O(depth^2) path walks per node per update) to
+        // reconstruct it. Fresh instances are created whenever a typeKey
+        // in the chain changes, as UIDocumentNode rebuilds its subtree in
+        // that case, so this snapshot stays correct for the lifetime of
+        // this widget.
+        this._pathOfTypes = [...(context.pathOfTypes ?? []), typeKey];
+
         const childrenContext = {
             ...this._context,
             inInlineContext: childrenInInlineContext,
             // the immediate parent element decides mark styling, mirroring
             // ProseMirror where marks attach only to subscribed nodeViews
             hasTypeSpecStyling: this._hasTypeSpecStyling,
+            pathOfTypes: this._pathOfTypes,
         };
 
         this._treatAsLeaf = innerHtml !== null;
@@ -373,17 +384,6 @@ export class UIDocumentElement extends _BaseContainerComponent {
         );
     }
 
-    _getPathOfTypes(localPath) {
-        const pathOfTypes = [];
-        let currentPath = localPath;
-        do {
-            const current = this.getEntry(currentPath);
-            pathOfTypes.unshift(current.get("typeKey").value);
-            currentPath = currentPath.parent.parent;
-        } while (currentPath.startsWith(this._documentRootPath));
-        return pathOfTypes;
-    }
-
     _provisionWidgets(/* compareResult */) {
         const requiresFullInitialUpdate = new Set();
         if (this._hasTypeSpecStyling) {
@@ -396,8 +396,9 @@ export class UIDocumentElement extends _BaseContainerComponent {
     }
 
     _provisionTypeSpecStyler() {
-        const pathOfTypes = this._getPathOfTypes(this.widgetBus.rootPath),
-            typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes);
+        const typeSpecProperties = this._getTypeSpecPropertiesId(
+            this._pathOfTypes,
+        );
         // Compute the next sibling's typeSpecProperties for
         // resolving lineHeightAfter/emAfter margin units.
         // TODO (parity edge case): this uses the sibling's original
@@ -412,8 +413,11 @@ export class UIDocumentElement extends _BaseContainerComponent {
             nextIndex = currentIndex + 1;
         if (currentIndex >= 0 && nextIndex < parentCollection.size) {
             const nextKey = `${nextIndex}`,
-                nextPath = this.widgetBus.rootPath.parent.append(nextKey),
-                nextPathOfTypes = this._getPathOfTypes(nextPath);
+                // same ancestors as this node, only the own typeKey differs
+                nextPathOfTypes = [
+                    ...this._pathOfTypes.slice(0, -1),
+                    parentCollection.get(nextKey).get("typeKey").value,
+                ];
             nextTypeSpecProperties =
                 this._getTypeSpecPropertiesId(nextPathOfTypes);
         }
@@ -517,7 +521,6 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
     }
 
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
-    _getPathOfTypes = UIDocumentElement.prototype._getPathOfTypes;
 
     _swapNode(newNode) {
         if (this.node.parentElement)
@@ -740,11 +743,10 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
 
     _provisionWidgets(...args /* compareResult */) {
         const requiresFullInitialUpdate = new Set(),
-            // 0, -1: don't include the current "text" type
-            pathOfTypes = this._getPathOfTypes(this.widgetBus.rootPath).slice(
-                0,
-                -1,
-            ),
+            // context.pathOfTypes contains the typeKeys from the document
+            // root down to and including the parent element, i.e. without
+            // the own "text" type (equivalent to the old .slice(0, -1)).
+            pathOfTypes = this._context.pathOfTypes ?? [],
             typeSpecPropertiesPath = this._getTypeSpecPropertiesId(
                 pathOfTypes,
                 true /*asPath*/,
@@ -1070,7 +1072,14 @@ export class UIDocumentViewer extends _BaseContainerComponent {
                 this.nodesElement,
                 originTypeSpecPath,
                 this.widgetBus.rootPath, // documentRootPath
-                { inInlineContext: false }, // context
+                {
+                    inInlineContext: false,
+                    // typeKey of the document root node (usually "doc");
+                    // the base of every pathOfTypes (see UIDocumentElement).
+                    // Assumed stable for the lifetime of the document,
+                    // a change of it does not rebuild this widget.
+                    pathOfTypes: [this.getEntry(".").get("typeKey").value],
+                }, // context
             ],
         ];
         this._initWidgets(widgets);
