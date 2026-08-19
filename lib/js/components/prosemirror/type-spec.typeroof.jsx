@@ -223,7 +223,12 @@ class UIParametersDisplay extends _BaseComponent {
  * margins.
  */
 export class UIDocumentTypeSpecStyler extends _BaseComponent {
-    constructor(widgetBus, innerElement, outerElement, pmNode) {
+    constructor(
+        widgetBus,
+        innerElement,
+        outerElement,
+        pmNode = null /* Viewer does not provide this*/,
+    ) {
         super(widgetBus);
         this.innerElement = innerElement;
         this.outerElement = outerElement;
