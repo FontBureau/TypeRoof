@@ -217,7 +217,7 @@ class TypeSpecSelect extends GenericSelect {
             // Now ensure options are updated.
             if (!changedMap.has("options")) {
                 _changedMap = new Map(changedMap);
-                _changedMap.set("options", this._getEntry("options"));
+                _changedMap.set("options", this.getEntry("options"));
             }
         }
         super.update(_changedMap);

@@ -25,6 +25,8 @@ import {
     Collapsible,
     WasteBasketDropTarget,
     UICheckboxInput,
+    StaticNode,
+    StaticTag,
 } from "../../generic.mjs";
 import { SelectAndDragByOptions } from "../motion-stage.mjs";
 import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
@@ -52,6 +54,13 @@ import {
 } from "./node-specs.typeroof.jsx";
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 import { UIDocumentViewer } from "./viewer.typeroof.jsx";
+
+import {
+    DocumentRendererModeModel,
+    DocumentRendererModeDfltEditorModel,
+} from "../../document-renderer-mode/model.mjs";
+
+import { UIDocumentRendererModeSelector } from "../../document-renderer-mode/ui-selector.typeroof.jsx";
 
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
@@ -117,7 +126,27 @@ export function initTypeSpecCoherenceFn(DEFAULT_STATE) {
     );
 }
 
-export function createTypeStageModelVariantWithDefaults(name, DEFAULT_STATE) {
+export function createTypeStageModelVariantWithDefaults(
+    name,
+    DEFAULT_STATE,
+    typeOverrides = {},
+) {
+    // CAUTION: This is mighty and can completely change the meaning of the
+    // model. It was introduced to inject different versions of
+    // DocumentRendererModeModel (DocumentRendererModeDfltEditorModel, DocumentRendererModeDfltCompareModel)
+    // which is only a mild deviation.
+    const _getType = (name, RootType, DefaultType) => {
+        const Type =
+            typeOverrides && name in typeOverrides
+                ? typeOverrides[name]
+                : DefaultType;
+        if (Type !== RootType && !(Type.prototype instanceof RootType))
+            throw new Error(
+                `TYPE ERROR createTypeStageModelVariantWithDefaults: ` +
+                    `Type (${Type.name}) must be ${RootType.name} or a sub-class of it.`,
+            );
+        return [name, Type];
+    };
     return _BaseLayoutModel.createClass(
         name,
         // The root TypeSpec
@@ -135,6 +164,11 @@ export function createTypeStageModelVariantWithDefaults(name, DEFAULT_STATE) {
         ["document", NodeModel],
         ["showParameters", BooleanModel],
         ["showNodeTypeSpecLabels", BooleanModel],
+        _getType(
+            "documentRendererMode",
+            DocumentRendererModeModel,
+            DocumentRendererModeDfltEditorModel,
+        ),
         initTypeSpecCoherenceFn(DEFAULT_STATE),
         // fixme: add a coherence function to ensure the link paths in nodeSpecToTypeSpec
         // are explicitly relative, i.e. start with a "./" not "/". could eventually also
@@ -181,13 +215,9 @@ class TypeStageController extends _BaseContainerComponent {
                 "div",
                 { class: "editor-manager-prosemirror" },
             ),
-            editorManagerContainer = widgetBus.domTool.createElement(
-                "div",
-                {
-                    class: "editor-manager",
-                },
-                proseMirrorEditorMenuContainer,
-            ),
+            editorManagerContainer = widgetBus.domTool.createElement("div", {
+                class: "editor-manager",
+            }),
             zones = new Map([
                 ..._zones,
                 ["type_spec-manager", typeSpecManagerContainer],
@@ -370,7 +400,38 @@ class TypeStageController extends _BaseContainerComponent {
                 new Map([...zones, ["main", stylePatchesManagerContainer]]),
             ],
             [
-                {},
+                {
+                    zone: "editor-manager",
+                    relativeRootPath: Path.fromParts(
+                        ".",
+                        "documentRendererMode",
+                    ),
+                },
+                [],
+                UIDocumentRendererModeSelector,
+                zones,
+                getRegisteredPropertySetup(`${GENERIC}documentRendererMode`)
+                    .label, //label
+            ],
+            [{ zone: "editor-manager" }, [], StaticTag, "hr"],
+            [
+                { zone: "editor-manager" },
+                [],
+                StaticNode,
+                proseMirrorEditorMenuContainer,
+            ],
+            [
+                {
+                    activationTest: () => {
+                        const documentRendererMode = this.getEntry(
+                            "./documentRendererMode",
+                        );
+                        return (
+                            documentRendererMode.value === "editor" ||
+                            documentRendererMode.value === "compare"
+                        );
+                    },
+                },
                 [],
                 TypeStageProseMirrorContext,
                 zones,
@@ -384,6 +445,15 @@ class TypeStageController extends _BaseContainerComponent {
                 {
                     zone: "layout",
                     relativeRootPath: Path.fromParts(".", "document"),
+                    activationTest: () => {
+                        const documentRendererMode = this.getEntry(
+                            "./documentRendererMode",
+                        );
+                        return (
+                            documentRendererMode.value === "viewer" ||
+                            documentRendererMode.value === "compare"
+                        );
+                    },
                 },
                 [
                     ["../proseMirrorSchema/nodes", "nodeSpec"],

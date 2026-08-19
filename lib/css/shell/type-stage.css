@@ -2,7 +2,8 @@
 prosemirror
 *******************************************************************************/
 
-.ui_prosemirror_host {
+.ui_prosemirror_host,
+.typeroof-document {
     /* so the background color fills the entire layout */
     min-height: 100%;
 
@@ -88,7 +89,8 @@ prosemirror
         --space-after: 0;
     }
     */
-    .editor-advanced:not(.has-node-labels) & {
+    .editor-advanced:not(.has-node-labels) &,
+    &.typeroof-document:not(.has-node-labels) {
         margin-inline-start: var(--label-width-or-margin-inline-start, 0);
     }
 
