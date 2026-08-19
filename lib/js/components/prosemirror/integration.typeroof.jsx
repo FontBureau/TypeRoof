@@ -121,6 +121,18 @@ function _getBestTypeSpecPropertiesId(
 }
 
 /**
+ * Memoize getTypeSpecPropertiesIdMethod resolutions, keyed by the
+ * nodeSpecToTypeSpec model instance (immutable, so relinking uses a
+ * fresh cache level automatically) and the joined typeKeys. The resolved
+ * path is stored, registry membership is re-validated on every hit
+ * (a cheap Map lookup), so typeSpec edits also stay correct. This runs
+ * once per document node per update (UIDocumentElement twice: self +
+ * next sibling), and many nodes share the same type path of typeKeys,
+ * so most calls hit the cache.
+ */
+const _typeSpecPropertiesIdCache = new WeakMap();
+
+/**
  * MAYBE: requires a better name
  *
  * NOTE (to myself): I think going via _getBestTypeSpecPropertiesId is
@@ -133,23 +145,48 @@ export function getTypeSpecPropertiesIdMethod(
     nodeSpecToTypeSpecName = "nodeSpecToTypeSpec",
     protocolHandlerName = "typeSpecProperties@",
 ) {
+    let memo = _typeSpecPropertiesIdCache.get(
+        this.getEntry(nodeSpecToTypeSpecName),
+    );
     const nodeSpecToTypeSpec = this.getEntry(nodeSpecToTypeSpecName),
-        typeKey = pathOfTypes.at(-1),
-        typeSpecLink = !nodeSpecToTypeSpec.has(typeKey)
-            ? ""
-            : nodeSpecToTypeSpec.get(typeKey).get("link").value,
         protocolHandlerImplementation =
             this.widgetBus.getProtocolHandlerImplementation(
                 protocolHandlerName,
                 null,
-            );
-    return _getBestTypeSpecPropertiesId(
+            ),
+        // Lazy per-component memo of the origin path string.
+        memoKey =
+            `${this._tsIdOriginKey ?? (this._tsIdOriginKey = this._originTypeSpecPath.toString())}` +
+            `|${asPath}|${pathOfTypes.join("\n")}`,
+        cached = memo?.get(memoKey);
+    // cached is the resolved testPath (a Path), registry membership is
+    // re-validated on every hit (cheap Map lookup), like the uncached
+    // resolution does.
+    if (
+        cached !== undefined &&
+        protocolHandlerImplementation.hasRegistered(
+            `${protocolHandlerName}${cached}`,
+        )
+    )
+        return asPath ? cached : `${protocolHandlerName}${cached}`;
+
+    const typeKey = pathOfTypes.at(-1),
+        typeSpecLink = !nodeSpecToTypeSpec.has(typeKey)
+            ? ""
+            : nodeSpecToTypeSpec.get(typeKey).get("link").value;
+    // asPath=true returns a Path, otherwise the id string; the cache
+    // always stores just the Path.
+    const resolvedPath = _getBestTypeSpecPropertiesId(
         typeSpecLink,
         protocolHandlerName,
         protocolHandlerImplementation,
         this._originTypeSpecPath,
-        asPath,
+        true, // asPath
     );
+    if (memo === undefined)
+        _typeSpecPropertiesIdCache.set(nodeSpecToTypeSpec, (memo = new Map()));
+    memo.set(memoKey, resolvedPath);
+    return asPath ? resolvedPath : `${protocolHandlerName}${resolvedPath}`;
 }
 
 export function getTypeSpecsMethod(state) {
