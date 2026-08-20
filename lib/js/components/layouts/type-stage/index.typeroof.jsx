@@ -422,9 +422,11 @@ class TypeStageController extends _BaseContainerComponent {
             ],
             [
                 {
-                    activationTest: () => {
-                        const documentRendererMode = this.getEntry(
-                            "./documentRendererMode",
+                    // getEntry is injected by ComponentWrapper and only
+                    // serves declared dependencies.
+                    activationTest: (getEntry) => {
+                        const documentRendererMode = getEntry(
+                            "documentRendererMode",
                         );
                         return (
                             documentRendererMode.value === "editor" ||
@@ -432,7 +434,8 @@ class TypeStageController extends _BaseContainerComponent {
                         );
                     },
                 },
-                [],
+                // documentRendererMode: read in the activationTest.
+                ["documentRendererMode"],
                 TypeStageProseMirrorContext,
                 zones,
                 // proseMirrorSettings
@@ -445,9 +448,11 @@ class TypeStageController extends _BaseContainerComponent {
                 {
                     zone: "layout",
                     relativeRootPath: Path.fromParts(".", "document"),
-                    activationTest: () => {
-                        const documentRendererMode = this.getEntry(
-                            "./documentRendererMode",
+                    // getEntry is injected by ComponentWrapper and only
+                    // serves declared dependencies.
+                    activationTest: (getEntry) => {
+                        const documentRendererMode = getEntry(
+                            "documentRendererMode",
                         );
                         return (
                             documentRendererMode.value === "viewer" ||
@@ -459,6 +464,8 @@ class TypeStageController extends _BaseContainerComponent {
                     ["../proseMirrorSchema/nodes", "nodeSpec"],
                     ["../proseMirrorSchema/marks", "markSpec"],
                     ["../nodeSpecToTypeSpec", "nodeSpecToTypeSpec"],
+                    // Read in the activationTest.
+                    ["../documentRendererMode", "documentRendererMode"],
                 ],
                 UIDocumentViewer,
                 zones,

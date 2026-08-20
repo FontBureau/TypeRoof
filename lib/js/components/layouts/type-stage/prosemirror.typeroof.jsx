@@ -170,8 +170,11 @@ export class TypeStageProseMirrorContext extends BaseProseMirrorContext {
                 zones,
                 originTypeSpecPath,
                 {
-                    typeSpecLabels: () =>
-                        this.getEntry("./showNodeTypeSpecLabels").value,
+                    // The argument is the dependency-enforcing getEntry
+                    // injected into the activationTest (see
+                    // ComponentWrapper._activationTestGetEntry).
+                    typeSpecLabels: (getEntry) =>
+                        getEntry("showNodeTypeSpecLabels").value,
                 } /*nodeOutfitterOptions*/,
             ],
             [
