@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="harfbuzzjs-v1x-upgrade--opentypejs-replacement-implementation-plan" class="heading_anchor" href="#harfbuzzjs-v1x-upgrade--opentypejs-replacement-implementation-plan" aria-hidden="true">#</a>harfbuzzjs v1.x Upgrade + opentype.js Replacement Implementation Plan</h1>
+<ul>
+<li>Research: <code>~/thoughts/research/2026-08-20-1445-harfbuzzjs-upgrade-opentypejs-replacement.md</code></li>
+<li>harfbuzzjs checkout: <code>/var/lib/agent/harfbuzzjs</code> (main == origin/main == <code>cfe067c</code>, v1.6.0, HarfBuzz 14.3.1)</li>
+<li>TypeRoof: branch <code>fix/modern-font-parsing</code>, commit <code>c2ad58a2</code></li>
+</ul>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>opentype.js (unmaintained upstream) crashes on valid fonts (<code>parseSTATTable</code>: “STAT axis count
+must be greater than or equal to fvar axis count”). We (1) upgrade the vendored harfbuzzjs from
+the v0.x-based <code>graphicore/TypeRoof-main</code> fork to upstream v1.x (all fork deltas are absorbed
+upstream), then (2) replace all opentype.js parsing with a harfbuzzjs-based metadata shim in
+<code>lib/js/font-info.mjs</code>, keeping only the fork’s <code>opentype.woffToOTF</code>. The legacy app gets the
+same replacement.</p>
+<h2><a id="operator-decisions-2026-08-20" class="heading_anchor" href="#operator-decisions-2026-08-20" aria-hidden="true">#</a>Operator decisions (2026-08-20)</h2>
+<ol>
+<li><strong>fvar named instances</strong>: parse via <code>Face.referenceTable('fvar')</code> — the format is fixed and
+trivial (~40 lines). Code must carry a comment that binding <code>hb_ot_var_named_instance_*</code>
+upstream (graphicore branch → PR) is the good alternative if this ever grows.
+Only if implementation proves non-trivial: add the binding to a branch on the graphicore
+remote instead (operator may PR it).</li>
+<li><strong>Vendoring</strong>: keep the <code>lib/js/vendor/harfbuzzjs/</code> pattern. emscripten is NOT installed for
+the agent (<code>which emcc</code> empty) → operator provides the <code>dist/</code> build of
+<code>/var/lib/agent/harfbuzzjs</code> main (or builds in-place there).</li>
+<li><strong>ascender/descender</strong>: keep opentype.js semantics (hhea values) — harfbuzz <code>Font.hExtents()</code>
+at scale=upem. Only revisit if issues arise.</li>
+<li><strong><code>widgetBus.harfbuzz</code> shape</strong>: pass the v1.x module namespace directly, drop the
+<code>{hbjs, Module}</code> wrapper (simpler; the raw <code>Module</code> was only needed for <code>_getExtents</code>, which
+becomes <code>Font.hExtents()</code>).</li>
+<li><strong>Shim location</strong>: <code>lib/js/font-info.mjs</code>, must NOT depend on <code>lib/js/components</code>
+(vendor imports are fine). Shared between main and legacy app.</li>
+</ol>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li>harfbuzzjs v0.x vendored at <code>lib/js/vendor/harfbuzzjs/</code> (<code>hb.wasm</code>, <code>hb.mjs</code>, <code>hbjs.mjs</code>,
+<code>hbjs.js</code>, <code>harfbuzz.mjs</code> loader, <code>build.sh</code> pointing at <code>graphicore/harfbuzzjs</code> branch
+<code>TypeRoof-main</code>). Loaded via <code>shell.mjs:48,676-683</code> into the <code>harfbuzz</code> initial dependency,
+exposed as <code>widgetBus.harfbuzz = {hbjs, Module}</code> (<code>shell.mjs:1145</code>).</li>
+<li>opentype.js (graphicore fork submodule, <code>lib/js/vendor/opentype.js</code>) imported only at
+<code>lib/js/shell.mjs:1</code> (main) and <code>lib/js/legacy/videoproof-controller.mjs:3</code> (legacy).
+Used APIs: <code>_parse.getTag</code>, <code>woffToOTF</code>, <code>parse</code> (all in <code>parseFont</code>, <code>shell.mjs:54-73</code>;
+legacy: only <code>parse</code>, <code>videoproof-controller.mjs:3862-3887</code>).</li>
+<li>Downstream reads of the opentype font object (the shim’s compatibility surface):
+<ul>
+<li>names: <code>getEnglishName(key)</code>, <code>names.{unicode,macintosh,windows}[key][lang]</code>
+(<code>model/font.mjs:250-257</code>; legacy <code>:449-454</code>)</li>
+<li>fvar axes: <code>tables.fvar.axes</code> → <code>{tag, name.en, minValue, maxValue, defaultValue}</code>
+(<code>model/font.mjs:7-23</code>; <code>dev-layouts/videoproof-array.mjs:681</code>; legacy <code>:196-209,:5192</code>)</li>
+<li>fvar instances: <code>tables.fvar.instances</code> → <code>{name: {en,...}, coordinates: {tag: value}}</code>
+(<code>model/font.mjs:380-396</code>; legacy <code>:533-543</code>)</li>
+<li>GSUB/GPOS: <code>tables.{gsub,gpos}.{scripts,features}</code>, <code>defaultLangSys</code>, <code>langSysRecords</code>,
+<code>featureIndexes</code>, <code>feature.uiName</code>/<code>featUiLabelName</code> (<code>model/font.mjs:44-117</code>; legacy
+<code>:3238-3290</code>)</li>
+<li>cmap: <code>tables.cmap.glyphIndexMap</code> (<code>ui-char-groups.mjs:193</code> — gids ARE consumed at
+<code>ui-char-groups.mjs:239-240</code>; legacy <code>:856,:870</code>)</li>
+<li>metrics: <code>fontObject.unitsPerEm/ascender/descender</code> (<code>line-of-text.mjs:103-105</code>,
+<code>videoproof-array.mjs:510</code>, <code>type-tools-grid.mjs:1942-1944</code>,
+<code>type-spec.typeroof.jsx:283-294,733-741</code>)</li>
+</ul>
+</li>
+</ul>
+<h3><a id="key-discoveries" class="heading_anchor" href="#key-discoveries" aria-hidden="true">#</a>Key Discoveries</h3>
+<ul>
+<li>All three fork deltas are upstream in v1.6.0: stack runtime methods (<code>em.runtime</code>),
+<code>_hb_font_get_glyph_extents</code>/<code>_hb_font_get_h_extents</code> (<code>harfbuzz.symbols</code>), and the
+Uint16Array alignment fix (obsolete: <code>HEAPU16.subarray(ptr/2)</code>, <code>src/helpers.ts:110-118</code>).
+Upstream <code>config-override.h</code> (CFF/draw/paint/color/name/metrics/avar2/var-composites) is
+wired into the <code>Makefile:20</code>. <strong>No fork branch needs porting.</strong></li>
+<li>v1.x package: ESM <code>dist/index.mjs</code>, WASM init via top-level await (<code>src/index.ts:16</code>),
+classes <code>Blob/Face/Font/Buffer/Feature/Variation</code>, no <code>.destroy()</code> (FinalizationRegistry),
+<code>Buffer.json()</code> removed → <code>getGlyphInfosAndPositions()</code>
+(<code>{codepoint, cluster, flags, xAdvance, yAdvance, xOffset, yOffset}</code>), string features →
+<code>Feature[]</code> (<code>Feature.fromString('+liga')</code>).</li>
+<li>Build: <code>make</code> in harfbuzzjs repo → <code>dist/{harfbuzz.js,harfbuzz.wasm}</code> via em++
+(<code>MODULARIZE+EXPORT_ES6</code>, wasm located via <code>import.meta.url</code> — Vite-compatible), then
+<code>npx tsdown</code> → <code>dist/index.mjs</code> (<code>harfbuzz.js</code> kept external via <code>deps.neverBundle</code>).
+Vite <code>build.target: &quot;esnext&quot;</code> (vite.config.js:99) → top-level await OK.</li>
+<li>v1.x <code>Font.hExtents()</code> → <code>{ascender, descender, lineGap}</code> (<code>src/font.ts:184</code>) replaces the
+raw-Module <code>_hb_font_get_h_extents</code> + <code>Pointer32StackAlloc</code>/<code>Pointer32Malloc</code> machinery
+(<code>videoproof-array.mjs:598-630,1177-1212</code>).</li>
+<li>GSUB/GPOS facade from v1.x: <code>getTableScriptTags</code> → per script index <code>getScriptLanguageTags</code>
+(explicit languages only) and <code>getLanguageFeatureTags(table, scriptIndex, 0xFFFF)</code> for the
+default LangSys (<code>HB_OT_LAYOUT_DEFAULT_LANGUAGE_INDEX</code>); feature indexes = position in
+<code>getTableFeatureTags(table)</code> order (matches <code>hb_ot_layout_feature_get_name_ids</code> indexing);
+<code>getFeatureNameIds(table, featureIndex).uiLabelNameId</code> + <code>getName(nameId, lang)</code> replaces
+opentype’s <code>feature.uiName</code> for ssXX/cvXX (<code>model/font.mjs:26-42</code>).</li>
+<li>fvar named instances: NOT bound in v1.x → parse <code>Face.referenceTable('fvar')</code>.</li>
+<li><code>_hbShapeExample</code> is debug-only code (<code>videoproof-array.mjs:917-953</code>, caller
+<code>_hbDebugDumpSVG</code>); <code>_getCellsWidths</code> line 1093 passes the font model to <code>buffer.json()</code>
+(harmless no-op arg today; drop on rewrite).</li>
+<li>Tests exist via vitest (<code>npm test</code>, e.g. <code>lib/js/metamodel/compare.test.mjs</code>); wawoff2
+supports node; harfbuzzjs v1.x dist works in node (<code>examples/harfbuzz.example.node.js</code>) →
+<code>font-info.mjs</code> is unit-testable against <code>lib/assets/fonts/RobotoFlex[...].woff2</code>.</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<ul>
+<li><code>lib/js/vendor/harfbuzzjs/</code> contains upstream v1.x build artifacts (<code>index.mjs</code>,
+<code>index.d.mts</code>, <code>harfbuzz.js</code>, <code>harfbuzz.wasm</code>) + updated provenance script; the loader
+re-exports the v1.x namespace.</li>
+<li><code>widgetBus.harfbuzz</code> is the v1.x namespace; all call sites migrated (no <code>hbjs</code>, no
+<code>Module</code>, no <code>.destroy()</code>, no <code>buffer.json()</code>).</li>
+<li><code>lib/js/font-info.mjs</code> provides container decompression + an opentype.js-shaped facade
+built purely on harfbuzzjs; <code>opentype.parse</code> and <code>opentype._parse.getTag</code> are gone from
+both apps; only <code>woffToOTF</code> remains imported from the opentype.js fork.</li>
+<li>The STAT-crashing font loads in main and legacy app.</li>
+<li><code>npm run typecheck</code>, <code>npm run eslint</code>, <code>npm test</code>, <code>npm run build:app</code> pass.</li>
+</ul>
+<h3><a id="how-to-verify" class="heading_anchor" href="#how-to-verify" aria-hidden="true">#</a>How to verify</h3>
+<ul>
+<li>Automated: the four commands above + new <code>lib/js/font-info.test.mjs</code>.</li>
+<li>Manual: dev server, load Roboto Flex (URL + file drop) and the previously crashing font;
+check font name/version in the select menu, axis UI (axes + instances), OpenType features
+UI, char groups, type-spec/type-tools-grid rendering, and legacy.html equivalents.</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>Not replacing <code>woffToOTF</code> (kept from the graphicore opentype.js fork).</li>
+<li>Not adding <code>hb_ot_var_named_instance_*</code> bindings to harfbuzzjs (unless
+<code>referenceTable('fvar')</code> parsing proves non-trivial — see operator decision 1).</li>
+<li>Not changing ascender/descender semantics (stays hhea).</li>
+<li>Not refactoring consumers off the facade object shape (<code>font.fontObject...</code> reads stay;
+a future cleanup can migrate them to a cleaner API incrementally).</li>
+<li>Not touching <code>vendor/fbdemo</code>, the wawoff2 vendoring, or <code>docs/</code> build output.</li>
+<li>Not re-basing any graphicore/harfbuzzjs branch (nothing to port).</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Facade-first: <code>font-info.mjs</code> builds an opentype.js-shaped object from harfbuzzjs so that
+<code>VideoProofFont</code> (main + legacy), the UI consumers, and the feature/axis/cmap code keep
+working unchanged. This contains the blast radius to: the vendored harfbuzzjs, the harfbuzz
+call sites (few), <code>shell.mjs</code>/<code>videoproof-controller.mjs</code> (parseFont), and one new module.</p>
+<hr>
+<h2><a id="phase-1-vendor-harfbuzzjs-v1x-and-migrate-harfbuzz-call-sites" class="heading_anchor" href="#phase-1-vendor-harfbuzzjs-v1x-and-migrate-harfbuzz-call-sites" aria-hidden="true">#</a>Phase 1: Vendor harfbuzzjs v1.x and migrate harfbuzz call sites</h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p>Replace the vendored v0.x artifacts with an upstream v1.x build, rewire the loader and the
+<code>harfbuzz</code> initial dependency to the module namespace, and migrate all call sites
+(factory API → classes, <code>json()</code> → accessors, string features → <code>Feature[]</code>, raw-Module
+extents → <code>Font.hExtents()</code>). After this phase the app works exactly as before, still with
+opentype.js for metadata.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required</h3>
+<h4><a id="1-build-harfbuzzjs-operator-step--emscripten-required" class="heading_anchor" href="#1-build-harfbuzzjs-operator-step--emscripten-required" aria-hidden="true">#</a>1. Build harfbuzzjs (OPERATOR STEP — emscripten required)</h4>
+<p><strong>Repo</strong>: <code>/var/lib/agent/harfbuzzjs</code> (branch <code>main</code>, tracks <code>origin/main</code>; verify
+<code>git fetch origin &amp;&amp; git status</code> shows no divergence)</p>
+<pre class="language-bash"><code class="language-bash"><span class="token builtin class-name">cd</span> /var/lib/agent/harfbuzzjs <span class="token operator">&amp;&amp;</span> <span class="token function">git</span> checkout main <span class="token operator">&amp;&amp;</span> <span class="token function">git</span> pull --ff-only origin main
+<span class="token function">make</span>        <span class="token comment"># requires em++; produces dist/harfbuzz.{js,wasm} + dist/index.{mjs,d.mts}</span></code></pre>
+<h4><a id="2-replace-vendored-artifacts" class="heading_anchor" href="#2-replace-vendored-artifacts" aria-hidden="true">#</a>2. Replace vendored artifacts</h4>
+<p><strong>Dir</strong>: <code>lib/js/vendor/harfbuzzjs/</code>
+<strong>Changes</strong>: delete <code>hb.mjs</code>, <code>hbjs.mjs</code>, <code>hbjs.js</code>, <code>hb.wasm</code>; copy in from the harfbuzzjs
+build: <code>dist/index.mjs</code>, <code>dist/index.d.mts</code> (helps <code>npm run typecheck</code>), <code>dist/harfbuzz.js</code>,
+<code>dist/harfbuzz.wasm</code>. Keep <code>.gitignore</code> (artifacts stay committed, as before).</p>
+<p><strong>File</strong>: <code>lib/js/vendor/harfbuzzjs/build.sh</code>
+<strong>Changes</strong>: rewrite as provenance/update documentation: clone upstream
+<code>https://github.com/harfbuzz/harfbuzzjs.git</code> main, <code>make</code>, copy the four files listed above.</p>
+<h4><a id="3-rewrite-the-loader" class="heading_anchor" href="#3-rewrite-the-loader" aria-hidden="true">#</a>3. Rewrite the loader</h4>
+<p><strong>File</strong>: <code>lib/js/vendor/harfbuzzjs/harfbuzz.mjs</code>
+<strong>Changes</strong>: v1.x self-initializes at import (top-level await), so the loader becomes a pure
+re-export (kept as the single import point, and for Vite to resolve <code>harfbuzz.wasm</code> relative
+to <code>harfbuzz.js</code> via <code>import.meta.url</code>):</p>
+<pre class="language-js"><code class="language-js"><span class="token comment">// harfbuzzjs v1.x: WASM initializes at module load (top-level await).</span>
+<span class="token keyword">export</span> <span class="token operator">*</span> <span class="token keyword">from</span> <span class="token string">'./index.mjs'</span><span class="token punctuation">;</span></code></pre>
+<h4><a id="4-shellmjs-init-namespace-instead-of-hbjs-module" class="heading_anchor" href="#4-shellmjs-init-namespace-instead-of-hbjs-module" aria-hidden="true">#</a>4. shell.mjs init: namespace instead of <code>{hbjs, Module}</code></h4>
+<p><strong>File</strong>: <code>lib/js/shell.mjs</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>:48</code> → <code>import * as harfbuzz from './vendor/harfbuzzjs/harfbuzz.mjs';</code></li>
+<li><code>:676-683</code> → replace <code>getHarfbuzz().then(result =&gt; ...)</code> with a synchronous
+<code>this.setInitialDependency('harfbuzz', harfbuzz);</code> (the import already awaited WASM init;
+keep the <code>harfbuzz</code> key in the <code>_externalPromises</code> list so the resource flow is unchanged).</li>
+<li><code>:1145</code> → <code>harfbuzz: this.harfbuzz // harfbuzzjs v1.x module namespace</code></li>
+<li><code>get harfbuzz()</code> (<code>:1158-1161</code>) unchanged.</li>
+</ul>
+<h4><a id="5-videoprooffont-hbface-cache" class="heading_anchor" href="#5-videoprooffont-hbface-cache" aria-hidden="true">#</a>5. VideoProofFont hbFace cache</h4>
+<p><strong>File</strong>: <code>lib/js/model/font.mjs</code>
+<strong>Changes</strong> (<code>:399-415</code>):</p>
+<pre class="language-js"><code class="language-js"><span class="token keyword">get</span> <span class="token function">hbFace</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>_hbCache <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> blob <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">this<span class="token punctuation">.</span>_widgetBus<span class="token punctuation">.</span>harfbuzz<span class="token punctuation">.</span>Blob</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>buffer<span class="token punctuation">)</span>
+          <span class="token punctuation">,</span> face <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">this<span class="token punctuation">.</span>_widgetBus<span class="token punctuation">.</span>harfbuzz<span class="token punctuation">.</span>Face</span><span class="token punctuation">(</span>blob<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span>
+          <span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>_hbCache <span class="token operator">=</span> <span class="token punctuation">{</span>blob<span class="token punctuation">,</span> face<span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_hbCache<span class="token punctuation">.</span>face<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token function">destroy</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>_document<span class="token punctuation">.</span>fonts<span class="token punctuation">.</span><span class="token function">delete</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>fontFace<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// v1.x: no .destroy(), objects are reclaimed via FinalizationRegistry.</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>_hbCache <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+    <span class="token comment">// ...existing FIXME comment stays</span>
+<span class="token punctuation">}</span></code></pre>
+<h4><a id="6-videoproof-arraymjs" class="heading_anchor" href="#6-videoproof-arraymjs" aria-hidden="true">#</a>6. videoproof-array.mjs</h4>
+<p><strong>File</strong>: <code>lib/js/components/actors/videoproof-array.mjs</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li>Delete <code>Pointer32Malloc</code> and <code>Pointer32StackAlloc</code> (<code>:598-630</code>) — no remaining users.</li>
+<li><code>_getExtents</code> (<code>:1177-1212</code>): replace the whole raw-Module block with:</li>
+</ul>
+<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> hbFont <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">harfbuzz<span class="token punctuation">.</span>Font</span><span class="token punctuation">(</span>hbFace<span class="token punctuation">)</span><span class="token punctuation">;</span>
+hbFont<span class="token punctuation">.</span><span class="token function">setVariations</span><span class="token punctuation">(</span><span class="token function">variationsToArray</span><span class="token punctuation">(</span>variations<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// see helper below</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>ascender<span class="token punctuation">,</span> descender<span class="token punctuation">,</span> lineGap<span class="token punctuation">}</span> <span class="token operator">=</span> hbFont<span class="token punctuation">.</span><span class="token function">hExtents</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// scale defaults to upem</span>
+result<span class="token punctuation">[</span>actorIndex<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">{</span>ascender<span class="token punctuation">,</span> <span class="token literal-property property">descender</span><span class="token operator">:</span> Math<span class="token punctuation">.</span><span class="token function">abs</span><span class="token punctuation">(</span>descender<span class="token punctuation">)</span><span class="token punctuation">,</span> lineGap<span class="token punctuation">,</span> <span class="token literal-property property">upem</span><span class="token operator">:</span> hbFace<span class="token punctuation">.</span>upem<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+<p>(verify <code>new Font(face)</code> default scale == upem; if not, <code>hbFont.setScale(hbFace.upem, hbFace.upem)</code> first)</p>
+<ul>
+<li><code>_getCellsWidths</code> (<code>:1054-1104</code>): <code>harfbuzz.createFont/createBuffer/shape</code> →
+<code>new harfbuzz.Font(hbFace)</code> / <code>new harfbuzz.Buffer()</code> / <code>harfbuzz.shape(hbFont, hbBuffer, [harfbuzz.Feature.fromString(features)])</code>; <code>hbBuffer.json(font)</code> →
+<code>hbBuffer.getGlyphInfosAndPositions()</code>; <code>_getAdvance</code> (<code>:1026-1031</code>) sums <code>item.xAdvance</code>
+instead of <code>item.ax</code>; drop all <code>.destroy()</code> calls.</li>
+<li><code>_hbShapeExample</code> (<code>:917-953</code>, debug-only): same migration (<code>x.g</code> → <code>x.codepoint</code>;
+<code>face.getAxisInfos()</code>, <code>glyphName</code>, <code>glyphToPath</code> unchanged in v1.x).</li>
+<li>Add a small local helper for the variations object → <code>Variation[]</code> conversion:</li>
+</ul>
+<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token function-variable function">toVariations</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">harfbuzz<span class="token punctuation">,</span> obj</span><span class="token punctuation">)</span> <span class="token operator">=></span>
+    Object<span class="token punctuation">.</span><span class="token function">entries</span><span class="token punctuation">(</span>obj<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">[</span>tag<span class="token punctuation">,</span> value<span class="token punctuation">]</span></span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token keyword">new</span> <span class="token class-name">harfbuzz<span class="token punctuation">.</span>Variation</span><span class="token punctuation">(</span>tag<span class="token punctuation">,</span> value<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<h4><a id="7-videoproof-contextual" class="heading_anchor" href="#7-videoproof-contextual" aria-hidden="true">#</a>7. videoproof-contextual</h4>
+<p><strong>File</strong>: <code>lib/js/components/actors/videoproof-contextual/layout.mjs</code>
+<strong>Changes</strong> (<code>measureWordWidths</code>, <code>:43-65</code>): same migration; <code>buffer.json(hbFont)</code> →
+<code>buffer.getGlyphInfosAndPositions()</code>; <code>item.ax</code> → <code>item.xAdvance</code>; features param
+(default <code>'+liga'</code>) → <code>[harfbuzz.Feature.fromString(features)]</code>; drop <code>.destroy()</code>;
+update the <code>@param {Object} harfbuzz</code> docstring (“harfbuzz.hbjs object” → “harfbuzzjs v1.x
+module namespace”). Accept the full namespace instead of <code>hbjs</code> (call-site change below).</p>
+<p><strong>File</strong>: <code>lib/js/components/actors/videoproof-contextual/index.typeroof.jsx</code>
+<strong>Changes</strong> (<code>:274</code>): <code>this.widgetBus.harfbuzz.hbjs</code> → <code>this.widgetBus.harfbuzz</code>.</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification" class="heading_anchor" href="#automated-verification" aria-hidden="true">#</a>Automated Verification</h4>
+<ul>
+<li>[x] <code>npm run typecheck</code> passes</li>
+<li>[x] <code>npm run eslint</code> passes</li>
+<li>[x] <code>npm test</code> passes</li>
+<li>[x] <code>npm run build:app</code> passes</li>
+<li>[x] <code>grep -rn &quot;hbjs\|createBlob\|createFace\|createFont\|createBuffer\|\.json(&quot; lib/js --include=&quot;*.mjs&quot; --include=&quot;*.jsx&quot; | grep -v vendor | grep -v legacy</code> is empty</li>
+</ul>
+<h4><a id="manual-verification" class="heading_anchor" href="#manual-verification" aria-hidden="true">#</a>Manual Verification</h4>
+<ul>
+<li>[ ] App loads; default fonts (Roboto Flex URL) install; console shows no harfbuzz errors</li>
+<li>[ ] type-tools-grid layout renders; animation works (exercises <code>_getExtents</code>, <code>_getCellsWidths</code>)</li>
+<li>[ ] videoproof-contextual layout renders with correct word widths</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause for manual confirmation before Phase 2.</p>
+<hr>
+<h2><a id="phase-2-libjsfont-infomjs--harfbuzzjs-based-font-metadata-remove-opentypeparse-main-app" class="heading_anchor" href="#phase-2-libjsfont-infomjs--harfbuzzjs-based-font-metadata-remove-opentypeparse-main-app" aria-hidden="true">#</a>Phase 2: <code>lib/js/font-info.mjs</code> — harfbuzzjs-based font metadata, remove <code>opentype.parse</code> (main app)</h2>
+<h3><a id="overview-2" class="heading_anchor" href="#overview-2" aria-hidden="true">#</a>Overview</h3>
+<p>New module <code>lib/js/font-info.mjs</code> (imports only from <code>lib/js/vendor/**</code> and <code>lib/js/util.mjs</code>
+— never <code>lib/js/components</code>) provides (a) container decompression and (b) an
+opentype.js-shaped facade over a harfbuzz <code>Face</code>. <code>shell.mjs</code> switches <code>parseFont</code> to it and
+drops its opentype.js import. Unit tests against <code>lib/assets/fonts/RobotoFlex[...].woff2</code>.</p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required</h3>
+<h4><a id="1-new-module-libjsfont-infomjs" class="heading_anchor" href="#1-new-module-libjsfont-infomjs" aria-hidden="true">#</a>1. New module <code>lib/js/font-info.mjs</code></h4>
+<p><strong>Dependencies</strong>: <code>import {woffToOTF} from './vendor/opentype.js/dist/opentype.mjs'</code>,
+<code>import {getDecompressSync} from './vendor/wawoff2/decompress.mjs'</code>. The harfbuzz namespace
+is passed in as a parameter (keeps the module DI-friendly and testable).</p>
+<p><strong>Exports</strong> (sketches):</p>
+<pre class="language-js"><code class="language-js"><span class="token comment">// Replaces opentype._parse.getTag: 4-byte ASCII signature.</span>
+<span class="token keyword">function</span> <span class="token function">getSignatureTag</span><span class="token punctuation">(</span><span class="token parameter">buffer</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">TextDecoder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Uint8Array</span><span class="token punctuation">(</span>buffer<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// woff/woff2 → SFNT. (woffToOTF stays: harfbuzz cannot read woff.)</span>
+<span class="token keyword">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">decompressFontBuffer</span><span class="token punctuation">(</span><span class="token parameter">fontBuffer</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">/* as parseFont today, minus opentype.parse */</span> <span class="token punctuation">}</span>
+
+<span class="token comment">// nameID map for the keys TypeRoof uses (opentype.js semantics):</span>
+<span class="token keyword">const</span> <span class="token constant">NAME_ID_TO_KEY</span> <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token number">1</span><span class="token operator">:</span> <span class="token string">'fontFamily'</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token operator">:</span> <span class="token string">'fontSubfamily'</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token operator">:</span> <span class="token string">'fullName'</span><span class="token punctuation">,</span>
+                        <span class="token number">5</span><span class="token operator">:</span> <span class="token string">'version'</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token operator">:</span> <span class="token string">'postScriptName'</span><span class="token punctuation">,</span> <span class="token number">16</span><span class="token operator">:</span> <span class="token string">'preferredFamily'</span><span class="token punctuation">,</span>
+                        <span class="token number">17</span><span class="token operator">:</span> <span class="token string">'preferredSubfamily'</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token comment">// Builds the facade from an hb Face + the SFNT buffer.</span>
+<span class="token comment">// Returned object intentionally mimics the opentype.js Font shape</span>
+<span class="token comment">// (only the surface TypeRoof consumes — see research doc §4).</span>
+<span class="token keyword">export</span> <span class="token keyword">function</span> <span class="token function">createFontObject</span><span class="token punctuation">(</span><span class="token parameter">hb<span class="token punctuation">,</span> sfntBuffer</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">/* see below */</span> <span class="token punctuation">}</span></code></pre>
+<p>Facade construction (all lazy, cached, from one cached <code>Face</code>/<code>Blob</code>):</p>
+<ul>
+<li><strong>names</strong>: from <code>face.listNames()</code> build <code>{[key]: {[language]: value}}</code> via
+<code>face.getName(nameId, language)</code>; expose it as <code>names.windows</code> (single bucket is enough —
+all consumers use <code>?.</code> chaining across unicode/macintosh/windows) and implement
+<code>getEnglishName(key)</code> as “entry <code>en</code> (or <code>en-US</code>), else first language”. Document the
+divergence: platform buckets are not replicated (harfbuzz abstracts platforms away).</li>
+<li><strong>fvar axes</strong>: <code>face.getAxisInfos()</code> → <code>[{tag, name: {en: face.getName(info.nameId, 'en')}, minValue: info.minValue, maxValue: info.maxValue, defaultValue: info.defaultValue}]</code>.
+Only when the font is variable (empty record → <code>tables.fvar</code> undefined).</li>
+<li><strong>fvar instances</strong> via <code>face.referenceTable('fvar')</code>:</li>
+</ul>
+<pre class="language-js"><code class="language-js"><span class="token comment">// NOTE: harfbuzzjs does not (yet) bind hb_ot_var_named_instance_*; if that API</span>
+<span class="token comment">// lands upstream (a binding PR would be welcome), prefer it over this parser.</span>
+<span class="token comment">// fvar layout (OpenType spec): uint16 major, minor, axesArrayOffset, reserved,</span>
+<span class="token comment">// axisCount, axisSize, instanceCount, instanceSize; instance record:</span>
+<span class="token comment">// uint32 subfamilyNameID, uint16 flags, Fixed coordinates[axisCount]</span>
+<span class="token comment">// [, uint32 postScriptNameID if instanceSize == 4 + 4*axisCount + 2 + 4 ... ]</span>
+<span class="token keyword">function</span> <span class="token function">parseFvarInstances</span><span class="token punctuation">(</span><span class="token parameter">fvar</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">/* DataView reads; Fixed = int32/65536 */</span> <span class="token punctuation">}</span></code></pre>
+<p>→ <code>[{name: {en: resolvedName}, coordinates: {tag: value}}]</code> matching the opentype.js
+shape consumed at <code>model/font.mjs:380-396</code> and legacy <code>:533-543</code>.</p>
+<ul>
+<li><strong>GSUB/GPOS</strong> (feeds <code>model/font.mjs:_getFontFeaturesInfo</code> and legacy <code>OTFeaturesChooser</code>
+unchanged):</li>
+</ul>
+<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">getLayoutTable</span><span class="token punctuation">(</span>face<span class="token punctuation">,</span> tableTag <span class="token comment">/* 'GSUB'|'GPOS' */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> featureTags <span class="token operator">=</span> face<span class="token punctuation">.</span><span class="token function">getTableFeatureTags</span><span class="token punctuation">(</span>tableTag<span class="token punctuation">)</span> <span class="token comment">// order == featureIndex</span>
+      <span class="token punctuation">,</span> features <span class="token operator">=</span> featureTags<span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token parameter">tag</span> <span class="token operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">{</span>tag<span class="token punctuation">,</span> <span class="token literal-property property">feature</span><span class="token operator">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+      <span class="token punctuation">,</span> scripts <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+      <span class="token punctuation">;</span>
+    <span class="token keyword">const</span> <span class="token constant">DEFAULT_LANGSYS_INDEX</span> <span class="token operator">=</span> <span class="token number">0xFFFF</span><span class="token punctuation">;</span> <span class="token comment">// HB_OT_LAYOUT_DEFAULT_LANGUAGE_INDEX</span>
+    face<span class="token punctuation">.</span><span class="token function">getTableScriptTags</span><span class="token punctuation">(</span>tableTag<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">scriptTag<span class="token punctuation">,</span> scriptIndex</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> script <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token literal-property property">defaultLangSys</span><span class="token operator">:</span> <span class="token keyword">null</span><span class="token punctuation">,</span> <span class="token literal-property property">langSysRecords</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">}</span>
+          <span class="token punctuation">,</span> <span class="token function-variable function">toIndexes</span> <span class="token operator">=</span> <span class="token parameter">tags</span> <span class="token operator">=></span> tags<span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token parameter">t</span> <span class="token operator">=></span> featureTags<span class="token punctuation">.</span><span class="token function">indexOf</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment">// ssXX/cvXX UI names (opentype feature.uiName equivalent):</span>
+        <span class="token comment">// face.getFeatureNameIds(tableTag, idx)?.uiLabelNameId → face.getName(nameId, 'en')</span>
+        <span class="token keyword">const</span> defaultTags <span class="token operator">=</span> face<span class="token punctuation">.</span><span class="token function">getLanguageFeatureTags</span><span class="token punctuation">(</span>tableTag<span class="token punctuation">,</span> scriptIndex<span class="token punctuation">,</span> <span class="token constant">DEFAULT_LANGSYS_INDEX</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span><span class="token punctuation">(</span>defaultTags<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+            script<span class="token punctuation">.</span>defaultLangSys <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token literal-property property">featureIndexes</span><span class="token operator">:</span> <span class="token function">toIndexes</span><span class="token punctuation">(</span>defaultTags<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+        face<span class="token punctuation">.</span><span class="token function">getScriptLanguageTags</span><span class="token punctuation">(</span>tableTag<span class="token punctuation">,</span> scriptIndex<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">langTag<span class="token punctuation">,</span> langIndex</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+            script<span class="token punctuation">.</span>langSysRecords<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">tag</span><span class="token operator">:</span> langTag<span class="token punctuation">,</span> <span class="token literal-property property">langSys</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+                <span class="token literal-property property">featureIndexes</span><span class="token operator">:</span> <span class="token function">toIndexes</span><span class="token punctuation">(</span>face<span class="token punctuation">.</span><span class="token function">getLanguageFeatureTags</span><span class="token punctuation">(</span>tableTag<span class="token punctuation">,</span> scriptIndex<span class="token punctuation">,</span> langIndex<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        scripts<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">tag</span><span class="token operator">:</span> scriptTag<span class="token punctuation">,</span> script<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>scripts<span class="token punctuation">,</span> features<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>Exposed as <code>tables.gsub</code>/<code>tables.gpos</code> (lowercase keys, as opentype.js). Populate
+<code>feature.uiName</code>/<code>featUiLabelName</code> only for <code>ss**</code>/<code>cv**</code> tags (that is the only consumer
+path, <code>model/font.mjs:26-42</code>).</p>
+<ul>
+<li><strong>cmap</strong>: <code>tables.cmap.glyphIndexMap</code> =</li>
+</ul>
+<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> map <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">const</span> cp <span class="token keyword">of</span> face<span class="token punctuation">.</span><span class="token function">collectUnicodes</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    map<span class="token punctuation">[</span>cp<span class="token punctuation">]</span> <span class="token operator">=</span> font<span class="token punctuation">.</span><span class="token function">nominalGlyph</span><span class="token punctuation">(</span>cp<span class="token punctuation">)</span> <span class="token operator">??</span> <span class="token number">0</span><span class="token punctuation">;</span></code></pre>
+<ul>
+<li><strong>metrics</strong>: <code>unitsPerEm = face.upem</code>; <code>ascender</code>/<code>descender</code> from
+<code>new hb.Font(face)</code> → <code>hExtents()</code> (hhea — identical semantics to opentype.js).</li>
+</ul>
+<h4><a id="2-shellmjs-parsefont" class="heading_anchor" href="#2-shellmjs-parsefont" aria-hidden="true">#</a>2. shell.mjs <code>parseFont</code></h4>
+<p><strong>File</strong>: <code>lib/js/shell.mjs</code>
+<strong>Changes</strong>: <code>parseFont</code> (<code>:54-73</code>) becomes <code>decompressFontBuffer</code> from font-info.mjs +
+<code>createFontObject(this-or-static-harfbuzz, fontBuffer_)</code>; remove the module-level
+<code>import * as opentype</code> (<code>:1</code>) and the module-level <code>woff2decompress</code> await (moves into
+font-info.mjs). The <code>[fontObject, fontBuffer_]</code> return contract stays.</p>
+<h4><a id="3-unit-tests" class="heading_anchor" href="#3-unit-tests" aria-hidden="true">#</a>3. Unit tests</h4>
+<p><strong>File</strong>: <code>lib/js/font-info.test.mjs</code> (vitest, node env)
+<strong>Changes</strong>: load <code>lib/assets/fonts/RobotoFlex[...].woff2</code> via <code>decompressFontBuffer</code>
+(wawoff2 works in node), build the facade, assert:</p>
+<ul>
+<li>name/version/fullName resolution</li>
+<li>13 axes incl. <code>wght</code>/<code>wdth</code>/<code>opsz</code> with min&lt;default&lt;max</li>
+<li>at least one named instance with valid coordinates keyed by axis tag</li>
+<li><code>glyphIndexMap</code> non-empty, maps known codepoint (e.g. 65 ‘A’) to a gid &gt; 0</li>
+<li>GSUB scripts/features contain <code>liga</code>; langSys enumeration covers default LangSys</li>
+<li><code>unitsPerEm</code> 1000, <code>ascender</code> &gt; 0, <code>descender</code> &lt; 0</li>
+</ul>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification-1" class="heading_anchor" href="#automated-verification-1" aria-hidden="true">#</a>Automated Verification</h4>
+<ul>
+<li>[x] <code>npm run typecheck</code>, <code>npm run eslint</code>, <code>npm test</code>, <code>npm run build:app</code> pass</li>
+<li>[x] <code>grep -n &quot;opentype&quot; lib/js/shell.mjs</code> → no matches (only comments + woffToOTF mention)</li>
+<li>[x] <code>grep -rn &quot;opentype.parse\|_parse.getTag&quot; lib/js --include=&quot;*.mjs&quot; | grep -v vendor | grep -v legacy</code> → empty</li>
+<li>[x] <code>lib/js/font-info.mjs</code> has no imports from <code>lib/js/components</code></li>
+</ul>
+<p>Phase 2 implementation notes (deviations from plan, all verified by tests):</p>
+<ul>
+<li>harfbuzzjs <code>AxisInfo</code> fields are <code>min</code>/<code>default</code>/<code>max</code> (not <code>minValue</code>…).</li>
+<li>Default-LangSys sentinel is <code>0xFFFF</code> (uint16), not <code>0xFFFFFFFF</code>.</li>
+<li>fvar instances: offset = <code>axesArrayOffset + axisCount*axisSize</code> (the spec’s
+countSizePairs/“reserved” field is unreliable in real fonts — RobotoFlex has 2);
+subfamilyNameID parsed as uint16 like opentype.js/fontTools do.</li>
+<li>MaterialSymbolsOutlinedSubset is variable (fvar+gvar) — static fixture is
+LiberationMono-Regular.ttf from the system instead.</li>
+</ul>
+<h4><a id="manual-verification-1" class="heading_anchor" href="#manual-verification-1" aria-hidden="true">#</a>Manual Verification</h4>
+<ul>
+<li>[ ] The previously STAT-crashing font loads via file drop (the original bug report)</li>
+<li>[ ] Font name/version in select menus; axis UI + manual axis locations (instances);
+OpenType features UI populated; char groups work; type-spec layout renders with
+correct <code>--units-per-em/--ascender/--descender</code></li>
+<li>[ ] local font storage round-trip (reload → fonts restore)</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause for manual confirmation before Phase 3.</p>
+<hr>
+<h2><a id="phase-3-legacy-app-migration" class="heading_anchor" href="#phase-3-legacy-app-migration" aria-hidden="true">#</a>Phase 3: Legacy app migration</h2>
+<h3><a id="overview-3" class="heading_anchor" href="#overview-3" aria-hidden="true">#</a>Overview</h3>
+<p>Swap the legacy app’s <code>opentype.parse</code> for the same <code>font-info.mjs</code> facade. The legacy
+<code>VideoProofFont</code> wrapper and <code>OTFeaturesChooser</code> keep working unchanged thanks to the
+facade. Rendering is browser <code>FontFace</code>/CSS — no harfbuzz init is needed in legacy beyond
+what the facade uses (the facade needs the v1.x namespace; import the vendor loader directly).</p>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required</h3>
+<h4><a id="1-videoproof-controllermjs" class="heading_anchor" href="#1-videoproof-controllermjs" aria-hidden="true">#</a>1. videoproof-controller.mjs</h4>
+<p><strong>File</strong>: <code>lib/js/legacy/videoproof-controller.mjs</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>:3</code> remove <code>import * as opentype ...</code>; add
+<code>import * as harfbuzz from '../vendor/harfbuzzjs/harfbuzz.mjs';</code> and
+<code>import {decompressFontBuffer, createFontObject} from '../font-info.mjs';</code>
+(top-level await in the loader is fine — <code>main.mjs</code> is <code>type=&quot;module&quot;</code> and Vite targets
+esnext).</li>
+<li><code>_parseFont</code> (<code>:3862-3887</code>): body becomes
+<code>const fontBuffer_ = await decompressFontBuffer(fontBuffer);</code> +
+<code>return [createFontObject(harfbuzz, fontBuffer_), fontBuffer_];</code>
+Keep the existing wOF2 error-message behavior where applicable.</li>
+<li>Nothing else: names (<code>:449-454</code>), fvar (<code>:197,:533,:5192</code>), cmap (<code>:856,:870</code>),
+GSUB/GPOS chooser (<code>:3238-3290</code>) all consume the facade-compatible shape.</li>
+</ul>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification-2" class="heading_anchor" href="#automated-verification-2" aria-hidden="true">#</a>Automated Verification</h4>
+<ul>
+<li>[x] <code>npm run typecheck</code>, <code>npm run eslint</code>, <code>npm test</code>, <code>npm run build:app</code> pass</li>
+<li>[x] <code>grep -rn &quot;opentype&quot; lib/js/legacy</code> → no matches (only docs/MIME-map strings)</li>
+</ul>
+<h4><a id="manual-verification-2" class="heading_anchor" href="#manual-verification-2" aria-hidden="true">#</a>Manual Verification</h4>
+<ul>
+<li>[ ] legacy.html: load the STAT-crashing font; axis/animation UI works; feature chooser
+populated and applies via CSS; char selection (cmap) works</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause for manual confirmation before Phase 4.</p>
+<hr>
+<h2><a id="phase-4-cleanup" class="heading_anchor" href="#phase-4-cleanup" aria-hidden="true">#</a>Phase 4: Cleanup</h2>
+<h3><a id="overview-4" class="heading_anchor" href="#overview-4" aria-hidden="true">#</a>Overview</h3>
+<p>Remove dead code and finalize vendoring hygiene.</p>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required</h3>
+<ul>
+<li><code>lib/js/vendor/opentype.js</code>: submodule stays (still provides <code>woffToOTF</code>); add a note in
+<code>font-info.mjs</code> (or a vendor README) that this is the only remaining use.</li>
+<li><code>lib/js/vendor/harfbuzzjs/</code>: confirm no stale v0.x files; <code>build.sh</code> reflects the new
+upstream-main build.</li>
+<li>Remove any now-dead helpers (<code>Pointer32*</code> if not deleted in Phase 1, commented-out
+<code>Module</code> usages).</li>
+<li>Optional (only if trivial): drop <code>hbjs.js</code> AMD remnant references from any html/docs.</li>
+</ul>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification-3" class="heading_anchor" href="#automated-verification-3" aria-hidden="true">#</a>Automated Verification</h4>
+<ul>
+<li>[x] <code>npm run lint</code> (full: eslint + prettier + stylelint), <code>npm run typecheck</code>, <code>npm test</code>,
+<code>npm run build:app</code> all pass</li>
+</ul>
+<h4><a id="manual-verification-3" class="heading_anchor" href="#manual-verification-3" aria-hidden="true">#</a>Manual Verification</h4>
+<ul>
+<li>[ ] Full smoke: shell + player + legacy entry points load and render</li>
+</ul>
+<hr>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<h3><a id="unit-tests" class="heading_anchor" href="#unit-tests" aria-hidden="true">#</a>Unit Tests</h3>
+<ul>
+<li><code>lib/js/font-info.test.mjs</code> (Phase 2.3): facade correctness against RobotoFlex fixture.</li>
+<li>Edge cases to cover: non-variable font (no <code>tables.fvar</code>), font without GPOS
+(MaterialSymbols subset), font without named instances.</li>
+</ul>
+<h3><a id="integration-tests" class="heading_anchor" href="#integration-tests" aria-hidden="true">#</a>Integration Tests</h3>
+<ul>
+<li>Manual per-phase checklists above (font loading is I/O- and DOM-heavy; full automation is
+out of scope).</li>
+</ul>
+<h2><a id="risks" class="heading_anchor" href="#risks" aria-hidden="true">#</a>Risks</h2>
+<ul>
+<li><strong>wawoff2 in vitest/node</strong>: if <code>getDecompressSync</code> fails under node, fall back to a
+<code>.ttf</code>/decompressed fixture committed for tests, or decompress once at test setup via the
+node entry (<code>vendor/wawoff2/index.js</code>).</li>
+<li><strong><code>new Font(face)</code> default scale</strong>: verify scale defaults to upem before relying on
+<code>hExtents()</code> returning font units; otherwise call <code>setScale(upem, upem)</code> explicitly.</li>
+<li><strong>cmap build cost</strong>: one <code>nominalGlyph</code> wasm call per collected unicode (~30k for CJK) —
+expected fine (ms range); measure with a large font if a user ever loads one.</li>
+<li><strong>Name-table divergence</strong>: harfbuzz abstracts platform/encoding; the facade exposes a
+single bucket. All current consumers use <code>?.</code> fallback chains, so this is safe, but new
+consumers must read the facade docs.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

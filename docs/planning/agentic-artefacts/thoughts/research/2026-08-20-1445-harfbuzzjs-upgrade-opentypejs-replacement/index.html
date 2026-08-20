@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-harfbuzzjs-v1x-upgrade--opentypejs-replacement" class="heading_anchor" href="#research-harfbuzzjs-v1x-upgrade--opentypejs-replacement" aria-hidden="true">#</a>Research: harfbuzzjs v1.x upgrade + opentype.js replacement</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>opentype.js throws <code>STAT axis count must be greater than or equal to fvar axis count</code> on a new (valid) font.
+opentype.js upstream is in a bad maintenance state, so: (1) update vendored harfbuzzjs to track upstream
+<code>harfbuzz/harfbuzzjs</code> main (v1.x, new API), porting TypeRoof usage; (2) replace most of opentype.js with
+harfbuzzjs, keeping only the custom <code>opentype.woffToOTF</code> from the graphicore fork; (3) size the same
+replacement for the legacy app. harfbuzzjs checkout (upstream main + graphicore remotes): <code>/var/lib/agent/harfbuzzjs</code>.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<ul>
+<li><strong>The old harfbuzzjs fork is fully absorbed upstream.</strong> All three deltas of <code>graphicore/TypeRoof-main</code>
+(vs base 0.4.0) exist in upstream v1.6.0: <code>stackAlloc/stackSave/stackRestore</code> runtime methods
+(<code>em.runtime</code>), <code>_hb_font_get_glyph_extents</code>/<code>_hb_font_get_h_extents</code> (<code>harfbuzz.symbols</code>), and the
+Uint16Array string-alignment fix (obsolete; new code uses <code>HEAPU16.subarray(ptr/2)</code>,
+<code>src/helpers.ts:110-118</code>). Upstream main == local main (<code>cfe067c</code>, HarfBuzz 14.3.1). No fork branch
+needs porting; a plain vendor update suffices.</li>
+<li><strong>TypeRoof’s harfbuzzjs usage is small and funneled through one loader</strong>
+(<code>lib/js/vendor/harfbuzzjs/harfbuzz.mjs</code> → <code>shell.mjs</code> initial dependency → <code>widgetBus.harfbuzz</code>).
+Migration surface: ~4 files, mostly mechanical factory→class changes. Two non-mechanical spots:
+string feature arguments to <code>shape()</code> (now <code>Feature[]</code>) and the raw-Module <code>_hb_font_get_h_extents</code>
+call in <code>_getExtents</code> (now <code>Font.hExtents()</code>).</li>
+<li><strong>opentype.js (main app) has exactly one import site and three API calls</strong> (<code>shell.mjs:1</code>, <code>parseFont</code>
+at <code>shell.mjs:54-73</code>). The STAT crash happens <em>inside</em> <code>opentype.parse</code>; TypeRoof never reads STAT.
+Downstream consumers read only: name table, fvar axes+instances, GSUB/GPOS script/feature lists,
+cmap <code>glyphIndexMap</code>, and unitsPerEm/ascender/descender.</li>
+<li><strong>harfbuzzjs v1.x covers almost all of that</strong>: <code>Face.listNames()/getName()</code>,
+<code>Face.getAxisInfos()</code>, full GSUB/GPOS enumeration (<code>getTableScriptTags</code>, <code>getTableFeatureTags</code>,
+<code>getScriptLanguageTags</code>, <code>getLanguageFeatureTags</code>, <code>getFeatureLookups</code>, <code>getFeatureNameIds</code>),
+<code>Face.collectUnicodes()</code> + <code>Font.nominalGlyph()</code> for cmap, <code>Face.upem</code>, <code>Font.hExtents()/vExtents()</code>,
+<code>Font.getMetricPosition()</code> (ot-metrics), <code>Font.glyphToPath()/glyphName()</code>.
+<strong>One gap: fvar named instances are NOT bound in v1.x</strong> (no <code>hb_ot_var_named_instance_*</code> in
+<code>harfbuzz.symbols</code>/<code>src/</code>). Options: parse via <code>Face.referenceTable('fvar')</code>, or add the binding upstream.</li>
+<li><strong>Legacy app replacement is easy-ish</strong>: one file (<code>lib/js/legacy/videoproof-controller.mjs</code>), one API
+call (<code>opentype.parse</code>, twice), ~6 distinct property-read shapes; rendering is browser <code>FontFace</code>/CSS
+(no shaping/outlines in JS). The same font-metadata shim built for the main app serves legacy verbatim.
+Legacy does not even use <code>woffToOTF</code>/<code>_parse.getTag</code> (only woff2 error sniffing).</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-harfbuzzjs-vendored-state-and-loading-typeroof" class="heading_anchor" href="#1-harfbuzzjs-vendored-state-and-loading-typeroof" aria-hidden="true">#</a>1. harfbuzzjs: vendored state and loading (TypeRoof)</h3>
+<ul>
+<li>Vendored artifacts committed at <code>lib/js/vendor/harfbuzzjs/</code>: <code>hb.wasm</code> (~319 KB), <code>hb.mjs</code>
+(emscripten factory), <code>hbjs.mjs</code> (v0.x factory wrapper), <code>hbjs.js</code> (AMD, legacy), <code>harfbuzz.mjs</code>
+(loader), <code>build.sh</code>, <code>.gitignore</code> (ignores only <code>.build</code>).</li>
+<li><code>lib/js/vendor/harfbuzzjs/build.sh:10-14</code> clones <code>graphicore/harfbuzzjs</code> branch <code>TypeRoof-main</code>
+(based on <code>js-callbacks</code>, for the string-features <code>shape</code> variant, upstream PR harfbuzz/harfbuzzjs#97).
+Run manually; no package.json/Makefile automation.</li>
+<li>Loader <code>lib/js/vendor/harfbuzzjs/harfbuzz.mjs</code> (17 lines): <code>hb({locateFile})</code> then
+<code>{hbjs: hbjs(Module), Module}</code>; wasm URL via <code>new URL('hb.wasm', import.meta.url)</code> (Vite asset).
+<strong>Natural single migration point</strong> for v1.x top-level-await init.</li>
+<li>Init flow: <code>lib/js/shell.mjs:48</code> import → <code>:676-683</code> <code>setInitialDependency('harfbuzz', result)</code> →
+<code>:920</code> <code>_harfbuzz</code> → <code>:1145</code> <code>widgetBus.harfbuzz</code> (<code>{hbjs, Module}</code>) → <code>:1158-1161</code> getter.
+Passed into FontManager (<code>:664</code>) and via <code>lib/js/components/font-loading.mjs:84-86</code> into VideoProofFont.</li>
+</ul>
+<h3><a id="2-harfbuzzjs-api-call-sites-in-typeroof-v0x--v1x-migration-checklist" class="heading_anchor" href="#2-harfbuzzjs-api-call-sites-in-typeroof-v0x--v1x-migration-checklist" aria-hidden="true">#</a>2. harfbuzzjs API call sites in TypeRoof (v0.x → v1.x migration checklist)</h3>
+<ul>
+<li><code>lib/js/model/font.mjs:399-415</code> — <code>hbFace</code> getter: <code>hbjs.createBlob(this.buffer)</code>,
+<code>hbjs.createFace(blob, 0)</code>; <code>destroy()</code> calls <code>face.destroy(); blob.destroy();</code>
+(v1.x: <code>new Blob(buf)</code>, <code>new Face(blob, 0)</code>, drop destroy — FinalizationRegistry).</li>
+<li><code>lib/js/components/actors/videoproof-array.mjs</code>:
+<ul>
+<li><code>917-953</code> <code>_hbShapeExample</code> (debug): createBlob/createFace/createFont/createBuffer,
+<code>font.setVariations(obj)</code> (v1.x: <code>Variation[]</code>), <code>font.setScale</code>, <code>buffer.addText</code>,
+<code>guessSegmentProperties</code>, <code>hb.shape(font, buffer, featuresString)</code> (v1.x: <code>Feature[]</code>,
+<code>Feature.fromString</code> exists), <code>buffer.json(font)</code> (<strong>removed in v1.x</strong> →
+<code>getGlyphInfosAndPositions()</code> or <code>serialize({format: BufferSerializeFormat.JSON})</code>),
+<code>font.glyphName/glyphToPath</code>, 4× <code>.destroy()</code>.</li>
+<li><code>1064-1104</code> <code>_getCellsWidths</code>: same shape pipeline; note <code>:1093</code> passes the font <em>model</em> to
+<code>buffer.json(font)</code> (harmless today, revisit on rewrite).</li>
+<li><code>1177-1212</code> <code>_getExtents</code>: raw Module use — <code>stackSave/stackAlloc/stackRestore</code>,
+<code>Module._hb_font_get_h_extents(hbFont.ptr, ptr)</code> (custom fork export), reads
+ascender/descender/lineGap from <code>HEAP32</code>. <strong>v1.x: replace whole block with <code>hbFont.hExtents()</code></strong>
+(<code>src/font.ts:184</code>). <code>Pointer32StackAlloc</code> (<code>:620-630</code>) and unused <code>Pointer32Malloc</code> (<code>:598</code>)
+become deletable.</li>
+</ul>
+</li>
+<li><code>lib/js/components/actors/videoproof-contextual/layout.mjs:43-65</code> <code>measureWordWidths</code>:
+createFont/setScale/setVariations/createBuffer/addText/guessSegmentProperties/shape/json/destroy.
+Called from <code>videoproof-contextual/index.typeroof.jsx:274</code>.</li>
+<li>Not used anywhere: <code>reference_table</code>, <code>shapeWithTrace</code>, <code>FontFuncs</code>, draw/paint callbacks.</li>
+</ul>
+<h3><a id="3-harfbuzzjs-v1x-packagingapi-checkout-at-varlibagentharfbuzzjs-main--originmain" class="heading_anchor" href="#3-harfbuzzjs-v1x-packagingapi-checkout-at-varlibagentharfbuzzjs-main--originmain" aria-hidden="true">#</a>3. harfbuzzjs v1.x packaging/API (checkout at /var/lib/agent/harfbuzzjs, main == origin/main)</h3>
+<ul>
+<li>ESM-only, <code>dist/index.mjs</code> + types; WASM init at module load via top-level await
+(<code>src/index.ts</code>: <code>init(await createHarfBuzz())</code>). <code>MIGRATING.md</code> documents v0.x→v1.x.</li>
+<li>Classes: <code>Blob</code>, <code>Face</code>, <code>Font</code>, <code>Buffer</code>, <code>FontFuncs</code>, <code>DrawFuncs</code>, <code>PaintFuncs</code>, <code>Feature</code>,
+<code>Variation</code>; enums <code>Direction</code>, <code>BufferFlag</code>, <code>BufferSerializeFormat/Flag</code>, <code>GlyphClass</code>,
+<code>TracePhase</code>. No <code>.destroy()</code>. <code>null</code> → <code>undefined</code> throughout.</li>
+<li><code>Buffer.json()</code> removed → <code>getGlyphInfos()</code>, <code>getGlyphPositions()</code>, <code>getGlyphInfosAndPositions()</code>.</li>
+<li>Renames: <code>reference_table</code>→<code>referenceTable</code>, <code>x_advance</code>→<code>xAdvance</code>, etc.</li>
+<li>Custom build config now lives upstream: <code>Makefile:20</code> <code>-DHB_CONFIG_OVERRIDE_H=&quot;config-override.h&quot;</code>;
+tracked <code>config-override.h</code> enables CFF, draw, paint, color, name, metrics, avar2, cubic-glyf,
+var-composites (all TypeRoof-relevant features on). <code>em.runtime</code> includes the stack methods and
+HEAP* views. <code>harfbuzz.symbols</code> includes extents + <code>hb_ot_layout_*</code> + metrics symbols.</li>
+<li>Build requires emscripten (<code>em++</code>) — <strong>not verified installed on this machine; prompt operator</strong>.</li>
+<li><code>Face</code> methods (src/face.ts): <code>upem</code>, <code>referenceTable</code>, <code>getAxisInfos()</code> (Record&lt;tag, AxisInfo&gt;
+incl. <code>nameId</code>, min/max/default), <code>collectUnicodes()</code>, <code>getTableScriptTags/FeatureTags</code>,
+<code>getScriptLanguageTags</code>, <code>getLanguageFeatureTags</code>, <code>getFeatureLookups</code>, <code>getGlyphClass</code>,
+<code>listNames()</code>/<code>getName(nameId, language)</code>, <code>getFeatureNameIds()</code>, color APIs.</li>
+<li><code>Font</code> methods (src/font.ts): <code>setScale</code>, <code>setVariations(Variation[])</code>, <code>hExtents()</code>/<code>vExtents()</code>
+(<code>FontExtents</code> = ascender/descender/lineGap), <code>glyphExtents()</code>, <code>nominalGlyph()</code>,
+<code>variationGlyph()</code>, <code>glyphName()</code>, <code>glyphFromName()</code>, <code>glyphToPath()</code>, <code>drawGlyph</code>, <code>paintGlyph</code>,
+<code>getMetricPosition()/getMetricPositionWithFallback()</code> (hb-ot-metrics).</li>
+<li><strong>Gap: no fvar named-instance binding</strong> (no <code>hb_ot_var_named_instance_*</code> in symbols or src).</li>
+</ul>
+<h3><a id="4-opentypejs-usage--main-app" class="heading_anchor" href="#4-opentypejs-usage--main-app" aria-hidden="true">#</a>4. opentype.js usage — main app</h3>
+<ul>
+<li>Submodule <code>lib/js/vendor/opentype.js</code> → <code>https://github.com/graphicore/opentype.js.git</code> branch <code>main</code>
+(fork; adds <code>woffToOTF</code> at <code>dist/opentype.mjs:16299,16359</code>; STAT check that throws at
+<code>dist/opentype.mjs:8850-8992</code>, error text <code>:8871/:8874</code>). Not an npm dep.</li>
+<li>Sole import: <code>lib/js/shell.mjs:1</code>. Sole API call site: <code>parseFont</code> (<code>shell.mjs:54-73</code>):
+<code>_parse.getTag</code> (<code>:56</code>, woff/woff2 sniffing), <code>woffToOTF</code> (<code>:61</code>, because harfbuzz can’t read woff),
+<code>parse</code> (<code>:71</code>). woff2 via <code>vendor/wawoff2/decompress.mjs</code>, not opentype.</li>
+<li>Font-object property consumers (replacement shim surface):
+<ul>
+<li>names: <code>fontObject.getEnglishName(key)</code> + <code>names.unicode/macintosh/windows</code>
+(<code>lib/js/model/font.mjs:250,255-257</code>) → fullName/fontFamily/postScriptName/version.</li>
+<li>fvar axes: <code>tables.fvar.axes</code> with <code>tag/name.en/minValue/maxValue/defaultValue</code>
+(<code>model/font.mjs:9-21</code>; also <code>components/dev-layouts/videoproof-array.mjs:681</code>).</li>
+<li>fvar instances: <code>tables.fvar.instances</code> name/coordinates (<code>model/font.mjs:382-389</code>).</li>
+<li>GSUB/GPOS: <code>tables.gsub/gpos.scripts/features</code>, <code>defaultLangSys</code>, <code>langSysRecords</code>,
+<code>featureIndexes</code>, <code>feature.uiName</code>/<code>featUiLabelName</code> (<code>model/font.mjs:44-117</code>, <code>_getUINameFromFeature</code>
+<code>:26-42</code>).</li>
+<li>cmap: <code>tables.cmap.glyphIndexMap</code> (<code>components/ui-char-groups.mjs:193</code>).</li>
+<li>metrics: <code>fontObject.unitsPerEm/ascender/descender</code> → CSS custom properties
+(<code>actors/line-of-text.mjs:103-105</code>, <code>actors/videoproof-array.mjs:510</code>,
+<code>layouts/type-tools-grid.mjs:1942-1944</code>, <code>prosemirror/type-spec.typeroof.jsx:283-294,733-741</code>).</li>
+<li>Never used: charToGlyph, getKerningValue, advanceWidth, getPath/draw, head/hmtx/os2/post tables,
+STAT.</li>
+</ul>
+</li>
+<li>Pipeline: <code>parseFont</code> → <code>FontManager</code> (<code>shell.mjs:~78-600</code>): <code>_hydrateFont</code> (<code>:147-161</code> →
+<code>new VideoProofFont(...)</code> + <code>FontFace</code> + <code>document.fonts.add</code>), <code>_loadFontFromUrl</code> (<code>:386-387</code>,
+parse only when metadata lacks name/version), <code>_loadFontFromFile</code> (<code>:430-446</code> →
+<code>VideoProofDeferredFont.fromFontObject</code> → IndexedDB via <code>local-font-storage.mjs</code>),
+<code>_loadFontFromMessage</code> (<code>:468-469</code>), <code>_registerFont</code> → <code>availableFonts</code> model
+(<code>components/main-model.mjs:75</code>).</li>
+<li><code>local-font-storage.mjs</code>: zero opentype usage (pure IndexedDB).</li>
+</ul>
+<h3><a id="5-opentypejs-usage--legacy-app" class="heading_anchor" href="#5-opentypejs-usage--legacy-app" aria-hidden="true">#</a>5. opentype.js usage — legacy app</h3>
+<ul>
+<li>One file: <code>lib/js/legacy/videoproof-controller.mjs</code> (7637 lines). Import <code>:3</code> (same vendor file as
+main app). Entry: <code>legacy.html:20</code> → <code>legacy/main.mjs</code> → VideoproofController; Vite multi-page input
+at <code>vite.config.js:103</code>.</li>
+<li><code>opentype.parse</code> only, twice (<code>:3868,:3881</code> in <code>_parseFont :3862-3887</code>; callers <code>:3928,:3967,:3977</code>).
+No <code>_parse.getTag</code>, no <code>woffToOTF</code> (woff2 sniffing only, <code>:3870-3873</code>).</li>
+<li>Property reads: names/getEnglishName (<code>:449,:454</code>), fvar axes (<code>:197,:5192</code>), fvar instances
+(<code>:533-543</code>), cmap glyphIndexMap (<code>:856,:870</code>), GSUB/GPOS scripts/features walk (<code>:3253-3290</code>,
+feature chooser; applied via CSS <code>font-feature-settings</code>).</li>
+<li>Rendering entirely via browser <code>FontFace</code> + CSS (<code>:431-437,:555-557</code>); no canvas paths, no shaping,
+no outlines, no metrics reads. <strong>No harfbuzzjs in legacy at all.</strong></li>
+<li>Other legacy modules (layouts/*, text-selection, content-editable, user-guide) touch neither
+opentype nor fontObject.</li>
+<li><strong>Sizing</strong>: small. A font-metadata shim (names, fvar axes+instances, cmap map, GSUB/GPOS structure)
+shared with the main app covers legacy; the parse swap is identical. Only extra work is keeping the
+legacy <code>VideoProofFont</code> wrapper’s object shape compatible.</li>
+</ul>
+<h3><a id="6-mapping-opentypejs-consumers--harfbuzzjs-v1x" class="heading_anchor" href="#6-mapping-opentypejs-consumers--harfbuzzjs-v1x" aria-hidden="true">#</a>6. Mapping opentype.js consumers → harfbuzzjs v1.x</h3>
+<table>
+<thead>
+<tr>
+<th>opentype.js</th>
+<th>harfbuzzjs v1.x</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>parse(buffer)</code> (full table parse)</td>
+<td><code>new Face(new Blob(buffer), 0)</code></td>
+<td>Lazy; no STAT parse → bug gone by construction</td>
+</tr>
+<tr>
+<td><code>getEnglishName</code> / <code>names.*</code></td>
+<td><code>Face.listNames()</code>, <code>Face.getName(nameId, lang)</code></td>
+<td>shim needed for platform/encoding precedence</td>
+</tr>
+<tr>
+<td><code>tables.fvar.axes</code></td>
+<td><code>Face.getAxisInfos()</code> + <code>getName(axis.nameId)</code></td>
+<td>direct</td>
+</tr>
+<tr>
+<td><code>tables.fvar.instances</code></td>
+<td><strong>not bound</strong></td>
+<td>parse <code>Face.referenceTable('fvar')</code> or upstream binding</td>
+</tr>
+<tr>
+<td><code>tables.gsub/gpos</code> scripts/features</td>
+<td><code>Face.getTableScriptTags/FeatureTags</code>, <code>getScriptLanguageTags</code>, <code>getLanguageFeatureTags</code>, <code>getFeatureNameIds</code></td>
+<td>shape differs → shim converts to opentype-like structure</td>
+</tr>
+<tr>
+<td><code>tables.cmap.glyphIndexMap</code></td>
+<td><code>Face.collectUnicodes()</code> + <code>Font.nominalGlyph(cp)</code></td>
+<td>rebuild map; or keep only the unicode set if indexes unused downstream</td>
+</tr>
+<tr>
+<td><code>unitsPerEm</code></td>
+<td><code>Face.upem</code></td>
+<td>direct</td>
+</tr>
+<tr>
+<td><code>ascender</code>/<code>descender</code></td>
+<td><code>Font.hExtents()</code> (hhea) or <code>getMetricPosition()</code> (OS/2 typo metrics)</td>
+<td>decide which metric the CSS vars semantically need</td>
+</tr>
+<tr>
+<td><code>woffToOTF</code></td>
+<td>keep from opentype.js fork (planned)</td>
+<td>harfbuzz cannot read woff</td>
+</tr>
+</tbody>
+</table>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/vendor/harfbuzzjs/harfbuzz.mjs</code> — loader, single migration point</li>
+<li><code>lib/js/vendor/harfbuzzjs/build.sh:10-14</code> — fork provenance</li>
+<li><code>lib/js/shell.mjs:1,48,54-73,676-683,1145</code> — opentype import, harfbuzz init, <code>parseFont</code></li>
+<li><code>lib/js/model/font.mjs:7-23,44-117,224-419,399-415</code> — VideoProofFont, axis/features info, hbFace</li>
+<li><code>lib/js/components/actors/videoproof-array.mjs:598-630,917-953,1064-1104,1177-1212</code> — shaping + raw-Module extents</li>
+<li><code>lib/js/components/actors/videoproof-contextual/layout.mjs:43-65</code> — measureWordWidths</li>
+<li><code>lib/js/components/ui-char-groups.mjs:193</code> — cmap consumer</li>
+<li><code>lib/js/legacy/videoproof-controller.mjs:3,196-209,430-557,856-882,3238-3290,3862-3887</code> — legacy surface</li>
+<li><code>/var/lib/agent/harfbuzzjs/MIGRATING.md</code> — official v0.x→v1.x guide</li>
+<li><code>/var/lib/agent/harfbuzzjs/src/{index,face,font,buffer,shape,helpers}.ts</code>, <code>Makefile</code>, <code>em.runtime</code>, <code>harfbuzz.symbols</code>, <code>config-override.h</code></li>
+</ul>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ol>
+<li>fvar named instances: hand-parse via <code>referenceTable('fvar')</code> vs. adding <code>hb_ot_var_named_instance_*</code>
+bindings upstream (harfbuzzjs is active; a PR is plausible)?</li>
+<li>How to vendor v1.x: copy <code>dist/index.mjs</code>+wasm into <code>lib/js/vendor/harfbuzzjs/</code> (keep current pattern)
+or npm dependency + Vite bundling? Also: build with emscripten locally or use upstream release artifacts?
+(Is emscripten installed on this machine?)</li>
+<li><code>ascender</code>/<code>descender</code> CSS vars: hhea (<code>hExtents</code>) vs OS/2 typo (<code>getMetricPosition</code>) semantics —
+which one matches current opentype.js behavior (opentype uses hhea ascender/descender for these properties)?</li>
+<li>Keep the <code>{hbjs, Module}</code> dependency shape on <code>widgetBus.harfbuzz</code>, or switch to passing the v1.x module
+namespace directly (breaking change confined to ~4 consumer files)?</li>
+<li>Should the opentype-like shim (names/fvar/cmap/GSUB-GPOS) live in <code>lib/js/model/font.mjs</code>, a new
+<code>lib/js/font-info.mjs</code>, or <code>lib/js/vendor/</code> so the legacy app can share it without importing app code?</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>
