@@ -271,7 +271,7 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
     _measureWords(font, words) {
         return [
             words,
-            measureWordWidths(this.widgetBus.harfbuzz.hbjs, font, words), // wordWidthsEm
+            measureWordWidths(this.widgetBus.harfbuzz, font, words), // wordWidthsEm
         ];
     }
 
