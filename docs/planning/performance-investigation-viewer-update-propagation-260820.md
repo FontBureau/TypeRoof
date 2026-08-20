@@ -166,6 +166,53 @@ asserts the rendered structure and that the background-color change
 actually propagates). If a regression surfaces in a less-disciplined
 layout, flip the escape hatch.
 
+## Postscript: the caveat bit, twice
+
+The caveat above was not hypothetical. After cleanup of the performance
+harness, manual testing in the type-stage editor showed that
+**Show Parameters** (`showParameters`) and **Show Element Labels**
+(`showNodeTypeSpecLabels`) no longer appeared when toggled — only a
+viewer↔editor round trip (unrelated full provisioning) brought them up.
+A new regression harness at `lib/js/tests/type-stage-toggles/` boots
+the real `TypeStageController` (viewer default, as in the wikipedia
+app), switches to the editor and flips the toggles; it reproduced the
+bug exactly, including the workaround behavior. Root causes, one per
+stage:
+
+- **Labels — stage 1.** The `NodeTypeSpecLabel` widgets'
+  `activationTest` reads `showNodeTypeSpecLabels` (via the
+  `typeSpecLabels` option) but no dependency mapping declared it, so
+  the relevance scan pruned the outfitter subtree and provisioning
+  never re-ran. The `has-node-labels` class *was* set
+  (`UpdateLabelListener` declares the dep) — just with no label
+  elements to unhide. Fixed by declaring the dependency
+  (`50ba406a`).
+- **Parameters — stage 2.** The outfitter widgets *do* declare
+  `showParameters`, so stage 1 keeps them relevant — but the outfitters
+  are created **dynamically per document node** by
+  `TypeSpecSubscriptions`, so their dependencies never enter the
+  statically computed aggregate stage 2 caches. Toggling
+  `showParameters` proved the subtree unaffected, and provisioning was
+  skipped. Stage 2 stays reverted (`7ad6f363`); re-applying it still
+  fails the regression harness, this time already at the labels
+  assertion.
+
+The structural fix for this class of bug: `ComponentWrapper` now
+injects a **dependency-enforcing `getEntry`** into every
+`activationTest` (`f2acb725`). It behaves like the widget's
+`widgetBus.getEntry` but throws — pointing at the missing
+`dependencyMappings` entry — when the test reads state the widget did
+not declare. All activationTests were converted to use it and to
+declare what they read, so this regression class now fails loudly
+instead of silently skipping provisioning.
+
+**If stage 2 is re-attempted**, the cache must account for containers
+whose children are provisioned dynamically in `update()` (not only in
+the constructor): either update/invalidate the aggregate when
+provisioning creates new wrappers, or — simpler and probably right —
+mark such containers as non-cacheable. `lib/js/tests/type-stage-toggles/`
+is the gate; it catches any wrong version immediately.
+
 ## Remaining work
 
 - **Central CSS per typeSpec-path / stylePatch-path** (operator's
