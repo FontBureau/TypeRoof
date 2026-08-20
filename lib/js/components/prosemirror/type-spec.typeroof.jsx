@@ -532,10 +532,10 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                     // zone doesn't exist, widgets must not activate;
                     // their contents are view-managed, inserting would
                     // corrupt them (and trigger PM reparses).
-                    activationTest: () =>
+                    activationTest: (getEntry) =>
                         this._structuralElements.outer !==
                             this._structuralElements.inner &&
-                        this.getEntry("showParameters").value,
+                        getEntry("showParameters").value,
                 },
                 [
                     [
@@ -543,6 +543,8 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                         "properties@",
                     ],
                     [this.widgetBus.getExternalName("rootFont"), "rootFont"],
+                    // Read in the activationTest.
+                    ["showParameters"],
                 ],
                 UIParametersDisplay,
                 ["ui_type_spec_ramp"],
@@ -552,10 +554,12 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                     zone: "outer",
                     // If the `typeSpecLabels` option is a function it is
                     // treated itself as the activationTest function,
-                    // leaving it to the caller how to implement it. Otherwise,
-                    // the  activationTest will only return true if the value
-                    // of the option is strictly `true`;
-                    activationTest: () => {
+                    // leaving it to the caller how to implement it. It
+                    // receives the dependency-enforcing getEntry as its
+                    // argument (see ComponentWrapper._activationTestGetEntry).
+                    // Otherwise, the activationTest will only return true
+                    // if the value of the option is strictly `true`;
+                    activationTest: (getEntry) => {
                         // see UIParametersDisplay above: no outer zone
                         // when outer === inner
                         if (
@@ -567,7 +571,9 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                             typeof this._nodeOutfitterOptions
                                 ?.typeSpecLabels === "function"
                         )
-                            return this._nodeOutfitterOptions.typeSpecLabels();
+                            return this._nodeOutfitterOptions.typeSpecLabels(
+                                getEntry,
+                            );
                         return (
                             this._nodeOutfitterOptions.typeSpecLabels === true
                         );
@@ -583,6 +589,9 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                         "nodeSpecToTypeSpec",
                     ],
                     ["editingTypeSpec"],
+                    // Read in the activationTest (indirectly, via the
+                    // typeSpecLabels option function).
+                    ["showNodeTypeSpecLabels"],
                 ],
                 NodeTypeSpecLabel,
                 this._typeSpecPath.toRelative(this._originTypeSpecPath),
@@ -1158,6 +1167,11 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 [typeSpecProperties, "properties@"],
                 ["/font", "rootFont"],
                 ["showParameters"],
+                // The label widget's activationTest (see _staticWidgets)
+                // reads showNodeTypeSpecLabels; it must be a declared
+                // dependency so the update-relevance filter keeps this
+                // subtree in update/provisioning range when it changes.
+                ["showNodeTypeSpecLabels"],
                 // unused so far!
                 [parentContentsPath.toString(), "parentContent"],
                 ["nodeSpecToTypeSpec"],
