@@ -2386,7 +2386,12 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                     ],
                     [widgetBus.rootPath.append("t").toString(), "globalT"],
                     // Read in the activationTest.
-                    ["./showParameters", "showParameters"],
+                    [
+                        this.widgetBus.rootPath
+                            .append("showParameters")
+                            .toString(),
+                        "showParameters",
+                    ],
                 ],
                 UIParametersDisplay,
                 zones,
