@@ -1961,7 +1961,7 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
             // feels like a hack at the moment, requires institutionalization.
             videoproofContainer = widgetBus.domTool.createElement("div", {
                 class: "videoproof_layout",
-                style: "height: 100%",
+                style: "height: 100%; width: 100%; box-sizing: border-box;",
             }),
             zones = new Map([
                 ..._zones,

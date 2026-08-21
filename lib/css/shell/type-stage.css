@@ -198,7 +198,6 @@ prosemirror
     font-feature-settings: normal;
 }
 
-
 .typeroof-main > .typeroof-layout {
     /* TODO: This so far has no negative effect on the other layouts,
      * but it enables the side-by-side comparisoon view of editor|viewer.

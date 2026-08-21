@@ -53,3 +53,8 @@ etc
     border-top: 1px solid var(--fieldset-border-color);
     padding: 1em;
 }
+
+.motion_stage-wrapper {
+    /* flex-grow: 1; */
+    flex-shrink: 0;
+}
