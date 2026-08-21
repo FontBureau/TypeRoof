@@ -218,6 +218,9 @@ class TypeStageController extends _BaseContainerComponent {
             editorManagerContainer = widgetBus.domTool.createElement("div", {
                 class: "editor-manager",
             }),
+            proseMirrorHostElement = widgetBus.domTool.createElement("div", {
+                class: "ui_prosemirror_host external_source",
+            }),
             zones = new Map([
                 ..._zones,
                 ["type_spec-manager", typeSpecManagerContainer],
@@ -422,6 +425,25 @@ class TypeStageController extends _BaseContainerComponent {
             ],
             [
                 {
+                    zone: "layout",
+                    // getEntry is injected by ComponentWrapper and only
+                    // serves declared dependencies.
+                    activationTest: (getEntry) => {
+                        const documentRendererMode = getEntry(
+                            "documentRendererMode",
+                        );
+                        return (
+                            documentRendererMode.value === "editor" ||
+                            documentRendererMode.value === "compare"
+                        );
+                    },
+                },
+                ["documentRendererMode"],
+                StaticNode,
+                proseMirrorHostElement,
+            ],
+            [
+                {
                     // getEntry is injected by ComponentWrapper and only
                     // serves declared dependencies.
                     activationTest: (getEntry) => {
@@ -443,6 +465,7 @@ class TypeStageController extends _BaseContainerComponent {
                 originTypeSpecPath,
                 // menuSettings
                 { zone: "prose-mirror-editor-menu" },
+                proseMirrorHostElement,
             ],
             [
                 {

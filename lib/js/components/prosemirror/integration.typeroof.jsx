@@ -809,6 +809,16 @@ export class ProseMirror extends _BaseComponent {
         idMap = {},
         originTypeSpecPath = null,
         classes = [],
+        // In order to have better control where exactly the editor is
+        // inserted, element can be substituted here, instead of having it
+        // created internally, it will also not be inserted into the zone.
+        // A special zone would be an option as well, but that would create
+        // a further element that is not really required, especially as
+        // prosemirror already creates it's own host element and inserts
+        // it into this.element. The `classes` will be applied to this
+        // element as well, but not the `ui_prosemirror_host` class of
+        // the template, you should set that yourself if required.
+        element = null,
     ) {
         super(widgetBus);
         this._idMap = idMap;
@@ -840,7 +850,7 @@ export class ProseMirror extends _BaseComponent {
                 this._idMap.subscriptions,
                 ...args,
             );
-        [this.element, this.view] = this.initTemplate(classes);
+        [this.element, this.view] = this.initTemplate(classes, element);
     }
 
     // Be a bit cautious with the availability of items in the cache
@@ -975,13 +985,15 @@ export class ProseMirror extends _BaseComponent {
         return view;
     }
 
-    initTemplate(classes = []) {
-        const frag = this._domTool.createFragmentFromHTML(
+    initTemplate(classes = [], element = null) {
+        if (element === null) {
+            const frag = this._domTool.createFragmentFromHTML(
                 this.constructor.TEMPLATE,
-            ),
+            );
             element = frag.firstElementChild;
+            this._insertElement(element);
+        }
         for (const name of classes) element.classList.add(name);
-        this._insertElement(element);
         const view = this._initProseMirrorView(element);
         return [element, view];
     }

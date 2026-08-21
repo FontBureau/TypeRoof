@@ -83,6 +83,7 @@ export class RampProseMirrorContext extends BaseProseMirrorContext {
         proseMirrorSettings,
         originTypeSpecPath,
         menuSettings,
+        proseMirrorHostElement = null,
     ) {
         super(widgetBus, zones, [
             [
@@ -107,6 +108,7 @@ export class RampProseMirrorContext extends BaseProseMirrorContext {
                 new.target.ID_MAP,
                 originTypeSpecPath,
                 ["editor-advanced", "has-node-labels"],
+                proseMirrorHostElement,
             ],
             [
                 { id: new.target.ID_MAP.subscriptions },
@@ -137,6 +139,7 @@ export class TypeStageProseMirrorContext extends BaseProseMirrorContext {
         proseMirrorSettings /* e.g. {zone:'layout'}*/,
         originTypeSpecPath,
         menuSettings /* e.g. {zone:'main'}*/,
+        proseMirrorHostElement,
     ) {
         super(widgetBus, zones, [
             [
@@ -161,6 +164,7 @@ export class TypeStageProseMirrorContext extends BaseProseMirrorContext {
                 new.target.ID_MAP,
                 originTypeSpecPath,
                 ["editor-advanced"],
+                proseMirrorHostElement,
             ],
             [{}, ["showNodeTypeSpecLabels"], UpdateLabelListener],
             [
