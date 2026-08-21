@@ -15,7 +15,10 @@ import { getTypeSpecPropertiesIdMethod } from "../../prosemirror/integration.typ
 import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
 import { readMetaModelJSONfromMap } from "../../prosemirror/models.typeroof.jsx";
 
-import { applyHtmlAttrsBag } from "../../prosemirror/html-attrs.ts";
+import {
+    applyHtmlAttrsBag,
+    htmlAttrsBagToSpec,
+} from "../../prosemirror/html-attrs.ts";
 
 import {
     // getStyleLinks,
@@ -119,6 +122,58 @@ function _getRenderingAttrDirectives(hasAttr, attrs) {
     };
 }
 
+// Resolve a typeKey that is neither in the metamodel schema
+// (mmNodeSpecMap) nor in the default schema to one of the default
+// schema's unknown_* node specs, classifying by the block/inline-ness
+// of the node's children. Returns [pmTypeName, nodeSpec, unknownAttrs].
+// Mirrors ProseMirror._rawCreateProseMirrorNode in
+// prosemirror/integration.typeroof.jsx (see default-schema.ts for the
+// specs handled here, e.g. hard_break, unknown, unknown_block,
+// unknown_inline).
+function _determineUnknownType(
+    defaultSchemaNodes,
+    mmNodeSpecMap,
+    mmNode,
+    inInlineContext,
+) {
+    const typeKey = mmNode.get("typeKey").value,
+        childrenBlockType = {
+            hasBlock: false,
+            hasInline: false,
+        };
+    for (const mmChild of mmNode.get("content").value) {
+        const block = _getMMChildIsBlock(
+            defaultSchemaNodes,
+            mmNodeSpecMap,
+            mmChild,
+        );
+        if (block) {
+            childrenBlockType.hasBlock = true;
+            if (childrenBlockType.hasInline) break; // shortcut
+        } else {
+            childrenBlockType.hasInline = true;
+            if (childrenBlockType.hasBlock) break; // shortcut
+        }
+    }
+    const { hasBlock, hasInline } = childrenBlockType;
+
+    // NOTE: this renderer won't crash, ProseMirror doesn't
+    // accept that, but here we don't have a problem.
+    if (hasBlock && hasInline)
+        // log-and-crash (operator decision): schema.node below
+        // will throw on the invalid content mix.
+        console.warn(
+            `unknown type "${typeKey}" has` +
+                " mixed block/inline content; ProseMirror will likely throw.",
+        );
+    const [pmTypeName, unknownAttrs] = hasBlock
+        ? ["unknown_block", { "data-unknown-block-type": typeKey }]
+        : inInlineContext
+          ? ["unknown_inline", { "data-unknown-inline-type": typeKey }]
+          : ["unknown", { "data-unknown-type": typeKey }];
+    return [pmTypeName, defaultSchemaNodes[pmTypeName], unknownAttrs];
+}
+
 // This should inject it's own e.g. <p> element.
 // It's interesting, the "nodesContainer" might have to change when the
 // typeSpec changes! Thus, creating nodesContainer in the constructor might
@@ -160,12 +215,7 @@ export class UIDocumentElement extends _BaseContainerComponent {
         if (nodeSpecMap.has(typeKey)) {
             // FIXME: must update when this.typeKey or nodeSpec[typeKey] changes!
             const nodeSpec = nodeSpecMap.get(typeKey),
-                attributeSpecMap = nodeSpec.get("attrs"),
-                attrs = readMetaModelJSONfromMap(current.get("attrs"), {}),
-                renderingDirectives = _getRenderingAttrDirectives(
-                    (name) => attributeSpecMap.has(name),
-                    attrs,
-                );
+                renderingDirectives = this._getRenderingDirectives();
 
             innerHtml = renderingDirectives.innerHtml;
             attributes = renderingDirectives.attributes;
@@ -191,66 +241,21 @@ export class UIDocumentElement extends _BaseContainerComponent {
             // from the raw specs; see default-schema.ts for the specs
             // handled here (e.g. hard_break, unknown, unknown_block,
             // unknown_inline).
-            const attrs = readMetaModelJSONfromMap(current.get("attrs"), {});
-            // Look at prosemirror/integration.typeroof.jsx ProseMirror._rawCreateProseMirrorNode
-            const _determineUnknownType = (typeKey, current) => {
-                const childrenBlockType = {
-                    hasBlock: false,
-                    hasInline: false,
-                };
-                for (const mmChild of current.get("content").value) {
-                    const block = _getMMChildIsBlock(
-                        this._defaultSchemaSpec.nodes,
-                        nodeSpecMap,
-                        mmChild,
-                    );
-                    if (block) {
-                        childrenBlockType.hasBlock = true;
-                        if (childrenBlockType.hasInline) break; // shortcut
-                    } else {
-                        childrenBlockType.hasInline = true;
-                        if (childrenBlockType.hasBlock) break; // shortcut
-                    }
-                }
-                const { hasBlock, hasInline } = childrenBlockType;
-
-                // NOTE: this renderer won't crash, ProseMirror doesn't
-                // accept that, but here we don't have a problem.
-                if (hasBlock && hasInline)
-                    // log-and-crash (operator decision): schema.node below
-                    // will throw on the invalid content mix.
-                    console.warn(
-                        `${this} unknown type "${typeKey}" has` +
-                            " mixed block/inline content; ProseMirror will likely throw.",
-                    );
-                const [pmTypeName, unknownAttrs] = hasBlock
-                    ? ["unknown_block", { "data-unknown-block-type": typeKey }]
-                    : this._context.inInlineContext
-                      ? [
-                            "unknown_inline",
-                            { "data-unknown-inline-type": typeKey },
-                        ]
-                      : ["unknown", { "data-unknown-type": typeKey }];
-                return [
-                    pmTypeName,
-                    this._defaultSchemaSpec.nodes[pmTypeName],
-                    unknownAttrs,
-                ];
-            };
-
-            const [, /*pmTypeName*/ nodeSpec, unknownAttrs] =
+            const attrs = readMetaModelJSONfromMap(current.get("attrs"), {}),
+                [, /*pmTypeName*/ nodeSpec, unknownAttrs] =
                     typeKey in this._defaultSchemaSpec.nodes
                         ? [
                               typeKey,
                               this._defaultSchemaSpec.nodes[typeKey],
                               null,
                           ]
-                        : _determineUnknownType(typeKey, current),
-                attributeSpec = nodeSpec?.attrs || {},
-                renderingDirectives = _getRenderingAttrDirectives(
-                    (name) => name in attributeSpec,
-                    attrs,
-                );
+                        : _determineUnknownType(
+                              this._defaultSchemaSpec.nodes,
+                              nodeSpecMap,
+                              current,
+                              this._context.inInlineContext,
+                          ),
+                renderingDirectives = this._getRenderingDirectives();
 
             if (unknownAttrs !== null) additionalAttrs = unknownAttrs;
             childrenInInlineContext = _specChildrenInInlineContext(
@@ -288,6 +293,13 @@ export class UIDocumentElement extends _BaseContainerComponent {
             hasTypeSpecStyling: this._hasTypeSpecStyling,
             pathOfTypes: this._pathOfTypes,
         };
+
+        // The attr-driven DOM state as applied below (the htmlAttrs bag
+        // and the verbatim html of reproducing atoms);
+        // _applyAttrDrivenDOMUpdates compares against these when the
+        // node's attrs change while this widget is being reused.
+        this._appliedAttributes = attributes;
+        this._appliedInnerHtml = innerHtml;
 
         this._treatAsLeaf = innerHtml !== null;
         const localContainer = widgetBus.domTool.createElement(tag);
@@ -384,7 +396,89 @@ export class UIDocumentElement extends _BaseContainerComponent {
         );
     }
 
+    // Compute the "reproducing" rendering directives (see
+    // _getRenderingAttrDirectives) from the node's *current* attrs.
+    // The constructor uses this for the initial DOM;
+    // _applyAttrDrivenDOMUpdates uses it to re-apply attrs that changed
+    // while this widget is reused for a same-typeKey node (e.g. a
+    // replaced document's node at the same list position —
+    // UIDocumentNode rebuilds only on typeKey change).
+    _getRenderingDirectives() {
+        const current = this.getEntry("."),
+            typeKey = current.get("typeKey").value,
+            nodeSpecMap = this.getEntry("nodeSpec"),
+            attrs = readMetaModelJSONfromMap(current.get("attrs"), {});
+        let hasAttr;
+        if (nodeSpecMap.has(typeKey)) {
+            const attributeSpecMap = nodeSpecMap.get(typeKey).get("attrs");
+            hasAttr = (name) => attributeSpecMap.has(name);
+        } else {
+            const nodeSpec =
+                    typeKey in this._defaultSchemaSpec.nodes
+                        ? this._defaultSchemaSpec.nodes[typeKey]
+                        : _determineUnknownType(
+                              this._defaultSchemaSpec.nodes,
+                              nodeSpecMap,
+                              current,
+                              this._context.inInlineContext,
+                          )[1],
+                attributeSpec = nodeSpec?.attrs || {};
+            hasAttr = (name) => name in attributeSpec;
+        }
+        return _getRenderingAttrDirectives(hasAttr, attrs);
+    }
+
+    // Re-apply the attr-driven parts of the DOM (the htmlAttrs bag and
+    // the verbatim html of reproducing atoms) when the node's attrs
+    // changed underneath this reused widget — the constructor built
+    // that DOM only once. The tag (htmlTag/spec tag) is not
+    // re-resolved: element identity is managed by the parent's slot
+    // insertion (UIDocumentNodes) and the typeSpec styler; FIXME: a tag
+    // change requires a rebuild and is currently only warned about.
+    _applyAttrDrivenDOMUpdates() {
+        const { innerHtml, attributes, htmlTag } =
+            this._getRenderingDirectives();
+        if (htmlTag !== null && htmlTag !== this.node.tagName.toLowerCase())
+            console.warn(
+                `${this} htmlTag changed from ` +
+                    `"${this.node.tagName.toLowerCase()}" to "${htmlTag}"; ` +
+                    "re-creating the element is not implemented, keeping the stale tag.",
+            );
+        if (attributes !== this._appliedAttributes) {
+            // Remove attrs the old bag applied that the new bag doesn't
+            // have anymore, then replay the new bag (applyHtmlAttrsBag
+            // only sets, it never removes).
+            const newSpec = htmlAttrsBagToSpec(attributes || "");
+            for (const name of Object.keys(
+                htmlAttrsBagToSpec(this._appliedAttributes || ""),
+            ))
+                if (!(name in newSpec)) this.node.removeAttribute(name);
+            if (attributes) applyHtmlAttrsBag(this.node, attributes);
+            this._appliedAttributes = attributes;
+        }
+        if (innerHtml !== this._appliedInnerHtml) {
+            if (this._treatAsLeaf && innerHtml !== null)
+                this.node.replaceChildren(
+                    this._domTool.createFragmentFromHTML(innerHtml),
+                );
+            // Changing from or to a verbatim-html (leaf) node changes
+            // the widget structure (children widgets vs. none), which
+            // requires a rebuild.
+            // FIXME: not implemented, keeping the stale content.
+            else
+                console.warn(
+                    `${this} the "html" attr changed leaf-ness; ` +
+                        "rebuilding the widget is not implemented, keeping the stale content.",
+                );
+            this._appliedInnerHtml = innerHtml;
+        }
+    }
+
     _provisionWidgets(/* compareResult */) {
+        // The node's own attrs may have changed while this widget is
+        // being reused for a same-typeKey node — re-apply the
+        // constructor-baked, attr-driven DOM before provisioning.
+        this._applyAttrDrivenDOMUpdates();
         const requiresFullInitialUpdate = new Set();
         if (this._hasTypeSpecStyling) {
             const wrapper = this._provisionTypeSpecStyler();
@@ -824,6 +918,12 @@ export class UIDocumentNode extends _BaseContainerComponent {
         } else {
             dependencyMappings = [
                 ["./content", "nodes"],
+                // attrs drive the constructor-baked DOM (tag, htmlAttrs
+                // bag, verbatim html of reproducing atoms; see
+                // UIDocumentElement._applyAttrDrivenDOMUpdates); the
+                // mapping also makes the update-relevance filter wake
+                // this widget up when only attrs changed.
+                ["./attrs", "attrs"],
                 [this.widgetBus.getExternalName("nodeSpec"), "nodeSpec"],
                 [this.widgetBus.getExternalName("markSpec"), "markSpec"],
                 [
