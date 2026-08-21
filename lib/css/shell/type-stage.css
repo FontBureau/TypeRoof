@@ -190,28 +190,23 @@ prosemirror
     }
 }
 
-/******************************************************************************
-WIP add viewer/static document renderer
-*******************************************************************************/
-
-.typeroof-main > .typeroof-layout {
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: flex-end;
-}
-
-.ui_prosemirror_host {
-    /* temporary, to fit the viewer next to it */
-    width: fit-content;
-    height: fit-content;
-}
-
 /** .Prosemirror applies these via the vendor CSS, we can't allow the
  *  features manipulation
  */
 .ProseMirror {
     font-variant-ligatures: normal;
     font-feature-settings: normal;
+}
+
+
+.typeroof-main > .typeroof-layout {
+    /* TODO: This so far has no negative effect on the other layouts,
+     * but it enables the side-by-side comparisoon view of editor|viewer.
+     * Eventually we should have a class/styles manager that can be
+     * used by the layouts to configure .typeroof-layout and when the
+     * layout is destroyed, to reset it.
+     */
+    display: flex;
 }
 
 .typeroof-document {
