@@ -1,0 +1,4007 @@
+{
+  "activeState": {
+    "t": "0",
+    "duration": "100",
+    "keyMoments": [
+      {
+        "label": "Key Moment 1",
+        "duration": "1",
+        "easing": "linear",
+        "isActive": "1",
+        "3dProperties": [
+          [
+            "perspective",
+            "500"
+          ]
+        ],
+        "textColor": {
+          "instance": {
+            "R": "255",
+            "G": "224",
+            "B": "0"
+          },
+          "colorTypeKey": "RGB"
+        },
+        "stageBackgroundColor": {
+          "instance": {
+            "R": "0",
+            "G": "0",
+            "B": "38"
+          },
+          "colorTypeKey": "RGB"
+        }
+      }
+    ],
+    "activeActors": [
+      {
+        "instance": {
+          "label": "plane1",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "width",
+                  "2000"
+                ],
+                [
+                  "height",
+                  "3240"
+                ],
+                [
+                  "y",
+                  "-1000"
+                ]
+              ],
+              "3dProperties": [
+                [
+                  "rotationX",
+                  "45"
+                ]
+              ],
+              "axesLocations": [
+                [
+                  "wght",
+                  "500"
+                ]
+              ],
+              "fontSize": "54",
+              "textAlign": "center"
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "plane2",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "100",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "-360"
+                      ],
+                      [
+                        "y",
+                        "1700"
+                      ],
+                      [
+                        "width",
+                        "2000"
+                      ],
+                      [
+                        "height",
+                        "3240"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 2",
+                    "duration": "1",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "-5000"
+                      ]
+                    ]
+                  }
+                ],
+                "activeActors": [
+                  {
+                    "instance": {
+                      "label": "line1",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "Typography is the art and technique",
+                          "letterSpacing": 2.25,
+                          "wordSpacing": 3,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "0"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "3",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 2.25,
+                          "wordSpacing": 3,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 2.25,
+                          "wordSpacing": 3,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "83",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 2.25,
+                          "wordSpacing": 3,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line2",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "of arranging type to make written language",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": -1.5,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "81"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "5",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": -1.5,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": -1.5,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "81",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": -1.5,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line3",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "legible, readable and appealing when dis-",
+                          "letterSpacing": -0.375,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "162"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "6",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.375,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.375,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "80",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.375,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line4",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "played. The arrangement of type involves",
+                          "letterSpacing": 0,
+                          "wordSpacing": 0.75,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "243"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "8",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0,
+                          "wordSpacing": 0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0,
+                          "wordSpacing": 0.375,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "78",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0,
+                          "wordSpacing": 0.375,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line5",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "selecting typefaces, point sizes, line lengths,",
+                          "letterSpacing": -1.125,
+                          "wordSpacing": -2.25,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "324"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "9",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -1.125,
+                          "wordSpacing": -2.25,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -1.125,
+                          "wordSpacing": -2.25,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "77",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -1.125,
+                          "wordSpacing": -2.25,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line6",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "line spacing (leading), letter spacing",
+                          "letterSpacing": 1.875,
+                          "wordSpacing": 2.25,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "405"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "11",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 1.875,
+                          "wordSpacing": 2.25,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 1.875,
+                          "wordSpacing": 2.25,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "75",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 1.875,
+                          "wordSpacing": 2.25,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line7",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "(tracking), and adjusting the space between",
+                          "letterSpacing": -1.5,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "486"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "13",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -1.5,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -1.875,
+                          "wordSpacing": -1.125,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "73",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -1.875,
+                          "wordSpacing": -1.125,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line8",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "pairs of letters (kerning). The term typo-",
+                          "letterSpacing": 0.30000000000000004,
+                          "wordSpacing": 0.75,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "567"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0.30000000000000004,
+                          "wordSpacing": 0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0.30000000000000004,
+                          "wordSpacing": 0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "72",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0.30000000000000004,
+                          "wordSpacing": 0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line9",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "graphy is also applied to the style, arrange-",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": -1.5,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "648"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "16",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": -1.5,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.9375,
+                          "wordSpacing": -1.5,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "70",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.9375,
+                          "wordSpacing": -1.5,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line10",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "ment, and appearance of the letters, num-",
+                          "letterSpacing": -0.5625,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "729"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "17",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.5625,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.5625,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "69",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.5625,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line11",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "bers, and symbols created by the process.",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "810"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "19",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.48750000000000004,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "67",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.48750000000000004,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line12",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "Type design is a closely related craft, some-",
+                          "letterSpacing": -1.125,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "891"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "21",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -1.125,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -1.5,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "65",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -1.5,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line13",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "times considered part of typography; most",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "972"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "22",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "64",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line14",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "typographers do not design typefaces, and",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "1053"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "24",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "62",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line15",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "some type designers do not consider them-",
+                          "letterSpacing": -0.9375,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "1134"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "25",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.9375,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.9375,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "61",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.9375,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line16",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "selves typographers. Typography also",
+                          "letterSpacing": 2.0625,
+                          "wordSpacing": 1.5,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "1215"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "27",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 2.0625,
+                          "wordSpacing": 1.5,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 2.25,
+                          "wordSpacing": 1.5,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "59",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 2.25,
+                          "wordSpacing": 1.5,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line17",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "may be used as an ornamental and deco-",
+                          "letterSpacing": 0,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "1296"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "29",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "57",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line18",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "rative device, unrelated to the communi-",
+                          "letterSpacing": 0.5625,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "1377"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "30",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0.5625,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0.30000000000000004,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "56",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0.30000000000000004,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line19",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "cation of information.                                   ",
+                          "letterSpacing": 0,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "1458"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "32",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "54",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line20",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "Typography is the work of typesetters",
+                          "letterSpacing": 1.875,
+                          "wordSpacing": 1.5,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "1539"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "33",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 1.875,
+                          "wordSpacing": 1.5,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 1.875,
+                          "wordSpacing": 2.25,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "53",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 1.875,
+                          "wordSpacing": 2.25,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line21",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "(also known as compositors), typographers,",
+                          "letterSpacing": -1.125,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "1620"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "35",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -1.125,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -1.125,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "51",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -1.125,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line22",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "artists, comic book artists, graffiti artists,",
+                          "letterSpacing": 0.1875,
+                          "wordSpacing": 0.75,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "1701"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "37",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0.1875,
+                          "wordSpacing": 0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0,
+                          "wordSpacing": -0.375,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "49",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0,
+                          "wordSpacing": -0.375,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line23",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "and, now, anyone who arranges words, let-",
+                          "letterSpacing": -0.1875,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "1782"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "38",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.1875,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.44999999999999996,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "48",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.44999999999999996,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line24",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "ters, numbers, and symbols for publication,",
+                          "letterSpacing": -0.1875,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "1863"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "40",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.1875,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.9375,
+                          "wordSpacing": -1.125,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "46",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.9375,
+                          "wordSpacing": -1.125,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line25",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "display, or distribution, from clerical work-",
+                          "letterSpacing": 0.375,
+                          "wordSpacing": 0.75,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "1944"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "41",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0.375,
+                          "wordSpacing": 0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "45",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line26",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "ers and newsletter writers to anyone self-",
+                          "letterSpacing": 0.375,
+                          "wordSpacing": 1.5,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "2025"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "43",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0.375,
+                          "wordSpacing": 1.5,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0.375,
+                          "wordSpacing": 0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "43",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0.375,
+                          "wordSpacing": 0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line27",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "publishing materials. Until the Digital Age,",
+                          "letterSpacing": 0.1875,
+                          "wordSpacing": 0.75,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "2106"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "45",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0.1875,
+                          "wordSpacing": 0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.1875,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "41",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.1875,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line28",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "typography was a specialized occupation.",
+                          "letterSpacing": 0.1875,
+                          "wordSpacing": 0.75,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "2187"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "46",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": 0.1875,
+                          "wordSpacing": 0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.1875,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "40",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.1875,
+                          "wordSpacing": 0,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line29",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "Digitalization opened up typography to new",
+                          "letterSpacing": -0.1875,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "2268"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "48",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.1875,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": -1.5,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "38",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.75,
+                          "wordSpacing": -1.5,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  },
+                  {
+                    "instance": {
+                      "label": "line30",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": "generations of previously unrelated design...",
+                          "letterSpacing": -0.5625,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "2349"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "49",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -0.5625,
+                          "wordSpacing": -0.75,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "14",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -1.125,
+                          "wordSpacing": -1.125,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "37",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": -1.125,
+                          "wordSpacing": -1.125,
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  }
+                ]
+              },
+              "actorTypeKey": "LayerActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      }
+    ],
+    "width": "1280",
+    "height": "720",
+    "zoomLevel": {
+      "type": "app-default",
+      "scaling": "100.00000"
+    },
+    "editingActor": "./0"
+  },
+  "activeLayoutKey": "MotionStage",
+  "activeFontKey": "from-url Roboto Delta Regular Version_3-000"
+}
