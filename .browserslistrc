@@ -1,0 +1,5 @@
+# Browser support baseline for CSS minification (Lightning CSS via Vite).
+# Without targets, Lightning CSS assumes the latest of every browser and
+# strips vendor fallbacks (e.g. `width: -webkit-fill-available` before
+# `width: stretch`, which Firefox doesn't support yet).
+defaults

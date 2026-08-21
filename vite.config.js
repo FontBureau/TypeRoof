@@ -1,11 +1,44 @@
 import { defineConfig, transformWithOxc } from "vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
+import browserslist from "browserslist";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url)),
     // Set base path to match Eleventy's pathPrefix
     basePath = "/TypeRoof/";
+
+// esbuild-style engine names understood by Vite's cssTarget converter,
+// mapped from browserslist names.
+const esbuildEngineNames = {
+    chrome: "chrome",
+    edge: "edge",
+    firefox: "firefox",
+    safari: "safari",
+    ios_saf: "ios",
+    opera: "opera",
+};
+
+// Minimum version per engine from .browserslistrc ("defaults") as
+// esbuild-style targets (e.g. "firefox140") for `build.cssTarget`.
+// Without cssTarget, Lightning CSS minification assumes the latest of
+// every browser and strips vendor fallbacks (e.g. the `width: stretch`
+// fallbacks, unsupported in Firefox).
+function browserslistToEsbuildTargets() {
+    const minimumVersion = {};
+    for (const entry of browserslist()) {
+        const [browser, version] = entry.split(" ");
+        const engine = esbuildEngineNames[browser],
+            // "18.5-18.7" -> 18, "all" -> NaN
+            major = parseInt(version, 10);
+        if (!engine || Number.isNaN(major)) continue;
+        if (!(engine in minimumVersion) || major < minimumVersion[engine])
+            minimumVersion[engine] = major;
+    }
+    return Object.entries(minimumVersion).map(
+        ([engine, major]) => `${engine}${major}`,
+    );
+}
 
 export default defineConfig({
     plugins: [
@@ -97,6 +130,9 @@ export default defineConfig({
         outDir: "dist",
         assetsDir: "assets",
         target: "esnext",
+        // Lightning CSS minification targets, derived from .browserslistrc
+        // ("defaults"); without them vendor fallbacks get stripped.
+        cssTarget: browserslistToEsbuildTargets(),
         rolldownOptions: {
             input: {
                 shell: resolve(__dirname, "shell.html"),
