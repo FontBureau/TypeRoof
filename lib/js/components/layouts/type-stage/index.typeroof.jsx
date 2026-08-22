@@ -596,7 +596,22 @@ class TypeStageController extends _BaseContainerComponent {
                 new Map([...zones, ["main", markSpecManagerContainer]]),
             ],
         ];
+        // The manager may not be present in test harnesses; then the
+        // layout works without the layout-scoping class (CSS falls back
+        // to the generic selectors).
+        this._classesAndStylesManager = this.widgetBus.getWidgetById(
+            "classes-and-styles-manager",
+            null,
+        );
+        this._classesAndStylesManager?.setClass("typeroof-layout--type-stage");
+
         this._initWidgets(widgets);
+    }
+    destroy() {
+        // Whoever uses the manager must reset it.
+        this._classesAndStylesManager?.reset();
+        this._classesAndStylesManager = null;
+        return super.destroy();
     }
     update(...args) {
         this.widgetBus.wrapper

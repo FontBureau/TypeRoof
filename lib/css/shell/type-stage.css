@@ -198,13 +198,12 @@ prosemirror
     font-feature-settings: unset;
 }
 
-.typeroof-main > .typeroof-layout {
-    /* TODO: This so far has no negative effect on the other layouts,
-     * but it enables the side-by-side comparisoon view of editor|viewer.
-     * Eventually we should have a class/styles manager that can be
-     * used by the layouts to configure .typeroof-layout and when the
-     * layout is destroyed, to reset it.
-     */
+/* Scoped via ClassesAndStylesManager: the TypeStageController adds the
+ * class on construction and resets on destroy. This enables the
+ * side-by-side comparison view of editor|viewer without affecting the
+ * other layouts.
+ */
+.typeroof-main > .typeroof-layout.typeroof-layout--type-stage {
     display: flex;
 }
 
