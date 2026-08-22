@@ -194,8 +194,8 @@ prosemirror
  *  features manipulation
  */
 .ProseMirror {
-    font-variant-ligatures: normal;
-    font-feature-settings: normal;
+    font-variant-ligatures: unset;
+    font-feature-settings: unset;
 }
 
 .typeroof-main > .typeroof-layout {
