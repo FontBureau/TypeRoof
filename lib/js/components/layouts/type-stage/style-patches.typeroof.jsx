@@ -339,7 +339,13 @@ export class UIStylePatch extends _BaseTypeDrivenContainerComponentMixin(
                     [this.widgetBus.getExternalName("sourceMap"), "sourceMap"],
                 ],
                 Constructor = UICompositeStylePatch,
-                args = [this._zones];
+                args = [
+                    this._zones,
+                    "local", // childrenMainZone = 'local'
+                    null, // UIItem=null
+                    true, // itemsDragable=true
+                    true, // itemsDeletable=false
+                ];
             widgets.push([settings, dependencyMappings, Constructor, ...args]);
         } else throw new Error(`KEY ERROR unknown typeKey ${typeKey}.`);
 
@@ -501,7 +507,6 @@ export class UIStylePatchesMap extends _UIBaseMap {
                 zone: keyId, // required to check if widgetWrapper.host === host
             },
             dependencyMappings = [
-                ["./stylePatchTypeKey", "data"],
                 [
                     this.widgetBus.getExternalName("stylePatchPath"),
                     "activePath",
@@ -509,10 +514,8 @@ export class UIStylePatchesMap extends _UIBaseMap {
             ],
             Constructor = MapSelectButton,
             args = [
-                "button",
-                { class: "ui_style_patches_map-item-value" },
                 [["click", (/*event*/) => this._onClickHandler(key)]],
-                () => "Edit",
+                ["ui_style_patches_map-item-value"],
             ];
         return this._initWrapper(
             childWidgetBus,

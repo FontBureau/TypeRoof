@@ -15,6 +15,11 @@ import {
 import { getColorFromPropertyValuesMap, enhanceContrast } from "../color.mjs";
 
 import { getRegisteredPropertySetup } from "../registered-properties.mjs";
+import {
+    getStyleLinks,
+    INTENT_STYLE_LINKS,
+    MARK_STYLE_LINKS,
+} from "../registered-properties-definitions.mjs";
 
 import {
     COLOR,
@@ -46,6 +51,14 @@ import {
     getTypeSpecPropertiesIdMethod,
     getTypeSpecsMethod,
 } from "./integration.typeroof.jsx";
+
+import {
+    getStylePatchLinkForIntent,
+    getStylePatchLinkForMark,
+    getStylePatchTagForIntent,
+} from "../type-spec-models.mjs";
+
+import { applyHtmlAttrsBag as _applyHtmlAttrsBag } from "./html-attrs.ts";
 
 export function typeSpecGetFontMethod(changedMap, propertyValuesMap) {
     const fontPPSRecord = ProcessedPropertiesSystemMap.createSimpleRecord(
@@ -210,7 +223,12 @@ class UIParametersDisplay extends _BaseComponent {
  * margins.
  */
 export class UIDocumentTypeSpecStyler extends _BaseComponent {
-    constructor(widgetBus, innerElement, outerElement, pmNode) {
+    constructor(
+        widgetBus,
+        innerElement,
+        outerElement,
+        pmNode = null /* Viewer does not provide this*/,
+    ) {
         super(widgetBus);
         this.innerElement = innerElement;
         this.outerElement = outerElement;
@@ -303,7 +321,7 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                 getDefault = (property) => {
                     if (property.startsWith(`${GENERIC}blockMargins/`)) {
                         // FIXME: this is a hack!
-                        return [true, 0];
+                        return [true, `0pt`];
                     }
                     return [true, getRegisteredPropertySetup(property).default];
                 };
@@ -476,14 +494,13 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         getPos,
         nodeOutfitterOptions = { typeSpecLabels: false },
     ) {
-        // If structuralElements.outer === structuralElements.inner
-        // the contents of outer must be purely managed by prosemirror
-        // and hence it would be plainly wrong to create a zone for
-        // another widget to use.
-        const zones =
-            structuralElements.outer !== structuralElements.inner
-                ? new Map([..._zones, ["outer", structuralElements.outer]])
-                : _zones;
+        // The outer zone must exist for wrapper initialization even
+        // when structuralElements.outer === structuralElements.inner
+        // (e.g. reproducing atoms): _initWrapper resolves zones eagerly,
+        // and the activationTests of the outer-zone widgets
+        // (UIParametersDisplay, NodeTypeSpecLabel) prevent actual use
+        // in that case — nothing is inserted into the element.
+        const zones = new Map([..._zones, ["outer", structuralElements.outer]]);
 
         super(widgetBus, zones);
         this._structuralElements = structuralElements;
@@ -511,7 +528,14 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
             [
                 {
                     zone: "outer",
-                    activationTest: () => this.getEntry("showParameters").value,
+                    // outer === inner (e.g. reproducing atoms): the outer
+                    // zone doesn't exist, widgets must not activate;
+                    // their contents are view-managed, inserting would
+                    // corrupt them (and trigger PM reparses).
+                    activationTest: (getEntry) =>
+                        this._structuralElements.outer !==
+                            this._structuralElements.inner &&
+                        getEntry("showParameters").value,
                 },
                 [
                     [
@@ -519,6 +543,8 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                         "properties@",
                     ],
                     [this.widgetBus.getExternalName("rootFont"), "rootFont"],
+                    // Read in the activationTest.
+                    ["showParameters"],
                 ],
                 UIParametersDisplay,
                 ["ui_type_spec_ramp"],
@@ -528,15 +554,26 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                     zone: "outer",
                     // If the `typeSpecLabels` option is a function it is
                     // treated itself as the activationTest function,
-                    // leaving it to the caller how to implement it. Otherwise,
-                    // the  activationTest will only return true if the value
-                    // of the option is strictly `true`;
-                    activationTest: () => {
+                    // leaving it to the caller how to implement it. It
+                    // receives the dependency-enforcing getEntry as its
+                    // argument (see ComponentWrapper._activationTestGetEntry).
+                    // Otherwise, the activationTest will only return true
+                    // if the value of the option is strictly `true`;
+                    activationTest: (getEntry) => {
+                        // see UIParametersDisplay above: no outer zone
+                        // when outer === inner
+                        if (
+                            this._structuralElements.outer ===
+                            this._structuralElements.inner
+                        )
+                            return false;
                         if (
                             typeof this._nodeOutfitterOptions
                                 ?.typeSpecLabels === "function"
                         )
-                            return this._nodeOutfitterOptions.typeSpecLabels();
+                            return this._nodeOutfitterOptions.typeSpecLabels(
+                                getEntry,
+                            );
                         return (
                             this._nodeOutfitterOptions.typeSpecLabels === true
                         );
@@ -552,6 +589,9 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                         "nodeSpecToTypeSpec",
                     ],
                     ["editingTypeSpec"],
+                    // Read in the activationTest (indirectly, via the
+                    // typeSpecLabels option function).
+                    ["showNodeTypeSpecLabels"],
                 ],
                 NodeTypeSpecLabel,
                 this._typeSpecPath.toRelative(this._originTypeSpecPath),
@@ -804,6 +844,8 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             this._checkNewlySubscribedMarks.bind(this),
         );
         this._styleSubscribers = new Map();
+        // Intent -> tag correction machinery (see _flushMarkTagCorrections)
+        this._markTagCorrectionFlushScheduled = false;
         this._nodeOutfitterOptions = Object.assign(
             {
                 typeSpecLabels: false,
@@ -823,11 +865,59 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         return dependencies;
     }
 
-    _getStyleLinkPropertiesId(typeSpecProperties, styleLink) {
-        const typeSpecPath = typeSpecProperties.slice(
+    _getEffectiveStyleLinks(typeSpecProperties, prefix = INTENT_STYLE_LINKS) {
+        return getEffectiveStyleLinks(
+            this.widgetBus,
+            typeSpecProperties,
+            prefix,
+        );
+    }
+
+    // The applicable style-link for a mark, as [fieldName, key] or null.
+    // Intents resolve from intentStyleLinks (by data-style-name), schema
+    // marks from markStyleLinks (by mark type name); the field name is
+    // required to build the styleLinkProperties@ id path.
+    _getStylePatchLinkForMark(typeSpecProperties, mark) {
+        const styleName = mark.attrs["data-style-name"];
+        if (styleName !== undefined) {
+            const key = getStylePatchLinkForIntent(
+                this._getEffectiveStyleLinks(
+                    typeSpecProperties,
+                    INTENT_STYLE_LINKS,
+                ),
+                styleName,
+            );
+            return key === null ? null : ["intentStyleLinks", key];
+        }
+        const key = getStylePatchLinkForMark(
+            this._getEffectiveStyleLinks(typeSpecProperties, MARK_STYLE_LINKS),
+            mark,
+        );
+        return key === null ? null : ["markStyleLinks", key];
+    }
+
+    // The tag an intent mark is bound to via the applicable
+    // TypeSpec's style-link edges, or null (renders as default span).
+    _resolveIntentTag(typeSpecProperties, mark) {
+        return getStylePatchTagForIntent(
+            this._getEffectiveStyleLinks(typeSpecProperties),
+            mark.attrs["data-style-name"],
+        );
+    }
+
+    _getStyleLinkPropertiesId(typeSpecProperties, styleLinkEntry) {
+        if (styleLinkEntry === null)
+            // no applicable edge: the unknown-style fallback applies
+            return null;
+        const [fieldName, styleLink] = styleLinkEntry,
+            typeSpecPath = typeSpecProperties.slice(
                 "typeSpecProperties@".length,
             ),
-            styleLinkPropertiesId = `styleLinkProperties@${Path.fromParts(typeSpecPath, "stylePatches", styleLink)}`,
+            styleLinkPropertiesId = `styleLinkProperties@${Path.fromParts(
+                typeSpecPath,
+                fieldName,
+                styleLink,
+            )}`,
             protocolHandlerImplementation =
                 this.widgetBus.getProtocolHandlerImplementation(
                     "styleLinkProperties@",
@@ -837,11 +927,9 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             throw new Error(
                 `KEY ERROR ProtocolHandler for identifier "styleLinkProperties@" not found.`,
             );
-        // check if styleLinkPropertiesId exists, otherwise return null
-        if (protocolHandlerImplementation.hasRegistered(styleLinkPropertiesId))
-            return styleLinkPropertiesId;
-        return null;
-        // throw new Error(`KEY ERROR styleLinkPropertiesId "${styleLinkPropertiesId}" not found in styleLinkProperties@.`);
+        if (!protocolHandlerImplementation.hasRegistered(styleLinkPropertiesId))
+            return null;
+        return styleLinkPropertiesId;
     }
 
     _createStyleStylerWrapper(styleLinkProperties, domElemment) {
@@ -908,7 +996,10 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             ),
             styleLinkPropertiesId = this._getStyleLinkPropertiesId(
                 parentSubscription.typeSpecProperties,
-                mark.attrs["data-style-name"],
+                this._getStylePatchLinkForMark(
+                    parentSubscription.typeSpecProperties,
+                    mark,
+                ),
             ),
             styleSubscription = this._createStyleSubscription(
                 domElement,
@@ -924,6 +1015,101 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         this._updateDOM(() =>
             this._activateWidget(styleSubscription.widgetWrapper),
         );
+    }
+
+    // ProseMirror creates mark views context-free: the tag binding
+    // of an intent mark (via the applicable TypeSpec) is only resolvable
+    // once the element is attached. Where the resolved tag differs from
+    // the element's tag, the element is swapped and PM's view desc is
+    // patched to it (see _swapMarkElement). Flushed from a microtask,
+    // so callers can schedule freely within update cycles.
+    _scheduleMarkTagCorrectionFlush() {
+        if (this._markTagCorrectionFlushScheduled) return;
+        this._markTagCorrectionFlushScheduled = true;
+        queueMicrotask(() => {
+            this._markTagCorrectionFlushScheduled = false;
+            this._flushMarkTagCorrections();
+        });
+    }
+
+    _flushMarkTagCorrections() {
+        const proseMirrorComponent = this.widgetBus.getWidgetById(
+            "proseMirror",
+            null,
+        );
+        if (
+            proseMirrorComponent === null ||
+            proseMirrorComponent.view.isDestroyed
+        )
+            return;
+        const view = proseMirrorComponent.view;
+        // stop() defers the flush (setTimeout) when mutation records are
+        // pending; by then swapped-out elements are detached and the
+        // deferred flush crashes in localPosFromDOM. Flush first, while
+        // everything is still connected (and ignoreMutation still matches
+        // the styler's attribute writes), so stop() has nothing to defer.
+        view.domObserver.flush();
+        // The swaps are self-inflicted DOM changes; PM must not try to
+        // re-read the document from them (PM uses stop/start the same
+        // way internally). _updateDOM stops the domObserver for the whole
+        // loop; nested _updateDOM calls (unsubscribeMark, _finalizeMark-
+        // Subscription) pass through via the _updateDOMContext guard, so
+        // the observer is not re-connected mid-swap (which queued records
+        // targeting detached elements and crashed the deferred flush).
+        this._updateDOM(() => {
+            // snapshot: swaps migrate subscriptions within the map
+            for (const [domElement, { mark, parentSubscription }] of Array.from(
+                this._styleSubscribers,
+            )) {
+                if (mark.type.name !== "generic-style") continue;
+                if (!domElement.isConnected) continue;
+                const tag =
+                    this._resolveIntentTag(
+                        parentSubscription.typeSpecProperties,
+                        mark,
+                    ) || "span";
+                if (tag === domElement.tagName.toLowerCase()) continue;
+                this._swapMarkElement(view, domElement, mark, tag);
+            }
+        });
+    }
+
+    _findViewDescByDOM(viewDesc, dom) {
+        if (viewDesc.dom === dom) return viewDesc;
+        for (const child of viewDesc.children) {
+            const found = this._findViewDescByDOM(child, dom);
+            if (found !== null) return found;
+        }
+        return null;
+    }
+
+    _swapMarkElement(view, domElement, mark, tag) {
+        const desc = this._findViewDescByDOM(view.docView, domElement),
+            // desc.spec is the ProsemirrorMarkView (has _stylerDOM)
+            markView = desc === null ? null : desc.spec;
+        if (markView === null || !("_stylerDOM" in markView)) return;
+        const newElement = this.widgetBus.domTool.createElement(tag, {
+            "data-mark-type": mark.type.name,
+            "data-style-name": mark.attrs["data-style-name"],
+        });
+        // preserve collected attributes across the swap
+        if (mark.attrs.htmlAttrs)
+            _applyHtmlAttrsBag(newElement, mark.attrs.htmlAttrs);
+        // Move the content: PM's child view descs (text) reference the
+        // moved nodes, which stay valid.
+        while (domElement.firstChild)
+            newElement.appendChild(domElement.firstChild);
+        domElement.parentNode.replaceChild(newElement, domElement);
+        // Patch PM's book-keeping and the mark view to the new element,
+        // so text edits and destroy keep working on it.
+        desc.dom = newElement;
+        desc.contentDOM = newElement;
+        markView.dom = newElement;
+        markView.contentDOM = newElement;
+        markView._stylerDOM = newElement;
+        // Migrate the style subscription to the new element.
+        this.unsubscribeMark(domElement);
+        this._finalizeMarkSubscription(newElement, mark);
     }
 
     _checkNewlySubscribedMarks(mutations_) {
@@ -964,6 +1150,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         }
         if (this._newlySubscribedMarks.size === 0)
             this._marksDomObserver.disconnect();
+        this._scheduleMarkTagCorrectionFlush();
     }
 
     _createTypeSpecStylerWrapper(
@@ -980,6 +1167,11 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 [typeSpecProperties, "properties@"],
                 ["/font", "rootFont"],
                 ["showParameters"],
+                // The label widget's activationTest (see _staticWidgets)
+                // reads showNodeTypeSpecLabels; it must be a declared
+                // dependency so the update-relevance filter keeps this
+                // subtree in update/provisioning range when it changes.
+                ["showNodeTypeSpecLabels"],
                 // unused so far!
                 [parentContentsPath.toString(), "parentContent"],
                 ["nodeSpecToTypeSpec"],
@@ -1263,7 +1455,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         // Here are some edge-cases we need to cover here:
         // - When a used typeSpec e.g. get's move. here doc/paragraph-2
         //   to docs/paragraph-1/paragraph-2
-        // - When a used stylePatches link e.g. "italic" is renamed e.g. to "italicx"
+        // - When a used intentStyleLinks link e.g. "italic" is renamed e.g. to "italicx"
         const requiresUpdate = new Map();
         for (const [domElement, subscription] of this._subscribers) {
             const updates = this._updateWidget(domElement, subscription);
@@ -1284,7 +1476,10 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                         this._styleSubscribers.get(styleDOMElement),
                     styleLinkPropertiesId = this._getStyleLinkPropertiesId(
                         subscription.typeSpecProperties,
-                        oldStyleSubscription.mark.attrs["data-style-name"],
+                        this._getStylePatchLinkForMark(
+                            subscription.typeSpecProperties,
+                            oldStyleSubscription.mark,
+                        ),
                     );
                 requiresUpdate.set(styleDOMElement, [
                     subscription,
@@ -1300,7 +1495,10 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             const { parentSubscription, mark } = styleSubscription,
                 styleLinkPropertiesId = this._getStyleLinkPropertiesId(
                     parentSubscription.typeSpecProperties,
-                    mark.attrs["data-style-name"],
+                    this._getStylePatchLinkForMark(
+                        parentSubscription.typeSpecProperties,
+                        mark,
+                    ),
                 );
             if (
                 styleLinkPropertiesId ===
@@ -1343,6 +1541,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 styleSubscription,
             );
         }
+        this._scheduleMarkTagCorrectionFlush();
         return requiresFullInitialUpdate;
     }
 
@@ -1360,7 +1559,8 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         if (this._viewDomObserver === null)
             this._viewDomObserver =
                 this.widgetBus.getWidgetById("proseMirror").view.domObserver;
-        if (this._viewDomObserverIsStoppped) return fn();
+        if (this._viewDomObserverIsStoppped || this._updateDOMContext)
+            return fn();
         this._viewDomObserver.stop();
         this._updateDOMContext = true;
         try {
@@ -1374,6 +1574,31 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
     update(...args) {
         this._updateDOM(() => super.update(...args));
     }
+}
+
+// The effective (inherited and local) style-link edges of the
+// TypeSpec identified by a typeSpecProperties@ id, as a Map of
+// key => StylePatchLinkModel. Tombstoned (unlinked) edges are
+// excluded by getStyleLinks.
+export function getEffectiveStyleLinks(
+    widgetBus,
+    typeSpecProperties,
+    prefix = INTENT_STYLE_LINKS,
+) {
+    const protocolHandlerImplementation =
+        widgetBus.getProtocolHandlerImplementation("typeSpecProperties@", null);
+    if (protocolHandlerImplementation === null)
+        throw new Error(
+            `KEY ERROR ProtocolHandler for identifier "typeSpecProperties@" not found.`,
+        );
+    if (!protocolHandlerImplementation.hasRegistered(typeSpecProperties))
+        return new Map();
+    const typeSpecLiveProperties =
+        protocolHandlerImplementation.getRegistered(typeSpecProperties);
+    return getStyleLinks(
+        typeSpecLiveProperties.typeSpecnion.getProperties(),
+        prefix,
+    );
 }
 
 function _addMark(map, mark) {
@@ -1448,7 +1673,11 @@ export class UIProseMirrorMenuBlocks extends _BaseComponent {
                 linkParts.length === 0 || linkParts[0] === "children"
                     ? Path.fromParts(...linkParts)
                     : Path.fromParts("children", ...linkParts);
-        const typeSpecLabel = getEntry(typeSpec, path).get("label").value;
+        const linkedTypeSpec = getEntry(typeSpec, path, null),
+            typeSpecLabel =
+                (linkedTypeSpec !== null &&
+                    linkedTypeSpec.get("label").value) ||
+                "";
         return typeSpecLabel !== ""
             ? `${typeSpecLabel} [${blockName}]`
             : `[${blockName}]`;
@@ -1669,15 +1898,18 @@ export class UIProseMirrorMenuStyles extends _BaseComponent {
             commonSubSet = new Set();
 
         for (const [typeSpec, path] of typeSpecs) {
-            const stylePatches = typeSpec.get("stylePatches");
-            // console.log(
-            //   `${path} :: ${typeSpec.get("label").value} STYLES:`,
-            //   ...stylePatches.keys(),
-            // );
+            // The effective (inherited and local) intent style-links of
+            // the TypeSpec; tombstoned edges are excluded by getStyleLinks,
+            // NULL-styles are included and selectable.
+            const intentStyleLinks = getEffectiveStyleLinks(
+                this.widgetBus,
+                `typeSpecProperties@${path}`,
+                INTENT_STYLE_LINKS,
+            );
             // OK so these keys are the options that we are going to present
 
-            setsOfStyles.set(typeSpec, new Set(stylePatches.keys()));
-            for (const style of stylePatches.keys())
+            setsOfStyles.set(typeSpec, new Set(intentStyleLinks.keys()));
+            for (const style of intentStyleLinks.keys())
                 allStylesSuperSet.add(style);
         }
         for (const style of allStylesSuperSet) {
@@ -1704,7 +1936,7 @@ export class UIProseMirrorMenuStyles extends _BaseComponent {
         //               in the current context, should not be displayed at all
 
         // FIXME: we should define an order and keep it stable...
-        // i.e. stylePatches has an inherent order but before, the typeSpecs
+        // i.e. intentStyleLinks has an inherent order but before, the typeSpecs
         // could have, i.e. in order of appearance, maybe depth-first, but
         // it's not readily accessible for us.
 
@@ -1744,7 +1976,11 @@ export class UIProseMirrorMenuStyles extends _BaseComponent {
     }
 
     update(changedMap) {
-        if (changedMap.has("typeSpec") && this._editorView) {
+        if (
+            (changedMap.has("typeSpec") ||
+                changedMap.has("nodeSpecToTypeSpec")) &&
+            this._editorView
+        ) {
             // Especially the order of styles could be different, this reorders:
             // it's however interesting, that the typeSpec are not read from
             // here, maybe we should use another update mechanism via
@@ -1900,9 +2136,22 @@ export class UIBoldItalicMenu extends _BaseComponent {
 
         this._editorView = view;
         const state = this._editorView.state,
+            typeSpecs = this._getTypeSpecs(state),
             setsOfStyles = new Map(),
             allStylesSuperSet = new Set(["bold", "italic", "bold italic"]),
             commonSubSet = new Set();
+
+        for (const [typeSpec, path] of typeSpecs) {
+            // The effective (inherited and local) intent style-links of
+            // the TypeSpec; tombstoned edges are excluded by getStyleLinks,
+            // NULL-styles are included and selectable.
+            const intentStyleLinks = getEffectiveStyleLinks(
+                this.widgetBus,
+                `typeSpecProperties@${path}`,
+                INTENT_STYLE_LINKS,
+            );
+            setsOfStyles.set(typeSpec, new Set(intentStyleLinks.keys()));
+        }
 
         for (const style of allStylesSuperSet) {
             if (
@@ -1934,7 +2183,10 @@ export class UIBoldItalicMenu extends _BaseComponent {
     }
 
     update(changedMap) {
-        if (changedMap.has("nodeSpecToTypeSpec")) {
+        if (
+            changedMap.has("typeSpec") ||
+            changedMap.has("nodeSpecToTypeSpec")
+        ) {
             this.updateView(this._editorView);
         }
     }

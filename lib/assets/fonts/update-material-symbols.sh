@@ -10,10 +10,13 @@ ICON_NAMES=(
     arrow_forward
     arrow_left_alt
     arrow_right_alt
+    article
     chevron_right
+    close
     delete
     drag_pan
     edit
+    edit_document
     edit_off
     format_align_center
     format_align_left
@@ -33,8 +36,10 @@ ICON_NAMES=(
     play_arrow
     refresh
     remove
+    settings
     swap_horiz
     swap_vert
+    text_compare
     toggle_on
     toggle_off
 )

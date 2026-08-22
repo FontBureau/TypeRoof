@@ -134,10 +134,24 @@ export class Path {
     static fromParts(...pathParts: (string | number)[]): Path {
         return new this(...pathParts);
     }
+    // Path instances are immutable and fromString is a pure function of
+    // the string, so interning is safe. Profiling (UIDocumentViewer with
+    // a big document) showed Path construction/sanitizing to be the
+    // single biggest cost of update propagation, because paths get
+    // re-parsed from strings repeatedly (getExternalName, getEntry, …).
+    private static _fromStringCache = new Map<string, Path>();
+    static FROM_STRING_CACHE_LIMIT = 10000;
     static fromString(pathString: string): Path {
+        const cached = this._fromStringCache.get(pathString);
+        if (cached !== undefined) return cached;
         const splitted =
             pathString === "" ? [] : pathString.split(this.SEPARATOR);
-        return this.fromParts(...splitted);
+        const path = this.fromParts(...splitted);
+        if (this._fromStringCache.size >= this.FROM_STRING_CACHE_LIMIT)
+            // cheap eviction strategy: start over
+            this._fromStringCache.clear();
+        this._fromStringCache.set(pathString, path);
+        return path;
     }
     fromString(pathString: string): Path {
         return (this.constructor as typeof Path).fromString(pathString);

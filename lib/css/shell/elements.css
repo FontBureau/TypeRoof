@@ -215,3 +215,12 @@ button.ui_button.ui_button-move.drag_handle {
         font-size: 2rem !important;
     }
 }
+
+/******************************************************************************
+hr
+*******************************************************************************/
+
+.typeroof-ui hr {
+    border: none;
+    border-bottom: 1px solid var(--fieldset-border-color);
+}

@@ -2,7 +2,8 @@
 prosemirror
 *******************************************************************************/
 
-.ui_prosemirror_host {
+.ui_prosemirror_host,
+.typeroof-document {
     /* so the background color fills the entire layout */
     min-height: 100%;
 
@@ -33,12 +34,30 @@ prosemirror
         text-decoration-color: deeppink;
         text-decoration-skip-ink: none;
         text-decoration-line: underline;
+
+        &::before {
+            content: " (UNKOWN STYLE: " attr(data-style-name) ") ";
+            color: black;
+            background: white;
+        }
     }
 
-    .unknown-style::before {
-        content: " (UNKOWN STYLE: " attr(data-style-name) ") ";
+    [data-unknown-inline-type] {
+        font-family: RobotoFlex, sans-serif;
         color: black;
-        background: white;
+        background: deeppink;
+        text-decoration-style: solid;
+        text-decoration-thickness: 1.5pt;
+        text-decoration-color: deeppink;
+        text-decoration-skip-ink: none;
+        text-decoration-line: underline;
+
+        &::before {
+            content: " (UNKOWN INLINE TYPE: " attr(data-unknown-inline-type)
+                ") ";
+            color: black;
+            background: white;
+        }
     }
 }
 
@@ -48,7 +67,7 @@ prosemirror
 :is(.ProseMirror, .typeroof-document) {
     /** margin-left: 2em; */
 
-    > * {
+    *[data-node-type] {
         line-height: var(--line-height);
 
         /* FIXME: not functioning in Firefox, requires workaround! */
@@ -70,72 +89,8 @@ prosemirror
         --space-after: 0;
     }
     */
-    .editor-advanced & > * {
-        /* only acceptable for block-style
-         * this way, the label-columns in the ramp on the left can
-         * spread over the entire height of the element including its
-         * margins, which are here expressed as template areas which wont
-         * be occupied by elements.
-         */
-        display: grid;
-        grid-template-columns: auto;
-        grid-template-rows:
-            var(--space-before, 0)
-            auto auto
-            var(--space-after, 0);
-        grid-template-areas:
-            "space-before"
-            "content"
-            "bottom"
-            "space-after";
-
-        & > * {
-            grid-area: content;
-        }
-
-        & > .ui-parameters-display {
-            grid-area: bottom;
-            line-height: 1.3;
-        }
-    }
-
-    .editor-advanced.has-node-labels & > * {
-        grid-template-columns: var(--label-width-or-margin-inline-start, 0) auto;
-        grid-template-areas:
-            "label space-before"
-            "label content"
-            "label bottom"
-            "label space-after";
-
-        & > .ui_type_spec_label {
-            position: relative;
-            grid-area: label;
-
-            > span {
-                /* this way (psoition absolute) the label does not
-                 * influence the height of the actual element, even
-                 * if the element is smaller than the lavel.
-                 */
-                position: absolute;
-                width: stretch; /* only use available space */
-                font-size: 1rem;
-                background-color: transparent;
-                line-height: 1.3;
-                padding: 0.3rem;
-                margin-inline-end: 0.3em;
-                text-align: center;
-                text-overflow: ellipsis;
-                overflow: hidden;
-                white-space: nowrap;
-            }
-
-            &.ui_type_spec-editing {
-                background-color: #eef;
-            }
-        }
-    }
-
-    .editor-advanced:not(.has-node-labels) & {
+    .editor-advanced:not(.has-node-labels) &,
+    &.typeroof-document:not(.has-node-labels) {
         margin-inline-start: var(--label-width-or-margin-inline-start, 0);
     }
 
@@ -168,4 +123,126 @@ prosemirror
             margin-block-end: var(--margin-block-end, 0);
         }
     }
+}
+
+.editor-advanced *[data-node-type] {
+    /* only acceptable for block-style
+     * this way, the label-columns in the ramp on the left can
+     * spread over the entire height of the element including its
+     * margins, which are here expressed as template areas which wont
+     * be occupied by elements.
+     */
+    display: grid;
+    grid-template-columns: auto;
+    grid-template-rows:
+        var(--space-before, 0)
+        auto auto
+        var(--space-after, 0);
+    grid-template-areas:
+        "space-before"
+        "content"
+        "bottom"
+        "space-after";
+
+    & > [data-node-content] {
+        grid-area: content;
+    }
+
+    & > .ui-parameters-display {
+        grid-area: bottom;
+        line-height: 1.3;
+    }
+}
+
+.editor-advanced.has-node-labels *[data-node-type] {
+    grid-template-columns: var(--label-width-or-margin-inline-start, 0) auto;
+    grid-template-areas:
+        "label space-before"
+        "label content"
+        "label bottom"
+        "label space-after";
+
+    & > .ui_type_spec_label {
+        position: relative;
+        grid-area: label;
+
+        > span {
+            /* this way (psoition absolute) the label does not
+             * influence the height of the actual element, even
+             * if the element is smaller than the lavel.
+             */
+            position: absolute;
+            width: stretch; /* only use available space */
+            font-size: 1rem;
+            background-color: transparent;
+            line-height: 1.3;
+            padding: 0.3rem;
+            margin-inline-end: 0.3em;
+            text-align: center;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        &.ui_type_spec-editing {
+            background-color: #eef;
+        }
+    }
+}
+
+/** .Prosemirror applies these via the vendor CSS, we can't allow the
+ *  features manipulation
+ */
+.ProseMirror {
+    font-variant-ligatures: unset;
+    font-feature-settings: unset;
+}
+
+.typeroof-main > .typeroof-layout {
+    /* TODO: This so far has no negative effect on the other layouts,
+     * but it enables the side-by-side comparisoon view of editor|viewer.
+     * Eventually we should have a class/styles manager that can be
+     * used by the layouts to configure .typeroof-layout and when the
+     * layout is destroyed, to reset it.
+     */
+    display: flex;
+}
+
+.typeroof-document {
+    /** .Prosemirror applies these via the vendor CSS
+     * But in the form:
+     *      word-wrap: break-word;
+     *      white-space: pre-wrap;
+     *      white-space: break-spaces;
+     *      -webkit-font-variant-ligatures: none;
+     *      font-variant-ligatures: none;
+     **/
+    overflow-wrap: break-word;
+    font-variant-ligatures: none;
+
+    /*
+     *  Don't apply these from Prosemirror:
+        font-variant-ligatures: none;
+        font-feature-settings: "liga" 0;
+    */
+    height: fit-content;
+    width: fit-content;
+
+    /* ProseMirror does this, primarily it renders subsequent spaces instead of collapsing them. */
+    white-space: break-spaces;
+}
+
+.typeroof-document *[data-node-type] {
+    padding: var(--space-before) 0 var(--space-after) 0;
+    line-height: var(--line-height);
+
+    /* In order to achive a pixel-perfect match between the prosemirror
+     * elements and the document, this switches the layout engine to treat
+     * element heights the same (especially in chrome). This is basically
+     * a hack and if we are not viewing documents side by side, one rendered
+     * with prosemirror, one with this, it wouldn't matter much. prosemirror
+     * uses display grid on the inner elements, and they contain
+     * instrumentation that we can't change easily.
+     */
+    display: table;
 }

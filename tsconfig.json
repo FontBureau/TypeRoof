@@ -47,7 +47,7 @@
     "moduleResolution": "bundler",
   },
   "include": [
-    "lib/js"
+    "lib/js",
   ],
   "exclude": [
     "node_modules",

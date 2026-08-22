@@ -99,6 +99,10 @@ function hasMarkWithAttrs(
     attrs: Attrs | null,
 ): boolean {
     if (!doc.rangeHasMark(from, to, markType)) return false;
+    // No attrs specified: presence of the mark type is enough, matching
+    // upstream toggleMark semantics. (mark.attrs is always an object,
+    // e.g. {} for attr-less marks, so attrsEqual can't express this.)
+    if (attrs === null) return true;
     let allMatch = true;
     doc.nodesBetween(from, to, (node: Node) => {
         if (!allMatch) return false;

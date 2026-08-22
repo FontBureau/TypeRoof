@@ -37,11 +37,12 @@ function _uniqueKey(keys) {
 export class _BaseTreeEditor extends _BaseComponent {
     static TEMPLATE = `<div class="tree_editor stage-manager_actors">(initial)</div>`;
 
-    constructor(widgetBus, dataTransferTypes) {
+    constructor(widgetBus, dataTransferTypes, relPathToChildren) {
         super(widgetBus);
         this._dataTransferTypes = Object.freeze(
             Object.assign({}, dataTransferTypes),
         );
+        this._containerRelPathToChildren = relPathToChildren;
         this._itemElements = new Map(/* Path: element*/);
         this._activePaths = new Set();
         this._removeDragIndicatorTimeoutId = null;
@@ -234,16 +235,14 @@ export class _BaseTreeEditor extends _BaseComponent {
         this._setDropTargetIndicator(event.currentTarget);
 
         const { path } = item,
-            rootPath = Path.fromString(
-                this.widgetBus.getExternalName("activeActors"),
-            ),
-            targetPath = rootPath.append(...path),
+            targetPath = this.widgetBus.rootPath.append(...path),
             insertPosition = this._getDropTargetInsertPosition(item, event);
         if (type === this.DATA_TRANSFER_TYPES.PATH) {
             const relativeSourcePath = event.dataTransfer.getData(
                     this.DATA_TRANSFER_TYPES.PATH,
                 ),
-                sourcePath = rootPath.appendString(relativeSourcePath);
+                sourcePath =
+                    this.widgetBus.rootPath.appendString(relativeSourcePath);
             return this._move(sourcePath, targetPath, insertPosition);
         } else if (type === this.DATA_TRANSFER_TYPES.CREATE) {
             const typeKey = event.dataTransfer.getData(
@@ -546,16 +545,6 @@ export class _BaseTreeEditor extends _BaseComponent {
             `NOT IMPLEMENTED ${this}._createItem (for ${typeKey}).`,
         );
     }
-    _getContainerRelPathToChildren() {
-        // return Path.fromParts('instance', 'activeActors');
-        throw new Error(
-            `NOT IMPLEMENTED ${this}._getContainerRelPathToChildren`,
-        );
-    }
-
-    get _containerRelPathToChildren() {
-        return this._getContainerRelPathToChildren();
-    }
 
     _getItemLabel(/*item*/) {
         throw new Error(`NOT IMPLEMENTED ${this}._getItemLabel`);
@@ -566,9 +555,7 @@ export class TypeSpecTreeEditor extends _BaseTreeEditor {
     _isContainerItem(item) {
         return item instanceof TypeSpecModel;
     }
-    _getContainerRelPathToChildren() {
-        return Path.fromParts("children");
-    }
+
     _getItemLabel(item) {
         const typeLabel = "TypeSpec",
             itemLabel = item.get("label").value;

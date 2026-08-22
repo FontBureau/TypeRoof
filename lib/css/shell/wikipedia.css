@@ -1,0 +1,92 @@
+@import url("./main.css");
+
+/******************************************************************************
+override variables
+*******************************************************************************/
+
+:root {
+    --sidebar-bg-color: #eeeeeef0;
+}
+
+/******************************************************************************
+wrapper
+*******************************************************************************/
+
+.typeroof-ui_sidebar {
+    position: relative;
+    z-index: 2;
+}
+
+.typeroof-layout {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+.ui-button-show_settings {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    border: none;
+    border-radius: 5em;
+
+    .settings-visible & {
+        display: none;
+    }
+}
+
+.ui-button-close_settings {
+    float: right;
+    margin: 1em;
+}
+
+.typeroof-ui_sidebar {
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease-in;
+
+    .settings-visible & {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+/******************************************************************************
+etc
+*******************************************************************************/
+
+.general-settings {
+    border-top: 1px solid var(--fieldset-border-color);
+    padding: 1em;
+}
+
+:is(.ProseMirror, .typeroof-document) {
+    a[data-node-type="figcontent"] {
+        padding: var(--space-before) 0 var(--space-after) 0;
+
+        &,
+        img {
+            display: block;
+        }
+    }
+
+    [data-node-type="reproduce-as-inline"],
+    sup[data-node-type="cite-link"] {
+        /* FIXME: can be set via UI/TypeSpec */
+        padding: 0; /* var(--space-before) 0 var(--space-after) 0; */
+        display: inline;
+    }
+}
+
+/* Hide ProseMirror's editing-only hack nodes (no document counterpart)
+   when the editor isn't focused, so it reflows like the viewer's DOM.
+   While focused, keep them: an invisible trailingBreak breaks caret
+   feedback at the end of a textblock. */
+.ProseMirror:not(.ProseMirror-focused)
+    :is(.ProseMirror-trailingBreak, .ProseMirror-separator) {
+    display: none;
+}

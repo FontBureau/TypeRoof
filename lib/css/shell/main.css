@@ -342,15 +342,13 @@ base map items
     }
 
     > [class*="_map-item-value"] {
-        min-width: 5em;
-
         &.active {
             font-weight: 700;
         }
     }
 
-    > [class*="_map-item-drag_handle"] {
-        order: -1;
+    > :is([class*="_map-item-drag_handle"], .ui_button-remove) {
+        order: 10;
     }
 }
 
@@ -1445,7 +1443,8 @@ select and drag
 
 .ui_node_spec_map-tools,
 .ui_style_patches_map-tools,
-.ui_links_map-tools {
+.ui_links_map-tools,
+.ui_mark_spec_map-tools {
     & > * {
         display: initial;
     }
@@ -1501,6 +1500,10 @@ select and drag
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+
+    .ui_generic_select-select {
+        appearance: auto;
+    }
 }
 
 .ui_links_map-item_value-value_label {

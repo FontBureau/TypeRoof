@@ -3,7 +3,7 @@ import { FreezableSet, Path } from "../../metamodel.mjs";
 import {
     NodeModel,
     toMetaModelJSON,
-    fromMetaModelJSON,
+    readMetaModelJSONfromMap,
 } from "./models.typeroof.jsx";
 
 import { _BaseComponent } from "../basics/component.mjs";
@@ -121,6 +121,18 @@ function _getBestTypeSpecPropertiesId(
 }
 
 /**
+ * Memoize getTypeSpecPropertiesIdMethod resolutions, keyed by the
+ * nodeSpecToTypeSpec model instance (immutable, so relinking uses a
+ * fresh cache level automatically) and the joined typeKeys. The resolved
+ * path is stored, registry membership is re-validated on every hit
+ * (a cheap Map lookup), so typeSpec edits also stay correct. This runs
+ * once per document node per update (UIDocumentElement twice: self +
+ * next sibling), and many nodes share the same type path of typeKeys,
+ * so most calls hit the cache.
+ */
+const _typeSpecPropertiesIdCache = new WeakMap();
+
+/**
  * MAYBE: requires a better name
  *
  * NOTE (to myself): I think going via _getBestTypeSpecPropertiesId is
@@ -133,23 +145,48 @@ export function getTypeSpecPropertiesIdMethod(
     nodeSpecToTypeSpecName = "nodeSpecToTypeSpec",
     protocolHandlerName = "typeSpecProperties@",
 ) {
+    let memo = _typeSpecPropertiesIdCache.get(
+        this.getEntry(nodeSpecToTypeSpecName),
+    );
     const nodeSpecToTypeSpec = this.getEntry(nodeSpecToTypeSpecName),
-        typeKey = pathOfTypes.at(-1),
-        typeSpecLink = !nodeSpecToTypeSpec.has(typeKey)
-            ? ""
-            : nodeSpecToTypeSpec.get(typeKey).get("link").value,
         protocolHandlerImplementation =
             this.widgetBus.getProtocolHandlerImplementation(
                 protocolHandlerName,
                 null,
-            );
-    return _getBestTypeSpecPropertiesId(
+            ),
+        // Lazy per-component memo of the origin path string.
+        memoKey =
+            `${this._tsIdOriginKey ?? (this._tsIdOriginKey = this._originTypeSpecPath.toString())}` +
+            `|${asPath}|${pathOfTypes.join("\n")}`,
+        cached = memo?.get(memoKey);
+    // cached is the resolved testPath (a Path), registry membership is
+    // re-validated on every hit (cheap Map lookup), like the uncached
+    // resolution does.
+    if (
+        cached !== undefined &&
+        protocolHandlerImplementation.hasRegistered(
+            `${protocolHandlerName}${cached}`,
+        )
+    )
+        return asPath ? cached : `${protocolHandlerName}${cached}`;
+
+    const typeKey = pathOfTypes.at(-1),
+        typeSpecLink = !nodeSpecToTypeSpec.has(typeKey)
+            ? ""
+            : nodeSpecToTypeSpec.get(typeKey).get("link").value;
+    // asPath=true returns a Path, otherwise the id string; the cache
+    // always stores just the Path.
+    const resolvedPath = _getBestTypeSpecPropertiesId(
         typeSpecLink,
         protocolHandlerName,
         protocolHandlerImplementation,
         this._originTypeSpecPath,
-        asPath,
+        true, // asPath
     );
+    if (memo === undefined)
+        _typeSpecPropertiesIdCache.set(nodeSpecToTypeSpec, (memo = new Map()));
+    memo.set(memoKey, resolvedPath);
+    return asPath ? resolvedPath : `${protocolHandlerName}${resolvedPath}`;
 }
 
 export function getTypeSpecsMethod(state) {
@@ -175,7 +212,7 @@ export function getTypeSpecsMethod(state) {
     return result;
 }
 
-class ProsemirrorNodeView {
+export class ProsemirrorNodeView {
     // the args are from https://prosemirror.net/docs/ref/#view.NodeViewConstructor
     // type NodeViewConstructor = fn(
     //     node: Node,
@@ -205,25 +242,49 @@ class ProsemirrorNodeView {
                 .getLinked(node.type.schema)
                 .get("nodes")
                 .get(node.type.name),
-            tag = mmNodeSpec.get("tag").value,
+            specTag = mmNodeSpec.get("tag").value;
+        // Reproducing atoms (inferred: the node type declares an "html"
+        // attr) render wrapper-free: replayed outer attributes +
+        // verbatim innerHTML, no content element, no contentDOM. Their
+        // element tag may be reproduced from the source (htmlTag).
+        this._isReproducing = "html" in (node.type.spec.attrs ?? {});
+        this._specTag = specTag;
+        const tag =
+                "htmlTag" in (node.type.spec.attrs ?? {})
+                    ? _reproducingTag(node, specTag)
+                    : specTag,
             element = widgetBus.domTool.createElement(tag, {
                 "data-node-type": node.type.name,
             });
         // The outer DOM node that represents the document node.
         this.dom = element;
 
-        // FIXME: depending on the type of the outer node, this might
-        // better be a span.
-        const contentElement = widgetBus.domTool.createElement("div");
-        element.append(contentElement);
-        // For the subscription it is important that this element is
-        // the same as the contentDOM, the element that will be the parent
-        // of the marks.
-        this._stylerDOM = contentElement;
-        // The DOM node that should hold the node's content
-        // this is probably only required when this._stylerDOM != this.dom
-        // this is also part of the ProseMiror API
-        this.contentDOM = contentElement;
+        if (this._isReproducing) {
+            this._stylerDOM = this.dom;
+            _applyHtmlAttrsBag(this.dom, node.attrs.htmlAttrs);
+            // skipped when empty: the reproduced tag may be a void
+            // element (e.g. <img>), which has no content
+            if (node.attrs.html) this.dom.innerHTML = node.attrs.html;
+        } else {
+            // editable attr replay: collected outer attributes on the
+            // outer element (guarded; the content element is untouched)
+            if (node.attrs.htmlAttrs)
+                _applyHtmlAttrsBag(this.dom, node.attrs.htmlAttrs);
+            // FIXME: depending on the type of the outer node, this might
+            // better be a span.
+            const contentElement = widgetBus.domTool.createElement("div", {
+                "data-node-content": "",
+            });
+            element.append(contentElement);
+            // For the subscription it is important that this element is
+            // the same as the contentDOM, the element that will be the parent
+            // of the marks.
+            this._stylerDOM = contentElement;
+            // The DOM node that should hold the node's content
+            // this is probably only required when this._stylerDOM != this.dom
+            // this is also part of the ProseMiror API
+            this.contentDOM = contentElement;
+        }
         const subscriptionsWidget = widgetBus.getWidgetById(
             this._subscriptionsId,
             null,
@@ -233,6 +294,8 @@ class ProsemirrorNodeView {
         const structuralElements = {
             // required to style e.g. the margins between paragraphs
             outer: this.dom,
+            // for reproducing atoms outer === inner (an anticipated
+            // case in UIDocumentNodeOutfitter)
             inner: this._stylerDOM,
         };
 
@@ -252,11 +315,28 @@ class ProsemirrorNodeView {
         this._node = node;
         this._decorations = decorations;
         this._innerDecorations = innerDecorations;
+        if (this._isReproducing) {
+            // A changed reproduced tag can't be patched in place: the
+            // element itself is wrong. Rejecting the update makes PM
+            // discard this view and build a new one.
+            if (
+                _reproducingTag(node, this._specTag) !==
+                this.dom.tagName.toLowerCase()
+            )
+                return false;
+            _applyHtmlAttrsBag(this.dom, node.attrs.htmlAttrs);
+            // see the constructor: void elements have no content
+            if (node.attrs.html) this.dom.innerHTML = node.attrs.html;
+        }
         const subscriptionsWidget = this.widgetBus.getWidgetById(
             this._subscriptionsId,
             null,
         );
-        if (subscriptionsWidget === null) return;
+        if (!this._isReproducing && node.attrs.htmlAttrs) {
+            // editable attr replay: re-apply the bag on the outer element
+            _applyHtmlAttrsBag(this.dom, node.attrs.htmlAttrs);
+        }
+        if (subscriptionsWidget === null) return this._isReproducing;
         subscriptionsWidget.updateSubscription(
             this._stylerDOM,
             node,
@@ -266,6 +346,18 @@ class ProsemirrorNodeView {
         return true;
     }
 
+    // PM's domObserver also watches attribute changes; the styling
+    // machinery legitimately mutates attributes (style, lang) on this
+    // element. For reproducing atoms those must not trigger a
+    // readDOMChange (template: ProsemirrorMarkView.ignoreMutation).
+    ignoreMutation(mutation) {
+        return (
+            this._isReproducing &&
+            mutation.type === "attributes" &&
+            mutation.target === this.dom
+        );
+    }
+
     destroy() {
         this.widgetBus
             .getWidgetById(this._subscriptionsId, null)
@@ -273,7 +365,7 @@ class ProsemirrorNodeView {
     }
 }
 
-class ProsemirrorMarkView {
+export class ProsemirrorMarkView {
     // https://prosemirror.net/docs/ref/#view.MarkViewConstructor
     // type MarkViewConstructor = fn(
     //     mark: Mark,
@@ -284,16 +376,23 @@ class ProsemirrorMarkView {
     constructor(widgetBus, subscriptionsId, mark /*, view, inline*/) {
         this.widgetBus = widgetBus;
         this._subscriptionsId = subscriptionsId;
-        // TODO: a more direct API in widgetBus for this wouldn't hurt
-        // e.g. getTagForType
-        const // mmNodeSpec = this.widgetBus.getLinked(node.type.schema).get('nodes').get(node.type.name)
-            tag = "span",
+        // Reserved marks (e.g. generic-style) are not in the metamodel
+        // marks map; fall back to the legacy span/data-style-name shape.
+        const tag = this._getTag(mark),
             element = widgetBus.domTool.createElement(tag, {
-                "data-style-name": mark.attrs["data-style-name"],
+                "data-mark-type": mark.type.name,
+                ...(mark.type.name === "generic-style"
+                    ? { "data-style-name": mark.attrs["data-style-name"] }
+                    : {}),
             });
         this.dom = element;
         this._stylerDOM = element;
         this.contentDOM = element;
+        this._applyDeclaredAttrs(mark);
+        // replay the collected attributes bag (generic-style and
+        // schema marks alike; guarded)
+        if (mark.attrs.htmlAttrs)
+            _applyHtmlAttrsBag(this.dom, mark.attrs.htmlAttrs);
 
         const subscriptionsWidget = widgetBus.getWidgetById(
             this._subscriptionsId,
@@ -302,6 +401,75 @@ class ProsemirrorMarkView {
         if (subscriptionsWidget === null) return;
         subscriptionsWidget.subscribeMark(this._stylerDOM, mark);
     }
+
+    // Set/remove the declared mark attrs on the DOM element (1:1
+    // attr-name mapping, like the generated toDOM). Reserved marks
+    // (generic-style) handle their attrs separately.
+    _applyDeclaredAttrs(mark) {
+        if (mark.type.name === "generic-style") return;
+        let attrNames = null;
+        const mmSchema = this.widgetBus.getLinked(mark.type.schema);
+        if (mmSchema) {
+            const mmMarks = mmSchema.get("marks");
+            if (mmMarks.has(mark.type.name))
+                attrNames = Array.from(
+                    mmMarks.get(mark.type.name).get("attrs").keys(),
+                );
+        }
+        // fall back to the PM mark spec's declared attrs (covers
+        // unlinked contexts)
+        if (attrNames === null)
+            attrNames = Object.keys(mark.type.spec.attrs ?? {});
+        for (const attrName of attrNames) {
+            const value = mark.attrs[attrName];
+            if (value === undefined || value === null)
+                this.dom.removeAttribute(attrName);
+            else this.dom.setAttribute(attrName, String(value));
+        }
+    }
+
+    // PM >= 1.42 calls this when the mark at this position changed (same
+    // type, possibly different attrs). Returning true reuses the view —
+    // the element, its styling subscription and style widget stay
+    // alive; returning false re-creates it.
+    update(mark) {
+        if (mark.attrs.htmlAttrs)
+            _applyHtmlAttrsBag(this.dom, mark.attrs.htmlAttrs);
+        if (mark.type.name === "generic-style")
+            // A changed style name re-binds styling (and possibly the
+            // tag): re-create, so the subscriptions machinery re-resolves.
+            return (
+                mark.attrs["data-style-name"] ===
+                this.dom.getAttribute("data-style-name")
+            );
+        // Schema-defined marks: update the declared attrs in place; the
+        // styling subscription re-resolves by type name only, so its
+        // stored mark may stay stale harmlessly.
+        this._applyDeclaredAttrs(mark);
+        return true;
+    }
+
+    _getTag(mark) {
+        const fallback = "span";
+        const mmSchema = this.widgetBus.getLinked(mark.type.schema);
+        if (!mmSchema) return fallback;
+        const mmMarks = mmSchema.get("marks");
+        if (!mmMarks.has(mark.type.name)) return fallback;
+        const mmMarkSpec = mmMarks.get(mark.type.name),
+            tagOrEmpty = mmMarkSpec.get("tag");
+        if (tagOrEmpty.isEmpty || tagOrEmpty.value === "") return fallback;
+        return tagOrEmpty.value;
+    }
+
+    // PM's domObserver also watches attribute changes; the styling
+    // machinery legitimately mutates attributes (style, lang) on this
+    // element. Those must not trigger a readDOMChange, which would
+    // re-parse the element through the schema (bound tags could be
+    // misinterpreted as schema marks).
+    ignoreMutation(mutation) {
+        return mutation.type === "attributes" && mutation.target === this.dom;
+    }
+
     destroy() {
         this.widgetBus
             .getWidgetById(this._subscriptionsId, null)
@@ -328,6 +496,178 @@ function mapSetBiDirectional(map, valA, valB) {
     map.set(valB, valA);
 }
 
+// Reserved node types that stand in for node types missing from the
+// schema; the original typeKey is kept in the "unknown-type" attr.
+const UNKNOWN_NODE_TYPES = new Set([
+    "unknown",
+    "unknown_block",
+    "unknown_inline",
+]);
+
+// Convert an AttrValidateModel type to a ProseMirror `validate` string
+// (see model.AttributeSpec.validate), or null when ProseMirror can't
+// express it ("no-validation", "application-specific").
+function _attrValidateToPMValidate(validateType) {
+    switch (validateType) {
+        case "number":
+        case "string":
+        case "boolean":
+        case "null":
+        case "undefined":
+            return validateType;
+        default:
+            return null;
+    }
+}
+
+// Attr values live in the metamodel (AttributeSpecModel.default) and in
+// the DOM (getAttribute) as strings; coerce them to the validated type.
+function _coerceAttrValue(validateType, value) {
+    switch (validateType) {
+        case "number":
+            return Number(value);
+        case "boolean":
+            return value === "true";
+        case "null":
+            return null;
+        case "undefined":
+            return undefined;
+        default:
+            return value;
+    }
+}
+
+// Create ProseMirror attrs (Object<AttributeSpec>) from a metamodel
+// AttributeSpecMapModel. Returns null when no attributes are defined.
+function _createPMAttrs(attributeSpecMap) {
+    if (attributeSpecMap.size === 0) return null;
+    const attrs = {};
+    for (const [name, attributeSpec] of attributeSpecMap) {
+        const validateType = attributeSpec.get("validate").get("type").value,
+            attr = {
+                default: _coerceAttrValue(
+                    validateType,
+                    attributeSpec.get("default").value,
+                ),
+            },
+            validate = _attrValidateToPMValidate(validateType);
+        if (validate !== null) attr.validate = validate;
+        attrs[name] = attr;
+    }
+    return attrs;
+}
+
+// Read the declared attributes from a DOM element. Absent attributes are
+// left out, so the ProseMirror defaults apply. Attribute names map 1:1
+// to DOM attribute names.
+function _createGetAttrs(attributeSpecMap) {
+    return (dom) => {
+        const attrs = {};
+        for (const [name, attributeSpec] of attributeSpecMap) {
+            if (!dom.hasAttribute(name)) continue;
+            attrs[name] = _coerceAttrValue(
+                attributeSpec.get("validate").get("type").value,
+                dom.getAttribute(name),
+            );
+        }
+        return attrs;
+    };
+}
+
+// Serialize the declared attributes into the DOMOutputSpec, so HTML
+// output round-trips through the generated parseDOM rules.
+function _createToDOM(tag, attributeSpecMap) {
+    if (attributeSpecMap.size === 0)
+        return () => {
+            return [tag, 0];
+        };
+    return (node) => {
+        const attrs = {};
+        for (const name of attributeSpecMap.keys()) {
+            const value = node.attrs[name];
+            if (value === null || value === undefined) continue;
+            attrs[name] = value;
+        }
+        return [tag, attrs, 0];
+    };
+}
+
+import {
+    applyHtmlAttrsBag as _applyHtmlAttrsBag,
+    collectHtmlAttrsToBag as _collectHtmlAttrsToBag,
+    htmlAttrsBagToSpec as _htmlAttrsBagToSpec,
+} from "./html-attrs.ts";
+
+// Editable attr replay (inferred by a declared htmlAttrs attr):
+// declared attrs coerce 1:1 as before; foreign attributes collect
+// into the bag (guarded, minus declared names).
+function _createEditableGetAttrs(attributeSpecMap) {
+    const declaredGetAttrs = _createGetAttrs(attributeSpecMap),
+        // DOM attribute names are always lowercase, declared names
+        // may not be (e.g. htmlAttrs): compare lowercased.
+        declaredNamesLower = new Set(
+            Array.from(attributeSpecMap.keys(), (name) => name.toLowerCase()),
+        );
+    return (dom) =>
+        Object.assign(declaredGetAttrs(dom), {
+            htmlAttrs: _collectHtmlAttrsToBag(dom, (name) =>
+                declaredNamesLower.has(name),
+            ),
+        });
+}
+
+// Declared attrs serialize 1:1 (except the bag itself); the bag is
+// replayed as individual attributes.
+function _createEditableToDOM(tag, attributeSpecMap) {
+    const declaredToDOM = _createToDOM(tag, attributeSpecMap);
+    return (node) => {
+        const [outTag, outAttrs, hole] = declaredToDOM(node);
+        if (outAttrs) delete outAttrs.htmlAttrs;
+        return [
+            outTag,
+            Object.assign(
+                outAttrs ?? {},
+                _htmlAttrsBagToSpec(node.attrs.htmlAttrs),
+            ),
+            hole,
+        ];
+    };
+}
+
+// The tag a reproducing atom renders as: the reproduced source tag
+// when the node carries one, else the tag declared by its node spec.
+function _reproducingTag(node, specTag) {
+    return node.attrs.htmlTag || specTag;
+}
+
+// A reproducing atom whose spec declares the "htmlTag" attr also
+// reproduces the tag of the element it matched — its selector may
+// match several tags (e.g. figcontent: <a>, <img>, <pre>). The spec
+// tag stays the fallback for nodes created without an htmlTag.
+function _createReproducingGetAttrs(attributeSpecMap) {
+    const reproducesTag = attributeSpecMap.has("htmlTag");
+    return (dom) => {
+        const attrs = {
+            html: dom.innerHTML,
+            htmlAttrs: _collectHtmlAttrsToBag(dom),
+        };
+        if (reproducesTag) attrs.htmlTag = dom.tagName.toLowerCase();
+        return attrs;
+    };
+}
+
+function _createReproducingToDOM(tag) {
+    return (node) => {
+        const element = document.createElement(_reproducingTag(node, tag));
+        _applyHtmlAttrsBag(element, node.attrs.htmlAttrs);
+        // verbatim reproduction, no sanitization (like raw_html,
+        // operator decision). Skipped when empty: the reproduced tag
+        // may be a void element (e.g. <img>), which has no content.
+        if (node.attrs.html) element.innerHTML = node.attrs.html;
+        return element;
+    };
+}
+
 export function createProseMirrorSchemaFromMetaModel(
     /*SchemaSpec: */ proseMirrorDefaultSchema,
     /*ProseMirrorSchemaModel*/ proseMirrorSchema,
@@ -349,14 +689,10 @@ export function createProseMirrorSchemaFromMetaModel(
         }
         const newNode = {};
         for (const [key, value] of nodeSpec) {
-            if (key === "attrs") {
-                console.warn(
-                    `PROSEMIRROR SKIPPING nodeSpec property "${key}" in dynamic schema definition`,
-                );
-                continue;
-            }
+            // handled below, after the 1:1 mappings
+            if (key === "attrs") continue;
             if (value.isEmpty) continue;
-            if (key === "tag") continue;
+            if (key === "tag" || key === "selector") continue;
             // => for 1:1 mappings
             newNode[key] = value.value;
         }
@@ -369,11 +705,40 @@ export function createProseMirrorSchemaFromMetaModel(
         } else {
             // NOTE: this does not at all control any collisions of
             // tag names! E.g. when two nodes use the tag-name p
-            newNode.parseDOM = [{ tag: tag.value }];
-            newNode.toDOM = () => {
-                return [tag.value, 0];
-            };
+            const attributeSpecMap = nodeSpec.get("attrs"),
+                selector = nodeSpec.get("selector"),
+                // parseDOM matches on the selector if set, else the tag
+                parseTag =
+                    !selector.isEmpty && selector.value !== ""
+                        ? selector.value
+                        : tag.value,
+                parseDOMItem = { tag: parseTag };
+            if (attributeSpecMap.has("html")) {
+                // inferred reproducing atom (decision: presence of the
+                // html attr; may pivot to an explicit flag later)
+                parseDOMItem.getAttrs =
+                    _createReproducingGetAttrs(attributeSpecMap);
+                newNode.parseDOM = [parseDOMItem];
+                newNode.toDOM = _createReproducingToDOM(tag.value);
+            } else if (attributeSpecMap.has("htmlAttrs")) {
+                // inferred editable attr replay: declared
+                // 1:1 coercion + collect foreign attrs into the bag
+                parseDOMItem.getAttrs =
+                    _createEditableGetAttrs(attributeSpecMap);
+                newNode.parseDOM = [parseDOMItem];
+                newNode.toDOM = _createEditableToDOM(
+                    tag.value,
+                    attributeSpecMap,
+                );
+            } else {
+                if (attributeSpecMap.size)
+                    parseDOMItem.getAttrs = _createGetAttrs(attributeSpecMap);
+                newNode.parseDOM = [parseDOMItem];
+                newNode.toDOM = _createToDOM(tag.value, attributeSpecMap);
+            }
         }
+        const pmAttrs = _createPMAttrs(nodeSpec.get("attrs"));
+        if (pmAttrs !== null) newNode.attrs = pmAttrs;
         schemaSpec.nodes[name] = newNode;
     }
     // Adding the proseMirrorDefaultSchema nodes after our nodes.
@@ -394,12 +759,8 @@ export function createProseMirrorSchemaFromMetaModel(
         }
         const newMark = {};
         for (const [key, value] of markSpec) {
-            if (key === "attrs") {
-                console.warn(
-                    `PROSEMIRROR SKIPPING markSpec property "${key}" in dynamic schema definition`,
-                );
-                continue;
-            }
+            // handled below, after the 1:1 mappings
+            if (key === "attrs") continue;
             if (value.isEmpty) continue;
             if (key === "tag") continue;
             // => for 1:1 mappings
@@ -413,11 +774,21 @@ export function createProseMirrorSchemaFromMetaModel(
         } else {
             // NOTE: this does not at all control any collisions of
             // tag names! E.g. when two nodes use the tag-name p
-            newMark.parseDOM = [{ tag: tag.value }];
-            newMark.toDOM = () => {
-                return [tag.value, 0];
-            };
+            const attributeSpecMap = markSpec.get("attrs"),
+                parseDOMItem = { tag: tag.value };
+            if (attributeSpecMap.has("htmlAttrs"))
+                // inferred editable attr replay
+                parseDOMItem.getAttrs =
+                    _createEditableGetAttrs(attributeSpecMap);
+            else if (attributeSpecMap.size)
+                parseDOMItem.getAttrs = _createGetAttrs(attributeSpecMap);
+            newMark.parseDOM = [parseDOMItem];
+            newMark.toDOM = attributeSpecMap.has("htmlAttrs")
+                ? _createEditableToDOM(tag.value, attributeSpecMap)
+                : _createToDOM(tag.value, attributeSpecMap);
         }
+        const pmAttrs = _createPMAttrs(markSpec.get("attrs"));
+        if (pmAttrs !== null) newMark.attrs = pmAttrs;
         schemaSpec.marks[name] = newMark;
     }
     Object.assign(schemaSpec.marks, proseMirrorDefaultSchema.marks);
@@ -438,6 +809,16 @@ export class ProseMirror extends _BaseComponent {
         idMap = {},
         originTypeSpecPath = null,
         classes = [],
+        // In order to have better control where exactly the editor is
+        // inserted, element can be substituted here, instead of having it
+        // created internally, it will also not be inserted into the zone.
+        // A special zone would be an option as well, but that would create
+        // a further element that is not really required, especially as
+        // prosemirror already creates it's own host element and inserts
+        // it into this.element. The `classes` will be applied to this
+        // element as well, but not the `ui_prosemirror_host` class of
+        // the template, you should set that yourself if required.
+        element = null,
     ) {
         super(widgetBus);
         this._idMap = idMap;
@@ -469,7 +850,7 @@ export class ProseMirror extends _BaseComponent {
                 this._idMap.subscriptions,
                 ...args,
             );
-        [this.element, this.view] = this.initTemplate(classes);
+        [this.element, this.view] = this.initTemplate(classes, element);
     }
 
     // Be a bit cautious with the availability of items in the cache
@@ -604,13 +985,15 @@ export class ProseMirror extends _BaseComponent {
         return view;
     }
 
-    initTemplate(classes = []) {
-        const frag = this._domTool.createFragmentFromHTML(
+    initTemplate(classes = [], element = null) {
+        if (element === null) {
+            const frag = this._domTool.createFragmentFromHTML(
                 this.constructor.TEMPLATE,
-            ),
+            );
             element = frag.firstElementChild;
+            this._insertElement(element);
+        }
         for (const name of classes) element.classList.add(name);
-        this._insertElement(element);
         const view = this._initProseMirrorView(element);
         return [element, view];
     }
@@ -618,7 +1001,8 @@ export class ProseMirror extends _BaseComponent {
     _rawCreateMetamodelNode(cacheMap /* null or a map*/, pmNode, dependencies) {
         const draft = NodeModel.createPrimalDraft(dependencies),
             typeName =
-                pmNode.type.name === "unknown" && "unknown-type" in pmNode.attrs
+                UNKNOWN_NODE_TYPES.has(pmNode.type.name) &&
+                "unknown-type" in pmNode.attrs
                     ? pmNode.attrs["unknown-type"]
                     : pmNode.type.name;
         draft.get("typeKey").value = typeName;
@@ -652,9 +1036,9 @@ export class ProseMirror extends _BaseComponent {
         const attrsDraft = draft.get("attrs");
         for (const [name, value] of Object.entries(pmNode.attrs)) {
             if (
-                pmNode.type.name === "unknown" &&
+                UNKNOWN_NODE_TYPES.has(pmNode.type.name) &&
                 name === "unknown-type" &&
-                typeName !== "unknown"
+                !UNKNOWN_NODE_TYPES.has(typeName)
             )
                 // Only skip this value if we actually transferred it
                 // to the type of the node (typeName).
@@ -669,6 +1053,7 @@ export class ProseMirror extends _BaseComponent {
         cacheMap /* null or a map*/,
         metamodelNode,
         schema,
+        inInlineContext = false,
     ) {
         const type = metamodelNode.get("typeKey").value;
         let newNode;
@@ -678,12 +1063,7 @@ export class ProseMirror extends _BaseComponent {
             // schema.mark(type: string | MarkType, attrs⁠?: Attrs) → Mark
             // Create a mark with the given type and attributes.
             const mmAttrs = mmMark.get("attrs");
-            let attrs = null;
-            if (mmAttrs.size) {
-                attrs = {};
-                for (const [name, value] of mmAttrs)
-                    attrs[name] = fromMetaModelJSON(value);
-            }
+            let attrs = readMetaModelJSONfromMap(mmAttrs);
             const mark = schema.mark(mmMark.get("typeKey").value, attrs);
             marks.push(mark);
         }
@@ -708,11 +1088,20 @@ export class ProseMirror extends _BaseComponent {
         } else {
             const mmContent = metamodelNode.get("content"),
                 content = [];
+            // Children are in inline context when this node has inline
+            // content (textblock) or is itself inline. Unknown types fall
+            // back to `unknown` whose content is inline* — hence true.
+            const pmType = type in schema.nodes ? schema.nodes[type] : null,
+                childInlineContext =
+                    pmType === null
+                        ? true
+                        : pmType.inlineContent || pmType.isInline;
             for (const [, /*index*/ mmChildNode] of mmContent) {
                 const child = this._createProseMirrorNode(
                     cacheMap,
                     mmChildNode,
                     schema,
+                    childInlineContext,
                 );
                 content.push(child);
             }
@@ -733,13 +1122,7 @@ export class ProseMirror extends _BaseComponent {
             // We'll see how feasible that will be!
 
             const mmAttrs = metamodelNode.get("attrs");
-            let attrs = null;
-            if (mmAttrs.size) {
-                attrs = {};
-                for (const [name, value] of mmAttrs) {
-                    attrs[name] = fromMetaModelJSON(value);
-                }
-            }
+            let attrs = readMetaModelJSONfromMap(mmAttrs);
 
             // An alternative would be to create a type on the fly,
             // but that would require to update the schema, which at
@@ -750,8 +1133,20 @@ export class ProseMirror extends _BaseComponent {
             // allowing both: inline and block content!
             let pmTypeName = type;
             if (!(type in schema.nodes)) {
-                //schema.node(type)
-                pmTypeName = "unknown";
+                const hasBlock = content.some((child) => child.isBlock),
+                    hasInline = content.some((child) => child.isInline);
+                if (hasBlock && hasInline)
+                    // log-and-crash (operator decision): schema.node below
+                    // will throw on the invalid content mix.
+                    console.error(
+                        `${this} PROSEMIRROR: unknown type "${type}" has` +
+                            " mixed block/inline content; schema.node will likely throw.",
+                    );
+                pmTypeName = hasBlock
+                    ? "unknown_block"
+                    : inInlineContext
+                      ? "unknown_inline"
+                      : "unknown";
                 // caution: this attr should not be put into the metamodel!
                 if (attrs === null) attrs = {};
                 attrs["unknown-type"] = type;
@@ -792,7 +1187,12 @@ export class ProseMirror extends _BaseComponent {
      * The former, however, is crucial to keep the identity of the
      * metamodel <-> prosemirror nodes in sync.
      */
-    _createProseMirrorNode(cacheMap /* null or a map*/, metamodelNode, schema) {
+    _createProseMirrorNode(
+        cacheMap /* null or a map*/,
+        metamodelNode,
+        schema,
+        inInlineContext = false,
+    ) {
         if (cacheMap !== null && cacheMap.has(metamodelNode))
             return cacheMap.get(metamodelNode);
 
@@ -800,6 +1200,7 @@ export class ProseMirror extends _BaseComponent {
             cacheMap,
             metamodelNode,
             schema,
+            inInlineContext,
         );
 
         if (cacheMap !== null)
@@ -927,6 +1328,30 @@ export class ProseMirror extends _BaseComponent {
                     }
                 }
                 newProps.nodeViews[nodeName] = this._createGenericNodeView;
+            }
+
+            const oldMarkViews = this.view.props.markViews || {},
+                schemaMarks = proseMirrorSchema.get("marks");
+            for (const markName of schemaMarks.keys()) {
+                if (markName in oldMarkViews)
+                    // Nothing to do
+                    continue;
+
+                // this mark requires a new markView
+                if (!("markViews" in newProps)) {
+                    newProps.markViews = {};
+                    for (const [oldMarkName, oldMarkView] of Object.entries(
+                        oldMarkViews,
+                    )) {
+                        // Filter out removed markViews, but keep reserved
+                        // marks (e.g. generic-style): check the built PM
+                        // schema, not the metamodel map.
+                        if (!(oldMarkName in schema.marks)) continue;
+                        // Copy still required
+                        newProps.markViews[oldMarkName] = oldMarkView;
+                    }
+                }
+                newProps.markViews[markName] = this._createGenericMarkView;
             }
 
             // NOTE: it is required to rebuild all of the proseMirror doc

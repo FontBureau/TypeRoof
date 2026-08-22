@@ -37,7 +37,7 @@ export const nodes = {
         },
     } as NodeSpec,
 
-    // TODO: may require a unknonw-type than can contain block children as well.
+    // NOTE: companions for block and inline content exist below: unknown_block and unknown_inline.
     unknown: {
         attrs: { "unknown-type": { default: "???", validate: "string" } },
         content: "inline*",
@@ -72,18 +72,146 @@ export const nodes = {
             ];
         },
     } as NodeSpec,
+
+    // Reserved catch-all for DOM subtrees the ingestion engine does
+    // not (yet) traverse: keeps the raw HTML verbatim. No sanitization.
+    raw_html_block: {
+        atom: true,
+        group: "block",
+        attrs: { html: { default: "", validate: "string" } },
+        parseDOM: [
+            {
+                tag: "div[data-raw-html-block]",
+                getAttrs(dom: HTMLElement) {
+                    return { html: dom.innerHTML };
+                },
+            },
+        ],
+        toDOM(node: Node) {
+            // actual HTML injection, no sanitization (operator decision);
+            // lime outline for quick identification
+            const div = document.createElement("div");
+            div.setAttribute("data-raw-html-block", "");
+            div.style.outline = "2px solid lime";
+            div.innerHTML = node.attrs.html;
+            return div;
+        },
+    } as NodeSpec,
+
+    // Inline variant of raw_html_block: catch-all in inline context
+    // (e.g. link/meta/style inside paragraphs).
+    raw_html_inline: {
+        atom: true,
+        group: "inline",
+        inline: true,
+        attrs: { html: { default: "", validate: "string" } },
+        parseDOM: [
+            {
+                tag: "span[data-raw-html-inline]",
+                getAttrs(dom: HTMLElement) {
+                    return { html: dom.innerHTML };
+                },
+            },
+        ],
+        toDOM(node: Node) {
+            const span = document.createElement("span");
+            span.setAttribute("data-raw-html-inline", "");
+            span.style.outline = "2px solid lime";
+            span.innerHTML = node.attrs.html;
+            return span;
+        },
+    } as NodeSpec,
+
+    // Block companion to `unknown` (TODO above): unknown node types
+    // whose content is block-level.
+    unknown_block: {
+        attrs: { "unknown-type": { default: "???", validate: "string" } },
+        content: "block*",
+        group: "block",
+        parseDOM: [
+            {
+                tag: "div[data-unknown-block-type]",
+                getAttrs(dom: HTMLElement) {
+                    return {
+                        "unknown-type": dom.getAttribute(
+                            "data-unknown-block-type",
+                        ),
+                    };
+                },
+            },
+        ],
+        toDOM(node: Node) {
+            return [
+                "div",
+                { "data-unknown-block-type": node.attrs["unknown-type"] },
+                [
+                    "strong",
+                    { class: "message" },
+                    `UNKNOWN BLOCK NODE-TYPE: ${node.attrs["unknown-type"]}`,
+                ],
+                ["div", 0],
+            ];
+        },
+    } as NodeSpec,
+
+    // Inline companion to `unknown`: HTML inline elements are not
+    // necessarily marks; PM inline nodes carry them (nestable, with attrs).
+    unknown_inline: {
+        attrs: { "unknown-type": { default: "???", validate: "string" } },
+        content: "inline*",
+        group: "inline",
+        inline: true,
+        parseDOM: [
+            {
+                tag: "span[data-unknown-inline-type]",
+                getAttrs(dom: HTMLElement) {
+                    return {
+                        "unknown-type": dom.getAttribute(
+                            "data-unknown-inline-type",
+                        ),
+                    };
+                },
+            },
+        ],
+        toDOM(node: Node) {
+            // unobtrusive: keeps text flow, identity via attribute/title
+            return [
+                "span",
+                {
+                    "data-unknown-inline-type": node.attrs["unknown-type"],
+                    title: `UNKNOWN INLINE NODE-TYPE: ${node.attrs["unknown-type"]}`,
+                },
+                0,
+            ];
+        },
+    } as NodeSpec,
 };
+
+import { collectHtmlAttrsToBag, htmlAttrsBagToSpec } from "./html-attrs.ts";
 
 export const marks = {
     "generic-style": {
         excludes: "_",
-        attrs: { "data-style-name": { default: "", validate: "string" } },
+        attrs: {
+            "data-style-name": { default: "", validate: "string" },
+            // editable-element attr replay: the collected
+            // attributes bag (guarded JSON string)
+            htmlAttrs: { default: "", validate: "string" },
+        },
         parseDOM: [
             {
+                // Higher than the PM default (50) and than any schema mark:
+                // elements rendered for an intent mark keep their
+                // data-style-name whatever their tag is (e.g. bound tags
+                // via style-link edges), and must re-parse as intent.
+                priority: 60,
                 tag: "*[data-style-name]",
                 getAttrs(dom: HTMLElement) {
                     return {
                         "data-style-name": dom.getAttribute("data-style-name"),
+                        // collect foreign attributes into the bag (the
+                        // guard excludes data-style-name itself)
+                        htmlAttrs: collectHtmlAttrsToBag(dom),
                     };
                 },
             },
@@ -91,7 +219,11 @@ export const marks = {
         toDOM(node) {
             return [
                 "span",
-                { "data-style-name": node.attrs["data-style-name"] },
+                // replay the collected attributes bag (guarded)
+                Object.assign(
+                    { "data-style-name": node.attrs["data-style-name"] },
+                    htmlAttrsBagToSpec(node.attrs.htmlAttrs),
+                ),
                 0,
             ];
         },

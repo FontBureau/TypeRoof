@@ -24,6 +24,8 @@
 !**/type-stage/*.*
 !lib/js/components/**/videoproof-contextual/*
 !lib/js/components/presets.mjs
+!lib/js/wikipedia/*
+!lib/js/components/document-renderer-mode/*
 
 # Ignore glyph-groups.yaml
 lib/assets/glyph-groups.yaml

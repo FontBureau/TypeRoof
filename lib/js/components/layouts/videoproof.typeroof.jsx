@@ -103,8 +103,9 @@ import {
     AxesMathLocationsSumModel,
     createAxesMathItem,
     applyAxesMathLocations,
-    UIAxesMath,
-} from "../axes-math.mjs";
+} from "../axes-math-models.mjs";
+
+import { UIAxesMath } from "../axes-math.mjs";
 
 import { UIOTFeaturesChooserCollapsible as UIOTFeaturesChooser } from "../ui-opentype-features.typeroof.jsx";
 
@@ -512,16 +513,21 @@ class UIVideoproofArrayLayers extends _BaseContainerComponent {
                     // FIXME: These activationTest functions run a lot during
                     // animation, maybe that can be changed or this widget
                     // can check on update only when activeActors changes instead.
-                    activationTest: () => {
-                        const activeActors = widgetBus.getEntry(
-                            widgetBus.rootPath,
-                        );
+                    // getEntry is injected by ComponentWrapper and only
+                    // serves declared dependencies (the activeActors
+                    // collection at the parent rootPath, declared below).
+                    activationTest: (getEntry) => {
+                        const activeActors = getEntry("activeActors");
                         return activeActors.size === 1;
                     },
                     rootPath: Path.fromParts(".", "0", "instance"),
                     id: "Layer",
                 },
-                ["animationProperties@"],
+                [
+                    "animationProperties@",
+                    // Read in the activationTest.
+                    ["../..", "activeActors"],
+                ],
                 UIVideoproofArrayLayer,
                 zones,
             ],
@@ -529,10 +535,10 @@ class UIVideoproofArrayLayers extends _BaseContainerComponent {
                 // If there are more than one layers
                 {
                     zone: "main",
-                    activationTest: () => {
-                        const activeActors = widgetBus.getEntry(
-                            widgetBus.rootPath,
-                        );
+                    // getEntry is injected by ComponentWrapper and only
+                    // serves declared dependencies.
+                    activationTest: (getEntry) => {
+                        const activeActors = getEntry("collection");
                         return activeActors.size > 1;
                     },
                     id: "LayersController",
@@ -1667,10 +1673,10 @@ class UIParametersDisplay extends _BaseContainerComponent {
                 [
                     {
                         zone: "main",
-                        activationTest: () =>
-                            !this.widgetBus
-                                .getEntry(this.widgetBus.rootPath)
-                                .has("activeActors"),
+                        // getEntry is injected by ComponentWrapper and only
+                        // serves declared dependencies.
+                        activationTest: (getEntry) =>
+                            !getEntry("actorModel").has("activeActors"),
                     },
                     [
                         [`${widgetBus.rootPath.append("font")}`, "font"],
@@ -1678,6 +1684,8 @@ class UIParametersDisplay extends _BaseContainerComponent {
                             `animationProperties@${widgetBus.rootPath}`,
                             "animationProperties@",
                         ],
+                        // Read in the activationTest.
+                        [".", "actorModel"],
                     ],
                     UIParameterFontDisplay,
                     [["ui-parameters-display_layer"]],
@@ -1685,12 +1693,16 @@ class UIParametersDisplay extends _BaseContainerComponent {
                 [
                     {
                         zone: "main",
-                        activationTest: () =>
-                            this.widgetBus
-                                .getEntry(this.widgetBus.rootPath)
-                                .has("activeActors"),
+                        // getEntry is injected by ComponentWrapper and only
+                        // serves declared dependencies.
+                        activationTest: (getEntry) =>
+                            getEntry("actorModel").has("activeActors"),
                     },
-                    [["activeActors", "collection"]],
+                    [
+                        ["activeActors", "collection"],
+                        // Read in the activationTest.
+                        [".", "actorModel"],
+                    ],
                     UIParametersFontDisplayCollection,
                     zones,
                     [["ui-parameters-display_layer"], ...customArgs],
@@ -1949,7 +1961,7 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
             // feels like a hack at the moment, requires institutionalization.
             videoproofContainer = widgetBus.domTool.createElement("div", {
                 class: "videoproof_layout",
-                style: "height: 100%",
+                style: "height: 100%; width: 100%; box-sizing: border-box;",
             }),
             zones = new Map([
                 ..._zones,
@@ -2091,12 +2103,14 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                 {
                     zone: "main",
                     rootPath: videoProofActorPath.append("activeActors"),
-                    activationTest: () =>
-                        widgetBus.getEntry(
-                            videoProofActorPath.parent.append("actorTypeKey"),
-                        ).value === "VideoproofArrayV2ActorModel",
+                    // getEntry is injected by ComponentWrapper and only
+                    // serves declared dependencies.
+                    activationTest: (getEntry) =>
+                        getEntry("actorTypeKey").value ===
+                        "VideoproofArrayV2ActorModel",
                 },
-                [],
+                // actorTypeKey: read in the activationTest.
+                [["../../actorTypeKey", "actorTypeKey"]],
                 UIVideoproofArrayLayers,
                 zones,
                 "Layers",
@@ -2115,14 +2129,13 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                         "0",
                         "charGroup",
                     ),
-                    activationTest: () =>
-                        widgetBus
-                            .getEntry(
-                                videoProofActorPath.append("keyMoments", "0"),
-                            )
-                            .has("charGroup"),
+                    // getEntry is injected by ComponentWrapper and only
+                    // serves declared dependencies.
+                    activationTest: (getEntry) =>
+                        getEntry("keyMoment").has("charGroup"),
                 },
-                [],
+                // keyMoment: read in the activationTest.
+                [["..", "keyMoment"]],
                 UICharGroupContainer,
                 zones,
                 // FIXME: "injectable" => this must update paths as well!
@@ -2169,12 +2182,11 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                     generalSettings = {
                         zone: "main",
                         rootPath: videoProofActorPath.append("keyMoments", "0"),
-                        activationTest: () =>
-                            widgetBus.getEntry(
-                                videoProofActorPath.parent.append(
-                                    "actorTypeKey",
-                                ),
-                            ).value === typeKey,
+                        // getEntry is injected by ComponentWrapper and only
+                        // serves declared dependencies (actorTypeKey,
+                        // declared below).
+                        activationTest: (getEntry) =>
+                            getEntry("actorTypeKey").value === typeKey,
                     },
                     // MAYBE this can be shared with the UICharGroupContainer definition above...
                     injectable = {
@@ -2220,6 +2232,24 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                     "Glyphs",
                     contextualGlyphsContainer,
                 ]);
+                // The activationTest (in generalSettings) reads actorTypeKey
+                // via the injected getEntry, which requires it to be a
+                // declared dependency (see
+                // ComponentWrapper._activationTestGetEntry). Declare it on
+                // every widget using the test — as an absolute path,
+                // because the widgets have differing rootPaths.
+                const actorTypeKeyDependency = [
+                    videoProofActorPath.parent
+                        .append("actorTypeKey")
+                        .toString(),
+                    "actorTypeKey",
+                ];
+                for (const widgetDefinition of widgets)
+                    if (
+                        widgetDefinition[0].activationTest ===
+                        generalSettings.activationTest
+                    )
+                        widgetDefinition[1].push(actorTypeKeyDependency);
                 return widgets;
             })(),
             // RESUME NORMAL WIDGETS
@@ -2343,11 +2373,10 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                 {
                     zone: "before-layout",
                     rootPath: videoProofActorPath,
-                    activationTest: () => {
-                        const showParameters =
-                            widgetBus.getEntry("./showParameters");
-                        return showParameters.value;
-                    },
+                    // getEntry is injected by ComponentWrapper and only
+                    // serves declared dependencies.
+                    activationTest: (getEntry) =>
+                        getEntry("showParameters").value,
                 },
                 [
                     // we'll use this to determine a high contrast text color.
@@ -2356,6 +2385,13 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                         "stageBackgroundColor",
                     ],
                     [widgetBus.rootPath.append("t").toString(), "globalT"],
+                    // Read in the activationTest.
+                    [
+                        this.widgetBus.rootPath
+                            .append("showParameters")
+                            .toString(),
+                        "showParameters",
+                    ],
                 ],
                 UIParametersDisplay,
                 zones,
