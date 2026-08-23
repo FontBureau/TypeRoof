@@ -3,10 +3,6 @@ import {
     _BaseContainerComponent,
 } from "../../basics/component.mjs";
 import { Path } from "../../../metamodel.mjs";
-import { COLOR } from "../../registered-properties-definitions.mjs";
-import { actorApplyCSSColors } from "../../actors/properties-util.mjs";
-import { getRegisteredPropertySetup } from "../../registered-properties.mjs";
-import { setLanguageTag } from "../../language-tags.typeroof.jsx";
 import {
     UIProseMirrorMenu,
     TypeSpecSubscriptions,
@@ -16,41 +12,6 @@ import {
     getTypeSpecPropertiesIdMethod,
 } from "../../prosemirror/integration.typeroof.jsx";
 import { schemaSpec as proseMirrorDefaultSchema } from "../../prosemirror/default-schema";
-
-class ProseMirrorGeneralDocumentStyler extends _BaseComponent {
-    update(changedMap) {
-        const element = this.widgetBus.getWidgetById("proseMirror").element;
-        const propertyValuesMap = (
-            changedMap.has("properties@")
-                ? changedMap.get("properties@")
-                : this.getEntry("properties@")
-        ).typeSpecnion.getProperties();
-
-        if (changedMap.has("properties@")) {
-            const outerColorPropertiesMap = [
-                    [`${COLOR}backgroundColor`, "background-color"],
-                ],
-                getDefault = (property) => {
-                    return [true, getRegisteredPropertySetup(property).default];
-                };
-            actorApplyCSSColors(
-                element,
-                propertyValuesMap,
-                getDefault,
-                outerColorPropertiesMap,
-            );
-            setLanguageTag(element, propertyValuesMap);
-            // NOTE: apply paddings (use padding instead of margins)
-            // especially left and top, but ideally also right and bottom
-            // This is because we don't apply styles directly to the actual
-            // document element, but rather to the parent of that. (.ui_prosemirror_host)
-            // i.e the element in here is a lot like the outerElement.
-            //
-            // NOTE: it could be worth to try to treat the actual .ProseMirror
-            // document like the innerElement.
-        }
-    }
-}
 
 class UpdateLabelListener extends _BaseComponent {
     update(changedMap) {
@@ -118,16 +79,9 @@ export class RampProseMirrorContext extends BaseProseMirrorContext {
                 originTypeSpecPath,
                 { typeSpecLabels: true } /*nodeOutfitterOptions*/,
             ],
-            [
-                {},
-                [
-                    [
-                        `typeSpecProperties@${originTypeSpecPath.toString()}`,
-                        "properties@",
-                    ],
-                ],
-                ProseMirrorGeneralDocumentStyler,
-            ],
+            // NOTE: document-level styling (backgroundColor, language
+            // tag) of the editor pane is applied by
+            // TypeStagePaneStyler (registered in RampController).
         ]);
     }
 }
@@ -181,16 +135,9 @@ export class TypeStageProseMirrorContext extends BaseProseMirrorContext {
                         getEntry("showNodeTypeSpecLabels").value,
                 } /*nodeOutfitterOptions*/,
             ],
-            [
-                {},
-                [
-                    [
-                        `typeSpecProperties@${originTypeSpecPath.toString()}`,
-                        "properties@",
-                    ],
-                ],
-                ProseMirrorGeneralDocumentStyler,
-            ],
+            // NOTE: the document-level styling (backgroundColor,
+            // language tag) for the editor pane is applied by
+            // TypeStagePaneStyler (registered in TypeStageController),
         ]);
     }
 }

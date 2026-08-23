@@ -18,7 +18,13 @@ import {
     NodeSpecToTypeSpecMapModel,
     NodeModel,
 } from "../../prosemirror/models.typeroof.jsx";
-import { Collapsible, UICheckboxInput, GenericSelect } from "../../generic.mjs";
+import {
+    Collapsible,
+    UICheckboxInput,
+    GenericSelect,
+    StaticNode,
+} from "../../generic.mjs";
+import { TypeStagePaneStyler } from "../type-stage/pane-styler.typeroof.jsx";
 import { GENERIC } from "../../registered-properties-definitions.mjs";
 import {
     isInheritingPropertyFn,
@@ -261,6 +267,11 @@ class RampController extends _BaseContainerComponent {
                     class: "style_patches-manager",
                 },
             ),
+            // The editor pane: sized + document-styled by
+            // TypeStagePaneStyler (like in type-stage).
+            proseMirrorHostElement = widgetBus.domTool.createElement("div", {
+                class: "ui_prosemirror_host external_source",
+            }),
             zones = new Map([
                 ..._zones,
                 ["properties-manager", propertiesManagerContainer],
@@ -378,6 +389,29 @@ class RampController extends _BaseContainerComponent {
                 originTypeSpecPath,
                 // menuSettings
                 { zone: "prose-mirror-editor-menu" },
+                proseMirrorHostElement,
+            ],
+            [
+                // ProseMirror uses the passed host element but does not
+                // insert it into the zone (see type-stage).
+                { zone: "layout" },
+                [],
+                StaticNode,
+                proseMirrorHostElement,
+            ],
+            [
+                {},
+                [
+                    "width",
+                    "height",
+                    "environment@layout",
+                    [
+                        `typeSpecProperties@${originTypeSpecPath.toString()}`,
+                        "properties@",
+                    ],
+                ],
+                TypeStagePaneStyler,
+                proseMirrorHostElement,
             ],
             [
                 { zone: "editor-manager" },

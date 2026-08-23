@@ -486,6 +486,10 @@ class TypeStageController extends _BaseContainerComponent {
                     "width",
                     "height",
                     "environment@layout",
+                    [
+                        `typeSpecProperties@${originTypeSpecPath.toString()}`,
+                        "properties@",
+                    ],
                 ],
                 TypeStagePaneStyler,
                 proseMirrorHostElement,
