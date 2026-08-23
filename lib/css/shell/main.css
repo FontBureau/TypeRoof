@@ -1153,6 +1153,27 @@ select and drag
 }
 
 .videoproof_layout {
+    width: 100%;
+    box-sizing: border-box;
+
+    /* Grows with its content so the background covers the full scroll
+     * extent (min-height covers short content). The array actor
+     * measures the available space via 'environment@layout'
+     * (viewport-stable), so growth does not feed back into its cell
+     * sizing. */
+    min-height: 100%;
+
+    /* Contextual is the inner scroller (overflow-y: auto;
+     * height: 100%): it needs a definite height chain container ->
+     * layer (height: inherit) -> actor, or it grows with its spacer
+     * and never scrolls. Its measurement also comes from
+     * 'environment@layout', so the clamp does not feed back. (The
+     * actor sits inside a .videoproof_layout-layer, hence the
+     * descendant selector.) */
+    &:has(.actor_renderer-videoproof_contextual) {
+        height: 100%;
+    }
+
     .actor_renderer-videoproof_array_v2,
     .actor_renderer-videoproof_contextual-content {
         /*
