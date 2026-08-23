@@ -26,6 +26,11 @@
 !lib/js/components/presets.mjs
 !lib/js/wikipedia/*
 !lib/js/components/document-renderer-mode/*
+!lib/js/components/classes-and-styles-manager.mjs
+!lib/js/components/environment-provider.mjs
+!lib/js/font-info.mjs
+!**/*.test.mjs
+!lib/js/tests/**/*
 
 # Ignore glyph-groups.yaml
 lib/assets/glyph-groups.yaml
