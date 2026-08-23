@@ -12,6 +12,7 @@ import {
     getEffectiveStyleLinks,
 } from "../../prosemirror/type-spec.typeroof.jsx";
 import { getTypeSpecPropertiesIdMethod } from "../../prosemirror/integration.typeroof.jsx";
+import { TypeStagePaneStyler } from "./pane-styler.typeroof.jsx";
 import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
 import { readMetaModelJSONfromMap } from "../../prosemirror/models.typeroof.jsx";
 
@@ -1155,6 +1156,16 @@ export class UIDocumentViewer extends _BaseContainerComponent {
         super(widgetBus, zones);
         this.nodesElement = documentContainer;
         const widgets = [
+            [
+                {},
+                [
+                    ["../width", "width"],
+                    ["../height", "height"],
+                    "environment@layout",
+                ],
+                TypeStagePaneStyler,
+                documentContainer,
+            ],
             [
                 {},
                 [

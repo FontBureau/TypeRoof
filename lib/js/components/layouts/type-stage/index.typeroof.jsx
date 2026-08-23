@@ -39,6 +39,8 @@ import { UINodeSpecToTypeSpecLinksMap } from "../../type-spec-fundamentals.mjs";
 import { getTypeSpecDefaultsMap } from "./defaults.mjs";
 
 import { LengthModel } from "../../length-models.mjs";
+
+import { TypeStagePaneStyler } from "./pane-styler.typeroof.jsx";
 import { TYPE_SPEC_PROPERTIES_GENERATORS } from "./properties-generators.mjs";
 import { StylePatchSourcesMeta, TypeSpecMeta } from "./meta.typeroof.jsx";
 import { TypeSpecTreeEditor } from "./tree-editor.typeroof.jsx";
@@ -206,6 +208,20 @@ const TypeStageModel = createTypeStageModelVariantWithDefaults(
     DEFAULT_STATE,
 );
 
+function showEditorActivationTest(getEntry) {
+    const documentRendererMode = getEntry("documentRendererMode");
+    return (
+        documentRendererMode.value === "editor" ||
+        documentRendererMode.value === "compare"
+    );
+}
+function showViewerActivationTest(getEntry) {
+    const documentRendererMode = getEntry("documentRendererMode");
+    return (
+        documentRendererMode.value === "viewer" ||
+        documentRendererMode.value === "compare"
+    );
+}
 class TypeStageController extends _BaseContainerComponent {
     constructor(widgetBus, _zones) {
         // BUT: we may need a mechanism to handle typeSpec inheritance!
@@ -453,15 +469,7 @@ class TypeStageController extends _BaseContainerComponent {
                     zone: "layout",
                     // getEntry is injected by ComponentWrapper and only
                     // serves declared dependencies.
-                    activationTest: (getEntry) => {
-                        const documentRendererMode = getEntry(
-                            "documentRendererMode",
-                        );
-                        return (
-                            documentRendererMode.value === "editor" ||
-                            documentRendererMode.value === "compare"
-                        );
-                    },
+                    activationTest: showEditorActivationTest,
                 },
                 ["documentRendererMode"],
                 StaticNode,
@@ -469,17 +477,24 @@ class TypeStageController extends _BaseContainerComponent {
             ],
             [
                 {
+                    // Same activation as the editor pane above: the pane
+                    // styler only exists while the editor pane exists.
+                    activationTest: showEditorActivationTest,
+                },
+                [
+                    "documentRendererMode",
+                    "width",
+                    "height",
+                    "environment@layout",
+                ],
+                TypeStagePaneStyler,
+                proseMirrorHostElement,
+            ],
+            [
+                {
                     // getEntry is injected by ComponentWrapper and only
                     // serves declared dependencies.
-                    activationTest: (getEntry) => {
-                        const documentRendererMode = getEntry(
-                            "documentRendererMode",
-                        );
-                        return (
-                            documentRendererMode.value === "editor" ||
-                            documentRendererMode.value === "compare"
-                        );
-                    },
+                    activationTest: showEditorActivationTest,
                 },
                 // documentRendererMode: read in the activationTest.
                 ["documentRendererMode"],
@@ -498,15 +513,7 @@ class TypeStageController extends _BaseContainerComponent {
                     relativeRootPath: Path.fromParts(".", "document"),
                     // getEntry is injected by ComponentWrapper and only
                     // serves declared dependencies.
-                    activationTest: (getEntry) => {
-                        const documentRendererMode = getEntry(
-                            "documentRendererMode",
-                        );
-                        return (
-                            documentRendererMode.value === "viewer" ||
-                            documentRendererMode.value === "compare"
-                        );
-                    },
+                    activationTest: showViewerActivationTest,
                 },
                 [
                     ["../proseMirrorSchema/nodes", "nodeSpec"],

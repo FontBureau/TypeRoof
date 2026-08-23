@@ -224,8 +224,10 @@ prosemirror
         font-variant-ligatures: none;
         font-feature-settings: "liga" 0;
     */
-    height: fit-content;
-    width: fit-content;
+
+    /* width/height come from the layout-level LengthModel fields,
+     * resolved by TypeStagePaneStyler (width always bound; height unset
+     * grows via min-height:100% above). */
 
     /* ProseMirror does this, primarily it renders subsequent spaces instead of collapsing them. */
     white-space: break-spaces;
