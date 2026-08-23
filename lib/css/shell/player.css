@@ -41,6 +41,14 @@ body > .wrapper > *:not(.typeroof-main) {
     height: 100vh;
 }
 
+/* In the player shell, the motion-stage layout is always
+ * letterboxed (automatic zoom fits the stage to the viewport);
+ * clip statically instead of the dynamic inline write the editor
+ * needs (zoom type can switch at runtime there). */
+.wrapper.player .typeroof-layout--motion-stage {
+    overflow: hidden;
+}
+
 .wrapper:not(.visible) > *:not(.typeroof-main) {
     visibility: hidden;
 }
