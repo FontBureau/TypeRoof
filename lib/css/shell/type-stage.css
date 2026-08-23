@@ -7,6 +7,11 @@ prosemirror
     /* so the background color fills the entire layout */
     min-height: 100%;
 
+    /* In compare mode the panes are flex children of .typeroof-layout;
+     * with explicit widths (LengthModel) their sum may exceed the host
+     * width — they must keep their resolved size, the host scrolls. */
+    flex-shrink: 0;
+
     --label-width-or-margin-inline-start: 2.5rem;
 }
 
@@ -205,6 +210,15 @@ prosemirror
  */
 .typeroof-main > .typeroof-layout.typeroof-layout--type-stage {
     display: flex;
+
+    /* Don't stretch the panes to the flex line: in a scrollable
+     * container the line height is bounded by the container, so a
+     * stretched pane's background would stop mid-scroll. flex-start
+     * lets each pane grow with its content; the panes'
+     * min-height: 100% keeps covering the viewport for short
+     * documents.
+     */
+    align-items: flex-start;
 }
 
 .typeroof-document {
