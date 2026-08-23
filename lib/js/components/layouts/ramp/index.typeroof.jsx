@@ -37,7 +37,12 @@ import {
 } from "../type-stage/style-patches.typeroof.jsx";
 import { RampProseMirrorContext } from "../type-stage/prosemirror.typeroof.jsx";
 
-import { initTypeSpecCoherenceFn } from "../type-stage/index.typeroof.jsx";
+import {
+    initTypeSpecCoherenceFn,
+    ensureDimensionBoundnessCoherenceFn,
+} from "../type-stage/index.typeroof.jsx";
+
+import { LengthModel } from "../../length-models.mjs";
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 
 //  We can't create the self-reference directly
@@ -57,6 +62,9 @@ const RampModel = _BaseLayoutModel.createClass(
     // the root of all typeSpecs
     ["document", NodeModel],
     ["showParameters", BooleanModel],
+    ["width", LengthModel],
+    ["height", LengthModel],
+    ensureDimensionBoundnessCoherenceFn,
     initTypeSpecCoherenceFn(DEFAULT_STATE),
 );
 

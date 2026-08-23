@@ -37,6 +37,8 @@ import {
 } from "../../registered-properties.mjs";
 import { UINodeSpecToTypeSpecLinksMap } from "../../type-spec-fundamentals.mjs";
 import { getTypeSpecDefaultsMap } from "./defaults.mjs";
+
+import { LengthModel } from "../../length-models.mjs";
 import { TYPE_SPEC_PROPERTIES_GENERATORS } from "./properties-generators.mjs";
 import { StylePatchSourcesMeta, TypeSpecMeta } from "./meta.typeroof.jsx";
 import { TypeSpecTreeEditor } from "./tree-editor.typeroof.jsx";
@@ -126,6 +128,26 @@ export function initTypeSpecCoherenceFn(DEFAULT_STATE) {
     );
 }
 
+// Boundness rule: width must always be bound (length fields set);
+// height may be unset (then it grows to fit content); both
+// unset is invalid. Written against the general invariant
+// "at least one dimension bound", so the future relaxation
+// (width unbound iff height is set) is admissible without model
+// migration. Migration default for legacy documents:
+// width 100% layout, height unset.
+export const ensureDimensionBoundnessCoherenceFn = CoherenceFunction.create(
+    ["width", "height"],
+    function ensureDimensionBoundness({ width, height }) {
+        // width/height are instances of lengthModel:
+        //      struct fields ({value, unit}).
+        const widthUnit = width.get("unit"),
+            heightUnit = height.get("unit");
+        if (widthUnit.isEmpty)
+            widthUnit.value = widthUnit.constructor.Model.defaultValue; // "percent-layout";
+        // value is filled by LengthModel's own coherence.
+    },
+);
+
 export function createTypeStageModelVariantWithDefaults(
     name,
     DEFAULT_STATE,
@@ -169,6 +191,9 @@ export function createTypeStageModelVariantWithDefaults(
             DocumentRendererModeModel,
             DocumentRendererModeDfltEditorModel,
         ),
+        ["width", LengthModel],
+        ["height", LengthModel],
+        ensureDimensionBoundnessCoherenceFn,
         initTypeSpecCoherenceFn(DEFAULT_STATE),
         // fixme: add a coherence function to ensure the link paths in nodeSpecToTypeSpec
         // are explicitly relative, i.e. start with a "./" not "/". could eventually also
