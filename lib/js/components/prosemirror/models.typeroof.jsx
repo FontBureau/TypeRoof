@@ -650,7 +650,7 @@ export function toMetaModelJSON(value, dependencies = {}) {
 }
 
 /**
- * Convenience funtion especially to read ["attrs", AttrsMapModel]
+ * Convenience function especially to read ["attrs", AttrsMapModel]
  * but it can be used for similar structures as well.
  */
 export function readMetaModelJSONfromMap(jsonMapModel, empty = null) {
