@@ -637,15 +637,14 @@ class TypeStageController extends _BaseContainerComponent {
         // to the generic selectors).
         this._classesAndStylesManager = this.widgetBus.getWidgetById(
             "classes-and-styles-manager",
-            null,
         );
-        this._classesAndStylesManager?.setClass("typeroof-layout--type-stage");
+        this._classesAndStylesManager.setClass("typeroof-layout--type-stage");
 
         this._initWidgets(widgets);
     }
     destroy() {
         // Whoever uses the manager must reset it.
-        this._classesAndStylesManager?.reset();
+        this._classesAndStylesManager.reset();
         this._classesAndStylesManager = null;
         return super.destroy();
     }
