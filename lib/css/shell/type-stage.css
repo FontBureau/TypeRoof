@@ -41,7 +41,7 @@ prosemirror
         text-decoration-line: underline;
 
         &::before {
-            content: " (UNKOWN STYLE: " attr(data-style-name) ") ";
+            content: " (UNKNOWN STYLE: " attr(data-style-name) ") ";
             color: black;
             background: white;
         }
@@ -58,7 +58,7 @@ prosemirror
         text-decoration-line: underline;
 
         &::before {
-            content: " (UNKOWN INLINE TYPE: " attr(data-unknown-inline-type)
+            content: " (UNKNOWN INLINE TYPE: " attr(data-unknown-inline-type)
                 ") ";
             color: black;
             background: white;

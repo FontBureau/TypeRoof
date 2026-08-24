@@ -79,8 +79,8 @@ const KeyValueModel = _AbstractGenericModel.createClass("KeyValueModel", {
     ) {
         if (typeof value === "string") return value;
         if (value === ForeignKey.NULL) return null; // could be empty string, doesn't start with "S:"!
-        // return `UNKOWN VALUE TYPE ${value.toString()}`;
-        throw new Error(`UNKOWN VALUE TYPE (in KeyValueModel)`);
+        // return `UNKNOWN VALUE TYPE ${value.toString()}`;
+        throw new Error(`UNKNOWN VALUE TYPE (in KeyValueModel)`);
     },
     deserializeFN: function (
         serializedString: unknown /*, options=SERIALIZE_OPTIONS*/,
@@ -1069,7 +1069,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
             } else
                 // A programming error, was new stuff added recently ?
                 throw new Error(
-                    `UNKOWN NAME ${ctor.name} Don't know how to treat "${name}".`,
+                    `UNKNOWN NAME ${ctor.name} Don't know how to treat "${name}".`,
                 );
         }
 

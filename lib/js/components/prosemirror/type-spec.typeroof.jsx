@@ -727,7 +727,7 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
     }
 }
 
-export class UIDocumentUnkownStyleStyler extends _BaseComponent {
+export class UIDocumentUnknownStyleStyler extends _BaseComponent {
     _CLASS = "unknown-style";
     constructor(widgetBus, element) {
         super(widgetBus);
@@ -943,7 +943,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                       ],
             Constructor =
                 styleLinkProperties === null
-                    ? UIDocumentUnkownStyleStyler
+                    ? UIDocumentUnknownStyleStyler
                     : UIDocumentStyleStyler,
             args = [domElemment];
         return this._initWrapper(

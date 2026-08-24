@@ -625,7 +625,7 @@ class UIVideoproofArrayLayers extends _BaseContainerComponent {
             if (childElement === element || childElement.contains(element))
                 return childElement;
         }
-        throw new Error(`UNKOWN can't get closest child in ${this}.`);
+        throw new Error(`UNKNOWN can't get closest child in ${this}.`);
     }
 
     _getDropTargetInsertPosition(event) {

@@ -8,7 +8,7 @@ import { _BaseDropTarget } from "../../generic.mjs";
 import {
     UIDocumentTypeSpecStyler,
     UIDocumentStyleStyler,
-    UIDocumentUnkownStyleStyler,
+    UIDocumentUnknownStyleStyler,
     getEffectiveStyleLinks,
 } from "../../prosemirror/type-spec.typeroof.jsx";
 import { getTypeSpecPropertiesIdMethod } from "../../prosemirror/integration.typeroof.jsx";
@@ -635,7 +635,7 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
                       ],
             Constructor =
                 styleLinkProperties === null
-                    ? UIDocumentUnkownStyleStyler
+                    ? UIDocumentUnknownStyleStyler
                     : UIDocumentStyleStyler,
             args = [domElement];
         return this._initWrapper(
@@ -818,7 +818,7 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
         for (const wrapper of wrapResults) {
             const { styleLinkName, styleLinkType } = wrapper,
                 domElement = wrapper[_MARK_ELEMENT];
-            // if not skipped we will apply UIDocumentUnkownStyleStyler,
+            // if not skipped we will apply UIDocumentUnknownStyleStyler,
             // which may be wrong as well, e.g. when tags/elements are
             // purely semantic HTML that we don't want to style.
             if (!styleLinkName) continue;
