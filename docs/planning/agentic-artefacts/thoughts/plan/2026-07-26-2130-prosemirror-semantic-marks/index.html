@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="semantic-marks-for-prosemirror--implementation-plan" class="heading_anchor" href="#semantic-marks-for-prosemirror--implementation-plan" aria-hidden="true">#</a>Semantic Marks for ProseMirror — Implementation Plan</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Make schema-defined marks (<code>ProseMirrorSchemaModel.marks</code>) first-class: definable
+in UI, applicable to text, emitted by ingest, and stylable via StylePatches — so
+TypeRoof produces proper semantic HTML (<code>&lt;strong&gt;</code>, <code>&lt;em&gt;</code>, <code>&lt;a href&gt;</code>).
+Research: <code>thoughts/research/2026-07-26-2119-prosemirror-semantic-marks.md</code>.</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<p>Schema-mark <strong>loading</strong> and <strong>rendering</strong> exist; everything that puts marks into
+documents, parameterizes, or styles them is missing (7 gaps, research doc §“What
+does not exist today”). <code>generic-style</code> remains the styling workhorse and must
+behave identically throughout.</p>
+<h3><a id="key-discoveries" class="heading_anchor" href="#key-discoveries" aria-hidden="true">#</a>Key Discoveries:</h3>
+<ul>
+<li>Attrs are dropped with a warning — <code>integration.typeroof.jsx:396-409</code>; blocks <code>link</code>/<code>href</code></li>
+<li>Node-side UI pattern to mirror: <code>UINodeSpecMap</code> + <code>NodeSpecPropertiesManager</code>, bound to <code>./proseMirrorSchema/nodes</code> at <code>lib/js/components/layouts/type-stage/index.typeroof.jsx:426-452</code></li>
+<li><code>toggleMark</code>/<code>removeMark</code> in <code>commands.ts</code> are already generic; menus (<code>UIProseMirrorMenuStyles</code>) hard-code <code>generic-style</code> — <code>lib/js/components/prosemirror/type-spec.typeroof.jsx:1531</code></li>
+<li>Tests run with <strong>vitest</strong> (<code>npm test</code>), colocated <code>*.test.mjs</code> (pattern: <code>default-schema.test.mjs</code>, <code>ingest_next.test.mjs</code>)</li>
+<li>Reserved-mark guard must stay; removal filter for views must use built PM <code>schema.marks</code> (done, 369fb540)</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>Removing or restyling <code>generic-style</code>; changing the reserved-name guard</li>
+<li>Fixing <code>wikipedia/main.ts</code> TS2305 (kept deliberately until ingest consolidation)</li>
+<li>Removing <code>ingest.ts</code> / renaming <code>ingest_next.ts</code> (owner’s separate task)</li>
+<li>Explicit mark-to-style maps (<code>markSpecToTypeSpec</code>) and pps-maps UI changes — marks link to StylePatches <strong>by name</strong>, mirroring <code>data-style-name</code> today</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Bottom-up: data model → schema creation → application → ingest → styling →
+hardening. <strong>One commit per phase</strong> (phases 1, 3, 5 split into 2: logic, then UI).
+Commit style: <code>[ProseMirror] ...</code> prefix per repo convention. Each phase adds
+vitest unit tests alongside the code it touches.</p>
+<hr>
+<h2><a id="phase-1-attrs-conversion-in-schema-creation" class="heading_anchor" href="#phase-1-attrs-conversion-in-schema-creation" aria-hidden="true">#</a>Phase 1: Attrs conversion in schema creation</h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p>Convert <code>AttributeSpecMapModel</code> to PM attr specs for marks <strong>and</strong> nodes; generate
+<code>getAttrs</code>/<code>toDOM</code> attr serialization so HTML paste round-trips. Unblocks <code>link</code>/<code>href</code>.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-schema-creation" class="heading_anchor" href="#1-schema-creation" aria-hidden="true">#</a>1. Schema creation</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/integration.typeroof.jsx</code>
+<strong>Changes</strong>: Replace the <code>attrs</code>-skip warning in <code>createProseMirrorSchemaFromMetaModel</code>
+with conversion: for each <code>AttributeSpecModel</code> → <code>{default: &lt;from AttrValidateModel&gt;, validate?}</code>;
+extend generated <code>parseDOM</code>/<code>toDOM</code> to read/write attrs (<code>getAttrs</code> from DOM, attrs into <code>toDOM</code>).</p>
+<h4><a id="2-tests" class="heading_anchor" href="#2-tests" aria-hidden="true">#</a>2. Tests</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/integration.test.mjs</code> (new)
+<strong>Changes</strong>: vitest cases — mark with attrs lands in built <code>Schema</code>; defaults applied;
+a metamodel doc node carrying <code>{&quot;typeKey&quot;:&quot;link&quot;,&quot;attrs&quot;:[href]}</code> round-trips
+through <code>_rawCreateProseMirrorNode</code>/<code>_rawCreateMetamodelNode</code> unchanged.</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-verification" class="heading_anchor" href="#automated-verification" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[x] <code>npm test</code> passes (new + existing)</li>
+<li>[x] <code>npm run typecheck</code> — only pre-existing <code>main.ts</code> TS2305</li>
+<li>[x] <code>npm run lint</code></li>
+</ul>
+<h4><a id="manual-verification" class="heading_anchor" href="#manual-verification" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[x] type-stage loads; <code>generic-style</code> styling unchanged (operator review, commit d94a95d9)</li>
+</ul>
+<p><strong>Commits</strong>: 1 (logic+tests) — split if diff exceeds easy review.
+<strong>Implementation Note</strong>: pause for manual confirmation before next phase.</p>
+<hr>
+<h2><a id="phase-2-schema-ui-for-marks" class="heading_anchor" href="#phase-2-schema-ui-for-marks" aria-hidden="true">#</a>Phase 2: Schema UI for marks</h2>
+<h3><a id="overview-2" class="heading_anchor" href="#overview-2" aria-hidden="true">#</a>Overview</h3>
+<p>Mirror the node-spec editor pair for <code>proseMirrorSchema/marks</code>: list editor +
+fields (tag, excludes, inclusive, spanning; attrs via Phase-1 attribute editor).</p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-ui-components" class="heading_anchor" href="#1-ui-components" aria-hidden="true">#</a>1. UI components</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/index.typeroof.jsx</code> (registration;
+editor classes alongside the node-spec ones, likely in <code>type-stage/node-specs.typeroof.jsx</code>
+— pin exact module at implementation time)
+<strong>Changes</strong>: <code>UIMarkSpecMap</code> + <code>MarkSpecPropertiesManager</code> mirroring
+<code>UINodeSpecMap</code>/<code>NodeSpecPropertiesManager</code>; register parallel to the
+“NodeSpecs” <code>Collapsible</code> section (bindings pattern: <code>index.typeroof.jsx:426-452</code>),
+with <code>./proseMirrorSchema/marks</code> as <code>childrenOrderedMap</code> plus an <code>editingMarkSpecPath</code>.</p>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-verification-1" class="heading_anchor" href="#automated-verification-1" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[x] <code>npm run lint</code>, <code>npm run typecheck</code> (as above) + <code>vite build</code></li>
+</ul>
+<h4><a id="manual-verification-1" class="heading_anchor" href="#manual-verification-1" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[x] Add/edit/delete a <code>strong</code> mark in UI; schema rebuilds; JSON export shows it (operator-confirmed)</li>
+</ul>
+<p><strong>Commits</strong>: 1.</p>
+<hr>
+<h2><a id="phase-3-applytoggle-ui--keymap--superseded-2026-07-27" class="heading_anchor" href="#phase-3-applytoggle-ui--keymap--superseded-2026-07-27" aria-hidden="true">#</a>Phase 3: Apply/toggle UI + keymap — SUPERSEDED (2026-07-27)</h2>
+<blockquote>
+<p><strong>Dismissed by owner after implementation</strong> (commits e53e4069 + 99c9ace3,
+reset away via <code>git reset --hard 17e6cda1</code>): toggling “Styles” and toggling
+marks must be the <strong>same</strong> UI — some styles are expressed via a configured
+mark, some via the generic-style mark. Salvaged: the vendored <code>toggleMark</code>
+fix (<code>hasMarkWithAttrs</code> attrs=null → presence-only) + regression tests,
+commit a8e765c4. Keymap: deferred (not needed yet).</p>
+<p><strong>Phase 3 is absorbed into Phase 5</strong> (unified style application, see there).
+Original text kept for reference below.</p>
+<p><strong>Final resolution (2026-07-28, operator):</strong> documents store <strong>intent/roles
+only</strong> (no “semantic marks” as a document concept). Toggling styles therefore
+never writes concrete mark types — Phase 5 item 4 (unified application) is
+dropped. Output semantics are bound at render time via the edge’s mark link
+(Phase 5 item 6, absorbing Phase 7).</p>
+</blockquote>
+<h3><a id="overview-original-superseded" class="heading_anchor" href="#overview-original-superseded" aria-hidden="true">#</a>Overview (original, superseded)</h3>
+<p>Generate menu entries from <code>schema.marks</code> (excluding <code>generic-style</code>, which keeps
+its style-name UI); restore keymap dynamically.</p>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-menu-generation-logic" class="heading_anchor" href="#1-menu-generation-logic" aria-hidden="true">#</a>1. Menu generation (logic)</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/type-spec.typeroof.jsx</code>
+<strong>Changes</strong>: Around <code>UIProseMirrorMenuStyles</code> (:1531), derive mark toggle items from
+<code>state.schema.marks</code>; reuse generic <code>toggleMark</code>/<code>removeMark</code> (<code>commands.ts</code>).
+Toggling a mark does not create styles; StylePatches (Phase 5) are created in
+the TypeSpec editor, as today.</p>
+<h4><a id="2-keymap" class="heading_anchor" href="#2-keymap" aria-hidden="true">#</a>2. Keymap</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/integration.typeroof.jsx</code>
+<strong>Changes</strong>: Replace commented <code>Mod-b</code>/<code>Mod-i</code> lines (~596) with per-schema
+bindings for marks that declare a key (or fixed bold/italic mapping when
+<code>strong</code>/<code>em</code> exist).</p>
+<h4><a id="3-tests" class="heading_anchor" href="#3-tests" aria-hidden="true">#</a>3. Tests</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/integration.test.mjs</code>
+<strong>Changes</strong>: unit-test the pure derivation (schema → menu/keymap entries) if
+extractable as a function.</p>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-npm-test--lint-typecheck" class="heading_anchor" href="#automated-npm-test--lint-typecheck" aria-hidden="true">#</a>Automated: <code>npm test</code>, lint, typecheck</h4>
+<h4><a id="manual-toggle-strong-via-menu-and-mod-b--mark-persists-through-json-round-trip" class="heading_anchor" href="#manual-toggle-strong-via-menu-and-mod-b--mark-persists-through-json-round-trip" aria-hidden="true">#</a>Manual: toggle <code>strong</code> via menu and <code>Mod-b</code>; mark persists through JSON round-trip</h4>
+<p><strong>Commits</strong>: 2 (menu logic, keymap).</p>
+<hr>
+<h2><a id="phase-4-ingest-emits-semantic-marks" class="heading_anchor" href="#phase-4-ingest-emits-semantic-marks" aria-hidden="true">#</a>Phase 4: Ingest emits semantic marks</h2>
+<blockquote>
+<p><strong>Note (2026-07-28):</strong> implemented as specified (3db52c65), but the
+intent-only decision (see Phase 3 note) reframes it: ingest should
+eventually map tags -&gt; intent (<code>data-style-name</code>) instead of emitting
+concrete semantic marks. The <code>semanticMarksFromSchema</code> gate serves both
+policies. Follow-up, not urgent — schema without marks already yields
+intent-only documents.</p>
+</blockquote>
+<h3><a id="overview-3" class="heading_anchor" href="#overview-3" aria-hidden="true">#</a>Overview</h3>
+<p><code>ingest_next.ts</code> emits schema marks (<code>strong</code>, <code>em</code>, <code>a</code>+href) instead of / in
+addition to <code>generic-style</code>, gated by what the schema defines.</p>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-ingest" class="heading_anchor" href="#1-ingest" aria-hidden="true">#</a>1. Ingest</h4>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.ts</code>
+<strong>Changes</strong>: In the <code>strong</code>/<code>b</code>/<code>em</code>/<code>i</code>/<code>a</code> mapping (~128), check the active
+schema’s marks; emit semantic mark when present, else current <code>generic-style</code> fallback.
+Harvest applicable insights from <code>ingest.ts</code> before its planned removal.</p>
+<h4><a id="2-tests-1" class="heading_anchor" href="#2-tests-1" aria-hidden="true">#</a>2. Tests</h4>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.test.mjs</code>
+<strong>Changes</strong>: fixture HTML with <code>&lt;strong&gt;</code>/<code>&lt;a href&gt;</code> → asserts semantic marks in
+output metamodel when schema provides them; fallback case unchanged.</p>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-npm-test--lint-typecheck-1" class="heading_anchor" href="#automated-npm-test--lint-typecheck-1" aria-hidden="true">#</a>Automated: <code>npm test</code>, lint, typecheck</h4>
+<h4><a id="manual-ingest-a-wikipedia-page-in-wikipedia-demo-semantic-tags-in-output-html" class="heading_anchor" href="#manual-ingest-a-wikipedia-page-in-wikipedia-demo-semantic-tags-in-output-html" aria-hidden="true">#</a>Manual: ingest a Wikipedia page in wikipedia-demo; semantic tags in output HTML</h4>
+<p><strong>Commits</strong>: 1.</p>
+<hr>
+<h2><a id="phase-5-stylepatch-styling-for-semantic-marks" class="heading_anchor" href="#phase-5-stylepatch-styling-for-semantic-marks" aria-hidden="true">#</a>Phase 5: StylePatch styling for semantic marks</h2>
+<h3><a id="overview-4" class="heading_anchor" href="#overview-4" aria-hidden="true">#</a>Overview</h3>
+<p>Architecture (verified): <strong>TypeSpecs style nodes; StylePatches style marks.</strong>
+The link is the <strong>edge</strong>: <code>TypeSpecModel.stylePatches</code> is a
+<code>StylePatchLinksMapModel</code> (<code>type-spec-models.mjs:366</code>) — <strong>edge keys</strong> are link
+identifiers matched against the mark’s style link (<code>data-style-name</code>), <strong>edge
+values</strong> are keys into the global <code>stylePatches</code> map (nullable,
+“FOREIGN_KEY_NO_ACTION”). <code>_finalizeMarkSubscription</code>
+(<code>lib/js/components/prosemirror/type-spec.typeroof.jsx:911</code>) resolves
+<code>data-style-name</code> -&gt; edge key -&gt; StylePatch properties.</p>
+<p>Design decision (owner): the edge key stays the <strong>default</strong> link, but the edge
+value gains an <strong>explicit MarkLink</strong>: change the value model from
+<code>StylePatchKeyModel</code> to a struct
+<code>{stylePatch: StylePatchKeyModel, mark: MarkLinkOrEmpty}</code>. When <code>mark</code> is set,
+that edge styles the named mark type regardless of the edge key; when empty,
+key-based matching applies (today’s behavior, incl. the Phase-5 fallback
+<code>data-style-name ?? mark.type.name</code>). Semantics fully tunable per use-case:
+edge <code>strong</code> -&gt; any patch; several edges -&gt; same patch; marks sharing a tag
+-&gt; separate edges.</p>
+<h3><a id="changes-required-4" class="heading_anchor" href="#changes-required-4" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-model-marklink-struct-logic" class="heading_anchor" href="#1-model-marklink-struct-logic" aria-hidden="true">#</a>1. Model: MarkLink struct (logic)</h4>
+<p><strong>File</strong>: <code>lib/js/components/type-spec-models.mjs</code>
+<strong>Changes</strong>: <code>StylePatchLinksMapModel</code> value: <code>StylePatchKeyModel</code> -&gt;
+struct <code>{stylePatch: StylePatchKeyModel, mark: MarkLinkOrEmpty}</code>. Open point:
+serialized legacy values are bare keys — decide legacy-upgrade on load vs.
+dual-read at implementation time.</p>
+<h4><a id="2-resolution-logic" class="heading_anchor" href="#2-resolution-logic" aria-hidden="true">#</a>2. Resolution (logic)</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/type-spec.typeroof.jsx</code>
+<strong>Changes</strong>: match priority in <code>_finalizeMarkSubscription</code> (:911) and
+touchpoints (~1287, 1303, 1381): (a) edge whose <code>value.mark</code> ==
+<code>mark.type.name</code>; else (b) edge key == <code>data-style-name ?? mark.type.name</code>.</p>
+<h4><a id="3-edge-editor-ui" class="heading_anchor" href="#3-edge-editor-ui" aria-hidden="true">#</a>3. Edge editor (UI)</h4>
+<p><strong>File</strong>: StylePatches-links editor (<code>UIStylePatchesLinksMap</code>-based, <code>type-stage/</code>)
+<strong>Changes</strong>: edit the struct value (StylePatch key + optional mark link);
+suggest schema mark names for the <code>mark</code> field.</p>
+<h4><a id="4-unified-style-application-absorbed-phase-3--dropped-2026-07-28" class="heading_anchor" href="#4-unified-style-application-absorbed-phase-3--dropped-2026-07-28" aria-hidden="true">#</a>4. Unified style application (absorbed Phase 3) — DROPPED (2026-07-28)</h4>
+<p><strong>Operator decision</strong>: documents store intent/roles only; toggling always
+writes <code>generic-style</code> + <code>data-style-name</code> (today’s behavior, no change
+needed). No toggle-time backing resolution. Original text: see git history
+of this file / session notes.</p>
+<h4><a id="5-tests" class="heading_anchor" href="#5-tests" aria-hidden="true">#</a>5. Tests</h4>
+<p><strong>Changes</strong>: explicit <code>mark</code> link wins over key match; empty <code>mark</code> -&gt;
+key fallback; <code>data-style-name</code> regression; multi-edge -&gt; same patch.</p>
+<h4><a id="6-intenttag-resolution-at-render-time-absorbs-phase-7--commit-44" class="heading_anchor" href="#6-intenttag-resolution-at-render-time-absorbs-phase-7--commit-44" aria-hidden="true">#</a>6. Intent→tag resolution at render time (absorbs Phase 7) — commit 4/4</h4>
+<p><strong>Files</strong>: <code>lib/js/components/prosemirror/integration.typeroof.jsx</code>
+(<code>ProsemirrorMarkView</code>), possibly <code>default-schema.ts</code> / <code>type-spec.typeroof.jsx</code>
+(subscription machinery)
+<strong>Changes</strong>: a <code>generic-style</code> mark renders as the tag bound to its
+<code>data-style-name</code> by the applicable TypeSpec’s edge (e.g. <code>&lt;strong data-style-name=&quot;bold&quot;&gt;</code>), else as today’s styled <code>&lt;span&gt;</code>. The MarkView
+re-resolves on edge/schema changes and <code>update()</code> reuses the view when the
+resolution is stable (no destroy/recreate, subscriptions stay intact).
+Styling itself is unchanged (edge → StylePatch, items 1–3).</p>
+<h3><a id="success-criteria-4" class="heading_anchor" href="#success-criteria-4" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-npm-test--lint-typecheck-2" class="heading_anchor" href="#automated-npm-test--lint-typecheck-2" aria-hidden="true">#</a>Automated: <code>npm test</code>, lint, typecheck</h4>
+<h4><a id="manual-wire-edge-strong-explicit-mark-link-to-any-stylepatch-in-a" class="heading_anchor" href="#manual-wire-edge-strong-explicit-mark-link-to-any-stylepatch-in-a" aria-hidden="true">#</a>Manual: wire edge <code>strong</code> (explicit mark link) to any StylePatch in a</h4>
+<p>TypeSpec; <code>strong</code> marks styled; legacy key-only edges and <code>generic-style</code>
+behave as before</p>
+<p><strong>Commits</strong>: 1 (model+resolution+tests, ecc46778) + 1 (edge editor UI +
+StringModel simplification, e11e16d2) + 1 (intent→tag MarkView resolution,
+absorbing Phase 7). Item 4 dropped (2026-07-28).</p>
+<hr>
+<h2><a id="phase-6-validation" class="heading_anchor" href="#phase-6-validation" aria-hidden="true">#</a>Phase 6: Validation</h2>
+<blockquote>
+<p><strong>Note (2026-07-28):</strong> semantic-mark-specific items (attrs editor for
+document marks, document-mark/schema validation) are mostly obsolete under
+the intent-only decision; schema-side validation (excludes, mark names)
+stays relevant — schema marks remain the output vocabulary.</p>
+</blockquote>
+<h3><a id="overview-5" class="heading_anchor" href="#overview-5" aria-hidden="true">#</a>Overview</h3>
+<p>Fail loudly and early on misconfiguration.</p>
+<h3><a id="changes-required-5" class="heading_anchor" href="#changes-required-5" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-models" class="heading_anchor" href="#1-models" aria-hidden="true">#</a>1. Models</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/models.typeroof.jsx</code>
+<strong>Changes</strong>: <code>MarkSpecModel.validate</code>: <code>excludes</code> names must exist in the marks map
+(parent-context check like <code>AttrValidateModel</code>); warn path for document marks
+absent from schema before <code>schema.mark()</code> degrades nodes to <code>INVALID</code>
+(<code>integration.typeroof.jsx</code> ~687); mark names must be valid metamodel map
+keys/path components (PM imposes no name rules — verified empirically:
+spaces/emoji accepted).</p>
+<h4><a id="2-tests-2" class="heading_anchor" href="#2-tests-2" aria-hidden="true">#</a>2. Tests</h4>
+<p><strong>Changes</strong>: vitest for both validations (bad <code>excludes</code>, unknown document mark).</p>
+<h3><a id="success-criteria-5" class="heading_anchor" href="#success-criteria-5" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-npm-test--lint-typecheck-3" class="heading_anchor" href="#automated-npm-test--lint-typecheck-3" aria-hidden="true">#</a>Automated: <code>npm test</code>, lint, typecheck</h4>
+<h4><a id="manual-broken-config-produces-visible-validation-feedback-in-type-stage" class="heading_anchor" href="#manual-broken-config-produces-visible-validation-feedback-in-type-stage" aria-hidden="true">#</a>Manual: broken config produces visible validation feedback in type-stage</h4>
+<p><strong>Commits</strong>: 1.</p>
+<hr>
+<h2><a id="phase-7-prosemirrormarkviewupdate--absorbed-into-phase-5-item-6-2026-07-28" class="heading_anchor" href="#phase-7-prosemirrormarkviewupdate--absorbed-into-phase-5-item-6-2026-07-28" aria-hidden="true">#</a>Phase 7: <code>ProsemirrorMarkView.update()</code> — ABSORBED into Phase 5 item 6 (2026-07-28)</h2>
+<h3><a id="overview-original" class="heading_anchor" href="#overview-original" aria-hidden="true">#</a>Overview (original)</h3>
+<p>Avoid view destroy/recreate (and <code>subscribeMark</code> re-runs) on attr changes.</p>
+<h3><a id="changes-required-6" class="heading_anchor" href="#changes-required-6" aria-hidden="true">#</a>Changes Required:</h3>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/integration.typeroof.jsx</code>
+<strong>Changes</strong>: <code>update(mark)</code> returning true when <code>data-mark-type</code> unchanged and
+spec resolution is stable; test with attr-changing <code>link</code> edits.</p>
+<h3><a id="success-criteria-6" class="heading_anchor" href="#success-criteria-6" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-npm-test-view-reuse-unit-test-if-feasible-lint-typecheck" class="heading_anchor" href="#automated-npm-test-view-reuse-unit-test-if-feasible-lint-typecheck" aria-hidden="true">#</a>Automated: <code>npm test</code> (view-reuse unit test if feasible), lint, typecheck</h4>
+<h4><a id="manual-edit-link-href-no-flicker-subscription-stays-intact" class="heading_anchor" href="#manual-edit-link-href-no-flicker-subscription-stays-intact" aria-hidden="true">#</a>Manual: edit link href; no flicker, subscription stays intact</h4>
+<p><strong>Commits</strong>: 1.</p>
+<hr>
+<h2><a id="postponed-two-kinds-of-schema-marks-note-for-the-future-2026-07-28" class="heading_anchor" href="#postponed-two-kinds-of-schema-marks-note-for-the-future-2026-07-28" aria-hidden="true">#</a>Postponed: two kinds of schema marks (note for the future, 2026-07-28)</h2>
+<p>Schema marks could be divided into two kinds: <strong>tag-only</strong> (output vocabulary —
+applies a tag to intent at render time, instances never enter documents; the PM
+behavioral flags <code>inclusive</code>/<code>spanning</code>/<code>code</code>/<code>group</code>/<code>excludes</code> are
+inert for these) and <strong>full-featured PM marks</strong> (instances live in documents,
+carry load-bearing attrs, behavioral flags apply). The distinction could live
+on the MarkSpec (a flag) — or in the <strong>style-links edges</strong>, which may be the
+cleaner design (operator instinct).</p>
+<p>Insight from discussion: the distinction arguably needs no flag at all — it
+emerges from two orthogonal usage switches: (1) do instances enter the
+document (ingest gate / authoring UI) -&gt; full mark; (2) does an edge bind
+intent -&gt; mark -&gt; tag (render-time) -&gt; phantom/tag application. The same mark
+name could serve both roles. A MarkSpec flag would only add <em>restriction</em>
+(validation: “may never enter documents” / “never as output tag”), not new
+capability.</p>
+<p>DECIDED (2026-07-28): edge-located typed target. The edge struct gains
+<code>type</code> (plain enum <code>generic-tag</code>|<code>mark</code>, always serialized) + <code>tag</code>/<code>mark</code>
+(StringOrEmpty, omitted when empty); a CoherenceFunction clears the inactive
+field at init/metamorphose (verified: coherence does NOT run on every set).
+<code>generic-tag</code> applies an HTML tag to intent at render time (no PM mark);
+<code>mark</code> links a full-featured schema mark. Schema marks: one use case.
+Supersedes the StringModel-<code>mark</code> simplification from commit e11e16d2.</p>
+<h2><a id="postponed-style-link-inheritance-through-the-typespec-parent-tree" class="heading_anchor" href="#postponed-style-link-inheritance-through-the-typespec-parent-tree" aria-hidden="true">#</a>Postponed: Style-link inheritance through the TypeSpec parent tree</h2>
+<p><strong>Operator decision (2026-07-28):</strong> treat completely separate from this plan;
+requires sharp focus. Resolution (edge visibility at a node) walks up the
+TypeSpec parent chain; children override by redefining the same edge key —
+follows the existing typeSpecnion inheritance pattern. Enables document-wide
+defaults + local overrides for style→tag binding.</p>
+<hr>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<h3><a id="unit-tests-vitest-colocated-testmjs-" class="heading_anchor" href="#unit-tests-vitest-colocated-testmjs-" aria-hidden="true">#</a>Unit Tests (vitest, colocated <code>*.test.mjs</code>)</h3>
+<ul>
+<li>Schema creation: attrs conversion, defaults, reserved-name guard (Phase 1)</li>
+<li>Metamodel↔PM round-trip incl. mark attrs (Phase 1)</li>
+<li>Menu/keymap derivation from schema (Phase 3)</li>
+<li>Ingest emission + fallback (Phase 4)</li>
+<li>StylePatch style-link fallback resolution + <code>generic-style</code> regression (Phase 5)</li>
+<li>Validation rules (Phase 6)</li>
+</ul>
+<h3><a id="integration--manual" class="heading_anchor" href="#integration--manual" aria-hidden="true">#</a>Integration / Manual</h3>
+<ul>
+<li>type-stage + wikipedia-demo smoke tests per phase (initial-state JSON with a
+hand-added <code>strong</code> mark remains the baseline smoke fixture)</li>
+</ul>
+<h2><a id="baseline-for-all-phases" class="heading_anchor" href="#baseline-for-all-phases" aria-hidden="true">#</a>Baseline for all phases</h2>
+<ul>
+<li><code>npm test</code> / <code>npm run lint</code> must stay green; <code>npm run typecheck</code> may show <strong>only</strong>
+the known pre-existing <code>main.ts</code> TS2305.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

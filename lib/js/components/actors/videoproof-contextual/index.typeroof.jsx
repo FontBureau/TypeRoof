@@ -277,19 +277,23 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
 
     // --- Phase 2: Layout ---
 
-    // FIXME: got to do this via the properties system!
-    _getAvailableDimensions() {
-        // The host element is the stage layer (100% x 100% of stage)
-        // offsetWidth/Height give pre-transform dimensions
-        const host = this.widgetBus.wrapper.host;
+    // The measurement comes from the 'environment@' protocol (the
+    // .typeroof-layout box, css-px, before css-transforms): a
+    // viewport-stable reference. Measuring wrapper.host (the layer)
+    // instead feeds back through content growth once the container
+    // can grow for the background scroll edge fix.
+    _getAvailableDimensions(changedMap) {
+        const layoutBox = changedMap.has("environment@layout")
+            ? changedMap.get("environment@layout")
+            : this.getEntry("environment@layout");
         return {
-            widthPt: host.offsetWidth * 0.75, // px to pt
-            heightPt: host.offsetHeight * 0.75, // px to pt
+            widthPt: layoutBox.width * 0.75, // px to pt
+            heightPt: layoutBox.height * 0.75, // px to pt
         };
     }
 
-    _relayout() {
-        const { widthPt, heightPt } = this._getAvailableDimensions();
+    _relayout(changedMap) {
+        const { widthPt, heightPt } = this._getAvailableDimensions(changedMap);
 
         const layoutKey = [
             widthPt,
@@ -612,7 +616,7 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
 
             // Even if Words didn't change, but layout might need update
             // (e.g., container resized since last render).
-            if (this._relayout()) this._renderVisiblePage();
+            if (this._relayout(changedMap)) this._renderVisiblePage();
 
             actorApplyCSSColors(
                 this._content,
@@ -633,6 +637,12 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
                 true,
             );
             setLanguageTagDirect(this._content, propertyValuesMap);
+        }
+        // Environment-only updates (e.g. window resize): relayout with
+        // the new available dimensions and re-render. (When animation
+        // properties change too, the block above already handles it.)
+        else if (changedMap.has("environment@layout")) {
+            if (this._relayout(changedMap)) this._renderVisiblePage();
         }
     }
 }

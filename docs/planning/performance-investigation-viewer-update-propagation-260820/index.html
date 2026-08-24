@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/large-file-investigation-260723/">Large File Investigation</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-2026-07/">Metamodel: 2026-07</a></li>
+<li><a href="/TypeRoof/docs/planning/columns/REPORT/">Columns: Runion Report</a></li>
+<li><a href="/TypeRoof/docs/planning/overview/architectural-overview/">Architectural Overview</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/performance-investigation-viewer-update-propagation-260820/">Perf: Viewer Update Propagation</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="performance-investigation-uidocumentviewer-update-propagation" class="heading_anchor" href="#performance-investigation-uidocumentviewer-update-propagation" aria-hidden="true">#</a>Performance Investigation: <code>UIDocumentViewer</code> Update Propagation</h1>
+<blockquote>
+<p><strong>Status:</strong> Done (stages 1+2 landed). Written 2026-08-20, after the
+fixes were implemented and confirmed in the browser by the operator
+(“feels much better, more snappy now”). Remaining follow-up: central
+CSS per typeSpec/stylePatch path (see “Remaining work”).</p>
+</blockquote>
+<h2><a id="problem-statement" class="heading_anchor" href="#problem-statement" aria-hidden="true">#</a>Problem statement</h2>
+<p>In the type-stage “viewer” renderer (<code>UIDocumentViewer</code>,
+<code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx</code>), updates
+that touch the origin typeSpec — e.g. changing its <code>backgroundColor</code> —
+were visibly slow with big documents (the Wikipedia “Typography” page).
+The ProseMirror renderer was fine. Disabling the creation of
+<code>UIDocumentTypeSpecStyler</code> and <code>UIDocumentStyleStyler</code> did <em>not</em> fix it,
+so the suspicion fell on the update propagation machinery itself
+(<code>lib/js/components/basics/component.mjs</code>, <code>static updateWidget</code> of
+<code>_CommonContainerComponent</code>).</p>
+<h2><a id="method-a-reproducible-headless-harness" class="heading_anchor" href="#method-a-reproducible-headless-harness" aria-hidden="true">#</a>Method: a reproducible headless harness</h2>
+<p>Since the bottleneck is CPU-side propagation logic (not layout), a
+jsdom-based benchmark suffices for attribution. The harness lives in the
+(untracked) files:</p>
+<ul>
+<li><code>lib/js/wikipedia/viewer-perf-lib.mjs</code></li>
+<li><code>lib/js/wikipedia/viewer-perf.test.mjs</code></li>
+<li><code>downloads/typography.html</code> — the real Wikipedia “Typography” article
+(<code>curl &quot;https://en.wikipedia.org/w/rest.php/v1/page/Typography/html&quot;</code>)</li>
+</ul>
+<p>It boots a <strong>real <code>UIDocumentViewer</code> subtree</strong> over the real article
+(ingested via <code>lib/js/wikipedia/ingest</code>), with faithful stand-ins for
+the app-level plumbing: a minimal wrapper model providing
+<code>/activeState</code>, <code>/font</code>, <code>/installedFonts</code>; <code>typeSpecProperties@</code> /
+<code>styleLinkProperties@</code> protocol handlers fed with real
+<code>HierarchicalScopeTypeSpecnion</code>s (mirroring <code>TypeSpecLiveProperties</code> /
+<code>StyleLinkLiveProperties</code>, including the <code>setUpdated</code> marking an origin
+typeSpec change produces); instrumentation via prototype monkey-patches;
+optional CPU profile (<code>VIEWER_PERF_PROFILE=1</code>, writes
+<code>downloads/*.cpuprofile</code>).</p>
+<p>Run:</p>
+<pre class="language-shell"><code class="language-shell">npx vitest run lib/js/wikipedia/viewer-perf.test.mjs
+<span class="token assign-left variable">VIEWER_PERF_PROFILE</span><span class="token operator">=</span><span class="token number">1</span> npx vitest run lib/js/wikipedia/viewer-perf.test.mjs</code></pre>
+<p>Document stats of the benchmark scene: <strong>785 elements, 1094 text runs,
+455 marks, maxDepth 10</strong>.</p>
+<p>Caveats: jsdom has no layout/style-recalc, so the DOM-write share of
+stylers is understated; the TypeSpec-properties UI tree is not part of
+the harness, so real app updates are somewhat slower than the numbers
+below. Relative attribution holds.</p>
+<h2><a id="findings" class="heading_anchor" href="#findings" aria-hidden="true">#</a>Findings</h2>
+<p>Per-update wall time (<code>root.update(compareResult)</code>, median of 5) for an
+origin-typeSpec <code>backgroundColor</code> change, at baseline:</p>
+<ul>
+<li>stylers enabled: <strong>865–872 ms</strong></li>
+<li>stylers disabled (operator’s test): <strong>470–487 ms</strong></li>
+<li><code>metamorphose</code> and <code>StateComparison</code> construction: <strong>&lt; 1 ms</strong> —
+the model layer was never the problem.</li>
+</ul>
+<p>Attribution (instrumentation + <code>node:inspector</code> CPU profile):</p>
+<ol>
+<li><strong>The <code>Path</code> machinery was the single biggest cost</strong> (~470 ms of the
+~870 ms stylers-on update): <code>Path</code> constructor, <code>sanitize</code>,
+<code>fromString</code>, <code>slice</code>, <code>toString</code>. Paths are re-parsed from strings
+constantly — <code>getExternalName</code>, <code>getEntry</code>,
+<code>_getBestTypeSpecPropertiesId</code>, dependency resolution.</li>
+<li><strong>Per-node provisioning recomputes near-constant data.</strong> Notably
+<code>UIDocumentElement._getPathOfTypes</code> walked the whole ancestor chain
+with one <code>getEntry</code> (a root-to-node walk) per level — O(depth²) path
+operations per node per update — once per text run and twice per
+element (self + next sibling). Its only consumer,
+<code>getTypeSpecPropertiesIdMethod</code>, uses just <code>pathOfTypes.at(-1)</code>.
+This also explains why disabling the stylers did not help: the
+expensive path resolution in <code>_provisionTypeSpecStyler</code> runs
+regardless of styler creation.</li>
+<li><strong>The traversal is unconditional.</strong> <code>UPDATE_STRATEGY_COMPARE</code>
+containers recurse into every widget on every change, whether or not
+anything in the subtree could be affected.</li>
+<li>Dead end (kept for the record): per-update memoization of
+<code>_getPathOfTypes</code> / <code>_getEffectiveStyleLinks</code> gained ~2 % — each
+node’s full path is unique, so full-path memos never hit, and
+style-link resolution was already cheap.</li>
+</ol>
+<h2><a id="fixes-landed" class="heading_anchor" href="#fixes-landed" aria-hidden="true">#</a>Fixes landed</h2>
+<p>All on branch <code>demo/wikipedia</code>:</p>
+<table>
+<thead>
+<tr>
+<th>commit</th>
+<th>change</th>
+<th>effect (median update)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>959ca92e</code></td>
+<td><code>[metamodel/path]</code> intern <code>Path.fromString</code> results (immutable + pure ⇒ safe; bounded at 10k entries, clear-and-restart eviction)</td>
+<td>stylers-on 865→~570 ms, stylers-off 487→~240 ms; initial render −28…−42 %</td>
+</tr>
+<tr>
+<td><code>343df6e1</code></td>
+<td><code>[type-stage/viewer]</code> thread <code>pathOfTypes</code> down via the <code>context</code> object, drop <code>_getPathOfTypes</code>. <code>UIDocumentViewer</code> seeds it with the doc root typeKey; each <code>UIDocumentElement</code> appends its own typeKey for children. Correct because <code>UIDocumentNode</code> rebuilds its subtree on any typeKey change.</td>
+<td>stylers-on →~350 ms, stylers-off →~122 ms</td>
+</tr>
+<tr>
+<td><code>c267d88f</code></td>
+<td><code>[prosemirror/integration]</code> memoize <code>getTypeSpecPropertiesIdMethod</code>, keyed by the immutable <code>nodeSpecToTypeSpec</code> model + joined typeKeys + lazy per-component origin path; cached Path re-validated with <code>hasRegistered</code> per hit</td>
+<td>below measurement noise in this doc; kept (regression-free, wins on deep typeSpec trees)</td>
+</tr>
+<tr>
+<td><code>92d9e3db</code></td>
+<td><code>[basics/components]</code> <strong>pruning stage 1</strong>: skip provably-unaffected widgets in <code>_update</code> (see below)</td>
+<td>stylers-on →~325 ms, stylers-off →~30 ms</td>
+</tr>
+<tr>
+<td><code>cbd5990e</code></td>
+<td><code>[basics/components]</code> <strong>pruning stage 2</strong>: skip <code>_provisionWidgets</code> of unaffected subtrees (see below)</td>
+<td>stylers-on →<strong>~223 ms</strong>, stylers-off →<strong>~30 ms</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Cumulative: <strong>−74 % stylers-on, −94 % stylers-off</strong>; initial render
+2378 ms → ~1100 ms (stylers-on). Confirmed snappy in the browser.</p>
+<h2><a id="the-pruning-design-stages-12" class="heading_anchor" href="#the-pruning-design-stages-12" aria-hidden="true">#</a>The pruning design (stages 1+2)</h2>
+<p>Both stages live in <code>lib/js/components/basics/component.mjs</code> and are
+generic (not viewer-specific).</p>
+<p><strong>Relevance report</strong> per <code>ComponentWrapper</code>, memoized per
+<code>compareResult</code> (WeakMap, so once per update, not per container):</p>
+<ul>
+<li><code>updateRelevant</code> — a model dep intersects the changed paths, or a
+<em>registered</em> protocol dep is marked updated, or (containers) any
+descendant is relevant.</li>
+<li><code>modelRelevant</code> — model deps only.</li>
+<li><code>membershipOk</code> — all mapped protocol ids are still registered.</li>
+</ul>
+<p><strong>Changed-path indexing</strong> (<code>_getUpdateRelevanceContext</code>): exclude
+<code>EQUALS</code> entries and proper ancestors of other changed paths.
+<code>rawCompare</code> yields <code>CHANGED</code> for <em>every ancestor</em> of a change (down to
+the root) — indexing those would match every dependency. Intersection
+matches in both directions: dep under a changed root (descendant
+changed), or a changed root under the dep (e.g. a <code>collection</code> dep whose
+parent path contains the change — the container must provision). Both
+reduce to Set lookups over a prefix set.</p>
+<p><strong>Stage 1</strong> (<code>_update</code>): irrelevant widgets are skipped entirely — they
+provably can not be affected. Because the descendant scan is aggregated
+and memoized, a fully-unaffected subtree is pruned in a single check at
+its root wrapper.</p>
+<p><strong>Stage 2</strong> (<code>update</code>): <code>_provisionWidgets</code> is skipped when no
+descendant is model-relevant <strong>and</strong> all mapped protocol ids are still
+registered. The two events provisioning must react to are both covered:
+structural changes are visible via model deps; registry changes (e.g. a
+typeSpec rename) surface as unregistered mapped ids → membership
+violation → provisioning runs → stale mappings self-heal by
+re-resolution before any consumer’s <code>getUpdated</code> could throw. In
+<code>_update</code>, containers with a membership violation are updated (to
+provision); simple widgets with stale ids are skipped (they are
+re-created by the parent’s provisioning).</p>
+<p>Why protocol deps must be first-class: the viewer’s stylers depend on
+<code>typeSpecProperties@</code> / <code>styleLinkProperties@</code> via
+<code>SimpleProtocolHandler</code> updated-logs, <em>outside</em> the compareResult — that
+is also why the original design updated unconditionally.</p>
+<p>Escape hatch: <code>_CommonContainerComponent.UPDATE_RELEVANCE_FILTER = false</code>.</p>
+<p><strong>Semantic caveat:</strong> widgets that call <code>getEntry</code> in <code>update()</code> for
+names they did not <em>declare</em> as dependencies were previously kept fresh
+by unconditional updates; pruning can not protect that pattern. The
+viewer’s declarations were verified complete (harness correctness test
+asserts the rendered structure and that the background-color change
+actually propagates). If a regression surfaces in a less-disciplined
+layout, flip the escape hatch.</p>
+<h2><a id="postscript-the-caveat-bit-twice" class="heading_anchor" href="#postscript-the-caveat-bit-twice" aria-hidden="true">#</a>Postscript: the caveat bit, twice</h2>
+<p>The caveat above was not hypothetical. After cleanup of the performance
+harness, manual testing in the type-stage editor showed that
+<strong>Show Parameters</strong> (<code>showParameters</code>) and <strong>Show Element Labels</strong>
+(<code>showNodeTypeSpecLabels</code>) no longer appeared when toggled — only a
+viewer↔editor round trip (unrelated full provisioning) brought them up.
+A new regression harness at <code>lib/js/tests/type-stage-toggles/</code> boots
+the real <code>TypeStageController</code> (viewer default, as in the wikipedia
+app), switches to the editor and flips the toggles; it reproduced the
+bug exactly, including the workaround behavior. Root causes, one per
+stage:</p>
+<ul>
+<li><strong>Labels — stage 1.</strong> The <code>NodeTypeSpecLabel</code> widgets’
+<code>activationTest</code> reads <code>showNodeTypeSpecLabels</code> (via the
+<code>typeSpecLabels</code> option) but no dependency mapping declared it, so
+the relevance scan pruned the outfitter subtree and provisioning
+never re-ran. The <code>has-node-labels</code> class <em>was</em> set
+(<code>UpdateLabelListener</code> declares the dep) — just with no label
+elements to unhide. Fixed by declaring the dependency
+(<code>50ba406a</code>).</li>
+<li><strong>Parameters — stage 2.</strong> The outfitter widgets <em>do</em> declare
+<code>showParameters</code>, so stage 1 keeps them relevant — but the outfitters
+are created <strong>dynamically per document node</strong> by
+<code>TypeSpecSubscriptions</code>, so their dependencies never enter the
+statically computed aggregate stage 2 caches. Toggling
+<code>showParameters</code> proved the subtree unaffected, and provisioning was
+skipped. Stage 2 stays reverted (<code>7ad6f363</code>); re-applying it still
+fails the regression harness, this time already at the labels
+assertion.</li>
+</ul>
+<p>The structural fix for this class of bug: <code>ComponentWrapper</code> now
+injects a <strong>dependency-enforcing <code>getEntry</code></strong> into every
+<code>activationTest</code> (<code>f2acb725</code>). It behaves like the widget’s
+<code>widgetBus.getEntry</code> but throws — pointing at the missing
+<code>dependencyMappings</code> entry — when the test reads state the widget did
+not declare. All activationTests were converted to use it and to
+declare what they read, so this regression class now fails loudly
+instead of silently skipping provisioning.</p>
+<p><strong>If stage 2 is re-attempted</strong>, the cache must account for containers
+whose children are provisioned dynamically in <code>update()</code> (not only in
+the constructor): either update/invalidate the aggregate when
+provisioning creates new wrappers, or — simpler and probably right —
+mark such containers as non-cacheable. <code>lib/js/tests/type-stage-toggles/</code>
+is the gate; it catches any wrong version immediately.</p>
+<h2><a id="remaining-work" class="heading_anchor" href="#remaining-work" aria-hidden="true">#</a>Remaining work</h2>
+<ul>
+<li><strong>Central CSS per typeSpec-path / stylePatch-path</strong> (operator’s
+item 1): the remaining stylers-on time (~223 ms) is almost entirely
+real styler DOM work — per-element/per-mark CSS writes in
+<code>UIDocumentTypeSpecStyler.update</code> / <code>UIDocumentStyleStyler.update</code>
+(in the browser additionally style-recalc/layout). With centralized
+styles those styler widgets largely disappear, and the pruning
+machinery then reduces a typeSpec change to near-zero propagation
+work. This is the natural next step.</li>
+<li>The <code>getEntry</code> / <code>getExternalName</code> name-resolution per wrapper call
+(~37 ms in the final profile) could be cached per wrapper, as
+dependency mappings are stable between provisionings.</li>
+<li>Verify numbers in a real browser when touching the DOM-write side
+(jsdom understates it).</li>
+</ul>
+<h2><a id="reproduction--regression-check" class="heading_anchor" href="#reproduction--regression-check" aria-hidden="true">#</a>Reproduction / regression check</h2>
+<p>The harness doubles as a regression benchmark (skips gracefully when
+<code>downloads/typography.html</code> is missing). It contains three tests:</p>
+<ol>
+<li><code>benchmarks origin typeSpec background-color updates</code> — five
+scenarios (stylers on/off, with/without caches/interning), medians
+over 5 updates plus per-method instrumentation.</li>
+<li><code>renders and propagates updates correctly</code> — guards the context
+<code>pathOfTypes</code> change: structure complete, update propagates.</li>
+<li><code>CPU-profiles a single stylers-enabled update</code> — opt-in via
+<code>VIEWER_PERF_PROFILE=1</code>.</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

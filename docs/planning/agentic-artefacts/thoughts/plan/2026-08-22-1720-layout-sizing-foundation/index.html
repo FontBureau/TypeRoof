@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="layout-sizing-foundation--implementation-plan" class="heading_anchor" href="#layout-sizing-foundation--implementation-plan" aria-hidden="true">#</a>Layout Sizing Foundation — Implementation Plan</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Establish the foundation for reactive, environment-aware layout sizing: (0) a per-shell <code>ClassesAndStylesManager</code> owning <code>.typeroof-layout</code> styling, (1) an <code>environment@</code> protocol handler publishing screen/viewport/layout/dpr facts, (2) length-model <code>{value, unit}</code> model fields on type-stage–derived layouts, (3) type-stage pane consumers resolving specs against <code>environment@layout</code>, and (4) absorbing <code>StageDOMNode</code>’s inline host writes into the manager. Each phase is a small, reviewable change ending in a commit-stop (proposed message + file list; proceed only after user confirms with OKOK).</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li><code>.typeroof-layout</code> is static shell DOM (<code>lib/js/zones.typeroof.jsx:10</code>); styling today = global shell CSS + one inline writer (<code>stage.mjs:82</code>, overflow in letterbox zoom) + one global hack rule (<code>type-stage.css:201-209</code> display:flex for compare mode, with a TODO asking for exactly this manager).</li>
+<li>No environment size distribution exists; videoproof actors read <code>widgetBus.wrapper.host.offsetWidth/offsetHeight</code> directly (<code>videoproof-contextual/index.typeroof.jsx:281-289</code> — with <code>FIXME: got to do this via the properties system!</code>, <code>videoproof-array.mjs:1356</code>); <code>StageDOMNode</code> owns a private ResizeObserver (<code>stage.mjs:51-56</code>).</li>
+<li>Type-stage has no sizing model: editor/viewer panes size by CSS (<code>fit-content</code>, <code>min-height:100%</code>, <code>type-stage.css:5-11, 211-248</code>); compare mode = two widgets in zone <code>layout</code> split by global flex.</li>
+<li>Protocol handler machinery exists and fits: <code>SimpleProtocolHandler</code> (<code>basics/component.mjs:169-239</code>), installed per controller root (precedent <code>animationProperties@</code>, <code>motion-stage.mjs:2603-2605</code>), consumers declare <code>`name@identifier`</code> deps, updates merged into <code>changedMap</code> by <code>getChangedMapFromCompareResult</code> (<code>component.mjs:609-660</code>).</li>
+<li>WidgetBus-id discovery precedent: <code>IDRegistry</code> registered <code>{id: 'dom-global-id-registry'}</code> in all three shells (<code>main-ui.mjs:93</code>, <code>main-player.mjs:245</code>, <code>wikipedia/main.mjs:195</code>), looked up via <code>widgetBus.getWidgetById(...)</code> (<code>dom-helpers.mjs:23</code>).</li>
+<li>Tests: vitest (<code>npm run test</code>), jsdom via <code>// @vitest-environment jsdom</code> (see <code>lib/js/tests/type-stage-toggles/index.test.mjs</code> booting the real TypeStageController via <code>harness.mjs</code>), unit tests co-located (<code>*.test.mjs</code> next to sources).</li>
+</ul>
+<h3><a id="key-discoveries-decisions-from-research-conversation--authoritative" class="heading_anchor" href="#key-discoveries-decisions-from-research-conversation--authoritative" aria-hidden="true">#</a>Key Discoveries (decisions from research conversation — authoritative)</h3>
+<ul>
+<li>Environment values are <strong>not</strong> in the document model; distributed via <code>environment@</code> protocol handler. Keys: <code>screen</code>, <code>viewport</code>, <code>layout</code> (each <code>{width, height}</code>), <code>dpr</code> (number). All sizes css-px (= the browser’s CSS px, device-pixels ÷ dpr; no physical anchoring). <code>dpr</code> is a stub for later use.</li>
+<li><code>%</code> bases resolve against the <strong>full host</strong> / viewport / screen — never per-pane; compare mode sums to 200% → host scrolls.</li>
+<li>Type-stage boundness rule: width always bound; height may be unset (grow); both unset forbidden; coherence fn written for the general invariant (future: width unbound iff height bound).</li>
+<li>Migration default: width = 100% layout, height = empty.</li>
+<li>Motion-stage stays px-fixed; zoom is a separate display axis; videoproof = host-fill semantics (later: 100% specs).</li>
+<li>Document-internal properties (columnWidth etc.) don’t touch environment sizes now; <code>environment@</code> must never encode the comparison layout (no per-pane keys).</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>No responsive motion-stage (px-fixed stays; zoom unchanged except host-style ownership in Phase 4).</li>
+<li>No migration of videoproof actors / StageDOMNode ResizeObserver to <code>environment@</code> (later plan; contextual single-row fix falls out of it).</li>
+<li>No safe-area keys, no media-query facts beyond dpr, no per-pane environment identifiers.</li>
+<li>No <code>MultipleLayoutsController</code> (chained layouts); <code>ClassesAndStylesManager</code> is designed for it (takes element as arg) but not built.</li>
+<li>No columnWidth or other document-internal relative units.</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Small phases, each independently committable and behavior-safe until its consumers land. Phases 0–1 are pure infrastructure (no behavior change), Phase 2 model-only, Phase 3 first visible change (type-stage panes sized by spec — visually near-identical due to migration default), Phase 4 ownership cleanup, Phase 5 small gap fix.</p>
+<h2><a id="phase-0-classesandstylesmanager" class="heading_anchor" href="#phase-0-classesandstylesmanager" aria-hidden="true">#</a>Phase 0: <code>ClassesAndStylesManager</code></h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p>A <code>_BaseComponent</code> loaded as a regular shell widget, owning classes/inline-styles of a given DOM element, discoverable by widgetBus-id. Absorbs the global flex hack.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-new-component" class="heading_anchor" href="#1-new-component" aria-hidden="true">#</a>1. New component</h4>
+<p><strong>File</strong>: <code>lib/js/components/classes-and-styles-manager.mjs</code> (new)
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>class ClassesAndStylesManager extends _BaseComponent</code>, constructor <code>(widgetBus, targetElement)</code>.</li>
+<li>API: <code>setClass/removeClass</code> (token set), <code>setStyleProperty/removeStyleProperty</code> (inline styles), <code>reset()</code> (removes everything it set — track own mutations internally; reset restores pristine state).</li>
+<li>No model dependencies; <code>UPDATE_STRATEGY_NO_UPDATE</code>-style (mutations via API only).</li>
+<li>Destroy: auto-reset (defensive; the contract is user-resets-on-destroy, but a destroyed manager must not leave residue).</li>
+</ul>
+<h4><a id="2-register-in-all-three-shells" class="heading_anchor" href="#2-register-in-all-three-shells" aria-hidden="true">#</a>2. Register in all three shells</h4>
+<p><strong>Files</strong>: <code>lib/js/components/main-ui.mjs</code>, <code>lib/js/main-player.mjs</code>, <code>lib/js/wikipedia/main.mjs</code>
+<strong>Changes</strong>: widget entry <code>[{id: 'classes-and-styles-manager'}, [], ClassesAndStylesManager, zones.get('layout')]</code> next to the <code>IDRegistry</code> registration.</p>
+<h4><a id="3-type-stage-adopts-it-scope-the-css" class="heading_anchor" href="#3-type-stage-adopts-it-scope-the-css" aria-hidden="true">#</a>3. Type-stage adopts it; scope the CSS</h4>
+<p><strong>Files</strong>: <code>lib/js/components/layouts/type-stage/index.typeroof.jsx</code>, <code>lib/css/shell/type-stage.css</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li>TypeStageController constructor: look up manager via <code>widgetBus.getWidgetById('classes-and-styles-manager', ...)</code>, <code>setClass('typeroof-layout--type-stage')</code>; destroy path calls <code>manager.reset()</code> (only its own use exists; reset is full).</li>
+<li><code>type-stage.css:201-209</code> → <code>.typeroof-main &gt; .typeroof-layout.typeroof-layout--type-stage { display:flex; }</code>; delete the TODO comment (now done).</li>
+</ul>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-verification" class="heading_anchor" href="#automated-verification" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[ ] <code>npm run lint</code>, <code>npm run typecheck</code>, <code>npm run test</code> pass</li>
+<li>[ ] Unit test (new, <code>classes-and-styles-manager.test.mjs</code>, jsdom): behavior — set classes/styles, reset restores pristine element (no <code>class</code>/<code>style</code> residue); double-reset idempotent</li>
+</ul>
+<h4><a id="manual-verification" class="heading_anchor" href="#manual-verification" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[ ] Editor shell: type-stage compare mode still shows editor|viewer side by side; motion-stage/videoproof/ramp unchanged</li>
+</ul>
+<p><strong>Commit stop</strong>: propose message (e.g. <code>Add ClassesAndStylesManager; scope type-stage layout flex rule</code>) + file list; wait for OKOK.</p>
+<hr>
+<h2><a id="phase-1-environment-protocol-handler--provider" class="heading_anchor" href="#phase-1-environment-protocol-handler--provider" aria-hidden="true">#</a>Phase 1: <code>environment@</code> protocol handler + provider</h2>
+<h3><a id="overview-2" class="heading_anchor" href="#overview-2" aria-hidden="true">#</a>Overview</h3>
+<p>Per-shell protocol handler + provider widget publishing <code>screen</code>/<code>viewport</code>/<code>layout</code>/<code>dpr</code> with rAF-burst-batched updates. No consumers yet.</p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-provider-component" class="heading_anchor" href="#1-provider-component" aria-hidden="true">#</a>1. Provider component</h4>
+<p><strong>File</strong>: <code>lib/js/components/environment-provider.mjs</code> (new)
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>class EnvironmentProvider extends _BaseComponent</code>, constructor <code>(widgetBus, layoutElement)</code>.</li>
+<li>On create: <code>SimpleProtocolHandler</code> registration of current values for <code>screen</code> (<code>window.screen.width/height</code>), <code>viewport</code> (<code>innerWidth/innerHeight</code>), <code>layout</code> (from ResizeObserver content-box), <code>dpr</code> (<code>devicePixelRatio</code>).</li>
+<li>Observers: ResizeObserver on layoutElement; <code>resize</code>+<code>orientationchange</code> listeners; dpr via <code>matchMedia('(resolution: Xdppx)')</code> re-subscription loop (query from current dpr; on fire: read new, mark dirty, re-subscribe).</li>
+<li>Event handlers only set dirty flags + schedule <strong>one rAF flush</strong>; flush reads all four fresh, diffs, calls handler <code>register/update</code> + <code>setUpdated</code> for changed keys.</li>
+<li>Flush triggers the app update cycle via the lightest root hook (pin during implementation: <code>widgetBus.rootWidgetBus</code>/shell <code>updateState</code> area, <code>shell.mjs:1078-1084</code>).</li>
+<li>Destroy: disconnect observer, remove listeners, cancel rAF, unregister.</li>
+</ul>
+<h4><a id="2-install-in-shells" class="heading_anchor" href="#2-install-in-shells" aria-hidden="true">#</a>2. Install in shells</h4>
+<p><strong>Files</strong>: <code>lib/js/components/main-ui.mjs</code>, <code>lib/js/main-player.mjs</code>, <code>lib/js/wikipedia/main.mjs</code>
+<strong>Changes</strong>: <code>setProtocolHandlerImplementation(...SimpleProtocolHandler.create('environment@'))</code> at controller root; widget entry <code>[{id: 'environment-provider'}, [], EnvironmentProvider, zones.get('layout')]</code>; reset the handler’s updated-log at the start of each update cycle (precedent <code>motion-stage.mjs:2703-2710</code>).</p>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-verification-1" class="heading_anchor" href="#automated-verification-1" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[ ] <code>npm run lint</code>, <code>npm run typecheck</code>, <code>npm run test</code> pass</li>
+<li>[ ] Unit test (jsdom): initial values published on registration; simulated layout element resize → flush → updated-set contains <code>layout</code> with new values; dpr event path; destroy leaves no listeners</li>
+</ul>
+<h4><a id="manual-verification-1" class="heading_anchor" href="#manual-verification-1" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[ ] Editor + player + wikipedia shells boot without errors (no consumers yet — purely additive)</li>
+</ul>
+<p><strong>Commit stop</strong>: propose message (e.g. <code>Add environment@ protocol handler and EnvironmentProvider</code>) + file list; wait for OKOK.</p>
+<hr>
+<h2><a id="phase-2-length-model--type-stage-fields" class="heading_anchor" href="#phase-2-length-model--type-stage-fields" aria-hidden="true">#</a>Phase 2: Length model + type-stage fields</h2>
+<h3><a id="overview-3" class="heading_anchor" href="#overview-3" aria-hidden="true">#</a>Overview</h3>
+<p><code>{value, unit}</code> length models (CSS <code>&lt;length-percentage&gt;</code>); <code>width</code>/<code>height</code> fields on <code>createTypeStageModelVariantWithDefaults</code> (+ Ramp mirror); coherence enforcing boundness; migration default width=100% layout, height=empty.</p>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-length-models" class="heading_anchor" href="#1-length-models" aria-hidden="true">#</a>1. Length models</h4>
+<p><strong>File</strong>: <code>lib/js/components/length-model.mjs</code> (new) — or into <code>type-spec-models.mjs</code> if it fits there better (decide at implementation; check for existing types first per coding style)
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>LengthUnitModel = _AbstractEnumModel.createClass('LengthUnitModel', ['px','pt','cm','mm','in','percent-screen','percent-viewport','percent-layout'], 'percent-layout')</code> (naming pinned at implementation; flat enum per decision).</li>
+<li><code>LengthModel = _AbstractStructModel.createClass(...)</code> with <code>['value', _AbstractNumberModel...]</code>, <code>['unit', LengthUnitModel]</code> (both mandatory).</li>
+<li>Unset semantics: unit empty = unset (both fields OrEmpty; inner coherence keeps value in sync), because _AbstractSimpleOrEmptyModel only wraps scalars, not structs.</li>
+</ul>
+<h4><a id="2-fields--coherence--defaults" class="heading_anchor" href="#2-fields--coherence--defaults" aria-hidden="true">#</a>2. Fields + coherence + defaults</h4>
+<p><strong>Files</strong>: <code>lib/js/components/layouts/type-stage/index.typeroof.jsx</code>, <code>lib/js/components/layouts/ramp/index.typeroof.jsx</code>, <code>lib/js/components/layouts/type-stage/defaults.mjs</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>['width', LengthModel]</code>, <code>['height', LengthModel]</code> in the factory (before the coherence fn arg).</li>
+<li>Coherence fn: enforce “width bound; height optional; both-unset forbidden” — written against the general invariant “≥1 length bound” (future rule admissible); apply migration default width <code>{value:100, unit:'percent-layout'}</code>, height empty when legacy docs lack the fields.</li>
+<li>Ramp mirrors the two fields.</li>
+</ul>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-verification-2" class="heading_anchor" href="#automated-verification-2" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[ ] <code>npm run lint</code>, <code>npm run typecheck</code>, <code>npm run test</code> pass</li>
+<li>[ ] Unit test (behavior of the model): legacy doc (no fields) metamorphoses to width=100%layout/height=empty; width-empty+height-set valid; both-empty corrected by coherence</li>
+</ul>
+<h4><a id="manual-verification-2" class="heading_anchor" href="#manual-verification-2" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[ ] Editor boots, type-stage documents load unchanged visually (no consumers yet — defaults only)</li>
+</ul>
+<p><strong>Commit stop</strong>: propose message (e.g. <code>Add length model and type-stage width/height fields</code>) + file list; wait for OKOK.</p>
+<hr>
+<h2><a id="phase-3-type-stage-panes-consume-spec--environmentlayout" class="heading_anchor" href="#phase-3-type-stage-panes-consume-spec--environmentlayout" aria-hidden="true">#</a>Phase 3: Type-stage panes consume spec + <code>environment@layout</code></h2>
+<h3><a id="overview-4" class="heading_anchor" href="#overview-4" aria-hidden="true">#</a>Overview</h3>
+<p>Shared <code>TypeStagePaneStyler</code> resolves width spec against <code>environment@layout</code> per pane (editor + viewer); height-empty via CSS <code>min-height:100%</code> (JS fallback if insufficient); visible overflow when height set.</p>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-resolution-util" class="heading_anchor" href="#1-resolution-util" aria-hidden="true">#</a>1. Resolution util</h4>
+<p><strong>File</strong>: <code>lib/js/components/length-model.mjs</code> (same module as Phase 2)
+<strong>Changes</strong>: <code>resolveLength(spec, environmentValues) → css-px number | null</code>; absolute units via CSS fixed ratios (96 px/in); <code>%</code>-bases read the named box; empty → null.</p>
+<h4><a id="2-pane-styler" class="heading_anchor" href="#2-pane-styler" aria-hidden="true">#</a>2. Pane styler</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/</code> (new <code>pane-styler</code> module or extend existing styler file — pin at implementation)
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>TypeStagePaneStyler</code> (<code>_BaseComponent</code>), deps <code>['width','height','environment@layout']</code>, constructor arg = pane element.</li>
+<li>update: width → <code>pane.style.width = ${resolved}px</code>; height set → <code>style.height</code>; height empty → clear inline height (CSS <code>min-height:100%</code> on panes governs).</li>
+<li>Instantiated for editor host (<code>.ui_prosemirror_host</code>) and viewer root (<code>article.typeroof-document</code>) in <code>index.typeroof.jsx</code> widgets (replacing/augmenting current styling path; <code>ProseMirrorGeneralDocumentStyler</code> keeps background duties until Phase 5 merges).</li>
+</ul>
+<h4><a id="3-css-adjustments" class="heading_anchor" href="#3-css-adjustments" aria-hidden="true">#</a>3. CSS adjustments</h4>
+<p><strong>File</strong>: <code>lib/css/shell/type-stage.css</code>
+<strong>Changes</strong>: remove <code>width: fit-content</code> from <code>.typeroof-document</code> (superseded by inline width); keep <code>min-height:100%</code> rules; keep the <code>display:table</code> hack. Verify editor pane behavior with bounded width.</p>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-verification-3" class="heading_anchor" href="#automated-verification-3" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[ ] <code>npm run lint</code>, <code>npm run typecheck</code>, <code>npm run test</code> pass</li>
+<li>[ ] Unit test: <code>resolveLength</code> unit matrix (each unit, % against each box, empty)</li>
+<li>[ ] Harness behavior test (extend <code>lib/js/tests/</code> style): boot TypeStage with environment provider stubbed at <code>{layout:{width:800,height:600}}</code> → editor host style width 800px; set height <code>{50,%layout}</code> → height 400px; change stub to 400px → re-resolved</li>
+</ul>
+<h4><a id="manual-verification-3" class="heading_anchor" href="#manual-verification-3" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[ ] Editor: type-stage editor/viewer/compare look correct; compare = both panes full-host wide → horizontal scroll; window resize re-flows panes</li>
+<li>[ ] Player + wikipedia: type-stage documents render bounded as expected</li>
+</ul>
+<p><strong>Commit stop</strong>: propose message (e.g. <code>Type-stage panes resolve width/height specs against environment@layout</code>) + file list; wait for OKOK.</p>
+<hr>
+<h2><a id="phase-4-absorb-stagedomnode-host-style-writes-into-the-manager" class="heading_anchor" href="#phase-4-absorb-stagedomnode-host-style-writes-into-the-manager" aria-hidden="true">#</a>Phase 4: Absorb <code>StageDOMNode</code> host-style writes into the manager</h2>
+<h3><a id="overview-5" class="heading_anchor" href="#overview-5" aria-hidden="true">#</a>Overview</h3>
+<p><code>stage.mjs:82</code> inline <code>overflow:hidden</code> on the host goes through <code>ClassesAndStylesManager</code> (widgetBus-id lookup); cleanup via reset on destroy/zoom-switch. Resolve D4 (player clip via static class vs dynamic) during implementation by visual check.</p>
+<h3><a id="changes-required-4" class="heading_anchor" href="#changes-required-4" aria-hidden="true">#</a>Changes Required:</h3>
+<p><strong>Files</strong>: <code>lib/js/components/actors/stage.mjs</code>, possibly <code>lib/css/shell/main.css</code>/<code>player.css</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>StageDOMNode</code> looks up <code>'classes-and-styles-manager'</code>; <code>_resizeFitToHost</code> → <code>manager.setStyleProperty('overflow','hidden')</code>; <code>_stopResizeFitToHost</code> → manager reset of its contribution (its only use → full reset acceptable).</li>
+<li>If D4 resolves to static: <code>.typeroof-layout--motion-stage { overflow:hidden }</code> in player.css instead, dynamic write removed (decision recorded at implementation).</li>
+<li>The private ResizeObserver stays (motion-stage px-fixed per decision; environment@ migration is a later plan).</li>
+</ul>
+<h3><a id="success-criteria-4" class="heading_anchor" href="#success-criteria-4" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-verification-4" class="heading_anchor" href="#automated-verification-4" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[ ] <code>npm run lint</code>, <code>npm run typecheck</code>, <code>npm run test</code> pass</li>
+<li>[ ] Unit/harness test: automatic zoom → host overflow hidden via manager; zoom switch away → pristine; layout destroy → no residue</li>
+</ul>
+<h4><a id="manual-verification-4" class="heading_anchor" href="#manual-verification-4" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[ ] Player: <code>jump-cloud-tree.json</code> demo still letterbox-fits, no content outside stage, no scrollbars</li>
+<li>[ ] Editor motion-stage: automatic zoom behaves as before</li>
+</ul>
+<p><strong>Commit stop</strong>: propose message (e.g. <code>Route stage host overflow through ClassesAndStylesManager</code>) + file list; wait for OKOK.</p>
+<hr>
+<h2><a id="phase-5-viewer-background-via-pane-styler" class="heading_anchor" href="#phase-5-viewer-background-via-pane-styler" aria-hidden="true">#</a>Phase 5: Viewer background via pane styler</h2>
+<h3><a id="overview-6" class="heading_anchor" href="#overview-6" aria-hidden="true">#</a>Overview</h3>
+<p><code>TypeStagePaneStyler</code> also applies <code>${COLOR}backgroundColor</code> → <code>background-color</code> on the pane root (mirroring <code>ProseMirrorGeneralDocumentStyler</code>), closing the viewer gap.</p>
+<h3><a id="changes-required-5" class="heading_anchor" href="#changes-required-5" aria-hidden="true">#</a>Changes Required:</h3>
+<p><strong>Files</strong>: <code>lib/js/components/layouts/type-stage/</code> pane-styler module from Phase 3, <code>viewer.typeroof.jsx</code>
+<strong>Changes</strong>: add backgroundColor mapping (pattern from <code>prosemirror.typeroof.jsx:20-53</code>); wire into viewer pane. Editor pane may adopt the shared styler for background too (DRY), retiring <code>ProseMirrorGeneralDocumentStyler</code> usage if cleanly replaceable.</p>
+<h3><a id="success-criteria-5" class="heading_anchor" href="#success-criteria-5" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-verification-5" class="heading_anchor" href="#automated-verification-5" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[ ] <code>npm run lint</code>, <code>npm run typecheck</code>, <code>npm run test</code> pass</li>
+<li>[ ] Harness behavior test: viewer pane root gets background-color from document backgroundColor; empty → none</li>
+</ul>
+<h4><a id="manual-verification-5" class="heading_anchor" href="#manual-verification-5" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[ ] Viewer + compare mode: document background covers the pane incl. grown height; editor unchanged</li>
+</ul>
+<p><strong>Commit stop</strong>: propose message + file list; wait for OKOK.</p>
+<hr>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<ul>
+<li><strong>Unit tests</strong> (co-located <code>*.test.mjs</code>, jsdom where DOM needed): ClassesAndStylesManager roundtrip; EnvironmentProvider publication/batching; resolveLength matrix; coherence/boundness.</li>
+<li><strong>Harness behavior tests</strong> (<code>lib/js/tests/</code>, real controller boots per <code>type-stage-toggles</code> precedent): Phase 3 pane resolution end-to-end; Phase 5 background.</li>
+<li>Tests assert <strong>behavior/observable DOM state</strong>, not internal functions.</li>
+</ul>
+<h2><a id="follow-up-plans-recorded-not-this-plan" class="heading_anchor" href="#follow-up-plans-recorded-not-this-plan" aria-hidden="true">#</a>Follow-up Plans (recorded, not this plan)</h2>
+<ul>
+<li>Migrate videoproof actors + StageDOMNode ResizeObserver to <code>environment@</code> (fixes contextual single-row via degenerate-measurement guard).</li>
+<li><code>MultipleLayoutsController</code> (chained layouts; per-layout containers each with own ClassesAndStylesManager).</li>
+<li>Safe-area/viewport-variant keys when needed; dpr consumers; document-internal relative units (columnWidth).</li>
+</ul>
+<hr>
+<h2><a id="outcome-implemented-2026-08-2223" class="heading_anchor" href="#outcome-implemented-2026-08-2223" aria-hidden="true">#</a>Outcome (implemented 2026-08-22/23)</h2>
+<p>All phases landed on branch <code>demo/wikipedia</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Commit</th>
+<th>Phase</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>169eebc4</code></td>
+<td>0: ClassesAndStylesManager</td>
+<td>widgetBus-id lookup, reset-on-destroy contract; type-stage flex rule scoped</td>
+</tr>
+<tr>
+<td><code>01a9478b</code></td>
+<td>1: environment@ + EnvironmentProvider</td>
+<td>keys <code>screen</code>/<code>viewport</code>/<code>layout</code>/<code>dpr</code>, css-px, rAF-batched flush, dpr matchMedia loop; all three shells</td>
+</tr>
+<tr>
+<td><code>28f814a8</code></td>
+<td>2: LengthModel + fields</td>
+<td>renamed from DimensionSpec (decision in research doc); coherence via <code>ensureDimensionBoundnessCoherenceFn</code> shared type-stage/ramp</td>
+</tr>
+<tr>
+<td><code>b8c3bded</code></td>
+<td>3: TypeStagePaneStyler</td>
+<td>environment@ created with <code>treatAdressAsRootPath:false</code>; registered on the shell-owned root <code>protocolHandlers</code> map (root controller has no ComponentWrapper)</td>
+</tr>
+<tr>
+<td><code>bf5c403d</code></td>
+<td>4: StageDOMNode overflow via manager</td>
+<td>player clip is static CSS (<code>.wrapper.player .typeroof-layout--motion-stage</code>), editor dynamic via manager</td>
+</tr>
+<tr>
+<td><code>db054d65</code></td>
+<td>5: viewer background + ramp unified</td>
+<td>ProseMirrorGeneralDocumentStyler removed, both registrations superseded</td>
+</tr>
+<tr>
+<td><code>311cb9a5</code></td>
+<td>follow-up: flex fixes</td>
+<td><code>flex-shrink: 0</code> (compare widths) + <code>align-items: flex-start</code> (scroll-edge background; stretched flex items clamp to container height)</td>
+</tr>
+<tr>
+<td><code>7cabe635</code></td>
+<td>videoproof + dispatch machinery</td>
+<td>array/contextual measure via <code>environment@layout</code> (kills the feedback loop: taller host → more rows → smaller cells); <code>.videoproof_layout</code> min-height + <code>:has(contextual)</code> height:100%; shell <code>_replaceState</code> falls through to dispatch on protocol-only updates (<code>hasUpdated()</code>); updated-log resets <em>after</em> the update pass (it is the relevance signal); contextual re-layouts on <code>environment@layout</code> (was gated behind animation deps)</td>
+</tr>
+</tbody>
+</table>
+<p>Notable deviations/discoveries vs the plan:</p>
+<ul>
+<li><strong>environment@ is path-less</strong>: <code>treatAdressAsRootPath:false</code> — keys are literal identifiers, not model paths.</li>
+<li><strong>Root protocol installation</strong>: on the shell-owned <code>widgetBus.protocolHandlers</code> map (<code>shell.mjs</code> passes <code>new Map()</code>); <code>Object.create(widgetBus)</code> inheritance carries it to all ComponentWrappers.</li>
+<li><strong>Protocol-only dispatch required two shell changes</strong>: the identical-state early return in <code>_replaceState</code> <em>and</em> the EQUALS-only gate; plus reset-order (after the pass, not before).</li>
+<li><strong>Struct-typed coherence fns</strong>: receive the struct instances; mutate via <code>field.get(&quot;unit&quot;).value = ...</code> (works; the AxesMath/StageZoom precedents mutate scalar fields the same way).</li>
+<li>First real <code>environment@</code> consumers: type-stage pane styler, videoproof array + contextual actors.</li>
+</ul>
+<p>Still open (deferred): StageDOMNode’s own ResizeObserver → <code>environment@</code> migration; MultipleLayoutsController; safe-area keys; columnWidth relatives; the wikipedia shell’s <code>.typeroof-layout</code> pinning (100vw/100vh) review.</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

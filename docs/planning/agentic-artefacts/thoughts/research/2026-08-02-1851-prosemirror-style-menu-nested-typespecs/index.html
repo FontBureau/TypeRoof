@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-uiprosemirrormenustyles-shows-no-style-link-buttons-with-nested-type-specs" class="heading_anchor" href="#research-uiprosemirrormenustyles-shows-no-style-link-buttons-with-nested-type-specs" aria-hidden="true">#</a>Research: UIProseMirrorMenuStyles shows no style-link buttons with nested type-specs</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>The style chooser <code>UIProseMirrorMenuStyles</code> in <code>lib/js/components/prosemirror/type-spec.typeroof.jsx</code>
+(loaded via <code>UIProseMirrorMenu</code>) no longer shows style-link buttons when type-specs are nested.
+Style links became inheritable in the 2026-07-30/31 sprints and are now read from the typeSpecnion
+(<code>typeSpecProperties@...</code>); the menu was not updated in that sprint. Research and plans for the
+breaking updates live in <code>docs/planning/agentic-artefacts/thoughts/</code>.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p><code>UIProseMirrorMenuStyles.updateView</code> is the <strong>only remaining consumer that reads the raw local
+model field</strong> <code>typeSpec.get(&quot;intentStyleLinks&quot;)</code> (<code>type-spec.typeroof.jsx:1869</code>). Every other
+consumer was migrated in the inheritance/two-map sprints to read the <strong>effective (inherited) set</strong>
+via <code>getStyleLinks(typeSpecLiveProperties.typeSpecnion.getProperties(), prefix)</code>
+(<code>registered-properties-definitions.mjs:42-48</code>), reached through the <code>typeSpecProperties@&lt;path&gt;</code>
+protocol handler.</p>
+<p>Since commit <code>96aa379d</code> (“[type-stage-initial-state] inherit style-links from origin type-spec,
+put h1 to h3 and p1 to p2 into a hierarchy”), the shipped initial state keeps the style links on
+the <strong>root</strong> type-spec and nests h1–h3/p1–p2 as children <strong>without local <code>intentStyleLinks</code></strong>.
+When the cursor is inside such a nested node, <code>getTypeSpecsMethod</code> correctly resolves the nested
+typeSpec (<code>typeSpecProperties@/activeState/typeSpec/children/{key}</code>), but that typeSpec’s local
+<code>intentStyleLinks</code> map is empty → <code>allStylesSuperSet</code> is empty → no buttons are rendered.</p>
+<p>None of the four planning/research documents of the inheritance and two-map sprints lists
+<code>UIProseMirrorMenuStyles</code> (or any ProseMirror <em>menu</em>) as a call-site to update — the inventory
+covered only the styler/subscription path. The menu is a gap in those breaking-update lists.</p>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-the-style-menu-and-its-data-flow" class="heading_anchor" href="#1-the-style-menu-and-its-data-flow" aria-hidden="true">#</a>1. The style menu and its data flow</h3>
+<ul>
+<li><code>UIProseMirrorMenuStyles</code> — <code>lib/js/components/prosemirror/type-spec.typeroof.jsx:1728</code>.
+<code>updateView(view)</code> (:1852-1943) builds:
+<ul>
+<li><code>typeSpecs</code> = <code>this._getTypeSpecs(state)</code> → a <code>Map&lt;TypeSpecModel, Path&gt;</code>,</li>
+<li>per typeSpec: <code>intentStyleLinks = typeSpec.get(&quot;intentStyleLinks&quot;)</code> (:1869) — <strong>raw local field</strong>,</li>
+<li><code>allStylesSuperSet</code> = union of keys (these become buttons, :1917-1933),</li>
+<li><code>commonSubSet</code> = intersection across typeSpecs (buttons disabled unless in every set, :1928).</li>
+</ul>
+</li>
+<li>Method bindings: <code>_getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod</code>,
+<code>_getTypeSpecs = getTypeSpecsMethod</code> (:1829-1830), imported from
+<code>lib/js/components/prosemirror/integration.typeroof.jsx:51-52</code>.</li>
+<li>Instantiation: <code>UIProseMirrorMenu</code> (:1988-2020) declares the widget with dependencies
+<code>[&quot;typeSpec&quot;, &quot;nodeSpecToTypeSpec&quot;]</code> and constructor args <code>originTypeSpecPath, &quot;Styles:&quot;</code>
+(:2002-2009). It extends <code>_IDPublisherMixin</code> (:1959-1986), which forwards <code>updateView</code>/
+<code>destroyView</code> to the child widgets by ID and caches the initial forward until the first
+<code>_update</code> (lifecycle fix, comment :1965-1967).</li>
+<li>Trigger paths:
+<ul>
+<li>ProseMirror plugin: <code>ProseMirror._menuPlugin()</code> (<code>integration.typeroof.jsx:780-794</code>) →
+<code>ProseMirrorMenuView</code> (:424-436) calls <code>updateView(view, prevState)</code> on every PM state update.</li>
+<li>Model changes: <code>UIProseMirrorMenuStyles.update(changedMap)</code> (:1946-1953) re-runs
+<code>updateView</code> when <code>changedMap.has(&quot;typeSpec&quot;)</code> (comment notes typeSpecs are re-read from
+<code>editorView.state</code>, not from the changed entry).</li>
+</ul>
+</li>
+<li>Menu widget creation: <code>lib/js/components/layouts/type-stage/prosemirror.typeroof.jsx:90-97</code>
+(“IMPORTANT: must be before ProseMirror”).</li>
+</ul>
+<h3><a id="2-how-typespecs-are-resolved--typespecproperties-" class="heading_anchor" href="#2-how-typespecs-are-resolved--typespecproperties-" aria-hidden="true">#</a>2. How typeSpecs are resolved (<code>typeSpecProperties@</code>)</h3>
+<ul>
+<li><code>getTypeSpecsMethod(state)</code> — <code>integration.typeroof.jsx:155-177</code>: for an empty non-cursor
+selection returns an empty Map; otherwise <code>getPathsOfTypes</code> (:56-84, on <code>getPathOfTypes</code>
+:27-47) walks <code>doc.nodesBetween</code> over the selection ranges (skipping <code>&quot;text&quot;</code>, not entering
+inline atoms) and resolves each path-of-types via
+<code>this._getTypeSpecPropertiesId(pathOfTypes, /*asPath*/ true)</code>, then <code>this.getEntry(typeSpecPath)</code>.</li>
+<li><code>getTypeSpecPropertiesIdMethod</code> — <code>integration.typeroof.jsx:130-153</code>: takes the innermost PM
+type name, looks up its relative <code>link</code> in the <code>nodeSpecToTypeSpec</code> map (<code>&quot;&quot;</code> if unmapped),
+fetches the <code>typeSpecProperties@</code> protocol-handler implementation, delegates to
+<code>_getBestTypeSpecPropertiesId</code> (:86-128) with <code>this._originTypeSpecPath</code>.</li>
+<li><code>_getBestTypeSpecPropertiesId</code> (:86-128): builds <code>testPath</code> from the origin path + link parts
+(inserting <code>children</code> when the link doesn’t start with it), then <strong>walks upward</strong> stripping
+<code>children/{key}</code> pairs (<code>testPath.slice(0, -2)</code>) until
+<code>protocolHandlerImplementation.hasRegistered(&quot;typeSpecProperties@${testPath}&quot;)</code> hits; fallback
+is the origin path. So nested links resolve to the deepest <em>registered</em> typeSpec on the path.</li>
+<li>Handler registration: <code>SimpleProtocolHandler.create(&quot;typeSpecProperties@&quot;)</code> at
+<code>layouts/type-stage/index.typeroof.jsx:205-207</code> (ramp: <code>layouts/ramp/index.typeroof.jsx:273-275</code>);
+<code>originTypeSpecPath = widgetBus.rootPath.append(&quot;.&quot;, &quot;typeSpec&quot;)</code> (:201-204).
+<code>TypeSpecMeta</code> (<code>layouts/type-stage/meta.typeroof.jsx:261</code>, settings at :272) registers
+<code>typeSpecProperties@&lt;rootPath&gt;</code> per typeSpec; <code>TypeSpecChildrenMeta</code> (:191-247) recurses into
+<code>children/{key}</code>. Registration mechanics: <code>component.mjs:288-291, 728-746</code>.</li>
+<li>Resulting identifiers: root → <code>typeSpecProperties@/activeState/typeSpec</code>; nested →
+<code>typeSpecProperties@/activeState/typeSpec/children/{key}</code> (deeper pairs for grandchildren).</li>
+</ul>
+<p><strong>Consequence for the menu:</strong> with nested type-specs the resolved typeSpec is the <em>child</em>, whose
+local <code>intentStyleLinks</code> is empty by design (inheritance). The upward walk in
+<code>_getBestTypeSpecPropertiesId</code> only compensates for <em>unregistered</em> paths, not for registered
+children with empty local maps — so the menu sees the child and finds no styles.</p>
+<h3><a id="3-the-inheritance-model-what-the-menu-missed" class="heading_anchor" href="#3-the-inheritance-model-what-the-menu-missed" aria-hidden="true">#</a>3. The inheritance model (what the menu missed)</h3>
+<ul>
+<li>Model: <code>TypeSpecModel</code> fields <code>intentStyleLinks</code> (<code>IntentStyleLinksMapModel</code>) and
+<code>markStyleLinks</code> (<code>MarkStyleLinksMapModel</code>) — <code>lib/js/components/type-spec-models.mjs:431-432</code>.
+Intent edge struct: <code>{stylePatch ('' = NULL-STYLE), mode ('link'|'unlinked'), tag}</code> (:315-325);
+mark edge: <code>{stylePatch, mode}</code> (:326-331). Coherence fn clears <code>stylePatch</code> when
+<code>mode !== 'link'</code> (:307-313). Inheritance semantics documented on the field (:420-427).</li>
+<li>Inheritance flows through the <strong>typeSpecnion properties stream</strong>, not by merging model maps:
+<ul>
+<li><code>styleLinksGen</code> — <code>layouts/type-stage/properties-generators.mjs:357-367</code> (registered in
+<code>TYPE_SPEC_PROPERTIES_GENERATORS</code> :392) yields <code>intentStyleLinks/&lt;key&gt;</code> /
+<code>markStyleLinks/&lt;key&gt;</code> per edge; <code>mode === &quot;unlinked&quot;</code> yields literal <code>null</code> (tombstone).</li>
+<li>Prefixes <code>INTENT_STYLE_LINKS</code> / <code>MARK_STYLE_LINKS</code> —
+<code>registered-properties-definitions.mjs:31-32</code>, deliberately unregistered so they inherit by
+default (comment :26-30).</li>
+<li>Merge: <code>HierarchicalScopeTypeSpecnion</code> (<code>layouts/type-stage/type-specnion.mjs:245</code>) puts
+filtered parent properties under local ones (<code>mapSetProperties</code>, :315-332): whole-edge
+override, local <code>null</code> shadows (tombstone; “the absence is the inheritance”).</li>
+</ul>
+</li>
+<li>The effective-set accessor: <strong><code>getStyleLinks(propertyValuesMap, prefix)</code></strong> —
+<code>registered-properties-definitions.mjs:42-48</code>; doc comment (:37-41) names the intended
+consumers: “StyleLinksMeta, the ProseMirror resolvers and the UI inherited-links list”.</li>
+<li>Existing effective-set consumers (all via <code>typeSpecnion.getProperties()</code>):
+<ul>
+<li>ProseMirror rendering: <code>_getEffectiveStyleLinks(typeSpecProperties, prefix)</code> —
+<code>type-spec.typeroof.jsx:858-876</code>, used by <code>_getStylePatchLinkForMark</code> (:882-899) and
+<code>_resolveIntentTag</code> (:903); <code>_finalizeMarkSubscription</code> picks the map by mark kind.</li>
+<li><code>StyleLinksMeta</code> — <code>layouts/type-stage/meta.typeroof.jsx:122-131,151</code>, instantiated per
+family at :296-310.</li>
+<li>Inherited-links UI: <code>_UIInheritedStyleLinksListBase.update</code> —
+<code>type-spec-fundamentals.mjs:817-846</code> (<code>getStyleLinks</code> at :828, skips keys in
+<code>localStyleLinks</code> at :832).</li>
+</ul>
+</li>
+<li>Serialized form: ordered-map pairs, e.g. <code>lib/assets/type-stage-initial-state.json:97-113</code>.
+Field excluded from type-driven UI sections (<code>type-spec-properties.typeroof.jsx:291</code>) and from
+the defaults map (<code>defaults.mjs:150-151</code>).</li>
+</ul>
+<h3><a id="4-the-planning-documents-and-their-breaking-update-lists" class="heading_anchor" href="#4-the-planning-documents-and-their-breaking-update-lists" aria-hidden="true">#</a>4. The planning documents and their breaking-update lists</h3>
+<p>All four docs form one thread (research → plan, both sprints implemented, checkboxes ticked):</p>
+<ul>
+<li><code>thoughts/research/2026-07-30-0957-style-link-inheritance-typespecnion.md</code> — establishes
+inheritance through the typeSpecnion, three states per edge (linked / NULL-STYLE <code>''</code> /
+absent), whole-edge override, tombstone required.</li>
+<li><code>thoughts/plan/2026-07-30-1422-style-link-inheritance.md</code> — <strong>implemented</strong> (tests 83→88,
+manual criteria confirmed 2026-07-30). Phase 3 explicitly migrated the ProseMirror <em>resolvers</em>
+(<code>type-spec.typeroof.jsx:855-869</code>) to the effective map.</li>
+<li><code>thoughts/research/2026-07-31-2036-two-map-style-links.md</code> — two-map split rationale;
+full consumer inventory (models, properties stream, runtime, UI).</li>
+<li><code>thoughts/plan/2026-07-31-2156-two-map-style-links.md</code> — <strong>implemented</strong> (tests 86→89,
+confirmed 2026-08-01). Breaking updates: model split, resolver contract change (return <code>null</code>),
+3 serialized JSON states renamed <code>&quot;stylePatches&quot;</code> → <code>&quot;intentStyleLinks&quot;</code>.</li>
+</ul>
+<p><strong>Gap:</strong> none of the four documents mentions <code>UIProseMirrorMenuStyles</code>, <code>UIProseMirrorMenuBlocks</code>,
+<code>UIBoldItalicMenu</code>, or any ProseMirror <em>menu</em>. The PM call-sites they list are exclusively the
+styling/subscription layer (<code>_getEffectiveStyleLinks</code>, <code>_getStylePatchLinkForMark</code>,
+<code>_resolveIntentTag</code>, <code>_getStyleLinkPropertiesId</code>, <code>_finalizeMarkSubscription</code>) and the MarkView
+in <code>integration.typeroof.jsx</code>.</p>
+<h3><a id="5-relevant-commits" class="heading_anchor" href="#5-relevant-commits" aria-hidden="true">#</a>5. Relevant commits</h3>
+<ul>
+<li><code>f7fa559b</code> 2026-07-30 [ProseMirror] resolve style-link edges from the effective (inherited) set</li>
+<li><code>26f047cc</code> 2026-07-30 [UI] style-link tombstone via unified select + inherited links list</li>
+<li><code>4574e240</code> 2026-07-31 [type-spec-models] split style-links into intentStyleLinks + markStyleLinks</li>
+<li><code>6d9394b6</code> 2026-07-31 [typeSpecnion] two style-link families in the properties stream + delivery</li>
+<li><code>b48b0f48</code> 2026-07-31 [ProseMirror] resolve intents and schema marks from their own maps</li>
+<li><code>d173784b</code>, <code>c3e91be5</code>, <code>5c068feb</code>, <code>165cefb3</code> — two-map UI + refactors</li>
+<li><code>96aa379d</code> 2026-08-02 [type-stage-initial-state] inherit style-links from origin type-spec —
+<strong>the commit that made the menu gap visible</strong> (h1–h3, p1–p2 nested, links only on the root)</li>
+</ul>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:1728</code> — <code>UIProseMirrorMenuStyles</code></li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:1869</code> — stale raw-field read <code>typeSpec.get(&quot;intentStyleLinks&quot;)</code></li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:1852-1943</code> — <code>updateView</code> (superset/subset button logic)</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:1946-1953</code> — <code>update(changedMap)</code> re-render trigger</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:858-876</code> — <code>_getEffectiveStyleLinks</code> (the migrated pattern)</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:1988-2020</code> — <code>UIProseMirrorMenu</code> + widget config</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:1959-1986</code> — <code>_IDPublisherMixin</code> forwarding</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:130-153</code> — <code>getTypeSpecPropertiesIdMethod</code></li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:86-128</code> — <code>_getBestTypeSpecPropertiesId</code> (upward walk)</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:155-177</code> — <code>getTypeSpecsMethod</code></li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:424-436, 780-794</code> — <code>ProseMirrorMenuView</code>, <code>_menuPlugin</code></li>
+<li><code>lib/js/components/registered-properties-definitions.mjs:31-48</code> — prefixes + <code>getStyleLinks</code> accessor</li>
+<li><code>lib/js/components/layouts/type-stage/properties-generators.mjs:357-367,392</code> — <code>styleLinksGen</code></li>
+<li><code>lib/js/components/layouts/type-stage/type-specnion.mjs:245,297-332</code> — hierarchical merge semantics</li>
+<li><code>lib/js/components/type-spec-models.mjs:315-335,420-432</code> — edge models + <code>TypeSpecModel</code> fields</li>
+<li><code>lib/js/components/layouts/type-stage/meta.typeroof.jsx:191-310</code> — <code>TypeSpecMeta</code>/<code>TypeSpecChildrenMeta</code>/<code>StyleLinksMeta</code></li>
+<li><code>lib/js/components/type-spec-fundamentals.mjs:817-904</code> — inherited-links list UI (effective-set consumer)</li>
+<li><code>lib/js/components/layouts/type-stage/prosemirror.typeroof.jsx:90-97</code> — menu instantiation</li>
+</ul>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ul>
+<li>Should the menu show the <strong>effective</strong> set per resolved typeSpec (union/intersection over
+<code>getStyleLinks(...)</code>), i.e. mirror <code>_getEffectiveStyleLinks</code>, or should selection resolution
+itself change (e.g. also include ancestor typeSpecs)? The <code>commonSubSet</code> disabling logic
+(:1882-1890) interacts with whichever choice is made.</li>
+<li>How should the menu present the three edge states (linked / NULL-STYLE / tombstoned-absent)?
+<code>getStyleLinks</code> already excludes tombstoned keys; NULL-STYLE edges are included (available but
+unstyled) — the menu currently has no notion of “unstyled”.</li>
+<li><code>UIProseMirrorMenuBlocks</code> (:1600s) and <code>UIBoldItalicMenu</code> (:2022-2138) consume the same
+resolution helpers; <code>UIBoldItalicMenu.updateView</code> (:2095-2131) never populates <code>setsOfStyles</code>
+(its <code>commonSubSet</code> stays empty — possibly a second, pre-existing gap worth verifying).</li>
+<li>Ordering: the FIXME at :1905-1908 (stable button order) is still open; the effective map from
+the typeSpecnion has parent-first merge order, which may or may not match the old
+<code>intentStyleLinks</code> order.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

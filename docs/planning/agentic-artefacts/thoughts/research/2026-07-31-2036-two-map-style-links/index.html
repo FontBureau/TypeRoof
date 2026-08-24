@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-two-map-style-links-redesign-intentstylelinks--markstylelinks" class="heading_anchor" href="#research-two-map-style-links-redesign-intentstylelinks--markstylelinks" aria-hidden="true">#</a>Research: Two-Map Style-Links Redesign (intentStyleLinks / markStyleLinks)</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>The single style-link edge map (<code>TypeSpecModel.stylePatches</code>, edge struct
+<code>{stylePatch, mode, type, tag, mark}</code>) proved semantically muddled in
+practice (operator testing 2026-07-30/31):</p>
+<ul>
+<li>Key-based fallback (<code>getStylePatchLinkForMark</code>, type-spec-models.mjs:455)
+styles schema marks via ANY edge whose key matches the mark name,
+regardless of the edge’s <code>type</code> (“Apply As”) — a half-semantic field.</li>
+<li>Explicit mark-link resolution is first-in-order over a parent-first
+merged map → ancestors always win mark-link races; a child cannot
+override an inherited mark link (“the parent wins, no way for the
+closer child to take precedence”).</li>
+<li>An intent linked “as mark” gets styling but not the mark’s tag
+(by design, but surprising).</li>
+</ul>
+<p>Redesign (operator direction 2026-07-31): split into TWO maps.
+<code>intentStyleLinks</code> (rename of <code>stylePatches</code>; key = intent name /
+<code>data-style-name</code>; edge keeps the tag binding) and <code>markStyleLinks</code>
+(NEW; key = schema mark type name; edge <code>{stylePatch, mode}</code>; direct
+key match, no explicit mark link). The <code>type</code> enum and the explicit
+<code>mark</code> link are dropped entirely.</p>
+<p>This research maps the full blast radius and the serialized-state surface.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<ul>
+<li>The current machinery is compact and well-inventoried (Detailed Findings 1):
+one edge struct + one ordered map, one properties-stream family
+(<code>styleLinks/</code>), one runtime meta container, two resolvers, one UI
+family — all within <code>lib/js/components/</code> plus three JSON states.</li>
+<li><strong>No shipped state relies on implicit schema-mark styling</strong> (Detailed
+Findings 2): in <code>wikipedia-demo.json</code> the document styles itself via
+generic-style INTENTS (data-style-name: link ×289, sup ×77, cite ×70,
+italic ×40, bold ×1); schema marks exist in the schema but their
+name-matched edges serve the intents. The implicit name fallback is
+latent, unused behavior in shipped data → the split breaks nothing.</li>
+<li>The split DISSOLVES the precedence bug: with pure key matching per map,
+resolution is <code>map.get(name)</code> and key override in the merged
+typeSpecnion map is already depth-correct (tested whole-edge override).
+The order-sensitive explicit-link loop disappears; no scope-walk
+resolver needed. Variant B (type gating) becomes structural.</li>
+<li>Inheritance machinery (generator, <code>getStyleLinks</code>, <code>StyleLinksMeta</code>,
+tombstone via <code>mode: 'unlinked'</code>) carries over unchanged, just with a
+second properties-stream prefix and handler-id path segment.</li>
+<li>The “multiple link-marks match one mark” question disappears — map keys
+are unique. Precedence contract collapses to: <strong>name match, closest
+scope wins</strong>.</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-current-machinery-inventory-complete-reference-map" class="heading_anchor" href="#1-current-machinery-inventory-complete-reference-map" aria-hidden="true">#</a>1. Current machinery inventory (complete reference map)</h3>
+<p><strong>Models</strong> (<code>type-spec-models.mjs</code>): <code>MarkLinkApplyTypeEnumModel</code> (:285-289,
+<code>generic-tag|mark</code>), <code>StylePatchLinkModeEnumModel</code> (:303-307, <code>link|unlinked</code>),
+<code>StylePatchLinkModel</code> (:317-339, <code>{stylePatch, mode, type, tag, mark}</code> +
+coherence fns :326-338), <code>StylePatchLinksMapModel</code> (:341-344),
+<code>TypeSpecModel.stylePatches</code> field (:436). Resolvers:
+<code>getStylePatchLinkForMark</code> (:448-458, explicit mark-link loop :449-454 +
+key fallback :455), <code>getStylePatchTagForIntent</code> (:463-470, <code>generic-tag</code>-only).
+Tests: <code>type-spec-models.test.mjs</code> (both resolvers covered).</p>
+<p><strong>Properties stream</strong>: <code>STYLE_LINKS = 'styleLinks/'</code> +
+<code>getStyleLinks</code> (registered-properties-definitions.mjs:31,41-46);
+<code>styleLinksGen</code> (properties-generators.mjs:356-363, registered :387;
+yields edge struct or <code>null</code> tombstone); display filter
+(processed-properties.mjs:135). <code>pps-maps.mjs:48,101</code> maps
+<code>stylePatches → &quot;stylePatches/&quot;</code>; <code>defaults.mjs:150</code> skip set.</p>
+<p><strong>Runtime delivery</strong>: <code>StyleLinksMeta</code> (meta.typeroof.jsx:56-146,
+provisions handlers from effective edges, id
+<code>styleLinkProperties@&lt;typeSpecPath&gt;/stylePatches/&lt;key&gt;</code>);
+<code>StyleLinkLiveProperties</code> (live-properties.typeroof.jsx:257-327);
+consumers: viewer.typeroof.jsx:298-306,362 and
+prosemirror/type-spec.typeroof.jsx:852-906 (<code>_getEffectiveStyleLinks</code>,
+<code>_getStylePatchLinkForMark</code>, <code>_resolveIntentTag</code>, id construction);
+protocol handler created in type-stage index.typeroof.jsx:219,519,531
+and ramp index.typeroof.jsx:287,440,452.</p>
+<p><strong>UI</strong> (type-spec-fundamentals.mjs): unified selects with (NULL-STYLE)/
+(UNLINK) specials (<code>StyleLinksMapKeyCreateSelect</code> :210,
+<code>StyleLinksMapKeyChangeSelect</code> :218-250), edge editor
+<code>UIStylePatchLinksValue</code> (:310) incl. type/tag/mark editors (:405-438),
+<code>UIStylePatchesLinksMap</code> (:641) + <code>Collapsible</code> (:840),
+<code>UIInheritedStyleLinksList</code> (:792, reads <code>stylePatch</code>/<code>type</code>/<code>tag</code>/<code>mark</code>
+at :819-823). Registration: type-driven-ui.mjs:339
+<code>[StylePatchLinksMapModel, [UIStylePatchesLinksMapCollapsible, ...]]</code>.
+Cousin widget (forked, for node→typespec links):
+<code>UINodeSpecToTypeSpecLinksMap</code> (:1215+).</p>
+<h3><a id="2-serialized-state-analysis-3-json-states" class="heading_anchor" href="#2-serialized-state-analysis-3-json-states" aria-hidden="true">#</a>2. Serialized-state analysis (3 JSON states)</h3>
+<ul>
+<li><code>lib/assets/type-stage-initial-state.json</code> + <code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code>:
+identical edges (italic, bold, bold italic → patch of same name) on two
+TypeSpecs each; schema marks: strong, link; NO key/mark collisions.
+Legacy shape: edges carry only <code>stylePatch</code> (defaults fill the rest).</li>
+<li><code>lib/assets/wikipedia-demo.json</code> (the wikipedia demo state): 10 edges
+per TypeSpec (italic, bold, bold italic, link, abbr, bdi, cite, code,
+small, sup); schema marks: abbr, bdi, bold, cite, code, italic, link,
+small, sup — 9 key/mark-name COLLISIONS. BUT the document body uses
+generic-style intents with those names (data-style-name counts:
+link 289, sup 77, cite 70, italic 40, bold 1; 962 attr occurrences
+total) and NO schema-mark instances are styled by the edges.
+⇒ The implicit name fallback is latent in shipped data; the split
+breaks nothing. Edges stay intent links; <code>markStyleLinks</code> starts empty.</li>
+</ul>
+<h3><a id="3-schema-marks-at-runtime" class="heading_anchor" href="#3-schema-marks-at-runtime" aria-hidden="true">#</a>3. Schema marks at runtime</h3>
+<ul>
+<li>Metamodel schema: <code>ProseMirrorSchemaModel.marks</code> (MarkSpecModel:
+<code>tag</code>, <code>attrs</code>, …), in the state tree at <code>proseMirrorSchema</code>;
+PM schema ↔ metamodel schema mapped bidirectionally via <code>_nodesCache</code>
+(integration.typeroof.jsx:1288), accessed by <code>getLinked</code> (:776).</li>
+<li>Schema-mark rendering: <code>ProsemirrorMarkView._getTag</code> (:398-410) reads
+the MarkSpec tag (markViews registered dynamically per metamodel mark,
+:1259-1284). Intent tag correction only processes generic-style
+(type-spec.typeroof.jsx:1027).</li>
+<li>Schema marks selectable in UI: no existing select lists schema mark
+names for style-links; the marks UI (semantic-marks sprint) offers
+them for toggling (type-driven-ui/schema UI).</li>
+</ul>
+<h3><a id="4-precedents-for-a-second-map-field--ui" class="heading_anchor" href="#4-precedents-for-a-second-map-field--ui" aria-hidden="true">#</a>4. Precedents for a second map field + UI</h3>
+<ul>
+<li>type-driven-ui registers per model CLASS, not per field: a new
+<code>MarkStyleLinksMapModel</code> class gets its own
+<code>[MarkStyleLinksMapModel, [UI…Collapsible, …]]</code> entry next to :339 —
+no registration conflict with the existing one.</li>
+<li><code>UINodeSpecToTypeSpecLinksMap</code> (type-spec-fundamentals.mjs:1215+) is a
+fork of the links-map UI for a different link kind — evidence the
+widget family tolerates a sibling.</li>
+<li>Ramp layout: style-link related wiring is handler registration only
+(index.typeroof.jsx:287,440,452); the <code>style_patches-manager</code> zone
+(:256-266) manages the patch SOURCE, not links. No link-editing UI in
+ramp → the split is type-stage-only for UI; runtime comes free via
+shared <code>TypeSpecMeta</code>.</li>
+<li>No field-rename migration machinery exists (none needed: states are
+shipped JSON we control; the metamodel fills defaults for missing
+fields, and unknown serialized fields would need checking — the legacy
+<code>stylePatches</code> key in shipped JSON must be RENAMED in the files).</li>
+</ul>
+<h3><a id="5-design-decisions-so-far-operator-2026-07-31" class="heading_anchor" href="#5-design-decisions-so-far-operator-2026-07-31" aria-hidden="true">#</a>5. Design decisions so far (operator, 2026-07-31)</h3>
+<ol>
+<li>Two maps: <code>intentStyleLinks</code> (rename of <code>stylePatches</code>; serialized
+states get edited to the new field name) and <code>markStyleLinks</code> (new).
+Symmetric naming scales (<code>nodeStyleLinks</code> possible later).</li>
+<li><code>markStyleLinks</code> edge: <code>{stylePatch, mode}</code>, key == schema mark type
+name. No explicit mark link, no type enum — dropped entirely from the
+intent edge too; intent edge = <code>{stylePatch, mode, tag}</code> (tag binding
+stays, it is the intent-only feature).</li>
+<li>Resolution: intents → <code>intentStyleLinks.get(data-style-name)</code>;
+schema marks → <code>markStyleLinks.get(mark.type.name)</code>. No
+cross-matching. Precedence contract: name match, closest scope wins
+(map-merge override is already depth-correct).</li>
+<li>Tombstone (<code>mode: 'unlinked'</code>) in both maps; NULL-STYLE stays
+<code>stylePatch: ''</code> in both.</li>
+<li>Properties stream: two prefixes, <code>intentStyleLinks/&lt;key&gt;</code> and
+<code>markStyleLinks/&lt;key&gt;</code> (replaces <code>styleLinks/</code>); handler ids
+<code>styleLinkProperties@&lt;typeSpecPath&gt;/intentStyleLinks/&lt;key&gt;</code> resp.
+<code>.../markStyleLinks/&lt;key&gt;</code> — an intent and a mark may share a key
+with different edges.</li>
+</ol>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/components/type-spec-models.mjs:285-344,436,448-470</code> — edge models, field, resolvers</li>
+<li><code>lib/js/components/registered-properties-definitions.mjs:31,41-46</code> — STYLE_LINKS + getStyleLinks</li>
+<li><code>lib/js/components/layouts/type-stage/properties-generators.mjs:356-363,387</code> — styleLinksGen</li>
+<li><code>lib/js/components/layouts/type-stage/meta.typeroof.jsx:56-146,288</code> — StyleLinksMeta</li>
+<li><code>lib/js/components/layouts/type-stage/live-properties.typeroof.jsx:257-327</code> — StyleLinkLiveProperties</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:852-906,973,1027-1037,1441,1460</code> — PM resolution</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:398-410,776,1259-1288</code> — MarkView tag, getLinked</li>
+<li><code>lib/js/components/type-spec-fundamentals.mjs:210-250,310-438,641-872</code> — selects, edge editor, maps, inherited list</li>
+<li><code>lib/js/components/type-driven-ui.mjs:339-347</code> — UI registration</li>
+<li><code>lib/js/components/pps-maps.mjs:48,101</code>, <code>lib/js/components/layouts/type-stage/defaults.mjs:150</code> — PPS plumbing</li>
+<li><code>lib/assets/wikipedia-demo.json</code>, <code>lib/assets/type-stage-initial-state.json</code>, <code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code> — serialized states</li>
+<li><code>docs/planning/agentic-artefacts/thoughts/plan/2026-07-30-1422-style-link-inheritance.md</code> — predecessor plan (inheritance)</li>
+<li><code>docs/planning/agentic-artefacts/thoughts/research/2026-07-30-0957-style-link-inheritance-typespecnion.md</code> — predecessor research</li>
+</ul>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ol>
+<li>Map-2 UI in v1: free-text keys (validateStyleName) or options from
+the schema’s mark names? (The schema’s marks map is reachable via
+getLinked; a select would need a dependency to the metamodel schema
+in the links-map UI.)</li>
+<li>Edge struct factoring: shared base (<code>stylePatch</code>, <code>mode</code>) with
+intent struct adding <code>tag</code>, vs. two independent small structs.</li>
+<li>Do we keep <code>getStylePatchLinkForMark</code>’s return-null contract change
+(nothing applicable) — call sites must short-circuit to unknown-style.</li>
+<li><code>pps-maps.mjs</code> / <code>defaults.mjs</code> prefix plumbing: does the renamed
+field need a new PPS entry, and does <code>markStyleLinks</code>?</li>
+<li>Viewer (type-stage/viewer.typeroof.jsx:298-306) constructs handler
+ids with <code>stylePatches</code> as path segment — rename to
+<code>intentStyleLinks</code> there too (it only handles intents).</li>
+<li>Rename fallout in comments/docs (archived plans keep the old
+vocabulary — leave as historical record).</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

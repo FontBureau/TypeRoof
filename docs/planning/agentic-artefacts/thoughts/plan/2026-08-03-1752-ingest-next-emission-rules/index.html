@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="ingest-engine-unified-emission-rules-implementation-plan" class="heading_anchor" href="#ingest-engine-unified-emission-rules-implementation-plan" aria-hidden="true">#</a>Ingest Engine: Unified Emission Rules Implementation Plan</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Restructure <code>lib/js/wikipedia/ingest_next.ts</code> so that all element-handling
+policy lives in one ordered, selector-based emission-rule table passed via
+<code>IngestionOptions</code>, with <code>ingestWikipediaDocument</code> carrying the complete
+Wikipedia setup. The engine keeps only the reserved vocabulary (<code>doc</code>,
+<code>text</code>, <code>hard_break</code>, <code>raw_html_block</code>, <code>raw_html_inline</code>,
+<code>generic-style</code>) and the mechanism. Block-context handling changes from
+“prune inline content to raw_html_block” to scoped run-lifting.</p>
+<p>Basis: research document
+<code>thoughts/research/2026-08-03-1657-wikipedia-ingest-next-structure.md</code>
+(git db9f09f7, branch demo/wikipedia). All line references below are to
+that state.</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li><code>ingestNode</code> (<code>ingest_next.ts:608-831</code>) is a 12-branch precedence chain;
+seven policy pieces are hardcoded module constants (<code>KNOWN_BLOCK_TAGS:22</code>,
+<code>KNOWN_MARK_TAGS:55</code>, <code>INLINE_TAGS:67</code>, <code>SELECTORS_TO_RAW_HTML:111</code>,
+<code>FALLBACK_INLINE_CONTENT_NODES:46</code>, BR→hard_break <code>:804</code>, LI split
+<code>:568-606</code>).</li>
+<li>Two mechanisms are already options and share the target shape — ordered
+<code>{selector, rule}</code>, first <code>element.matches()</code> wins: <code>markEmission</code>
+(<code>:154-157</code>, resolver <code>:457-484</code>) and <code>nodeEmission</code> (<code>:162-165</code>,
+resolver <code>:442-448</code>).</li>
+<li>Known defects: markEmission gated on <code>KNOWN_MARK_TAGS</code> (silent rule
+trap, <code>:750</code>); <code>resolveNodeEmission</code> ignores context (<code>:667</code>); dead
+<code>BODY:&quot;doc&quot;</code> + <code>!== &quot;doc&quot;</code> guard; unused <code>traverseDom</code>; misnamed report
+fields; 5x duplicated htmlAttrs-bag pattern; twin mark-draft
+constructors; twin child-iteration helpers; 5x <code>*FromSchema</code> +
+guard-ternaries (<code>:865-882</code>).</li>
+<li>Behavioral fork: inline content in blocks-only containers is pruned
+under <code>&lt;section&gt;</code> but run-lifted inside <code>li-block</code>.</li>
+<li>Tests: 951 lines, 49 passing; <code>loadStateSchema</code> defined 4x; <strong>no
+<code>ul</code>/<code>li</code> coverage at all</strong> (<code>ingestListItem</code> untested).</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<ul>
+<li><code>ingestDOM(doc, options)</code> is an empty engine: no built-in tag tables.
+Policy arrives as <code>options.emissionRules: EmissionRuleEntry[]</code> (plus
+<code>proseMirrorSchema</code>, <code>attrPolicy</code>, <code>liftedRunWrapper</code>, <code>logger</code>).</li>
+<li><code>ingestWikipediaDocument</code> composes exported rule-set constants into the
+complete, readable Wikipedia configuration.</li>
+<li>Block containers lift positively-resolving inline runs into wrapper
+paragraphs (<code>report.liftedRuns</code>); unresolved elements stay
+<code>raw_html_block</code> + counter + log (discovery preserved).</li>
+<li>All 49 existing behaviors either still pass or are consciously updated
+in the lift phase; new <code>ul</code>/<code>li</code> coverage pins <code>ingestListItem</code> first.</li>
+</ul>
+<p>Verification: <code>npx vitest run lib/js/wikipedia/ingest_next.test.mjs</code>,
+full <code>npx vitest run</code>, <code>npm run typecheck</code> (no NEW errors; the
+pre-existing <code>main.ts</code> TS2305 remains until the deferred deletion),
+<code>npm run lint</code>, demo smoke test (Phases 4-5).</p>
+<h3><a id="key-discoveries-carried-from-research" class="heading_anchor" href="#key-discoveries-carried-from-research" aria-hidden="true">#</a>Key Discoveries (carried from research)</h3>
+<ul>
+<li>Reserved vocabulary contract: <code>default-schema.ts:20-233</code>; sync stand-ins
+for unknown typeKeys <code>integration.typeroof.jsx:459-465,1143-1160</code>; attr
+guard lives outside ingest (<code>html-attrs.ts:7-8</code>).</li>
+<li><code>paragraph</code> is the only non-reserved hardcoded typeKey (<code>:591</code>, <code>:647</code>)
+— becomes the <code>liftedRunWrapper</code> option default.</li>
+<li>parseDOM matching is <code>selector ?? tag</code> (<code>integration.typeroof.jsx:668-673</code>)
+— the same selectors drive ingest and replay.</li>
+<li>State schema (<code>type-stage-wikipedia-initial-state.json</code>) declares
+heading-1…3 only; the engine’s h4-h6 mappings produce <code>unknown_block</code>
+via sync when used. Observed oddity, NOT changed by this plan (rules
+mirror current behavior).</li>
+</ul>
+<h2><a id="operator-decisions-2026-08-03-recorded" class="heading_anchor" href="#operator-decisions-2026-08-03-recorded" aria-hidden="true">#</a>Operator Decisions (2026-08-03, recorded)</h2>
+<ol>
+<li>Option B: unified ordered emission-rule table; engine/setup separation.</li>
+<li>Context-fit resolution: non-fitting entries skipped, first fitting
+match wins, no match → context catch-all.</li>
+<li>Rule kinds as proposed; mw-empty-elt handling stays <code>raw</code> in the
+Wikipedia config; <code>skip</code> exists as an available kind.</li>
+<li>Schema-derived rules append after explicit entries (position control
+deferred).</li>
+<li>cite-link entry gets <code>context: &quot;inline&quot;</code>; stray citation in block
+context must not crash (falls to raw_html_block; under lift it joins a
+run instead).</li>
+<li>Empty engine; default table lives alongside <code>ingestWikipediaDocument</code>.</li>
+<li><strong>Lift-only</strong>: scoped run-lifting replaces prune entirely (supersedes
+the 2026-07-24 prune decision). No mode option, no per-rule placement.
+Unresolved elements keep the raw_html_block catch-all. li-block run
+classification unifies with the same positive-resolution rule.</li>
+<li>Logging behind an optional <code>logger</code> (silent default); wikipedia variant
+logs to console.</li>
+<li>Report renames: <code>skippedMarkAttrs</code> → <code>skippedHtmlAttrs</code>, <code>mwEmptyElts</code>
+→ <code>rawAtoms</code>; add <code>liftedRuns</code>, drop <code>wrappedStrayTexts</code> (lift phase).</li>
+<li>ul/li tests land up-front (Phase 1).</li>
+<li>After each phase: STOP; present diffstat + commit message; operator
+reviews and confirms with OKOK. No commits by the agent
+(~/MANNERS.md, ~/COLLABORATION.md; commit metadata read from actual
+sources at commit time).</li>
+</ol>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>No rename <code>ingest_next.ts</code> → <code>ingest.ts</code>, no deletion of <code>ingest.ts</code> /
+<code>main.ts</code> (deferred until the demo is completed; the known TS2305 in
+<code>main.ts:1</code> stays open until then).</li>
+<li>No prune/lift mode option and no per-rule lift placement (lift-only).</li>
+<li>No position control for schema-derived rules (always appended).</li>
+<li>No sanitization changes (raw/verbatim replay is an operator decision).</li>
+<li>No new element support (ol, table, blockquote, dl…) — future rule
+entries, enabled but not added by this plan.</li>
+<li>No changes to <code>default-schema.ts</code>, <code>html-attrs.ts</code>,
+<code>integration.typeroof.jsx</code>, or the state JSON.</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Five phases, each independently green and reviewable. Phases 1-3 are
+behavior-preserving (existing tests keep passing unmodified except where a
+phase explicitly says otherwise). Phase 4 empties the engine (test setup
+churn, same behaviors). Phase 5 changes behavior (lift) with its own test
+updates. Rationale: never mix “moved” and “changed” in one diff.</p>
+<h3><a id="target-types-final-shape-introduced-in-phase-3" class="heading_anchor" href="#target-types-final-shape-introduced-in-phase-3" aria-hidden="true">#</a>Target types (final shape, introduced in Phase 3)</h3>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">export</span> <span class="token keyword">type</span> <span class="token class-name">EmissionContext</span> <span class="token operator">=</span> <span class="token string">"block"</span> <span class="token operator">|</span> <span class="token string">"inline"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">type</span> <span class="token class-name">EmissionRule</span> <span class="token operator">=</span>
+    <span class="token operator">|</span> <span class="token punctuation">{</span> kind<span class="token operator">:</span> <span class="token string">"block"</span><span class="token punctuation">;</span> typeKey<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span> inlineContent<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">boolean</span> <span class="token punctuation">}</span>
+    <span class="token operator">|</span> <span class="token punctuation">{</span> kind<span class="token operator">:</span> <span class="token string">"mark"</span><span class="token punctuation">;</span> name<span class="token operator">:</span> <span class="token builtin">string</span> <span class="token punctuation">}</span>
+    <span class="token operator">|</span> <span class="token punctuation">{</span> kind<span class="token operator">:</span> <span class="token string">"generic"</span><span class="token punctuation">;</span> styleName<span class="token operator">:</span> <span class="token builtin">string</span> <span class="token punctuation">}</span>
+    <span class="token operator">|</span> <span class="token punctuation">{</span> kind<span class="token operator">:</span> <span class="token string">"inline-node"</span><span class="token punctuation">;</span> typeKey<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span> <span class="token punctuation">}</span>   <span class="token comment">// default: lowercased tag</span>
+    <span class="token operator">|</span> <span class="token punctuation">{</span> kind<span class="token operator">:</span> <span class="token string">"atom"</span><span class="token punctuation">;</span> typeKey<span class="token operator">:</span> <span class="token builtin">string</span> <span class="token punctuation">}</span>           <span class="token comment">// reproducing atom</span>
+    <span class="token operator">|</span> <span class="token punctuation">{</span> kind<span class="token operator">:</span> <span class="token string">"raw"</span> <span class="token punctuation">}</span>                             <span class="token comment">// raw_html_* by context</span>
+    <span class="token operator">|</span> <span class="token punctuation">{</span> kind<span class="token operator">:</span> <span class="token string">"void"</span><span class="token punctuation">;</span> typeKey<span class="token operator">:</span> <span class="token builtin">string</span> <span class="token punctuation">}</span>           <span class="token comment">// e.g. BR -> hard_break</span>
+    <span class="token operator">|</span> <span class="token punctuation">{</span> kind<span class="token operator">:</span> <span class="token string">"transparent"</span> <span class="token punctuation">}</span>
+    <span class="token operator">|</span> <span class="token punctuation">{</span> kind<span class="token operator">:</span> <span class="token string">"skip"</span> <span class="token punctuation">}</span>
+    <span class="token operator">|</span> <span class="token punctuation">{</span>
+          kind<span class="token operator">:</span> <span class="token string">"split-item"</span><span class="token punctuation">;</span>                     <span class="token comment">// e.g. LI</span>
+          inlineTypeKey<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+          blockTypeKey<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">interface</span> <span class="token class-name">EmissionRuleEntry</span> <span class="token punctuation">{</span>
+    selector<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+    rule<span class="token operator">:</span> EmissionRule<span class="token punctuation">;</span>
+    <span class="token comment">// restricts matching to a context; omitted = fits both.</span>
+    <span class="token comment">// Kind-intrinsic fit still applies (mark/generic/inline-node/void</span>
+    <span class="token comment">// are inline-only; block/split-item are block-only;</span>
+    <span class="token comment">// atom/raw/transparent/skip fit both).</span>
+    context<span class="token operator">?</span><span class="token operator">:</span> EmissionContext<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>Resolution (one function, replaces resolveNodeEmission +
+resolveMarkEmission + the tag-table branches): iterate explicit entries,
+then schema-derived entries; skip entries whose context/kind does not fit;
+first fitting <code>el.matches(selector)</code> wins; none → catch-all of the
+context. Schema-derived entries: node specs with non-empty <code>selector</code> →
+<code>atom</code> rules (as <code>nodeSelectorsFromSchema</code> today); mark specs with a tag →
+<code>mark</code> rules (as <code>semanticMarksFromSchema</code> today). An explicit <code>mark</code> rule
+naming an undefined mark falls back to generic + <code>unresolvedMarkRules</code>
+(unchanged).</p>
+<p><code>inlineContent</code> on <code>block</code> rules: schema-derived inline-ness
+(<code>inlineContentNodesFromSchema</code>) wins when a schema is present; the rule
+field is the no-schema fallback. <code>FALLBACK_INLINE_CONTENT_NODES</code> is
+deleted; the information moves into the block rules of the default table.</p>
+<hr>
+<h2><a id="phase-1-pin--tidy-tests-no-engine-change" class="heading_anchor" href="#phase-1-pin--tidy-tests-no-engine-change" aria-hidden="true">#</a>Phase 1: Pin &amp; tidy tests (no engine change)</h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p>Close the <code>ul</code>/<code>li</code> coverage gap so Phases 3/5 refactor against pinned
+behavior; consolidate organically-grown test helpers.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.test.mjs</code> (only file touched)</p>
+<ol>
+<li>Consolidate helpers at module top: single <code>loadStateSchema</code> (replaces
+the 4 verbatim copies at <code>:562,690,760,856</code>); move <code>allMarksOf</code>
+(<code>:229-238</code>) next to <code>marksOf</code>; rename the destructured shadows of
+<code>typeKey</code> at <code>:622,667,738</code> (e.g. <code>markTypeKey</code>); fix describe #2 name
+(“ingestDOM with schema: semantic marks” — it calls <code>ingestDOM</code>, not
+<code>ingestWikipediaDocument</code>).</li>
+<li>New <code>describe(&quot;ul/li list ingestion&quot;)</code> pinning CURRENT
+<code>ingestListItem</code> behavior (no schema, plain <code>ingestDOM</code>):
+<ul>
+<li><code>&lt;ul&gt;&lt;li&gt;a &lt;b&gt;b&lt;/b&gt;&lt;/li&gt;&lt;/ul&gt;</code> → <code>ul &gt; li-inline</code> with text+mark;</li>
+<li><code>&lt;ul&gt;&lt;li&gt;intro&lt;ul&gt;&lt;li&gt;x&lt;/li&gt;&lt;/ul&gt;tail&lt;/li&gt;&lt;/ul&gt;</code> → outer <code>li-block</code>:
+<code>paragraph[&quot;intro&quot;]</code>, nested <code>ul &gt; li-inline</code>, <code>paragraph[&quot;tail&quot;]</code>
+(run lifting, <code>flushRun</code> <code>:589-605</code>);</li>
+<li>li htmlAttrs bag + skipped-attr counting (<code>li.style</code> key format,
+<code>:575-579</code>);</li>
+<li>stray <code>&lt;li&gt;</code> NOT under <code>&lt;ul&gt;</code> (e.g. direct child of <code>&lt;section&gt;</code>)
+falls to the block catch-all (<code>:703</code> parent check);</li>
+<li><code>&lt;li&gt;</code> in inline context falls to inline catch-all;</li>
+<li>EDGE, pinned as-is with a <code>// Phase 5 changes this</code> comment:
+<code>&lt;ul&gt;&lt;li&gt;text&lt;table&gt;...&lt;/table&gt;&lt;/li&gt;&lt;/ul&gt;</code> — table is NOT in
+KNOWN_BLOCK_TAGS, so it joins the run → li-inline containing
+raw_html_inline (current <code>isBlockChild</code> semantics <code>:570-572</code>).</li>
+<li>end-to-end variant with <code>loadStateSchema</code> (li-inline/li-block are
+state-schema types; sync sanity).</li>
+</ul>
+</li>
+</ol>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification" class="heading_anchor" href="#automated-verification" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[x] <code>npx vitest run lib/js/wikipedia/ingest_next.test.mjs</code> — all pass
+(49 existing + 7 new = 56)</li>
+<li>[x] <code>npm run lint</code> clean for the test file</li>
+<li>[x] <code>git diff --stat</code> touches only <code>ingest_next.test.mjs</code></li>
+</ul>
+<h4><a id="manual-verification" class="heading_anchor" href="#manual-verification" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[x] Operator agrees the pinned li edge-case semantics are correctly
+labeled as “current, changes in Phase 5” (OKOK 2026-08-03, commit
+4e2e8614)</li>
+</ul>
+<p>STOP: present diffstat + commit message; wait for OKOK.</p>
+<hr>
+<h2><a id="phase-2-dead-code--internal-dry-options-surface-unchanged" class="heading_anchor" href="#phase-2-dead-code--internal-dry-options-surface-unchanged" aria-hidden="true">#</a>Phase 2: Dead code &amp; internal DRY (options surface unchanged)</h2>
+<h3><a id="overview-2" class="heading_anchor" href="#overview-2" aria-hidden="true">#</a>Overview</h3>
+<p>Remove approved dead code, deduplicate internals, rename report fields.
+<code>IngestionOptions</code> shape untouched; all tests pass with only the report
+field renames applied to assertions.</p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.ts</code></p>
+<ol>
+<li>Delete <code>traverseDom</code> (<code>:964-975</code>), <code>BODY: &quot;doc&quot;</code> entry (<code>:23</code>), the
+<code>!== &quot;doc&quot;</code> guard (<code>:712</code>).</li>
+<li>Merge <code>newGenericStyleMarkDraft</code>/<code>newSemanticMarkDraft</code> (<code>:345-376</code>)
+into one <code>newMarkDraft(marksList, typeKey, attrs, htmlAttrs)</code>;
+generic-style becomes <code>newMarkDraft(list, &quot;generic-style&quot;, {&quot;data-style-name&quot;: styleName}, bag)</code>. (Both currently take <code>nodeDraft</code>
+only to reach <code>marks</code> — pass the list.)</li>
+<li>Merge <code>fillContent</code>/<code>ingestChildrenInto</code> (<code>:532-557</code>): keep
+<code>ingestChildrenInto(el, marks, out, ctx, inInline)</code>; <code>fillContent</code>
+becomes a 3-liner over it (temp array → content pushes) or inlines
+away.</li>
+<li>One <code>setHtmlAttrsBag(attrsDraft, el, ctx, tagLabel)</code> helper for the 5
+duplicated bag+skip-count sites (<code>:575-579,713-722,761-765/774, 785-786/794,812-816</code>). The repro-atom site (<code>:673-676</code>) keeps its
+unconditional-set + no-skip-count semantics — factor the bag
+collection, not the divergent policy (documented in a comment).</li>
+<li>One <code>deriveSchemaFacts(proseMirrorSchema | undefined)</code> returning
+<code>{semanticMarks, markAttrs, nodeAttrs, inlineContentNodes, nodeSelectors}</code> with built-in defaults; replaces the five ternaries in
+<code>ingestDOM</code> (<code>:865-882</code>). The five <code>*FromSchema</code> functions become
+internal to it (exported <code>semanticMarksFromSchema</code>/
+<code>nodeSelectorsFromSchema</code> stay exported — the test imports the former).</li>
+<li>Rename report fields: <code>skippedMarkAttrs</code> → <code>skippedHtmlAttrs</code>,
+<code>mwEmptyElts</code> → <code>rawAtoms</code> (interface <code>:113-135</code>, init <code>:850-861</code>,
+count sites, <code>logReport</code>). Add <code>unresolvedMarkRules</code> to <code>logReport</code>
+(currently missing, research §1).</li>
+</ol>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.test.mjs</code>
+7. Mechanical rename of the two report fields in assertions
+(<code>:92,201,265,682-685</code> + new Phase-1 sites).</p>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification-1" class="heading_anchor" href="#automated-verification-1" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[x] <code>npx vitest run lib/js/wikipedia/ingest_next.test.mjs</code> all pass (56)</li>
+<li>[x] <code>npx vitest run</code> (full suite) — no regressions (105/105, 6 files)</li>
+<li>[x] <code>npm run typecheck</code> — no new errors (only pre-existing main.ts TS2305)</li>
+<li>[x] <code>npm run lint</code> clean (eslint, prettier, stylelint)</li>
+<li>[x] <code>grep -n traverseDom lib/js/wikipedia/ingest_next.ts</code> → empty</li>
+</ul>
+<h4><a id="manual-verification-1" class="heading_anchor" href="#manual-verification-1" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[x] Operator reviews that factored helpers didn’t smuggle in behavior
+changes (OKOK 2026-08-03, commit 06480a88; note: function
+skippedHtmlAttrs renamed policyExcludedAttrNames to avoid
+colliding with the renamed report field)</li>
+</ul>
+<p>STOP: present diffstat + commit message; wait for OKOK.</p>
+<hr>
+<h2><a id="phase-3-engine-speaks-rules-behavior-identical-bridge" class="heading_anchor" href="#phase-3-engine-speaks-rules-behavior-identical-bridge" aria-hidden="true">#</a>Phase 3: Engine speaks rules (behavior-identical bridge)</h2>
+<h3><a id="overview-3" class="heading_anchor" href="#overview-3" aria-hidden="true">#</a>Overview</h3>
+<p>Introduce <code>EmissionRule</code>/<code>EmissionRuleEntry</code> and the unified resolver;
+rewrite <code>ingestNode</code> as a thin kind-dispatcher. The hardcoded tables are
+TRANSLATED into an internal default rule table consumed through the same
+path — a temporary bridge so every existing test proves the mechanism
+reproduces today’s behavior. Old option fields keep working by
+translation.</p>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.ts</code></p>
+<ol>
+<li>Add the target types (see “Target types” above) and
+<code>resolveEmission(ctx, el, context): ResolvedEmission | null</code>:
+<ul>
+<li>iterates <code>ctx.rules</code> (explicit) then <code>ctx.schemaRules</code> (derived);</li>
+<li>kind-intrinsic context fit: mark/generic/inline-node/void →
+inline-only; block/split-item → block-only; atom/raw/transparent/skip
+→ both; entry <code>context</code> field narrows further;</li>
+<li>non-fitting entries are skipped (operator decision Q1);</li>
+<li><code>mark</code> rules resolve attrs via schema facts; undefined mark name →
+generic fallback + <code>unresolvedMarkRules</code> (moved from
+<code>resolveMarkEmission</code>).</li>
+</ul>
+</li>
+<li>Build the internal bridge table <code>DEFAULT_RULES</code> translating, in
+precedence order mirroring today’s chain (research §1 branches 4-11):
+<ul>
+<li><code>{selector: &quot;.mw-empty-elt, meta&quot;, rule: {kind: &quot;raw&quot;}}</code></li>
+<li>transparentContainers option → <code>transparent</code> entries (translation)</li>
+<li><code>{selector: &quot;ul &gt; li&quot;, rule: {kind: &quot;split-item&quot;, inlineTypeKey: &quot;li-inline&quot;, blockTypeKey: &quot;li-block&quot;}, context: &quot;block&quot;}</code>
+(replaces the hand-coded parent check <code>:703-706</code>)</li>
+<li>KNOWN_BLOCK_TAGS (minus BODY) → <code>block</code> entries; the six
+FALLBACK_INLINE_CONTENT_NODES textblocks get <code>inlineContent: true</code>
+(paragraph, heading-1…3, figcaption; plus heading-4…6 per current
+KNOWN_BLOCK_TAGS with schema-fallback semantics preserved)</li>
+<li>KNOWN_MARK_TAGS → <code>generic</code> entries (<code>b, strong</code> → bold; <code>i, em</code> →
+italic; <code>a</code> → link) — the resolver’s schema-mark derivation preserves
+the “schema wins over KNOWN_MARK_TAGS style” behavior (<code>:476-483</code>)</li>
+<li><code>{selector: &quot;br&quot;, rule: {kind: &quot;void&quot;, typeKey: &quot;hard_break&quot;}}</code></li>
+<li>INLINE_TAGS → one <code>{selector: &quot;abbr, b, bdi, ...&quot;, rule: {kind: &quot;inline-node&quot;}}</code> entry
+Ordering note: today mark-tags precede INLINE_TAGS for the same tag
+(B, A…); the table must preserve that precedence.</li>
+</ul>
+</li>
+<li><code>ingestDOM</code> wiring: <code>options.markEmission</code>/<code>options.nodeEmission</code>/
+<code>options.transparentContainers</code> are translated into rule entries
+PREPENDED to <code>DEFAULT_RULES</code> (markEmission loses its KNOWN_MARK_TAGS
+gate — see behavior note below). New optional <code>options.emissionRules</code>
+accepted and placed before the translated legacy entries.</li>
+<li><code>ingestNode</code> becomes: text branch (unchanged incl. stray-text wrap —
+lift comes in Phase 5) → non-element → <code>resolveEmission</code> → kind
+dispatch to small emitter functions (<code>emitBlock</code>, <code>emitAtom</code>,
+<code>emitRaw</code>, <code>emitInlineNode</code>, <code>emitVoid</code>, <code>emitSplitItem</code>,
+mark-descent, transparent-descent, skip) → context catch-all.
+<code>ingestListItem</code> becomes <code>emitSplitItem</code> (same body; <code>isBlockChild</code>
+temporarily resolves via rule table: “does the child resolve to a
+block-only kind?” — pinned by Phase-1 tests as current behavior since
+table children resolve to nothing → run, matching today).</li>
+<li><code>logger</code> option lands here (Q8): <code>interface IngestLogger { log(...) }</code>;
+<code>ctx.logger</code> default no-op; catch-all logs and <code>logReport</code> route
+through it. <code>ingestWikipediaDocument</code> passes <code>console</code>.</li>
+<li>Report: <code>count(report.rawAtoms, tag)</code> now fires for every <code>raw</code> rule
+emission (was mw-empty-elt only — same sites as today via the bridge
+table, so counts unchanged).</li>
+</ol>
+<p>Behavior note (intended, minor): a <code>markEmission</code> rule whose selector
+matches a non-KNOWN_MARK_TAGS element now fires (gate removed). No
+existing test depends on the gate; the trap’s removal is a Phase-3
+deliverable. Everything else must be bit-identical.</p>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.test.mjs</code>
+7. NO changes to existing tests (that is the proof). Add a small
+<code>describe(&quot;emissionRules option&quot;)</code>: explicit rule beats default table;
+context-misfit entry is skipped (e.g. a block rule matched in inline
+context falls through to inline catch-all — pins Q1); <code>skip</code> kind
+emits nothing; cite-link entry with <code>context: &quot;inline&quot;</code> in block
+context does not crash (Q4/Q5 pin: falls to raw_html_block).</p>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification-2" class="heading_anchor" href="#automated-verification-2" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[x] All Phase-1/2 tests pass UNMODIFIED (56/56)</li>
+<li>[x] New emissionRules tests pass (5, total 61)</li>
+<li>[x] <code>npx vitest run</code> full suite green (110/110); <code>npm run typecheck</code>
+no new errors; <code>npm run lint</code> clean</li>
+</ul>
+<h4><a id="manual-verification-2" class="heading_anchor" href="#manual-verification-2" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[x] Operator reviews resolver + dispatcher readability (OKOK
+2026-08-03, commit c7938cc4)</li>
+</ul>
+<p>STOP: present diffstat + commit message; wait for OKOK.</p>
+<hr>
+<h2><a id="phase-4-setup-moves-out-empty-engine" class="heading_anchor" href="#phase-4-setup-moves-out-empty-engine" aria-hidden="true">#</a>Phase 4: Setup moves out (empty engine)</h2>
+<h3><a id="overview-4" class="heading_anchor" href="#overview-4" aria-hidden="true">#</a>Overview</h3>
+<p>Delete the internal bridge table and legacy option fields; export the
+Wikipedia rule sets next to <code>ingestWikipediaDocument</code>; <code>ingestDOM</code>
+without rules handles only text/reserved emissions and catch-alls.</p>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.ts</code></p>
+<ol>
+<li>Delete <code>DEFAULT_RULES</code>, <code>KNOWN_BLOCK_TAGS</code>, <code>KNOWN_MARK_TAGS</code>,
+<code>INLINE_TAGS</code>, <code>FALLBACK_INLINE_CONTENT_NODES</code>, <code>MW_EMPTY_ELT</code>,
+<code>MW_META</code>, <code>SELECTORS_TO_RAW_HTML</code>, and the legacy option fields
+<code>markEmission</code>, <code>nodeEmission</code>, <code>transparentContainers</code> (single
+consumer <code>main.mjs</code> uses <code>ingestWikipediaDocument</code>; the test file is
+updated in step 3).</li>
+<li>Define exported rule-set constants adjacent to
+<code>ingestWikipediaDocument</code> (Q5: default table lives with the setup),
+composed in its options — suggested grouping, final naming at
+implementation time (naming is hard; operator review at the STOP):
+<ul>
+<li><code>WIKIPEDIA_RAW_RULES</code> (mw-empty-elt, meta)</li>
+<li><code>WIKIPEDIA_ATOM_RULES</code> (cite-link w/ <code>context: &quot;inline&quot;</code>,
+figcontent)</li>
+<li><code>WIKIPEDIA_BLOCK_RULES</code> (section, p, h1-h6, ul, ul&gt;li split-item,
+figure, figcaption; <code>inlineContent</code> flags)</li>
+<li><code>WIKIPEDIA_MARK_RULES</code> (b,strong → mark strong; i,em → generic
+italic; a → generic link fallback under schema derivation)</li>
+<li><code>HTML_PHRASING_RULES</code> (br void + the inline-node tag list — generic
+HTML, not Wikipedia-specific, hence the distinct name)
+<code>ingestWikipediaDocument</code> = <code>ingestDOM(dom, {proseMirrorSchema, emissionRules: [...raw, ...atoms, ...blocks, ...marks, ...phrasing], attrPolicy, logger: console, liftedRunWrapper: &quot;paragraph&quot;})</code> — the
+complete setup readable in one place.</li>
+</ul>
+</li>
+<li><code>liftedRunWrapper</code> option (Q6) replaces the hardcoded <code>&quot;paragraph&quot;</code>
+at <code>:591</code>/<code>:647</code> (still wrap-per-text-node semantics until Phase 5;
+default <code>&quot;paragraph&quot;</code>).</li>
+</ol>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.test.mjs</code>
+4. Update describe #1 and other default-dependent tests (research §9
+list) to pass explicit rule tables — import the exported rule-set
+constants where the Wikipedia set is meant, or minimal inline tables
+where a test pins one mechanism. Tests asserting “no rules” behavior
+(everything → catch-alls) added: empty-engine contract.
+5. Legacy-option tests (<code>transparentContainers</code>, <code>markEmission</code>,
+<code>nodeEmission</code> describes) rewritten as <code>emissionRules</code> equivalents —
+same behaviors, new spelling.</p>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification-3" class="heading_anchor" href="#automated-verification-3" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[x] <code>npx vitest run</code> full suite green (113/113, wikipedia file 64);
+typecheck no new errors; lint clean</li>
+<li>[x] <code>grep -n &quot;KNOWN_BLOCK_TAGS\|KNOWN_MARK_TAGS\|INLINE_TAGS\|SELECTORS_TO_RAW_HTML\|FALLBACK_INLINE&quot; lib/js/wikipedia/ingest_next.ts</code> → empty
+(also: markEmission/nodeEmission/transparentContainers gone)</li>
+</ul>
+<h4><a id="manual-verification-3" class="heading_anchor" href="#manual-verification-3" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[x] Demo smoke test / operator review (OKOK 2026-08-03, commit
+3af723ef)</li>
+<li>[x] Operator signs off rule-set constant names (OKOK 2026-08-03)</li>
+</ul>
+<p>STOP: present diffstat + commit message; wait for OKOK.</p>
+<hr>
+<h2><a id="phase-5-scoped-run-lifting-replaces-prune-behavior-change" class="heading_anchor" href="#phase-5-scoped-run-lifting-replaces-prune-behavior-change" aria-hidden="true">#</a>Phase 5: Scoped run-lifting replaces prune (behavior change)</h2>
+<h3><a id="overview-5" class="heading_anchor" href="#overview-5" aria-hidden="true">#</a>Overview</h3>
+<p>Block containers lift inline runs into wrapper paragraphs; unresolved
+elements keep the loud raw_html_block catch-all. Supersedes the
+2026-07-24 prune decision (operator, 2026-08-03: lift-only, no mode
+option). <code>emitSplitItem</code>’s run classification unifies with the same rule.</p>
+<h3><a id="changes-required-4" class="heading_anchor" href="#changes-required-4" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.ts</code></p>
+<ol>
+<li>Run membership (positive test): a child joins an inline run iff it is
+a text node OR <code>resolveEmission(ctx, el, &quot;inline&quot;)</code> returns a fitting
+rule (mark/generic/inline-node/void/atom/raw/transparent/skip).
+Unresolved elements break the run and fall to the block catch-all
+(raw_html_block + <code>catchAllBlocks</code> + logger) — discovery guarantee.</li>
+<li>Generalize <code>flushRun</code> (today <code>:589-605</code> inside ingestListItem) into
+the block-content filler: wherever block-only content is ingested
+(doc root, non-textblock <code>block</code> rules, split-item block arm),
+consecutive run members are ingested in INLINE context and lifted into
+one <code>liftedRunWrapper</code> draft per run; whitespace-only runs vanish
+(existing flushRun length guard + skipped-empty-text handling).</li>
+<li>Delete the stray-text-wrap special case in the text branch
+(<code>:643-651</code>) — subsumed by run membership (text nodes join runs).</li>
+<li>Report: add <code>liftedRuns</code> (count per flushed run; Q7 decision: “tells
+us a lot about the shape of the source”); DELETE <code>wrappedStrayTexts</code>
+(subsumed). <code>logReport</code> updated.</li>
+<li><code>emitSplitItem</code> drops its own run machinery and block-child test in
+favor of the generalized mechanism: li becomes li-block iff any child
+resolves block-only or fails to resolve; run lifting inside li-block
+is the same code path.</li>
+</ol>
+<p>Consequences (intended behavior changes, each with a test):</p>
+<ul>
+<li><code>&lt;section&gt;Hello &lt;b&gt;W&lt;/b&gt;!&lt;br&gt;x&lt;p&gt;p&lt;/p&gt;&lt;/section&gt;</code> → ONE
+<code>paragraph[&quot;Hello &quot;, &quot;W&quot;+strongOrBold, &quot;!&quot;, hard_break, &quot;x&quot;]</code> +
+<code>paragraph[&quot;p&quot;]</code> (was: 3 wrap-paragraphs + 2 raw_html_block).</li>
+<li><code>catchAllBlocks</code> no longer counts inline-resolving tags (B, BR, SPAN
+entries disappear); still counts DIV, TABLE, unknowns.</li>
+<li>Inline atom in block context (stray cite-link) joins a run → valid
+inline position (Q4 healed).</li>
+<li>li edge case from Phase 1: <code>&lt;li&gt;text&lt;table&gt;</code> now → li-block with
+<code>paragraph[&quot;text&quot;]</code> + <code>raw_html_block(table)</code> (was li-inline with
+raw_html_inline) — flip the Phase-1 pinned test as planned.</li>
+</ul>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.test.mjs</code></p>
+<ol start="6">
+<li>Update the affected pinned tests, each flagged in Phase 1 or listed
+above: section blocks-only test (<code>:141-172</code> reshaped), stray-text
+wrap assertions (<code>wrappedStrayTexts</code> gone), the li table edge, plus
+new lift tests: run boundaries around blocks; marks preserved across
+a lifted run; whitespace-only run produces no wrapper; <code>liftedRuns</code>
+counts; unresolved element inside a run breaks it into
+before/raw/after.</li>
+</ol>
+<h3><a id="success-criteria-4" class="heading_anchor" href="#success-criteria-4" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification-4" class="heading_anchor" href="#automated-verification-4" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[x] <code>npx vitest run</code> full suite green (119/119, wikipedia file 70);
+typecheck no new errors; lint clean; wrappedStrayTexts gone</li>
+</ul>
+<h4><a id="manual-verification-4" class="heading_anchor" href="#manual-verification-4" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[x] Phase reviewed, OKOK 2026-08-03 (commit d1c8f502). Demo smoke
+test confirmed by operator later the same day (“demo looks
+OK”).</li>
+</ul>
+<p>STOP: present diffstat + commit message; wait for OKOK.</p>
+<hr>
+<h2><a id="completed-2026-08-03" class="heading_anchor" href="#completed-2026-08-03" aria-hidden="true">#</a>COMPLETED 2026-08-03</h2>
+<p>All five phases implemented and committed on demo/wikipedia:
+4e2e8614 (P1 tests), 06480a88 (P2 DRY), c7938cc4 (P3 rules bridge),
+3af723ef (P4 empty engine), d1c8f502 (P5 run-lifting).
+119/119 tests green; only pre-existing main.ts TS2305 remains (its
+fix is deferred with the ingest.ts/main.ts deletion, see “What We’re
+NOT Doing”).</p>
+<hr>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<h3><a id="unit-tests-per-phase-in-ingest_nexttestmjs-" class="heading_anchor" href="#unit-tests-per-phase-in-ingest_nexttestmjs-" aria-hidden="true">#</a>Unit tests (per phase, in <code>ingest_next.test.mjs</code>)</h3>
+<ul>
+<li>Phase 1: ul/li pinning (the refactor’s safety net) + helper cleanup.</li>
+<li>Phase 3: mechanism tests (rule precedence, context fit, skip kind,
+inline-atom-in-block no-crash) with existing tests unmodified as the
+behavior-identity proof.</li>
+<li>Phase 4: empty-engine contract; rewritten option-spelling tests;
+Wikipedia rule-set constants exercised via ingestWikipediaDocument
+end-to-end tests (unchanged assertions).</li>
+<li>Phase 5: lift semantics (run boundaries, mark preservation, counters,
+discovery guarantee).</li>
+</ul>
+<h3><a id="integration" class="heading_anchor" href="#integration" aria-hidden="true">#</a>Integration</h3>
+<ul>
+<li>Existing end-to-end describes (cite-link, figcontent, figcaption,
+editable attr replay against the state JSON) run unmodified through
+Phases 1-4; Phase-5 impact reviewed per test.</li>
+<li>Manual demo smoke test at Phases 4 and 5 (real Parsoid article).</li>
+</ul>
+<h3><a id="regression-guards" class="heading_anchor" href="#regression-guards" aria-hidden="true">#</a>Regression guards</h3>
+<ul>
+<li>Full <code>npx vitest run</code> (not just the wikipedia file) each phase —
+prosemirror integration tests share the metamodel.</li>
+<li><code>npm run typecheck</code> may only show the pre-existing <code>main.ts</code> TS2305.</li>
+</ul>
+<h2><a id="rollback" class="heading_anchor" href="#rollback" aria-hidden="true">#</a>Rollback</h2>
+<p>Each phase is one commit; revert restores the previous green state.
+Phases 1-3 are pure refactors (safe to revert independently); Phase 5
+reverts to prune semantics if the demo surfaces problems (re-flip the
+Phase-5 test changes).</p>
+<h2><a id="references" class="heading_anchor" href="#references" aria-hidden="true">#</a>References</h2>
+<ul>
+<li>Research: <code>thoughts/research/2026-08-03-1657-wikipedia-ingest-next-structure.md</code></li>
+<li>Engine: <code>lib/js/wikipedia/ingest_next.ts</code> (git db9f09f7)</li>
+<li>Tests: <code>lib/js/wikipedia/ingest_next.test.mjs</code></li>
+<li>Contract: <code>lib/js/components/prosemirror/default-schema.ts</code>,
+<code>html-attrs.ts</code>, <code>integration.typeroof.jsx</code></li>
+<li>State: <code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code></li>
+<li>UI: <code>lib/js/wikipedia/main.mjs:119-143</code></li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

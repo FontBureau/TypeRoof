@@ -1,3 +1,17 @@
+.typeroof-docs {
+    .wrapper {
+        grid-template-areas:
+            "header main"
+            "sidebar main";
+        grid-template-rows: auto 1fr;
+    }
+
+    header {
+        margin: 0 auto;
+        grid-area: header;
+    }
+}
+
 /******************************************************************************
 sidebar
 *******************************************************************************/

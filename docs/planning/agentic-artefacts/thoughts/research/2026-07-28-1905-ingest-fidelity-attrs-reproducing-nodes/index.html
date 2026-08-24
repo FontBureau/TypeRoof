@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-ingest-fidelity--attr-replay--reproducing-atom-nodes" class="heading_anchor" href="#research-ingest-fidelity--attr-replay--reproducing-atom-nodes" aria-hidden="true">#</a>Research: Ingest Fidelity — Attr Replay + Reproducing Atom Nodes</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Two related questions from the operator (2026-07-28):</p>
+<ol>
+<li><strong>Collect-all → replay-all attributes via ingest</strong> — feasible? Goal: recreate
+the original ingested Wikipedia HTML more faithfully; Wikipedia-specific
+attributes (<code>rel=&quot;mw:ExtLink&quot;</code>, <code>typeof</code>, <code>about</code>, <code>data-mw</code>, class, id,
+title…) reproduced correctly.</li>
+<li><strong>Reproducing atom nodes</strong> — a mechanism like <code>raw_html_block</code> but explicitly
+using the <em>collected tag</em> (plus maybe collected attrs) as the outer tag, <strong>no
+additional wrapper</strong>, treated as atoms; matched by CSS selector
+(e.g. <code>MW_INLINE_CITATION = 'sup[typeof=&quot;mw:Extension/ref&quot;]'</code>), and
+<strong>configurable per schema</strong> as general default TypeRoof behavior.</li>
+</ol>
+<p>This document describes what exists today that both questions touch.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<ul>
+<li><strong>The selector infrastructure exists and is already Wikipedia-flavored</strong>:
+<code>SELECTORS_TO_RAW_HTML</code> in ingest is a hardcoded list that <em>already contains
+the operator’s citation example</em> (<code>sup[typeof=&quot;mw:Extension/ref&quot;]</code>), checked
+<strong>first</strong> in the dispatch order. The newer <code>markEmission</code> option is an
+ordered first-match-wins selector list (same <code>el.matches</code> pattern).</li>
+<li><strong>Reproducing atoms almost exist</strong>: <code>raw_html_block</code>/<code>raw_html_inline</code> are
+<code>atom: true</code> reserved node types storing verbatim <code>outerHTML</code> in a declared
+<code>html</code> PM attr that round-trips metamodel↔PM cleanly. But their <code>toDOM</code>
+<strong>wraps</strong> the stored HTML in an extra <code>div</code>/<code>span</code> (with a lime debug
+outline) — “no additional wrapper” does not exist today.</li>
+<li><strong>Schema-configurable node matching does not exist</strong>: ingest consults the
+schema <strong>only for marks</strong> (<code>semanticMarksFromSchema</code>); block/inline node
+recognition is the hardcoded <code>KNOWN_BLOCK_TAGS</code>/<code>INLINE_TAGS</code> tables.
+<code>NodeSpecModel</code> has <code>atom</code>, <code>inline</code>, <code>tag</code> (and more) but <strong>no
+<code>selector</code> field</strong>.</li>
+<li><strong>Attr storage is solved; attr <em>declaration</em> is the constraint</strong>: the
+metamodel document stores free-form JSON attrs per node/mark, but PM’s
+<code>computeAttrs</code> <strong>silently drops</strong> any attr not declared in the schema on
+<code>NodeType.create</code> — “collect-all” must therefore ride either declared attrs
+or a single declared bag attr.</li>
+<li><strong>Replay exists for marks, not for nodes</strong>: <code>ProsemirrorMarkView</code> applies
+declared attrs to the DOM (construction + in-place <code>update()</code>);
+<code>ProsemirrorNodeView</code> writes only <code>data-node-type</code> — there is no node-side
+attr replay. Marks are never put in the metamodel↔PM cache, so mark-level
+replay can only come from PM attrs (declared), not from the metamodel.</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-raw-html-atoms-today-the-q2-baseline" class="heading_anchor" href="#1-raw-html-atoms-today-the-q2-baseline" aria-hidden="true">#</a>1. Raw HTML atoms today (the Q2 baseline)</h3>
+<p><strong>Definitions</strong> — <code>lib/js/components/prosemirror/default-schema.ts</code>:</p>
+<ul>
+<li><code>raw_html_block</code> (:78–99): <code>atom: true</code>, <code>group: &quot;block&quot;</code>,
+<code>attrs: { html: { default: &quot;&quot;, validate: &quot;string&quot; } }</code> (declared PM attr),
+<code>parseDOM: [{ tag: &quot;div[data-raw-html-block]&quot;, getAttrs → { html: dom.innerHTML } }]</code>,
+<code>toDOM</code>: real <code>div[data-raw-html-block]</code> with <code>outline: 2px solid lime</code>
+and <code>innerHTML = node.attrs.html</code> (“actual HTML injection, no sanitization
+(operator decision)”).</li>
+<li><code>raw_html_inline</code> (:103–123): same shape with <code>inline: true</code>,
+<code>group: &quot;inline&quot;</code>, <code>span[data-raw-html-inline]</code>.</li>
+<li>So: the stored element is <strong>not</strong> the outer DOM; the wrapper carries the
+<code>data-raw-html-*</code> marker and the debug outline. HTML enters via
+<code>innerHTML</code> assignment on the wrapper (no fragment parsing).</li>
+</ul>
+<p><strong>No NodeView for raw_html types</strong> — nodeViews are registered <strong>only for
+metamodel-defined node names</strong> in <code>update()</code>
+(<code>lib/js/components/prosemirror/integration.typeroof.jsx:1101–1127</code>, loop over
+<code>proseMirrorSchema.get(&quot;nodes&quot;)</code> keys → <code>this._createGenericNodeView</code>).
+Reserved default-schema types (raw_html, unknown*, doc, text, hard_break) never
+enter that map; PM renders them via the spec <code>toDOM</code>. Atom behavior comes
+from the PM spec (<code>atom: true</code>), not from any view code.</p>
+<p><strong>Ingest emission</strong> — <code>lib/js/wikipedia/ingest_next.ts</code>:</p>
+<ul>
+<li><code>MW_EMPTY_ELT = &quot;.mw-empty-elt&quot;</code> (:84), <code>MW_INLINE_CITATION = 'sup[typeof=&quot;mw:Extension/ref&quot;]'</code> (:87),
+<code>SELECTORS_TO_RAW_HTML = [MW_EMPTY_ELT, MW_INLINE_CITATION].join(&quot;, &quot;)</code> (:89).</li>
+<li><code>emitRawHtmlAtom(el, inInline, out)</code> (:284–291): typeKey
+<code>raw_html_inline</code>/<code>raw_html_block</code> by context, attr
+<code>html = el.outerHTML</code> (verbatim, via <code>toMetaModelJSON</code>).</li>
+<li>Dispatch order in <code>ingestNode</code> (:320–471): text (:329) → non-elements
+dropped (:359) → <strong><code>el.matches(SELECTORS_TO_RAW_HTML)</code> first (:366–372)</strong>,
+counted in <code>report.mwEmptyElts</code> → <code>transparentContainers</code> (:374) →
+<code>KNOWN_BLOCK_TAGS</code> (:379) → block-context catch-all → <code>raw_html_block</code>
+(:391–405) → <code>KNOWN_MARK_TAGS</code> (:408) → <code>BR</code> (:449) → <code>INLINE_TAGS</code>
+(:454) → inline catch-all → <code>raw_html_inline</code> (:462–470).</li>
+</ul>
+<p><strong>Round-trip of <code>html</code></strong>: declared PM attr with default <code>&quot;&quot;</code>, so it always
+round-trips: PM→metamodel via <code>_rawCreateMetamodelNode</code> (integration:782–833,
+attrs copied through <code>toMetaModelJSON</code>); metamodel→PM via
+<code>_rawCreateProseMirrorNode</code> (:835–954, <code>schema.node(pmTypeName, attrs, …)</code>).
+Metamodel document attrs are <code>AttrsMapModel</code> = ordered map of <code>JSONModel</code>
+(models.typeroof.jsx:506–511) — <strong>free-form JSON per attr value</strong>, typed per
+value by <code>JSONTypeModel</code> enum (:454), not by any spec.</p>
+<h3><a id="2-nodespec-model--nodeview-layer-q2s-schema-side" class="heading_anchor" href="#2-nodespec-model--nodeview-layer-q2s-schema-side" aria-hidden="true">#</a>2. NodeSpec model + NodeView layer (Q2’s schema side)</h3>
+<p><strong><code>NodeSpecModel</code></strong> (<code>lib/js/components/prosemirror/models.typeroof.jsx:131–249</code>)
+fields in order: <code>content</code> (OrEmpty), <code>marks</code> (OrEmpty), <code>group</code> (OrEmpty),
+<code>tag</code> (OrEmpty, explicitly <em>not</em> a PM NodeSpec field, comment :153),
+<code>inline</code> (bool), <strong><code>atom</code> (bool, exists, :166)</strong>, <code>attrs</code>
+(AttributeSpecMapModel), <code>selectable</code> (default-true bool), <code>draggable</code>,
+<code>code</code>, <code>definingAsContext</code>, <code>definingForContent</code>, <code>isolating</code>,
+<code>linebreakReplacement</code> (all bool). <strong>No <code>selector</code> field.</strong> <code>whitespace</code>,
+<code>defining</code>, <code>toDOM</code>, <code>parseDOM</code>, <code>toDebugString</code>, <code>leafText</code> are
+commented out as “implement dynamically”.</p>
+<p><strong><code>MarkSpecModel</code></strong> (:250–300): <code>attrs</code>, <code>inclusive</code> (default-true),
+<code>excludes</code> (OrEmpty), <code>group</code> (OrEmpty), <code>tag</code> (OrEmpty), <code>spanning</code>
+(default-true), <code>code</code>. No <code>selector</code>.</p>
+<p><strong>Mapping to PM</strong> (<code>createProseMirrorSchemaFromMetaModel</code>,
+integration:497–585): reserved-name collisions skipped with warn (:511–517,
+:559–565); every non-empty struct field except <code>attrs</code>/<code>tag</code> copied 1:1
+(includes <code>atom</code>, <code>inline</code>, <code>selectable</code>, <code>draggable</code>, <code>isolating</code>…);
+<code>tag</code> generates <code>parseDOM = [{ tag, getAttrs? }]</code> and
+<code>toDOM = _createToDOM(tag, attributeSpecMap)</code> (:530–546/:576–592). PM’s
+<code>parseDOM</code> <code>tag</code> accepts CSS selectors (the generated rule just passes the
+string through), and ingest matches via <code>el.matches</code> — both sides already
+speak selector syntax.</p>
+<p><strong><code>ProsemirrorNodeView</code></strong> (integration:178–276) — only for metamodel-defined
+node types: resolves the metamodel spec’s <code>tag</code> via
+<code>widgetBus.getLinked(node.type.schema)</code> (:205), creates outer
+<code>&lt;tag data-node-type&gt;</code> element plus an <strong>inner content <code>div</code></strong> as
+<code>contentDOM</code> and <code>_stylerDOM</code> (two-element wrapper, :215–227), subscribes to
+the styling machinery with <code>structuralElements {outer, inner}</code> (:228–246).
+<code>update()</code> always returns <code>true</code> (:252–267). <strong>No atom/leaf special-casing;
+<code>contentDOM</code> is always set.</strong></p>
+<p><strong>PM atom semantics</strong> (node_modules/prosemirror-model/dist/index.js):
+<code>NodeType.isAtom</code> (:2130) = leaf (empty content match) or <code>spec.atom</code>;
+prosemirror-view: <code>domAtom</code> (:1513), full redraw for atoms (:1952),
+<code>NodeSelection</code> as a unit on click/arrow keys (:3263–3264, :2465–2468),
+uneditable content. <code>NodeSpecModel.selectable</code>/<code>draggable</code> map onto PM’s
+selection/drag behavior.</p>
+<h3><a id="3-the-attributes-pipeline-q1s-baseline" class="heading_anchor" href="#3-the-attributes-pipeline-q1s-baseline" aria-hidden="true">#</a>3. The attributes pipeline (Q1’s baseline)</h3>
+<p><strong>Storage (solved)</strong>: metamodel <code>NodeModel</code>/<code>MarkModel</code> attrs are free-form
+JSON (<code>AttrsMapModel</code>, models.typeroof.jsx:506–511; <code>toMetaModelJSON</code>/:614,
+<code>fromMetaModelJSON</code>/:592). Wikipedia attrs could live there today.</p>
+<p><strong>The PM constraint</strong>: <code>computeAttrs</code>
+(node_modules/prosemirror-model/dist/index.js:2043) iterates <strong>only declared
+attr names</strong> on <code>NodeType.create</code>/<code>createChecked</code> — undeclared attrs are
+<strong>silently dropped</strong>; missing declared attrs without default throw. So
+collect-all cannot ride as loose PM attrs; it needs either per-attr
+declaration or one declared bag attr per type.</p>
+<p><strong>Schema attr declaration (exists, Phase 1)</strong>: <code>AttributeSpecModel</code>
+(models.typeroof.jsx:107–127: <code>default</code> StringModel, <code>validate</code>
+AttrValidateModel) → <code>_createPMAttrs</code> (integration:444, coerced defaults +
+validate strings), <code>_createGetAttrs</code> (:465, parseDOM reads declared attrs 1:1,
+absent ones left out for PM defaults), <code>_createToDOM</code> (:481, serializes
+declared attrs into DOMOutputSpec).</p>
+<p><strong>Harvest at ingest (marks only)</strong>:</p>
+<ul>
+<li>Semantic marks: declared attrs harvested via <code>el.getAttribute</code>
+(ingest_next.ts:413–431); every <em>other</em> element attr counted in
+<code>report.skippedMarkAttrs</code> as <code>&quot;tag.attr&quot;</code> and dropped.</li>
+<li><code>INLINE_TAGS</code> elements (:454–460): emitted as inline nodes
+(<code>typeKey = tag.toLowerCase()</code>) — <strong>attrs neither read, stored, nor
+counted</strong>.</li>
+<li><code>KNOWN_BLOCK_TAGS</code> elements (:379–389): <strong>attrs neither collected nor
+counted</strong>.</li>
+<li>Raw atoms: attrs survive only inside the verbatim <code>outerHTML</code> string.</li>
+</ul>
+<p><strong>Replay</strong>:</p>
+<ul>
+<li>Marks: <code>ProsemirrorMarkView._applyDeclaredAttrs</code> (integration:312–335) —
+metamodel declared attr names (fallback: PM spec attrs), setAttribute/
+removeAttribute, at construction (:299) and in-place on <code>update()</code> (:343).
+<code>ignoreMutation</code> (:371) suppresses PM reparse for attribute mutations on
+the view’s own element (the styling machinery legitimately mutates
+<code>style</code>/<code>lang</code>).</li>
+<li>Nodes: <strong>no equivalent</strong> — <code>ProsemirrorNodeView</code> writes only
+<code>data-node-type</code>.</li>
+<li>Export: <code>_createToDOM</code> is attached to generated specs; the repo has <strong>no
+<code>DOMSerializer</code> usage</strong>, and views are registered for all schema nodes and
+marks, so live rendering is entirely view-side.</li>
+</ul>
+<p><strong>Cache/links</strong>: <code>_nodesCache</code> (WeakMap, integration:616) links PM Schema →
+metamodel <code>ProseMirrorSchemaModel</code> (used by both views for spec lookup),
+PM Node ↔ metamodel NodeModel (:972, :1001, :1046–1050, :1157, :1188).
+<strong>Marks are never put into the cache</strong> — a mark instance cannot currently be
+resolved to its metamodel counterpart.</p>
+<h3><a id="4-selector-based-configuration-precedents" class="heading_anchor" href="#4-selector-based-configuration-precedents" aria-hidden="true">#</a>4. Selector-based configuration precedents</h3>
+<ul>
+<li><code>SELECTORS_TO_RAW_HTML</code> (ingest_next.ts:84–89): hardcoded list,
+<code>el.matches</code>, first check in dispatch.</li>
+<li><code>markEmission</code> (IngestionOptions, ingest_next.ts:129–133, 135–161): ordered
+<code>[{ selector, rule }]</code> list, <strong>first match wins</strong> in
+<code>resolveMarkEmission</code> (:228–255); fallback chain: explicit rule →
+schema-derived mark (<code>semanticMarks</code>) → <code>KNOWN_MARK_TAGS</code> intent name.</li>
+<li><code>semanticMarksFromSchema</code> (:164–177): schema marks with non-empty <code>tag</code>
+→ <code>lowercaseTag → { name, attrs }</code>; “mirroring the generated parseDOM
+rules. Marks without a tag are not reachable by ingest.” This is the
+template a node-side equivalent (<code>nodeSelectorsFromSchema</code>) would follow.</li>
+<li><code>schemaMarkAttrsFromSchema</code> (:212–221): mark name → declared attr names.</li>
+<li><strong>No schema-derived node/block matching exists</strong> — ingest never reads
+<code>proseMirrorSchema.get(&quot;nodes&quot;)</code>.</li>
+</ul>
+<h3><a id="5-unknown-type-sync-how-non-schema-typekeys-travel" class="heading_anchor" href="#5-unknown-type-sync-how-non-schema-typekeys-travel" aria-hidden="true">#</a>5. Unknown-type sync (how non-schema typeKeys travel)</h3>
+<ul>
+<li><code>UNKNOWN_NODE_TYPES = {&quot;unknown&quot;,&quot;unknown_block&quot;,&quot;unknown_inline&quot;}</code>
+(integration:401–408). Metamodel→PM: node typeKeys not in the schema are
+remapped by content shape/context to <code>unknown_block</code>/<code>unknown_inline</code>/
+<code>unknown</code> with <code>attrs[&quot;unknown-type&quot;] = typeKey</code> (:936–946); mixed
+content logs-and-crashes (operator decision). PM→metamodel recovers the
+typeKey from the <code>unknown-type</code> attr and skips duplicating it (:786–791,
+:819–830).</li>
+<li>Marks have <strong>no</strong> unknown fallback: <code>schema.mark(typeKey, attrs)</code> is called
+directly (:~856) and would throw for marks absent from the schema.</li>
+<li>Reserved-name protection in <code>createProseMirrorSchemaFromMetaModel</code>
+(:511–515, :556–560): metamodel specs colliding with reserved names are
+skipped with a warning — raw_html types therefore always come verbatim from
+the default schema and cannot be customized via the metamodel today.</li>
+</ul>
+<h3><a id="6-reserved-type-inventory--default-schemats-" class="heading_anchor" href="#6-reserved-type-inventory--default-schemats-" aria-hidden="true">#</a>6. Reserved type inventory (<code>default-schema.ts</code>)</h3>
+<p><code>doc</code> (:20–22, <code>block+</code>), <code>text</code> (:24–26), <code>hard_break</code> (:28–36,
+inline, <code>selectable: false</code>, <code>br</code>), <code>unknown</code> (:41–73, block,
+<code>content: &quot;inline*&quot;</code>, unknown-type attr, message toDOM), <code>raw_html_block</code>
+(:78–99), <code>raw_html_inline</code> (:103–123), <code>unknown_block</code> (:126–157,
+<code>content: &quot;block*&quot;</code>), <code>unknown_inline</code> (:158–187, inline,
+<code>content: &quot;inline*&quot;</code>, unobtrusive span toDOM). Reserved mark
+<code>generic-style</code> (:189–214): <code>excludes: &quot;_&quot;</code>,
+<code>attrs: { &quot;data-style-name&quot; }</code>, <code>parseDOM</code> priority <strong>60</strong> with
+<code>tag: &quot;*[data-style-name]&quot;</code> (wins ties against schema marks,
+order-independent), <code>toDOM</code> span.
+<code>paragraph</code>/<code>section</code>/<code>heading-N</code> are <strong>not</strong> reserved — they are
+metamodel-schema nodes defined in the initial states
+(e.g. <code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code>).</p>
+<h2><a id="mapping-the-questions-to-what-exists" class="heading_anchor" href="#mapping-the-questions-to-what-exists" aria-hidden="true">#</a>Mapping the Questions to What Exists</h2>
+<table>
+<thead>
+<tr>
+<th>Need</th>
+<th>Exists today</th>
+<th>Missing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Selector matching in ingest</td>
+<td><code>el.matches</code> + 2 precedents (<code>SELECTORS_TO_RAW_HTML</code>, <code>markEmission</code>)</td>
+<td>schema-driven node selectors (blocks/marks are tag-only)</td>
+</tr>
+<tr>
+<td>Schema place for selectors</td>
+<td>PM <code>parseDOM.tag</code> accepts CSS selectors; <code>NodeSpecModel.tag</code> exists</td>
+<td>a <code>selector</code> field on <code>NodeSpecModel</code> (none today)</td>
+</tr>
+<tr>
+<td>Atom node types via schema</td>
+<td><code>NodeSpecModel.atom</code> <strong>exists</strong> and maps 1:1 to PM</td>
+<td>reproducing behavior (wrapper-free rendering)</td>
+</tr>
+<tr>
+<td>Wrapper-free reproduction</td>
+<td>verbatim <code>outerHTML</code> storage + round-trip (<code>raw_html_*</code>)</td>
+<td>a view/toDOM that makes the stored element the outer DOM (today: wrapper <code>div</code>/<code>span</code> + lime outline)</td>
+</tr>
+<tr>
+<td>NodeView for atoms</td>
+<td><code>ProsemirrorNodeView</code> for metamodel node types</td>
+<td>atom/leaf special-casing (contentDOM always set today); nodeViews only registered for metamodel-defined names</td>
+</tr>
+<tr>
+<td>Attr storage</td>
+<td>free-form JSON attrs in metamodel documents</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Attr replay (marks)</td>
+<td><code>_applyDeclaredAttrs</code> + <code>update()</code> (declared attrs only)</td>
+<td>collect-all beyond declared attrs (PM <code>computeAttrs</code> drops undeclared)</td>
+</tr>
+<tr>
+<td>Attr replay (nodes)</td>
+<td>—</td>
+<td>no node-side equivalent of <code>_applyDeclaredAttrs</code></td>
+</tr>
+<tr>
+<td>Metamodel identity for marks</td>
+<td>PM Node ↔ metamodel Node cache</td>
+<td>marks are never cached (identity problem)</td>
+</tr>
+<tr>
+<td>Attr harvest coverage</td>
+<td>semantic marks only</td>
+<td>INLINE_TAGS and KNOWN_BLOCK_TAGS elements: attrs neither stored nor counted</td>
+</tr>
+</tbody>
+</table>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/wikipedia/ingest_next.ts:84–89</code> — MW selectors, SELECTORS_TO_RAW_HTML</li>
+<li><code>lib/js/wikipedia/ingest_next.ts:284–291</code> — emitRawHtmlAtom (verbatim outerHTML)</li>
+<li><code>lib/js/wikipedia/ingest_next.ts:320–471</code> — ingestNode dispatch order</li>
+<li><code>lib/js/wikipedia/ingest_next.ts:164–177, 212–221, 228–255</code> — schema derivation + selector-rule resolution</li>
+<li><code>lib/js/wikipedia/ingest_next.ts:379–389, 454–460</code> — block/inline emission without attr collection</li>
+<li><code>lib/js/components/prosemirror/default-schema.ts:78–123</code> — raw_html_block/inline (atom, html attr, wrapper toDOM)</li>
+<li><code>lib/js/components/prosemirror/default-schema.ts:189–214</code> — generic-style reserved mark (priority 60 parseDOM)</li>
+<li><code>lib/js/components/prosemirror/models.typeroof.jsx:131–249</code> — NodeSpecModel fields (atom exists, no selector)</li>
+<li><code>lib/js/components/prosemirror/models.typeroof.jsx:454–511, 529–588, 590–653</code> — JSONModel/AttrsMapModel/NodeModel/MarkModel, to/fromMetaModelJSON</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:178–276</code> — ProsemirrorNodeView (two-element wrapper, no atom casing)</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:276–375</code> — ProsemirrorMarkView (_getTag, _applyDeclaredAttrs, update, ignoreMutation)</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:401–408, 782–954</code> — unknown-type remap, metamodel↔PM conversion</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:497–585</code> — createProseMirrorSchemaFromMetaModel (1:1 fields, tag → parseDOM/toDOM)</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:1101–1127</code> — nodeViews registration (metamodel-defined names only)</li>
+<li><code>node_modules/prosemirror-model/dist/index.js:2043</code> — computeAttrs drops undeclared attrs</li>
+<li><code>node_modules/prosemirror-model/dist/index.js:2130</code> — NodeType.isAtom</li>
+</ul>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ol>
+<li><strong>Where should the selector config live</strong>: on <code>NodeSpecModel</code> (new
+<code>selector</code> field, appears in the NodeSpecs UI automatically) vs. a
+schema-level selector→typeKey map? The <code>tag</code> field already feeds both
+parseDOM and ingest-mark matching for marks; nodes have no equivalent.</li>
+<li><strong>Reproducing rendering</strong>: extend the reserved <code>raw_html_*</code> types (new
+toDOM/NodeView without wrapper) vs. a new reserved type vs. schema-defined
+atom node types rendered by <code>ProsemirrorNodeView</code> with atom special-casing?
+Note reserved types currently cannot be customized via the metamodel
+(reserved-name skip).</li>
+<li><strong>Precedence in dispatch</strong>: schema-selector atoms should slot between
+<code>SELECTORS_TO_RAW_HTML</code> (:366) and <code>transparentContainers</code> (:374), or
+replace/merge the hardcoded list?</li>
+<li><strong>Storage variant for reproducing nodes</strong>: verbatim <code>outerHTML</code> (today’s
+<code>html</code> attr) vs. decomposed tag+attrs+innerHTML (would connect to the
+attr-bag idea)?</li>
+<li><strong>Attr-bag for collect-all (Q1)</strong>: one declared bag attr (e.g. <code>htmlAttrs</code>
+JSON string) per type vs. declaring Wikipedia attrs individually on specs
+(works today for marks with zero code)? Exclusion list for replay
+(<code>style</code> collides with the styling machinery, <code>class</code> needs merging,
+<code>data-style-name</code>/<code>data-mark-type</code> are TypeRoof’s own).</li>
+<li><strong>Mark identity</strong>: Q1 replay for intent/generic-style marks from the
+metamodel would need a mark↔metamodel link that does not exist (marks are
+not cached); PM-attrs-based replay (declared) avoids this entirely.</li>
+<li><strong><code>inline</code> flag vs. group semantics</strong>: <code>raw_html_inline</code> sets both
+<code>inline: true</code> and <code>group: &quot;inline&quot;</code>; which combination new reproducing
+node types need for paragraph compatibility.</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

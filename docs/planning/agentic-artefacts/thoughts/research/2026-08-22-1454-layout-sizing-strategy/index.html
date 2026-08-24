@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-unified-layout-sizing-strategy--current-state" class="heading_anchor" href="#research-unified-layout-sizing-strategy--current-state" aria-hidden="true">#</a>Research: Unified layout sizing strategy — current state</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Unify the behavior of all layouts regarding their sizing strategy (foundation for a future central resize listener injecting viewport/host sizes as document dependencies). Establish what “fill available space appropriately” means per layout, and document the current hurdles:</p>
+<ul>
+<li>type-stage–derived layouts can have two elements in <code>.typeroof-layout</code> (side-by-side/compare); both must color AND cover their own content; the viewer doesn’t apply the background color.</li>
+<li>videoproof actors measure available space to size contents; contextual degrades to a single row.</li>
+<li>player/motion-stage must not show content outside the stage; stage has explicit size, so needn’t cover the container.</li>
+<li>The container (<code>.typeroof-layout</code>) style is already being mutated by code (<code>overflow: hidden</code>).</li>
+</ul>
+<p>This document describes what exists today, not what should be built.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<ul>
+<li><code>.typeroof-layout</code> is static shell DOM (<code>lib/js/zones.typeroof.jsx:10</code>), mounted as zone <code>&quot;layout&quot;</code>. <strong>No central widget owns its styling</strong>; today its appearance is a mix of global shell CSS and ad-hoc inline-style writes.</li>
+<li>The <strong>only inline-style writes on the host</strong> come from <code>StageDOMNode</code> in the motion-stage layout: <code>overflow: hidden</code> in automatic-zoom fit mode (<code>lib/js/components/actors/stage.mjs:82</code>), removed at <code>stage.mjs:64</code>.</li>
+<li><strong>Five distinct sizing regimes</strong> coexist: motion-stage (explicit px stage + zoom/fit-to-host), type-stage/ramp (pure CSS, <code>fit-content</code>, flex side-by-side via a global rule), videoproof actors (read <code>host.offsetWidth/offsetHeight</code> each update, px→pt × 0.75), viewer/player shells (CSS <code>100vw/100vh</code> absolute). There is no shared abstraction.</li>
+<li>Background color is applied in <strong>different places per layout</strong>: motion-stage colors <code>.motion_stage-layer-top</code>; videoproof colors the actor container + layout container; type-stage colors the ProseMirror host; <strong>the type-stage viewer (<code>article.typeroof-document</code>) has no document-level background styler at all</strong> (confirmed gap).</li>
+<li>The contextual videoproof “single row” bug is a math clamp: <code>linesPerPage = Math.max(1, floor(availableHeightPt / (fontSizePt*lineHeightEm)))</code> (<code>videoproof-contextual/layout.mjs:187-192</code>) — a zero/shrunken host measurement clamps to 1 line.</li>
+<li>The dependency machinery for a future size-injection widget already exists in the exact shape needed: <code>AnimationTGenerator</code> writes <code>t</code> into the model per rAF (<code>animation-t-generator.mjs:125</code>); a resize observer writing <code>width</code>/<code>height</code>-style entries would follow the same pattern. Registered properties <code>width</code>/<code>height</code> already exist (<code>registered-properties.mjs:64-65</code>). <code>MainUIController</code> owns zones + layout lifecycle (<code>main-ui.mjs:76-186</code>) and is the natural host for a central layout-style widget.</li>
+<li>A TODO matching the user’s “central widget manages classes/styles, reset on destroy” idea <strong>already exists as a code comment</strong>: <code>lib/css/shell/type-stage.css:202-207</code>.</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-shell-structure-zones-and-container-css" class="heading_anchor" href="#1-shell-structure-zones-and-container-css" aria-hidden="true">#</a>1. Shell structure, zones, and container CSS</h3>
+<ul>
+<li>DOM skeleton: <code>.wrapper &gt; .typeroof-main &gt; (.typeroof-layout-before, .typeroof-layout, .typeroof-layout-after)</code> — <code>lib/js/zones.typeroof.jsx:1-16</code>; zone map at <code>:18-33</code>.</li>
+<li>Every CSS rule touching the container:
+<ul>
+<li><code>lib/css/shell/layout.css:21-27</code> — <code>.typeroof-main { grid-area: main; display:flex; flex-direction:column; overflow-y:auto }</code>.</li>
+<li><code>lib/css/shell/layout.css:36-44</code> — <code>.typeroof-main &gt; .typeroof-layout { overflow:auto; flex-grow:1; overscroll-behavior-x:contain }</code> (editor default: scrollable flex child).</li>
+<li><code>lib/css/shell/type-stage.css:201-209</code> — <code>.typeroof-main &gt; .typeroof-layout { display:flex }</code> (global, unscoped; enables side-by-side; comment at :202-207 literally proposes the class/styles-manager-with-reset idea as a TODO).</li>
+<li><code>lib/css/shell/player.css:35-42</code> — <code>.typeroof-layout { position:absolute; z-index:1; top:0; left:0; width:100vw; height:100vh }</code>; <code>player.css:8-25</code> <code>:root { overflow:hidden; --gap-size:0 }</code>.</li>
+<li><code>lib/css/shell/wikipedia.css:20-27</code> — same absolute full-viewport treatment as player.</li>
+<li><code>lib/css/shell/docs.css:89-92</code> — <code>.typeroof-main { overflow:auto; container-type: inline-size }</code>.</li>
+<li><code>lib/css/shell/main.css:1973</code> — <code>.typeroof-layout</code> included in the Meyer-reset selector.</li>
+<li><code>lib/css/shell/main.css:1174-1183</code> — <code>.typeroof-layout &gt; .actor_renderer-videoproof_array_v2 { padding-top: var(--gap-size); min-height: calc(100% - var(--gap-size)) }</code>.</li>
+</ul>
+</li>
+</ul>
+<h3><a id="2-motion-stage-player--editor" class="heading_anchor" href="#2-motion-stage-player--editor" aria-hidden="true">#</a>2. Motion-stage (player &amp; editor)</h3>
+<ul>
+<li><code>StageDOMNode</code> (<code>lib/js/components/actors/stage.mjs:18</code>):
+<ul>
+<li>Zoom types enum <code>['app-default','custom','25%','50%','75%','100%','150%','200%','automatic']</code> (<code>motion-stage.mjs:173-175</code>); <code>'app-default'</code> coerced to <code>'automatic'</code> only when the layout passes <code>automaticZoomDefault=true</code> (<code>stage.mjs:30-33</code>).</li>
+<li><code>'automatic'</code> → <code>ResizeObserver</code> on <code>widgetBus.wrapper.host</code> (<code>stage.mjs:51-56</code>); <code>_resizeFitToHost</code> (<code>stage.mjs:70-86</code>) letterbox-fits and sets <strong><code>host.style overflow:hidden</code> (:82)</strong> + transform on the stage node. <code>_stopResizeFitToHost</code> (<code>:59-68</code>) removes the styles; <code>destroy()</code> (:129) calls it.</li>
+<li>Non-automatic zoom → <code>transform: scale()</code> on the stage node (<code>:36-47</code>).</li>
+<li>Stage explicit size: <code>MotionStageModel</code> fields <code>width</code>/<code>height</code> (<code>motion-stage.mjs:263-264</code>, <code>StageSizeNumberModel</code> default 720 at :160-170, coherence default at :215-228), applied as px inline styles (<code>stage.mjs:140-146</code>).</li>
+</ul>
+</li>
+<li><code>StageHTML</code> (<code>motion-stage.mjs:496-563</code>): builds <code>containerElement</code> (classes <code>motion_stage</code>, <code>motion_stage-wrapper</code>) + <code>topLayerElement</code> (<code>motion_stage-layer-top</code>); remaps zones so <code>'parent-layer'</code> = <code>widgetBus.wrapper.host</code> = <code>.typeroof-layout</code> (:508).</li>
+<li>Two controllers: editor <code>MotionStageController</code> mounts StageHTML with <code>automaticZoomDefault=false</code> (:2652-2656); player <code>MotionStagePlayerController</code> with <code>true</code> (:2753-2757). Player registered via <code>main-player.mjs:32</code>; editor via <code>main-ui.mjs:29</code>.</li>
+<li>Stage background: <code>stageBackgroundColor</code> (actor model field <code>actors/models.mjs:165</code>; registered default opaque white <code>registered-properties.mjs:107-112</code>) applied via <code>actorApplyCSSColors</code> to <strong><code>.motion_stage-layer-top</code></strong> (<code>stage.mjs:160-165</code>) — not the host, not the <code>.motion_stage</code> container (which keeps the transparency checkerboard <code>::before</code>, <code>main.css:228-239</code>).</li>
+<li>Requirement “player must not show content outside the stage” is currently served by <code>overflow:hidden</code> on host (inline, :82) + <code>.motion_stage-wrapper { position:relative; overflow:hidden }</code> (<code>main.css:223-226</code>).</li>
+</ul>
+<h3><a id="3-type-stagederived-layouts-typestage-ramp-viewer" class="heading_anchor" href="#3-type-stagederived-layouts-typestage-ramp-viewer" aria-hidden="true">#</a>3. Type-stage–derived layouts (TypeStage, Ramp, Viewer)</h3>
+<ul>
+<li>Modules: <code>layouts/type-stage/index.typeroof.jsx</code> (base, exports at :628) and <code>layouts/ramp/index.typeroof.jsx</code> (imports type-stage pieces, no class inheritance, :27-41). Registered: editor <code>main-ui.mjs:67-68</code>; player registers <strong>TypeStage only</strong> (<code>main-player.mjs:56</code>).</li>
+<li><strong>No explicit sizing model</strong>: pure CSS. Editor half <code>&lt;div class=&quot;ui_prosemirror_host external_source&quot;&gt;</code> (<code>index.typeroof.jsx:219-221</code>); viewer half <code>&lt;article class=&quot;typeroof-document&quot;&gt;</code> (<code>viewer.typeroof.jsx:1144-1157</code>) — both mounted into zone <code>&quot;layout&quot;</code> (<code>index.typeroof.jsx:425-496</code>).</li>
+<li><code>.typeroof-document { height:fit-content; width:fit-content; ... }</code> (<code>type-stage.css:211-233</code>); <code>.ui_prosemirror_host, .typeroof-document { min-height:100% }</code> (<code>type-stage.css:5-11</code>); optional <code>generic/columnWidth</code> → pt width (<code>prosemirror/type-spec.typeroof.jsx:242-259</code>).</li>
+<li><strong>Side-by-side (“compare”) mode</strong>: <code>DocumentRendererModeModel</code> enum <code>[&quot;editor&quot;,&quot;viewer&quot;,&quot;compare&quot;]</code> (<code>components/document-renderer-mode/model.mjs:5-9</code>); activationTests in <code>index.typeroof.jsx:425-496</code>. Split is done <strong>only</strong> by the global flex rule <code>type-stage.css:201-209</code>; children size by content (no width percentages, no inline split). Ramp has no viewer → no side-by-side.</li>
+<li>Background color:
+<ul>
+<li>Editor: <code>ProseMirrorGeneralDocumentStyler</code> applies <code>${COLOR}backgroundColor</code> → <code>background-color</code> on the PM host (<code>type-stage/prosemirror.typeroof.jsx:20-53</code>, used at :129 and :192).</li>
+<li>Viewer per-node: <code>UIDocumentTypeSpecStyler</code> maps <code>backgroundColor</code> → each node’s outerElement (<code>prosemirror/type-spec.typeroof.jsx:323-339</code>).</li>
+<li><strong>Viewer gap confirmed</strong>: <code>UIDocumentViewer</code> constructor (<code>viewer.typeroof.jsx:1144-1184</code>) has no document-level styler on the <code>&lt;article&gt;</code>; zero <code>backgroundColor</code> references in <code>viewer.typeroof.jsx</code>. Root background is painted in the editor pane but never on the viewer container.</li>
+</ul>
+</li>
+</ul>
+<h3><a id="4-videoproof-layout--actors" class="heading_anchor" href="#4-videoproof-layout--actors" aria-hidden="true">#</a>4. Videoproof layout &amp; actors</h3>
+<ul>
+<li>Layout <code>layouts/videoproof.typeroof.jsx</code> restricts actors to <code>VideoproofArrayV2ActorModel</code> + <code>VideoproofContextualActorModel</code> (:116-129); actors registered in <code>components/actors/available-actors.mjs:33-59</code>.</li>
+<li><strong>Space measurement — all read the host directly, no ResizeObserver anywhere in videoproof:</strong>
+<ul>
+<li>Contextual: <code>_getAvailableDimensions()</code> reads <code>widgetBus.wrapper.host.offsetWidth/offsetHeight × 0.75</code> (px→pt) (<code>videoproof-contextual/index.typeroof.jsx:281-289</code>, with <code>// FIXME: got to do this via the properties system!</code> at :280). [Migration goal (decided): all <code>host.offsetWidth/offsetHeight</code> reads disappear; sizes flow through the <code>environment@</code> protocol handler as the clear in-app/in-graph source of truth — see Decisions.] Model width/height entries explicitly disabled (:557-563). Relayout keyed on <code>[widthPt, heightPt, gapEm, lineHeightEm, cellsStateKey]</code> (:291-353) — only re-runs on animation frames when the key changes.</li>
+<li>Array V2: same host read at <code>videoproof-array.mjs:1356</code> (comment: “should/must update on resize. It currently updates when the animation runs”). Grid math in <code>_getGridFontSize</code> (:1184-1287) iterates candidate row counts, fits by limiting dimension, emits <code>--font-size-pt</code> etc. consumed by <code>main.css:1185-1188</code>.</li>
+</ul>
+</li>
+<li><strong>“Single row” mechanism</strong>: <code>computeFontSizeAndLayout</code> (<code>videoproof-contextual/layout.mjs:142-199</code>) ends with <code>linesPerPage = Math.max(1, Math.floor(availableHeightPt / (fontSizePt*lineHeightEm)))</code> (:187-192). If the host measures ~0 (resize/hidden phase) or shrinks, the floor yields 0 → clamped to 1 line/page; similarly <code>availableWidthPt ≈ 0</code> makes every word its own line.</li>
+<li>Background color: V2 actor applies <code>stageBackgroundColor</code> → <code>--background-color</code> on its element (<code>videoproof-array.mjs:1403-1406</code>); contextual maps <code>--background-color</code>/<code>--cell-background-color</code>/<code>color</code> (<code>index.typeroof.jsx:576-579</code>, consumed <code>main.css:1019,1030-1033</code>); layout-level <code>VideoproofContainerStyler</code> (<code>videoproof.typeroof.jsx:1905-1941</code>) sets <code>background-color</code> on the layout container + a <code>--layout-specific-override-...</code> hack (see also :1571-1634 label contrast logic and <code>main.css:1015-1018</code>).</li>
+<li>Videoproof writes <strong>no inline styles</strong> on <code>.typeroof-layout</code>/<code>host</code> (host used read-only).</li>
+</ul>
+<h3><a id="5-dependency-injection--lifecycle-machinery-foundation-for-the-future-resize-injection" class="heading_anchor" href="#5-dependency-injection--lifecycle-machinery-foundation-for-the-future-resize-injection" aria-hidden="true">#</a>5. Dependency-injection &amp; lifecycle machinery (foundation for the future resize-injection)</h3>
+<ul>
+<li>Widget dependency lists (<code>['width','height','zoomLevel',['t','globalT'],'animationProperties@']</code>) are resolved by <code>ComponentWrapper.absPathDependencies</code> (<code>lib/js/components/basics/component.mjs:416-493</code>); change propagation via <code>StateComparison</code>/<code>changedMap</code> (<code>component.mjs:609-660, 1179-1273</code>).</li>
+<li><strong>Canonical environment-injection precedent</strong>: <code>AnimationTGenerator</code> (<code>lib/js/components/animation-t-generator.mjs:81</code>) is a widget that rAF-writes <code>t</code> <strong>into the model</strong> via <code>changeState</code> (:125) and declares model deps <code>['t','duration','playing','perpetual']</code>. A <code>ResizeObserver</code>→<code>changeState(hostWidth/hostHeight)</code> widget is structurally identical.</li>
+<li>Registered properties <code>width</code>/<code>height</code> already exist under <code>[NUMERIC]</code> (<code>registered-properties.mjs:63-65</code>) — but today they are document-owned (motion-stage stage size), not environment-owned.</li>
+<li>Protocol handlers (<code>animationProperties@</code>): <code>SimpleProtocolHandler</code> (<code>component.mjs:169-239</code>), installed per controller root (<code>motion-stage.mjs:2603-2605</code>, :2713-2716).</li>
+<li>Lifecycle: <code>ShellController._initUI</code> (<code>lib/js/shell.mjs:1073-1074</code>) creates the root widgetBus; <code>MainUIController</code> (<code>components/main-ui.mjs:76-186</code>) owns the zones and registers one widget per layout with <code>activationTest</code> on <code>activeState.WrappedType</code> (:143-167); layout switching destroys/creates controllers via <code>_BaseContainerComponent._provisionWidgets</code> (<code>component.mjs:1287-1324</code>). <code>MainUIController</code> is the only existing component that outlives layout switches and owns the zones — the natural place for a central layout-style/size widget.</li>
+</ul>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/zones.typeroof.jsx:10</code> — <code>.typeroof-layout</code> element; zone map :18-33</li>
+<li><code>lib/js/components/actors/stage.mjs:82</code> — the only inline <code>overflow:hidden</code> write on the host; removal :64; ResizeObserver :51-56</li>
+<li><code>lib/js/components/layouts/motion-stage.mjs:496-563</code> — StageHTML zone remap; controllers :2599/:2726; model width/height :263-265</li>
+<li><code>lib/css/shell/layout.css:36-44</code> — editor default container rule (overflow:auto)</li>
+<li><code>lib/css/shell/type-stage.css:201-209</code> — global flex for side-by-side + central-widget TODO comment</li>
+<li><code>lib/css/shell/player.css:35-42</code> / <code>wikipedia.css:20-27</code> — full-viewport container</li>
+<li><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx:1144-1184</code> — UIDocumentViewer, missing document-level background styler</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:323-339</code> — per-node viewer background</li>
+<li><code>lib/js/components/layouts/type-stage/prosemirror.typeroof.jsx:20-53</code> — editor background styler</li>
+<li><code>lib/js/components/actors/videoproof-contextual/index.typeroof.jsx:281-289</code> — host measurement + FIXME; layout clamp at <code>layout.mjs:187-192</code></li>
+<li><code>lib/js/components/actors/videoproof-array.mjs:1356-1360</code> — host measurement; grid fit :1184-1287</li>
+<li><code>lib/js/components/layouts/videoproof.typeroof.jsx:1905-1941</code> — VideoproofContainerStyler</li>
+<li><code>lib/js/components/animation-t-generator.mjs:81-125</code> — precedent for env→model injection</li>
+<li><code>lib/js/components/basics/component.mjs:416-493</code> — dependency resolution; :1287-1324 layout lifecycle; :169-239 protocol handlers</li>
+<li><code>lib/js/components/main-ui.mjs:76-186</code> — MainUIController owns zones/layout switching</li>
+<li><code>lib/js/components/registered-properties.mjs:63-65</code> — existing <code>width</code>/<code>height</code>/<code>t</code> registered properties</li>
+</ul>
+<h2><a id="decisions-from-follow-up-conversation" class="heading_anchor" href="#decisions-from-follow-up-conversation" aria-hidden="true">#</a>Decisions (from follow-up conversation)</h2>
+<ol>
+<li><strong>Environment sizes are NOT stored in the document model.</strong> Distribution via an <code>environment@</code>-style protocol handler (same channel as <code>animationProperties@</code>; <code>SimpleProtocolHandler</code>, <code>component.mjs:169-239</code>). Canonical internal unit = css-px. Naming decision: <strong><code>environment@</code>, not <code>hostSize@</code></strong> — general enough to also internalize viewport size, DPR, prefers-reduced-motion, color scheme, etc. into the metamodel DAG as declared dependencies. Rationale: the state is described by a metamodel that is a DAG driving the application; <code>environment@</code> internalizes dependencies on the external environment into that graph (this is the “graph” sense — not the gortex code graph).</li>
+<li><strong>One struct shape for length specs:</strong> <code>{value, unit}</code> (after <code>MarginUnitModel</code> precedent, <code>type-spec-models.mjs:112-144</code>), both mandatory, no inheritance gymnastics. Absolute units resolve without environment; relative units consume <code>environment@</code>. <strong>Naming (decided 2026-08-23):</strong> “Length” after CSS <code>&lt;length-percentage&gt;</code> — NOT “Dimension” (overloaded by grid/axes usage in the codebase), NOT “Size” (reads as a width+height box, cf. <code>StageSizeNumberModel</code>), and no “Spec” suffix (every model is a spec; precedents: <code>TypeSpecModel</code>, <code>MarginValueModel</code>, <code>StageZoomLevelModel</code>). Final: <code>LengthModel</code> / <code>LengthUnitModel</code> / <code>LengthValueModel</code> + <code>lengthIsSet</code>/<code>resolveLength</code>, module <code>lib/js/components/length-model.mjs</code>.</li>
+<li><strong>Pilot: <code>width</code>/<code>height</code> spec fields added in <code>createTypeStageModelVariantWithDefaults</code></strong> (<code>type-stage/index.typeroof.jsx:129-181</code>) — covers TypeStage, the test harness, and the Wikipedia variant; Ramp mirrors.</li>
+<li><strong>Unit bases resolve against the FULL host element (<code>.typeroof-layout</code>) or the browser viewport — never per-pane.</strong> In compare mode, editor + viewer each resolve against the full host; 2×100% means sum = 200% and the host scrolls horizontally (existing <code>overflow:auto</code> behavior, <code>layout.css:36-44</code>). No split ratio in the model, no per-pane percentage bases. Meanings must not shift when switching modes.</li>
+<li><strong>Migration over legacy behavior:</strong> no legacy <code>fit-content</code> fallback — all type-stage documents move to the explicit spec.</li>
+<li><strong>Explicit vs. implicit sizing semantics:</strong>
+<ul>
+<li>Unset size (e.g. no <code>height</code> set) → dimension implicitly <strong>grows to fit content</strong>, so the document surface always covers its content (ties to the background-color task: color must cover the grown surface).</li>
+<li>Set size → definite box; overflow is visible (<code>overflow: visible</code> effect), clearly distinguishing “document box” from “host box”.</li>
+<li><strong>Boundness rule per dimension (type-stage, current): width MUST be set to a bound value; height MAY be unset (then it grows).</strong> Both unset is <strong>not an option</strong> — enforced by a <strong>coherence function</strong> (precedent: the width/height defaulting coherence in <code>motion-stage.mjs:215-228</code>; the spec struct’s coherence must guarantee: width set ∧ (height set ∨ unset)).</li>
+<li><strong>Future relaxation (recorded, not implemented):</strong> width may be unbound <em>only if</em> height is set; both-unset remains never valid. The coherence function must already be written to enforce the general invariant “at least one dimension bound” so the future rule is admissible without model migration.</li>
+</ul>
+</li>
+<li><strong>Zoom and size are distinct, and motion-stage stays fixed pixel-size for now.</strong> Zoom is display-scaling; the dimension-spec system is document-sizing. Responsive motion-stage “videos” are a future possibility, but that would require all downstream units inside the stage coordinate system to catch up (everything inside measures in stage px, e.g. <code>VideoproofArrayV2</code> fits fonts in pt derived from a px stage) — explicitly out of scope. <strong>So motion-stage keeps its fixed pixel width/height model</strong> (<code>MotionStageModel</code> fields, <code>motion-stage.mjs:263-265</code>) and does not adopt the spec units now.</li>
+<li><strong>Videoproof is derived from motion-stage but has different semantics.</strong> It imports its animation machinery from motion-stage (<code>initAnimanion</code>, <code>UITimeControl</code>, <code>videoproof.typeroof.jsx:95</code>) and similarly renders animanion-based actors into the layout zone — <strong>but</strong> its model has no explicit stage size: “a default motion-stage configuration can do what I need” (comment, <code>videoproof.typeroof.jsx:957</code>). Its actors are <strong>host-fill by design</strong> (array/contextual measure the full host and fit content into it, unlike a fixed-size motion stage), and its stage background colors the <em>host-filling container</em>, not a letterboxed stage layer. Implication: when the dimension-spec system exists, videoproof’s correct expression is <code>width: 100%host, height: 100%host</code> (or unset/grow for height) — i.e. it becomes the natural second consumer of the spec system after type-stage; motion-stage itself may stay px-fixed.
+8a. <strong>Document-internal readers MAY consume <code>environment@</code>; the boundary that must not leak is the comparison layout itself:</strong> <code>environment@</code>'s keys always describe the <em>whole</em> shell box (<code>layout</code> = full <code>.typeroof-layout</code>) — side-by-side panes (2× width in compare mode) are a <em>document-driven use of</em> the host space, not a property <em>of</em> the environment. Therefore: (1) environment units stay comparison-agnostic; (2) any document-internal reader of <code>environment@</code> (e.g. a future relative <code>columnWidth</code>) gets the same comparison-agnostic values; (3) per-pane identifiers remain rejected — not because readers can’t see the environment, but because the environment has no panes. The pane split (and its 200% overflow) is expressed by the surface spec fields + CSS, never by environment values.</li>
+</ol>
+<p>8b. <strong>App coverage for <code>environment@</code>:</strong> the protocol must be installed in <strong>both shells that host layouts</strong> — the editor shell (<code>main-ui.mjs</code>, <code>MainUIController</code>) <strong>and <code>app/player</code></strong> (<code>main-player.mjs</code> / <code>MotionStagePlayerController</code> chain) — so player-mode layouts receive the same keys. Central mount point: each shell’s root UI controller (the component that owns <code>createAndGetDefaultZones</code>); do NOT rely on per-layout controllers installing it, else player-only shells (player, wikipedia) would lack the provider.</p>
+<p>8b. <strong>Ramp + Wikipedia variant (confirmed):</strong> Ramp inherits the width/height spec fields (single pane, full host). The Wikipedia variant (<code>wikipedia/main.mjs:38</code>, using the same factory) follows type-stage rules; its shell just additionally pins <code>.typeroof-layout</code> to 100vw/100vh (<code>wikipedia.css:20-27</code>). <code>screen</code>, <code>viewport</code>, <code>layout</code>, plus <code>dpr</code> from day one. <code>screen</code> = the physical screen (<code>window.screen.width/height</code>, e.g. for fullscreen/kiosk scenarios); <code>viewport</code> = browser viewport (<code>window.innerWidth/innerHeight</code>); <code>layout</code> = the <code>.typeroof-layout</code> host element box. All three publish <strong>css-pixels</strong> (<code>devicePixelRatio</code> does not apply; css-px is canonical). <code>dpr</code> publishes the <em>device</em> pixel ratio (<code>window.devicePixelRatio</code>) — carefully kept separate from the size keys because impera combining “sizes are css-px” with “dpr exists” otherwise invites confusion: css-px × dpr = physical device px. Since percentages resolve against the full host (decision 4), a single <code>layout</code> key covers compare mode; per-pane identifiers remain unnecessary.</p>
+<ul>
+<li>Value shape per key: <code>{width, height}</code> for <code>screen</code>/<code>viewport</code>/<code>layout</code>; a number for <code>dpr</code>. (Shape detail, open for implementation.)</li>
+<li>Publication rhythm (confirmed): provider publishes on resize / orientationchange / dpr-change. <strong>dpr must notify on every change</strong> (browser zoom, monitor-move between densities, orientation) — implemented via the <code>matchMedia('(resolution: Xdppx)')</code> re-subscription loop (query built from current dpr; on fire: read new value, publish, re-subscribe) plus <code>resize</code>/<code>orientationchange</code> as secondary triggers.</li>
+<li><strong>Burst batching (decided):</strong> environment events arrive in bursts (monitor move fires resize + orientation + dpr together). Provider handlers only mark keys dirty and schedule <strong>one rAF flush</strong> (not a timed debounce — no added latency, no risk of missing settled state). Flush reads all values fresh, diffs against cache, marks changed keys once. Flush must trigger the app update cycle via the lightest available root hook (<code>shell.mjs:1078-1084</code> updateState/withChangeState area) — mechanism pinned during implementation. Continuous resize publishes per frame; consumers rely on <code>changedMap</code> relevance filtering as usual.</li>
+<li>Shell coverage (confirmed): provider + protocol installed in editor (<code>main-ui.mjs</code>), player (<code>main-player.mjs</code>), and wikipedia (<code>wikipedia/main.mjs</code>) shells — same for Phase 0’s ClassesAndStylesManager.</li>
+<li><strong>Migration default for existing type-stage documents (decided):</strong> width = 100% layout, height = empty (grows). Matches the viewer’s effective current behavior (full-width pane, content height); makes the editor pane bounded — the intended semantic change.</li>
+<li><strong>css-px semantics (corrected):</strong> css-px = the browser’s own CSS pixel (device-pixels ÷ dpr, whatever the browser computes) — NOT anchored to any physical size by us. Setting <code>style.width = ${layout.width}px</code> yields exactly the measured box. Absolute units (<code>pt</code>, <code>cm</code>, <code>mm</code>, <code>in</code>) convert to css-px via CSS’s fixed ratios (96 px/in) for JS-side math; where possible pass CSS strings through and let the browser resolve. <code>dpr</code> is a propagation <strong>stub for later use</strong>, not part of sizing math now.
+<ul>
+<li><em>Fit document to device</em> → <code>%</code> of <code>viewport</code>; <strong><code>layout ≈ viewport</code></strong> in player/full-viewport shells (<code>player.css</code> sets the host to 100vw/100vh), so for the player the two are interchangeable and <code>layout</code> (always available, even in embedded/iframed shells) is the more semantic base.</li>
+<li><em>Physical sizes</em> → absolute units (<code>mm</code>, <code>cm</code>, <code>in</code>) resolve at CSS’s fixed 96 px/in — sufficient for portably similar rendering; on high-dpr phones the result is slightly physically wrong (css-px is angular, phones are held closer) — acceptable, allows following the CSS convention rather than inventing our own.</li>
+<li><em>Readable-type rules</em> (“never render below N device-px”) → <code>dpr</code> covers it.</li>
+<li><em>Safe-area</em> (notches, dynamic toolbars: dvh/svh/lvh in CSS) → <strong>alternative measure</strong> of the same viewport box plus inset edges; <strong>not an additional unit</strong> — add as future keys (e.g. <code>viewportSafe</code> + inset edges) only when a consumer needs it.</li>
+<li><em>Orientation</em> → derivable from <code>viewport</code> width vs height; no key needed.
+Conclusion: no new units needed for mobile; <code>screen</code>/<code>viewport</code>/<code>layout</code>/<code>dpr</code> suffice. Remaining caveat is the absolute-unit pixel-definition (92% of… nothing, it’s CSS’s 96dpi), confirmed acceptable.</li>
+</ul>
+</li>
+</ul>
+<h3><a id="threads-as-named-in-conversation" class="heading_anchor" href="#threads-as-named-in-conversation" aria-hidden="true">#</a>Threads (as named in conversation)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Thread</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3</td>
+<td>Per-layout “appropriate” matrix (design decisions for all layouts)</td>
+<td><strong>nearly complete</strong> — decisions 4, 5, 6, 7 define it for type-stage (edit/view/compare incl. 200% overflow rule), motion-stage (px-fixed + separate zoom), videoproof (host-fill → <code>100%</code> specs). Remaining: formal matrix confirmation; the per-pane measurement nuance in compare mode.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Size injection via <code>environment@</code> protocol handler (end goal)</td>
+<td><strong>SOUNDLY SPECIFIED — concluded. Initial keys <code>screen</code>/<code>viewport</code>/<code>layout</code>/<code>dpr</code>, css-px everywhere, no new units needed for mobile. Future: safe-area keys. Implementation not planned yet.</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Length <code>{value, unit}</code> shape (named <code>LengthModel</code>, decision 2) + pilot in <code>createTypeStageModelVariantWithDefaults</code></td>
+<td>specified (decisions 2, 3)</td>
+</tr>
+<tr>
+<td>1</td>
+<td>Unified container styling (central widget vs scoped CSS; absorb <code>stage.mjs:82</code> inline write)</td>
+<td>open</td>
+</tr>
+<tr>
+<td>-</td>
+<td>Viewer background gap (<code>UIDocumentViewer</code> document-level styler)</td>
+<td>open, small</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Videoproof contextual single-row</td>
+<td>deferred — expected to fall out of environment@ + guard (host ~0×0)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Execution direction so far:</strong> matrix → container-style widget → environment@ provider → consumers migrate (contextual falls out) → viewer background fix anywhere along the way.</p>
+<h3><a id="thread-4-decisions--container-styling-from-conversation" class="heading_anchor" href="#thread-4-decisions--container-styling-from-conversation" aria-hidden="true">#</a>Thread 4 decisions — container styling (from conversation)</h3>
+<ul>
+<li><strong>D1 (mechanism) — hybrid, minimal core:</strong> a central <strong>LayoutContainerController</strong> (one per shell root <code>MainUIController</code>; editor + player + wikipedia) that owns <code>.typeroof-layout</code> and:
+<ol>
+<li><strong>centrally sets exactly one class for the currently active layout</strong> (class derived from the layout registry key; set on activation, removed on destroy — absorbing the global <code>type-stage.css:201-209</code> hack into <code>.typeroof-layout--&lt;key&gt; { ... }</code> rules);</li>
+<li>exposes a <strong>small dynamic API</strong> (<code>setStyle</code>/<code>setClass</code>-like + reset) for runtime-conditional cases (e.g. the zoom-driven <code>overflow:hidden</code> from <code>stage.mjs:82</code>). The custom-class part of the API also allows behavior changes without new CSS plumbing — API is “nice to have” but part of the design.</li>
+</ol>
+</li>
+<li><strong>Per-layout container refinement (replaces stack-scoping):</strong> the LayoutContainerController <strong>creates a container element per layout</strong> and attaches the class/styles to <em>that</em> container, not directly to <code>.typeroof-layout</code>. Chained layouts then nest naturally — each wrapped layout gets its own styled container; destroy of one layout only ever tears down its own container. <code>.typeroof-layout</code> itself becomes a pure shell-owned box (shell CSS only; no layout-specific state on it at all). Zone wiring: the controller is the widget holding the <code>&quot;layout&quot;</code> zone; its per-layout containers become the zone targets handed to layout controllers (zone map remap: <code>new Map([...zones, ['layout', perLayoutContainer]])</code> — same remap pattern as <code>StageHTML</code> in <code>motion-stage.mjs:508</code>). Applies uniformly in editor/player/wikipedia shells.</li>
+<li><strong>Consequence for <code>environment@</code>:</strong> <code>layout</code> key = the <code>.typeroof-layout</code> box (full host, per decision 4). Per-layout-container sizes are <em>not</em> published initially — they equal <code>layout</code> except where CSS constrains them (e.g. compare flex). Add per-container keys only when a concrete consumer needs them.</li>
+<li><strong>D2 (placement):</strong> sibling of the future <code>environment@</code> ResizeObserver provider, both mounted at the <strong>top-level shell MainUIController</strong> (editor shell and player shell independently; <code>wikipedia/main.mjs</code> too). The container-style controller itself does <strong>not</strong> contain the ResizeObserver — strict separation of concerns (style manager vs. environment publisher).</li>
+<li><strong>Access &amp; ownership model (corrected):</strong> the manager is a <code>_BaseComponent</code> loaded as a regular widget in <code>MainUIController</code>, constructed with the layout-zone element as arg. It is <strong>NOT passed to layout controllers</strong> via constructor/registry wiring. Instead it is discoverable <strong>by widgetBus-id</strong> — registered with <code>{id: ...}</code> in the shell’s widget array and looked up via <code>widgetBus.getWidgetById(...)</code> (existing precedent: <code>IDRegistry</code> as <code>'dom-global-id-registry'</code>, <code>main-ui.mjs:93</code>, <code>main-player.mjs:245</code>, <code>wikipedia/main.mjs:195</code>; lookup pattern at <code>dom-helpers.mjs:23</code>). Contract: any layout controller that uses it <strong>must reset it</strong> on its own destroy (user-owned reset; the manager does not track contributors).</li>
+<li><strong>D3 (overflow precedence, explicit three tiers):</strong> shell CSS base (e.g. editor <code>overflow:auto</code>, <code>layout.css:36-44</code>) → layout class overrides (e.g. <code>.typeroof-layout--motion-stage { overflow:hidden }</code> if we go that way) → dynamic API writes last (zoom-driven). This ordering must be documented in the component and in the CSS comments.</li>
+<li><strong>D4 (player clipping) — deferred:</strong> whether the player’s clip guarantee moves from the inline <code>overflow:hidden</code> write into a static layout class (and whether <code>.motion_stage-wrapper { overflow:hidden }</code>, <code>main.css:223-226</code>, is visually sufficient) is left open until implementation; classes are expected to “help a lot”, dynamic API remains available if needed.</li>
+</ul>
+<h2><a id="open-questions-to-settle-before-planning" class="heading_anchor" href="#open-questions-to-settle-before-planning" aria-hidden="true">#</a>Open Questions (to settle before planning)</h2>
+<ol>
+<li><strong>Definition of “appropriate” per layout</strong> — proposed reading of the current code:
+<ul>
+<li>motion-stage editor: host scrolls (<code>overflow:auto</code>), stage keeps explicit size → container <em>adapts to</em> stage, not vice versa.</li>
+<li>motion-stage player: host = viewport, stage letterbox-fits, host must clip (<code>overflow:hidden</code>).</li>
+<li>type-stage editor/viewer/compare: host is a measured flex box; each pane covers ≥ full height (<code>min-height:100%</code>) and colors itself; background should cover the <em>pane</em>, not the container.</li>
+<li>videoproof: host = measurement source; actors expect host size = usable space; container background should fill the whole host even when content is smaller.
+Confirm/correct this matrix per layout.</li>
+</ul>
+</li>
+<li><strong>Where should the container’s own background live</strong> when the stage doesn’t cover it (motion-stage letterbox bars, videoproof short content)? Today: nowhere (host is transparent; <code>.typeroof-main</code> background shows through).</li>
+<li><strong>Viewer background fix</strong>: add a document-level styler to <code>UIDocumentViewer</code> mirroring <code>ProseMirrorGeneralDocumentStyler</code>, or generalize the styler to serve both panes?</li>
+<li><strong>Interim step vs. end goal</strong>: is a small <code>LayoutStyleManager</code>-style widget (mounted by <code>MainUIController</code>, API: set/reset classes+inline styles on <code>.typeroof-layout</code>) wanted now — matching the existing TODO comment — or are scoped CSS classes per layout (e.g. <code>.typeroof-layout--motion-stage</code>) enough for the first unification pass?</li>
+<li><strong>Contextual single-row</strong>: should the fix be part of this work (guard against degenerate measurements / subscribe to real resize events) or deferred to the central-size-injection milestone?</li>
+<li><code>StageDOMNode</code>’s inline <code>overflow:hidden</code> on the host conflicts with the editor’s <code>overflow:auto</code> default — is automatic-zoom ever active in the editor shell (it sets <code>automaticZoomDefault=false</code>, but a user can still pick ‘automatic’ in the zoom enum)?</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

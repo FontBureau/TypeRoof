@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-style-link-inheritance-in-typespecs-via-the-typespecnion" class="heading_anchor" href="#research-style-link-inheritance-in-typespecs-via-the-typespecnion" aria-hidden="true">#</a>Research: Style-Link Inheritance in TypeSpecs via the TypeSpecnion</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>The feature to implement: <strong>inheritance of style-links in TypeSpecs via the
+typeSpecnion</strong>. Requirements stated by the operator:</p>
+<ul>
+<li>Style-links must propagate down the TypeSpec parent/child tree.</li>
+<li>Propagation must be stoppable: a <strong>tombstone/null value</strong> explicitly stops
+inheritance. An explicit NULL-STYLE already exists, so it is “rather a
+matter of not propagating the link when that value is set”.</li>
+<li>A child entry can <strong>override</strong> an existing (inherited) value.</li>
+<li>Reference points: the just-archived rpi plans (commit <code>cd05af51</code>) and
+<code>lib/js/components/layouts/type-stage/properties-generators.mjs</code>.</li>
+</ul>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<ul>
+<li><strong>Style-links are edges</strong> stored per TypeSpec in <code>TypeSpecModel.stylePatches</code>
+(a <code>StylePatchLinksMapModel</code>, <code>type-spec-models.mjs:402</code>). The <strong>edge key</strong>
+is the link name (matched against a mark’s <code>data-style-name</code>); the <strong>edge
+value</strong> is a <code>StylePatchLinkModel</code> struct <code>{stylePatch, type, tag, mark}</code>
+where <code>stylePatch</code> is a nullable key into the global <code>StylePatchesMapModel</code>
+and <strong><code>''</code> is the explicit NULL-STYLE</strong> (<code>type-spec-models.mjs:291</code>,
+<code>type-spec-fundamentals.mjs:192</code>).</li>
+<li><strong>Resolution is local-only today</strong>: <code>getStylePatchLinkForMark</code> /
+<code>getStylePatchTagForIntent</code> (<code>type-spec-models.mjs:410-437</code>) look only at
+the node’s own <code>stylePatches</code> map; the parent’s edges are never consulted.</li>
+<li><strong>The typeSpecnion already implements exactly the required inheritance
+mechanics</strong> for scalar properties: <code>HierarchicalScopeTypeSpecnion</code>
+(<code>type-specnion.mjs:245</code>) merges <em>filtered parent properties</em> under <em>local
+properties</em> — local wins (<code>type-specnion.mjs:329-334</code>) — gated by an
+<code>isInheritingPropertyFn</code> (<code>registered-properties.mjs:382</code>).</li>
+<li><strong>Null semantics already exist in two flavors</strong> (<code>type-specnion.mjs</code>):
+a literal local <code>null</code> <em>shadows</em> the parent value (tombstone-like), while
+a <code>SyntheticValue</code> that <em>resolves to</em> <code>null</code> is deleted and lets
+inheritance through (<code>:154-168</code>). Generators use <code>yield [path, null]</code> as
+a local placeholder only when the parent lacks the path
+(<code>properties-generators.mjs:139,182</code>).</li>
+<li><strong>This feature was explicitly postponed</strong> in the archived semantic-marks
+plan: <em>“Resolution (edge visibility at a node) walks up the TypeSpec parent
+chain; children override by redefining the same edge key — follows the
+existing typeSpecnion inheritance pattern.”</em> (operator decision 2026-07-28,
+<code>docs/planning/agentic-artefacts/thoughts/plan/2026-07-26-2130-prosemirror-semantic-marks.md:335-341</code>).</li>
+<li><strong>Runtime application of a style-link</strong> happens in
+<code>StyleLinkLiveProperties</code> (<code>live-properties.typeroof.jsx:257-318</code>): the
+linked StylePatch’s <code>propertyValuesMap</code> is merged over the TypeSpec’s
+typeSpecnion via <code>createPatched()</code> and published as a
+<code>styleLinkProperties@</code> protocol handler, consumed by the type-stage viewer
+and the ProseMirror stylers.</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-the-style-link-data-layer-what-would-be-inherited" class="heading_anchor" href="#1-the-style-link-data-layer-what-would-be-inherited" aria-hidden="true">#</a>1. The style-link data layer (what would be inherited)</h3>
+<ul>
+<li><code>StylePatchKeyModel</code> / <code>StylePatchKeysModel</code> / <code>StylePatchLinkModel</code> /
+<code>StylePatchLinksMapModel</code> — <code>lib/js/components/type-spec-models.mjs:264-313</code>.
+<code>StylePatchLinkModel</code> (:296) has field <code>['stylePatch', StylePatchKeyModel]</code>
+plus sanitized link-target attrs via <code>sanitizeStylePatchLink({type, tag, mark})</code>
+(:304). The edge struct gained <code>type</code> (<code>generic-tag</code>|<code>mark</code>) + <code>tag</code>/<code>mark</code>
+in the semantic-marks plan (edge-located typed target, decided 2026-07-28).</li>
+<li>Comment block documenting the concept at <code>type-spec-models.mjs:266-294</code>:
+<em>“This links the StylePatches from the StylePatchesMapModel into the
+TypeSpecs”</em>; <code>:291</code>: <code>stylePatch: key into the StylePatchesMapModel (&quot;&quot; = NULL-STYLE)</code>.</li>
+<li><code>TypeSpecModel</code> struct — <code>type-spec-models.mjs:377-402</code>:
+<ul>
+<li><code>:389</code> — <code>['children', ... TypeSpecModelMap]</code> recursive self-reference:
+<strong>this is the parent/child tree the inheritance must walk</strong>.</li>
+<li><code>:391</code> — <code>['stylePatchesSource', InternalizedDependency]</code>.</li>
+<li><code>:402</code> — <code>['stylePatches', StylePatchLinksMapModel]</code>: the style-links field.</li>
+<li><code>:396-399</code> — comment: “if the key does not exist it’s a null style, no
+need to set null” (current local-only semantics; inheritance changes the
+meaning of an <em>explicit</em> <code>''</code> from “no link” to “stop propagation”).</li>
+</ul>
+</li>
+<li>Local-only resolvers:
+<ul>
+<li><code>getStylePatchLinkForMark(stylePatches, mark)</code> — <code>type-spec-models.mjs:410-424</code>.</li>
+<li><code>getStylePatchTagForIntent(stylePatches, styleName)</code> — <code>type-spec-models.mjs:426-437</code>.</li>
+</ul>
+</li>
+<li>NULL-STYLE in the UI: <code>EMPTY_STYLE_LINK_LABEL = '(NULL-STYLE)'</code>
+(<code>type-spec-fundamentals.mjs:192</code>), wired as allowNull option
+<code>[true, EMPTY_STYLE_LINK_LABEL, '']</code> at <code>:282</code> and <code>:607</code> — confirming the
+<strong>model value of NULL-STYLE is the empty string <code>''</code></strong>.</li>
+</ul>
+<h3><a id="2-the-typespecnion-inheritance-machinery-the-vehicle" class="heading_anchor" href="#2-the-typespecnion-inheritance-machinery-the-vehicle" aria-hidden="true">#</a>2. The typeSpecnion inheritance machinery (the vehicle)</h3>
+<p>Name: portmanteau “TypeSpec + Onion” — stacked layers, inner layers read
+outer layers (<code>type-specnion.mjs:237-243</code>). All in
+<code>lib/js/components/layouts/type-stage/type-specnion.mjs</code>:</p>
+<ul>
+<li><code>_BaseTypeSpecnion</code> (:11) — lazy throwing getters for
+<code>_localPropertyValuesMap</code>/<code>_propertyValuesMap</code>; <code>getProperties()</code> (:50),
+<code>getOwnProperty(name, default)</code> (:53, local-only), <code>localPropertyNames</code> (:63).</li>
+<li><code>LocalScopeTypeSpecnion</code> (:75) — statics only: <code>propertiesGenerator</code> (:174)
+runs all generators chained, exposing <code>outerTypespecnionAPI</code> with
+<code>hasParentProtperty</code>/<code>getParentProperty</code> bound to the parent map (:179-186);
+<code>initPropertyValuesMap</code> (:194) resolves synthetics;
+<code>resolveSyntheticProperties</code> (:76-172).</li>
+<li><code>HierarchicalScopeTypeSpecnion</code> (:245) — constructor
+<code>(propertiesGenerators, typeSpec, parentTypeSpecnionOrTypeSpecDefaultsMap, isInheritingPropertyFn = null)</code> (:246-251). Root gets a defaults map
+instead of a parent (:257-260).</li>
+<li><code>PatchedTypeSpecnion</code> (:203) — created by <code>createPatched( stylePatchPropertyValuesMap)</code> (:281-287); merges patch <strong>on top of raw
+properties before synthetic resolution</strong> (:215-225), so synthetics
+depending on patched keys recompute.</li>
+</ul>
+<p>Inheritance merge (eager, at construction):</p>
+<pre class="language-js"><code class="language-js"><span class="token comment">// type-specnion.mjs:329-334 — "All properties in local override properties in parent"</span>
+propertyValuesMap <span class="token operator">=</span> <span class="token function">mapSetProperties</span><span class="token punctuation">(</span>
+    <span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    filteredParentPropertyValuesMap<span class="token punctuation">,</span>   <span class="token comment">// parent, inheriting keys only</span>
+    localPropertyValuesMap<span class="token punctuation">,</span>            <span class="token comment">// local wins on key collision</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<ul>
+<li>Parent filter: <code>_getParentMaps</code> (:297-313) filters the parent’s merged map
+through <code>_isInheritingProperty</code> (:289-295; default: everything inherits).</li>
+<li>The injected <code>isInheritingPropertyFn</code> lives at
+<code>lib/js/components/registered-properties.mjs:382</code>.</li>
+<li>Merge primitive: <code>mapSetProperties</code> (:4-9) — later sources overwrite
+earlier keys in one <code>Map</code>.</li>
+</ul>
+<p>SyntheticValue arg resolution precedence (:140-153): 1) already-resolved
+local, 2) parent map, 3) unresolvable → drop. If <strong>zero</strong> local dependencies
+or not all args resolve, the synthetic is dropped (<code>:154-162</code>), confirmed by
+<code>type-specnion.test.mjs:6-38</code>.</p>
+<p>Instantiation sites:</p>
+<ul>
+<li><code>live-properties.typeroof.jsx:75</code> — child layer per TypeSpec node
+(<code>parentProperties.typeSpecnion</code> as parent).</li>
+<li><code>live-properties.typeroof.jsx:102</code> — root layer with <code>typeSpecDefaultsMap</code>.</li>
+<li><code>live-properties.typeroof.jsx:308</code> — style-link patch application via
+<code>createPatched(...)</code> (only when the patch map is non-empty, :306-311).</li>
+</ul>
+<h3><a id="3-nulltombstone-semantics-that-already-exist" class="heading_anchor" href="#3-nulltombstone-semantics-that-already-exist" aria-hidden="true">#</a>3. Null/tombstone semantics that already exist</h3>
+<p>Two distinct behaviors in <code>type-specnion.mjs</code>:</p>
+<ol>
+<li><strong>Literal local <code>null</code> shadows the parent.</strong> There is no null-check in
+<code>_getParentMaps</code>/<code>_initPropertyValuesMaps</code>; a local <code>null</code> entry is set
+into the merged map like any value and therefore <strong>overrides</strong> the
+inherited value. Generators exploit this as “optional, not set” placeholders:
+<ul>
+<li><code>languageTagGen</code> — <code>properties-generators.mjs:124-141</code>: yields
+<code>[path, null]</code> for empty subtags <strong>only if</strong> <code>!outerTypespecnionAPI.hasParentProtperty(path)</code>;
+comment: “null will also not be inherited.”</li>
+<li><code>marginsGen</code> — <code>properties-generators.mjs:175-184</code>: “same rationale as
+in languageTagGen”.
+These are the only two <code>yield [..., null]</code> sites in <code>lib/js</code>.</li>
+</ul>
+</li>
+<li><strong>Synthetic resolving to <code>null</code> is deleted</strong> (<code>type-specnion.mjs:164-168</code>),
+so it does <em>not</em> shadow the parent — inheritance passes through.</li>
+</ol>
+<p>Related metamodel primitives:</p>
+<ul>
+<li><code>ForeignKey.NULL</code> — <code>lib/js/metamodel/foreign-key.ts:44-85</code>
+(<code>FOREIGN_KEY_NULL = Symbol(&quot;NULL&quot;)</code>); <code>metamodel.mjs</code> is now a one-line
+re-export of <code>metamodel/metamodel.ts</code>.</li>
+<li>Link resolution returns <code>ForeignKey.NULL</code> for unset keys —
+<code>lib/js/metamodel/struct-model.ts:1466-1483</code> (<code>_getLink</code>), init-time at
+<code>:1013-1030</code>; consumer check pattern: <code>font !== ForeignKey.NULL</code>
+(<code>properties-generators.mjs:30-37</code>).</li>
+<li><code>FallBackValue</code>: primary wins, fallback only when primary is
+<code>ForeignKey.NULL</code> — <code>struct-model.ts:1047-1059</code>.</li>
+</ul>
+<p><strong>Implication for the feature:</strong> the “explicit NULL-STYLE stops propagation”
+requirement maps onto behavior (1): a child edge whose <code>stylePatch</code> value is
+<code>''</code> (NULL-STYLE) must be treated as a <em>set</em> entry that shadows the parent’s
+edge of the same key — not as an absent entry. Today’s local-only comment
+“if the key does not exist it’s a null style, no need to set null”
+(<code>type-spec-models.mjs:396-399</code>) describes exactly the semantic that
+inheritance will change: an <em>explicit</em> <code>''</code> gains override power (it stops
+the inherited patch link). NOTE, clarified 2026-07-30 (see Addendum): <code>''</code>
+is NOT the tombstone – the tombstone removes the edge entirely (state 3),
+while <code>''</code> keeps it available-but-unstyled (state 2).</p>
+<h3><a id="4-runtime-application-of-style-links-consumers-of-resolution" class="heading_anchor" href="#4-runtime-application-of-style-links-consumers-of-resolution" aria-hidden="true">#</a>4. Runtime application of style-links (consumers of resolution)</h3>
+<ul>
+<li><code>StyleLinkLiveProperties</code> — <code>live-properties.typeroof.jsx:257-318</code>:
+<code>update()</code> merges the style patch’s <code>propertyValuesMap</code> via
+<code>typeSpecProperties.typeSpecnion.createPatched(...)</code> (:288-318) and
+publishes the <code>styleLinkProperties@</code> protocol handler.</li>
+<li><code>StyleLinksMeta</code> — <code>layouts/type-stage/meta.typeroof.jsx:55-200</code>: dynamic
+map container registering per-edge <code>styleLinkProperties@</code> handlers (:78,:90);
+comment at :72: “key is an empty string in case of (NULL-STYLE)”.</li>
+<li>Protocol-handler creation/registration: <code>layouts/type-stage/index.typeroof.jsx:219,519,531</code>;
+also <code>layouts/ramp/index.typeroof.jsx:287,440,452</code>.</li>
+<li>Consumers:
+<ul>
+<li>type-stage viewer: <code>viewer.typeroof.jsx:262-366</code> (<code>_createStylerWrapper</code>,
+<code>_getStyleLinkPropertiesId</code>; null → plain wrapper).</li>
+<li>ProseMirror: <code>prosemirror/type-spec.typeroof.jsx:865-905, 922-968, 1425-1471</code> (<code>_getStyleLinkPropertiesId</code>, <code>_createStyleStylerWrapper</code>,
+subscription swap when the id changes); <code>_finalizeMarkSubscription</code>
+(:911) resolves <code>data-style-name</code> → edge key → StylePatch properties.</li>
+</ul>
+</li>
+<li>Chain walker example: <code>type-spec.typeroof.jsx:143-155</code> walks
+<code>parentTypeSpecnion</code> chains calling <code>getProperties()</code>.</li>
+</ul>
+<h3><a id="5-prior-decision-record-archived-plans" class="heading_anchor" href="#5-prior-decision-record-archived-plans" aria-hidden="true">#</a>5. Prior decision record (archived plans)</h3>
+<ul>
+<li><code>docs/planning/agentic-artefacts/thoughts/plan/2026-07-26-2130-prosemirror-semantic-marks.md</code>
+<ul>
+<li>:184-204 — “TypeSpecs style nodes; StylePatches style marks. The link is
+the edge.” Edge key matched against <code>data-style-name</code>; edge value =
+key into global <code>stylePatches</code> map (nullable, “FOREIGN_KEY_NO_ACTION”).</li>
+<li>:309-333 — DECIDED (2026-07-28): edge-located typed target; edge struct
+gains <code>type</code> (<code>generic-tag</code>|<code>mark</code>) + <code>tag</code>/<code>mark</code>.</li>
+<li>:335-341 — <strong>Postponed: Style-link inheritance through the TypeSpec
+parent tree.</strong> Operator decision (2026-07-28): resolution walks up the
+TypeSpec parent chain; children override by redefining the same edge key;
+follows the existing typeSpecnion inheritance pattern. Motivation:
+document-wide defaults + local overrides for style→tag binding.</li>
+</ul>
+</li>
+<li><code>docs/planning/agentic-artefacts/thoughts/plan/2026-07-29-2234-editable-element-attr-replay.md:96</code>
+— confirms style-link inheritance still postponed as of 2026-07-29.</li>
+</ul>
+<h3><a id="6-properties-generatorsmjs--patterns-relevant-to-the-implementation" class="heading_anchor" href="#6-properties-generatorsmjs--patterns-relevant-to-the-implementation" aria-hidden="true">#</a>6. properties-generators.mjs — patterns relevant to the implementation</h3>
+<p><code>lib/js/components/layouts/type-stage/properties-generators.mjs</code> (400 lines)
+defines the generator pipeline (<code>TYPE_SPEC_PROPERTIES_GENERATORS</code> :330-343,
+<code>STYLE_PATCH_PROPERTIES_GENERATORS</code> :350-398). Patterns a style-link
+generator would follow:</p>
+<ul>
+<li>Generators are <code>function*</code> yielding <code>[propertyName, value]</code>; chained by
+<code>LocalScopeTypeSpecnion.propertiesGenerator</code>.</li>
+<li>They read the host model (<code>hostInstance.get(...)</code>) and may consult the
+parent via <code>outerTypespecnionAPI.hasParentProtperty(path)</code> /
+<code>getParentProperty(path)</code> (used in <code>languageTagGen</code> :124, <code>marginsGen</code>
+:153, <code>leadingGen</code> :234-258 — the latter re-emits a computed value when an
+<em>inherited</em> algorithm requires recalculation with local inputs).</li>
+<li><code>getPropertiesBroomWagonGen(GENERIC, REGISTERED_GENERIC_TYPESPEC_FIELDS)</code>
+(:327-329) is the generic catch-all pattern for simple registered fields.</li>
+<li>Registry of inheriting properties: <code>registered-properties-definitions.mjs</code>
+(<code>SPECIFIC</code>, <code>GENERIC</code>, … prefixes) + <code>registered-properties.mjs:382</code>
+(<code>isInheritingPropertyFn</code>) — style-link property paths would need to enter
+this system if inheritance flows through the properties stream.</li>
+</ul>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/components/type-spec-models.mjs:264-313</code> — style-link edge models (<code>StylePatchLinkModel</code>, <code>StylePatchLinksMapModel</code>); <code>:291</code> <code>&quot;&quot; = NULL-STYLE</code></li>
+<li><code>lib/js/components/type-spec-models.mjs:377-402</code> — <code>TypeSpecModel</code> (<code>children</code> :389, <code>stylePatches</code> :402); <code>:396-399</code> local-only null-style comment</li>
+<li><code>lib/js/components/type-spec-models.mjs:410-437</code> — local-only resolvers <code>getStylePatchLinkForMark</code>, <code>getStylePatchTagForIntent</code></li>
+<li><code>lib/js/components/type-spec-fundamentals.mjs:192,282,607</code> — <code>EMPTY_STYLE_LINK_LABEL</code>, allowNull wiring; :195-721 style-link UI widgets</li>
+<li><code>lib/js/components/layouts/type-stage/type-specnion.mjs:4-9</code> — <code>mapSetProperties</code> merge primitive</li>
+<li><code>lib/js/components/layouts/type-stage/type-specnion.mjs:76-200</code> — synthetic resolution (local-over-parent args :140-153; null-result deletion :164-168)</li>
+<li><code>lib/js/components/layouts/type-stage/type-specnion.mjs:203-244</code> — <code>PatchedTypeSpecnion</code> (patch over raw props, pre-resolution)</li>
+<li><code>lib/js/components/layouts/type-stage/type-specnion.mjs:245-336</code> — <code>HierarchicalScopeTypeSpecnion</code> (parent filter :297-313; local-over-parent merge :329-334)</li>
+<li><code>lib/js/components/layouts/type-stage/live-properties.typeroof.jsx:75,102,257-318</code> — typespecnion instantiation; <code>StyleLinkLiveProperties</code></li>
+<li><code>lib/js/components/layouts/type-stage/meta.typeroof.jsx:55-200</code> — <code>StyleLinksMeta</code> protocol-handler registration</li>
+<li><code>lib/js/components/layouts/type-stage/properties-generators.mjs:124-141,175-184</code> — <code>yield [path, null]</code> placeholder pattern</li>
+<li><code>lib/js/components/registered-properties.mjs:382</code> — <code>isInheritingPropertyFn</code></li>
+<li><code>lib/js/metamodel/foreign-key.ts:44-85</code> — <code>ForeignKey.NULL</code>; <code>lib/js/metamodel/struct-model.ts:1466-1483</code> — <code>_getLink</code></li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:911,143-155</code> — mark subscription resolution; parent-chain walker</li>
+<li><code>docs/planning/agentic-artefacts/thoughts/plan/2026-07-26-2130-prosemirror-semantic-marks.md:335-341</code> — postponed feature decision</li>
+</ul>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ol>
+<li><strong>Merge level</strong>: should inherited style-links merge (a) at the <em>model</em>
+level — an “effective StylePatchLinksMap” computed by walking
+<code>TypeSpecModel.children</code> parents — or (b) through the <em>typeSpecnion
+properties stream</em> — a new generator yielding one property path per edge
+(e.g. <code>styleLinks/&lt;key&gt;/...</code>) so the existing filter/merge/tombstone
+machinery applies verbatim? Option (b) matches the operator’s “via the
+typespecnions” phrasing and reuses <code>isInheritingPropertyFn</code>, but requires
+registering the new property paths and deciding how <code>StyleLinkLiveProperties</code>
+/ <code>StyleLinksMeta</code> consume merged edges instead of the local map.</li>
+<li><strong>Tombstone representation</strong>: is the child’s <code>''</code> (NULL-STYLE) edge value
+sufficient as the stop-propagation marker for all edge attrs (<code>type</code>,
+<code>tag</code>, <code>mark</code>), or must each sub-value be independently tombstoned?</li>
+<li><strong>Override granularity</strong>: does a child redefining edge key <code>K</code> replace the
+whole inherited struct, or merge field-wise (e.g. inherit <code>stylePatch</code>
+but override <code>tag</code>)?</li>
+<li><strong>Protocol-handler churn</strong>: <code>styleLinkProperties@</code> handlers are registered
+per local edge (<code>meta.typeroof.jsx:78,90</code>); with inherited edges the set
+of visible edges at a node grows — how do registration/unregistration and
+subscriber notification (e.g. ProseMirror’s <code>_getStyleLinkPropertiesId</code>
+swap, <code>type-spec.typeroof.jsx:1425-1471</code>) react to a <em>parent’s</em> edge
+changing?</li>
+<li><strong>UI</strong>: how should inherited vs. local vs. tombstoned edges be displayed
+in <code>UIStylePatchesLinksMap</code> (<code>type-spec-fundamentals.mjs:570</code>); the
+<code>settings:dependencyMapping</code> + <code>stylePatchesSource</code> plumbing (:712-721)
+may need an inherited-edges source.</li>
+<li><strong>Ramp layout</strong>: <code>layouts/ramp/index.typeroof.jsx:287,440,452</code> also
+registers style-link handlers — does the ramp participate in the same
+inheritance, or is this type-stage-only?</li>
+</ol>
+<h2><a id="addendum-2026-07-30-is-null-style-a-good-tombstone-investigation--decisions" class="heading_anchor" href="#addendum-2026-07-30-is-null-style-a-good-tombstone-investigation--decisions" aria-hidden="true">#</a>Addendum 2026-07-30: Is NULL-Style a good tombstone? (investigation + decisions)</h2>
+<h3><a id="what-key---null-style--stylepatch---does-at-runtime-today" class="heading_anchor" href="#what-key---null-style--stylepatch---does-at-runtime-today" aria-hidden="true">#</a>What <code>key -&gt; NULL-Style</code> (<code>stylePatch: ''</code>) does at runtime today</h3>
+<ul>
+<li><strong>The style stays available</strong>: <code>StyleLinksMeta._getWidgetSetup</code>
+(<code>meta.typeroof.jsx:62-90</code>) creates a <code>StyleLinkLiveProperties</code> wrapper
+for EVERY edge, including <code>''</code> (comment :71-74: “key is an empty string in
+case of (NULL-STYLE) … ‘bold’ is available”). The dependency resolves to
+null -&gt; empty map -&gt; <code>size === 0</code> -&gt; no <code>createPatched()</code>; the BASE
+typeSpecnion is published (<code>live-properties.typeroof.jsx:299-311</code>).
+So <code>styleLinkProperties@&lt;.../stylePatches/key&gt;</code> IS registered.</li>
+<li><strong>Consumers distinguish available-unstyled from not-available</strong> via
+<code>hasRegistered(id)</code> (<code>viewer.typeroof.jsx:296-313</code>,
+<code>prosemirror/type-spec.typeroof.jsx:871-890</code>): edge exists -&gt;
+<code>UIDocumentStyleStyler</code> + element with <code>data-style-name</code>; no edge -&gt;
+<code>UIDocumentUnkownStyleStyler</code> resp. degradation to a plain text node
+(<code>viewer.typeroof.jsx:264-269</code>).</li>
+<li><strong><code>''</code> can carry semantics while unstyled</strong>: the edge’s <code>type</code>/<code>tag</code>/<code>mark</code>
+fields are independent of <code>stylePatch</code>; <code>getStylePatchTagForIntent</code>
+(<code>type-spec-models.mjs:426-437</code>) binds the HTML tag from the edge alone.
+<code>quote -&gt; {stylePatch: '', type: generic-tag, tag: 'q'}</code> = “available,
+renders as <q>, not visually styled”.</q></li>
+</ul>
+<h3><a id="three-states-per-edge-key-not-two" class="heading_anchor" href="#three-states-per-edge-key-not-two" aria-hidden="true">#</a>Three states per edge key (not two)</h3>
+<table>
+<thead>
+<tr>
+<th>state</th>
+<th>handler registered?</th>
+<th>styling</th>
+<th>encoding today</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>linked</td>
+<td>yes</td>
+<td>patched typeSpecnion</td>
+<td><code>stylePatch: '&lt;key&gt;'</code></td>
+</tr>
+<tr>
+<td>available, unstyled</td>
+<td>yes</td>
+<td>base typeSpecnion</td>
+<td><code>stylePatch: ''</code> (NULL-STYLE)</td>
+</tr>
+<tr>
+<td>not available (unknown-style fallback / text node)</td>
+<td>no</td>
+<td>–</td>
+<td>only as edge ABSENCE</td>
+</tr>
+</tbody>
+</table>
+<p>With inherited (merged) parent edges, absence is no longer locally
+expressible. The tombstone’s real job is therefore to encode state 3
+(“edge removed at this subtree”) – genuinely different from state 2.
+Verdict: using NULL-Style (<code>''</code>) as the tombstone would be an overload;
+two distinct behaviors need two distinct encodings.</p>
+<h3><a id="operator-decisions-2026-07-30" class="heading_anchor" href="#operator-decisions-2026-07-30" aria-hidden="true">#</a>Operator decisions (2026-07-30)</h3>
+<ol>
+<li><strong>Whole-edge override (DECIDED for v1)</strong>: a child redefining edge key <code>K</code>
+replaces the parent’s struct ENTIRELY (<code>stylePatch</code>, <code>type</code>, <code>tag</code>,
+<code>mark</code> and all future fields). With this, <code>stylePatch: ''</code> in the child
+already stops the inherited PATCH LINK as a natural side effect of
+overriding – no special tombstone needed for state 2.</li>
+<li><strong>Field-wise override POSTPONED</strong> (future possibility, e.g. inherit <code>tag</code>
+but override <code>stylePatch</code>): not needed yet. The per-field tombstone
+question it would raise (e.g. <code>tag: ''</code> already means “no binding”,
+<code>type-spec-models.mjs:436</code>) is deferred together with it.</li>
+<li><strong>Tombstone = state 3 is REQUIRED in v1</strong> (clarified 2026-07-30):
+the tombstone REMOVES key <code>K</code> entirely from the style-links visible at
+the child TypeSpec – <code>K</code> is not an entry in the child’s (inherited)
+style-links at all, it is simply not set. Consequences: no
+<code>styleLinkProperties@</code> handler registration for <code>K</code> (suppress it in
+<code>StyleLinksMeta</code>), consumers take the unknown-style fallback
+(<code>UIDocumentUnkownStyleStyler</code> / plain text node), and <code>K</code> must not
+propagate further down the subtree. <strong>NULL-Style (<code>''</code>) is NOT the
+tombstone and NOT a replacement for it</strong> – <code>''</code> keeps <code>K</code> available
+but unstyled (state 2), the tombstone makes <code>K</code> unavailable (state 3).
+The tombstone therefore needs its own distinct encoding on the edge
+struct (e.g. a <code>mode</code>/<code>unlinked</code> field, design deferred to the plan
+phase). The tombstone does NOT propagate itself (clarified 2026-07-30):
+it is consumed at the level where it is defined – <code>K</code> is absent from
+that child’s EFFECTIVE style-links, and that absence is what descendants
+inherit. A descendant can re-link <code>K</code> by defining the edge again.</li>
+</ol>
+<h3><a id="impact-on-open-questions-updates" class="heading_anchor" href="#impact-on-open-questions-updates" aria-hidden="true">#</a>Impact on Open Questions (updates)</h3>
+<ul>
+<li>Q2 (tombstone representation): ANSWERED semantically – the tombstone
+is state 3: <code>K</code> removed entirely from the child’s visible style-links,
+distinct from NULL-Style <code>''</code> (state 2, available-unstyled). OPEN: the
+concrete encoding of the tombstone marker on the edge struct (plan phase).</li>
+<li>Q3 (override granularity): ANSWERED – whole-edge override for v1;
+field-wise merge deferred as a future extension.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

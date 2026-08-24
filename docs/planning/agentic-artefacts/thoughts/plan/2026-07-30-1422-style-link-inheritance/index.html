@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="style-link-inheritance-via-the-typespecnion--implementation-plan" class="heading_anchor" href="#style-link-inheritance-via-the-typespecnion--implementation-plan" aria-hidden="true">#</a>Style-Link Inheritance via the TypeSpecnion — Implementation Plan</h1>
+<p>date: 2026-07-30T14:22:00+02:00
+git_commit: cd05af513ab0dc34e1f065a47c178bc160c7352a
+branch: demo/wikipedia
+research: thoughts/research/2026-07-30-0957-style-link-inheritance-typespecnion.md</p>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Style-links (edges in <code>TypeSpecModel.stylePatches</code>, a <code>StylePatchLinksMapModel</code>)
+apply today only at the TypeSpec node where they are defined. This plan makes
+them inherit down the TypeSpec children tree <strong>through the typeSpecnion
+properties stream</strong>: one property per edge (<code>styleLinks/&lt;key&gt;</code> → the live
+<code>StylePatchLinkModel</code> struct), whole-edge override via map-set semantics,
+tombstone via <code>null</code> shadowing. The edge model gains a <code>mode</code> enum
+(<code>link</code> | <code>null-style</code> | <code>unlinked</code>) that replaces <code>stylePatch: ''</code> as
+the NULL-STYLE encoding and encodes the tombstone (<code>unlinked</code>).</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li><strong>Edges are local-only</strong>: <code>StyleLinksMeta</code> iterates the node’s local model
+collection (<code>meta.typeroof.jsx:55-105</code>, wired at <code>:191-202</code>); the
+ProseMirror resolvers read the local map (<code>type-spec-models.mjs:410-437</code>,
+call sites <code>prosemirror/type-spec.typeroof.jsx:855-869</code>).</li>
+<li><strong>NULL-STYLE is <code>stylePatch: ''</code></strong> (<code>type-spec-models.mjs:291</code>);
+availability = a <code>styleLinkProperties@</code> handler is registered regardless
+of <code>''</code> (<code>meta.typeroof.jsx:71-74</code>); consumers branch on
+<code>hasRegistered(id)</code> (<code>viewer.typeroof.jsx:296-313</code>,
+<code>type-spec.typeroof.jsx:871-890</code>).</li>
+<li><strong>typeSpecnion merge</strong> (<code>type-specnion.mjs</code>): parent map filtered by
+<code>isInheritingPropertyFn</code> (default <code>inherit: true</code> for unregistered
+paths, <code>registered-properties.mjs:382-387</code>), merged UNDER local, local
+wins (<code>:329-334</code>). A literal local <code>null</code> shadows the parent (no
+null-check in the merge); a synthetic RESOLVING to null is deleted
+(<code>:164-168</code>). Generators are <code>function*</code> yielding <code>[name, value]</code>
+(<code>:174-189</code>).</li>
+</ul>
+<h3><a id="key-discoveries" class="heading_anchor" href="#key-discoveries" aria-hidden="true">#</a>Key Discoveries:</h3>
+<ul>
+<li><strong>The ramp layout reuses <code>TypeSpecMeta</code></strong> (<code>ramp/index.typeroof.jsx:37,320</code>)
+— changes in the shared meta/live-properties layer cover both layouts.</li>
+<li><strong>Only one iterate-all consumer of <code>getProperties()</code></strong>:
+<code>processed-properties.mjs:129-145</code> (own/inherited properties display UI)
+— needs a prefix filter; all other consumers read known keys only.</li>
+<li><strong>No shipped legacy data</strong>: both <code>lib/assets/type-stage-initial-state.json</code>
+and <code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code> serialize
+edges as <code>[key, {stylePatch}]</code> with NON-empty values only → <code>mode</code>
+defaulting to <code>'link'</code> is backward compatible, no data migration needed.</li>
+<li><strong>Handler id convention</strong> <code>styleLinkProperties@&lt;typeSpecPath&gt;/stylePatches/&lt;key&gt;</code>
+is constructed by consumers from the applicable TypeSpec’s path — keeping
+this convention keeps viewer/ProseMirror lookup code unchanged.</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<ul>
+<li>An edge defined on a TypeSpec applies to all descendants unless overridden
+or tombstoned; document-wide defaults + local overrides work.</li>
+<li>A child redefining key <code>K</code> replaces the WHOLE edge struct (no field merge).</li>
+<li>A child setting <code>mode: 'unlinked'</code> on <code>K</code> removes <code>K</code> from the
+effective set: no handler, consumers take the unknown-style fallback
+(<code>UIDocumentUnkownStyleStyler</code> / plain text node), for itself and all
+descendants — until a descendant re-links <code>K</code> by defining the edge again.</li>
+<li><code>mode: 'null-style'</code> keeps <code>K</code> available but unstyled (base
+typeSpecnion published, tag binding still applies).</li>
+<li>UI: a mode select per edge; a read-only list of inherited ACTIVE edges
+(effective set minus locally-defined keys, tombstoned excluded).</li>
+</ul>
+<h2><a id="decisions-operator-2026-07-30" class="heading_anchor" href="#decisions-operator-2026-07-30" aria-hidden="true">#</a>Decisions (operator, 2026-07-30)</h2>
+<ol>
+<li>
+<p>Inheritance goes <strong>through the typeSpecnion properties stream</strong>: one
+property per edge (<code>styleLinks/&lt;key&gt;</code>); the yielded value is the LIVE
+<code>StylePatchLinkModel</code> struct instance (no copying; identity changes on
+edit drive rebuilds; resolvers already speak the model API).</p>
+</li>
+<li>
+<p><strong>Whole-edge override</strong>; field-wise override (e.g. inherit <code>tag</code>,
+override <code>stylePatch</code>) is postponed — the <code>OrEmpty</code> fields keep that
+door open.</p>
+</li>
+<li>
+<p>Tombstone + null-style encoding: <code>mode</code> enum on <code>StylePatchLinkModel</code>
+(<code>link</code> | <code>null-style</code> | <code>unlinked</code>), plain enum, always serialized
+(<code>type</code> precedent, <code>type-spec-models.mjs:283-284</code>). <code>OrEmpty</code> was
+rejected: its third state (“unset → inherit”) is meaningless for a
+locally defined edge — deferral is already expressed by local absence.</p>
+</li>
+<li>
+<p>The tombstone does NOT propagate as a live marker: implemented as a
+<code>null</code> shadow in the merged map; every consumer treats <code>null</code> as
+absent (“the absence is the inheritance”).</p>
+</li>
+<li>
+<p>Simple read-only UI for inherited active edges in v1; better interface
+once the mechanics are in place.</p>
+</li>
+<li>
+<p>Stop before EVERY commit: propose the commit message, wait for operator
+review. Commits carry model/provider/agent metadata per <a href="http://COLLABORATION.md">COLLABORATION.md</a>
+(read from actual config at commit time, never hardcoded).</p>
+</li>
+<li>
+<p>REVISED (2026-07-30, operator): the mode enum is <code>link | unlinked</code>
+only — NULL-STYLE stays <code>stylePatch: ''</code> (identical runtime behavior,
+redundant as a mode). No separate mode UI: <code>(UNLINK)</code> is a special
+option in the existing create/change selects; the unified select sets
+<code>mode</code> as a side effect (selecting anything else sets <code>link</code>).</p>
+</li>
+</ol>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>Field-wise edge override (inherit <code>tag</code>, override <code>stylePatch</code>).</li>
+<li>Multiple inheritance / <code>parents</code> list (<code>type-spec-models.mjs:386-387</code>
+musing stays a musing).</li>
+<li>Rich inherited-edges EDITING UI.</li>
+<li>Migration tooling for user-saved legacy states with <code>stylePatch: ''</code>:
+none exist in shipped states; legacy <code>''</code> degrades gracefully to
+mode <code>link</code> + empty key = the existing “miracle” semantics (available,
+no patch applies), behaviorally equal to null-style. Documented, not
+migrated.</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Phase order keeps the app working after each commit: the model addition is
+backward compatible (default <code>'link'</code>); the generator makes <code>styleLinks/</code>
+entries appear in the stream (only the one display UI needs a filter);
+runtime delivery switches handler registration and resolution to the
+effective set; UI lands last. Tests are written with the mechanics
+(Phase 2), testing BEHAVIOR (observable merge outcomes), not methods.</p>
+<h2><a id="phase-1-stylepatchlinkmodel-mode-enum" class="heading_anchor" href="#phase-1-stylepatchlinkmodel-mode-enum" aria-hidden="true">#</a>Phase 1: StylePatchLinkModel mode enum</h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p>Add the <code>mode</code> field and coherence; update the documenting comments.
+Runtime is untouched — <code>StyleLinksMeta</code> keeps reading <code>stylePatch</code>.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-libjscomponentstype-spec-modelsmjs" class="heading_anchor" href="#1-libjscomponentstype-spec-modelsmjs" aria-hidden="true">#</a>1. <code>lib/js/components/type-spec-models.mjs</code></h4>
+<p><strong>Changes</strong>:</p>
+<ul>
+<li>Add <code>StylePatchLinkModeEnumModel = _AbstractEnumModel.createClass( 'StylePatchLinkModeEnumModel', ['link', 'null-style', 'unlinked'], 'link')</code>.</li>
+<li><code>StylePatchLinkModel</code> gains <code>['mode', StylePatchLinkModeEnumModel]</code> and a
+CoherenceFunction on <code>['mode', 'stylePatch']</code>: when <code>mode !== 'link'</code>
+clear <code>stylePatch</code> to <code>''</code> (follows the <code>sanitizeStylePatchLink</code>
+precedent, <code>type-spec-models.mjs:302-310</code>).</li>
+<li>Update the comment blocks (<code>:266-295</code>, esp. <code>:291</code> <code>&quot;&quot; = NULL-STYLE</code>
+and <code>:396-399</code> “no need to set null”) to mode semantics.</li>
+</ul>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated" class="heading_anchor" href="#automated" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] <code>npm test</code> green (83/83); <code>npm run lint</code> clean; typecheck: no new errors.</li>
+</ul>
+<h4><a id="manual" class="heading_anchor" href="#manual" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] Both initial states load; style links behave exactly as before.</li>
+</ul>
+<p><strong>Commit</strong>: <code>[type-spec-models] add mode (link|null-style|unlinked) to StylePatchLinkModel</code>
+<strong>Implementation Note</strong>: pause for manual confirmation before next phase.</p>
+<h2><a id="phase-2-stylelinksgen--merge-semantics--behavior-tests" class="heading_anchor" href="#phase-2-stylelinksgen--merge-semantics--behavior-tests" aria-hidden="true">#</a>Phase 2: styleLinksGen + merge semantics + behavior tests</h2>
+<h3><a id="overview-2" class="heading_anchor" href="#overview-2" aria-hidden="true">#</a>Overview</h3>
+<p>A new generator yields one property per edge into the typeSpecnion stream;
+inheritance, whole-edge override and the tombstone fall out of the existing
+merge. Behavior tests pin the semantics.</p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-libjscomponentslayoutstype-stageproperties-generatorsmjs" class="heading_anchor" href="#1-libjscomponentslayoutstype-stageproperties-generatorsmjs" aria-hidden="true">#</a>1. <code>lib/js/components/layouts/type-stage/properties-generators.mjs</code></h4>
+<p><strong>Changes</strong>: add and register (LAST in <code>TYPE_SPEC_PROPERTIES_GENERATORS</code>;
+NOT in <code>STYLE_PATCH_PROPERTIES_GENERATORS</code> — StylePatch models have no
+<code>stylePatches</code> field):</p>
+<pre class="language-js"><code class="language-js"><span class="token keyword">export</span> <span class="token keyword">const</span> <span class="token constant">STYLE_LINKS_PREFIX</span> <span class="token operator">=</span> <span class="token string">"styleLinks/"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">function</span><span class="token operator">*</span> <span class="token function">styleLinksGen</span><span class="token punctuation">(</span><span class="token parameter">outerTypespecnionAPI<span class="token punctuation">,</span> hostInstance</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token punctuation">[</span>key<span class="token punctuation">,</span> edge<span class="token punctuation">]</span> <span class="token keyword">of</span> hostInstance<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">"stylePatches"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">yield</span> <span class="token punctuation">[</span>
+            <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token constant">STYLE_LINKS_PREFIX</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>key<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span>
+            edge<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">"mode"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>value <span class="token operator">===</span> <span class="token string">"unlinked"</span> <span class="token operator">?</span> <span class="token keyword">null</span> <span class="token operator">:</span> edge<span class="token punctuation">,</span>
+        <span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// Effective, available style-links of a typeSpecnion (tombstones excluded).</span>
+<span class="token comment">// Used by StyleLinksMeta, the ProseMirror resolvers and the UI list.</span>
+<span class="token keyword">export</span> <span class="token keyword">function</span> <span class="token function">getStyleLinks</span><span class="token punctuation">(</span><span class="token parameter">propertyValuesMap</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> result <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token punctuation">[</span>name<span class="token punctuation">,</span> value<span class="token punctuation">]</span> <span class="token keyword">of</span> propertyValuesMap<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>name<span class="token punctuation">.</span><span class="token function">startsWith</span><span class="token punctuation">(</span><span class="token constant">STYLE_LINKS_PREFIX</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> value <span class="token operator">!==</span> <span class="token keyword">null</span><span class="token punctuation">)</span>
+            result<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span>name<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token constant">STYLE_LINKS_PREFIX</span><span class="token punctuation">.</span>length<span class="token punctuation">)</span><span class="token punctuation">,</span> value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> result<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<h4><a id="2-libjscomponentsprocessed-propertiesmjs-129-display-loop" class="heading_anchor" href="#2-libjscomponentsprocessed-propertiesmjs-129-display-loop" aria-hidden="true">#</a>2. <code>lib/js/components/processed-properties.mjs</code> (:129 display loop)</h4>
+<p><strong>Changes</strong>: skip <code>STYLE_LINKS_PREFIX</code> entries in the iterate-all display.</p>
+<h4><a id="3-libjscomponentslayoutstype-stagetype-specniontestmjs" class="heading_anchor" href="#3-libjscomponentslayoutstype-stagetype-specniontestmjs" aria-hidden="true">#</a>3. <code>lib/js/components/layouts/type-stage/type-specnion.test.mjs</code></h4>
+<p><strong>Changes</strong>: behavior tests driving REAL <code>HierarchicalScopeTypeSpecnion</code>
+chains (<code>propertiesGenerators=[styleLinksGen]</code>, real
+<code>StylePatchLinksMapModel</code> instances, minimal stub host <code>{ get(name) }</code>):</p>
+<ul>
+<li>inherit: child without local edges sees the parent’s struct (identity).</li>
+<li>override: child’s struct for <code>K</code> replaces the parent’s wholesale (e.g.
+different <code>tag</code>; no field merge).</li>
+<li>tombstone: <code>unlinked</code> <code>K</code> → merged value <code>null</code>;
+<code>getStyleLinks</code> excludes <code>K</code> at the child AND grandchild.</li>
+<li>re-link: grandchild redefines <code>K</code> after a tombstone → visible again.</li>
+<li>null-style: entry present in <code>getStyleLinks</code> with <code>mode: 'null-style'</code>.</li>
+</ul>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-1" class="heading_anchor" href="#automated-1" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] New tests green (5 behavior tests); <code>npm test</code> 88/88, <code>npm run lint</code> clean.</li>
+</ul>
+<h4><a id="manual-1" class="heading_anchor" href="#manual-1" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] App behaves as before (no consumer of <code>styleLinks/</code> entries yet).</li>
+</ul>
+<p><strong>Commit(s)</strong>: <code>[typeSpecnion] inherit style-links via styleLinks/ properties</code>
+(+ behavior tests, separate commit if review prefers smaller units)
+<strong>Implementation Note</strong>: pause for manual confirmation before next phase.</p>
+<h2><a id="phase-3-runtime-delivery-from-the-effective-edge-set" class="heading_anchor" href="#phase-3-runtime-delivery-from-the-effective-edge-set" aria-hidden="true">#</a>Phase 3: runtime delivery from the effective edge set</h2>
+<h3><a id="overview-3" class="heading_anchor" href="#overview-3" aria-hidden="true">#</a>Overview</h3>
+<p>Handlers are registered for the EFFECTIVE (incl. inherited) edges; the
+ProseMirror resolvers read the effective map. Handler id convention stays
+<code>styleLinkProperties@&lt;typeSpecPath&gt;/stylePatches/&lt;key&gt;</code> → viewer and ramp
+lookup code remain unchanged. Biggest phase, two commits.</p>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-stylelinksmeta-rework--metatyperoofjsx55-105--done" class="heading_anchor" href="#1-stylelinksmeta-rework--metatyperoofjsx55-105--done" aria-hidden="true">#</a>1. <code>StyleLinksMeta</code> rework (<code>meta.typeroof.jsx:55-105</code>) [DONE]</h4>
+<p><strong>Changes</strong>: from model-collection-driven to effective-set-driven. Subscribe
+<code>typeSpecProperties@</code> of the own node; on update compute
+<code>getStyleLinks(typeSpecProperties.typeSpecnion.getProperties())</code> and
+provision one <code>StyleLinkLiveProperties</code> per key, with settings
+<code>{rootPath: &lt;typeSpecPath&gt;/stylePatches/&lt;key&gt;, &quot;styleLinkProperties@&quot;: id}</code>
+(ids unchanged). Rebuild wrappers when the effective set or an edge value
+changes (<code>HANDLE_CHANGED_AS_NEW</code> pattern; likely a custom
+<code>_BaseContainerComponent</code> rather than <code>_BaseDynamicMapContainerComponent</code>,
+which is model-collection-bound — the main implementation task of this
+phase). NOTE: <code>getStyleLinks</code> already excludes tombstoned keys, so no
+handler is registered for them → consumers fall back to unknown-style.</p>
+<h4><a id="2-stylelinkliveproperties--live-propertiestyperoofjsx257-327-" class="heading_anchor" href="#2-stylelinkliveproperties--live-propertiestyperoofjsx257-327-" aria-hidden="true">#</a>2. <code>StyleLinkLiveProperties</code> (<code>live-properties.typeroof.jsx:257-327</code>)</h4>
+<p><strong>Changes</strong>: the edge struct is passed as a constructor arg (replaces
+<code>this.getEntry(rootPath).get('stylePatch')</code> — inherited edges have no
+local model entry). Dependency key = <code>edge.get('stylePatch').value</code>;
+<code>null-style</code> mode → <code>''</code> → dependency resolves null → base typeSpecnion
+published (existing behavior preserved, <code>:299-311</code>).</p>
+<p><strong>Commit (a)</strong>: <code>[type-stage] register styleLinkProperties@ from effective (inherited) style-links</code></p>
+<h4><a id="3-prosemirror-resolvers--type-spectyperoofjsx855-869-" class="heading_anchor" href="#3-prosemirror-resolvers--type-spectyperoofjsx855-869-" aria-hidden="true">#</a>3. ProseMirror resolvers (<code>type-spec.typeroof.jsx:855-869</code>)</h4>
+<p><strong>Changes</strong>: <code>getStylePatchLinkForMark</code> / <code>getStylePatchTagForIntent</code>
+(<code>type-spec-models.mjs:410-437</code>) keep their signatures but receive the
+EFFECTIVE map (<code>getStyleLinks</code> result — same struct API) instead of the
+model map; call sites obtain it from the <code>typeSpecProperties@</code> component’s
+typeSpecnion rather than <code>_getTypeSpecForPropertiesId(...).get('stylePatches')</code>.</p>
+<p><strong>Commit (b)</strong>: <code>[ProseMirror] resolve style-link edges from the effective (inherited) set</code></p>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-2" class="heading_anchor" href="#automated-2" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] <code>npm test</code> 88/88, <code>npm run lint</code> green.</li>
+</ul>
+<h4><a id="manual-2" class="heading_anchor" href="#manual-2" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] Wikipedia demo: an edge on a PARENT TypeSpec styles marks in child
+paragraphs; tombstone removes styling AND tag binding; override wins;
+null-style keeps availability without styling; ramp layout smoke test.</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause for manual confirmation before next phase.</p>
+<h2><a id="phase-4-ui" class="heading_anchor" href="#phase-4-ui" aria-hidden="true">#</a>Phase 4: UI</h2>
+<h3><a id="overview-4" class="heading_anchor" href="#overview-4" aria-hidden="true">#</a>Overview</h3>
+<p>Mode editing per edge + the simple read-only inherited list. Kept minimal;
+a better interface can follow once the mechanics prove out.</p>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-mode-select--type-spec-fundamentalsmjs242-330--607-" class="heading_anchor" href="#1-mode-select--type-spec-fundamentalsmjs242-330--607-" aria-hidden="true">#</a>1. Mode select (<code>type-spec-fundamentals.mjs:242-330</code>, <code>:607</code>)</h4>
+<p><strong>Changes</strong>: <code>UIStylePatchLinksValue</code> gains mode selection:
+<code>link</code> (patch-key select enabled, existing widget) / <code>null-style</code> /
+<code>unlinked</code>; labels <code>(NULL-STYLE)</code> / <code>(UNLINK)</code> alongside the existing
+<code>EMPTY_STYLE_LINK_LABEL</code>. Replaces the current allowNull-<code>''</code> handling.</p>
+<p><strong>Commit</strong>: <code>[UI] mode select for style-link edges (link, null-style, unlinked)</code></p>
+<h4><a id="2-read-only-inherited-list-style-links-section" class="heading_anchor" href="#2-read-only-inherited-list-style-links-section" aria-hidden="true">#</a>2. Read-only inherited list (style-links section,</h4>
+<p><code>type-driven-ui.mjs:343</code>, <code>UIStylePatchesLinksMapCollapsible</code>
+<code>type-spec-fundamentals.mjs:712-721</code>)
+<strong>Changes</strong>: a small component subscribing <code>typeSpecProperties@</code>, listing
+<code>getStyleLinks(...)</code> entries whose key is NOT in the local model map
+(i.e. inherited only, tombstones already excluded), showing key + mode /
+patch key / tag. Locally defined values are NOT in this list (operator
+requirement).</p>
+<p><strong>Commit</strong>: <code>[UI] read-only inherited style-links list</code></p>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-3" class="heading_anchor" href="#automated-3" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] <code>npm test</code> 88/88, <code>npm run lint</code> green.</li>
+</ul>
+<h4><a id="manual-3" class="heading_anchor" href="#manual-3" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[x] Create override and tombstone purely via UI ((UNLINK) special
+option in the unified selects); inherited list shows exactly the
+inherited active edges and updates live. (confirmed 2026-07-30)</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause for manual confirmation before next phase.</p>
+<hr>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<h3><a id="unitbehavior-tests-vitest-npm-test-" class="heading_anchor" href="#unitbehavior-tests-vitest-npm-test-" aria-hidden="true">#</a>Unit/behavior Tests (vitest, <code>npm test</code>):</h3>
+<ul>
+<li>Phase 2 merge-semantics tests (inherit / override / tombstone /
+re-link / null-style) — observable behavior of real
+<code>HierarchicalScopeTypeSpecnion</code> chains, not internals.</li>
+</ul>
+<h3><a id="integrationmanual" class="heading_anchor" href="#integrationmanual" aria-hidden="true">#</a>Integration/manual:</h3>
+<ul>
+<li>Wikipedia demo scenario matrix across the type-stage viewer AND the
+ProseMirror stylers: inherit, override, tombstone (unknown-style
+fallback + text-node degradation), re-link in grandchild, null-style
+(available, unstyled, tag binding intact).</li>
+<li>Ramp layout smoke test (shares <code>TypeSpecMeta</code>).</li>
+</ul>
+<h2><a id="baseline-for-all-phases" class="heading_anchor" href="#baseline-for-all-phases" aria-hidden="true">#</a>Baseline for all phases</h2>
+<ul>
+<li><code>npm test</code> (vitest) green; <code>npm run lint</code> clean; typecheck shows no
+new errors.</li>
+<li>Stop before EVERY commit: proposed message (+ model/provider/agent
+metadata read from actual config) presented for operator review.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

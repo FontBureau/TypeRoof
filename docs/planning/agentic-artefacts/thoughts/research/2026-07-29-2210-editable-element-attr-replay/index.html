@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-editable-element-attr-replay-q1" class="heading_anchor" href="#research-editable-element-attr-replay-q1" aria-hidden="true">#</a>Research: Editable-Element Attr Replay (Q1)</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Implement “editable-element attr replay” (Q1 of the ingest-fidelity arc, the
+follow-up seeded by the reproducing-atom-nodes plan): collect all attributes at
+ingest and replay them to HTML on elements that <strong>stay editable</strong> — generic-style
+intent marks, links/semantic marks, paragraphs/blocks, inline nodes. The
+operator expects it to work similar to the reproducing-atom sprint. This
+document maps what exists today that the implementation touches.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<ul>
+<li><strong>The bag machinery is fully reusable</strong>: <code>collectHtmlAttrs</code> + the conjunctive
+matcher policy (<code>ingest_next.ts:147–238</code>), <code>_applyHtmlAttrsBag</code> +
+<code>_HTML_ATTRS_GUARD</code> (<code>integration.typeroof.jsx:530–570</code>) already do
+collect/replay/parse for reproducing atoms; the guard already excludes
+<code>style</code>, <code>on*</code>, and all TypeRoof markers.</li>
+<li><strong>Collection is currently stored ONLY for reproducing atoms</strong> (:526). Every
+editable element class drops attributes at a known site: generic-style intent
+marks store only <code>data-style-name</code>; semantic marks store only spec-declared
+attrs; blocks and inline nodes read no DOM attributes at all.</li>
+<li><strong>A declared bag attr round-trips</strong> metamodel↔PM in both directions for marks
+and nodes (PM <code>computeAttrs</code> keeps declared attrs; metamodel copies all
+attrs). For schema-defined types the bag is declared via
+<code>AttributeSpecMapModel</code> (metamodel-owned); for <code>generic-style</code> it must be
+added to the hardcoded reserved spec in <code>default-schema.ts</code> (metamodel
+cannot override reserved names).</li>
+<li><strong>Replay hooks exist and are thin</strong>: <code>ProsemirrorMarkView</code> skips
+<code>generic-style</code> in <code>_applyDeclaredAttrs</code> (:341) — a bag-aware path is
+needed there; <code>ProsemirrorNodeView</code>’s non-atom branch writes nothing on the
+outer element except <code>data-node-type</code> (:206–208) — the bag hook is obvious
+(constructor + <code>update()</code>).</li>
+<li><strong>Merge semantics are milder than feared</strong>: nothing in TypeRoof writes
+<code>class</code> on document elements (replayed classes are collision-free);
+<code>style</code> is guard-excluded everywhere already; the styler only writes
+style-properties + <code>lang</code>; <code>UIDocumentStyleStyler.destroy()</code> resets only
+<code>element.style</code> (:725–727), leaving other attributes alone.</li>
+<li><strong>The round-trip answer is “bag-aware <code>getAttrs</code>”</strong> (option B+E from the
+options discussion): if editable types’ <code>parseDOM.getAttrs</code> collects foreign
+attributes into the declared bag, PM reparses <em>preserve</em> them through its own
+machinery — no <code>ignoreMutation</code> extension needed. Today paragraph &amp; co.
+have no <code>getAttrs</code> at all (added only when attrs are declared, :625–626),
+so foreign attributes are silently dropped on reparse.</li>
+<li><strong>One sharp edge</strong>: <code>_swapMarkElement</code> (intent→tag swap,
+type-spec.typeroof.jsx:1041–1045) creates the swapped element with ONLY
+<code>data-mark-type</code> + <code>data-style-name</code> and discards everything else —
+replayed attributes on intent marks would be lost on every tag swap unless
+the swap re-applies the bag from the mark’s attrs.</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-collection-gaps-at-ingest--libjswikipediaingest_nextts-" class="heading_anchor" href="#1-collection-gaps-at-ingest--libjswikipediaingest_nextts-" aria-hidden="true">#</a>1. Collection gaps at ingest (<code>lib/js/wikipedia/ingest_next.ts</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Element class</th>
+<th>Emission site</th>
+<th>Attrs today</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>generic-style intent marks</td>
+<td>:598–608 (fallback), :302–310 (<code>newGenericStyleMarkDraft</code>)</td>
+<td>all DOM attrs counted in <code>report.skippedMarkAttrs</code> (:600–601), <strong>none stored</strong>; only <code>data-style-name</code> written (:307–309)</td>
+</tr>
+<tr>
+<td>semantic marks</td>
+<td>:576–597</td>
+<td>only spec-declared attrs harvested (:579–584); rest counted; bag plays no role</td>
+</tr>
+<tr>
+<td>KNOWN_BLOCK_TAGS (blocks)</td>
+<td>:543–552</td>
+<td>attrs never read, counted, or stored</td>
+</tr>
+<tr>
+<td>INLINE_TAGS (inline nodes)</td>
+<td>:618–624</td>
+<td>attrs never read, counted, or stored</td>
+</tr>
+<tr>
+<td>reproducing atoms</td>
+<td>:518–531</td>
+<td><strong>the only <code>collectHtmlAttrs</code> storage</strong> (:526, <code>htmlAttrs</code> + <code>html</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Pipeline notes: <code>MarkDesc</code> (:415–417) is <code>{style}</code> (no attrs) or
+<code>{mark, name, attrs}</code>; marks accumulate while descending and materialize on
+text drafts (:483–493). Blocks reset marks (<code>:550</code>, “marks do not cross block
+boundaries”). The conjunctive matcher policy (<code>HtmlAttrMatcher</code>/
+<code>HtmlAttrPolicy</code>/cloning, :147–209) and <code>collectHtmlAttrs</code> (:220–238) are
+ready-made; only 2 call sites exist (:526, :736–744 configured variant).</p>
+<p>Metamodel→PM for marks (integration.typeroof.jsx:934–946): <strong>all</strong> metamodel
+mark attrs are passed wholesale to <code>schema.mark(type, attrs)</code> — nothing is
+filtered metamodel-side; only spec-declared attrs reach the DOM
+(<code>_applyDeclaredAttrs</code>), the rest stays in-memory/PM-attrs (a legitimate
+carrier for the bag).</p>
+<h3><a id="2-generic-style-spec--markview-replay-surface" class="heading_anchor" href="#2-generic-style-spec--markview-replay-surface" aria-hidden="true">#</a>2. generic-style spec + MarkView replay surface</h3>
+<ul>
+<li>Reserved spec (<code>default-schema.ts:191–214</code>): <code>excludes: &quot;_&quot;</code>,
+<code>attrs: { &quot;data-style-name&quot; }</code>, <code>parseDOM</code> priority 60 with
+<code>tag: &quot;*[data-style-name]&quot;</code> + <code>getAttrs</code> reading only
+<code>data-style-name</code>, <code>toDOM</code> span. It is merged LAST into the built schema
+(integration:679); metamodel <code>MarkSpecModel</code> named <code>generic-style</code> is
+skipped with a warning (integration:645–650) — <strong>the bag attr for
+generic-style must be edited into <code>default-schema.ts</code> directly</strong> (attrs +
+<code>getAttrs</code> collection + <code>toDOM</code>).</li>
+<li>Round-trip of a declared attr on <code>generic-style</code>: PM→metamodel copies all
+mark attrs (integration:898–908); metamodel→PM passes all to
+<code>schema.mark(&quot;generic-style&quot;, attrs)</code> (:935–946); <code>computeAttrs</code> keeps
+declared keys — a declared bag survives.</li>
+<li><code>ProsemirrorMarkView</code> (integration:304–407): constructor sets
+<code>data-mark-type</code> always + <code>data-style-name</code> for generic-style (:316–323);
+<code>_applyDeclaredAttrs</code> <strong>returns immediately for generic-style</strong> (:341) and
+reconciles declared attrs 1:1 (set/remove) for schema marks (:343–361);
+<code>update()</code> reuses generic-style views only when <code>data-style-name</code> is
+unchanged (:369–375), re-applies declared attrs for schema marks (:378–380);
+<code>ignoreMutation</code> ignores ALL attribute mutations on its own element
+(:399–401) — replay writes on mark elements are invisible to PM’s
+domObserver already.</li>
+<li><strong><code>_swapMarkElement</code></strong> (type-spec.typeroof.jsx:1037–1064): builds the
+replacement element with exactly <code>data-mark-type</code> + <code>data-style-name</code>
+(:1041–1045), moves children, patches desc/markView, migrates the style
+subscription. <strong>Any other attributes are discarded</strong> — replayed attrs die on
+every intent→tag swap unless the swap re-applies the bag from the PM mark’s
+attrs (available: <code>mark.attrs</code>).</li>
+</ul>
+<h3><a id="3-merge-semantics-typeroofs-dom-mutation-surface" class="heading_anchor" href="#3-merge-semantics-typeroofs-dom-mutation-surface" aria-hidden="true">#</a>3. Merge semantics (TypeRoof’s DOM mutation surface)</h3>
+<ul>
+<li><code>UIDocumentStyleStyler</code> (mark elements, type-spec.typeroof.jsx:728–795):
+<code>style.setProperty</code> for font-family, --units-per-em, --ascender,
+–descender, background-color, color, direction, font-size,
+font-feature-settings, font-variation-settings; <code>lang</code> attribute
+(language-tags.typeroof.jsx:507–511). <code>destroy()</code>: <code>element.style = &quot;&quot;</code>
+(:725–727) — resets the entire inline style, touches no other attribute.</li>
+<li><code>UIDocumentTypeSpecStyler</code> (node elements, type-spec.typeroof.jsx:217–407):
+innerElement: width, text-align, direction, font-family, font metrics, color,
+font-feature/variation-settings; outerElement: --line-height,
+–margin-block-start/end, background-color, <code>lang</code>, font-size. No
+<code>destroy</code> override.</li>
+<li><code>class</code> writers on document elements: <strong>none</strong> — the only class written is
+<code>unknown-style</code> by <code>UIDocumentUnkownStyleStyler</code> (:708–717, add/remove).
+Replayed foreign classes are collision-free.</li>
+<li><code>setProperty</code> merges per-property into the inline style (never replaces the
+attribute); <code>style</code> itself is guard-excluded from bags both at collection
+(<code>_HTML_ATTRS_GUARD</code>, integration:530–531) and at parse.</li>
+<li><code>ignoreMutation</code> today: MarkView ignores all attribute mutations on its own
+element (:399–401); NodeView only for reproducing atoms (:289–295). A
+replayed class write on an editable NODE element would surface as an
+attributes mutation → <code>readDOMChange</code> → reparse; <strong>bag-aware <code>getAttrs</code>
+makes such reparses lossless</strong> (re-collected into the declared bag), so no
+<code>ignoreMutation</code> extension is required if parse-side collection exists.</li>
+</ul>
+<h3><a id="4-editable-node-replay-surface--parse-behavior" class="heading_anchor" href="#4-editable-node-replay-surface--parse-behavior" aria-hidden="true">#</a>4. Editable-node replay surface + parse behavior</h3>
+<ul>
+<li><code>ProsemirrorNodeView</code> non-atom path (integration:178–261): outer element
+gets only <code>data-node-type</code> (:206–208); inner <code>contentElement</code> is
+<code>contentDOM</code>/:stylerDOM (:226–235); <code>structuralElements {outer, inner}</code>
+(:243–250). Bag hook points: after <code>this.dom = element</code> (:210) and in
+<code>update()</code>'s non-atom branch (:263–270, currently touches nothing).</li>
+<li><code>_createGetAttrs</code> (:493–505): reads only declared attrs, coerces; foreign
+attributes invisible. Generated <code>getAttrs</code> is added <strong>only when the spec
+declares attrs</strong> (:625–626) — paragraph &amp; co. have none, so reparses drop
+foreign attributes silently; <code>data-node-type</code> is re-added by the view, not
+by parse/toDOM.</li>
+<li>Declared bag attr on schema nodes: round-trips metamodel↔PM (forward
+:1006–1014, backward :912–923) as long as it is declared (<code>_createPMAttrs</code>,
+:472–488).</li>
+<li>Styling subscription for editable nodes (type-spec.typeroof.jsx:473–614):
+outer zone + styler write style-properties/<code>lang</code> on outer only; outer-zone
+widgets append children only when outer ≠ inner. No collision with replayed
+classes; reuse the existing guard for the bag hook.</li>
+</ul>
+<h2><a id="mapping-needs--existing-vs-missing" class="heading_anchor" href="#mapping-needs--existing-vs-missing" aria-hidden="true">#</a>Mapping Needs → Existing vs. Missing</h2>
+<table>
+<thead>
+<tr>
+<th>Need</th>
+<th>Exists</th>
+<th>Missing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bag collection + policy</td>
+<td><code>collectHtmlAttrs</code>, conjunctive matchers, cloning (:147–238)</td>
+<td>call sites for intent marks (:302–310), blocks (:543–552), inline nodes (:618–624)</td>
+</tr>
+<tr>
+<td>Bag storage</td>
+<td>free-form metamodel attrs; declared-attr round-trip both ways</td>
+<td>declaration on <code>generic-style</code> reserved spec (default-schema.ts edit)</td>
+</tr>
+<tr>
+<td>Bag replay (marks)</td>
+<td><code>_applyHtmlAttrsBag</code> + guard; <code>_applyDeclaredAttrs</code> for schema marks</td>
+<td>bag path for <code>generic-style</code> in <code>ProsemirrorMarkView</code> (skipped today, :341)</td>
+</tr>
+<tr>
+<td>Bag replay (nodes)</td>
+<td>hook points identified (:210, :263–270)</td>
+<td>outer bag application in non-atom <code>ProsemirrorNodeView</code></td>
+</tr>
+<tr>
+<td>Reparse stability</td>
+<td><code>ignoreMutation</code> covers mark elements fully</td>
+<td>bag-aware <code>getAttrs</code> on editable types (else foreign attrs drop on reparse, :625–626); <code>_swapMarkElement</code> re-applying the bag (:1041–1045)</td>
+</tr>
+<tr>
+<td>Merge policy</td>
+<td>guard excludes style/on*/markers; class is collision-free</td>
+<td>naming decision for the bag attr per type</td>
+</tr>
+</tbody>
+</table>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/wikipedia/ingest_next.ts:147–238</code> — matcher policy + collectHtmlAttrs</li>
+<li><code>lib/js/wikipedia/ingest_next.ts:302–310</code> — newGenericStyleMarkDraft (only data-style-name)</li>
+<li><code>lib/js/wikipedia/ingest_next.ts:518–531, 543–552, 576–608, 618–624</code> — emission sites per element class</li>
+<li><code>lib/js/components/prosemirror/default-schema.ts:191–214</code> — generic-style reserved spec</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:304–407</code> — ProsemirrorMarkView (replay surface, ignoreMutation)</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:493–570</code> — _createGetAttrs/_createToDOM/_applyHtmlAttrsBag/reproducing get+toDOM</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:625–626</code> — getAttrs only when attrs declared</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:178–295</code> — ProsemirrorNodeView (non-atom path, replay hooks)</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:898–946, 1006–1014</code> — metamodel↔PM attr round-trip</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:217–407</code> — UIDocumentTypeSpecStyler mutation surface</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:708–795</code> — UIDocumentUnkownStyleStyler / UIDocumentStyleStyler</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:1037–1064</code> — _swapMarkElement (discards foreign attributes)</li>
+</ul>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ol>
+<li><strong>Bag attr naming</strong>: <code>htmlAttrs</code> everywhere (consistent with reproducing
+atoms) vs. <code>data-style-attrs</code> for <code>generic-style</code> (signaling reserved
+intent-marks)? Consistency favors <code>htmlAttrs</code>.</li>
+<li><strong>Scope of intent-mark bags</strong>: should generic-style intent marks carry the
+bag at all, or only editable nodes (blocks/inline) + semantic marks? The
+operator’s framing includes intent marks; the swap-machinery edge (below)
+only matters if they do.</li>
+<li><strong>Semantic marks</strong>: keep declared-only harvest, or add the bag alongside
+(declared attrs typed + bag for the tail)?</li>
+<li><strong><code>_swapMarkElement</code></strong>: re-apply the bag from <code>mark.attrs</code> after the swap
+(the swapped element currently keeps only the two data-* markers).</li>
+<li><strong>parse-side collection scope</strong>: bag-aware <code>getAttrs</code> for every schema node
+type with a declared <code>htmlAttrs</code> attr (inference, like reproducing atoms’
+<code>html</code> attr) vs. an explicit flag; and for <code>generic-style</code> in
+<code>default-schema.ts</code> (edit its <code>getAttrs</code>).</li>
+<li><strong><code>id</code> on editable elements</strong>: the mw-prefixed-ids decision from the atom
+sprint carries over, but editable content can be duplicated in-editor —
+duplicate-id risk needs a conscious call.</li>
+<li><strong>Merge of replayed <code>class</code> with future TypeRoof classes</strong> (e.g. editing
+states): nothing writes class today; if that changes, class needs a merge
+strategy instead of verbatim replay.</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

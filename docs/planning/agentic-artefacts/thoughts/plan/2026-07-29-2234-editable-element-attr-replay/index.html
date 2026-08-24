@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="editable-element-attr-replay-q1--implementation-plan" class="heading_anchor" href="#editable-element-attr-replay-q1--implementation-plan" aria-hidden="true">#</a>Editable-Element Attr Replay (Q1) — Implementation Plan</h1>
+<p>date: 2026-07-29T22:34:00+02:00
+git_commit: 1d46a3d3b36aff37e7b73dc3177aed2ec2e21441
+branch: demo/wikipedia
+research: thoughts/research/2026-07-29-2210-editable-element-attr-replay.md
+predecessor plan: thoughts/plans/2026-07-29-1212-reproducing-atom-nodes.md</p>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Extend the reproducing-atom sprint’s <code>htmlAttrs</code> bag machinery to elements
+that <strong>stay editable</strong>: generic-style intent marks, semantic marks, blocks,
+and inline nodes. Attributes are collected at ingest into the declared
+<code>htmlAttrs</code> bag (JSON string), replayed to the DOM by the views, and kept
+round-trip stable by bag-aware <code>getAttrs</code>/<code>toDOM</code> (option B+E from the
+options discussion). Canonical wins: Wikipedia paragraphs keep
+<code>class</code>/<code>id</code>/<code>about</code>/<code>typeof</code>; links keep <code>rel</code>/<code>title</code>/<code>class</code>
+alongside the typed <code>href</code>; intent-mark spans carry their collected attrs.</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li>Bag machinery exists and is reused as-is: <code>collectHtmlAttrs</code> + conjunctive
+matcher policy (<code>ingest_next.ts:147–238</code>), <code>_applyHtmlAttrsBag</code> +
+<code>_HTML_ATTRS_GUARD</code> (<code>integration.typeroof.jsx:530–570</code>).</li>
+<li>Collection is stored ONLY for reproducing atoms (<code>ingest_next.ts:526</code>).
+Per editable class, attrs are dropped at known sites:
+generic-style intent marks store only <code>data-style-name</code>
+(<code>newGenericStyleMarkDraft</code>:302–310); semantic marks store only declared
+attrs (:576–597); blocks (:543–552) and inline nodes (:618–624) read no
+DOM attributes at all.</li>
+<li>A declared bag attr round-trips metamodel↔PM for marks (:898–946) and
+nodes (:1006–1014, :912–923); PM <code>computeAttrs</code> keeps declared attrs only.</li>
+<li><code>generic-style</code> is a hardcoded reserved spec (<code>default-schema.ts:191–214</code>);
+the metamodel cannot override reserved names (skip + warn, integration:645–650)
+→ its bag declaration must be edited into <code>default-schema.ts</code>.</li>
+<li>Replay surfaces: <code>ProsemirrorMarkView</code> skips <code>generic-style</code> in
+<code>_applyDeclaredAttrs</code> (:341); <code>ProsemirrorNodeView</code> non-atom branch writes
+only <code>data-node-type</code> on the outer element (:206–208).</li>
+<li>Reparse behavior: generated <code>getAttrs</code> exists only when a spec declares
+attrs (:625–626); foreign attributes are silently dropped on reparse today.</li>
+<li>Merge surface: nothing in TypeRoof writes <code>class</code> on document elements;
+<code>style</code> is guard-excluded; the styler writes only style-properties + <code>lang</code>;
+<code>UIDocumentStyleStyler.destroy()</code> resets only <code>element.style</code>.</li>
+<li>Sharp edge: <code>_swapMarkElement</code> (intent→tag swap, type-spec.typeroof.jsx:1041–1045)
+keeps only <code>data-mark-type</code>/<code>data-style-name</code> on the swapped element and
+discards everything else.</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<ul>
+<li>Ingested editable elements carry their collected attributes in <code>htmlAttrs</code>:
+intent-mark spans, links (typed declared attrs + bag for the tail),
+paragraphs/headings/sections, inline nodes.</li>
+<li>Rendered DOM shows those attributes (replayed minus the guard); editing
+keeps them (update-in-place); reparses/paste/reload preserve them via
+bag-aware <code>getAttrs</code>; intent→tag swaps preserve them.</li>
+<li><code>report.skippedMarkAttrs</code> counts only what the policy actually excluded.</li>
+</ul>
+<h3><a id="key-discoveries" class="heading_anchor" href="#key-discoveries" aria-hidden="true">#</a>Key Discoveries:</h3>
+<ul>
+<li>Everything in <code>MarkModel.attrs</code>/<code>NodeModel.attrs</code> reaches PM wholesale
+(no metamodel filtering) — the bag needs no conversion-layer changes, only
+declaration (so <code>computeAttrs</code> keeps it).</li>
+<li><code>ignoreMutation</code> on <code>ProsemirrorMarkView</code> already ignores all attribute
+mutations on its own element — replay writes on mark elements are invisible
+to PM’s domObserver.</li>
+<li>Bag-aware <code>getAttrs</code> makes reparses lossless <strong>without</strong> extending
+<code>ignoreMutation</code> to editable nodes (reparse re-collects into the declared
+bag — option B+E).</li>
+</ul>
+<h2><a id="decisions-operator-2026-07-29" class="heading_anchor" href="#decisions-operator-2026-07-29" aria-hidden="true">#</a>Decisions (operator, 2026-07-29)</h2>
+<ol>
+<li>Generic-style intent marks <strong>carry the bag</strong> (requires the
+<code>_swapMarkElement</code> re-application fix).</li>
+<li>Semantic marks: <strong>declared attrs typed + bag for the tail</strong> (duplicated
+values between declared attrs and bag accepted for v1 — same value set
+twice, harmless).</li>
+<li>Bag name: <strong><code>htmlAttrs</code> everywhere</strong> (one guard, one machinery).</li>
+<li>Parse-side handling is <strong>inferred</strong> from a declared <code>htmlAttrs</code> attr in
+the spec (mirrors the atom sprint’s decision; pivot to a flag later if
+impractical).</li>
+<li><code>id</code> <strong>allowed</strong> (Wikipedia ids are <code>mw</code>-prefixed); accepted v1 caveat:
+in-editor duplication of a block duplicates its <code>id</code> (PM copies attrs on
+split).</li>
+<li>Types declared in the wikipedia initial state: <code>generic-style</code> (in
+<code>default-schema.ts</code>), <code>paragraph</code>, <code>heading-1..3</code>, <code>section</code>,
+<code>paragraph-2</code>, <code>link</code>.</li>
+</ol>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>Class merge strategy (nothing writes class today → verbatim replay).</li>
+<li><code>style</code> replay (guard-excluded, by design).</li>
+<li>Byte-level output fidelity (attribute order, whitespace).</li>
+<li>Changing the reserved-name override behavior (<code>generic-style</code> stays
+hardcoded in <code>default-schema.ts</code>).</li>
+<li>Bag on <code>raw_html_*</code> atoms (already verbatim) or on <code>doc</code>.</li>
+<li>The report UI (still console.log), input-gesture routing, validation,
+style-link inheritance (all previously postponed).</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Bottom-up, mirroring the atom sprint: collection → declaration/round-trip →
+replay → example. Each phase lands as 1–2 small commits with verification.</p>
+<h2><a id="phase-1-collection-at-ingest-for-editable-element-classes" class="heading_anchor" href="#phase-1-collection-at-ingest-for-editable-element-classes" aria-hidden="true">#</a>Phase 1: Collection at ingest for editable element classes</h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p>The <code>htmlAttrs</code> bag is collected and stored for generic-style intent marks,
+semantic marks (declared + bag), blocks, and inline nodes.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-intent-marks" class="heading_anchor" href="#1-intent-marks" aria-hidden="true">#</a>1. Intent marks</h4>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.ts</code>
+<strong>Changes</strong>: <code>MarkDesc</code> <code>{kind: &quot;style&quot;}</code> gains <code>htmlAttrs</code> (string);
+the generic-style fallback emission (:598–608) collects
+<code>collectHtmlAttrs(el, ctx.attrPolicy)</code> into it (replacing the current
+count-all-in-<code>skippedMarkAttrs</code> behavior: count only policy-excluded attrs);
+<code>newGenericStyleMarkDraft</code> (:302–310) writes <code>data-style-name</code> <strong>and</strong>
+<code>htmlAttrs</code> into <code>MarkModel.attrs</code>.</p>
+<h4><a id="2-semantic-marks-declared--bag" class="heading_anchor" href="#2-semantic-marks-declared--bag" aria-hidden="true">#</a>2. Semantic marks (declared + bag)</h4>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.ts</code>
+<strong>Changes</strong>: the semantic-mark emission (:576–597) additionally stores
+<code>htmlAttrs</code> (full bag minus guard; declared attrs stay harvested as today —
+duplication accepted, decision 2); <code>newSemanticMarkDraft</code> writes it.</p>
+<h4><a id="3-blocks--inline-nodes" class="heading_anchor" href="#3-blocks--inline-nodes" aria-hidden="true">#</a>3. Blocks + inline nodes</h4>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.ts</code>
+<strong>Changes</strong>: <code>KNOWN_BLOCK_TAGS</code> (:543–552) and <code>INLINE_TAGS</code> (:618–624)
+emissions set <code>htmlAttrs</code> on the node draft via <code>collectHtmlAttrs</code>.</p>
+<h4><a id="4-tests" class="heading_anchor" href="#4-tests" aria-hidden="true">#</a>4. Tests</h4>
+<p><strong>Changes</strong>: intent mark carries <code>data-style-name</code> + bag; block carries bag
+(e.g. <code>p</code> with <code>class</code>/<code>id</code>); inline node carries bag; semantic mark
+carries declared <code>href</code> + bag with <code>rel</code>/<code>title</code>;
+<code>skippedMarkAttrs</code> counts only policy-excluded attrs.</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-npm-test--lint-typecheck-only-pre-existing-ts2305-build" class="heading_anchor" href="#automated-npm-test--lint-typecheck-only-pre-existing-ts2305-build" aria-hidden="true">#</a>Automated: <code>npm test</code>, lint, typecheck (only pre-existing TS2305), build</h4>
+<h4><a id="manual--end-to-end-in-phase-4" class="heading_anchor" href="#manual--end-to-end-in-phase-4" aria-hidden="true">#</a>Manual: — (end-to-end in Phase 4)</h4>
+<p><strong>Commits</strong>: 1.
+<strong>Implementation Note</strong>: pause for manual confirmation before next phase.</p>
+<hr>
+<h2><a id="phase-2-declaration--round-trip-stability" class="heading_anchor" href="#phase-2-declaration--round-trip-stability" aria-hidden="true">#</a>Phase 2: Declaration + round-trip stability</h2>
+<h3><a id="overview-2" class="heading_anchor" href="#overview-2" aria-hidden="true">#</a>Overview</h3>
+<p><code>htmlAttrs</code> is declared on <code>generic-style</code> (hardcoded) and handled by
+inference for schema-defined nodes/marks: bag-aware <code>getAttrs</code>/<code>toDOM</code>
+make parse, serialize, and reparse preserve collected attributes.</p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-generic-style-reserved-spec-commit-2a" class="heading_anchor" href="#1-generic-style-reserved-spec-commit-2a" aria-hidden="true">#</a>1. generic-style reserved spec (commit 2a)</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/default-schema.ts</code>
+<strong>Changes</strong>: <code>attrs</code> += <code>htmlAttrs: { default: &quot;&quot;, validate: &quot;string&quot; }</code>;
+<code>parseDOM.getAttrs</code> additionally collects foreign attributes into the bag
+(guarded; excluding <code>data-style-name</code> itself); <code>toDOM</code> replays the bag
+pairs into the span output spec (skipping guard).</p>
+<h4><a id="2-schema-defined-nodesmarks-commit-2b" class="heading_anchor" href="#2-schema-defined-nodesmarks-commit-2b" aria-hidden="true">#</a>2. Schema-defined nodes/marks (commit 2b)</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/integration.typeroof.jsx</code>
+<strong>Changes</strong>: in <code>createProseMirrorSchemaFromMetaModel</code>, when a node or mark
+spec declares <code>htmlAttrs</code> (inferred, decision 4): <code>getAttrs</code> = declared
+1:1 coercion (existing) + collect foreign attributes into the bag (minus
+guard and minus declared names); <code>toDOM</code> = declared 1:1 serialization
+(existing) + replay bag pairs into the output spec. New small helpers next to
+<code>_createGetAttrs</code>/<code>_createToDOM</code>; reproducing-atom path (has <code>html</code>
+attr) unchanged and takes precedence.</p>
+<h4><a id="3-tests" class="heading_anchor" href="#3-tests" aria-hidden="true">#</a>3. Tests</h4>
+<p><strong>Changes</strong>: generic-style parseDOM collects <code>data-style-name</code> + guarded
+bag and <code>toDOM</code> replays it; schema node with <code>htmlAttrs</code> declared:
+<code>getAttrs</code> collects declared + foreign into bag, <code>toDOM</code> replays;
+full round-trip parse→serialize for a bag-carrying paragraph and link.</p>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-npm-test--lint-typecheck-build" class="heading_anchor" href="#automated-npm-test--lint-typecheck-build" aria-hidden="true">#</a>Automated: <code>npm test</code>, lint, typecheck, build</h4>
+<h4><a id="manual-" class="heading_anchor" href="#manual-" aria-hidden="true">#</a>Manual: —</h4>
+<p><strong>Commits</strong>: 2 (2a: <code>generic-style</code>; 2b: schema nodes/marks).
+<strong>Implementation Note</strong>: pause for manual confirmation before next phase.</p>
+<hr>
+<h2><a id="phase-3-replay-in-the-views" class="heading_anchor" href="#phase-3-replay-in-the-views" aria-hidden="true">#</a>Phase 3: Replay in the views</h2>
+<h3><a id="overview-3" class="heading_anchor" href="#overview-3" aria-hidden="true">#</a>Overview</h3>
+<p>The views replay the bag to the DOM: marks (incl. generic-style), editable
+nodes (outer), and across intent→tag swaps.</p>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-prosemirrormarkview" class="heading_anchor" href="#1-prosemirrormarkview" aria-hidden="true">#</a>1. <code>ProsemirrorMarkView</code></h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/integration.typeroof.jsx</code>
+<strong>Changes</strong>: constructor and <code>update()</code> apply
+<code>_applyHtmlAttrsBag(this.dom, mark.attrs.htmlAttrs)</code> for marks that carry a
+bag (incl. generic-style, ending its <code>_applyDeclaredAttrs</code> exemption for
+the bag only); <code>update()</code> keeps returning true when <code>data-style-name</code> is
+unchanged (re-applying the bag in place when it changed).</p>
+<h4><a id="2-prosemirrornodeview-non-atom-branch" class="heading_anchor" href="#2-prosemirrornodeview-non-atom-branch" aria-hidden="true">#</a>2. <code>ProsemirrorNodeView</code> (non-atom branch)</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/integration.typeroof.jsx</code>
+<strong>Changes</strong>: constructor (after <code>this.dom = element</code>, :210) and <code>update()</code>
+non-atom branch (:263–270) apply the bag to the <strong>outer</strong> element when the
+node carries <code>htmlAttrs</code> (guarded; contentElement/contentDOM untouched).</p>
+<h4><a id="3-_swapmarkelement" class="heading_anchor" href="#3-_swapmarkelement" aria-hidden="true">#</a>3. <code>_swapMarkElement</code></h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/type-spec.typeroof.jsx</code>
+<strong>Changes</strong>: after creating the swapped element with the two data-* markers
+(:1041–1045), apply <code>_applyHtmlAttrsBag</code> from <code>mark.attrs.htmlAttrs</code> so
+intent→tag swaps preserve collected attributes.</p>
+<h4><a id="4-tests-1" class="heading_anchor" href="#4-tests-1" aria-hidden="true">#</a>4. Tests</h4>
+<p><strong>Changes</strong>: generic-style MarkView replays bag at construction and re-applies
+on <code>update()</code> (extend the existing MarkView update test); editable NodeView
+replays bag on outer; swap keeps bag attributes (jsdom test around
+<code>_swapMarkElement</code>-equivalent flow or via the flush path if feasible).</p>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-npm-test--lint-typecheck-build-1" class="heading_anchor" href="#automated-npm-test--lint-typecheck-build-1" aria-hidden="true">#</a>Automated: <code>npm test</code>, lint, typecheck, build</h4>
+<h4><a id="manual--end-to-end-in-phase-4-1" class="heading_anchor" href="#manual--end-to-end-in-phase-4-1" aria-hidden="true">#</a>Manual: — (end-to-end in Phase 4)</h4>
+<p><strong>Commits</strong>: 1.
+<strong>Implementation Note</strong>: pause for manual confirmation before next phase.</p>
+<hr>
+<h2><a id="phase-4-example-state--end-to-end-verification" class="heading_anchor" href="#phase-4-example-state--end-to-end-verification" aria-hidden="true">#</a>Phase 4: Example state + end-to-end verification</h2>
+<h3><a id="overview-4" class="heading_anchor" href="#overview-4" aria-hidden="true">#</a>Overview</h3>
+<p>The wikipedia demo declares the bag on the decision-6 types and shows the
+fidelity end-to-end.</p>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-state" class="heading_anchor" href="#1-state" aria-hidden="true">#</a>1. State</h4>
+<p><strong>File</strong>: <code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code>
+<strong>Changes</strong>: declare <code>htmlAttrs</code> (<code>{ &quot;default&quot;: &quot;&quot;, &quot;validate&quot;: { &quot;type&quot;: &quot;string&quot; } }</code>)
+on <code>paragraph</code>, <code>heading-1..3</code>, <code>section</code>, <code>paragraph-2</code> (nodes) and
+<code>link</code> (mark). (<code>generic-style</code> is declared in <code>default-schema.ts</code> in
+Phase 2a.)</p>
+<h4><a id="2-tests" class="heading_anchor" href="#2-tests" aria-hidden="true">#</a>2. Tests</h4>
+<p><strong>Changes</strong>: state deserializes with the declarations; e2e: ingest a fragment
+with <code>&lt;p class=&quot;x&quot; id=&quot;mw1&quot; about=&quot;#a&quot;&gt;…&lt;a href=&quot;…&quot; rel=&quot;mw:ExtLink&quot; title=&quot;T&quot;&gt;…&lt;/a&gt;&lt;/p&gt;</code>
+via <code>ingestWikipediaDocument</code> → paragraph node has bag with
+<code>class</code>/<code>id</code>/<code>about</code>; link mark has <code>href</code> typed + bag with
+<code>rel</code>/<code>title</code>.</p>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-npm-test--lint-typecheck-build-2" class="heading_anchor" href="#automated-npm-test--lint-typecheck-build-2" aria-hidden="true">#</a>Automated: <code>npm test</code>, lint, typecheck, build</h4>
+<h4><a id="manual-ingest-typography--paragraph-class--id--about--typeof" class="heading_anchor" href="#manual-ingest-typography--paragraph-class--id--about--typeof" aria-hidden="true">#</a>Manual: ingest “Typography” → paragraph <code>class</code>/<code>id</code>/<code>about</code>/<code>typeof</code></h4>
+<p>visible in DOM; links show <code>rel</code>/<code>title</code> next to <code>href</code>; intent-mark
+spans carry collected attrs; editing (typing, splitting a block) keeps attrs;
+paste/reload/reparse preserves them.</p>
+<p><strong>Commits</strong>: 1.</p>
+<hr>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<h3><a id="unit-tests-vitest-colocated-testmjs-" class="heading_anchor" href="#unit-tests-vitest-colocated-testmjs-" aria-hidden="true">#</a>Unit Tests (vitest, colocated <code>*.test.mjs</code>)</h3>
+<ul>
+<li>Collection per element class + policy-excluded counting (Phase 1)</li>
+<li>generic-style and schema-type <code>getAttrs</code>/<code>toDOM</code> bag round-trips (Phase 2)</li>
+<li>MarkView/NodeView/swap bag replay (Phase 3)</li>
+<li>State deserialization + e2e ingestion (Phase 4)</li>
+</ul>
+<h3><a id="integration--manual" class="heading_anchor" href="#integration--manual" aria-hidden="true">#</a>Integration / Manual</h3>
+<ul>
+<li>Phase 4: full “Typography” article verification (see criteria)</li>
+</ul>
+<h2><a id="baseline-for-all-phases" class="heading_anchor" href="#baseline-for-all-phases" aria-hidden="true">#</a>Baseline for all phases</h2>
+<ul>
+<li><code>npm test</code> / <code>npm run lint</code> must stay green; <code>npm run typecheck</code> may
+show <strong>only</strong> the known pre-existing <code>main.ts</code> TS2305.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

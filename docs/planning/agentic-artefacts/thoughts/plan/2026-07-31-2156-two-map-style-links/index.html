@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="two-map-style-links-intentstylelinks--markstylelinks--implementation-plan" class="heading_anchor" href="#two-map-style-links-intentstylelinks--markstylelinks--implementation-plan" aria-hidden="true">#</a>Two-Map Style-Links (intentStyleLinks / markStyleLinks) — Implementation Plan</h1>
+<p>date: 2026-07-31T21:56:00+02:00
+git_commit: 37798e99d35fbad80649977435a19ea3112b43a1
+branch: demo/wikipedia
+research: thoughts/research/2026-07-31-2036-two-map-style-links.md
+predecessor plan: docs/planning/agentic-artefacts/thoughts/plan/2026-07-30-1422-style-link-inheritance.md</p>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Split the single style-link edge map (<code>TypeSpecModel.stylePatches</code>, edge
+<code>{stylePatch, mode, type, tag, mark}</code>) into two purpose-built maps:
+<code>intentStyleLinks</code> (rename; key = intent name / <code>data-style-name</code>; edge
+<code>{stylePatch, mode, tag}</code>) and <code>markStyleLinks</code> (new; key = schema mark
+type name; edge <code>{stylePatch, mode}</code>). The <code>type</code> enum, the explicit
+<code>mark</code> link and the type-gating semantics are deleted. This makes the
+edge’s target kind structural, dissolves the ancestor-wins precedence bug
+(pure key matching is depth-correct by map-merge override), and removes
+the latent implicit schema-mark styling that made behavior unpredictable.</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li>Full machinery inventory + serialized-state analysis:
+<code>thoughts/research/2026-07-31-2036-two-map-style-links.md</code>.</li>
+<li>Inheritance via the typeSpecnion (<code>styleLinks/&lt;key&gt;</code> → edge struct,
+<code>null</code> tombstone) is shipped and tested (commits up to 26f047cc).</li>
+<li>No shipped state relies on implicit schema-mark styling: documents
+style via generic-style intents; the name fallback is latent.</li>
+</ul>
+<h3><a id="key-discoveries" class="heading_anchor" href="#key-discoveries" aria-hidden="true">#</a>Key Discoveries:</h3>
+<ul>
+<li><code>/proseMirrorSchema</code> is a root state key in all 3 states; absolute
+dependency mappings (<code>['/font', 'rootFont']</code>) are established — a
+schema-marks select needs no new plumbing.</li>
+<li>Codebase mixin convention (<code>typographyInlineMixin</code> etc.) fits the
+shared edge-fields factoring better than class inheritance.</li>
+<li>type-driven-ui registers UI per model CLASS; the mark map either gets
+its own registration or is hosted inside the intent collapsible (user
+decision: ONE collapsible hosting both).</li>
+<li>Ramp: handler registration only; runtime comes free via TypeSpecMeta.</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<ul>
+<li><code>TypeSpecModel</code> has <code>intentStyleLinks</code> + <code>markStyleLinks</code>; the
+legacy <code>stylePatches</code> field, <code>type</code>/<code>mark</code> edge fields and
+<code>MarkLinkApplyTypeEnumModel</code> are gone.</li>
+<li>Resolution: intents ← <code>intentStyleLinks.get(data-style-name)</code>;
+schema marks ← <code>markStyleLinks.get(mark.type.name)</code>. No
+cross-matching. Resolvers return <code>null</code> when nothing applies.</li>
+<li>Both maps inherit via the typeSpecnion (prefixes
+<code>intentStyleLinks/</code>, <code>markStyleLinks/</code>), with whole-edge override,
+NULL-STYLE (<code>stylePatch: ''</code>) and tombstone (<code>mode: 'unlinked'</code>)
+in both. Precedence: name match, closest scope wins.</li>
+<li>Handler ids: <code>styleLinkProperties@&lt;typeSpecPath&gt;/intentStyleLinks/&lt;key&gt;</code>
+resp. <code>.../markStyleLinks/&lt;key&gt;</code>.</li>
+<li>One “Style Links” collapsible hosting: inherited list (both maps),
+intent-links map, mark-links map (keys via schema-marks select +
+custom).</li>
+</ul>
+<h2><a id="decisions-operator-2026-07-31" class="heading_anchor" href="#decisions-operator-2026-07-31" aria-hidden="true">#</a>Decisions (operator, 2026-07-31)</h2>
+<ol>
+<li>Two maps; names <code>intentStyleLinks</code> / <code>markStyleLinks</code> (serialized
+states get renamed — no legacy concerns).</li>
+<li>Edge factoring: shared mixin <code>{stylePatch, mode}</code> + coherence
+(codebase mixin convention); intent edge adds <code>tag</code>.</li>
+<li>Tombstone (<code>mode: 'unlinked'</code>) KEPT in both maps (2026-07-31,
+after brief confusion with the dropped <code>type</code> field).</li>
+<li>Map-2 keys: select from schema mark names + custom option; permissive
+validation (FOREIGN_KEY_NO_ACTION philosophy — unknown keys inert).</li>
+<li>Both map UIs live inside the single “Style Links” collapsible.</li>
+<li>Behavior tests (not method tests) ride with each phase; stop before
+EVERY commit with the proposed message for review.</li>
+</ol>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>Explicit mark-link indirection (edge key ≠ mark name) — dropped.</li>
+<li><code>type</code> enum / “Apply as” semantics — dropped.</li>
+<li>Migration tooling for user-saved states containing <code>type</code>/<code>mark</code>
+edge data (only from local testing; states are edited by hand).</li>
+<li><code>nodeStyleLinks</code> (noted as possible future third map).</li>
+<li>Conflict indicators for shadowed edges in the UI.</li>
+</ul>
+<h2><a id="phase-1-model-split" class="heading_anchor" href="#phase-1-model-split" aria-hidden="true">#</a>Phase 1: Model split</h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p>New edge structs + maps, field rename, deleted type/mark machinery,
+simplified resolvers, JSON states renamed, model behavior tests.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-libjscomponentstype-spec-modelsmjs" class="heading_anchor" href="#1-libjscomponentstype-spec-modelsmjs" aria-hidden="true">#</a>1. <code>lib/js/components/type-spec-models.mjs</code></h4>
+<p><strong>Changes</strong>:</p>
+<ul>
+<li>Add <code>stylePatchLinkModelMixin</code> = <code>[['stylePatch', StylePatchKeyModel], ['mode', StylePatchLinkModeEnumModel], CoherenceFunction.create( ['mode','stylePatch'], sanitizeStylePatchLinkMode)]</code> (mixin convention).</li>
+<li><code>MarkStylePatchLinkModel</code> = struct(mixin);
+<code>IntentStylePatchLinkModel</code> = struct(mixin + <code>['tag', StringOrEmptyModel]</code>).</li>
+<li><code>IntentStyleLinksMapModel</code> / <code>MarkStyleLinksMapModel</code> ordered maps
+(<code>validateKeyFn: validateStyleName</code>).</li>
+<li><code>TypeSpecModel</code>: <code>['stylePatches', StylePatchLinksMapModel]</code> →
+<code>['intentStyleLinks', IntentStyleLinksMapModel]</code> + new
+<code>['markStyleLinks', MarkStyleLinksMapModel]</code>. Update comments.</li>
+<li>DELETE: <code>MarkLinkApplyTypeEnumModel</code>, <code>StylePatchLinkModel</code>,
+<code>StylePatchLinksMapModel</code>, <code>sanitizeStylePatchLink</code>, the
+<code>type</code>/<code>mark</code> fields.</li>
+<li>Resolvers: <code>getStylePatchLinkForMark(markStyleLinks, mark)</code> →
+<code>markStyleLinks.has(mark.type.name) ? mark.type.name : null</code>;
+<code>getStylePatchTagForIntent(intentStyleLinks, styleName)</code> → edge’s
+<code>tag</code> if non-empty else <code>null</code> (no type check anymore);
+both return <code>null</code> when nothing applies (contract change; call sites
+are adapted in Phase 2 commit 4).</li>
+</ul>
+<h4><a id="2-serialized-states-3-files" class="heading_anchor" href="#2-serialized-states-3-files" aria-hidden="true">#</a>2. Serialized states (3 files)</h4>
+<p><code>lib/assets/type-stage-initial-state.json</code>,
+<code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code>,
+<code>lib/assets/wikipedia-demo.json</code>: rename <code>&quot;stylePatches&quot;</code> →
+<code>&quot;intentStyleLinks&quot;</code> (TypeSpec fields only, NOT <code>stylePatchesSource</code>).</p>
+<h4><a id="3-libjscomponentstype-spec-modelstestmjs" class="heading_anchor" href="#3-libjscomponentstype-spec-modelstestmjs" aria-hidden="true">#</a>3. <code>lib/js/components/type-spec-models.test.mjs</code></h4>
+<p><strong>Changes</strong>: rewrite resolver describes as BEHAVIOR tests using real
+map-model drafts: mark resolves only via <code>markStyleLinks</code> (an
+<code>intentStyleLinks</code> edge with the same key does NOT style the mark);
+intent tag resolves only via <code>intentStyleLinks</code>; <code>null</code> when absent;
+tombstone semantics are stream-level (covered in Phase 2 tests).</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated" class="heading_anchor" href="#automated" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] <code>npm test</code> green (86/86); <code>npm run lint</code> clean; typecheck: no new errors.</li>
+</ul>
+<h4><a id="manual" class="heading_anchor" href="#manual" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] All 3 states load; style links behave as before (intent styling).</li>
+</ul>
+<p><strong>Commit</strong>: <code>[type-spec-models] split style-links into intentStyleLinks + markStyleLinks</code>
+<strong>Implementation Note</strong>: pause for manual confirmation before next phase.</p>
+<hr>
+<h2><a id="phase-2-properties-stream--runtime-delivery" class="heading_anchor" href="#phase-2-properties-stream--runtime-delivery" aria-hidden="true">#</a>Phase 2: Properties stream + runtime delivery</h2>
+<h3><a id="overview-2" class="heading_anchor" href="#overview-2" aria-hidden="true">#</a>Overview</h3>
+<p>Two stream families, delivery of both via StyleLinksMeta, PM + viewer
+resolution per map. Two commits (2a stream+meta+viewer, 2b PM resolvers).</p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-registered-properties-definitionsmjs" class="heading_anchor" href="#1-registered-properties-definitionsmjs" aria-hidden="true">#</a>1. <code>registered-properties-definitions.mjs</code></h4>
+<p><code>STYLE_LINKS = 'styleLinks/'</code> → <code>INTENT_STYLE_LINKS = 'intentStyleLinks/'</code></p>
+<ul>
+<li><code>MARK_STYLE_LINKS = 'markStyleLinks/'</code>; <code>getStyleLinks(propertyValuesMap, prefix)</code> parameterized (callers pass the prefix).</li>
+</ul>
+<h4><a id="2-properties-generatorsmjs" class="heading_anchor" href="#2-properties-generatorsmjs" aria-hidden="true">#</a>2. <code>properties-generators.mjs</code></h4>
+<p><code>styleLinksGen</code> yields from both fields: <code>intentStyleLinks/&lt;key&gt;</code> →
+intent edge or <code>null</code> (unlinked); <code>markStyleLinks/&lt;key&gt;</code> → mark edge
+or <code>null</code>. <code>processed-properties.mjs</code>: skip both prefixes.</p>
+<h4><a id="3-metatyperoofjsx--stylelinksmeta-" class="heading_anchor" href="#3-metatyperoofjsx--stylelinksmeta-" aria-hidden="true">#</a>3. <code>meta.typeroof.jsx</code> (<code>StyleLinksMeta</code>)</h4>
+<p>Parameterize with <code>(fieldName, prefix)</code>; instantiate TWICE in
+<code>TypeSpecMeta</code> (intent + mark). Handler rootPath =
+<code>rootPath.append(fieldName, key)</code> → ids
+<code>styleLinkProperties@&lt;typeSpecPath&gt;/&lt;fieldName&gt;/&lt;key&gt;</code>.
+<code>viewer.typeroof.jsx:298-306</code>: id segment <code>stylePatches</code> →
+<code>intentStyleLinks</code> (viewer handles intents only).</p>
+<h4><a id="4-prosemirrortype-spectyperoofjsx" class="heading_anchor" href="#4-prosemirrortype-spectyperoofjsx" aria-hidden="true">#</a>4. <code>prosemirror/type-spec.typeroof.jsx</code></h4>
+<p><code>_getEffectiveStyleLinks(typeSpecProperties, prefix)</code>;
+<code>_getStylePatchLinkForMark</code> uses the <code>markStyleLinks</code> map (schema
+marks) — short-circuit <code>null</code> → unknown-style fallback;
+<code>_resolveIntentTag</code> uses the <code>intentStyleLinks</code> map;
+<code>_getStyleLinkPropertiesId</code> gains the field-name path segment;
+<code>_finalizeMarkSubscription</code> picks the map by mark kind
+(<code>data-style-name</code> present → intent, else schema mark).</p>
+<h4><a id="5-type-specniontestmjs" class="heading_anchor" href="#5-type-specniontestmjs" aria-hidden="true">#</a>5. <code>type-specnion.test.mjs</code></h4>
+<p>BEHAVIOR tests (real <code>HierarchicalScopeTypeSpecnion</code> chains, stub
+hosts exposing both maps): per map — inherit, override (closer wins),
+tombstone (+ re-link in grandchild), NULL-STYLE available; cross-map:
+same key in both maps stays independent; an intent is NOT styled when
+only <code>markStyleLinks</code> has its name and vice versa (structural
+separation = the dissolved Variant B).</p>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-1" class="heading_anchor" href="#automated-1" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] New behavior tests green (89/89); <code>npm run lint</code> clean. (2a: 6d9394b6, 2b pending)</li>
+</ul>
+<h4><a id="manual-1" class="heading_anchor" href="#manual-1" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] Wikipedia demo: intent styling, schema-mark styling via
+<code>markStyleLinks</code>, override in child, tombstone, ramp smoke test.</li>
+</ul>
+<p><strong>Commit (2a)</strong>: <code>[typeSpecnion] two style-link families in the properties stream + delivery</code>
+<strong>Commit (2b)</strong>: <code>[ProseMirror] resolve intents and schema marks from their own maps</code>
+<strong>Implementation Note</strong>: pause for manual confirmation before next phase.</p>
+<h2><a id="phase-3-ui" class="heading_anchor" href="#phase-3-ui" aria-hidden="true">#</a>Phase 3: UI</h2>
+<h3><a id="overview-3" class="heading_anchor" href="#overview-3" aria-hidden="true">#</a>Overview</h3>
+<p>One “Style Links” collapsible hosting: inherited list (both maps),
+intent-links map (no more “Apply as”), mark-links map (schema-marks
+select + custom).</p>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-type-spec-fundamentalsmjs" class="heading_anchor" href="#1-type-spec-fundamentalsmjs" aria-hidden="true">#</a>1. <code>type-spec-fundamentals.mjs</code></h4>
+<ul>
+<li>Intent edge editor (<code>UIStylePatchLinksValue</code>): DELETE the “Apply as”
+select, the mark input and the <code>linkType</code> wiring/activationTests;
+the tag input becomes direct (always visible for intent edges).</li>
+<li>Parameterize the links-map widget family for the mark map (no tag
+input; create-flow key select fed by schema mark names via a
+<code>/proseMirrorSchema</code> dependency + custom option; permissive).</li>
+<li><code>UIStylePatchesLinksMapCollapsible</code>: host both maps + the inherited
+list; the mark map’s <code>childrenOrderedMap</code> maps to the sibling
+<code>markStyleLinks</code> field. NOTE: check what default UI
+<code>MarkStyleLinksMapModel</code> gets without its own type-driven-ui
+registration — if it renders, suppress it (minimal hidden
+registration); fallback if awkward: discuss before deviating from the
+one-collapsible decision.</li>
+<li><code>UIInheritedStyleLinksList</code>: cover both maps (kind-labeled entries
+or two lists); reads edges from both prefixes.</li>
+</ul>
+<h4><a id="2-type-driven-uimjs" class="heading_anchor" href="#2-type-driven-uimjs" aria-hidden="true">#</a>2. <code>type-driven-ui.mjs</code></h4>
+<p>Adjust the <code>StylePatchLinksMapModel</code> registration to the renamed
+<code>IntentStyleLinksMapModel</code>; mark map per 1. NOTE.</p>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-2" class="heading_anchor" href="#automated-2" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] <code>npm test</code> 89/89, <code>npm run lint</code> green. (d173784b)</li>
+</ul>
+<h4><a id="manual-2" class="heading_anchor" href="#manual-2" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[x] Create/edit intent links (with tag) and mark links in one
+collapsible; (UNLINK) works in both; inherited list covers both.
+(confirmed 2026-08-01; labels + per-item x delete + collapsed
+default added on operator request)</li>
+</ul>
+<p><strong>Commit</strong>: <code>[UI] style-links sections for intent and mark links in one collapsible</code>
+<strong>Implementation Note</strong>: pause for manual confirmation before next phase.</p>
+<hr>
+<h2><a id="phase-4-plumbing--polish" class="heading_anchor" href="#phase-4-plumbing--polish" aria-hidden="true">#</a>Phase 4: Plumbing &amp; polish</h2>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required:</h3>
+<ul>
+<li><code>pps-maps.mjs:48,101</code>: <code>stylePatches</code> → <code>intentStyleLinks</code>
+prefix mapping; add <code>markStyleLinks</code> as needed.</li>
+<li><code>defaults.mjs:150</code>: skip/known-default set updated for both fields.</li>
+<li>Comment cleanup touching renamed symbols (archived docs stay as
+historical record).</li>
+</ul>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-3" class="heading_anchor" href="#automated-3" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] <code>npm test</code> 89/89, <code>npm run lint</code> green; typecheck: no new errors.</li>
+</ul>
+<h4><a id="manual-3" class="heading_anchor" href="#manual-3" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[x] Full demo pass (type-stage + wikipedia + ramp). (confirmed 2026-08-01)</li>
+</ul>
+<p><strong>Commit</strong>: <code>[housekeeping] PPS plumbing + comments for the two-map split</code></p>
+<hr>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<h3><a id="behavior-tests-vitest" class="heading_anchor" href="#behavior-tests-vitest" aria-hidden="true">#</a>Behavior tests (vitest):</h3>
+<ul>
+<li>Phase 1: resolution semantics per map via real model drafts (incl.
+no-cross-matching).</li>
+<li>Phase 2: inheritance semantics per map via real
+<code>HierarchicalScopeTypeSpecnion</code> chains (inherit / override /
+tombstone / re-link / NULL-STYLE / cross-map independence).</li>
+</ul>
+<h3><a id="integrationmanual" class="heading_anchor" href="#integrationmanual" aria-hidden="true">#</a>Integration/manual:</h3>
+<ul>
+<li>Wikipedia demo + type-stage demo + ramp smoke per phase; UI flows
+per Phase 3 manual criteria.</li>
+</ul>
+<h2><a id="baseline-for-all-phases" class="heading_anchor" href="#baseline-for-all-phases" aria-hidden="true">#</a>Baseline for all phases</h2>
+<ul>
+<li><code>npm test</code> (vitest) green; <code>npm run lint</code> clean; typecheck shows
+no new errors (pre-existing main.ts TS2305 tolerated).</li>
+<li>Stop before EVERY commit: proposed message (+ model/provider/agent
+metadata read from actual config) presented for operator review.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

@@ -20,11 +20,11 @@ import {
 } from "../../prosemirror/models.typeroof.jsx";
 import {
     Collapsible,
-    WasteBasketDropTarget,
     UICheckboxInput,
     GenericSelect,
+    StaticNode,
 } from "../../generic.mjs";
-import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
+import { TypeStagePaneStyler } from "../type-stage/pane-styler.typeroof.jsx";
 import { GENERIC } from "../../registered-properties-definitions.mjs";
 import {
     isInheritingPropertyFn,
@@ -43,7 +43,12 @@ import {
 } from "../type-stage/style-patches.typeroof.jsx";
 import { RampProseMirrorContext } from "../type-stage/prosemirror.typeroof.jsx";
 
-import { initTypeSpecCoherenceFn } from "../type-stage/index.typeroof.jsx";
+import {
+    initTypeSpecCoherenceFn,
+    ensureDimensionBoundnessCoherenceFn,
+} from "../type-stage/index.typeroof.jsx";
+
+import { LengthModel } from "../../length-models.mjs";
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 
 //  We can't create the self-reference directly
@@ -63,6 +68,9 @@ const RampModel = _BaseLayoutModel.createClass(
     // the root of all typeSpecs
     ["document", NodeModel],
     ["showParameters", BooleanModel],
+    ["width", LengthModel],
+    ["height", LengthModel],
+    ensureDimensionBoundnessCoherenceFn,
     initTypeSpecCoherenceFn(DEFAULT_STATE),
 );
 
@@ -223,7 +231,7 @@ class TypeSpecSelect extends GenericSelect {
             // Now ensure options are updated.
             if (!changedMap.has("options")) {
                 _changedMap = new Map(changedMap);
-                _changedMap.set("options", this._getEntry("options"));
+                _changedMap.set("options", this.getEntry("options"));
             }
         }
         super.update(_changedMap);
@@ -259,6 +267,11 @@ class RampController extends _BaseContainerComponent {
                     class: "style_patches-manager",
                 },
             ),
+            // The editor pane: sized + document-styled by
+            // TypeStagePaneStyler (like in type-stage).
+            proseMirrorHostElement = widgetBus.domTool.createElement("div", {
+                class: "ui_prosemirror_host external_source",
+            }),
             zones = new Map([
                 ..._zones,
                 ["properties-manager", propertiesManagerContainer],
@@ -376,6 +389,29 @@ class RampController extends _BaseContainerComponent {
                 originTypeSpecPath,
                 // menuSettings
                 { zone: "prose-mirror-editor-menu" },
+                proseMirrorHostElement,
+            ],
+            [
+                // ProseMirror uses the passed host element but does not
+                // insert it into the zone (see type-stage).
+                { zone: "layout" },
+                [],
+                StaticNode,
+                proseMirrorHostElement,
+            ],
+            [
+                {},
+                [
+                    "width",
+                    "height",
+                    "environment@layout",
+                    [
+                        `typeSpecProperties@${originTypeSpecPath.toString()}`,
+                        "properties@",
+                    ],
+                ],
+                TypeStagePaneStyler,
+                proseMirrorHostElement,
             ],
             [
                 { zone: "editor-manager" },
@@ -398,21 +434,7 @@ class RampController extends _BaseContainerComponent {
                 [], // eventHandlers
                 null, // label 'Style Patches'
                 true, // dragAndDrop
-            ],
-            [
-                {
-                    zone: "style_patches-manager",
-                },
-                [["typeSpec/children", "rootCollection"]],
-                WasteBasketDropTarget,
-                "Delete",
-                "", //'drag and drop into trash-bin.'
-                [
-                    DATA_TRANSFER_TYPES.TYPE_SPEC_STYLE_PATCH_PATH,
-                    DATA_TRANSFER_TYPES.TYPE_SPEC_STYLE_PATCH_LINK_PATH,
-                    // to delete the axesLocations values coming from UIAxesMathLocation
-                    DATA_TRANSFER_TYPES.AXESMATH_LOCATION_VALUE_PATH,
-                ],
+                true, // deletableEntries
             ],
             [
                 {

@@ -1,0 +1,17 @@
+.ui_document_renderer_mode_selector {
+    .ui-button_document_renderer_mode_selector {
+        height: 4em;
+        width: 5em;
+        flex-wrap: wrap;
+        &.active {
+            color: white;
+            background: black;
+        }
+        span {
+            display: block;
+        }
+        .material-symbols-outlined {
+            font-size: 2em !important;
+        }
+    }
+}

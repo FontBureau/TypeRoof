@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-prosemirror-schema-defined-marks--usage-and-integration-state" class="heading_anchor" href="#research-prosemirror-schema-defined-marks--usage-and-integration-state" aria-hidden="true">#</a>Research: ProseMirror schema-defined marks — usage and integration state</h1>
+<ul>
+<li>Date: 2026-07-26T21:20:39+02:00</li>
+<li>Repo: TypeRoof</li>
+<li>Branch: demo/wikipedia</li>
+<li>Commit: 369fb540ed8b53981296612304b9dfae068c7391</li>
+</ul>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research question</h2>
+<p><code>ProseMirrorSchemaModel</code> (<code>lib/js/components/prosemirror/models.typeroof.jsx</code>)
+has <code>[&quot;marks&quot;, MarkSpecMapModel]</code>. Initial states define a <code>strong</code> mark, but no
+document uses it. Is the marks machinery actually used, forgotten, or
+superseded — and what exists today vs. what does not?</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p>The marks <strong>loading</strong> half exists and runs; the <strong>application</strong> half was never
+built. The <code>generic-style</code> mark (one reserved mark + <code>data-style-name</code> attr +
+TypeSpec subscription styling) superseded per-name schema marks as the styling
+mechanism — a deliberate ship-faster pivot; semantic HTML remains a goal.
+Recently landed (commit <code>369fb540</code>, branch <code>demo/wikipedia</code>): generalized
+<code>ProsemirrorMarkView</code> + dynamic <code>markViews</code> registration, closing the render gap.</p>
+<h2><a id="what-exists-today-with-evidence" class="heading_anchor" href="#what-exists-today-with-evidence" aria-hidden="true">#</a>What exists today (with evidence)</h2>
+<h3><a id="schema-loading" class="heading_anchor" href="#schema-loading" aria-hidden="true">#</a>Schema loading</h3>
+<ul>
+<li><code>createProseMirrorSchemaFromMetaModel</code> (<code>lib/js/components/prosemirror/integration.typeroof.jsx:339-433</code>)
+iterates <code>proseMirrorSchema.get(&quot;marks&quot;)</code> (394-431), generates <code>parseDOM</code>/<code>toDOM</code>
+from <code>tag</code>, adds each to the <code>SchemaSpec</code>. Marks named like reserved marks
+(<code>generic-style</code>) are skipped with a warning. In-code comment: “CAUTION: this
+is a stub marks will be handled very differently, likely!”</li>
+<li>Single caller: <code>ProseMirror.update</code> (line 938), triggered by the
+<code>proseMirrorSchema</code> dependency, wired in both layouts
+(<code>type-stage/prosemirror.typeroof.jsx</code>, <code>ramp/index.typeroof.jsx</code>).</li>
+<li>Origin: commit <code>1d625176</code> “[ProseMirror] WIP: initial loading of NodeSpec/MarkSpec
+from Metamodel to Prosemirror” (2025-09-02).</li>
+</ul>
+<h3><a id="document-round-trip" class="heading_anchor" href="#document-round-trip" aria-hidden="true">#</a>Document round-trip</h3>
+<ul>
+<li><code>_rawCreateProseMirrorNode</code> (integration ~687) calls <code>schema.mark(typeKey, attrs)</code>
+per metamodel mark; <code>_rawCreateMetamodelNode</code> (~640-690) writes marks back.</li>
+<li><code>NodeSpecModel.marks</code> (allowed-marks constraint string) and MarkSpec
+<code>excludes</code>/<code>inclusive</code>/<code>spanning</code> pass through 1:1.</li>
+<li>Unknown mark names in a document fail inside <code>schema.mark()</code> → node degrades
+to <code>INVALID</code> (console.error only).</li>
+</ul>
+<h3><a id="rendering-landed-369fb540" class="heading_anchor" href="#rendering-landed-369fb540" aria-hidden="true">#</a>Rendering (landed 369fb540)</h3>
+<ul>
+<li><code>ProsemirrorMarkView._getTag(mark)</code> resolves tag from the metamodel mark spec
+via <code>widgetBus.getLinked(mark.type.schema)</code>; fallback <code>span</code> for reserved
+marks. Emits <code>data-mark-type</code>; <code>data-style-name</code> only for <code>generic-style</code>.</li>
+<li><code>update()</code> registers <code>markViews</code> for new schema marks, mirroring the
+<code>nodeViews</code> block; removal filter checks the built PM <code>schema.marks</code> so
+reserved marks survive.</li>
+</ul>
+<h2><a id="what-does-not-exist-today" class="heading_anchor" href="#what-does-not-exist-today" aria-hidden="true">#</a>What does not exist today</h2>
+<ol>
+<li><strong>Attrs conversion</strong> — <code>attrs</code> skipped with a warning in schema creation
+(integration 396-409) for marks and nodes; generated <code>parseDOM</code>/<code>toDOM</code>
+have no <code>getAttrs</code>/attr serialization. Blocks <code>link</code>/<code>href</code>.
+<code>AttributeSpecMapModel</code>/<code>AttrValidateModel</code> exist, unwired.</li>
+<li><strong>Schema UI for marks</strong> — node-spec editors <code>UINodeSpecMap</code> +
+<code>NodeSpecPropertiesManager</code> bind <code>./proseMirrorSchema/nodes</code>
+(<code>lib/js/components/layouts/type-stage/index.typeroof.jsx:426-452</code>); no
+equivalent for <code>proseMirrorSchema/marks</code>. Entry today: initial-state JSON only.</li>
+<li><strong>Apply/toggle UI</strong> — menus hard-code <code>schema.marks[&quot;generic-style&quot;]</code>
+(<code>lib/js/components/prosemirror/type-spec.typeroof.jsx</code>, <code>UIProseMirrorMenuStyles</code> :1531); <code>Mod-b/i</code> keymap lines commented
+out (integration ~596-597). <code>toggleMark</code>/<code>removeMark</code> in <code>commands.ts</code> are generic.</li>
+<li><strong>Ingest emission</strong> — both ingests flatten <code>&lt;strong&gt;</code>/<code>&lt;b&gt;</code>/<code>&lt;em&gt;</code> to
+<code>generic-style</code> + <code>data-style-name</code> (<code>lib/js/wikipedia/ingest.ts:128-149</code>,
+<code>ingest_next.ts:128</code>). No document in any initial state uses schema marks.</li>
+<li><strong>StylePatch link for semantic marks</strong> — marks are styled by StylePatches
+(children of the parent node’s TypeSpec), linked by name:
+<code>_finalizeMarkSubscription</code> (<code>lib/js/components/prosemirror/type-spec.typeroof.jsx:911</code>)
+maps <code>data-style-name</code> -&gt; <code>stylePatches/&lt;name&gt;</code> of the node’s TypeSpec;
+semantic marks have no <code>data-style-name</code>, so no StylePatch resolves
+(<code>UIDocumentUnkownStyleStyler</code>). Bridge: plain CSS on <code>[data-mark-type]</code>.</li>
+<li><strong>Validation</strong> — <code>excludes</code> strings unchecked against existing mark names;
+INVALID-node failures not surfaced to the user.</li>
+<li><strong><code>ProsemirrorMarkView.update(mark)</code></strong> — absent; PM destroys/recreates the
+view (re-running <code>subscribeMark</code>) on attr change.</li>
+</ol>
+<h2><a id="methodology-notes" class="heading_anchor" href="#methodology-notes" aria-hidden="true">#</a>Methodology notes</h2>
+<ul>
+<li>Ground truth via grep/python JSON scans (all three initial states: every
+document mark is <code>generic-style</code>; <code>strong</code>/<code>bold</code> appear only in schema sections).</li>
+<li>Gortex cross-check: <code>callers</code>/<code>references</code> on functions matched grep 1:1;
+<code>references</code>/<code>usages</code> on variable-kind symbols (const-chain declarators)
+returned false <code>total_references: 0</code> with a “likely_unused … safe to remove”
+caveat — documented in <code>~/TOOLING.md</code> (2026-07-26 entry), not yet filed upstream.</li>
+</ul>
+<h2><a id="related-state" class="heading_anchor" href="#related-state" aria-hidden="true">#</a>Related state</h2>
+<ul>
+<li>Pre-existing, unrelated: <code>lib/js/wikipedia/main.ts(1,10)</code> TS2305 (kept
+deliberately; <code>ingest.ts</code> will be removed, <code>ingest_next.ts</code> renamed to <code>ingest.ts</code>).</li>
+<li>Initial states carrying the vestigial schema-mark entries:
+<code>lib/assets/type-stage-initial-state.json</code> (<code>strong</code>),
+<code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code> (<code>strong</code>),
+<code>lib/assets/wikipedia-demo.json</code> (<code>bold</code>).</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

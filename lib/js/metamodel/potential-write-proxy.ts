@@ -279,7 +279,7 @@ export class _PotentialWriteProxy {
                 // CAUTION in case of 'slice' result would be an array!
                 if (!getterAPIs.has(fnName))
                     throw new Error(
-                        `UNKOWN GETTER API don't know how to get arguments for method "${fnName}" ` +
+                        `UNKNOWN GETTER API don't know how to get arguments for method "${fnName}" ` +
                             `from parent ${thisArgument} arguments: ${argumentsList.join(", ")}.`,
                     );
                 const key = argumentsList[0] as string;

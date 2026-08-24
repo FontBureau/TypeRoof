@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="reproducing-atom-nodes-selector-configured--implementation-plan" class="heading_anchor" href="#reproducing-atom-nodes-selector-configured--implementation-plan" aria-hidden="true">#</a>Reproducing Atom Nodes (selector-configured) — Implementation Plan</h1>
+<p>date: 2026-07-29T12:12:00+02:00
+git_commit: 897109aad5d6563835621f4f1b854d589d922831
+branch: demo/wikipedia
+research: thoughts/research/2026-07-28-1905-ingest-fidelity-attrs-reproducing-nodes.md</p>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Schema-configured <strong>reproducing atom nodes</strong> for ingest fidelity: named,
+metamodel-owned node types (per-tag) carrying a <code>selector</code>, matched by ingest
+via an ordered selector list, stored with verbatim innerHTML plus collected
+outer attributes, rendered <strong>wrapper-free</strong> as atoms (collected tag + replayed
+attrs + innerHTML), and styleable per name via <code>nodeSpecToTypeSpec</code>.</p>
+<p>Canonical case: <code>sup[typeof=&quot;mw:Extension/ref&quot;]</code> (Wikipedia citations) →
+<code>&quot;cite-link&quot;</code> node → <code>&lt;sup typeof=&quot;mw:Extension/ref&quot;&gt;…&lt;/sup&gt;</code> verbatim in
+the document, styleable, round-tripping.</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li><code>SELECTORS_TO_RAW_HTML</code> is a hardcoded 2-selector list
+(<code>ingest_next.ts:84–89</code>, incl. the citation selector), checked <strong>first</strong> in
+dispatch (:366–372); emits <code>raw_html_inline</code>/<code>raw_html_block</code> atoms with
+verbatim <code>outerHTML</code> in a declared <code>html</code> attr (:284–291).</li>
+<li><code>raw_html_*</code> are reserved (<code>default-schema.ts:78–123</code>): <code>atom: true</code>,
+but <code>toDOM</code> <strong>wraps</strong> the stored HTML in an extra <code>div</code>/<code>span</code> with a
+lime debug outline; they get no NodeView (reserved types are skipped in
+<code>update()</code>, integration:1101–1127) and cannot be styled via
+<code>nodeSpecToTypeSpec</code>.</li>
+<li><code>NodeSpecModel</code> (models.typeroof.jsx:131–249) has <code>atom</code>, <code>inline</code>,
+<code>tag</code>, <code>selectable</code>, <code>draggable</code> … but <strong>no <code>selector</code></strong>.</li>
+<li>Ingest consults the schema <strong>only for marks</strong>
+(<code>semanticMarksFromSchema</code>:164–177); node recognition is fully hardcoded
+(<code>KNOWN_BLOCK_TAGS</code>/<code>INLINE_TAGS</code>).</li>
+<li><code>ProsemirrorNodeView</code> (integration:178–276) always builds outer <code>&lt;tag&gt;</code> +
+inner content <code>div</code> (<code>contentDOM</code> always set, no atom special-casing);
+nodeViews register for <strong>all metamodel-defined node names</strong> automatically.</li>
+<li>PM <code>computeAttrs</code> drops undeclared attrs (prosemirror-model:2043) → the
+outer-attr bag must be a <strong>declared</strong> attr.</li>
+<li>Selector-config precedent: <code>markEmission</code> ordered first-match-wins list
+(<code>resolveMarkEmission</code>:228–255).</li>
+<li>PM <code>parseDOM</code> <code>tag</code> accepts full CSS selectors; ingest matches with
+<code>el.matches</code> — both sides already speak selector syntax.</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<ul>
+<li>A schema can declare reproducing atom node types:
+<code>&quot;cite-link&quot;: { tag: &quot;sup&quot;, selector: 'sup[typeof=&quot;mw:Extension/ref&quot;]', atom: true, inline: true, group: &quot;inline&quot;, attrs: { html, htmlAttrs } }</code>.</li>
+<li>Ingest routes matching elements to them (configurable ordered list +
+schema-derived fallback); non-matching same-tag elements fall through to the
+existing chain (<code>unknown_inline</code> — its raison d’être).</li>
+<li>Rendered output is the collected tag with replayed outer attrs and verbatim
+innerHTML — <strong>no wrapper</strong>, no TypeRoof marker elements; styling comes from a
+TypeSpec linked by type name.</li>
+<li>Round-trip stable: rendered output satisfies the spec’s <code>selector</code> (the
+<code>:is()</code> trick covers source and output shapes), so paste/reparse re-matches.</li>
+</ul>
+<h3><a id="key-discoveries" class="heading_anchor" href="#key-discoveries" aria-hidden="true">#</a>Key Discoveries:</h3>
+<ul>
+<li><code>NodeSpecModel</code> fields map 1:1 to PM (incl. <code>atom</code>) except <code>tag</code>/<code>attrs</code>
+(integration:518–546).</li>
+<li>The raw_html <code>parseDOM</code>/<code>toDOM</code> pair (<code>default-schema.ts:86–99</code>) is the
+template for reproducing parse/serialize (<code>getAttrs → { html: dom.innerHTML }</code>).</li>
+<li><code>ProsemirrorMarkView.ignoreMutation</code> (integration:365–373) is the template
+for suppressing styler-triggered <code>readDOMChange</code> on view-owned elements.</li>
+<li><code>ProsemirrorMarkView._applyDeclaredAttrs</code> (:312–335) is the replay template.</li>
+<li>Ingest dispatch order is fixed and known (:329–470); node matching slots in
+before :366.</li>
+</ul>
+<h2><a id="decisions-operator" class="heading_anchor" href="#decisions-operator" aria-hidden="true">#</a>Decisions (operator)</h2>
+<ol>
+<li><strong>Reading A</strong>: <code>tag</code> and <code>selector</code> live in the <code>NodeSpecModel</code>; the
+ingest list routes input → <code>typeKey</code> only (<code>{ selector, typeKey }</code>, no
+tag in ingest). Reading B (per-instance tags) and the hybrid: rejected.</li>
+<li><strong>Per-tag named types</strong> for v1.</li>
+<li><code>selector</code> drives <strong>both</strong> ingest matching (schema-derived fallback) and
+generated <code>parseDOM</code>; it may differ from the ingest-side selector —
+<code>:is(span,sup)[typeof=&quot;mw:Extension/ref&quot;]</code> covers source + output shapes.</li>
+<li>Ingest matching list: ordered, <strong>first match wins</strong>, redundancy OK
+(declared fallbacks).</li>
+<li><code>htmlAttrs</code>: collected outer attrs, minus an <strong>exclusion list</strong>, plus an
+optional <strong>inclusion list</strong> (when set, only those) — full author control.
+<code>id</code> is allowed (Wikipedia ids are <code>mw</code>-prefixed), decided in ingest
+config. PM attr stored as <strong>JSON string</strong> (PM attr equality is shallow —
+<code>compareObjs</code> — nested objects like <code>data-mw</code> would compare by reference
+and force constant redraws).</li>
+<li><strong>Reproducing behavior is inferred</strong> from the presence of an <code>html</code> attr
+in the spec (pivot to an explicit flag later if impractical).</li>
+<li>Fall-through on selector mismatch to the existing chain is intended.</li>
+<li>Ship a <code>cite-link</code> node in <code>type-stage-wikipedia-initial-state.json</code>.</li>
+<li><strong>Small incremental commits</strong> per phase (as marked).</li>
+</ol>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>Per-instance tags / generic reproducing type (Reading B), tag overrides in
+the ingest list (hybrid).</li>
+<li>Editable-element attr replay (Q1 proper) → <strong>Follow-up</strong> section below.</li>
+<li>Automatic schema declaration by ingest (ingest declares nodes/attrs).</li>
+<li>Removing <code>raw_html_*</code> types or <code>SELECTORS_TO_RAW_HTML</code> (kept as fallback).</li>
+<li>A <code>selector</code> field on <code>MarkSpecModel</code> (nodes only, for now).</li>
+<li>Byte-level output fidelity (attribute order, whitespace).</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Bottom-up: model field → ingest routing + collection → rendering → example
+state. Each phase is independently verifiable and lands as 1–2 small commits.</p>
+<h2><a id="phase-1-selector-field-on-nodespecmodel" class="heading_anchor" href="#phase-1-selector-field-on-nodespecmodel" aria-hidden="true">#</a>Phase 1: <code>selector</code> field on NodeSpecModel</h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p>The schema can carry a CSS selector per node type; the generated <code>parseDOM</code>
+uses <code>selector ?? tag</code>.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-model" class="heading_anchor" href="#1-model" aria-hidden="true">#</a>1. Model</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/models.typeroof.jsx</code>
+<strong>Changes</strong>: <code>NodeSpecModel</code> += <code>['selector', StringOrEmptyModel]</code> (after
+<code>tag</code>). Comment: drives ingest matching and generated <code>parseDOM</code>; may cover
+multiple output/source shapes via <code>:is()</code>.</p>
+<h4><a id="2-schema-creation" class="heading_anchor" href="#2-schema-creation" aria-hidden="true">#</a>2. Schema creation</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/integration.typeroof.jsx</code>
+<strong>Changes</strong>: in <code>createProseMirrorSchemaFromMetaModel</code> node loop: treat
+<code>selector</code> like the other non-1:1 fields — the generated <code>parseDOM</code> rule
+uses <code>selector ?? tag</code> as its <code>tag</code>; <code>toDOM</code> unchanged (<code>tag</code>-driven).</p>
+<h4><a id="3-ui-exposure-check" class="heading_anchor" href="#3-ui-exposure-check" aria-hidden="true">#</a>3. UI exposure check</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/pps-maps.mjs</code>
+<strong>Changes</strong>: verify <code>NODESPEC_PPS_MAP</code> maps <code>selector</code> (it maps all fields
+except <code>attrs</code> — expected free); adjust only if excluded.</p>
+<h4><a id="4-tests" class="heading_anchor" href="#4-tests" aria-hidden="true">#</a>4. Tests</h4>
+<p><strong>Changes</strong>: serialization round-trip of a spec with <code>selector</code>; built schema
+<code>parseDOM[0].tag</code> equals the selector when set, the tag otherwise.</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-npm-test--lint-typecheck-only-pre-existing-ts2305-build" class="heading_anchor" href="#automated-npm-test--lint-typecheck-only-pre-existing-ts2305-build" aria-hidden="true">#</a>Automated: <code>npm test</code>, lint, typecheck (only pre-existing TS2305), build</h4>
+<h4><a id="manual-nodespecs-ui-shows-a-selector-field-state-savesloads-with-it" class="heading_anchor" href="#manual-nodespecs-ui-shows-a-selector-field-state-savesloads-with-it" aria-hidden="true">#</a>Manual: NodeSpecs UI shows a “Selector” field; state saves/loads with it</h4>
+<p><strong>Commits</strong>: 1.
+<strong>Implementation Note</strong>: pause for manual confirmation before next phase.</p>
+<hr>
+<h2><a id="phase-2-ingest-node-routing-big-list--schema-derived-fallback" class="heading_anchor" href="#phase-2-ingest-node-routing-big-list--schema-derived-fallback" aria-hidden="true">#</a>Phase 2: Ingest node routing (big list + schema-derived fallback)</h2>
+<h3><a id="overview-2" class="heading_anchor" href="#overview-2" aria-hidden="true">#</a>Overview</h3>
+<p>Elements can be claimed by named node types via an ordered, configurable
+selector list, with a schema-derived fallback for <code>selector</code>-carrying specs.</p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-options-types-resolution" class="heading_anchor" href="#1-options-types-resolution" aria-hidden="true">#</a>1. Options, types, resolution</h4>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.ts</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>NodeEmissionEntry = { selector: string; typeKey: string }</code>;
+<code>IngestionOptions.nodeEmission?: NodeEmissionEntry[]</code> (ordered, first match
+wins; redundancy = declared fallbacks).</li>
+<li><code>nodeSelectorsFromSchema(proseMirrorSchema)</code>: derive
+<code>[{ selector, typeKey }]</code> from node specs <strong>that have a non-empty
+<code>selector</code></strong> (deliberately NOT from <code>tag</code>-only specs — otherwise
+<code>paragraph</code>’s <code>tag: &quot;p&quot;</code> would hijack <code>KNOWN_BLOCK_TAGS</code>).</li>
+<li><code>resolveNodeEmission(ctx, el)</code>: first matching <code>nodeEmission</code> entry →
+<code>typeKey</code>; else first matching schema-derived entry → <code>typeKey</code>; else
+<code>null</code>.</li>
+<li>New report bucket <code>reproNodes: Record&lt;string, number&gt;</code> (typeKey → count).</li>
+</ul>
+<h4><a id="2-dispatch--emission" class="heading_anchor" href="#2-dispatch--emission" aria-hidden="true">#</a>2. Dispatch + emission</h4>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.ts</code>
+<strong>Changes</strong>: in <code>ingestNode</code>, <strong>before</strong> the <code>SELECTORS_TO_RAW_HTML</code> check
+(:366): <code>const typeKey = resolveNodeEmission(ctx, el);</code> — when non-null, emit
+a reproducing atom draft (<code>typeKey</code>; <code>html = el.innerHTML</code>; <code>htmlAttrs</code>
+per Phase 3 policy), <code>count(report.reproNodes, typeKey)</code>, return. Everything
+else unchanged; <code>SELECTORS_TO_RAW_HTML</code> stays as fallback.</p>
+<h4><a id="3-configured-variant" class="heading_anchor" href="#3-configured-variant" aria-hidden="true">#</a>3. Configured variant</h4>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.ts</code>
+<strong>Changes</strong>: <code>ingestWikipediaDocument</code> gains
+<code>nodeEmission: [{ selector: 'sup[typeof=&quot;mw:Extension/ref&quot;]', typeKey: &quot;cite-link&quot; }]</code>
+(also serves as the working example).</p>
+<h4><a id="4-tests-1" class="heading_anchor" href="#4-tests-1" aria-hidden="true">#</a>4. Tests</h4>
+<p><strong>Changes</strong>: list precedence + first-match-wins; schema-derived claim of the
+citation (schema with <code>cite-link</code> selector spec, no list entry); fall-through
+(<code>&lt;sup&gt;</code> without typeof → <code>unknown_inline</code> via existing chain);
+<code>tag</code>-only specs do NOT hijack <code>&lt;p&gt;</code> etc.; <code>reproNodes</code> bucket counts.</p>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-npm-test--lint-typecheck-build" class="heading_anchor" href="#automated-npm-test--lint-typecheck-build" aria-hidden="true">#</a>Automated: <code>npm test</code>, lint, typecheck, build</h4>
+<h4><a id="manual--verified-end-to-end-in-phase-5" class="heading_anchor" href="#manual--verified-end-to-end-in-phase-5" aria-hidden="true">#</a>Manual: — (verified end-to-end in Phase 5)</h4>
+<p><strong>Commits</strong>: 2 (2a: routing + schema derivation + emission w/o bag;
+2b: tests/hardening) — 2a may temporarily emit without <code>htmlAttrs</code>.
+<strong>Implementation Note</strong>: pause for manual confirmation before next phase.</p>
+<hr>
+<h2><a id="phase-3-htmlattrs-collection-policy" class="heading_anchor" href="#phase-3-htmlattrs-collection-policy" aria-hidden="true">#</a>Phase 3: <code>htmlAttrs</code> collection policy</h2>
+<h3><a id="overview-3" class="heading_anchor" href="#overview-3" aria-hidden="true">#</a>Overview</h3>
+<p>Outer attributes are collected into the declared <code>htmlAttrs</code> attr under an
+exclusion/inclusion/id policy.</p>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-policy--collection" class="heading_anchor" href="#1-policy--collection" aria-hidden="true">#</a>1. Policy + collection</h4>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest_next.ts</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>IngestionOptions.attrPolicy?: { include?: string[]; exclude?: string[]; includeId?: boolean }</code>.
+Defaults (baked into <code>ingestWikipediaDocument</code>, overridable):
+<code>exclude: [&quot;style&quot;]</code> (collides with TypeRoof styling), all <code>on*</code> handler
+attributes, TypeRoof’s own markers (<code>data-node-type</code>, <code>data-mark-type</code>,
+<code>data-style-name</code>); <code>includeId: true</code> (Wikipedia ids are <code>mw</code>-prefixed;
+operator decision) — the <code>include</code> list, when set, wins over <code>exclude</code>.</li>
+<li><code>collectHtmlAttrs(el, policy)</code> → <strong>JSON string</strong> (PM-attr equality is
+shallow; nested objects would redraw-oscillate — operator-approved trade-off).
+Wire into the Phase-2 reproducing emission.</li>
+</ul>
+<h4><a id="2-tests" class="heading_anchor" href="#2-tests" aria-hidden="true">#</a>2. Tests</h4>
+<p><strong>Changes</strong>: exclusion of <code>style</code>/<code>on*</code>/markers; inclusion list wins;
+<code>includeId</code> true/false; output is a JSON string of the expected pairs.</p>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-npm-test--lint-typecheck-build-1" class="heading_anchor" href="#automated-npm-test--lint-typecheck-build-1" aria-hidden="true">#</a>Automated: <code>npm test</code>, lint, typecheck, build</h4>
+<h4><a id="manual-" class="heading_anchor" href="#manual-" aria-hidden="true">#</a>Manual: —</h4>
+<p><strong>Commits</strong>: 1.
+<strong>Implementation Note</strong>: pause for manual confirmation before next phase.</p>
+<hr>
+<h2><a id="phase-4-rendering-reproducing-atoms-wrapper-free" class="heading_anchor" href="#phase-4-rendering-reproducing-atoms-wrapper-free" aria-hidden="true">#</a>Phase 4: Rendering reproducing atoms (wrapper-free)</h2>
+<h3><a id="overview-4" class="heading_anchor" href="#overview-4" aria-hidden="true">#</a>Overview</h3>
+<p>Named atom nodes render as the collected tag with replayed attrs and verbatim
+innerHTML — no wrapper — and re-parse through generated rules.</p>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-generated-parseserialize" class="heading_anchor" href="#1-generated-parseserialize" aria-hidden="true">#</a>1. Generated parse/serialize</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/integration.typeroof.jsx</code>
+<strong>Changes</strong>: in <code>createProseMirrorSchemaFromMetaModel</code>, when the spec has an
+<code>html</code> attr (inferred reproducing — decision 6): <code>parseDOM = [{ tag: selector ?? tag, getAttrs(dom) { return { html: dom.innerHTML, htmlAttrs: &lt;JSON.stringify of dom attributes, minus the Phase-3 marker exclusions&gt; }; } }]</code>;
+<code>toDOM</code> = function returning a real element (template: raw_html
+<code>default-schema.ts:92–99</code>): create <code>tag</code>, replay <code>htmlAttrs</code>
+(<code>setAttribute</code> each, skipping markers), <code>innerHTML = node.attrs.html</code>.</p>
+<h4><a id="2-nodeview-atom-branch" class="heading_anchor" href="#2-nodeview-atom-branch" aria-hidden="true">#</a>2. NodeView atom branch</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/integration.typeroof.jsx</code>
+<strong>Changes</strong>: <code>ProsemirrorNodeView</code>: when the node type has an <code>html</code> attr
+(inferred): outer = <code>tag</code> (+ <code>data-node-type</code>), apply <code>htmlAttrs</code> bag,
+<code>innerHTML = node.attrs.html</code>; <strong>no inner div, no <code>contentDOM</code> (leaf)</strong>;
+styling subscription with <code>structuralElements: { outer }</code> only. <code>update()</code>:
+re-apply bag + innerHTML when changed, return <code>true</code>. Add
+<code>ignoreMutation(mutation)</code> returning true for attribute mutations on
+<code>this.dom</code> (template: <code>ProsemirrorMarkView.ignoreMutation</code>:365–373 — the
+styler legitimately mutates <code>style</code>/<code>lang</code>).</p>
+<h4><a id="3-tests" class="heading_anchor" href="#3-tests" aria-hidden="true">#</a>3. Tests</h4>
+<p><strong>Changes</strong>: generated <code>parseDOM</code> uses <code>selector ?? tag</code> and round-trips
+<code>html</code>/<code>htmlAttrs</code>; EditorView test (template: the MarkView update test):
+render a <code>cite-link</code> node → outer IS <code>&lt;sup typeof=&quot;…&quot;&gt;</code> with innerHTML
+intact and <strong>no wrapper</strong>; <code>update()</code> re-applies on <code>htmlAttrs</code> change.</p>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-npm-test--lint-typecheck-build-2" class="heading_anchor" href="#automated-npm-test--lint-typecheck-build-2" aria-hidden="true">#</a>Automated: <code>npm test</code>, lint, typecheck, build</h4>
+<h4><a id="manual--end-to-end-in-phase-5" class="heading_anchor" href="#manual--end-to-end-in-phase-5" aria-hidden="true">#</a>Manual: — (end-to-end in Phase 5)</h4>
+<p><strong>Commits</strong>: 2 (4a: generated parse/serialize; 4b: NodeView atom branch).
+<strong>Implementation Note</strong>: pause for manual confirmation before next phase.</p>
+<hr>
+<h2><a id="phase-5-example-state--end-to-end-verification" class="heading_anchor" href="#phase-5-example-state--end-to-end-verification" aria-hidden="true">#</a>Phase 5: Example state + end-to-end verification</h2>
+<h3><a id="overview-5" class="heading_anchor" href="#overview-5" aria-hidden="true">#</a>Overview</h3>
+<p>The wikipedia demo declares and uses <code>cite-link</code> out of the box.</p>
+<h3><a id="changes-required-4" class="heading_anchor" href="#changes-required-4" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-state" class="heading_anchor" href="#1-state" aria-hidden="true">#</a>1. State</h4>
+<p><strong>File</strong>: <code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code>
+<strong>Changes</strong>: add to <code>proseMirrorSchema/nodes</code>:
+<code>[&quot;cite-link&quot;, { &quot;tag&quot;: &quot;sup&quot;, &quot;selector&quot;: &quot;sup[typeof=\&quot;mw:Extension/ref\&quot;]&quot;, &quot;inline&quot;: true, &quot;group&quot;: &quot;inline&quot;, &quot;atom&quot;: true, &quot;attrs&quot;: [[&quot;html&quot;, { &quot;default&quot;: &quot;&quot;, &quot;validate&quot;: { &quot;type&quot;: &quot;string&quot; } }], [&quot;htmlAttrs&quot;, { &quot;default&quot;: &quot;&quot;, &quot;validate&quot;: { &quot;type&quot;: &quot;string&quot; } }]] }]</code>
+(serialized shape verified via a model probe, like the link snippet).</p>
+<h4><a id="2-styling-link-manualexample" class="heading_anchor" href="#2-styling-link-manualexample" aria-hidden="true">#</a>2. Styling link (manual/example)</h4>
+<p><code>nodeSpecToTypeSpec</code> edge <code>cite-link</code> → a TypeSpec (operator adds in UI
+during verification; optionally pre-seeded).</p>
+<h4><a id="3-tests-1" class="heading_anchor" href="#3-tests-1" aria-hidden="true">#</a>3. Tests</h4>
+<p><strong>Changes</strong>: state JSON deserializes (probe), ingest of a citation fragment
+through <code>ingestWikipediaDocument</code> produces a <code>cite-link</code> node with
+<code>html</code>/<code>htmlAttrs</code>.</p>
+<h3><a id="success-criteria-4" class="heading_anchor" href="#success-criteria-4" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-npm-test--lint-typecheck-build-3" class="heading_anchor" href="#automated-npm-test--lint-typecheck-build-3" aria-hidden="true">#</a>Automated: <code>npm test</code>, lint, typecheck, build</h4>
+<h4><a id="manual-ingest-a-wikipedia-article-with-references--citations-render-as" class="heading_anchor" href="#manual-ingest-a-wikipedia-article-with-references--citations-render-as" aria-hidden="true">#</a>Manual: ingest a Wikipedia article with references → citations render as</h4>
+<p>verbatim <code>&lt;sup typeof=&quot;mw:Extension/ref&quot;&gt;</code> (no wrapper, no lime outline);
+styling via the linked TypeSpec applies; text editing around citations treats
+them as atoms (NodeSelection); HTML output reproduces the citation; re-parse
+(paste/reload) keeps the node type.</p>
+<p><strong>Commits</strong>: 1.</p>
+<hr>
+<h2><a id="follow-up-next-rpi-cycle-editable-element-attr-replay-q1" class="heading_anchor" href="#follow-up-next-rpi-cycle-editable-element-attr-replay-q1" aria-hidden="true">#</a>Follow-up (next RPI cycle): editable-element attr replay (Q1)</h2>
+<p>Scope for a new plan, seeded by this one (~60–70% reuse: bag collection,
+policy, replay primitive, selector infrastructure, <code>:is()</code> round-trip
+pattern):</p>
+<ul>
+<li>Bag replay on <strong>editable</strong> elements: <code>generic-style</code> intent marks, links,
+paragraphs/blocks, inline nodes that stay editable.</li>
+<li>Hard parts this plan deliberately avoids: <strong>merge semantics on live editable
+elements</strong> (replayed <code>class</code> vs. TypeRoof classes/styling on elements users
+edit); mark-side replay for <code>generic-style</code> (reserved spec, hardcoded in
+<code>default-schema.ts</code> — bag as declared PM attr there, touched carefully);
+bag-aware <code>getAttrs</code> on all types for reparse stability.</li>
+<li>Reference: <code>thoughts/research/2026-07-28-1905-ingest-fidelity-attrs-reproducing-nodes.md</code>
+(options A–E; decision: B+E general, A curated, D atoms — D lands here).</li>
+</ul>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<h3><a id="unit-tests-vitest-colocated-testmjs-" class="heading_anchor" href="#unit-tests-vitest-colocated-testmjs-" aria-hidden="true">#</a>Unit Tests (vitest, colocated <code>*.test.mjs</code>)</h3>
+<ul>
+<li>Model serialization incl. <code>selector</code>; schema build uses <code>selector</code> in
+<code>parseDOM</code> (Phase 1)</li>
+<li>Node routing: precedence, first-match-wins, schema-derived, fall-through,
+no-hijack (Phase 2)</li>
+<li><code>htmlAttrs</code> policy: exclusion/inclusion/id, JSON string shape (Phase 3)</li>
+<li>Reproducing parse/serialize round-trip; NodeView wrapper-free render +
+update (Phase 4)</li>
+<li>State deserialization; citation end-to-end via <code>ingestWikipediaDocument</code>
+(Phase 5)</li>
+</ul>
+<h3><a id="integration--manual" class="heading_anchor" href="#integration--manual" aria-hidden="true">#</a>Integration / Manual</h3>
+<ul>
+<li>Phase 1: NodeSpecs UI shows Selector; state round-trips</li>
+<li>Phase 5: full Wikipedia article verification (see criteria)</li>
+</ul>
+<h2><a id="baseline-for-all-phases" class="heading_anchor" href="#baseline-for-all-phases" aria-hidden="true">#</a>Baseline for all phases</h2>
+<ul>
+<li><code>npm test</code> / <code>npm run lint</code> must stay green; <code>npm run typecheck</code> may
+show <strong>only</strong> the known pre-existing <code>main.ts</code> TS2305.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>
