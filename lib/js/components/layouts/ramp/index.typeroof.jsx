@@ -7,12 +7,14 @@ import {
     PathModelOrEmpty,
     Path,
     BooleanModel,
+    StringModel,
     CoherenceFunction,
 } from "../../../metamodel.mjs";
 import {
     TypeSpecModel,
     StylePatchesMapModel,
 } from "../../type-spec-models.mjs";
+import { createRootFontStylePatchesCoherenceFunction } from "./root-font-style-patches.mjs";
 import {
     ProseMirrorSchemaModel,
     NodeSpecToTypeSpecMapModel,
@@ -63,7 +65,11 @@ const RampModel = _BaseLayoutModel.createClass(
     // the root of all typeSpecs
     ["document", NodeModel],
     ["showParameters", BooleanModel],
+    // The font identity for which the style patches in "stylePatchesSource"
+    // were generated, see createRootFontStylePatchesCoherenceFunction.
+    ["rootFontStylePatchesKey", StringModel],
     initTypeSpecCoherenceFn(DEFAULT_STATE),
+    createRootFontStylePatchesCoherenceFunction(),
 );
 
 class TypeSpecSelect extends GenericSelect {
