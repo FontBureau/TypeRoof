@@ -24,6 +24,8 @@ import {
 } from "prosemirror-commands";
 import "prosemirror-view/style/prosemirror.css";
 
+import DOMPurify from "dompurify";
+
 export function getPathOfTypes(
     path /* { path } = resolved */,
     currentType = null,
@@ -264,7 +266,8 @@ export class ProsemirrorNodeView {
             _applyHtmlAttrsBag(this.dom, node.attrs.htmlAttrs);
             // skipped when empty: the reproduced tag may be a void
             // element (e.g. <img>), which has no content
-            if (node.attrs.html) this.dom.innerHTML = node.attrs.html;
+            if (node.attrs.html)
+                this.dom.innerHTML = DOMPurify.sanitize(node.attrs.html);
         } else {
             // editable attr replay: collected outer attributes on the
             // outer element (guarded; the content element is untouched)
@@ -326,7 +329,8 @@ export class ProsemirrorNodeView {
                 return false;
             _applyHtmlAttrsBag(this.dom, node.attrs.htmlAttrs);
             // see the constructor: void elements have no content
-            if (node.attrs.html) this.dom.innerHTML = node.attrs.html;
+            if (node.attrs.html)
+                this.dom.innerHTML = DOMPurify.sanitize(node.attrs.html);
         }
         const subscriptionsWidget = this.widgetBus.getWidgetById(
             this._subscriptionsId,
@@ -663,7 +667,8 @@ function _createReproducingToDOM(tag) {
         // verbatim reproduction, no sanitization (like raw_html,
         // operator decision). Skipped when empty: the reproduced tag
         // may be a void element (e.g. <img>), which has no content.
-        if (node.attrs.html) element.innerHTML = node.attrs.html;
+        if (node.attrs.html)
+            element.innerHTML = DOMPurify.sanitize(node.attrs.html);
         return element;
     };
 }

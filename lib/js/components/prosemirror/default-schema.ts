@@ -11,6 +11,8 @@ import type {
     Node,
 } from "prosemirror-model";
 
+import DOMPurify from "dompurify";
+
 // These are the reserved/default nodes and marks, they won't be
 // redefined by the application.
 
@@ -93,7 +95,7 @@ export const nodes = {
             const div = document.createElement("div");
             div.setAttribute("data-raw-html-block", "");
             div.style.outline = "2px solid lime";
-            div.innerHTML = node.attrs.html;
+            div.innerHTML = DOMPurify.sanitize(node.attrs.html);
             return div;
         },
     } as NodeSpec,
@@ -117,7 +119,7 @@ export const nodes = {
             const span = document.createElement("span");
             span.setAttribute("data-raw-html-inline", "");
             span.style.outline = "2px solid lime";
-            span.innerHTML = node.attrs.html;
+            span.innerHTML = DOMPurify.sanitize(node.attrs.html);
             return span;
         },
     } as NodeSpec,

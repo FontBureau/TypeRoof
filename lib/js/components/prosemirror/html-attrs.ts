@@ -36,7 +36,16 @@ export function htmlAttrsBagToSpec(bagJson: string): Record<string, string> {
     if (!Array.isArray(pairs)) return spec;
     for (const [name, value] of pairs as [string, string][]) {
         if (HTML_ATTRS_GUARD.test(name)) continue;
-        spec[name] = String(value);
+        const n = String(name).toLowerCase();
+        const v = String(value);
+        // Basic URL hardening (still not a full sanitizer).
+        if (
+            (n === "href" || n === "src" || n === "xlink:href") &&
+            /^\s*javascript:/i.test(v)
+        )
+            continue;
+        if (n === "srcdoc") continue;
+        spec[name] = v;
     }
     return spec;
 }
