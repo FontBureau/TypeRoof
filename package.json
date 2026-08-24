@@ -66,7 +66,7 @@
     "http-server": "^14.1.1",
     "jsdom": "^29.1.1",
     "prettier": "^3.6.2",
-    "puppeteer": "^24.17.0",
+    "puppeteer": "^25.8.0",
     "stylelint": "^16.23.1",
     "stylelint-config-standard": "^39.0.0",
     "tscw-config": "^1.1.2",
