@@ -116,8 +116,14 @@ export default defineConfig({
                 ws: true,
             },
             // Everything else under basePath that isn't owned by Vite is
-            // documentation content served by Eleventy
-            [`^${basePath}(?!@|node_modules/|app/|lib/|shell\\.html|legacy\\.html)`]:
+            // documentation content served by Eleventy.
+            // The entry points must be excluded in their extensionless
+            // form as well (Vite's html fallback resolves those), otherwise
+            // e.g. /TypeRoof/legacy is served from Eleventy's static build
+            // and hence without the Vite client, i.e. without live updates.
+            // The ([?#]|$) boundary keeps query strings and hashes excluded
+            // while not swallowing unrelated paths like /TypeRoof/shell-docs.
+            [`^${basePath}(?!@|node_modules/|app/|lib/|(shell|legacy)(\\.html)?([?#]|$))`]:
                 {
                     target: "http://localhost:8080",
                     changeOrigin: true,
