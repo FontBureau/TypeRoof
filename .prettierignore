@@ -32,6 +32,7 @@
 !**/*.test.mjs
 !lib/js/tests/**/*
 !lib/js/components/length-models.mjs
+!lib/js/components/type-spec-paths.mjs
 
 # Ignore glyph-groups.yaml
 lib/assets/glyph-groups.yaml
