@@ -234,6 +234,15 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
         this.outerElement = outerElement;
         this.pmNode = pmNode;
     }
+    // Destroy hooks are the styler's way to participate in
+    // styled→silent (noStyler) transitions: the inline styles and the
+    // lang attribute it set are removed, so the element renders
+    // inherit-only until another styler re-provisions.
+    destroy() {
+        this.innerElement.removeAttribute("style");
+        this.outerElement.removeAttribute("style");
+        this.outerElement.removeAttribute("lang");
+    }
     update(changedMap) {
         const innerPropertiesData = [
                 ["generic/textAlign", "text-align", ""],
@@ -483,7 +492,7 @@ class NodeTypeSpecLabel extends _BaseComponent {
     }
 }
 
-class UIDocumentNodeOutfitter extends _BaseContainerComponent {
+export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
     constructor(
         widgetBus,
         _zones,
@@ -512,6 +521,7 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         this._nodeOutfitterOptions = nodeOutfitterOptions;
 
         this._nextProperties = null;
+        this._lastSilent = null;
         {
             const initialWidgets = this._staticWidgets;
             this._initialWidgetsAmount = initialWidgets.length;
@@ -600,8 +610,15 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         ];
     }
 
+    // A resolved spec with "noStyler" renders inherit-only: the
+    // outfitter's dynamic styler widget is not provisioned (the
+    // subscription still exists for its marks, which resolve style
+    // links from this spec regardless).
+    _isSilent() {
+        return this.getEntry("noStyler").value === true;
+    }
+
     _createWidgetDefinition() {
-        // update/replace this dynamically depending on the value of
         // nextProperties which we, at this point, hopefully always, can
         // determine using pmNode, parenContent and pmNode-Index => I hope
         // we can't/won't create clashes with nodes that exist as duplicates,
@@ -696,14 +713,20 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         // figure out the nextProperties@ of this._pmNode and if
         // they have changed, rebuild the UIDocumentTypeSpecStyler.
 
+        const silentChanged = this._lastSilent !== this._isSilent();
+        this._lastSilent = this._isSilent();
         const requireUpdateDynamicWidget =
             this._checkNextProperties(compareResult) ||
+            silentChanged ||
             removedDynamicWidgets.length === 0; // is initial
         // do we need to replace/renew the dynamic widget
         if (!requireUpdateDynamicWidget) {
             // don't change
             this._widgets.push(...removedDynamicWidgets);
             removedDynamicWidgets.splice(0, Infinity);
+        } else if (this._isSilent()) {
+            // silent: no styler widget definition; destroyed leftovers
+            // below clear the element's inline styles.
         } else {
             const widgetDefinitions = [this._createWidgetDefinition()];
             this._initWidgets(widgetDefinitions); // pushes into this._widgets
@@ -1175,6 +1198,9 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 // unused so far!
                 [parentContentsPath.toString(), "parentContent"],
                 ["nodeSpecToTypeSpec"],
+                // The resolved spec's own "noStyler" flag gates dynamic
+                // styler provisioning (silent nodes render inherit-only).
+                [typeSpecPath.append("noStyler").toString(), "noStyler"],
             ];
         const Constructor = UIDocumentNodeOutfitter,
             args = [
