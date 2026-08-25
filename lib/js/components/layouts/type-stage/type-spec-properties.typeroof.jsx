@@ -7,7 +7,11 @@ import {
     UILineOfTextInput,
     DynamicTag,
     CollapsibleContainer,
+    UIToggleButton,
 } from "../../generic.mjs";
+
+import { createLabelAndIcon } from "../../icons.mjs";
+
 import { FontSelect } from "../../font-loading.mjs";
 import { typeSpecGetDefaults } from "./defaults.mjs";
 import {
@@ -499,6 +503,36 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 "typespec_inherent_settings", //classNameParticle
                 [
                     // widgets
+                    [
+                        {
+                            rootPath: typeSpecPath,
+                            zone: "main",
+                        },
+                        [["noStyler", "boolean"]],
+                        UIToggleButton,
+                        "ui_toggle-no_styler", // classToken
+                        createLabelAndIcon("No Styler", "toggle_on"), // labelIsOn
+                        createLabelAndIcon("No Styler", "toggle_off"), // labelIsOff
+                        "Toggle this TypeSpec is activeley styled.",
+                    ],
+                    [
+                        {
+                            rootPath: typeSpecPath,
+                            zone: "main",
+                        },
+                        [["excludeFromFallback", "boolean"]],
+                        UIToggleButton,
+                        "ui_toggle-exclude_from_fallback", // classToken
+                        createLabelAndIcon(
+                            "Exclude from Fallback",
+                            "toggle_on",
+                        ), // labelIsOn
+                        createLabelAndIcon(
+                            "Exclude from Fallback",
+                            "toggle_off",
+                        ), // labelIsOff
+                        "Toggle this TypeSpec is considered in fallback resolution.",
+                    ],
                     [
                         {
                             rootPath: typeSpecPath,
