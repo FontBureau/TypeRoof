@@ -108,7 +108,7 @@ function _getBestTypeSpecPropertiesId(
             : originTypeSpecPath.append("children", ...currentTypeSpecPath);
     while (true) {
         if (!originTypeSpecPath.isRootOf(testPath))
-            // We have gone to far up. This also prevents that
+            // We have gone too far up. This also prevents that
             // a currentTypeSpecPath could potentially inject '..'
             // to break out of originTypeSpecPath, though,
             // the latter seems unlikely, as we parse it in here.
