@@ -91,9 +91,11 @@ function _getBestTypeSpecPropertiesId(
     protocolHandlerImplementation,
     originTypeSpecPath,
     asPath = false,
+    getTypeSpecEntry = null,
 ) {
     const currentTypeSpecPath = Path.fromString(typeSpecLink),
         format = (path) => `${protocolHandlerName}${path}`;
+
     if (protocolHandlerImplementation === null)
         throw new Error(
             `KEY ERROR ProtocolHandler for identifier "${protocolHandlerName}" not found.`,
@@ -106,6 +108,11 @@ function _getBestTypeSpecPropertiesId(
             ? // the initial "children" is part from typeSpecLink
               originTypeSpecPath.append(...currentTypeSpecPath)
             : originTypeSpecPath.append("children", ...currentTypeSpecPath);
+
+    // The fallback walk is the only place 'excludeFromFallback' is
+    // consulted: explicit link hits (first iteration) skip this check,
+    // so an explicitly-chosen flagged spec still resolves to itself.
+    let skippedFallbackLevel = false;
     while (true) {
         if (!originTypeSpecPath.isRootOf(testPath))
             // We have gone too far up. This also prevents that
@@ -114,9 +121,22 @@ function _getBestTypeSpecPropertiesId(
             // the latter seems unlikely, as we parse it in here.
             break;
         const typeSpecPropertiesId = format(testPath);
-        if (protocolHandlerImplementation.hasRegistered(typeSpecPropertiesId))
+        if (protocolHandlerImplementation.hasRegistered(typeSpecPropertiesId)) {
+            // Only intermediates of the fallback walk (not the explicit
+            // link hit) consult the flag: pass through a flagged level.
+            if (
+                skippedFallbackLevel &&
+                getTypeSpecEntry !== null &&
+                getTypeSpecEntry(testPath).get("excludeFromFallback").value
+            ) {
+                // Fallback-through: this level is invisible to the walk.
+                testPath = testPath.slice(0, -2);
+                continue;
+            }
             return asPath ? testPath : typeSpecPropertiesId;
+        }
         // Move towards root and continue; // remove 'children' and `{key}`
+        skippedFallbackLevel = true;
         testPath = testPath.slice(0, -2);
     }
     return asPath ? originTypeSpecPath : format(originTypeSpecPath);
@@ -184,6 +204,7 @@ export function getTypeSpecPropertiesIdMethod(
         protocolHandlerImplementation,
         this._originTypeSpecPath,
         true, // asPath
+        (testPath) => this.getEntry(testPath), // fallback-walk flag check
     );
     if (memo === undefined)
         _typeSpecPropertiesIdCache.set(nodeSpecToTypeSpec, (memo = new Map()));
