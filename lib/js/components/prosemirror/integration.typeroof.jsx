@@ -1286,7 +1286,13 @@ export class ProseMirror extends _BaseComponent {
 
         if (this._originTypeSpecPath !== null) {
             const typeSpecs = this._getTypeSpecs(this.view.state),
-                [, selectedTypeSpecPath] = typeSpecs.entries().next().value,
+                firstEntry = typeSpecs.entries().next().value;
+            // With silent nodes (noStyler), getTypeSpecs can be empty
+            // when the selection is not inside any node the resolver
+            // covers (e.g. cursor gaps between blocks). Guard against
+            // the genuinely-empty case: no selection → no edit target.
+            if (firstEntry === undefined) return;
+            const [, selectedTypeSpecPath] = firstEntry,
                 editingTypeSpec = this.getEntry("editingTypeSpec");
             if (this._originTypeSpecPath.equals(selectedTypeSpecPath))
                 this._changeState(() =>
