@@ -372,12 +372,22 @@ export class UIDocumentElement extends _BaseContainerComponent {
     _createTypeSpecStylerWrapper(
         typeSpecProperties,
         nextTypeSpecProperties = null,
+        typeSpecPath = null,
     ) {
         const settings = {},
             dependencyMappings = [
                 [typeSpecProperties, "properties@"],
                 ["/font", "rootFont"],
             ];
+        // The resolved spec's own "noStyler" flag gates styler
+        // provisioning (silent nodes render inherit-only). The
+        // provisioning call reads it directly, but the dependency
+        // mapping makes a flag flip re-provision.
+        if (typeSpecPath !== null)
+            dependencyMappings.push([
+                typeSpecPath.append("noStyler").toString(),
+                "noStyler",
+            ]);
         if (
             nextTypeSpecProperties !== null &&
             nextTypeSpecProperties !== typeSpecProperties
@@ -490,10 +500,25 @@ export class UIDocumentElement extends _BaseContainerComponent {
         return requiresFullInitialUpdate;
     }
 
+    // A resolved spec with "noStyler" renders inherit-only: the
+    // node never provisions a styler, though the resolved spec still
+    // speaks for its marks and the margins of a sibling nextProperties@.
+    // _hasTypeSpecStyling (a spec is resolvable at all) stays true for
+    // silent nodes — the gate applies only to provisioning.
     _provisionTypeSpecStyler() {
-        const typeSpecProperties = this._getTypeSpecPropertiesId(
-            this._pathOfTypes,
-        );
+        const typeSpecPath = this._getTypeSpecPropertiesId(
+                this._pathOfTypes,
+                true /* asPath */,
+            ),
+            typeSpecProperties = this._getTypeSpecPropertiesId(
+                this._pathOfTypes,
+            ),
+            // A resolved spec with "noStyler" renders inherit-only:
+            // no styler is provisioned, though the resolved spec still
+            // speaks for its marks and a sibling's nextProperties@.
+            // (_provisionTypeSpecStyler is only reached when
+            // _hasTypeSpecStyling holds, so the path resolves here.)
+            silent = this.getEntry(typeSpecPath).get("noStyler").value;
         // Compute the next sibling's typeSpecProperties for
         // resolving lineHeightAfter/emAfter margin units.
         // TODO (parity edge case): this uses the sibling's original
@@ -521,13 +546,23 @@ export class UIDocumentElement extends _BaseContainerComponent {
                 ? this._widgets.indexOf(this._typeSpecStylerWrapper)
                 : -1;
         if (oldId === -1) {
-            // inital
+            // inital (or after a silent state)
+            if (silent) return null; // no styler provisioned
             this._typeSpecStylerWrapper = this._createTypeSpecStylerWrapper(
                 typeSpecProperties,
                 nextTypeSpecProperties,
+                typeSpecPath,
             );
             this._widgets.splice(0, 0, this._typeSpecStylerWrapper);
             return this._typeSpecStylerWrapper;
+        } else if (silent) {
+            // styled→silent: destroy the existing styler (clears the
+            // inline styles it set) and provision nothing.
+            const oldWrapper = this._widgets[oldId];
+            this._widgets.splice(oldId, 1);
+            oldWrapper.destroy();
+            this._typeSpecStylerWrapper = null;
+            return null;
         } else {
             const oldWrapper = this._widgets[oldId];
             if (
@@ -537,6 +572,7 @@ export class UIDocumentElement extends _BaseContainerComponent {
                 const newWrapper = this._createTypeSpecStylerWrapper(
                     typeSpecProperties,
                     nextTypeSpecProperties,
+                    typeSpecPath,
                 );
                 this._widgets.splice(oldId, 1, newWrapper);
                 oldWrapper.destroy();
