@@ -8,6 +8,8 @@ import {
 
 import { _BaseComponent } from "../basics/component.mjs";
 
+import { resolveTypeSpecLinkFromAnchor } from "../type-spec-paths.mjs";
+
 import { Schema /*, DOMParser*/ } from "prosemirror-model";
 import { EditorState, Plugin } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
@@ -195,17 +197,67 @@ export function getTypeSpecPropertiesIdMethod(
     const typeKey = pathOfTypes.at(-1),
         typeSpecLink = !nodeSpecToTypeSpec.has(typeKey)
             ? ""
-            : nodeSpecToTypeSpec.get(typeKey).get("link").value;
+            : nodeSpecToTypeSpec.get(typeKey).get("link").value,
+        parsedLink = Path.fromString(typeSpecLink),
+        // Link discriminator: only an explicitly absolute link ("/…")
+        // is origin-anchored. Everything else — bare names, "./…",
+        // leading ".." — is anchored at the parent node's resolved
+        // spec (parent-anchored). An empty link "" is origin-
+        // anchored by construction (it has no absolute marker) and
+        // resolves to nothing → fallback to root (root-of-self).
+        isAbsolute = parsedLink.isExplicitlyAbsolute,
+        isRelative = !isAbsolute && parsedLink.parts.length > 0;
     // asPath=true returns a Path, otherwise the id string; the cache
     // always stores just the Path.
-    const resolvedPath = _getBestTypeSpecPropertiesId(
-        typeSpecLink,
-        protocolHandlerName,
-        protocolHandlerImplementation,
-        this._originTypeSpecPath,
-        true, // asPath
-        (testPath) => this.getEntry(testPath), // fallback-walk flag check
-    );
+    let resolvedPath = null;
+    if (isRelative) {
+        // The anchor is the parent node's resolved spec; the document
+        // root's parent is the origin itself. Recursing on the parent
+        // path memoizes naturally (same cache). The Step-2 helper
+        // consumes ".." on logical levels strictly BEFORE any append,
+        // and returns null for out-of-bounds (broken link → normal
+        // fallback walk below).
+        const anchorPath =
+                pathOfTypes.length > 1
+                    ? // calling itself, we are avoiding the this
+                      // interface, we don't know the shape of the caller.
+                      getTypeSpecPropertiesIdMethod.call(
+                          this,
+                          pathOfTypes.slice(0, -1),
+                          true /* asPath */,
+                          nodeSpecToTypeSpecName,
+                          protocolHandlerName,
+                      )
+                    : this._originTypeSpecPath,
+            candidatePath = resolveTypeSpecLinkFromAnchor(
+                this._originTypeSpecPath,
+                anchorPath,
+                parsedLink.parts,
+            );
+        // Accept only a registered candidate path; an out-of-bounds or
+        // unregistered candidate is a broken link → normal fallback walk.
+        if (
+            candidatePath !== null &&
+            protocolHandlerImplementation.hasRegistered(
+                `${protocolHandlerName}${candidatePath}`,
+            )
+        )
+            // The explicit relative link hits the candidate directly;
+            // excludeFromFallback does NOT apply to explicit hits.
+            resolvedPath = candidatePath;
+    }
+    if (resolvedPath === null) {
+        // Broken relative link or absolute link (origin anchored)
+        // resolve empty/relative links toward root.
+        resolvedPath = _getBestTypeSpecPropertiesId(
+            typeSpecLink,
+            protocolHandlerName,
+            protocolHandlerImplementation,
+            this._originTypeSpecPath,
+            true, // asPath
+            (testPath) => this.getEntry(testPath), // fallback-walk flag check
+        );
+    }
     if (memo === undefined)
         _typeSpecPropertiesIdCache.set(nodeSpecToTypeSpec, (memo = new Map()));
     memo.set(memoKey, resolvedPath);
