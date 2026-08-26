@@ -815,6 +815,27 @@ touching it.
 | line-1268 guard (4,5) | `integration.typeroof.jsx:1268` |
 | characterization tests first (6) | new `*.test.mjs` beside `integration.test.mjs` |
 
+## Implementation status (2026-08-26)
+
+All items above are implemented on branch `demo/wikipedia`:
+
+| item | commit |
+|---|---|
+| characterization tests (resolver baseline) | `584fc5c0` |
+| logical↔storage helper (`type-spec-paths.mjs`) | `8155278a` |
+| flags on TypeSpecModel (+ PPS exclusion, toggle UI `2698f8b4`) | `dfb35c36` |
+| `excludeFromFallback` in the walk | `9c5d52a3` |
+| `noStyler` gate PM side + styler `destroy()` | `1d3c5001` |
+| `noStyler` gate Viewer side + dynamic flag | `554203c7` |
+| dispatch guard (empty `getTypeSpecs`) | `e69dcecb` |
+| relative links, anchor recursion (relative-by-default) | `bc4b775a` |
+| mapping-label hint for relative links | `5741ed8b` |
+
+User-doc source: `docs/planning/type-spec-resolution/2026-08-26-silent-typespecs-user-doc-source_Fable-5.md`
+(silent specs / flags / mark-rendering palette / relative-link
+anchoring) — kept with the plan as source material for user-facing
+documentation.
+
 ## Round 6 conclusion
 
 Source state pinned against `2f6ac4b2` + comment-only dirt. Biggest
