@@ -8,7 +8,10 @@ import {
 
 import { _BaseComponent } from "../basics/component.mjs";
 
-import { resolveTypeSpecLinkFromAnchor } from "../type-spec-paths.mjs";
+import {
+    resolveTypeSpecLinkFromAnchor,
+    logicalLevelsToStorageParts,
+} from "../type-spec-paths.mjs";
 
 import { Schema /*, DOMParser*/ } from "prosemirror-model";
 import { EditorState, Plugin } from "prosemirror-state";
@@ -103,13 +106,13 @@ function _getBestTypeSpecPropertiesId(
             `KEY ERROR ProtocolHandler for identifier "${protocolHandlerName}" not found.`,
         );
 
-    // getProtocolHandlerImplementation
-    let testPath =
-        currentTypeSpecPath.parts.length === 0 ||
-        currentTypeSpecPath.parts[0] === "children"
-            ? // the initial "children" is part from typeSpecLink
-              originTypeSpecPath.append(...currentTypeSpecPath)
-            : originTypeSpecPath.append("children", ...currentTypeSpecPath);
+    // Stored links are logical by definition (pristine system, no
+    // legacy shape tolerated): raw parts are the level names, and a
+    // literal "children" level only exists if a typeSpec is so named.
+    // The storage "children" segments exist only at the final origin
+    // boundary — exactly one conversion site.
+    const initialParts = logicalLevelsToStorageParts(currentTypeSpecPath.parts);
+    let testPath = originTypeSpecPath.append(...initialParts);
 
     // The fallback walk is the only place 'excludeFromFallback' is
     // consulted: explicit link hits (first iteration) skip this check,
