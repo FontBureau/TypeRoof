@@ -107,14 +107,14 @@ class TypeSpecSelect extends GenericSelect {
             treePrefix = prefix;
             // We omit TypeSpec labels in the ramp, instead we focus on
             // the "Edge" labels.
-            if (label !== "") labels.push(`label: ${label}`);
+            if (label !== "") labels.push(label);
         }
 
         if (key === ".")
             //root
             labels.unshift("Origin TypeSpec");
 
-        const text = labels.length === 0 ? key : labels.join(" ");
+        const text = labels.length === 0 ? key : labels.join("/");
         return `${treePrefix}${text}`;
     }
 
@@ -199,7 +199,7 @@ class TypeSpecSelect extends GenericSelect {
             }
             const data = this._metaData.get(linkStr);
             if (nodeKey !== null && edgeLabel !== "")
-                data.labels.push(`${edgeLabel} (Node: ${nodeKey})`);
+                data.labels.push(`${edgeLabel}`); // (Node: ${nodeKey})`);
             else if (nodeKey !== null) data.labels.push(nodeKey);
             else if (edgeLabel !== "") data.labels.push(edgeLabel);
         };
