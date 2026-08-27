@@ -10,7 +10,7 @@ import { _BaseComponent } from "../basics/component.mjs";
 
 import {
     resolveTypeSpecLinkFromAnchor,
-    logicalLevelsToStorageParts,
+    logicalLevelSegmentsToModelTreeSegments,
 } from "../type-spec-paths.mjs";
 
 import { Schema /*, DOMParser*/ } from "prosemirror-model";
@@ -106,12 +106,13 @@ function _getBestTypeSpecPropertiesId(
             `KEY ERROR ProtocolHandler for identifier "${protocolHandlerName}" not found.`,
         );
 
-    // Stored links are logical by definition (pristine system, no
-    // legacy shape tolerated): raw parts are the level names, and a
-    // literal "children" level only exists if a typeSpec is so named.
-    // The storage "children" segments exist only at the final origin
-    // boundary — exactly one conversion site.
-    const initialParts = logicalLevelsToStorageParts(currentTypeSpecPath.parts);
+    // Stored links are logical by definition: raw parts are the logical
+    // level names, and a literal "children" level only exists if a
+    // typeSpec is so named. The model tree "children" segments exist only
+    // at the final origin boundary — exactly one conversion site.
+    const initialParts = logicalLevelSegmentsToModelTreeSegments(
+        currentTypeSpecPath.parts,
+    );
     let testPath = originTypeSpecPath.append(...initialParts);
 
     // The fallback walk is the only place 'excludeFromFallback' is
@@ -222,7 +223,7 @@ export function getTypeSpecPropertiesIdMethod(
         // fallback walk below).
         const anchorPath =
                 pathOfTypes.length > 1
-                    ? // calling itself, we are avoiding the this
+                    ? // calling itself, we are avoiding the `this`
                       // interface, we don't know the shape of the caller.
                       getTypeSpecPropertiesIdMethod.call(
                           this,

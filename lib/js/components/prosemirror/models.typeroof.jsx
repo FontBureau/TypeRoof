@@ -416,10 +416,10 @@ export const // We don't do  prosemirror SchemaSpec yet, but we may need it to a
     // For the keys here as well, these are the same keys as in
     NodeSpecToTypeSpecEdgeModel = _AbstractStructModel.createClass(
         "NodeSpecToTypeSpecEdgeModel",
-        // A link is in logical form by definition (no storage-form
-        // tolerance): level-name parts; ".." consumes one logical
-        // level; anything prefixed with "/" is the only origin-bound
-        // anchor. Other users resolve getEntry on logical paths.
+        // A link is in logical form (not model tree from, see
+        // `components/type-spec-paths.mjs for details) by definition:
+        // level-name parts; ".." consumes one logical level; anything
+        // prefixed with "/" is the only origin-bound anchor.
         ["link", StringModel],
         ["label", StringModel], // empty String will be treated as not set.
     ),
