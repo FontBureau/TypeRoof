@@ -2,10 +2,17 @@ import { _BaseComponent } from "../../basics/component.mjs";
 import { createIcon } from "../../icons.mjs";
 import { Path, getEntry } from "../../../metamodel.mjs";
 import { TypeSpecModel } from "../../type-spec-models.mjs";
+import { modelTreeSegmentsToLogicalLevelSegments } from "../../type-spec-paths.mjs";
 
-function _uniqueKey(keys) {
+import "./tree-editor.css";
+
+// generatedKeySuffix: Marker for generated keys. The numeric prefix must
+// stay parseable via parseFloat, so a suffix must not start with a digit,
+// '.', '+', '-' or an exponent  ('e'/'E' followed by digits).
+function _uniqueKey(generatedKeySuffix, keys, sourceKey = null) {
     const keysSet = new Set(keys),
-        numericKeys = new Set();
+        numericKeys = new Set(),
+        formatKey = (keyNum, suffix) => `${keyNum}${suffix}`;
     let highest = null;
     for (const key of keysSet) {
         const num = parseFloat(key);
@@ -14,14 +21,30 @@ function _uniqueKey(keys) {
         numericKeys.add(num);
         if (highest === null || num > highest) highest = num;
     }
+    // Preserve the suffix of the source key (e.g. on move), so the key
+    // style follows the item; fall back to the default marker.
+    let suffix = generatedKeySuffix;
+    if (sourceKey !== null) {
+        const match = String(sourceKey).match(
+            /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/,
+        );
+        if (match && match[0].length < sourceKey.length) {
+            const sourceSuffix = sourceKey.slice(match[0].length);
+            if (
+                !/^[0-9.+-]/.test(sourceSuffix) &&
+                !/^[eE][+-]?[0-9]/.test(sourceSuffix)
+            )
+                suffix = sourceSuffix;
+        }
+    }
     let keyNum = highest === null ? 0 : Math.ceil(highest),
-        newKey = `${keyNum}`;
+        newKey = formatKey(keyNum, suffix);
     while (keysSet.has(newKey)) {
         // will in each iteration at least add 1
         do {
             keyNum += 1;
         } while (numericKeys.has(keyNum));
-        newKey = `${keyNum}`;
+        newKey = formatKey(keyNum, suffix);
     }
     return newKey;
 }
@@ -36,7 +59,7 @@ function _uniqueKey(keys) {
  */
 export class _BaseTreeEditor extends _BaseComponent {
     static TEMPLATE = `<div class="tree_editor stage-manager_actors">(initial)</div>`;
-
+    _generatedKeySuffix = "~";
     constructor(widgetBus, dataTransferTypes, relPathToChildren) {
         super(widgetBus);
         this._dataTransferTypes = Object.freeze(
@@ -47,6 +70,10 @@ export class _BaseTreeEditor extends _BaseComponent {
         this._activePaths = new Set();
         this._removeDragIndicatorTimeoutId = null;
         [this.element, this._actorsElement] = this.initTemplate();
+    }
+
+    _uniqueKey(keys, sourceKey = null) {
+        return _uniqueKey(this._generatedKeySuffix, keys, sourceKey);
     }
 
     _onClickHandler(path) {
@@ -263,7 +290,7 @@ export class _BaseTreeEditor extends _BaseComponent {
                 // correct element, even though, at the moment, the dependencies
                 // are all identical, it may change at some point.
                 newActor = this._createItem(typeKey, activeActors.dependencies),
-                uniqueKey = _uniqueKey(activeActors.keys()),
+                uniqueKey = this._uniqueKey(activeActors.keys()),
                 newEntry = [uniqueKey, newActor];
             if (insertPosition === "insert") {
                 // "insert" case is intended to insert into empty layers only.
@@ -321,7 +348,7 @@ export class _BaseTreeEditor extends _BaseComponent {
                 // change is circumvented.
                 // We may preserve the old key if it is free.
                 const uniqueKey = activeActors.has(sourceKey)
-                    ? _uniqueKey(activeActors.keys())
+                    ? this._uniqueKey(activeActors.keys(), sourceKey)
                     : sourceKey;
                 newEntry[0] = uniqueKey;
                 activeActors.push(newEntry);
@@ -355,7 +382,7 @@ export class _BaseTreeEditor extends _BaseComponent {
             }
             // We may preserve the old key if it is free.
             const uniqueKey = activeActors.has(sourceKey)
-                ? _uniqueKey(activeActors.keys())
+                ? this._uniqueKey(activeActors.keys(), sourceKey)
                 : sourceKey;
             newEntry[0] = uniqueKey;
             sourceParent.delete(sourceKey);
@@ -462,13 +489,24 @@ export class _BaseTreeEditor extends _BaseComponent {
         const h = this._domTool.h,
             button = (
                 <button>
-                    <span></span>
+                    <span class="tree_editor-key"></span>
+                    <span class="tree_editor-label"></span>
                 </button>
             ),
             result = [button];
         button.addEventListener("click", this._onClickHandler.bind(this, path));
-        button.querySelector("span").textContent = this._getItemLabel(actor);
-        button.setAttribute("title", `local path: ${path}`);
+        button.querySelector(".tree_editor-label").textContent =
+            this._getItemLabel(actor);
+
+        const logicalSegments =
+            modelTreeSegmentsToLogicalLevelSegments(path.parts) || [];
+        button.querySelector(".tree_editor-key").textContent =
+            logicalSegments.length ? logicalSegments.at(-1) : "/";
+        button.setAttribute(
+            "title",
+            `local path: /${logicalSegments.join("/")}`,
+        );
+
         if (this._isContainerItem(actor)) {
             // used to be if(typeClass === LayerActorModel) {
             const activeActorsPath = this._containerRelPathToChildren,
@@ -552,6 +590,8 @@ export class _BaseTreeEditor extends _BaseComponent {
 }
 
 export class TypeSpecTreeEditor extends _BaseTreeEditor {
+    _generatedKeySuffix = "_typeSpec";
+
     _isContainerItem(item) {
         return item instanceof TypeSpecModel;
     }
