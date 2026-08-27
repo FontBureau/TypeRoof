@@ -379,10 +379,10 @@ export class UIDocumentElement extends _BaseContainerComponent {
                 [typeSpecProperties, "properties@"],
                 ["/font", "rootFont"],
             ];
-        // The resolved spec's own "noStyler" flag gates styler
-        // provisioning (silent nodes render inherit-only). The
-        // provisioning call reads it directly, but the dependency
-        // mapping makes a flag flip re-provision.
+        // This "noStyler" dependency is not used by UIDocumentTypeSpecStyler,
+        // but instead the _provisionWidgets method below reads it directly
+        // via _provisionTypeSpecStyler and we use this dependency declaration
+        // to have _provisionWidgets re-evaluated when the flag changes.
         if (typeSpecPath !== null)
             dependencyMappings.push([
                 typeSpecPath.append("noStyler").toString(),
