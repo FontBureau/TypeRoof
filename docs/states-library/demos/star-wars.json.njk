@@ -1,0 +1,399 @@
+---json
+{
+  "permalink": "{{ page.filePathStem }}",
+  "layout": null
+}
+---
+{#-
+  baseDelay  seconds before the first line starts moving
+  lineDelay  extra delay added for each following line
+  lineTime   seconds a line takes to travel up the crawl
+-#}
+{%- set baseDelay = 3 %}
+{%- set lineDelay = 1.6 %}
+{%- set lineTime = 14 %}
+{%- set overlayBands = 36 %}
+{%- set lines = [
+  "Typography is the art and technique",
+  "of arranging type to make written language",
+  "legible, readable and appealing when dis-",
+  "played. The arrangement of type involves",
+  "selecting typefaces, point sizes, line lengths,",
+  "line spacing (leading), letter spacing",
+  "(tracking), and adjusting the space between",
+  "pairs of letters (kerning). The term typo-",
+  "graphy is also applied to the style, arrange-",
+  "ment, and appearance of the letters, num-",
+  "bers, and symbols created by the process.",
+  "Type design is a closely related craft, some-",
+  "times considered part of typography; most",
+  "typographers do not design typefaces, and",
+  "some type designers do not consider them-",
+  "selves typographers. Typography also",
+  "may be used as an ornamental and deco-",
+  "rative device, unrelated to the communi-",
+  "cation of information.                                          ",
+  "Typography is the work of typesetters",
+  "(also known as compositors), typographers,",
+  "artists, comic book artists, graffiti artists,",
+  "and, now, anyone who arranges words, let-",
+  "ters, numbers, and symbols for publication,",
+  "display, or distribution, from clerical work-",
+  "ers and newsletter writers to anyone self-",
+  "publishing materials. Until the Digital Age,",
+  "typography was a specialized occupation.",
+  "Digitalization opened up typography to new",
+  "generations of previously unrelated design..."
+] %}
+{#- per line: letter and word spacing tweaks at the near (0) and far (1) end of the crawl -#}
+{%- set adjustments = [
+  {"lsp0":3,"wsp0":4},
+  {"lsp0":-1,"wsp0":-2},
+  {"lsp0":-0.5,"wsp0":0},
+  {"lsp0":0,"wsp0":1,"wsp1":0.5},
+  {"lsp0":-1.5,"wsp0":-3},
+  {"lsp0":2.5,"wsp0":3},
+  {"lsp0":-2,"wsp0":-1,"lsp1":-2.5,"wsp1":-1.5},
+  {"lsp0":0.4,"wsp0":1},
+  {"lsp0":-1,"wsp0":-2,"lsp1":-1.25,"wsp1":-2},
+  {"lsp0":-0.75,"wsp0":0,"lsp1":-0.75,"wsp1":-1},
+  {"lsp0":-1,"wsp0":0,"lsp1":-0.65},
+  {"lsp0":-1.5,"wsp0":-1,"lsp1":-2},
+  {"lsp0":-1,"wsp0":0,"lsp1":-1},
+  {"lsp0":-1,"wsp0":0,"lsp1":-1,"wsp1":-1},
+  {"lsp0":-1.25,"wsp0":-1},
+  {"lsp0":2.75,"wsp0":2,"lsp1":3},
+  {"lsp0":0,"wsp0":0},
+  {"lsp0":0.75,"wsp0":0,"lsp1":0.4},
+  {"lsp0":0,"wsp0":0},
+  {"lsp0":2.5,"wsp0":2,"lsp1":2.5,"wsp1":3},
+  {"lsp0":-1.5,"wsp0":-1},
+  {"lsp0":0.25,"wsp0":1,"lsp1":0,"wsp1":-0.5},
+  {"lsp0":-0.25,"wsp0":-1,"lsp1":-0.6},
+  {"lsp0":-0.25,"wsp0":-1,"lsp1":-1.25,"wsp1":-1.5},
+  {"lsp0":0.5,"wsp0":1,"lsp1":0,"wsp1":-1},
+  {"lsp0":0.5,"wsp0":2,"lsp1":0.5,"wsp1":1},
+  {"lsp0":0.25,"wsp0":1,"lsp1":-0.25,"wsp1":0},
+  {"lsp0":0.25,"wsp0":1,"lsp1":-0.25,"wsp1":0},
+  {"lsp0":-0.25,"wsp0":-1,"lsp1":-1,"wsp1":-2},
+  {"lsp0":-0.75,"wsp0":-1,"lsp1":-1.5,"wsp1":-1.5}
+] -%}
+{
+  "activeState": {
+    "t": "0",
+    "duration": "100",
+    "keyMoments": [
+      {
+        "label": "Key Moment 1",
+        "duration": "1",
+        "easing": "linear",
+        "isActive": "1",
+        "3dProperties": [
+          [
+            "perspective",
+            "500"
+          ]
+        ],
+        "textColor": {
+          "instance": {
+            "R": "255",
+            "G": "224",
+            "B": "0"
+          },
+          "colorTypeKey": "RGB"
+        },
+        "stageBackgroundColor": {
+          "instance": {
+            "R": "0",
+            "G": "0",
+            "B": "38"
+          },
+          "colorTypeKey": "RGB"
+        }
+      }
+    ],
+    "activeActors": [
+      {
+        "instance": {
+          "label": "plane1",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "width",
+                  "2000"
+                ],
+                [
+                  "height",
+                  "3240"
+                ],
+                [
+                  "y",
+                  "-1000"
+                ]
+              ],
+              "3dProperties": [
+                [
+                  "rotationX",
+                  "45"
+                ]
+              ],
+              "axesLocations": [
+                [
+                  "wght",
+                  "500"
+                ]
+              ],
+              "fontSize": "54",
+              "textAlign": "center"
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "plane2",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "duration": "100",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "-360"
+                      ],
+                      [
+                        "y",
+                        "1700"
+                      ],
+                      [
+                        "width",
+                        "2000"
+                      ],
+                      [
+                        "height",
+                        "3240"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Key Moment 2",
+                    "duration": "1",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "-5000"
+                      ]
+                    ]
+                  }
+                ],
+                "activeActors": [
+{% for line in lines %}
+{%- set adj = adjustments[loop.index0] %}
+{%- set lsp0 = adj.lsp0 * 0.75 %}
+{%- set wsp0 = adj.wsp0 * 0.75 %}
+{%- set lsp1 = (adj.lsp1 | default(adj.lsp0 * 1.5)) * 0.75 %}
+{%- set wsp1 = (adj.wsp1 | default(adj.wsp0 * 1.5)) * 0.75 %}
+{%- set delay = (baseDelay + lineDelay * loop.index0) | round %}
+{%- set hold = (100 - lineTime - baseDelay - lineDelay * loop.index0) | round %}                  {
+                    "instance": {
+                      "label": "line{{ loop.index }}",
+                      "keyMoments": [
+                        {
+                          "label": "Key Moment 1",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textRun": {{ line | dump | safe }},
+                          "letterSpacing": "{{ lsp0 }}",
+                          "wordSpacing": "{{ wsp0 }}",
+                          "numericProperties": [
+                            [
+                              "width",
+                              "2000"
+                            ],
+                            [
+                              "scale",
+                              "1"
+                            ],
+                            [
+                              "y",
+                              "{{ loop.index0 * 81 }}"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 2",
+                          "duration": "{{ delay }}",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": "{{ lsp0 }}",
+                          "wordSpacing": "{{ wsp0 }}",
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "1"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "144"
+                            ],
+                            [
+                              "XTRA",
+                              "463"
+                            ],
+                            [
+                              "XTSP",
+                              "0"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 3",
+                          "duration": "{{ lineTime }}",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": "{{ lsp1 }}",
+                          "wordSpacing": "{{ wsp1 }}",
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        },
+                        {
+                          "label": "Key Moment 4",
+                          "duration": "{{ hold }}",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "letterSpacing": "{{ lsp1 }}",
+                          "wordSpacing": "{{ wsp1 }}",
+                          "numericProperties": [
+                            [
+                              "scale",
+                              "0.55"
+                            ]
+                          ],
+                          "axesLocations": [
+                            [
+                              "opsz",
+                              "8"
+                            ],
+                            [
+                              "XTRA",
+                              "550"
+                            ],
+                            [
+                              "XTSP",
+                              "25"
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LineOfTextActorModel"
+                  }{{ "," if not loop.last }}
+{% endfor %}                ]
+              },
+              "actorTypeKey": "LayerActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "overlay",
+          "activeActors": [
+{% for band in range(0, overlayBands) %}            {
+              "instance": {
+                "label": "overlay{{ loop.index }}",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "{{ loop.index * 12 }}"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "{{ (36 - loop.index) * 0.4 }}"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            }{{ "," if not loop.last }}
+{% endfor %}          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      }
+    ],
+    "width": "1280",
+    "height": "720",
+    "zoomLevel": {
+      "type": "app-default",
+      "scaling": "100.00000"
+    },
+    "editingActor": "./0"
+  },
+  "activeLayoutKey": "MotionStage",
+  "activeFontKey": "from-url Roboto Delta Roman Version_3-000"
+}
