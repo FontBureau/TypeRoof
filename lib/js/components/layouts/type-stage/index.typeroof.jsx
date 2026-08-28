@@ -23,13 +23,10 @@ import {
 } from "../../prosemirror/models.typeroof.jsx";
 import {
     Collapsible,
-    WasteBasketDropTarget,
     UICheckboxInput,
     StaticNode,
     StaticTag,
 } from "../../generic.mjs";
-import { SelectAndDragByOptions } from "../motion-stage.mjs";
-import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
 import { GENERIC } from "../../registered-properties-definitions.mjs";
 import {
     isInheritingPropertyFn,
@@ -361,49 +358,21 @@ class TypeStageController extends _BaseContainerComponent {
             [
                 {
                     zone: "type_spec-manager",
-                },
-                [],
-                SelectAndDragByOptions,
-                "Create",
-                "", //'drag and drop into Rap-Editor.'
-                [
-                    // options [type, label, value]
-                    [
-                        DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_CREATE,
-                        "Type Spec",
-                        "TypeSpec",
-                    ],
-                ],
-            ],
-            [
-                {
-                    zone: "type_spec-manager",
                     relativeRootPath: typeSpecRelativePath,
                 },
-                [
-                    ["children", "activeActors"],
-                    [
-                        widgetBus.rootPath.append("editingTypeSpec").toString(),
-                        "editingActor",
-                    ],
-                ],
+                [["./children", "childrenOrderedMap"]],
                 TypeSpecTreeEditor,
+                zones,
+                [], // eventHandlers
+                "TypeSpec-Tree ", // label
+                true, // dragEntries
+                true, // deletableEntries (drag to wastebasket instead)
                 {
-                    // dataTransferTypes
-                    PATH: DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_PATH,
-                    CREATE: DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_CREATE,
+                    // treeConfig
+                    editingTypeSpecPath:
+                        widgetBus.rootPath.append("editingTypeSpec"),
+                    typeSpecRootPath: originTypeSpecPath,
                 },
-                Path.fromParts(".", "children"),
-            ],
-            [
-                {
-                    zone: "type_spec-manager",
-                },
-                [["typeSpec", "rootCollection"]],
-                WasteBasketDropTarget,
-                "Drop here to delete",
-                "", //'drag and drop into trash-bin.'
-                [DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_PATH],
             ],
             [
                 {},
