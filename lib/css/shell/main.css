@@ -318,7 +318,7 @@ li.ui_key_moment_controller.active:not(:last-child) {
 base map items
 *******************************************************************************/
 
-.ui_base_map-items {
+.ui_base_map ol {
     background-color: #fff;
 }
 
@@ -495,7 +495,8 @@ stage manager actors (document manager)
         var(--indicator-padding) + var(--own-padding-top, 00em)
     );
 
-    padding: var(--local-indicator-padding) 0 var(--own-padding-bottom, 0) 0;
+    padding-top: var(--local-indicator-padding);
+    padding-bottom: var(--own-padding-bottom, 0);
     background-image: linear-gradient(
         to bottom,
         var(--drop-indicator-color) var(--indicator-padding),
@@ -522,7 +523,8 @@ stage manager actors (document manager)
         var(--indicator-padding) + var(--own-padding-bottom, 0em)
     );
 
-    padding: var(--own-padding-top, 0) 0 var(--local-indicator-padding) 0;
+    padding-top: var(--own-padding-top, 0);
+    padding-bottom: var(--local-indicator-padding);
     background-image: linear-gradient(
         to top,
         var(--drop-indicator-color) var(--indicator-padding),
@@ -1370,13 +1372,21 @@ select and drag
     list-style: none;
     margin: 0;
     padding: 0;
+
+    --own-padding-top: 0.25em;
+    --own-padding-bottom: 0em;
 }
 
 .ui_base_map-item,
 .ui_axes_math-map-item,
 .ui-dimension_sequence {
     --padding-horizontal: 0.25em;
+
+    padding-top: var(--own-padding-top, 0);
+    padding-bottom: var(--own-padding-bottom, 0);
+
     --drop-target-indicator-width: 0.2em;
+    --background-base-color: var(--list-item-odd-bg);
 }
 
 .ui_axes_math-map-item {
