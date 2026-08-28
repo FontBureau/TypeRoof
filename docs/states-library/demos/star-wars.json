@@ -3992,6 +3992,1382 @@
           ]
         },
         "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "overlay",
+          "activeActors": [
+            {
+              "instance": {
+                "label": "overlay1",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "12"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "14"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay2",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "24"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "13.600000000000001"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay3",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "36"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "13.200000000000001"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay4",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "48"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "12.8"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay5",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "60"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "12.4"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay6",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "72"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "12"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay7",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "84"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "11.600000000000001"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay8",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "96"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "11.200000000000001"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay9",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "108"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "10.8"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay10",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "120"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "10.4"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay11",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "132"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "10"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay12",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "144"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "9.600000000000001"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay13",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "156"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "9.200000000000001"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay14",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "168"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "8.8"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay15",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "180"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "8.4"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay16",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "192"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "8"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay17",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "204"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "7.6000000000000005"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay18",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "216"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "7.2"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay19",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "228"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "6.800000000000001"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay20",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "240"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "6.4"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay21",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "252"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "6"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay22",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "264"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "5.6000000000000005"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay23",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "276"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "5.2"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay24",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "288"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "4.800000000000001"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay25",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "300"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "4.4"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay26",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "312"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "4"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay27",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "324"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "3.6"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay28",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "336"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "3.2"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay29",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "348"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "2.8000000000000003"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay30",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "360"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "2.4000000000000004"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay31",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "372"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "2"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay32",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "384"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "1.6"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay33",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "396"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "1.2000000000000002"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay34",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "408"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "0.8"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay35",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "420"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "0.4"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            },
+            {
+              "instance": {
+                "label": "overlay36",
+                "keyMoments": [
+                  {
+                    "label": "Key Moment 1",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "0"
+                      ],
+                      [
+                        "y",
+                        "0"
+                      ],
+                      [
+                        "width",
+                        "1280"
+                      ],
+                      [
+                        "height",
+                        "432"
+                      ]
+                    ],
+                    "fillColor": {
+                      "instance": {
+                        "R": "0",
+                        "G": "0",
+                        "B": "0",
+                        "alpha": "0"
+                      },
+                      "colorTypeKey": "RGB"
+                    }
+                  }
+                ]
+              },
+              "actorTypeKey": "RectangleActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
       }
     ],
     "width": "1280",
