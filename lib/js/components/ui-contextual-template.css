@@ -12,10 +12,12 @@ This behavioral/functional css, not "just" styling
     .ui_contextual_template_rule-contents {
         display: none;
     }
+
     &.edit .ui_contextual_template_rule-contents {
         display: block;
     }
 }
+
 .type_driven-type-char_group_arguments_list_model-items {
     /**
      * We hide the [+ add char group] button when there's more than one
@@ -25,6 +27,7 @@ This behavioral/functional css, not "just" styling
         + .ui_type_driven_list-add_button {
         display: none;
     }
+
     /**
      * If it is only one item (first-child and last-child at the same time)
      * don't show the item tools (move, delete).
