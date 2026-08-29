@@ -89,7 +89,7 @@
         }
       ],
       [
-        "texts",
+        "paragraphs",
         {
           "children": [
             [
@@ -150,7 +150,7 @@
       ]
     ]
   },
-  "editingTypeSpec": "./children/0/children/1",
+  "editingTypeSpec": ".",
   "stylePatchesSource": [
     [
       "italic",
@@ -223,14 +223,14 @@
     [
       "paragraph",
       {
-        "link": "../texts/t1",
+        "link": "../paragraphs/t1",
         "label": "T1"
       }
     ],
     [
       "paragraph-2",
       {
-        "link": "../texts/t2",
+        "link": "../paragraphs/t2",
         "label": "T2"
       }
     ]
