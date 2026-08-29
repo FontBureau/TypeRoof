@@ -60,6 +60,8 @@ import {
 
 import { applyHtmlAttrsBag as _applyHtmlAttrsBag } from "./html-attrs.ts";
 
+import { modelTreeSegmentsToLogicalLevelSegments } from "../type-spec-paths.mjs";
+
 export function typeSpecGetFontMethod(changedMap, propertyValuesMap) {
     const fontPPSRecord = ProcessedPropertiesSystemMap.createSimpleRecord(
         SPECIFIC,
@@ -471,7 +473,9 @@ class NodeTypeSpecLabel extends _BaseComponent {
 
             this.element.setAttribute(
                 "title",
-                `${label} :: Node ${this._nodeTypeName} :: TypeSpec ${typeSpecLabel !== "" ? " " + typeSpecLabel : ""} ${this._typeSpecPath}`,
+                `${label} :: Node ${this._nodeTypeName} :: ` +
+                    `TypeSpec ${typeSpecLabel !== "" ? " " + typeSpecLabel : ""} ` +
+                    `/${modelTreeSegmentsToLogicalLevelSegments(this._typeSpecPath.parts).join("/")}`,
             );
             this.label.textContent = label;
         }
