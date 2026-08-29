@@ -49,6 +49,7 @@ import {
 } from "../type-stage/index.typeroof.jsx";
 
 import { LengthModel } from "../../length-models.mjs";
+
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 
 //  We can't create the self-reference directly
@@ -76,7 +77,6 @@ const RampModel = _BaseLayoutModel.createClass(
 
 class TypeSpecSelect extends GenericSelect {
     static BASE_CLASS = "ui_type_spec_select";
-    _metaData = new Map();
     _typeSpecLabels = new Map();
     constructor(widgetBus, labelContent) {
         const allowNull = []; // use for root? otherwise, root could be included in the values...
@@ -98,9 +98,6 @@ class TypeSpecSelect extends GenericSelect {
 
     _optionGetLabel(key /*, value*/) {
         const labels = [];
-        if (this._metaData.has(key))
-            labels.push(...this._metaData.get(key).labels);
-
         let treePrefix = "";
         if (this._typeSpecLabels.has(key)) {
             const { treePrefix: prefix, label } = this._typeSpecLabels.get(key);
@@ -121,13 +118,6 @@ class TypeSpecSelect extends GenericSelect {
     *_optionsGen(rootTypeSpec) {
         // idempotent: options are fully rebuilt on every update
         this._typeSpecLabels.clear();
-
-        // this._metaData holds every reachable node (the leaves and all
-        // their ancestors up to "."). It is the single source of truth for
-        // visibility, so we check it once here for the root and once per
-        // child at enqueue time (needed anyway to know each node's last
-        // *visible* child).
-        if (!this._metaData.has(".")) return;
 
         const layers = [
             // [path, typeSpec, ancestorPrefix, isLast, isRoot]
@@ -158,8 +148,7 @@ class TypeSpecSelect extends GenericSelect {
                 "children",
             )) {
                 const childPath = currentPath.append("children", key);
-                if (this._metaData.has(childPath.toString(Path.RELATIVE)))
-                    visibleChildren.push([childPath, childTypeSpec]);
+                visibleChildren.push([childPath, childTypeSpec]);
             }
 
             // For the child level: a guide pipe if this node has a following
@@ -182,42 +171,6 @@ class TypeSpecSelect extends GenericSelect {
         }
     }
 
-    _updateMetaData(nodeSpecToTypeSpec) {
-        /* pass */
-        // This is a stub! in the final options we want to have all
-        // items that are targets in nodeSpecToTypeSpec, e.g.
-        //  for(const edge of nodeSpecToTypeSpec.values())
-        //          const linkStr = edge.get('link').value;
-        // AND all of the parents of that link up to the "rootTypeSpec"
-        // which would be just '.'
-        // The paths are folded with the `children` part, we don't need
-        // the paths to the "children" items, as they are just structure
-        // and can't be active TypeSpec
-        const upsertEdge = (linkStr, nodeKey = null, edgeLabel = "") => {
-            if (!this._metaData.has(linkStr)) {
-                this._metaData.set(linkStr, { labels: [] });
-            }
-            const data = this._metaData.get(linkStr);
-            if (nodeKey !== null && edgeLabel !== "")
-                data.labels.push(`${edgeLabel}`); // (Node: ${nodeKey})`);
-            else if (nodeKey !== null) data.labels.push(nodeKey);
-            else if (edgeLabel !== "") data.labels.push(edgeLabel);
-        };
-
-        this._metaData.clear();
-        for (const [nodeKey, edge] of nodeSpecToTypeSpec) {
-            const linkStr = edge.get("link").value;
-            upsertEdge(linkStr, nodeKey, edge.get("label").value);
-            if (linkStr === ".") continue;
-            let linkPath = Path.fromParts(linkStr);
-            while (linkPath.parts.length) {
-                // removes ['children', key]
-                linkPath = linkPath.parent.parent;
-                upsertEdge(linkPath.toString(Path.RELATIVE));
-            }
-        }
-    }
-
     _updateValue(activePath) {
         this._select.value = activePath.isEmpty
             ? "." // root? must it be a Path?
@@ -226,13 +179,12 @@ class TypeSpecSelect extends GenericSelect {
 
     update(changedMap) {
         let _changedMap = changedMap;
-        if (changedMap.has("nodeSpecToTypeSpec")) {
-            this._updateMetaData(changedMap.get("nodeSpecToTypeSpec"));
-            // Now ensure options are updated.
-            if (!changedMap.has("options")) {
-                _changedMap = new Map(changedMap);
-                _changedMap.set("options", this.getEntry("options"));
-            }
+        if (
+            changedMap.has("nodeSpecToTypeSpec") &&
+            !changedMap.has("options")
+        ) {
+            _changedMap = new Map(changedMap);
+            _changedMap.set("options", this.getEntry("options"));
         }
         super.update(_changedMap);
     }
