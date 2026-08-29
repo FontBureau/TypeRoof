@@ -8,7 +8,7 @@
     "textColor": {
       "instance": {
         "L": "0.00000",
-        "C": "0.00000",
+        "C": "0.0000000",
         "alpha": "100.00000"
       },
       "colorTypeKey": "OKLCH"
@@ -16,7 +16,7 @@
     "backgroundColor": {
       "instance": {
         "L": "100.00000",
-        "C": "0.00000",
+        "C": "0.0000000",
         "alpha": "100.00000"
       },
       "colorTypeKey": "OKLCH"
@@ -24,29 +24,35 @@
     "autoOPSZ": "1",
     "children": [
       [
-        "0",
+        "headings",
         {
-          "blockMargins": {
-            "start": {
-              "unit": "baseEm",
-              "value": "2.00000"
-            },
-            "end": {
-              "unit": "lineHeightAfter",
-              "value": "1.00000"
-            }
-          },
-          "relativeFontSize": "4.571428571",
-          "autoOPSZ": "1",
-          "axesLocations": [
-            [
-              "wght",
-              "700"
-            ]
-          ],
           "children": [
             [
-              "1",
+              "h1",
+              {
+                "blockMargins": {
+                  "start": {
+                    "unit": "baseEm",
+                    "value": "2.00000"
+                  },
+                  "end": {
+                    "unit": "lineHeightAfter",
+                    "value": "1.00000"
+                  }
+                },
+                "relativeFontSize": "4.571428571",
+                "autoOPSZ": "1",
+                "axesLocations": [
+                  [
+                    "wght",
+                    "700"
+                  ]
+                ],
+                "label": "Heading 1"
+              }
+            ],
+            [
+              "h2",
               {
                 "blockMargins": {
                   "start": {
@@ -61,37 +67,41 @@
                     "600"
                   ]
                 ],
-                "children": [
+                "label": "Heading 2"
+              }
+            ],
+            [
+              "h3",
+              {
+                "relativeFontSize": "1.285714286",
+                "autoOPSZ": "1",
+                "axesLocations": [
                   [
-                    "2",
-                    {
-                      "relativeFontSize": "1.285714286",
-                      "autoOPSZ": "1",
-                      "axesLocations": [
-                        [
-                          "wght",
-                          "550"
-                        ]
-                      ],
-                      "label": "Headline 3"
-                    }
+                    "wght",
+                    "550"
                   ]
                 ],
-                "label": "Headline 2"
+                "label": "Heading 3"
               }
             ]
           ],
-          "label": "Headline 1"
+          "label": "Headings"
         }
       ],
       [
-        "3",
+        "texts",
         {
-          "relativeFontSize": "1.285714286",
-          "autoOPSZ": "1",
           "children": [
             [
-              "4",
+              "t1",
+              {
+                "relativeFontSize": "1.285714286",
+                "autoOPSZ": "1",
+                "label": "Text 1"
+              }
+            ],
+            [
+              "t2",
               {
                 "relativeFontSize": "1",
                 "autoOPSZ": "1",
@@ -99,7 +109,7 @@
               }
             ]
           ],
-          "label": "Text 1"
+          "label": "Paragraphs"
         }
       ]
     ],
@@ -192,35 +202,35 @@
     [
       "heading-1",
       {
-        "link": "./children/0",
+        "link": "../headings/h1",
         "label": "H1"
       }
     ],
     [
       "heading-2",
       {
-        "link": "./children/0/children/1",
+        "link": "../headings/h2",
         "label": "H2"
       }
     ],
     [
       "heading-3",
       {
-        "link": "./children/0/children/1/children/2",
+        "link": "../headings/h3",
         "label": "H3"
       }
     ],
     [
       "paragraph",
       {
-        "link": "./children/3",
+        "link": "../texts/t1",
         "label": "T1"
       }
     ],
     [
       "paragraph-2",
       {
-        "link": "./children/3/children/4",
+        "link": "../texts/t2",
         "label": "T2"
       }
     ]
