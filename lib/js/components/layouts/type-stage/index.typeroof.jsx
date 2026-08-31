@@ -28,17 +28,17 @@ import {
     StaticTag,
 } from "../../generic.mjs";
 import { GENERIC } from "../../registered-properties-definitions.mjs";
-import {
-    isInheritingPropertyFn,
-    getRegisteredPropertySetup,
-} from "../../registered-properties.mjs";
+import { getRegisteredPropertySetup } from "../../registered-properties.mjs";
 import { UINodeSpecToTypeSpecLinksMap } from "../../type-spec-fundamentals.mjs";
 import { getTypeSpecDefaultsMap } from "./defaults.mjs";
 
 import { LengthModel } from "../../length-models.mjs";
 
 import { TypeStagePaneStyler } from "./pane-styler.typeroof.jsx";
-import { TYPE_SPEC_PROPERTIES_GENERATORS } from "./properties-generators.mjs";
+import {
+    TYPE_SPEC_PROPERTIES_GENERATORS,
+    inheritancePolicyGen,
+} from "./properties-generators.mjs";
 import { StylePatchSourcesMeta, TypeSpecMeta } from "./meta.typeroof.jsx";
 import { TypeSpecTreeEditor } from "./tree-editor.typeroof.jsx";
 import { TypeSpecPropertiesManager } from "./type-spec-properties.typeroof.jsx";
@@ -323,7 +323,7 @@ class TypeStageController extends _BaseContainerComponent {
                 TypeSpecMeta,
                 zones,
                 TYPE_SPEC_PROPERTIES_GENERATORS,
-                isInheritingPropertyFn,
+                [inheritancePolicyGen],
                 typeSpecDefaultsMap,
             ],
             [

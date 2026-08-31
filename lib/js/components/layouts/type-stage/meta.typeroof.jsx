@@ -199,16 +199,9 @@ export class StyleLinksMeta extends _BaseContainerComponent {
 
 export class TypeSpecChildrenMeta extends _BaseDynamicMapContainerComponent {
     [HANDLE_CHANGED_AS_NEW] = true;
-    constructor(
-        widgetBus,
-        zones,
-        typeSpecPropertiesGenerators,
-        isInheritingPropertyFn,
-        widgets = [],
-    ) {
+    constructor(widgetBus, zones, typeSpecPropertiesGenerators, widgets = []) {
         super(widgetBus, zones, widgets);
         this._typeSpecPropertiesGenerators = typeSpecPropertiesGenerators;
-        this._isInheritingPropertyFn = isInheritingPropertyFn;
     }
     /**
      * return => [settings, dependencyMappings, Constructor, ...args];
@@ -263,7 +256,7 @@ export class TypeSpecMeta extends _BaseContainerComponent {
         widgetBus,
         zones,
         typeSpecPropertiesGenerators,
-        isInheritingPropertyFn = null,
+        inheritancePolicyGenerators,
         typeSpecDefaultsMap = null,
     ) {
         const widgets = [
@@ -278,7 +271,7 @@ export class TypeSpecMeta extends _BaseContainerComponent {
                 ],
                 TypeSpecLiveProperties,
                 typeSpecPropertiesGenerators,
-                isInheritingPropertyFn,
+                inheritancePolicyGenerators,
                 typeSpecDefaultsMap,
             ],
             [
@@ -327,7 +320,6 @@ export class TypeSpecMeta extends _BaseContainerComponent {
                 TypeSpecChildrenMeta,
                 zones,
                 typeSpecPropertiesGenerators,
-                isInheritingPropertyFn,
                 [], // widgets
             ],
         ];

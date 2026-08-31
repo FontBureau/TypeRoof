@@ -26,12 +26,12 @@ import {
 } from "../../generic.mjs";
 import { TypeStagePaneStyler } from "../type-stage/pane-styler.typeroof.jsx";
 import { GENERIC } from "../../registered-properties-definitions.mjs";
-import {
-    isInheritingPropertyFn,
-    getRegisteredPropertySetup,
-} from "../../registered-properties.mjs";
+import { getRegisteredPropertySetup } from "../../registered-properties.mjs";
 import { getTypeSpecDefaultsMap } from "../type-stage/defaults.mjs";
-import { TYPE_SPEC_PROPERTIES_GENERATORS } from "../type-stage/properties-generators.mjs";
+import {
+    TYPE_SPEC_PROPERTIES_GENERATORS,
+    inheritancePolicyGen,
+} from "../type-stage/properties-generators.mjs";
 import {
     StylePatchSourcesMeta,
     TypeSpecMeta,
@@ -285,7 +285,7 @@ class RampController extends _BaseContainerComponent {
                 TypeSpecMeta,
                 zones,
                 TYPE_SPEC_PROPERTIES_GENERATORS,
-                isInheritingPropertyFn,
+                [inheritancePolicyGen],
                 typeSpecDefaultsMap,
             ],
             [
