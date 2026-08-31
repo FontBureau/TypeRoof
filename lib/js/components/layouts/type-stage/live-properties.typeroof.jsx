@@ -7,15 +7,14 @@ export class TypeSpecLiveProperties extends _BaseComponent {
     constructor(
         widgetBus,
         typeSpecPropertiesGenerators,
-        isInheritingPropertyFn = null,
+        inheritancePolicyGenerators,
         typeSpecDefaultsMap = null,
     ) {
         super(widgetBus);
         this._propertiesGenerators = typeSpecPropertiesGenerators;
+        this._inheritancePolicyGenerators = inheritancePolicyGenerators;
         this._typeSpecnion = null;
         this.propertyValuesMap = null;
-        // only used if also hasParentProperties
-        this._isInheritingPropertyFn = isInheritingPropertyFn;
         if (this.hasParentProperties && typeSpecDefaultsMap !== null)
             throw new Error(
                 `VALUE ERROR ${this} typeSpecDefaultsMap must be null if hasParentProperties.`,
@@ -76,7 +75,7 @@ export class TypeSpecLiveProperties extends _BaseComponent {
                         this._propertiesGenerators,
                         typeSpec,
                         parentProperties.typeSpecnion,
-                        this._isInheritingPropertyFn,
+                        this._inheritancePolicyGenerators,
                     );
                     typeSpecnionChanged = true;
                 }
@@ -103,6 +102,7 @@ export class TypeSpecLiveProperties extends _BaseComponent {
                     this._propertiesGenerators,
                     typeSpec,
                     typeSpecDefaultsMap,
+                    this._inheritancePolicyGenerators,
                     // potentiallly, here a local typespecnion with a typespec populated withh all the default values...
                 );
                 typeSpecnionChanged = true;
