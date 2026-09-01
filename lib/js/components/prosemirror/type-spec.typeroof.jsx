@@ -260,13 +260,13 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
     }
     update(changedMap) {
         const innerPropertiesData = [
-                ["generic/textAlign", "text-align", ""],
-                ["generic/direction", "direction", ""],
+                [`${GENERIC}textAlign`, "text-align", ""],
+                [`${GENERIC}direction`, "direction", ""],
                 // it's more complex, should get basefontSize and multiply with that
                 // to determine the PT
                 //, ['generic/lineLength', 'width', 'em', val=>val*0.5/*it's supposed to be EN*/]
                 [
-                    "generic/lineLength",
+                    `${GENERIC}lineLength`,
                     (
                         element,
                         value,
@@ -276,7 +276,7 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                         const [, baseFontSize] = getPropertyValue(
                                 propertiesValueMap,
                                 getDefault,
-                                "generic/baseFontSize",
+                                `${GENERIC}baseFontSize`,
                             ),
                             lineLengthPT = value * baseFontSize * 0.5;
                         element.style.setProperty("width", `${lineLengthPT}pt`);
@@ -810,7 +810,7 @@ export class UIDocumentStyleStyler extends _BaseComponent {
         this.element.style = "";
     }
     update(changedMap) {
-        const propertiesData = [["generic/direction", "direction", ""]],
+        const propertiesData = [[`${GENERIC}direction`, "direction", ""]],
             propertyValuesMap = (
                 changedMap.has("properties@")
                     ? changedMap.get("properties@")
