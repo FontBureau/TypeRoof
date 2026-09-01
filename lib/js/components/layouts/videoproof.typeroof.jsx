@@ -113,6 +113,8 @@ import { UILanguageTagCollapsible as UILanguageTag } from "../language-tags.type
 
 import { renderAxesParameterDisplay } from "../axes-parameters.mjs";
 
+import { UIColorChooserTwoColorsWithSwap } from "../ui-color-chooser.mjs";
+
 const activatableVideoproofActorTypes = (() => {
     const videoproofActors = [
             "VideoproofArrayV2ActorModel",
@@ -2265,52 +2267,19 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
             [
                 {
                     zone: "general",
-                    rootPath: videoProofActorPath.append(
-                        "keyMoments",
-                        "0",
-                        "textColor",
-                    ),
+                    rootPath: videoProofActorPath.append("keyMoments", "0"),
                 },
-                [],
-                UIColorChooser,
+                [
+                    ["textColor", "color1"],
+                    ["stageBackgroundColor", "color2"],
+                ],
+                UIColorChooserTwoColorsWithSwap,
                 zones,
-                "Text Color",
-                // argument = injectable.getDefaults.bind(null, propertyRoot, fieldName, BaseModelType.defaultValue);
-                this._getDefaults.bind(
-                    this,
-                    videoProofAnimationPropertiesKey,
-                    ProcessedPropertiesSystemMap.createSimpleRecord(
-                        COLOR,
-                        "textColor",
-                    ),
-                    "textColor",
-                ),
-                updateDefaultsDependencies,
-                requireUpdateDefaults,
-            ],
-            [
-                {
-                    zone: "general",
-                    rootPath: videoProofActorPath.append(
-                        "keyMoments",
-                        "0",
-                        "stageBackgroundColor",
-                    ),
-                },
-                [],
-                UIColorChooser,
-                zones,
-                "Stage Color",
-                // argument = injectable.getDefaults.bind(null, propertyRoot, fieldName, BaseModelType.defaultValue);
-                this._getDefaults.bind(
-                    this,
-                    videoProofAnimationPropertiesKey,
-                    ProcessedPropertiesSystemMap.createSimpleRecord(
-                        COLOR,
-                        "stageBackgroundColor",
-                    ),
-                    "stageBackgroundColor",
-                ),
+                ["FG", "BG"],
+                // UIColorChooserTwoColorsWithSwap binds (ppsRecord, fieldName)
+                // per color itself, hence only the animation properties key
+                // is bound here.
+                this._getDefaults.bind(this, videoProofAnimationPropertiesKey),
                 updateDefaultsDependencies,
                 requireUpdateDefaults,
             ],
