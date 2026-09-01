@@ -282,7 +282,7 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                     "openTypeFeatures",
                     "axesLocations",
                 ],
-                horizontal: ["columnWidth", "textAlign"],
+                horizontal: ["lineLength", "textAlign"],
                 vertical: ["leading", "blockMargins"],
                 // we don't use sections.color activeley, instead we
                 // use UIColorChooserTwoColorsWithSwap to control these
