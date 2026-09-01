@@ -251,9 +251,9 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                 ["generic/direction", "direction", ""],
                 // it's more complex, should get basefontSize and multiply with that
                 // to determine the PT
-                //, ['generic/columnWidth', 'width', 'em', val=>val*0.5/*it's supposed to be EN*/]
+                //, ['generic/lineLength', 'width', 'em', val=>val*0.5/*it's supposed to be EN*/]
                 [
-                    "generic/columnWidth",
+                    "generic/lineLength",
                     (
                         element,
                         value,
@@ -265,11 +265,8 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                                 getDefault,
                                 "generic/baseFontSize",
                             ),
-                            columnWidthPT = value * baseFontSize * 0.5;
-                        element.style.setProperty(
-                            "width",
-                            `${columnWidthPT}pt`,
-                        );
+                            lineLengthPT = value * baseFontSize * 0.5;
+                        element.style.setProperty("width", `${lineLengthPT}pt`);
                     },
                 ],
             ],
