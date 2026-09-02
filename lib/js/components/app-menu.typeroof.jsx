@@ -106,6 +106,13 @@ export class AppMenu extends _BaseContainerComponent {
                     </button>
                 </li>
             ),
+            shareLinkElement = (
+                <li>
+                    <button onClick={() => this._onClickShareLink()}>
+                        Copy share link
+                    </button>
+                </li>
+            ),
             zones = new Map([["main", mainElement]]);
         widgetBus.insertElement(mainElement);
 
@@ -119,6 +126,7 @@ export class AppMenu extends _BaseContainerComponent {
                     {loadStateElement}
                     {saveStateElement}
                     {manageFontsElement}
+                    {shareLinkElement}
                 </menu>,
             ],
             [
@@ -209,7 +217,11 @@ export class AppMenu extends _BaseContainerComponent {
         }
     }
 
-    _onClickSaveState() {
+    /**
+     * Serialize the app state, reporting errors under label. Returns null
+     * if serialization failed.
+     */
+    _serializeState(label) {
         const [errors, serializedValue] = serialize(this.getEntry("/"));
         if (errors.length) {
             const messages = [];
@@ -224,7 +236,41 @@ export class AppMenu extends _BaseContainerComponent {
                     `${error.name}: ${error.message} at ./${path.join("/")}`,
                 );
             }
-            this._reportError("Saving state file", messages.join("\n"));
+            this._reportError(label, messages.join("\n"));
+            return null;
+        }
+        return serializedValue;
+    }
+
+    async _onClickShareLink() {
+        const serializedValue = this._serializeState("Creating share link");
+        if (serializedValue === null) {
+            return;
+        }
+        const window_ = this._domTool.window,
+            url = new URL(window_.location.href);
+        // Drop the whitespace used to pretty print the JSON.
+        const compactValue = JSON.stringify(JSON.parse(serializedValue));
+        url.searchParams.set("state", compactValue);
+        const href = url.href;
+        try {
+            await window_.navigator.clipboard.writeText(href);
+        } catch (error) {
+            this._reportError("Copying the share link", error);
+            return;
+        }
+        const message =
+            "The share link was copied to the clipboard." +
+            (href.length > 2000
+                ? `\n\nWarning: the link is ${href.length} characters long. ` +
+                  "URLs longer than 2000 characters might not work with all browsers."
+                : "");
+        window_.alert(message);
+    }
+
+    _onClickSaveState() {
+        const serializedValue = this._serializeState("Saving state file");
+        if (serializedValue === null) {
             return;
         }
         downloadFile(
