@@ -113,6 +113,13 @@ export class AppMenu extends _BaseContainerComponent {
                     </button>
                 </li>
             ),
+            resetToDefaultsElement = (
+                <li>
+                    <button onClick={() => this._onClickResetToDefaults()}>
+                        Reset to defaults
+                    </button>
+                </li>
+            ),
             zones = new Map([["main", mainElement]]);
         widgetBus.insertElement(mainElement);
 
@@ -125,8 +132,11 @@ export class AppMenu extends _BaseContainerComponent {
                 <menu>
                     {loadStateElement}
                     {saveStateElement}
-                    {manageFontsElement}
                     {shareLinkElement}
+                    <hr />
+                    {manageFontsElement}
+                    <hr />
+                    {resetToDefaultsElement}
                 </menu>,
             ],
             [
@@ -317,6 +327,37 @@ export class AppMenu extends _BaseContainerComponent {
         } finally {
             this._manageFontsDialog = null;
             dialog.destroy();
+        }
+    }
+
+    /**
+     * Reset the document, i.e. activeState, to a primal (default) state.
+     *
+     * The remaining root entries are either dependencies (availableLayouts,
+     * availableFonts, installedFonts) or links derived from the selections
+     * (layoutTypeModel, font), hence replacing the wrapped activeState is
+     * all it takes, and activeLayoutKey/activeFontKey persist untouched.
+     */
+    async _onClickResetToDefaults() {
+        const message =
+            "Reset to defaults?\n\n" +
+            "This discards the current document. " +
+            "The layout and font selections are kept.";
+        if (!this._domTool.window.confirm(message)) {
+            return;
+        }
+        try {
+            await this._changeState(() => {
+                const activeState = this.getEntry("activeState");
+                // Fonts used only by the discarded document become unused,
+                // and without this we'd miss freeing them.
+                this.widgetBus.requireReviewResources();
+                activeState.wrapped = activeState.WrappedType.createPrimalDraft(
+                    activeState.wrapped.dependencies,
+                );
+            });
+        } catch (error) {
+            this._reportError("Resetting to defaults", error);
         }
     }
 
