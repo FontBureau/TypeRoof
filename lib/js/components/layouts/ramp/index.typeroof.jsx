@@ -52,6 +52,8 @@ import { LengthModel } from "../../length-models.mjs";
 
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 
+import { ENVIRONMENT_PROVIDER_ENTRIES } from "../../environment-provider.mjs";
+
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
 const RampModel = _BaseLayoutModel.createClass(
@@ -279,8 +281,12 @@ class RampController extends _BaseContainerComponent {
                             .toString(),
                         "stylePatchesSource",
                     ],
-                    // special, reqired only for the root instance
+                    // special, required only for the root instance
+                    // CAUTION: also important, to identify as "root":
+                    //           The absence of "@parentProperties"!!!
                     ["/font", "rootFont"],
+                    ...ENVIRONMENT_PROVIDER_ENTRIES, // "environment@viewport" etc.
+                    // end special root dependencies
                 ],
                 TypeSpecMeta,
                 zones,
@@ -354,9 +360,6 @@ class RampController extends _BaseContainerComponent {
             [
                 {},
                 [
-                    "width",
-                    "height",
-                    "environment@layout",
                     [
                         `typeSpecProperties@${originTypeSpecPath.toString()}`,
                         "properties@",

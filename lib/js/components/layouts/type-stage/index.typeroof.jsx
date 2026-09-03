@@ -63,6 +63,8 @@ import {
 
 import { UIDocumentRendererModeSelector } from "../../document-renderer-mode/ui-selector.typeroof.jsx";
 
+import { ENVIRONMENT_PROVIDER_ENTRIES } from "../../environment-provider.mjs";
+
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
 export function initTypeSpecCoherenceFn(DEFAULT_STATE) {
@@ -317,8 +319,14 @@ class TypeStageController extends _BaseContainerComponent {
                             .toString(),
                         "stylePatchesSource",
                     ],
-                    // special, reqired only for the root instance
+                    // special, required only for the root instance
+                    // CAUTION: also important, to identify as "root":
+                    //           The absence of "@parentProperties"!!!
                     ["/font", "rootFont"],
+                    ...ENVIRONMENT_PROVIDER_ENTRIES, // "environment@viewport" etc.
+                    [widgetBus.rootPath.append("width").toString(), "width"],
+                    [widgetBus.rootPath.append("height").toString(), "height"],
+                    // end special root dependencies
                 ],
                 TypeSpecMeta,
                 zones,
@@ -452,9 +460,6 @@ class TypeStageController extends _BaseContainerComponent {
                 },
                 [
                     "documentRendererMode",
-                    "width",
-                    "height",
-                    "environment@layout",
                     [
                         `typeSpecProperties@${originTypeSpecPath.toString()}`,
                         "properties@",
