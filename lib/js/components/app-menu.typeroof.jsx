@@ -250,7 +250,7 @@ export class AppMenu extends _BaseContainerComponent {
         const window_ = this._domTool.window,
             url = new URL(window_.location.href),
             compressed = await compressStateForUrl(serializedValue);
-        url.searchParams.set("state", compressed);
+        url.hash = `from-hash:${compressed}`;
         const href = url.href;
         try {
             await window_.navigator.clipboard.writeText(href);
