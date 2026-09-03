@@ -1,7 +1,14 @@
+import { zip } from "../../../util.mjs";
 import { _BaseComponent } from "../../basics/component.mjs";
 import { SPECIFIC } from "../../registered-properties-definitions.mjs";
 import { HierarchicalScopeTypeSpecnion } from "./type-specnion.mjs";
+import { pathSpecValuesFromObjectGen } from "./synthetic-values.mjs";
 import { STYLE_PATCH_PROPERTIES_GENERATORS } from "./properties-generators.mjs";
+import {
+    PATH_SPEC_ENVIRONMENT_PROVIDER,
+    ENVIRONMENT_PROVIDER_KEYS,
+    ENVIRONMENT_PROVIDER_ENTRIES,
+} from "../../environment-provider.mjs";
 
 export class TypeSpecLiveProperties extends _BaseComponent {
     constructor(
@@ -41,28 +48,27 @@ export class TypeSpecLiveProperties extends _BaseComponent {
     }
 
     update(changedMap) {
-        const hasRootFont =
-            this.widgetBus.wrapper.dependencyReverseMapping.has("rootFont");
-        let typeSpecnionChanged = false;
+        const getEntry = (key) =>
+            changedMap.has(key) ? changedMap.get(key) : this.getEntry(key);
 
+        let typeSpecnionChanged = false;
         if (
-            changedMap.has("typeSpec") ||
-            changedMap.has("@parentProperties") ||
-            changedMap.has("rootFont")
+            [
+                "typeSpec",
+                "@parentProperties",
+                "rootFont",
+                ...ENVIRONMENT_PROVIDER_ENTRIES,
+            ].some((k) => changedMap.has(k))
         ) {
             const hasLocalChanges = changedMap.has("typeSpec"),
                 fontChanged = changedMap.has("rootFont"),
-                typeSpec_ = changedMap.has("typeSpec")
-                    ? changedMap.get("typeSpec")
-                    : this.getEntry("typeSpec"),
+                typeSpec_ = getEntry("typeSpec"),
                 // I had a case where typeSpec is a dynamic model
                 // it would be nice to define the dependency in such a
                 // way that it would be unwrapped here.
                 typeSpec = typeSpec_.hasWrapped ? typeSpec_.wrapped : typeSpec_;
             if (this.hasParentProperties) {
-                const parentProperties = changedMap.has("@parentProperties")
-                        ? changedMap.get("@parentProperties")
-                        : this.getEntry("@parentProperties"),
+                const parentProperties = getEntry("@parentProperties"),
                     localChanged =
                         hasLocalChanges || this._typeSpecnion === null,
                     parentChanged =
@@ -88,14 +94,39 @@ export class TypeSpecLiveProperties extends _BaseComponent {
                 // how to distribute this kind of external, from the TypeSpec
                 // structure, injected/inherited dynamic dependencies; or maybe
                 // just formalize this.
+                const hasRootFont =
+                    this.widgetBus.wrapper.dependencyReverseMapping.has(
+                        "rootFont",
+                    );
                 if (hasRootFont) {
-                    const fontValue = (
-                        changedMap.has("rootFont")
-                            ? changedMap.get("rootFont")
-                            : this.getEntry("rootFont")
-                    ).value;
+                    const fontValue = getEntry("rootFont").value;
                     typeSpecDefaultsMap = new Map(this._typeSpecDefaultsMap);
                     typeSpecDefaultsMap.set(`${SPECIFIC}font`, fontValue);
+                }
+
+                for (const [key, value] of pathSpecValuesFromObjectGen(
+                    PATH_SPEC_ENVIRONMENT_PROVIDER,
+                    `${SPECIFIC}root/environment`, // prefix
+                    Object.fromEntries(
+                        zip(
+                            ENVIRONMENT_PROVIDER_KEYS,
+                            ENVIRONMENT_PROVIDER_ENTRIES.map(getEntry),
+                        ),
+                    ),
+                ))
+                    typeSpecDefaultsMap.set(key, value);
+
+                for (const dimension of ["width", "height"]) {
+                    if (
+                        !this.widgetBus.wrapper.dependencyReverseMapping.has(
+                            dimension,
+                        )
+                    )
+                        continue;
+                    typeSpecDefaultsMap.set(
+                        `${SPECIFIC}root/${dimension}`,
+                        getEntry(dimension),
+                    );
                 }
 
                 this._typeSpecnion = new HierarchicalScopeTypeSpecnion(
@@ -150,7 +181,7 @@ export class StylePatchSourceLiveProperties extends _BaseComponent {
                 {
                     // keeping these for now so we can re-use generators
                     // from LocalScopeTypeSpecnion.*_propertiesGenerator
-                    hasParentProtperty: () => false,
+                    hasParentProperty: () => false,
                     getParentProperty: (...args) => {
                         throw new Error(
                             `KEY ERROR ${this}.getParentProperty ${args.join(",     ")}`,
