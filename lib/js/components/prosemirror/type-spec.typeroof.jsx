@@ -249,29 +249,21 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
         const innerPropertiesData = [
                 [`${GENERIC}textAlign`, "text-align", ""],
                 [`${GENERIC}direction`, "direction", ""],
-                // it's more complex, should get basefontSize and multiply with that
-                // to determine the PT
-                //, ['generic/lineLength', 'width', 'em', val=>val*0.5/*it's supposed to be EN*/]
-                [
-                    `${GENERIC}lineLength`,
-                    (
-                        element,
-                        value,
-                        propertiesValueMap,
-                        getDefault /*, useUnit*/,
-                    ) => {
-                        const [, baseFontSize] = getPropertyValue(
-                                propertiesValueMap,
-                                getDefault,
-                                `${GENERIC}baseFontSize`,
-                            ),
-                            lineLengthPT = value * baseFontSize * 0.5;
-                        element.style.setProperty("width", `${lineLengthPT}pt`);
-                    },
-                ],
+                [`${GENERIC}width`, "width", "pt"]
             ],
             outerPropertiesData = [
                 // using this to define a margin-top
+
+                // FIXME: use baseFontSize and set absolutely in pt
+                // just like lineLengthPT, as this depends on lineLengthPT
+                // and it should be in the according size. ALTHOUGH, maybe
+                // both should be based on the final fontSize value???
+                // currently using baseFontSize would break the least
+                // existing code!! It's not that important, however, as
+                // em is calculated in the parent and the descendant inherits
+                // the absolute value from the parent, so the number stays
+                // stable in CSS inheritance terms.
+
                 [`${LEADING}leading/line-height-em`, "--line-height", "em"],
                 [`${GENERIC}blockMargins/start`, "--margin-block-start", ""],
                 [`${GENERIC}blockMargins/end`, "--margin-block-end", ""],
