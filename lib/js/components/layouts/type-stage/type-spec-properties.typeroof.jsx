@@ -36,7 +36,7 @@ import {
     UIManualAxesLocations,
 } from "../../ui-manual-axis-locations.mjs";
 
-import { ManualMarginsModel } from "../../type-spec-models.mjs";
+import { ManualBlockMarginsModel } from "../../type-spec-models.mjs";
 
 import { UIMargins } from "../../ui-margins.typeroof.jsx";
 
@@ -158,7 +158,7 @@ const uiElementMap = new Map([
             ],
         ],
         [
-            ManualMarginsModel,
+            ManualBlockMarginsModel,
             [
                 UIMargins,
                 require("settings:rootPath"),
