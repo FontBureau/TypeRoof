@@ -1,169 +1,154 @@
 {
     "typeSpec": {
-      "languageTag": {
-        "language": "en"
-      },
-      "lineLength": "53.0",
-      "baseFontSize": "14",
-      "textColor": {
-        "instance": {
-          "L": "0.00000",
-          "C": "0.0000000",
-          "alpha": "100.00000"
+        "languageTag": {
+            "language": "en"
         },
-        "colorTypeKey": "OKLCH"
-      },
-      "backgroundColor": {
-        "instance": {
-          "L": "100.00000",
-          "C": "0.0000000",
-          "alpha": "100.00000"
+        "lineLength": "53.0",
+        "baseFontSize": "14",
+        "textColor": {
+            "instance": {
+                "L": "0.00000",
+                "C": "0.0000000",
+                "alpha": "100.00000"
+            },
+            "colorTypeKey": "OKLCH"
         },
-        "colorTypeKey": "OKLCH"
-      },
-      "autoOPSZ": "1",
-      "children": [
-        [
-          "headings",
-          {
-            "children": [
-              [
-                "h1",
+        "backgroundColor": {
+            "instance": {
+                "L": "100.00000",
+                "C": "0.0000000",
+                "alpha": "100.00000"
+            },
+            "colorTypeKey": "OKLCH"
+        },
+        "autoOPSZ": "1",
+        "children": [
+            [
+                "headings",
                 {
-                  "blockMargins": {
-                    "start": {
-                      "unit": "baseEm",
-                      "value": "2.00000"
+                    "children": [
+                        [
+                            "h1",
+                            {
+                                "blockMargins": {
+                                    "start": {
+                                        "unit": "baseEm",
+                                        "value": "2.00000"
+                                    },
+                                    "end": {
+                                        "unit": "lineHeightAfter",
+                                        "value": "1.00000"
+                                    }
+                                },
+                                "relativeFontSize": "4.571428571",
+                                "autoOPSZ": "1",
+                                "axesLocations": [["wght", "700"]],
+                                "label": "Heading 1"
+                            }
+                        ],
+                        [
+                            "h2",
+                            {
+                                "blockMargins": {
+                                    "start": {
+                                        "value": "0.00000"
+                                    }
+                                },
+                                "relativeFontSize": "1.785714286",
+                                "autoOPSZ": "1",
+                                "axesLocations": [["wght", "600"]],
+                                "label": "Heading 2"
+                            }
+                        ],
+                        [
+                            "h3",
+                            {
+                                "relativeFontSize": "1.285714286",
+                                "autoOPSZ": "1",
+                                "axesLocations": [["wght", "550"]],
+                                "label": "Heading 3"
+                            }
+                        ]
+                    ],
+                    "label": "Headings"
+                }
+            ],
+            [
+                "paragraphs",
+                {
+                    "children": [
+                        [
+                            "t1",
+                            {
+                                "relativeFontSize": "1.285714286",
+                                "autoOPSZ": "1",
+                                "label": "Text 1"
+                            }
+                        ],
+                        [
+                            "t2",
+                            {
+                                "relativeFontSize": "1",
+                                "autoOPSZ": "1",
+                                "label": "Text 2"
+                            }
+                        ]
+                    ],
+                    "label": "Paragraphs"
+                }
+            ],
+            [
+                "generic",
+                {
+                    "backgroundColor": {
+                        "instance": {
+                            "L": "100.00000",
+                            "C": "60.00000",
+                            "H": "0.4100000",
+                            "alpha": "57.00000"
+                        },
+                        "colorTypeKey": "OKLCH"
                     },
-                    "end": {
-                      "unit": "lineHeightAfter",
-                      "value": "1.00000"
-                    }
-                  },
-                  "relativeFontSize": "4.571428571",
-                  "autoOPSZ": "1",
-                  "axesLocations": [
-                    [
-                      "wght",
-                      "700"
-                    ]
-                  ],
-                  "label": "Heading 1"
+                    "label": "Generic"
                 }
-              ],
-              [
-                "h2",
+            ]
+        ],
+        "label": "",
+        "intentStyleLinks": [
+            [
+                "italic",
                 {
-                  "blockMargins": {
-                    "start": {
-                      "value": "0.00000"
-                    }
-                  },
-                  "relativeFontSize": "1.785714286",
-                  "autoOPSZ": "1",
-                  "axesLocations": [
-                    [
-                      "wght",
-                      "600"
-                    ]
-                  ],
-                  "label": "Heading 2"
+                    "stylePatch": "italic",
+                    "mode": "link",
+                    "tag": "em"
                 }
-              ],
-              [
-                "h3",
-                {
-                  "relativeFontSize": "1.285714286",
-                  "autoOPSZ": "1",
-                  "axesLocations": [
-                    [
-                      "wght",
-                      "550"
-                    ]
-                  ],
-                  "label": "Heading 3"
-                }
-              ]
             ],
-            "label": "Headings"
-          }
-        ],
-        [
-          "paragraphs",
-          {
-            "children": [
-              [
-                "t1",
+            [
+                "bold",
                 {
-                  "relativeFontSize": "1.285714286",
-                  "autoOPSZ": "1",
-                  "label": "Text 1"
+                    "stylePatch": "bold",
+                    "mode": "link",
+                    "tag": "strong"
                 }
-              ],
-              [
-                "t2",
-                {
-                  "relativeFontSize": "1",
-                  "autoOPSZ": "1",
-                  "label": "Text 2"
-                }
-              ]
             ],
-            "label": "Paragraphs"
-          }
+            [
+                "bold italic",
+                {
+                    "stylePatch": "bold italic",
+                    "mode": "link",
+                    "tag": "strong"
+                }
+            ]
         ],
-        [
-          "generic",
-          {
-              "backgroundColor": {
-                  "instance": {
-                      "L": "100.00000",
-                      "C": "60.00000",
-                      "H": "0.4100000",
-                      "alpha": "57.00000"
-                  },
-                  "colorTypeKey": "OKLCH"
-              },
-              "label": "Generic"
-          }
+        "markStyleLinks": [
+            [
+                "strong",
+                {
+                    "stylePatch": "bold",
+                    "mode": "link"
+                }
+            ]
         ]
-      ],
-      "label": "",
-      "intentStyleLinks": [
-        [
-          "italic",
-          {
-            "stylePatch": "italic",
-            "mode": "link",
-            "tag": "em"
-          }
-        ],
-        [
-          "bold",
-          {
-            "stylePatch": "bold",
-            "mode": "link",
-            "tag": "strong"
-          }
-        ],
-        [
-          "bold italic",
-          {
-            "stylePatch": "bold italic",
-            "mode": "link",
-            "tag": "strong"
-          }
-        ]
-      ],
-      "markStyleLinks": [
-        [
-          "strong",
-          {
-            "stylePatch": "bold",
-            "mode": "link"
-          }
-        ]
-      ]
     },
     "stylePatchesSource": [
         [
