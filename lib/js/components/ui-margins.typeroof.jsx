@@ -8,7 +8,7 @@ import {
     CollapsibleContainer,
 } from "./generic.mjs";
 
-import { MarginUnitModel } from "./type-spec-models.mjs";
+import { BlockMarginUnitModel } from "./type-spec-models.mjs";
 
 class UIMarginInput extends _BaseContainerComponent {
     constructor(
@@ -17,7 +17,7 @@ class UIMarginInput extends _BaseContainerComponent {
         label,
         //classes,
     ) {
-        //, ['unit', MarginUnitOrEmptyModel] => _AbstractEnumModel
+        //, ['unit', BlockMarginUnitOrEmptyModel] => _AbstractEnumModel
         //, ['value', PercentNumberOrEmptyModel]
         super(widgetBus, zones, [
             //value
@@ -59,10 +59,10 @@ class UIMarginInput extends _BaseContainerComponent {
                     ["unit", "value"], // require('settings:internalPropertyName', 'value')
                 ],
                 UISelectOrEmptyInput,
-                () => MarginUnitModel.defaultValue, //require('getDefault')
+                () => BlockMarginUnitModel.defaultValue, //require('getDefault')
                 () => false, // require('requireUpdateDefaults')
                 "", // require('label'),
-                MarginUnitModel.enumItems, // require('items')
+                BlockMarginUnitModel.enumItems, // require('items')
             ],
         ]);
     }
