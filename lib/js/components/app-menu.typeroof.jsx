@@ -5,11 +5,11 @@ import {
 } from "./basics/component.mjs";
 import { StaticNode } from "./generic.mjs";
 import {
+    compressStateForUrl,
     createStateFileName,
     deserializeStateString,
     downloadFile,
 } from "../utils/state-file.mjs";
-
 import { getRemovableFonts, UIDialogManageFonts } from "./font-loading.mjs";
 
 /**
@@ -248,10 +248,9 @@ export class AppMenu extends _BaseContainerComponent {
             return;
         }
         const window_ = this._domTool.window,
-            url = new URL(window_.location.href);
-        // Drop the whitespace used to pretty print the JSON.
-        const compactValue = JSON.stringify(JSON.parse(serializedValue));
-        url.searchParams.set("state", compactValue);
+            url = new URL(window_.location.href),
+            compressed = await compressStateForUrl(serializedValue);
+        url.searchParams.set("state", compressed);
         const href = url.href;
         try {
             await window_.navigator.clipboard.writeText(href);
@@ -259,13 +258,7 @@ export class AppMenu extends _BaseContainerComponent {
             this._reportError("Copying the share link", error);
             return;
         }
-        const message =
-            "The share link was copied to the clipboard." +
-            (href.length > 2000
-                ? `\n\nWarning: the link is ${href.length} characters long. ` +
-                  "URLs longer than 2000 characters might not work with all browsers."
-                : "");
-        window_.alert(message);
+        window_.alert("The share link was copied to the clipboard.");
     }
 
     _onClickSaveState() {
