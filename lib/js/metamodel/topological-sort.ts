@@ -49,6 +49,14 @@ export function topologicalSortKahn(
         if (!requirementsMap.has(name)) continue;
         for (const nodeM of requirementsMap.get(name)!) {
             // for each node m with an edge e from n to m do
+            // The edge may already be consumed: duplicate entries in
+            // resolveOrder (a known issue, see the caller's comment in
+            // type-specnion.mjs) can pop a node whose dependant was
+            // already resolved and removed from dependantsMap. The
+            // remaining edges of that dependant are settled, so the
+            // stale edge is benign; skipping it lets genuine dependency
+            // errors surface instead of crashing here.
+            if (!dependantsMap.has(nodeM)) continue;
             const dependencies = dependantsMap.get(nodeM)!;
             dependencies.delete(name); // remove edge e from the graph
             if (dependencies.size === 0) {
