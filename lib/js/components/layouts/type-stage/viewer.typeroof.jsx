@@ -1214,9 +1214,6 @@ export class UIDocumentViewer extends _BaseContainerComponent {
             [
                 {},
                 [
-                    ["../width", "width"],
-                    ["../height", "height"],
-                    "environment@layout",
                     [
                         `typeSpecProperties@${originTypeSpecPath.toString()}`,
                         "properties@",

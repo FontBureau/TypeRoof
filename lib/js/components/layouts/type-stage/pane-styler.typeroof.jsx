@@ -1,9 +1,10 @@
 import { _BaseComponent } from "../../basics/component.mjs";
-
-import { lengthToCSSPX } from "../../length-models.mjs";
-import { COLOR } from "../../registered-properties-definitions.mjs";
+import { COLOR, GENERIC } from "../../registered-properties-definitions.mjs";
 import { getRegisteredPropertySetup } from "../../registered-properties.mjs";
-import { actorApplyCSSColors } from "../../actors/properties-util.mjs";
+import {
+    actorApplyCSSColors,
+    actorApplyCssProperties,
+} from "../../actors/properties-util.mjs";
 import { setLanguageTag } from "../../language-tags.typeroof.jsx";
 
 /**
@@ -33,48 +34,40 @@ export class TypeStagePaneStyler extends _BaseComponent {
     }
 
     update(changedMap) {
-        const style = this._paneElement.style;
-
-        // Sizing (width/height LengthModel fields x environment@layout)
-        const environmentLayout = changedMap.has("environment@layout")
-                ? changedMap.get("environment@layout")
-                : this.getEntry("environment@layout"),
-            width = changedMap.has("width")
-                ? changedMap.get("width")
-                : this.getEntry("width"),
-            height = changedMap.has("height")
-                ? changedMap.get("height")
-                : this.getEntry("height"),
-            environmentValues = { layout: environmentLayout },
-            resolvedWidth = lengthToCSSPX(width, environmentValues, "width"),
-            resolvedHeight = lengthToCSSPX(height, environmentValues, "height");
-
-        if (resolvedWidth !== null)
-            style.setProperty("width", `${resolvedWidth}px`);
-        else style.removeProperty("width");
-
-        if (resolvedHeight !== null)
-            style.setProperty("height", `${resolvedHeight}px`);
-        else style.removeProperty("height");
-
         // Document-level styling (backgroundColor, language tag)
         if (changedMap.has("properties@")) {
             const propertyValuesMap = changedMap
                     .get("properties@")
                     .typeSpecnion.getProperties(),
-                outerColorPropertiesMap = [
+                colorPropertiesMap = [
                     [`${COLOR}backgroundColor`, "background-color"],
                 ],
-                getDefault = (property) => [
-                    true,
-                    getRegisteredPropertySetup(property).default,
-                ];
+                propertiesData = [
+                    [`${GENERIC}availableWidth`, "width", "pt"],
+                    [`${GENERIC}availableHeight`, "height", "pt"],
+                ],
+                getDefault = (property) => {
+                    if (
+                        property === `${GENERIC}availableWidth` ||
+                        property === `${GENERIC}availableHeight`
+                    ) {
+                        return [false, ""];
+                    }
+                    return [true, getRegisteredPropertySetup(property).default];
+                };
             actorApplyCSSColors(
                 this._paneElement,
                 propertyValuesMap,
                 getDefault,
-                outerColorPropertiesMap,
+                colorPropertiesMap,
             );
+            actorApplyCssProperties(
+                this._paneElement,
+                propertyValuesMap,
+                getDefault,
+                propertiesData,
+            );
+
             setLanguageTag(this._paneElement, propertyValuesMap);
         }
     }
