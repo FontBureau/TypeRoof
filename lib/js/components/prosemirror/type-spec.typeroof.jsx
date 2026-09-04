@@ -30,10 +30,11 @@ import {
 } from "../registered-properties-definitions.mjs";
 
 import {
-    getPropertyValue,
     actorApplyCSSColors,
     actorApplyCssProperties,
     setTypographicPropertiesToSample,
+    DIRECT_PROPERTY,
+    REMOVE_PROPERTY,
 } from "../actors/properties-util.mjs";
 
 import { setLanguageTag } from "../language-tags.typeroof.jsx";
@@ -249,7 +250,13 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
         const innerPropertiesData = [
                 [`${GENERIC}textAlign`, "text-align", ""],
                 [`${GENERIC}direction`, "direction", ""],
-                [`${GENERIC}width`, "width", "pt"]
+                [`${GENERIC}width`, "width", "pt"],
+                [
+                    `${GENERIC}inlineMargins/start/pt`,
+                    "padding-inline-start",
+                    "",
+                ],
+                [`${GENERIC}inlineMargins/end/pt`, "padding-inline-end", ""],
             ],
             outerPropertiesData = [
                 // using this to define a margin-top
@@ -348,6 +355,26 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
             // console.log(`${this}.update(${[...changedMap.keys()].join(', ')}), propertyValuesMap:`, ...propertyValuesMap);
             // FIXME: also properties that are not explicitly set in here
             // should have a value!
+
+            // only apply if >1
+            // display must be block for a column-layout to work
+            // we use `display:table` as a hack by default
+            const columnCount = propertyValuesMap.get(`${GENERIC}columnCount`);
+            if (columnCount && columnCount > 1) {
+                innerPropertiesData.push(
+                    [`${GENERIC}columnCount`, "column-count", ""],
+                    [`${GENERIC}columnGutter/pt`, "column-gap", ""],
+                    [`${GENERIC}lineLength/pt`, "column-width", ""],
+                    [DIRECT_PROPERTY, "display", "block"],
+                );
+            } else {
+                innerPropertiesData.push(
+                    [REMOVE_PROPERTY, "column-count"],
+                    [REMOVE_PROPERTY, "column-gap"],
+                    [REMOVE_PROPERTY, "column-width"],
+                    [REMOVE_PROPERTY, "display"],
+                );
+            }
             actorApplyCssProperties(
                 this.innerElement,
                 propertyValuesMap,
