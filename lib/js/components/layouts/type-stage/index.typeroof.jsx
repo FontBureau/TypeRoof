@@ -23,6 +23,7 @@ import {
 } from "../../prosemirror/models.typeroof.jsx";
 import {
     Collapsible,
+    CollapsibleContainer,
     UICheckboxInput,
     StaticNode,
     StaticTag,
@@ -65,6 +66,8 @@ import { UIDocumentRendererModeSelector } from "../../document-renderer-mode/ui-
 
 import { ENVIRONMENT_PROVIDER_ENTRIES } from "../../environment-provider.mjs";
 
+import { UIValueUnitPairInput } from "../../ui-margins.typeroof.jsx";
+import { require } from "../../dependency-injection.mjs";
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
 export function initTypeSpecCoherenceFn(DEFAULT_STATE) {
@@ -433,6 +436,39 @@ class TypeStageController extends _BaseContainerComponent {
                 zones,
                 getRegisteredPropertySetup(`${GENERIC}documentRendererMode`)
                     .label, //label
+            ],
+            [
+                {
+                    zone: "editor-manager",
+                },
+                [],
+                CollapsibleContainer,
+                zones,
+                "Stage Size",
+                "minimal",
+                "stage_size", //classNameParticle
+                // widgets
+                [
+                    ...[
+                        ["width", "Width"],
+                        ["height", "Height"],
+                    ].map(([name, label]) => {
+                        return [
+                            {
+                                zone: "main",
+                                relativeRootPath: Path.fromParts(".", name),
+                            },
+                            [],
+                            UIValueUnitPairInput,
+                            require("raw:zones"),
+                            true,
+                            label,
+                            `ui-stage_size-${name}`,
+                        ];
+                    }),
+                ],
+                false, // open
+                false, // scroll
             ],
             [{ zone: "editor-manager" }, [], StaticTag, "hr"],
             [

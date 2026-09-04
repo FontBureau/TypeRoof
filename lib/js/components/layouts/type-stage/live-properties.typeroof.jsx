@@ -58,6 +58,8 @@ export class TypeSpecLiveProperties extends _BaseComponent {
                 "@parentProperties",
                 "rootFont",
                 ...ENVIRONMENT_PROVIDER_ENTRIES,
+                "width",
+                "height",
             ].some((k) => changedMap.has(k))
         ) {
             const hasLocalChanges = changedMap.has("typeSpec"),
