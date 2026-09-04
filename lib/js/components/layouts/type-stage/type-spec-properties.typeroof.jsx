@@ -36,7 +36,10 @@ import {
     UIManualAxesLocations,
 } from "../../ui-manual-axis-locations.mjs";
 
-import { ManualBlockMarginsModel } from "../../type-spec-models.mjs";
+import {
+    ManualBlockMarginsModel,
+    ManualInlineMarginsModel,
+} from "../../type-spec-models.mjs";
 
 import { UIMargins } from "../../ui-margins.typeroof.jsx";
 
@@ -166,6 +169,15 @@ const uiElementMap = new Map([
                 ({ h }) => <h4 class="ui-margins-label">Vertical Margins</h4>,
             ],
         ],
+        [
+            ManualInlineMarginsModel,
+            [
+                UIMargins,
+                require("settings:rootPath"),
+                require("zones"),
+                ({ h }) => <h4 class="ui-margins-label">Horizontal Margins</h4>,
+            ],
+        ],
     ]),
     orEmptyUIElementMap = new Map([
         [
@@ -282,7 +294,13 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                     "openTypeFeatures",
                     "axesLocations",
                 ],
-                horizontal: ["lineLength", "textAlign"],
+                horizontal: [
+                    "columnCount",
+                    "columnGutter",
+                    "lineLength",
+                    "inlineMargins",
+                    "textAlign",
+                ],
                 vertical: ["leading", "blockMargins"],
                 // we don't use sections.color activeley, instead we
                 // use UIColorChooserTwoColorsWithSwap to control these
