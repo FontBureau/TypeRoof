@@ -282,6 +282,17 @@ class TypeStageController extends _BaseContainerComponent {
             ...SimpleProtocolHandler.create("typeSpecProperties@"),
         );
 
+        // per document-node properties (geometry/constraints), the
+        // parallel channel to typeSpecProperties@
+        widgetBus.wrapper.setProtocolHandlerImplementation(
+            // does not raise when not found, instead returns null: the
+            // root registration lands after the first TypeSpecMeta
+            // update, but consumers (pane-styler) can update earlier.
+            ...SimpleProtocolHandler.create("nodeProperties@", {
+                notFoundFallbackValue: null,
+            }),
+        );
+
         // the source style patches
         widgetBus.wrapper.setProtocolHandlerImplementation(
             // does not raise when not found, instead returns null
@@ -499,6 +510,10 @@ class TypeStageController extends _BaseContainerComponent {
                     [
                         `typeSpecProperties@${originTypeSpecPath.toString()}`,
                         "properties@",
+                    ],
+                    [
+                        `nodeProperties@${originTypeSpecPath.toString()}`,
+                        "nodeProperties@",
                     ],
                 ],
                 TypeStagePaneStyler,

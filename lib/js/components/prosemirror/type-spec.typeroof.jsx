@@ -24,6 +24,7 @@ import {
 import {
     COLOR,
     GENERIC,
+    LAYOUT,
     SPECIFIC,
     LEADING,
     ProcessedPropertiesSystemMap,
@@ -247,10 +248,19 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
         this.outerElement.removeAttribute("lang");
     }
     update(changedMap) {
-        const innerPropertiesData = [
+        // geometry from the nodeProperties@ channel (unregistered, may
+        // be null until the root registers), style from properties@.
+        const nodePropertiesEntry = changedMap.has("nodeProperties@")
+                ? changedMap.get("nodeProperties@")
+                : this.getEntry("nodeProperties@"),
+            nodePropertiesMap =
+                nodePropertiesEntry === null
+                    ? new Map()
+                    : nodePropertiesEntry.nodeProperties.getProperties(),
+            innerPropertiesData = [
                 [`${GENERIC}textAlign`, "text-align", ""],
                 [`${GENERIC}direction`, "direction", ""],
-                [`${GENERIC}width`, "width", "pt"],
+                [`${LAYOUT}width`, "width", "pt"],
                 [
                     `${GENERIC}inlineMargins/start/pt`,
                     "padding-inline-start",
@@ -275,11 +285,13 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                 [`${GENERIC}blockMargins/start`, "--margin-block-start", ""],
                 [`${GENERIC}blockMargins/end`, "--margin-block-end", ""],
             ],
-            propertyValuesMap = (
-                changedMap.has("properties@")
+            propertyValuesMap = new Map([
+                ...(changedMap.has("properties@")
                     ? changedMap.get("properties@")
                     : this.getEntry("properties@")
-            ).typeSpecnion.getProperties(),
+                ).typeSpecnion.getProperties(),
+                ...nodePropertiesMap,
+            ]),
             // Next sibling's resolved properties. Only present when a next
             // sibling exists — last child has no nextProperties@ wired.
             nextProperties =
@@ -330,6 +342,11 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                         // FIXME: this is a hack!
                         return [true, `0pt`];
                     }
+                    if (property.startsWith(LAYOUT))
+                        // nodeProperties@ keys are unregistered by
+                        // design; when absent (non-root scopes) the CSS
+                        // property stays unset.
+                        return [false, ""];
                     return [true, getRegisteredPropertySetup(property).default];
                 };
             // console.log(`${this}.update propertyValuesMap ...`, ...propertyValuesMap.keys(), '!', propertyValuesMap);

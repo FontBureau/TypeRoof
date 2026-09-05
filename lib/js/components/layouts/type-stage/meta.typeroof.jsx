@@ -263,6 +263,15 @@ export class TypeSpecMeta extends _BaseContainerComponent {
             [
                 {
                     "typeSpecProperties@": widgetBus.rootPath.toString(),
+                    // Only the root TypeSpecLiveProperties produces
+                    // nodeProperties@ (its update builds the root
+                    // HierarchicalScopeNodeProperties); children share
+                    // the settings struct, so the key must be absent here.
+                    ...(typeSpecDefaultsMap !== null
+                        ? {
+                              "nodeProperties@": widgetBus.rootPath.toString(),
+                          }
+                        : {}),
                 },
                 [
                     ...widgetBus.wrapper.getDependencyMapping(

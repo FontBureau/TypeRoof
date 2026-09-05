@@ -1,5 +1,5 @@
 import { _BaseComponent } from "../../basics/component.mjs";
-import { COLOR, GENERIC } from "../../registered-properties-definitions.mjs";
+import { COLOR, LAYOUT } from "../../registered-properties-definitions.mjs";
 import { getRegisteredPropertySetup } from "../../registered-properties.mjs";
 import {
     actorApplyCSSColors,
@@ -34,22 +34,40 @@ export class TypeStagePaneStyler extends _BaseComponent {
     }
 
     update(changedMap) {
-        // Document-level styling (backgroundColor, language tag)
-        if (changedMap.has("properties@")) {
-            const propertyValuesMap = changedMap
-                    .get("properties@")
-                    .typeSpecnion.getProperties(),
+        // Document-level styling (backgroundColor, language tag) and
+        // pane geometry (from the nodeProperties@ channel).
+        if (
+            changedMap.has("properties@") ||
+            changedMap.has("nodeProperties@")
+        ) {
+            const typeSpecProperties = changedMap.has("properties@")
+                    ? changedMap.get("properties@")
+                    : this.getEntry("properties@"),
+                // null until the root TypeSpecLiveProperties registers
+                // (notFoundFallbackValue); the pane keeps its unset
+                // width/height in that case.
+                nodePropertiesEntry = changedMap.has("nodeProperties@")
+                    ? changedMap.get("nodeProperties@")
+                    : this.getEntry("nodeProperties@"),
+                nodePropertiesMap =
+                    nodePropertiesEntry === null
+                        ? new Map()
+                        : nodePropertiesEntry.nodeProperties.getProperties(),
+                propertyValuesMap = new Map([
+                    ...typeSpecProperties.typeSpecnion.getProperties(),
+                    ...nodePropertiesMap,
+                ]),
                 colorPropertiesMap = [
                     [`${COLOR}backgroundColor`, "background-color"],
                 ],
                 propertiesData = [
-                    [`${GENERIC}availableWidth`, "width", "pt"],
-                    [`${GENERIC}availableHeight`, "height", "pt"],
+                    [`${LAYOUT}availableWidth`, "width", "pt"],
+                    [`${LAYOUT}availableHeight`, "height", "pt"],
                 ],
                 getDefault = (property) => {
                     if (
-                        property === `${GENERIC}availableWidth` ||
-                        property === `${GENERIC}availableHeight`
+                        property === `${LAYOUT}availableWidth` ||
+                        property === `${LAYOUT}availableHeight`
                     ) {
                         return [false, ""];
                     }
