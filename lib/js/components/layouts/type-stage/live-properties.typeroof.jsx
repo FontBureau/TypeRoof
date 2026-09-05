@@ -10,6 +10,35 @@ import {
     ENVIRONMENT_PROVIDER_ENTRIES,
 } from "../../environment-provider.mjs";
 
+/**
+ * Derive the root scope's defaults map from the frozen base map and the
+ * externally injected values (root font, environment facts, root
+ * width/height). Returns a FRESH map — the base map is never mutated
+ * (it's a frozen FreezableMap whose .set() silently no-ops, which is
+ * why in-place seeding silently dropped these injections).
+ */
+export function seedTypeSpecDefaults(
+    baseDefaultsMap,
+    { rootFont = null, environment = null, width = null, height = null },
+) {
+    const typeSpecDefaultsMap = new Map(baseDefaultsMap);
+    if (rootFont !== null) typeSpecDefaultsMap.set(`${SPECIFIC}font`, rootFont);
+    if (environment !== null)
+        for (const [key, value] of pathSpecValuesFromObjectGen(
+            PATH_SPEC_ENVIRONMENT_PROVIDER,
+            `${SPECIFIC}root/environment`, // prefix
+            environment,
+        ))
+            typeSpecDefaultsMap.set(key, value);
+    for (const [dimension, value] of [
+        ["width", width],
+        ["height", height],
+    ])
+        if (value !== null)
+            typeSpecDefaultsMap.set(`${SPECIFIC}root/${dimension}`, value);
+    return typeSpecDefaultsMap;
+}
+
 export class TypeSpecLiveProperties extends _BaseComponent {
     constructor(
         widgetBus,
@@ -90,46 +119,37 @@ export class TypeSpecLiveProperties extends _BaseComponent {
             } else {
                 // typeSpecDefaultsMap only comes in at root, when
                 // !this.hasParentProperties
-                let typeSpecDefaultsMap = this._typeSpecDefaultsMap;
                 // This is a hack, but it will work solidly for a while.
                 // Eventually I'd like to figure a more conceptually robust way
                 // how to distribute this kind of external, from the TypeSpec
                 // structure, injected/inherited dynamic dependencies; or maybe
                 // just formalize this.
-                const hasRootFont =
-                    this.widgetBus.wrapper.dependencyReverseMapping.has(
-                        "rootFont",
+                // NOTE: seedTypeSpecDefaults derives a FRESH map: the base
+                // map is frozen (its .set() silently no-ops), so in-place
+                // seeding would silently drop the injected keys.
+                const reverseMapping =
+                        this.widgetBus.wrapper.dependencyReverseMapping,
+                    hasRootFont = reverseMapping.has("rootFont"),
+                    typeSpecDefaultsMap = seedTypeSpecDefaults(
+                        this._typeSpecDefaultsMap,
+                        {
+                            rootFont: hasRootFont
+                                ? getEntry("rootFont").value
+                                : null,
+                            environment: Object.fromEntries(
+                                zip(
+                                    ENVIRONMENT_PROVIDER_KEYS,
+                                    ENVIRONMENT_PROVIDER_ENTRIES.map(getEntry),
+                                ),
+                            ),
+                            width: reverseMapping.has("width")
+                                ? getEntry("width")
+                                : null,
+                            height: reverseMapping.has("height")
+                                ? getEntry("height")
+                                : null,
+                        },
                     );
-                if (hasRootFont) {
-                    const fontValue = getEntry("rootFont").value;
-                    typeSpecDefaultsMap = new Map(this._typeSpecDefaultsMap);
-                    typeSpecDefaultsMap.set(`${SPECIFIC}font`, fontValue);
-                }
-
-                for (const [key, value] of pathSpecValuesFromObjectGen(
-                    PATH_SPEC_ENVIRONMENT_PROVIDER,
-                    `${SPECIFIC}root/environment`, // prefix
-                    Object.fromEntries(
-                        zip(
-                            ENVIRONMENT_PROVIDER_KEYS,
-                            ENVIRONMENT_PROVIDER_ENTRIES.map(getEntry),
-                        ),
-                    ),
-                ))
-                    typeSpecDefaultsMap.set(key, value);
-
-                for (const dimension of ["width", "height"]) {
-                    if (
-                        !this.widgetBus.wrapper.dependencyReverseMapping.has(
-                            dimension,
-                        )
-                    )
-                        continue;
-                    typeSpecDefaultsMap.set(
-                        `${SPECIFIC}root/${dimension}`,
-                        getEntry(dimension),
-                    );
-                }
 
                 this._typeSpecnion = new HierarchicalScopeTypeSpecnion(
                     this._propertiesGenerators,
