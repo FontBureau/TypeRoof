@@ -1,9 +1,14 @@
 import { zip } from "../../../util.mjs";
 import { _BaseComponent } from "../../basics/component.mjs";
-import { SPECIFIC } from "../../registered-properties-definitions.mjs";
+import { SPECIFIC, LAYOUT } from "../../registered-properties-definitions.mjs";
 import { HierarchicalScopeTypeSpecnion } from "./type-specnion.mjs";
 import { pathSpecValuesFromObjectGen } from "./synthetic-values.mjs";
 import { STYLE_PATCH_PROPERTIES_GENERATORS } from "./properties-generators.mjs";
+import {
+    HierarchicalScopeNodeProperties,
+    getRootNodePropertiesMap,
+} from "./node-properties.mjs";
+import { NODE_PROPERTIES_GENERATORS } from "./node-properties-generators.mjs";
 import {
     PATH_SPEC_ENVIRONMENT_PROVIDER,
     ENVIRONMENT_PROVIDER_KEYS,
@@ -12,10 +17,11 @@ import {
 
 /**
  * Derive the root scope's defaults map from the frozen base map and the
- * externally injected values (root font, environment facts, root
- * width/height). Returns a FRESH map — the base map is never mutated
- * (it's a frozen FreezableMap whose .set() silently no-ops, which is
- * why in-place seeding silently dropped these injections).
+ * externally injected values (root font). Returns a FRESH map — the
+ * base map is never mutated (it's a frozen FreezableMap whose .set()
+ * silently no-ops, which is why in-place seeding silently dropped these
+ * injections). Environment facts and root width/height moved to the
+ * nodeProperties@ channel (getRootNodePropertiesMap).
  */
 export function seedTypeSpecDefaults(
     baseDefaultsMap,
@@ -50,6 +56,7 @@ export class TypeSpecLiveProperties extends _BaseComponent {
         this._propertiesGenerators = typeSpecPropertiesGenerators;
         this._inheritancePolicyGenerators = inheritancePolicyGenerators;
         this._typeSpecnion = null;
+        this._nodeProperties = null;
         this.propertyValuesMap = null;
         if (this.hasParentProperties && typeSpecDefaultsMap !== null)
             throw new Error(
@@ -68,6 +75,14 @@ export class TypeSpecLiveProperties extends _BaseComponent {
                 "LIFECYCLE ERROR this._typeSpecnion is null, must update initially first.",
             );
         return this._typeSpecnion;
+    }
+
+    get nodeProperties() {
+        if (this._nodeProperties === null)
+            throw new Error(
+                "LIFECYCLE ERROR this._nodeProperties is null, must update initially first.",
+            );
+        return this._nodeProperties;
     }
 
     get hasParentProperties() {
@@ -136,20 +151,23 @@ export class TypeSpecLiveProperties extends _BaseComponent {
                             rootFont: hasRootFont
                                 ? getEntry("rootFont").value
                                 : null,
-                            environment: Object.fromEntries(
-                                zip(
-                                    ENVIRONMENT_PROVIDER_KEYS,
-                                    ENVIRONMENT_PROVIDER_ENTRIES.map(getEntry),
-                                ),
-                            ),
-                            width: reverseMapping.has("width")
-                                ? getEntry("width")
-                                : null,
-                            height: reverseMapping.has("height")
-                                ? getEntry("height")
-                                : null,
                         },
                     );
+                const rootNodePropertiesMap = getRootNodePropertiesMap(
+                        Object.fromEntries(
+                            zip(
+                                ENVIRONMENT_PROVIDER_KEYS,
+                                ENVIRONMENT_PROVIDER_ENTRIES.map(getEntry),
+                            ),
+                        ),
+                    ),
+                    nodePropertiesHostMap = new Map(rootNodePropertiesMap);
+                for (const dimension of ["width", "height"])
+                    if (reverseMapping.has(dimension))
+                        nodePropertiesHostMap.set(
+                            `${LAYOUT}${dimension}`,
+                            getEntry(dimension),
+                        );
 
                 this._typeSpecnion = new HierarchicalScopeTypeSpecnion(
                     this._propertiesGenerators,
@@ -159,6 +177,11 @@ export class TypeSpecLiveProperties extends _BaseComponent {
                     // potentiallly, here a local typespecnion with a typespec populated withh all the default values...
                 );
                 typeSpecnionChanged = true;
+                this._nodeProperties = new HierarchicalScopeNodeProperties(
+                    NODE_PROPERTIES_GENERATORS,
+                    nodePropertiesHostMap,
+                    rootNodePropertiesMap,
+                );
             }
         }
         if (typeSpecnionChanged) {
@@ -168,6 +191,21 @@ export class TypeSpecLiveProperties extends _BaseComponent {
                     `typeSpecProperties@`,
                 );
             protocolHandlerImplementation.setUpdated(identifier);
+            // Only the root instance (and only when its layout
+            // registered the protocol) has a nodeProperties@
+            // registration — e.g. type-tools-grid hasn't.
+            if (
+                this._nodeProperties !== null &&
+                this.widgetBus.wrapper.hasProtocolHandlerRegistration(
+                    "nodeProperties@",
+                )
+            ) {
+                const [npIdentifier, npProtocolHandlerImplementation] =
+                    this.widgetBus.getProtocolHandlerRegistration(
+                        `nodeProperties@`,
+                    );
+                npProtocolHandlerImplementation.setUpdated(npIdentifier);
+            }
         }
     }
 

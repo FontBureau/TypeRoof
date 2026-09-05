@@ -377,6 +377,13 @@ export class UIDocumentElement extends _BaseContainerComponent {
         const settings = {},
             dependencyMappings = [
                 [typeSpecProperties, "properties@"],
+                // geometry of the document root scope; per-node
+                // nodeProperties@ resolution arrives with the
+                // document-tree channel (Phase 5).
+                [
+                    `nodeProperties@${this._originTypeSpecPath.toString()}`,
+                    "nodeProperties@",
+                ],
                 ["/font", "rootFont"],
                 // A layout level setting (like showParameters in the
                 // editor); the document root is a direct child of the
@@ -1217,6 +1224,10 @@ export class UIDocumentViewer extends _BaseContainerComponent {
                     [
                         `typeSpecProperties@${originTypeSpecPath.toString()}`,
                         "properties@",
+                    ],
+                    [
+                        `nodeProperties@${originTypeSpecPath.toString()}`,
+                        "nodeProperties@",
                     ],
                 ],
                 TypeStagePaneStyler,

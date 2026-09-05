@@ -40,3 +40,6 @@ lib/assets/glyph-groups.yaml
 !lib/js/components/cascading-map.test.mjs
 !lib/js/components/layouts/type-stage/scope-resolution.mjs
 !lib/js/components/layouts/type-stage/live-properties.test.mjs
+!lib/js/components/layouts/type-stage/node-properties.mjs
+!lib/js/components/layouts/type-stage/node-properties-generators.mjs
+!lib/js/components/layouts/type-stage/node-properties.test.mjs
