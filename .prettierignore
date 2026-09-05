@@ -36,3 +36,5 @@
 
 # Ignore glyph-groups.yaml
 lib/assets/glyph-groups.yaml
+!lib/js/components/cascading-map.mjs
+!lib/js/components/cascading-map.test.mjs
