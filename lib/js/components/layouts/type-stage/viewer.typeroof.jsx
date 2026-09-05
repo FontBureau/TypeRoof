@@ -623,7 +623,6 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
         this.widgetBus.insertDocumentNode(this.node);
         this._originTypeSpecPath = originTypeSpecPath;
         this._documentRootPath = documentRootPath;
-        this._stylerWrapper = null;
         this._markWrappers = [];
         const widgets = [
             [{}, ["text"], GenericUpdater, this._updateNode.bind(this)],
@@ -1046,7 +1045,6 @@ export class UIDocumentNodes extends _BaseDynamicMapContainerComponent {
         super(widgetBus, zones);
         this._defaultSchemaSpec = defaultSchemaSpec;
         this._nodesElement = nodesElement;
-        this._nodeSlots = new Map();
         this._originTypeSpecPath = originTypeSpecPath;
         this._documentRootPath = documentRootPath;
         this._context = context;
