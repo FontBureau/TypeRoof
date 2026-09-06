@@ -768,7 +768,9 @@ export class UIDocumentViewer extends _BaseContainerComponent {
             metaInfo.typeKey === "text" ? UIDocumentTextRun : UIDocumentElement;
         return [
             {},
-            metaInfo.typeKey === "text" ? ["text"] : [["./attrs", "attrs"]],
+            metaInfo.typeKey === "text"
+                ? ["text", "marks"]
+                : [["./attrs", "attrs"]],
             Constructor,
             // Injected by the meta node that initializes this
             // description: its own zones.
