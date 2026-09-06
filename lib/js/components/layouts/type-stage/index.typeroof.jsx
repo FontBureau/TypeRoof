@@ -56,6 +56,7 @@ import {
 } from "./node-specs.typeroof.jsx";
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 import { UIDocumentViewer } from "./viewer.typeroof.jsx";
+import { DocumentNodesMeta } from "./document-nodes-meta/index.mjs";
 
 import {
     DocumentRendererModeModel,
@@ -535,6 +536,23 @@ class TypeStageController extends _BaseContainerComponent {
                 // menuSettings
                 { zone: "prose-mirror-editor-menu" },
                 proseMirrorHostElement,
+            ],
+            [
+                // Always-active, DOM-free document-tree meta layer: the
+                // viewer (below) attaches to it via its id; without a
+                // renderer it walks the document with zero attachments.
+                // No zone: DOM-less widgets are first-class.
+                {
+                    id: "documentNodesMeta",
+                    relativeRootPath: Path.fromParts(".", "document"),
+                },
+                [
+                    ["../proseMirrorSchema/nodes", "nodeSpec"],
+                    ["../proseMirrorSchema/marks", "markSpec"],
+                    ["../nodeSpecToTypeSpec", "nodeSpecToTypeSpec"],
+                ],
+                DocumentNodesMeta,
+                zones,
             ],
             [
                 {

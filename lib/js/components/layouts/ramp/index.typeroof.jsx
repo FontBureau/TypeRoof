@@ -42,6 +42,7 @@ import {
     UIStylePatchesMap,
 } from "../type-stage/style-patches.typeroof.jsx";
 import { RampProseMirrorContext } from "../type-stage/prosemirror.typeroof.jsx";
+import { DocumentNodesMeta } from "../type-stage/document-nodes-meta/index.mjs";
 
 import {
     initTypeSpecCoherenceFn,
@@ -347,6 +348,23 @@ class RampController extends _BaseContainerComponent {
                 ],
                 TypeSpecPropertiesManager,
                 new Map([...zones, ["main", propertiesManagerContainer]]),
+            ],
+            [
+                // Always-active, DOM-free document-tree meta layer. Ramp
+                // is editor-only: nothing ever attaches — the meta tree
+                // walks the document with zero attachments (the design
+                // center's purest case).
+                {
+                    id: "documentNodesMeta",
+                    relativeRootPath: Path.fromParts(".", "document"),
+                },
+                [
+                    ["../proseMirrorSchema/nodes", "nodeSpec"],
+                    ["../proseMirrorSchema/marks", "markSpec"],
+                    ["../nodeSpecToTypeSpec", "nodeSpecToTypeSpec"],
+                ],
+                DocumentNodesMeta,
+                zones,
             ],
             [
                 {},
