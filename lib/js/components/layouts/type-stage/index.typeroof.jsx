@@ -728,6 +728,9 @@ class TypeStageController extends _BaseContainerComponent {
         this.widgetBus.wrapper
             .getProtocolHandlerImplementation("styleLinkProperties@")
             .resetUpdatedLog();
+        this.widgetBus.wrapper
+            .getProtocolHandlerImplementation("nodeProperties@")
+            .resetUpdatedLog();
         super.update(...args);
     }
     initialUpdate(...args) {
@@ -739,6 +742,9 @@ class TypeStageController extends _BaseContainerComponent {
             .resetUpdatedLog();
         this.widgetBus.wrapper
             .getProtocolHandlerImplementation("styleLinkProperties@")
+            .resetUpdatedLog();
+        this.widgetBus.wrapper
+            .getProtocolHandlerImplementation("nodeProperties@")
             .resetUpdatedLog();
         super.initialUpdate(...args);
     }
