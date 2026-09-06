@@ -57,6 +57,7 @@ import {
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 import { UIDocumentViewer } from "./viewer.typeroof.jsx";
 import { DocumentNodesMeta } from "./document-nodes-meta/index.mjs";
+import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
 
 import {
     DocumentRendererModeModel,
@@ -286,7 +287,12 @@ class TypeStageController extends _BaseContainerComponent {
             typeSpecRelativePath = Path.fromParts(".", "typeSpec"),
             originTypeSpecPath = widgetBus.rootPath.append(
                 ...typeSpecRelativePath,
-            );
+            ),
+            // The id under which the always-active DocumentNodesMeta
+            // root registers; the mode-gated viewer looks it up to
+            // attach its renderer handler (configured here, not in
+            // the modules).
+            documentNodesMetaId = "documentNodesMeta";
         widgetBus.wrapper.setProtocolHandlerImplementation(
             ...SimpleProtocolHandler.create("typeSpecProperties@"),
         );
@@ -551,7 +557,7 @@ class TypeStageController extends _BaseContainerComponent {
                 // renderer it walks the document with zero attachments.
                 // No zone: DOM-less widgets are first-class.
                 {
-                    id: "documentNodesMeta",
+                    id: documentNodesMetaId,
                     relativeRootPath: Path.fromParts(".", "document"),
                 },
                 [
@@ -561,6 +567,8 @@ class TypeStageController extends _BaseContainerComponent {
                 ],
                 DocumentNodesMeta,
                 zones,
+                proseMirrorDefaultSchemaSpec,
+                originTypeSpecPath,
             ],
             [
                 {
@@ -580,6 +588,7 @@ class TypeStageController extends _BaseContainerComponent {
                 UIDocumentViewer,
                 zones,
                 originTypeSpecPath,
+                documentNodesMetaId,
                 // baseClass = "typeroof-document",
             ],
             [
