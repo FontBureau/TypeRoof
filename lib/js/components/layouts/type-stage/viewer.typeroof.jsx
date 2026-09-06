@@ -1,9 +1,22 @@
+// The type-stage document viewer: DOM rendering attachments for the
+// always-active, DOM-free DocumentNodesMeta tree
+// (./document-nodes-meta/index.mjs; Phase 3 of the walker/renderer
+// separation —
+// thoughts/plans/2026-09-06-1047-phase3-document-nodes-meta-attachment-interface.md).
+//
+// The viewer owns the DOM; the meta tree doesn't know anything about
+// it. UIDocumentViewer (mode-gated by its activationTest in the layout
+// controller) attaches a handler to the meta root; per document node
+// the meta tree calls the handler with metaInfo and initializes the
+// returned widget description. The attachment widgets below create,
+// insert, update and remove the DOM — insertion order is resolved
+// viewer-side via the attachment registry.
+
 import {
     _BaseComponent,
     _BaseContainerComponent,
-    _BaseDynamicMapContainerComponent,
 } from "../../basics/component.mjs";
-import { Path, _AbstractListModel } from "../../../metamodel.mjs";
+import { _AbstractListModel } from "../../../metamodel.mjs";
 import { _BaseDropTarget } from "../../generic.mjs";
 import {
     UIDocumentTypeSpecStyler,
@@ -14,13 +27,10 @@ import { getTypeSpecPropertiesIdMethod } from "../../prosemirror/integration.typ
 import { TypeStagePaneStyler } from "./pane-styler.typeroof.jsx";
 import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
 
-import {
-    applyHtmlAttrsBag,
-    htmlAttrsBagToSpec,
-} from "../../prosemirror/html-attrs.ts";
+import { applyHtmlAttrsBag } from "../../prosemirror/html-attrs.ts";
+import { require } from "../../dependency-injection.mjs";
 
 import {
-    resolveElementRenderingPlan,
     getRenderingDirectives,
     computeAttrDrivenDiff,
     resolveNextTypeSpecProperties,
@@ -71,124 +81,218 @@ export class UIDocumentElementTypeSpecDropTarget extends _BaseDropTarget {
     }
 }
 
-// Pure tree/spec derivations moved to ./document-nodes-meta.mjs
-// (Phase 5a delegation landing): getMMChildIsBlock,
-// specChildrenInInlineContext, getRenderingAttrDirectives,
-// determineUnknownType, getRenderingDirectives,
-// resolveElementRenderingPlan, computeAttrDrivenDiff,
-// resolveNextTypeSpecProperties, typeSpecStylerDependencyMappings,
-// getStyleLinkPropertiesId, getWrapMarks, wrapResultsAreEqual.
-
-// This should inject it's own e.g. <p> element.
-// It's interesting, the "nodesContainer" might have to change when the
-// typeSpec changes! Thus, creating nodesContainer in the constructor might
-// be not ideal. Definitely must look at the 'node'/'typeSpec@' in update.
+// Renderer-side sibling resolution and DOM insertion (adopted from the
+// viewer's former UIDocumentNodes._insertIntoSlot, expressed against
+// the attachment registry instead of widget lookups). The meta tree is
+// DOM-free; only this module knows where renderer nodes go.
 //
-// We could just copy all the content nodes when we change the nodesContainer,
-// a child, thus, should not save the parent container ever.
-// Interesting how/if insertElement plays along.
-export class UIDocumentElement extends _BaseContainerComponent {
-    constructor(
-        widgetBus,
-        _zones,
-        defaultSchemaSpec,
-        originTypeSpecPath,
-        documentRootPath,
-        context = { inInlineContext: false },
-    ) {
+// Assumptions (inherited):
+//   - the attachments of the nodes before `key` are initialized and
+//     registered by the time this runs (provisioning order),
+//   - nodes are inserted once per attachment; re-insertion (reorder)
+//     moves the node within the same parent.
+function insertRendererNode(collection, key, node, parentNode, getNodeByKey) {
+    const getNodeByIndex = (i) => {
+        const siblingKey =
+            collection instanceof _AbstractListModel
+                ? `${i}`
+                : collection.keyOfIndex(i);
+        return getNodeByKey(siblingKey);
+    };
+    let keyIndex;
+    if (collection instanceof _AbstractListModel) {
+        const [index, message] = collection.keyToIndex(key);
+        if (index === null) throw new Error(message);
+        keyIndex = index;
+    } else keyIndex = collection.indexOfKey(key);
+
+    if (keyIndex < 0)
+        throw new Error(
+            `NOT FOUND ERROR don't know where to insert ` +
+                `${key} as it was not found in collection (${keyIndex}).`,
+        );
+    if (keyIndex === 0) {
+        for (let i = keyIndex + 1; i < collection.size; i++) {
+            const siblingNode = getNodeByIndex(i);
+            if (
+                siblingNode &&
+                siblingNode !== node &&
+                siblingNode.parentElement === parentNode
+            ) {
+                parentNode.insertBefore(node, siblingNode);
+                return;
+            }
+        }
+    } else {
+        for (let i = keyIndex - 1; i < collection.size; i++) {
+            const siblingNode = getNodeByIndex(i);
+            if (
+                siblingNode &&
+                siblingNode !== node &&
+                siblingNode.parentElement === parentNode
+            ) {
+                // insertAfter => if there is no siblingNode.nextSibling
+                // it behaves like append
+                parentNode.insertBefore(node, siblingNode.nextSibling);
+                return;
+            }
+        }
+    }
+    // No appropriate sibling that is in the document was found; there
+    // may also be local elements before (ui controls/meta), so append
+    // seems the right choice.
+    parentNode.append(node);
+}
+
+// Viewer-side bookkeeping of the live attachments:
+// documentNodeRootPath.toString() → renderer node. Attachments register
+// on creation and unregister on destroy; sibling resolution and
+// parent-element resolution consult the registry, so the meta tree
+// never sees a DOM node. NOTE: parent resolution looks the parent
+// document node up by its *node* path — the same path children
+// register under (…/content/N, not the …/content collection path).
+class AttachmentRegistry {
+    // getEntry resolves absolute model paths against the current state.
+    constructor(getEntry) {
+        this._getEntry = getEntry;
+        this._nodes = new Map();
+    }
+
+    // The collection path (…/content) holds the siblings; their
+    // attachments register under their node path (…/content/<key>).
+    _getSiblingNodeResolver(collectionPath) {
+        return (key) =>
+            this._nodes.get(collectionPath.append(key).toString()) ?? null;
+    }
+
+    // The element a node's attachment inserts into: the attachment
+    // node of the parent document node. The collection path
+    // (…/content) never has a registration — the parent node path is
+    // its parent (…).
+    getParentNode(collectionPath) {
+        return this._nodes.get(collectionPath.parent.toString()) ?? null;
+    }
+
+    // Insert node into parentNode at the position the collection
+    // order of its document node implies.
+    insert(rootPath, node, parentNode) {
+        const parentPath = rootPath.parent,
+            key = rootPath.parts.at(-1),
+            collection = this._getEntry(parentPath);
+        insertRendererNode(
+            collection,
+            key,
+            node,
+            parentNode,
+            this._getSiblingNodeResolver(parentPath),
+        );
+        this._nodes.set(rootPath.toString(), node);
+    }
+
+    // Re-insert the node of an existing attachment (reorder
+    // notification from the meta tree).
+    reinsert(rootPath, parentNode) {
+        const node = this._nodes.get(rootPath.toString());
+        if (node === undefined) return;
+        const parentPath = rootPath.parent,
+            key = rootPath.parts.at(-1),
+            collection = this._getEntry(parentPath);
+        insertRendererNode(
+            collection,
+            key,
+            node,
+            parentNode,
+            this._getSiblingNodeResolver(parentPath),
+        );
+    }
+
+    replace(rootPath, node) {
+        this._nodes.set(rootPath.toString(), node);
+    }
+
+    delete(rootPath) {
+        this._nodes.delete(rootPath.toString());
+    }
+
+    getNode(rootPath) {
+        return this._nodes.get(rootPath.toString()) ?? null;
+    }
+}
+
+// Shared attachment base: DOM node lifecycle + attachment registry
+// bookkeeping. The widget wrapper that owns this attachment lives in
+// the meta tree; updates arrive through it (containers receive the
+// compare result).
+class _UIDocumentAttachment extends _BaseContainerComponent {
+    constructor(widgetBus, _zones, metaInfo, attachmentRegistry) {
         const zones = new Map(_zones);
         super(widgetBus, zones);
+        this._attachmentRegistry = attachmentRegistry;
+        this._documentNodePath = metaInfo.rootPath;
+    }
+
+    destroy() {
+        this._attachmentRegistry.delete(this._documentNodePath);
+        if (this.node?.parentElement)
+            this.node.parentElement.removeChild(this.node);
+        super.destroy();
+    }
+}
+
+// The DOM rendering attachment of a non-text document node. Applies
+// the meta-derived rendering plan (tag, attribute bag, verbatim html,
+// data-node-type) and provisions the per-node typeSpec styler. Its
+// children are rendered by their own attachments (provisioned by the
+// meta tree), not by this widget.
+export class UIDocumentElement extends _UIDocumentAttachment {
+    constructor(
+        widgetBus,
+        zones,
+        metaInfo,
+        parentRendererNode,
+        attachmentRegistry,
+        defaultSchemaSpec,
+        originTypeSpecPath,
+    ) {
+        super(widgetBus, zones, metaInfo, attachmentRegistry);
+        const plan = metaInfo.renderingPlan;
         this._defaultSchemaSpec = defaultSchemaSpec;
-        this._context = context;
-        // The rendering plan is derived in the meta layer (pure, no
-        // DOM); this constructor only applies it and wires children.
-        const plan = resolveElementRenderingPlan(
-                this.getEntry("."),
-                this.getEntry("nodeSpec"),
-                this._defaultSchemaSpec,
-                this._context,
-            ),
-            {
-                hasTypeSpecStyling,
-                tag,
-                attributes,
-                additionalAttrs,
-                innerHtml,
-                childrenContext,
-            } = plan;
-        this._hasTypeSpecStyling = hasTypeSpecStyling;
+        this._context = metaInfo.context;
+        this._hasTypeSpecStyling = plan.hasTypeSpecStyling;
         this._pathOfTypes = plan.pathOfTypes;
+        this._originTypeSpecPath = originTypeSpecPath;
+        this._typeSpecStylerWrapper = null;
 
         // The attr-driven DOM state as applied below (the htmlAttrs bag
         // and the verbatim html of reproducing atoms);
         // _applyAttrDrivenDOMUpdates compares against these when the
         // node's attrs change while this widget is being reused.
-        this._appliedAttributes = attributes;
-        this._appliedInnerHtml = innerHtml;
+        this._appliedAttributes = plan.attributes;
+        this._appliedInnerHtml = plan.innerHtml;
+        this._treatAsLeaf = plan.innerHtml !== null;
 
-        this._treatAsLeaf = innerHtml !== null;
-        const localContainer = widgetBus.domTool.createElement(tag);
+        const localContainer = widgetBus.domTool.createElement(plan.tag);
 
-        if (attributes) applyHtmlAttrsBag(localContainer, attributes);
+        if (plan.attributes) applyHtmlAttrsBag(localContainer, plan.attributes);
 
-        if (additionalAttrs) {
-            for (const [name, value] of Object.entries(additionalAttrs))
+        if (plan.additionalAttrs) {
+            for (const [name, value] of Object.entries(plan.additionalAttrs))
                 localContainer.setAttribute(name, value);
         }
 
-        if (innerHtml)
+        if (plan.innerHtml)
             localContainer.append(
-                widgetBus.domTool.createFragmentFromHTML(innerHtml),
+                widgetBus.domTool.createFragmentFromHTML(plan.innerHtml),
             );
 
-        zones.set("local", localContainer);
+        this._zones.set("local", localContainer);
 
         this.node = localContainer;
-        this.nodesElement = localContainer;
-        this.widgetBus.insertDocumentNode(this.node);
-
-        this._originTypeSpecPath = originTypeSpecPath;
-        this._documentRootPath = documentRootPath;
-        this._typeSpecStylerWrapper = null;
-
-        if (!this._treatAsLeaf) {
-            const widgets = [
-                [
-                    {},
-                    [
-                        ["./content", "collection"],
-                        [
-                            this.widgetBus.getExternalName("nodeSpec"),
-                            "nodeSpec",
-                        ],
-                        [
-                            this.widgetBus.getExternalName("markSpec"),
-                            "markSpec",
-                        ],
-                        [
-                            this.widgetBus.getExternalName(
-                                "nodeSpecToTypeSpec",
-                            ),
-                            "nodeSpecToTypeSpec",
-                        ],
-                    ],
-                    UIDocumentNodes,
-                    this._zones,
-                    this._defaultSchemaSpec,
-                    this.nodesElement,
-                    originTypeSpecPath,
-                    documentRootPath,
-                    childrenContext, // context
-                ],
-            ];
-            this._initWidgets(widgets);
-        }
-    }
-
-    destroy() {
-        if (this.node?.parentElement)
-            this.node.parentElement.removeChild(this.node);
-        super.destroy();
+        this._attachmentRegistry.insert(
+            this._documentNodePath,
+            this.node,
+            parentRendererNode,
+        );
     }
 
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
@@ -201,7 +305,7 @@ export class UIDocumentElement extends _BaseContainerComponent {
         const settings = {},
             dependencyMappings = typeSpecStylerDependencyMappings(
                 typeSpecProperties,
-                this._originTypeSpecPath,
+                `nodeProperties@${this._documentNodePath.toString()}`,
                 nextTypeSpecProperties,
                 typeSpecPath,
             );
@@ -217,12 +321,12 @@ export class UIDocumentElement extends _BaseContainerComponent {
     }
 
     // Compute the "reproducing" rendering directives (see
-    // _getRenderingAttrDirectives) from the node's *current* attrs.
+    // getRenderingAttrDirectives) from the node's *current* attrs.
     // The constructor uses this for the initial DOM;
     // _applyAttrDrivenDOMUpdates uses it to re-apply attrs that changed
     // while this widget is reused for a same-typeKey node (e.g. a
-    // replaced document's node at the same list position —
-    // UIDocumentNode rebuilds only on typeKey change).
+    // replaced document's node at the same list position — the meta
+    // node rebuilds only on typeKey change).
     _getRenderingDirectives() {
         return getRenderingDirectives(
             this.getEntry("."),
@@ -236,8 +340,8 @@ export class UIDocumentElement extends _BaseContainerComponent {
     // the verbatim html of reproducing atoms) when the node's attrs
     // changed underneath this reused widget — the constructor built
     // that DOM only once. The tag (htmlTag/spec tag) is not
-    // re-resolved: element identity is managed by the parent's slot
-    // insertion (UIDocumentNodes) and the typeSpec styler; FIXME: a tag
+    // re-resolved: element identity is managed by the meta tree's
+    // per-node lifecycle and the typeSpec styler; FIXME: a tag
     // change requires a rebuild and is currently only warned about.
     _applyAttrDrivenDOMUpdates() {
         const diff = computeAttrDrivenDiff(
@@ -318,7 +422,7 @@ export class UIDocumentElement extends _BaseContainerComponent {
         // typeKey; when the sibling's type is unknown, ProseMirror
         // resolves no per-node typeSpec for it. Fixing this requires
         // resolving the sibling's effective type (cf. the
-        // _determineUnknownType classification) — parked for now.
+        // determineUnknownType classification) — parked for now.
         const nextTypeSpecProperties = resolveNextTypeSpecProperties(
             (pathOfTypes, asPath) =>
                 this._getTypeSpecPropertiesId(pathOfTypes, asPath),
@@ -376,34 +480,35 @@ export class UIDocumentElement extends _BaseContainerComponent {
 //
 // maybe only to receive updates?
 //     styleLinkProperties@
-export class UIDocumentTextRun extends _BaseContainerComponent {
+//
+// The DOM rendering attachment of a text document node: the text node
+// itself plus the mark wrapper elements and their style-link stylers.
+export class UIDocumentTextRun extends _UIDocumentAttachment {
     constructor(
         widgetBus,
         zones,
+        metaInfo,
+        parentRendererNode,
+        attachmentRegistry,
         defaultSchemaSpec,
         originTypeSpecPath,
-        documentRootPath,
-        context,
     ) {
-        super(widgetBus, zones);
+        super(widgetBus, zones, metaInfo, attachmentRegistry);
         this._defaultSchemaSpec = defaultSchemaSpec;
-        this._context = context;
-        this.node = this._domTool.createTextNode("(initializing)");
-        this.widgetBus.insertDocumentNode(this.node);
+        this._context = metaInfo.context;
         this._originTypeSpecPath = originTypeSpecPath;
-        this._documentRootPath = documentRootPath;
+        this.node = this._domTool.createTextNode("(initializing)");
+        this._attachmentRegistry.insert(
+            this._documentNodePath,
+            this.node,
+            parentRendererNode,
+        );
         this._markWrappers = [];
         const widgets = [
             [{}, ["text"], GenericUpdater, this._updateNode.bind(this)],
         ];
         this._initWidgets(widgets);
         this._initalWidgetsLength = this._widgets.length;
-    }
-
-    destroy() {
-        if (this.node?.parentElement)
-            this.node.parentElement.removeChild(this.node);
-        super.destroy();
     }
 
     _updateNode(changedMap) {
@@ -441,6 +546,9 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
         if (this.node.parentElement)
             this.node.parentElement.replaceChild(newNode, this.node);
         this.node = newNode;
+        // The registry tracks the node other attachments resolve
+        // their siblings against.
+        this._attachmentRegistry.replace(this._documentNodePath, newNode);
     }
 
     _createStylerWrapper(domElement, styleLinkProperties) {
@@ -586,271 +694,18 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
     }
 }
 
-export class UIDocumentNode extends _BaseContainerComponent {
-    constructor(
-        widgetBus,
-        zones,
-        defaultSchemaSpec,
-        originTypeSpecPath,
-        documentRootPath,
-        context,
-    ) {
-        super(widgetBus, zones);
-        this._defaultSchemaSpec = defaultSchemaSpec;
-        this._originTypeSpecPath = originTypeSpecPath;
-        this._documentRootPath = documentRootPath;
-        this._context = context;
-        this._currentTypeKey = null;
-    }
-
-    _createWrapperForType(typeKey) {
-        const settings = {
-                rootPath: Path.fromParts("."),
-                id: "contentWidget",
-            },
-            moreArgs = [];
-        let Constructor, dependencyMappings;
-        if (typeKey === "text") {
-            dependencyMappings = [
-                "text",
-                [this.widgetBus.getExternalName("nodeSpec"), "nodeSpec"],
-                [this.widgetBus.getExternalName("markSpec"), "markSpec"],
-                [
-                    this.widgetBus.getExternalName("nodeSpecToTypeSpec"),
-                    "nodeSpecToTypeSpec",
-                ],
-            ];
-            Constructor = UIDocumentTextRun;
-        } else {
-            dependencyMappings = [
-                ["./content", "nodes"],
-                // attrs drive the constructor-baked DOM (tag, htmlAttrs
-                // bag, verbatim html of reproducing atoms; see
-                // UIDocumentElement._applyAttrDrivenDOMUpdates); the
-                // mapping also makes the update-relevance filter wake
-                // this widget up when only attrs changed.
-                ["./attrs", "attrs"],
-                [this.widgetBus.getExternalName("nodeSpec"), "nodeSpec"],
-                [this.widgetBus.getExternalName("markSpec"), "markSpec"],
-                [
-                    this.widgetBus.getExternalName("nodeSpecToTypeSpec"),
-                    "nodeSpecToTypeSpec",
-                ],
-            ];
-            Constructor = UIDocumentElement;
-        }
-        moreArgs.push(this._context);
-
-        const args = [
-                this._zones,
-                this._defaultSchemaSpec,
-                this._originTypeSpecPath,
-                this._documentRootPath,
-                ...moreArgs,
-            ],
-            childWidgetBus = this._childrenWidgetBus;
-        return this._initWrapper(
-            childWidgetBus,
-            settings,
-            dependencyMappings,
-            Constructor,
-            ...args,
-        );
-    }
-
-    _provisionWidgets(/* compareResult */) {
-        const nodes = this.getEntry(this.widgetBus.rootPath.parent),
-            key = this.widgetBus.rootPath.parts.at(-1),
-            node = nodes.get(key),
-            typeKey = node.get("typeKey").value;
-        if (this._currentTypeKey === typeKey) return new Set();
-        this._currentTypeKey = typeKey;
-        const newWrapper = this._createWrapperForType(typeKey),
-            deleted = this._widgets.splice(0, Infinity, newWrapper);
-        for (const wrapper of deleted) this._destroyWidget(wrapper);
-        return super._provisionWidgets();
-    }
-}
-
-// It's interesting on the one hand, each segment requires its own
-// control, e.g. to change the typeSpecLink, on the other hand,
-// it requires the data to render properly, and that is very depending
-// on the settings.
-export class UIDocumentNodes extends _BaseDynamicMapContainerComponent {
-    constructor(
-        widgetBus,
-        zones,
-        defaultSchemaSpec,
-        nodesElement,
-        originTypeSpecPath,
-        documentRootPath,
-        context,
-    ) {
-        super(widgetBus, zones);
-        this._defaultSchemaSpec = defaultSchemaSpec;
-        this._nodesElement = nodesElement;
-        this._originTypeSpecPath = originTypeSpecPath;
-        this._documentRootPath = documentRootPath;
-        this._context = context;
-
-        const insertNodeIntoSlot = this._insertNodeIntoSlot.bind(this);
-        this._childrenWidgetBus.insertDocumentNode = function (node) {
-            insertNodeIntoSlot(this.nodeKey, node);
-        };
-    }
-
-    /**
-     * Assumptions
-     *   - after initialization each nodeWidget, has a nodeWidget.node
-     *   - each widget,in order before this, is completely initialized.
-     *     by the time this method is called
-     *   - the widget calling this is not yet completely intialized:
-     *          this._keyToWidget.get(nodeKey).widget === null
-     *
-     * This would break if a node would call _insertNodeIntoSlot
-     * multiple times (we don't do this yet). We could however
-     * in that case change the interface to a beforeWidget.nodes = []
-     * then insert after beforeWidget.nodes.at(-1)
-     */
-    _insertIntoSlot(collection, nodeKey, node) {
-        const getNodeByIndex = (i) => {
-            const key =
-                    collection instanceof _AbstractListModel
-                        ? `${i}`
-                        : collection.keyOfIndex(i),
-                nodeWidgetWrapper = this._keyToWidget.get(key);
-            return nodeWidgetWrapper.widget.getWidgetWrapperById(
-                "contentWidget",
-                null,
-            )?.widget?.node;
-        };
-        let keyIndex;
-        if (collection instanceof _AbstractListModel) {
-            const [index, message] = collection.keyToIndex(nodeKey);
-            if (index === null) throw new Error(message);
-            keyIndex = index;
-        } else keyIndex = collection.indexOfKey(nodeKey);
-
-        if (keyIndex < 0)
-            throw new Error(
-                `NOT FOUND ERROR don't know where to insert ` +
-                    `${nodeKey} as it was not found in collection (${keyIndex}).`,
-            );
-        if (keyIndex === 0) {
-            for (let i = keyIndex + 1; i < collection.size; i++) {
-                const siblingNode = getNodeByIndex(i);
-                if (
-                    siblingNode &&
-                    siblingNode.parentElement &&
-                    siblingNode.parentElement === this._nodesElement
-                ) {
-                    siblingNode.parentElement.insertBefore(node, siblingNode);
-                    return;
-                }
-            }
-        } else {
-            for (let i = keyIndex - 1; i < collection.size; i++) {
-                const siblingNode = getNodeByIndex(i);
-                if (
-                    siblingNode &&
-                    siblingNode.parentElement &&
-                    siblingNode.parentElement === this._nodesElement
-                ) {
-                    // insertAfter => if there is no siblingNode.nextSibling it behaves like append
-                    siblingNode.parentElement.insertBefore(
-                        node,
-                        siblingNode.nextSibling,
-                    );
-                    return;
-                }
-            }
-        }
-        // no appropriate sibling that is in in the document was found
-        // we have also local elements before (ui controls/meta)
-        // so append seems the right choice.
-        this._nodesElement.append(node);
-    }
-
-    /**
-     * Via this mechanism in place, we completely bypass the element management
-     * of ComponentWrapper, which would be used via insertElement and would
-     * make reinsert work, but also removal on destroy...
-     * Hence, reordering and removal must be managed here as well!
-     *      - we override _destroyWidget
-     *      - we implement the optional _reorderChildren
-     *
-     * This doesn't keep a direct reference to the inserted nodes, that
-     * way the widgets can themselves replace nodes.
-     */
-    _insertNodeIntoSlot(nodeKey, node) {
-        const collection = this.getEntry("collection");
-        this._insertIntoSlot(collection, nodeKey, node);
-    }
-
-    _reorderChildren(reorderReasons, reorderStartIndex) {
-        if (!reorderReasons.has("changed")) return;
-        const collection = this.getEntry("collection"),
-            keys = Array.from(collection.keys()).slice(reorderStartIndex);
-        for (const key of keys) {
-            const nodeWidget = this._keyToWidget.get(key).widget,
-                widgetWrapper = nodeWidget.getWidgetWrapperById(
-                    "contentWidget",
-                    null,
-                ),
-                node = widgetWrapper?.widget?.node;
-            if (!node)
-                // not initialized yet
-                continue;
-            this._insertIntoSlot(collection, key, node);
-        }
-    }
-
-    _destroyWidget(widgetWrapper) {
-        const node = widgetWrapper.widget.getWidgetById("contentWidget").node;
-        this._nodesElement.removeChild(node);
-        super._destroyWidget(widgetWrapper);
-    }
-
-    _createWrapper(rootPath) {
-        const key = rootPath.parts.at(-1),
-            settings = {
-                rootPath: rootPath,
-                nodeKey: key,
-            },
-            dependencyMappings = [
-                [this.widgetBus.getExternalName("collection"), "collection"],
-                [this.widgetBus.getExternalName("nodeSpec"), "nodeSpec"],
-                [this.widgetBus.getExternalName("markSpec"), "markSpec"],
-                [
-                    this.widgetBus.getExternalName("nodeSpecToTypeSpec"),
-                    "nodeSpecToTypeSpec",
-                ],
-            ],
-            Constructor = UIDocumentNode,
-            args = [
-                this._zones,
-                this._defaultSchemaSpec,
-                this._originTypeSpecPath,
-                this._documentRootPath,
-                this._context,
-            ],
-            childWidgetBus = Object.create(this._childrenWidgetBus); // inherit
-        childWidgetBus.nodeKey = key;
-        return this._initWrapper(
-            childWidgetBus,
-            settings,
-            dependencyMappings,
-            Constructor,
-            ...args,
-        );
-    }
-}
-
+// The mode-gated viewer root: owns the <article> and attaches its
+// handler to the always-active DocumentNodesMeta tree (looked up by
+// the id the layout controller configured). All DOM below the article
+// is created by the attachments the handler returns; when the viewer
+// is destroyed (mode switch), detach removes exactly the attachments
+// this handler created.
 export class UIDocumentViewer extends _BaseContainerComponent {
     constructor(
         widgetBus,
         zones,
         originTypeSpecPath,
+        documentNodesMetaId,
         baseClass = "typeroof-document",
     ) {
         const documentContainer = widgetBus.domTool.createElement("article", {
@@ -859,6 +714,11 @@ export class UIDocumentViewer extends _BaseContainerComponent {
         widgetBus.insertElement(documentContainer);
         super(widgetBus, zones);
         this.nodesElement = documentContainer;
+        this._originTypeSpecPath = originTypeSpecPath;
+        this._documentNodesMetaId = documentNodesMetaId;
+        this._attachmentRegistry = new AttachmentRegistry(
+            this.widgetBus.getEntry.bind(this.widgetBus),
+        );
         const widgets = [
             [
                 {},
@@ -875,33 +735,72 @@ export class UIDocumentViewer extends _BaseContainerComponent {
                 TypeStagePaneStyler,
                 documentContainer,
             ],
-            [
-                {},
-                [
-                    ["content", "collection"],
-                    [this.widgetBus.getExternalName("nodeSpec"), "nodeSpec"],
-                    [this.widgetBus.getExternalName("markSpec"), "markSpec"],
-                    [
-                        this.widgetBus.getExternalName("nodeSpecToTypeSpec"),
-                        "nodeSpecToTypeSpec",
-                    ],
-                ],
-                UIDocumentNodes,
-                this._zones,
-                proseMirrorDefaultSchemaSpec,
-                this.nodesElement,
-                originTypeSpecPath,
-                this.widgetBus.rootPath, // documentRootPath
-                {
-                    inInlineContext: false,
-                    // typeKey of the document root node (usually "doc");
-                    // the base of every pathOfTypes (see UIDocumentElement).
-                    // Assumed stable for the lifetime of the document,
-                    // a change of it does not rebuild this widget.
-                    pathOfTypes: [this.getEntry(".").get("typeKey").value],
-                }, // context
-            ],
         ];
         this._initWidgets(widgets);
+        this.__attachHandler = this._attachHandler.bind(this);
+        const meta = this.widgetBus.getWidgetById(documentNodesMetaId, null);
+        meta?.attachRenderer(this.__attachHandler);
+    }
+
+    // The renderer handler, called per document node by the meta tree.
+    // Returns the widget description of the node's DOM attachment;
+    // the meta node initializes it (in its own context) and manages
+    // its lifecycle. On reposition notifications the existing
+    // attachment is re-inserted and null is returned (nothing to
+    // create). The document container node itself renders nothing —
+    // the article is its container.
+    _attachHandler(metaInfo) {
+        if (metaInfo.reposition) {
+            this._attachmentRegistry.reinsert(
+                metaInfo.rootPath,
+                this._resolveParentRendererNode(metaInfo.rootPath),
+            );
+            return null;
+        }
+        // The document container node itself renders nothing — the
+        // article is its container.
+        if (metaInfo.renderingPlan === null && metaInfo.typeKey !== "text")
+            return null;
+        const parentRendererNode = this._resolveParentRendererNode(
+            metaInfo.rootPath,
+        );
+        const Constructor =
+            metaInfo.typeKey === "text" ? UIDocumentTextRun : UIDocumentElement;
+        return [
+            {},
+            metaInfo.typeKey === "text" ? ["text"] : [["./attrs", "attrs"]],
+            Constructor,
+            // Injected by the meta node that initializes this
+            // description: its own zones.
+            require("raw:zones"),
+            metaInfo,
+            parentRendererNode,
+            this._attachmentRegistry,
+            proseMirrorDefaultSchemaSpec,
+            this._originTypeSpecPath,
+        ];
+    }
+
+    // The parent element a node's attachment inserts into: the
+    // attachment node of the parent document node (this handler
+    // renders every document node, so it is always registered);
+    // the top level attaches to the article. Parents attach before
+    // their children (the meta tree cascades top-down), so the
+    // registry lookup resolves by the time a child attaches.
+    _resolveParentRendererNode(rootPath) {
+        return (
+            this._attachmentRegistry.getParentNode(rootPath.parent) ??
+            this.nodesElement
+        );
+    }
+
+    destroy() {
+        const meta = this.widgetBus.getWidgetById(
+            this._documentNodesMetaId,
+            null,
+        );
+        meta?.detachRenderer(this.__attachHandler);
+        this.__attachHandler = null;
+        super.destroy();
     }
 }

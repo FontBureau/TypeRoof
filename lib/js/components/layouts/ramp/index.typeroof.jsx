@@ -43,6 +43,7 @@ import {
 } from "../type-stage/style-patches.typeroof.jsx";
 import { RampProseMirrorContext } from "../type-stage/prosemirror.typeroof.jsx";
 import { DocumentNodesMeta } from "../type-stage/document-nodes-meta/index.mjs";
+import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
 
 import {
     initTypeSpecCoherenceFn,
@@ -237,7 +238,11 @@ class RampController extends _BaseContainerComponent {
             typeSpecRelativePath = Path.fromParts(".", "typeSpec"),
             originTypeSpecPath = widgetBus.rootPath.append(
                 ...typeSpecRelativePath,
-            );
+            ),
+            // Id symmetry with the type-stage layout (configured in the
+            // controller, not in the module); ramp has no viewer, so
+            // nothing looks the meta root up.
+            documentNodesMetaId = "documentNodesMeta";
         widgetBus.wrapper.setProtocolHandlerImplementation(
             ...SimpleProtocolHandler.create("typeSpecProperties@"),
         );
@@ -355,7 +360,7 @@ class RampController extends _BaseContainerComponent {
                 // walks the document with zero attachments (the design
                 // center's purest case).
                 {
-                    id: "documentNodesMeta",
+                    id: documentNodesMetaId,
                     relativeRootPath: Path.fromParts(".", "document"),
                 },
                 [
@@ -365,6 +370,8 @@ class RampController extends _BaseContainerComponent {
                 ],
                 DocumentNodesMeta,
                 zones,
+                proseMirrorDefaultSchemaSpec,
+                originTypeSpecPath,
             ],
             [
                 {},
