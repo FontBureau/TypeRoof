@@ -28,7 +28,7 @@ import {
     getStyleLinkPropertiesId,
     getWrapMarks,
     wrapResultsAreEqual,
-} from "./document-nodes-meta.mjs";
+} from "./document-nodes-meta/derivations.mjs";
 
 class GenericUpdater extends _BaseComponent {
     constructor(widgetBus, updateHandlerFn) {
