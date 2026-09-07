@@ -184,14 +184,15 @@ export class TypeSpecLiveProperties extends _BaseComponent {
                     // potentiallly, here a local typespecnion with a typespec populated withh all the default values...
                 );
                 typeSpecnionChanged = true;
-                this._nodeProperties = new HierarchicalScopeNodeProperties(
-                    NODE_PROPERTIES_GENERATORS,
-                    nodePropertiesHostMap,
-                    rootNodePropertiesMap,
-                    // No inheritance policy yet: the socket is live, the
-                    // width-semantics takeover supplies the content.
-                    NODE_PROPERTIES_INHERITANCE_POLICY,
-                );
+                this._nodeProperties =
+                    HierarchicalScopeNodeProperties.createRoot(
+                        NODE_PROPERTIES_GENERATORS,
+                        nodePropertiesHostMap,
+                        rootNodePropertiesMap,
+                        // No inheritance policy yet: the socket is live, the
+                        // width-semantics takeover supplies the content.
+                        NODE_PROPERTIES_INHERITANCE_POLICY,
+                    );
             }
         }
         if (typeSpecnionChanged) {
