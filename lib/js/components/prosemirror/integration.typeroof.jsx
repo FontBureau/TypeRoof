@@ -89,6 +89,24 @@ export function getPathsOfTypes(
     return result.values();
 }
 
+/**
+ * Mirror of getPathOfTypes for the content-collection indexes: the
+ * document-node-path segments. resolved.path carries triples
+ * [node, index, startOffset]; the sibling index at i+1 is the node's
+ * key in its parent's content collection — the same key the meta tree
+ * (document-nodes-meta) uses for its per-node rootPaths and hence for
+ * nodeProperties@<path> registration ids. Yields one index per resolved
+ * ancestor (a top-level block resolves to a single doc ancestor, i.e.
+ * [0]); the count is path.length / 3. These are the segments a consumer
+ * joins as content/<i> to build a document-node path.
+ */
+export function getPathOfContentIndexes(path /* resolved.path */) {
+    const contentIndexes = [];
+    for (let i = 0, l = path.length; i < l; i += 3)
+        contentIndexes.push(path[i + 1]);
+    return contentIndexes;
+}
+
 /* We need this a lot, as it seems, there are still some duplicates in this module! */
 function _getBestTypeSpecPropertiesId(
     typeSpecLink,
