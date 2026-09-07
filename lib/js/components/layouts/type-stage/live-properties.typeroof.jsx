@@ -7,6 +7,7 @@ import { STYLE_PATCH_PROPERTIES_GENERATORS } from "./properties-generators.mjs";
 import {
     HierarchicalScopeNodeProperties,
     getRootNodePropertiesMap,
+    NODE_PROPERTIES_INHERITANCE_POLICY,
 } from "./node-properties.mjs";
 import { NODE_PROPERTIES_GENERATORS } from "./node-properties-generators.mjs";
 import {
@@ -187,6 +188,9 @@ export class TypeSpecLiveProperties extends _BaseComponent {
                     NODE_PROPERTIES_GENERATORS,
                     nodePropertiesHostMap,
                     rootNodePropertiesMap,
+                    // No inheritance policy yet: the socket is live, the
+                    // width-semantics takeover supplies the content.
+                    NODE_PROPERTIES_INHERITANCE_POLICY,
                 );
             }
         }
