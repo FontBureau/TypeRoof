@@ -11,11 +11,7 @@ import {
 import "./ui-margins.css";
 
 export class UIValueUnitPairInput extends _BaseContainerComponent {
-    constructor(
-        widgetBus,
-        _zones,
-        label,
-    ) {
+    constructor(widgetBus, _zones, label) {
         //, ['unit', BlockMarginUnitOrEmptyModel] => _AbstractEnumModel
         //, ['value', PercentNumberOrEmptyModel]
         const localZoneElement = widgetBus.domTool.createElement("div", {
