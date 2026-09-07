@@ -50,6 +50,7 @@ import { toggleMark, removeMark } from "./commands.ts";
 import {
     getPathOfTypes,
     getPathsOfTypes,
+    getPathOfContentIndexes,
     getTypeSpecPropertiesIdMethod,
     getTypeSpecsMethod,
 } from "./integration.typeroof.jsx";
@@ -569,6 +570,7 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         this._nodeOutfitterOptions = nodeOutfitterOptions;
 
         this._nextProperties = null;
+        this._nodeProperties = null; // cached nodeProperties@ id (rebuild probe)
         this._lastSilent = null;
         {
             const initialWidgets = this._staticWidgets;
@@ -684,6 +686,18 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                 ],
             ];
 
+        // The per-document-node channel: the editor consumes the same
+        // per-node property maps as the viewer. this._nodeProperties is
+        // set by _checkNodeProperties (called in _provisionWidgets before
+        // this definition is built); fall back to a fresh computation on
+        // the initial provision. If the id has no live registration
+        // (transient edit state) the protocol's notFoundFallbackValue:null
+        // degrades the styler to an empty node layer, as before.
+        stylerDependencies.push([
+            this._nodeProperties ?? this._documentNodePathId(),
+            "nodeProperties@",
+        ]);
+
         // Conditionally include next sibling's typeSpecnion for
         // resolving lineHeightAfter/emAfter margin units.
         if (
@@ -703,6 +717,38 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
 
     // requires this.getEntry(nodeSpecToTypeSpecName),
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
+
+    // The per-document-node nodeProperties@ registration id for this
+    // node: the absolute document-node path. Composed as the resolved
+    // document model path (read off the widget bus's "document"
+    // dependency — the codebase idiom, no baked-in path) + content/<i>
+    // segments from the PM resolved path's sibling indexes — the same
+    // keys the meta tree (document-nodes-meta) uses for its per-node
+    // rootPaths/registration ids (verified: model content keys are the
+    // PM sibling indexes). Recomputed on each call; callers cache and
+    // compare to detect a changed id (node moved/re-resolved).
+    _documentNodePathId() {
+        const view = this.widgetBus.getWidgetById("proseMirror").view,
+            resolved = view.state.doc.resolve(this._getPos()),
+            indexes = getPathOfContentIndexes(resolved.path),
+            segments = indexes.map((i) => `content/${i}`).join("/"),
+            documentPath = this.widgetBus.getExternalName("document");
+        return (
+            `nodeProperties@${documentPath}` + (segments ? `/${segments}` : "")
+        );
+    }
+
+    // Mirrors _checkNextProperties: recompute the nodeProperties@ id and
+    // report whether it changed since the last provision. PM NodeViews
+    // persist across edits/moves, so the id is NOT wrapper-lifetime-
+    // stable (unlike the viewer, which excludes nodeProperties@ from its
+    // rebuild check). Caches the id for _createWidgetDefinition.
+    _checkNodeProperties(/*compareResult*/) {
+        const nodeProperties = this._documentNodePathId(),
+            hasChanged = this._nodeProperties !== nodeProperties;
+        if (hasChanged) this._nodeProperties = nodeProperties;
+        return hasChanged;
+    }
 
     _checkNextProperties(/*compareResult*/) {
         // NOTE: if this._nextProperties is null it must be set in here!
@@ -765,6 +811,7 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         this._lastSilent = this._isSilent();
         const requireUpdateDynamicWidget =
             this._checkNextProperties(compareResult) ||
+            this._checkNodeProperties(compareResult) ||
             silentChanged ||
             removedDynamicWidgets.length === 0; // is initial
         // do we need to replace/renew the dynamic widget
@@ -1246,6 +1293,11 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 // unused so far!
                 [parentContentsPath.toString(), "parentContent"],
                 ["nodeSpecToTypeSpec"],
+                // The resolved document model path: the base of the
+                // nodeProperties@<documentNodePath> ids the outfitter
+                // composes (read via getExternalName("document") — the
+                // codebase idiom, no baked-in path assumption).
+                ["document"],
                 // The resolved spec's own "noStyler" flag gates dynamic
                 // styler provisioning (silent nodes render inherit-only).
                 [typeSpecPath.append("noStyler").toString(), "noStyler"],
