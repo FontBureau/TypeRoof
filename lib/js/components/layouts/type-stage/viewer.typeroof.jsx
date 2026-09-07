@@ -454,6 +454,13 @@ export class UIDocumentElement extends _UIDocumentAttachment {
             return null;
         } else {
             const oldWrapper = this._widgets[oldId];
+            // Only properties@ is compared: the nodeProperties@ mapping
+            // needs no rebuild check — its id is document-path-keyed
+            // (`nodeProperties@<documentNodePath>`) and the document
+            // path is stable for this wrapper's lifetime (a moved or
+            // rebuilt node gets a new wrapper via the meta tree),
+            // unlike properties@ which follows typeSpec resolution and
+            // can change in place (typeSpec relinking).
             if (
                 oldWrapper.dependencyReverseMapping.get("properties@") !==
                 typeSpecProperties

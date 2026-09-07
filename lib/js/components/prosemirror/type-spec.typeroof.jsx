@@ -64,6 +64,8 @@ import { applyHtmlAttrsBag as _applyHtmlAttrsBag } from "./html-attrs.ts";
 
 import { modelTreeSegmentsToLogicalLevelSegments } from "../type-spec-paths.mjs";
 
+import { CascadingMap } from "../cascading-map.mjs";
+
 export function typeSpecGetFontMethod(changedMap, propertyValuesMap) {
     const fontPPSRecord = ProcessedPropertiesSystemMap.createSimpleRecord(
         SPECIFIC,
@@ -285,12 +287,21 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                 [`${GENERIC}blockMargins/start`, "--margin-block-start", ""],
                 [`${GENERIC}blockMargins/end`, "--margin-block-end", ""],
             ],
-            propertyValuesMap = new Map([
-                ...(changedMap.has("properties@")
-                    ? changedMap.get("properties@")
-                    : this.getEntry("properties@")
-                ).typeSpecnion.getProperties(),
-                ...nodePropertiesMap,
+            // Style from the typeSpecnion, geometry from the
+            // nodeProperties@ channel — named layers, node wins on
+            // collision (CascadingMap resolves first-match). Behavior-
+            // identical to the former spread-merge (node keys spread
+            // last, i.e. overrode); the layers make the two sources
+            // inspectable (Phase 5b consumer polish).
+            propertyValuesMap = new CascadingMap([
+                ["node", nodePropertiesMap],
+                [
+                    "style",
+                    (changedMap.has("properties@")
+                        ? changedMap.get("properties@")
+                        : this.getEntry("properties@")
+                    ).typeSpecnion.getProperties(),
+                ],
             ]),
             // Next sibling's resolved properties. Only present when a next
             // sibling exists — last child has no nextProperties@ wired.
