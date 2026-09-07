@@ -44,3 +44,4 @@ lib/assets/glyph-groups.yaml
 !lib/js/components/layouts/type-stage/node-properties.mjs
 !lib/js/components/layouts/type-stage/node-properties-generators.mjs
 !lib/js/components/layouts/type-stage/node-properties.test.mjs
+!lib/js/components/layouts/type-stage/document-nodes-meta/style-link-id-equivalence.test.mjs
