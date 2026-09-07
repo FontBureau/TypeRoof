@@ -25,6 +25,12 @@ import {
  */
 export function seedTypeSpecDefaults(
     baseDefaultsMap,
+    // Phase 5b teardown: the environment/width/height options seed
+    // nothing anymore (their typeSpecnion consumers — environmentGen,
+    // availableSizesGen — are commented out in
+    // properties-generators.mjs; the nodeProperties@ channel owns these
+    // facts now). Kept for signature compatibility; no caller passes
+    // them. Candidates for removal with the options' import sites.
     { rootFont = null, environment = null, width = null, height = null },
 ) {
     const typeSpecDefaultsMap = new Map(baseDefaultsMap);
