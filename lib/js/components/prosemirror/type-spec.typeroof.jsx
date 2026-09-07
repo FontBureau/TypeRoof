@@ -1141,6 +1141,31 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
     // the element's tag, the element is swapped and PM's view desc is
     // patched to it (see _swapMarkElement). Flushed from a microtask,
     // so callers can schedule freely within update cycles.
+    // Deterministically drain _newlySubscribedMarks on the next frame.
+    // The MutationObserver is a trigger heuristic:
+    // _checkNewlySubscribedMarks' fallback loop already finalizes any
+    // mark whose element is attached but whose insertion produced no
+    // matching mutation record — but nothing re-invokes it if the
+    // observer stays silent. Firefox, on editor→viewer→editor, delivers
+    // no (matching) records for the freshly mounted view until focus,
+    // leaving marks unstyled until a click; Chromium delivers them.
+    // This sweep makes finalization independent of that timing.
+    // (requestAnimationFrame falls back to a macrotask where it is
+    // unavailable — jsdom, workers.)
+    _scheduleNewMarksSweep() {
+        if (this._newMarksSweepScheduled) return;
+        this._newMarksSweepScheduled = true;
+        const schedule =
+            typeof requestAnimationFrame === "function"
+                ? requestAnimationFrame
+                : (fn) => setTimeout(fn, 0);
+        schedule(() => {
+            this._newMarksSweepScheduled = false;
+            if (this._newlySubscribedMarks.size === 0) return;
+            this._checkNewlySubscribedMarks([]);
+        });
+    }
+
     _scheduleMarkTagCorrectionFlush() {
         if (this._markTagCorrectionFlushScheduled) return;
         this._markTagCorrectionFlushScheduled = true;
@@ -1479,6 +1504,14 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             );
         }
         this._newlySubscribedMarks.set(domElement, mark);
+        // The MutationObserver is the fast path, but it is a trigger
+        // heuristic: if it delivers no record matching this element
+        // (Firefox re-mount timing: editor→viewer→editor yields none
+        // until focus), the mark would wait unstyled indefinitely.
+        // Schedule a deterministic drain; the fallback loop in
+        // _checkNewlySubscribedMarks finalizes the element once it is
+        // attached. A no-op if the observer already drained the map.
+        this._scheduleNewMarksSweep();
     }
 
     unsubscribeMark(domElement) {
