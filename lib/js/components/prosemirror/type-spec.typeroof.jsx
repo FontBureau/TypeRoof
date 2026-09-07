@@ -55,6 +55,8 @@ import {
     getTypeSpecsMethod,
 } from "./integration.typeroof.jsx";
 
+import { getStyleLinkPropertiesId } from "../layouts/type-stage/document-nodes-meta/derivations.mjs";
+
 import {
     getStylePatchLinkForIntent,
     getStylePatchLinkForMark,
@@ -1028,26 +1030,15 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             // no applicable edge: the unknown-style fallback applies
             return null;
         const [fieldName, styleLink] = styleLinkEntry,
-            typeSpecPath = typeSpecProperties.slice(
-                "typeSpecProperties@".length,
-            ),
-            styleLinkPropertiesId = `styleLinkProperties@${Path.fromParts(
-                typeSpecPath,
-                fieldName,
-                styleLink,
-            )}`,
-            protocolHandlerImplementation =
-                this.widgetBus.getProtocolHandlerImplementation(
-                    "styleLinkProperties@",
-                    null,
-                );
-        if (protocolHandlerImplementation === null)
-            throw new Error(
-                `KEY ERROR ProtocolHandler for identifier "styleLinkProperties@" not found.`,
+            typeSpecPropertiesPath = Path.fromString(
+                typeSpecProperties.slice("typeSpecProperties@".length),
             );
-        if (!protocolHandlerImplementation.hasRegistered(styleLinkPropertiesId))
-            return null;
-        return styleLinkPropertiesId;
+        return getStyleLinkPropertiesId(
+            this.widgetBus,
+            typeSpecPropertiesPath,
+            fieldName,
+            styleLink,
+        );
     }
 
     _createStyleStylerWrapper(styleLinkProperties, domElemment) {
