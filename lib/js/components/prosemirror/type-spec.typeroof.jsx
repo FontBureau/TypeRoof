@@ -26,7 +26,6 @@ import {
     GENERIC,
     LAYOUT,
     SPECIFIC,
-    LEADING,
     ProcessedPropertiesSystemMap,
 } from "../registered-properties-definitions.mjs";
 
@@ -307,16 +306,18 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                     ).typeSpecnion.getProperties(),
                 ],
             ]),
-            // Next sibling's resolved properties. Only present when a next
-            // sibling exists — last child has no nextProperties@ wired.
+            // Next sibling's node-properties map (its style facts are
+            // in the cascade's typeSpec layer). Only present when a
+            // next sibling exists — last child has no
+            // nextNodeProperties@ wired.
             nextProperties =
                 this.widgetBus.wrapper.dependencyReverseMapping.has(
-                    "nextProperties@",
+                    "nextNodeProperties@",
                 )
-                    ? (changedMap.has("nextProperties@")
-                          ? changedMap.get("nextProperties@")
-                          : this.getEntry("nextProperties@")
-                      ).typeSpecnion.getProperties()
+                    ? (changedMap.has("nextNodeProperties@")
+                          ? changedMap.get("nextNodeProperties@")
+                          : this.getEntry("nextNodeProperties@")
+                      ).nodeProperties.getProperties()
                     : null;
         // console.log(`${this}.update propertyValuesMap:`, ...propertyValuesMap.keys());
         if (changedMap.has("rootFont") || changedMap.has("properties@")) {
@@ -446,7 +447,7 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                     ),
                     nsFontSize = nsProps.get(`${GENERIC}fontSize`),
                     nsLineHeightEm = nsProps.get(
-                        `${LEADING}leading/line-height-em`,
+                        `${LAYOUT}leading/line-height-em`,
                     );
                 if (
                     marginEndValue !== null &&
@@ -573,6 +574,7 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         this._nodeOutfitterOptions = nodeOutfitterOptions;
 
         this._nextProperties = null;
+        this._nextNodeProperties = null; // cached next-sibling nodeProperties@ id
         this._nodeProperties = null; // cached nodeProperties@ id (rebuild probe)
         this._lastSilent = null;
         {
@@ -701,13 +703,16 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
             "nodeProperties@",
         ]);
 
-        // Conditionally include next sibling's typeSpecnion for
-        // resolving lineHeightAfter/emAfter margin units.
-        if (
-            this._nextProperties !== null &&
-            this._nextProperties !== ownProperties
-        )
-            stylerDependencies.push([this._nextProperties, "nextProperties@"]);
+        // Conditionally include the next sibling's nodeProperties
+        // (which carry its style facts via the typeSpec layer) for
+        // resolving lineHeightAfter/emAfter margin units. The
+        // node-properties channel is the single source: fontSize comes
+        // through its typeSpec layer, leading through the layout keys.
+        if (this._nextNodeProperties !== null)
+            stylerDependencies.push([
+                this._nextNodeProperties,
+                "nextNodeProperties@",
+            ]);
 
         return [
             {},
@@ -730,9 +735,9 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
     // rootPaths/registration ids (verified: model content keys are the
     // PM sibling indexes). Recomputed on each call; callers cache and
     // compare to detect a changed id (node moved/re-resolved).
-    _documentNodePathId() {
+    _documentNodePathId(pos = null) {
         const view = this.widgetBus.getWidgetById("proseMirror").view,
-            resolved = view.state.doc.resolve(this._getPos()),
+            resolved = view.state.doc.resolve(pos ?? this._getPos()),
             indexes = getPathOfContentIndexes(resolved.path),
             segments = indexes.map((i) => `content/${i}`).join("/"),
             documentPath = this.widgetBus.getExternalName("document");
@@ -788,13 +793,21 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         }
 
         const nextTypeSpecProperties =
-            nextPathOfTypes !== null
-                ? this._getTypeSpecPropertiesId(nextPathOfTypes)
-                : null;
-        const hasChanged = this._nextProperties !== nextTypeSpecProperties;
-        if (hasChanged)
-            // update the cached value as well
+                nextPathOfTypes !== null
+                    ? this._getTypeSpecPropertiesId(nextPathOfTypes)
+                    : null,
+            // The next sibling's node-properties id: the document-node
+            // path at its position (null when there's no next sibling).
+            nextNodePropertiesId =
+                nextNode !== null ? this._documentNodePathId(nextPos) : null,
+            hasChanged =
+                this._nextProperties !== nextTypeSpecProperties ||
+                this._nextNodeProperties !== nextNodePropertiesId;
+        if (hasChanged) {
+            // update the cached values as well
             this._nextProperties = nextTypeSpecProperties;
+            this._nextNodeProperties = nextNodePropertiesId;
+        }
         return hasChanged;
     }
 
