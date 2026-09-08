@@ -11,7 +11,6 @@ import {
 } from "./node-properties.mjs";
 import { NODE_PROPERTIES_GENERATORS } from "./node-properties-generators.mjs";
 import {
-    PATH_SPEC_ENVIRONMENT_PROVIDER,
     ENVIRONMENT_PROVIDER_KEYS,
     ENVIRONMENT_PROVIDER_ENTRIES,
 } from "../../environment-provider.mjs";
@@ -26,29 +25,27 @@ import {
  */
 export function seedTypeSpecDefaults(
     baseDefaultsMap,
-    // Phase 5b teardown: the environment/width/height options seed
-    // nothing anymore (their typeSpecnion consumers — environmentGen,
-    // availableSizesGen — are commented out in
-    // properties-generators.mjs; the nodeProperties@ channel owns these
-    // facts now). Kept for signature compatibility; no caller passes
-    // them. Candidates for removal with the options' import sites.
+    // environment is defunct (no typeSpecnion consumer; the
+    // nodeProperties@ channel reads environment facts from its own
+    // root defaults). width/height seed the root's layout/*
+    // LengthModels — the root node-properties scope reads them through
+    // the typeSpec layer (the settled typeSpecnion map).
     { rootFont = null, environment = null, width = null, height = null },
 ) {
     const typeSpecDefaultsMap = new Map(baseDefaultsMap);
     if (rootFont !== null) typeSpecDefaultsMap.set(`${SPECIFIC}font`, rootFont);
     if (environment !== null)
-        for (const [key, value] of pathSpecValuesFromObjectGen(
-            PATH_SPEC_ENVIRONMENT_PROVIDER,
-            `${SPECIFIC}root/environment`, // prefix
-            environment,
-        ))
-            typeSpecDefaultsMap.set(key, value);
+        throw new Error(
+            "VALUE ERROR environment facts don't seed the typeSpecnion " +
+                "defaults; the nodeProperties@ channel owns them " +
+                "(getRootNodePropertiesMap).",
+        );
     for (const [dimension, value] of [
         ["width", width],
         ["height", height],
     ])
         if (value !== null)
-            typeSpecDefaultsMap.set(`${SPECIFIC}root/${dimension}`, value);
+            typeSpecDefaultsMap.set(`${LAYOUT}${dimension}`, value);
     return typeSpecDefaultsMap;
 }
 
@@ -158,23 +155,22 @@ export class TypeSpecLiveProperties extends _BaseComponent {
                             rootFont: hasRootFont
                                 ? getEntry("rootFont").value
                                 : null,
+                            width: reverseMapping.has("width")
+                                ? getEntry("width")
+                                : null,
+                            height: reverseMapping.has("height")
+                                ? getEntry("height")
+                                : null,
                         },
                     );
                 const rootNodePropertiesMap = getRootNodePropertiesMap(
-                        Object.fromEntries(
-                            zip(
-                                ENVIRONMENT_PROVIDER_KEYS,
-                                ENVIRONMENT_PROVIDER_ENTRIES.map(getEntry),
-                            ),
+                    Object.fromEntries(
+                        zip(
+                            ENVIRONMENT_PROVIDER_KEYS,
+                            ENVIRONMENT_PROVIDER_ENTRIES.map(getEntry),
                         ),
                     ),
-                    nodePropertiesHostMap = new Map(rootNodePropertiesMap);
-                for (const dimension of ["width", "height"])
-                    if (reverseMapping.has(dimension))
-                        nodePropertiesHostMap.set(
-                            `${LAYOUT}${dimension}`,
-                            getEntry(dimension),
-                        );
+                );
 
                 this._typeSpecnion = new HierarchicalScopeTypeSpecnion(
                     this._propertiesGenerators,
@@ -187,7 +183,9 @@ export class TypeSpecLiveProperties extends _BaseComponent {
                 this._nodeProperties =
                     HierarchicalScopeNodeProperties.createRoot(
                         NODE_PROPERTIES_GENERATORS,
-                        nodePropertiesHostMap,
+                        // the node's settled style map (incl. the
+                        // seeded layout/width|height LengthModels)
+                        this._typeSpecnion.getProperties(),
                         rootNodePropertiesMap,
                         // No inheritance policy yet: the socket is live, the
                         // width-semantics takeover supplies the content.
