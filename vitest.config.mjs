@@ -25,6 +25,7 @@ export default defineConfig({
         },
     ],
     test: {
+        setupFiles: ['lib/js/tests/setup.ts'],
         include: ['lib/js/**/*.test.mjs'],
         exclude: ['lib/js/vendor/**', '**/node_modules/**'],
     },
