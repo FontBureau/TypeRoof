@@ -1,4 +1,5 @@
 import { _BaseComponent } from "../../basics/component.mjs";
+import { CascadingMap } from "../../cascading-map.mjs";
 import { COLOR, LAYOUT } from "../../registered-properties-definitions.mjs";
 import { getRegisteredPropertySetup } from "../../registered-properties.mjs";
 import {
@@ -53,9 +54,12 @@ export class TypeStagePaneStyler extends _BaseComponent {
                     nodePropertiesEntry === null
                         ? new Map()
                         : nodePropertiesEntry.nodeProperties.getProperties(),
-                propertyValuesMap = new Map([
-                    ...typeSpecProperties.typeSpecnion.getProperties(),
-                    ...nodePropertiesMap,
+                // Named-layer cascade like the node styler: node facts
+                // win over style facts (geometry from the node channel
+                // shadows any style-side remnant of the same key).
+                propertyValuesMap = new CascadingMap([
+                    ["node", nodePropertiesMap],
+                    ["style", typeSpecProperties.typeSpecnion.getProperties()],
                 ]),
                 colorPropertiesMap = [
                     [`${COLOR}backgroundColor`, "background-color"],
