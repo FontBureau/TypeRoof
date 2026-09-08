@@ -2,7 +2,7 @@ import {
     _BaseContainerComponent,
     SimpleProtocolHandler,
 } from "../../basics/component.mjs";
-import { _BaseLayoutModel } from "../../main-model.mjs";
+import { _BaseLayoutModel, CommentsModel } from "../../main-model.mjs";
 import {
     PathModelOrEmpty,
     Path,
@@ -65,6 +65,8 @@ import {
 } from "../../document-renderer-mode/model.mjs";
 
 import { UIDocumentRendererModeSelector } from "../../document-renderer-mode/ui-selector.typeroof.jsx";
+
+import { createCommentsWidgets } from "../../ui-comments.mjs";
 
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
@@ -173,6 +175,7 @@ export function createTypeStageModelVariantWithDefaults(
     };
     return _BaseLayoutModel.createClass(
         name,
+        ["comments", CommentsModel],
         // The root TypeSpec
         ["typeSpec", TypeSpecModel],
         ["editingTypeSpec", PathModelOrEmpty],
@@ -631,6 +634,7 @@ class TypeStageController extends _BaseContainerComponent {
                 MarkSpecPropertiesManager,
                 new Map([...zones, ["main", markSpecManagerContainer]]),
             ],
+            ...createCommentsWidgets(zones),
         ];
         // The manager may not be present in test harnesses; then the
         // layout works without the layout-scoping class (CSS falls back
