@@ -397,7 +397,7 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                 innerPropertiesData.push(
                     [`${GENERIC}columnCount`, "column-count", ""],
                     [`${GENERIC}columnGutter/pt`, "column-gap", ""],
-                    [`${GENERIC}lineLength/pt`, "column-width", ""],
+                    [`${LAYOUT}columnWidth`, "column-width", "pt"],
                     [DIRECT_PROPERTY, "display", "block"],
                 );
             } else {
