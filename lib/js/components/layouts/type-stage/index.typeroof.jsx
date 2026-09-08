@@ -527,6 +527,29 @@ class TypeStageController extends _BaseContainerComponent {
                 proseMirrorHostElement,
             ],
             [
+                // Always-active, DOM-free document-tree meta layer: the
+                // viewer/editor attach to it via its id; without a
+                // renderer it walks the document with zero attachments.
+                // ORDERING: must update BEFORE both renderers — its
+                // node-properties scopes are their input; a renderer
+                // updating first reads the previous edit's scope
+                // (the one-cycle-lag bug).
+                // No zone: DOM-less widgets are first-class.
+                {
+                    id: documentNodesMetaId,
+                    relativeRootPath: Path.fromParts(".", "document"),
+                },
+                [
+                    ["../proseMirrorSchema/nodes", "nodeSpec"],
+                    ["../proseMirrorSchema/marks", "markSpec"],
+                    ["../nodeSpecToTypeSpec", "nodeSpecToTypeSpec"],
+                ],
+                DocumentNodesMeta,
+                zones,
+                proseMirrorDefaultSchemaSpec,
+                originTypeSpecPath,
+            ],
+            [
                 {
                     // getEntry is injected by ComponentWrapper and only
                     // serves declared dependencies.
@@ -542,25 +565,6 @@ class TypeStageController extends _BaseContainerComponent {
                 // menuSettings
                 { zone: "prose-mirror-editor-menu" },
                 proseMirrorHostElement,
-            ],
-            [
-                // Always-active, DOM-free document-tree meta layer: the
-                // viewer (below) attaches to it via its id; without a
-                // renderer it walks the document with zero attachments.
-                // No zone: DOM-less widgets are first-class.
-                {
-                    id: documentNodesMetaId,
-                    relativeRootPath: Path.fromParts(".", "document"),
-                },
-                [
-                    ["../proseMirrorSchema/nodes", "nodeSpec"],
-                    ["../proseMirrorSchema/marks", "markSpec"],
-                    ["../nodeSpecToTypeSpec", "nodeSpecToTypeSpec"],
-                ],
-                DocumentNodesMeta,
-                zones,
-                proseMirrorDefaultSchemaSpec,
-                originTypeSpecPath,
             ],
             [
                 {
