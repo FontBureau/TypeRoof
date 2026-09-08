@@ -286,7 +286,8 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                 // the absolute value from the parent, so the number stays
                 // stable in CSS inheritance terms.
 
-                [`${LEADING}leading/line-height-em`, "--line-height", "em"],
+                // from the node channel: the actual line width
+                [`${LAYOUT}leading/line-height-em`, "--line-height", "em"],
                 [`${GENERIC}blockMargins/start`, "--margin-block-start", ""],
                 [`${GENERIC}blockMargins/end`, "--margin-block-end", ""],
             ],
