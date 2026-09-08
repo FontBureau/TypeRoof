@@ -73,7 +73,13 @@ class AppMenuItem extends _BaseComponent {
 }
 
 export class AppMenu extends _BaseContainerComponent {
-    constructor(widgetBus) {
+    /**
+     * layouts is the application's Layouts list, i.e. the
+     * [key, label, LayoutModule, groupKey] entries that also create the
+     * layout controllers. It is used to find the controller of the active
+     * layout, which can hook into the reset to defaults.
+     */
+    constructor(widgetBus, layouts = []) {
         const h = widgetBus.domTool.h,
             mainElement = <div class="typeroof-app-menu"></div>,
             stateFileInput = (
@@ -183,6 +189,7 @@ export class AppMenu extends _BaseContainerComponent {
 
         super(widgetBus, zones, widgets);
 
+        this._layouts = layouts;
         this._stateFileInput = stateFileInput;
         this._manageFontsDialog = null;
         this._menuItemIds = menuItemWidgets.map(([settings]) => settings.id);
@@ -346,6 +353,15 @@ export class AppMenu extends _BaseContainerComponent {
         if (!this._domTool.window.confirm(message)) {
             return;
         }
+        // A layout controller can preserve a bit of its state across the
+        // reset, e.g. the videoproof layout keeps the actor selection,
+        // which is more of a layout mode than a document setting.
+        const LayoutController = this._getActiveLayoutController(),
+            capturedState = LayoutController?.captureStateForReset
+                ? LayoutController.captureStateForReset(
+                      this.getEntry("activeState"),
+                  )
+                : null;
         try {
             await this._changeState(() => {
                 const activeState = this.getEntry("activeState");
@@ -356,9 +372,33 @@ export class AppMenu extends _BaseContainerComponent {
                     activeState.wrapped.dependencies,
                 );
             });
+            if (capturedState !== null) {
+                // A separate change, as the structure to restore into is
+                // created by the CoherenceFunctions of the reset above.
+                await this._changeState(() => {
+                    LayoutController.restoreStateAfterReset(
+                        this.getEntry("activeState"),
+                        capturedState,
+                    );
+                });
+            }
         } catch (error) {
             this._reportError("Resetting to defaults", error);
         }
+    }
+
+    /**
+     * The controller class of the currently active layout or null, if
+     * the layouts are unknown to this menu.
+     */
+    _getActiveLayoutController() {
+        const WrappedType = this.getEntry("activeState").WrappedType;
+        for (const [, , Layout] of this._layouts) {
+            if (Layout.Model === WrappedType) {
+                return Layout.Controller;
+            }
+        }
+        return null;
     }
 
     _reportError(label, error) {
