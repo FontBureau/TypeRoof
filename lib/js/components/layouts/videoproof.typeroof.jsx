@@ -1947,6 +1947,44 @@ class VideoproofContainerStyler extends StaticNode {
 class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
     _BaseContainerComponent,
 ) {
+    /**
+     * The videoproof actor, i.e. the "Current" selection of the actor
+     * select, one of the activatableVideoproofActorTypes. See the
+     * actorsStructure CoherenceFunction for the enforced structure.
+     */
+    static ACTOR_TYPE_KEY_PATH =
+        "./activeActors/0/instance/activeActors/0/actorTypeKey";
+
+    /**
+     * Reset to defaults hook: the actor selection is more of a layout
+     * mode than a document setting, hence it survives the reset, while
+     * everything else, including the settings of the actor itself, is
+     * discarded. Returns the state that restoreStateAfterReset restores.
+     */
+    static captureStateForReset(activeState) {
+        return {
+            actorTypeKey: getEntry(
+                activeState,
+                VideoproofController.ACTOR_TYPE_KEY_PATH,
+            ).value,
+        };
+    }
+
+    /**
+     * Counterpart of captureStateForReset, called with a draft of the
+     * freshly reset activeState. Setting the actorTypeKey is just what
+     * the actor select does, the CoherenceFunctions take care of
+     * instantiating the matching actor.
+     */
+    static restoreStateAfterReset(activeState, capturedState) {
+        const actorTypeKey = getDraftEntry(
+            activeState,
+            VideoproofController.ACTOR_TYPE_KEY_PATH,
+        );
+        if (actorTypeKey.value !== capturedState.actorTypeKey)
+            actorTypeKey.value = capturedState.actorTypeKey;
+    }
+
     constructor(widgetBus, _zones) {
         const generalControlsContainer = widgetBus.domTool.createElement(
                 "div",
