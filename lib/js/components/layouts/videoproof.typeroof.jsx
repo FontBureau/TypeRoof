@@ -32,7 +32,7 @@ import {
 
 import { createIcon } from "../icons.mjs";
 
-import { _BaseLayoutModel } from "../main-model.mjs";
+import { _BaseLayoutModel, CommentsModel } from "../main-model.mjs";
 
 import { FontSelect } from "../font-loading.mjs";
 
@@ -114,6 +114,7 @@ import { UILanguageTagCollapsible as UILanguageTag } from "../language-tags.type
 import { renderAxesParameterDisplay } from "../axes-parameters.mjs";
 
 import { UIColorChooserTwoColorsWithSwap } from "../ui-color-chooser.mjs";
+import { createCommentsWidgets } from "../ui-comments.mjs";
 
 const activatableVideoproofActorTypes = (() => {
     const videoproofActors = [
@@ -831,6 +832,7 @@ const LAYER_TYPE_KEY = "LayerActorModel";
 // optimization strategies.
 const VideoproofModel = _BaseLayoutModel.createClass(
     "VideoproofModel",
+    ["comments", CommentsModel],
     ...timeControlModelMixin,
     ...StaticDependency.createWithInternalizedDependency(
         "availableAxesMathItemTypes",
@@ -2406,6 +2408,7 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                 videoProofActorUpdateDefaultsDependencies,
                 { zone: "keyMoments", label: null }, //keyMomentsOptions
             ],
+            ...createCommentsWidgets(zones),
         ];
         this._initWidgets(widgets);
     }
