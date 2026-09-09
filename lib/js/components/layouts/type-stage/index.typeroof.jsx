@@ -23,25 +23,23 @@ import {
 } from "../../prosemirror/models.typeroof.jsx";
 import {
     Collapsible,
-    WasteBasketDropTarget,
+    CollapsibleContainer,
     UICheckboxInput,
     StaticNode,
     StaticTag,
 } from "../../generic.mjs";
-import { SelectAndDragByOptions } from "../motion-stage.mjs";
-import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
 import { GENERIC } from "../../registered-properties-definitions.mjs";
-import {
-    isInheritingPropertyFn,
-    getRegisteredPropertySetup,
-} from "../../registered-properties.mjs";
+import { getRegisteredPropertySetup } from "../../registered-properties.mjs";
 import { UINodeSpecToTypeSpecLinksMap } from "../../type-spec-fundamentals.mjs";
 import { getTypeSpecDefaultsMap } from "./defaults.mjs";
 
 import { LengthModel } from "../../length-models.mjs";
 
 import { TypeStagePaneStyler } from "./pane-styler.typeroof.jsx";
-import { TYPE_SPEC_PROPERTIES_GENERATORS } from "./properties-generators.mjs";
+import {
+    TYPE_SPEC_PROPERTIES_GENERATORS,
+    inheritancePolicyGen,
+} from "./properties-generators.mjs";
 import { StylePatchSourcesMeta, TypeSpecMeta } from "./meta.typeroof.jsx";
 import { TypeSpecTreeEditor } from "./tree-editor.typeroof.jsx";
 import { TypeSpecPropertiesManager } from "./type-spec-properties.typeroof.jsx";
@@ -58,6 +56,8 @@ import {
 } from "./node-specs.typeroof.jsx";
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 import { UIDocumentViewer } from "./viewer.typeroof.jsx";
+import { DocumentNodesMeta } from "./document-nodes-meta/index.mjs";
+import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
 
 import {
     DocumentRendererModeModel,
@@ -66,6 +66,10 @@ import {
 
 import { UIDocumentRendererModeSelector } from "../../document-renderer-mode/ui-selector.typeroof.jsx";
 
+import { ENVIRONMENT_PROVIDER_ENTRIES } from "../../environment-provider.mjs";
+
+import { UIValueUnitPairInput } from "../../ui-margins.typeroof.jsx";
+import { require } from "../../dependency-injection.mjs";
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
 export function initTypeSpecCoherenceFn(DEFAULT_STATE) {
@@ -275,9 +279,25 @@ class TypeStageController extends _BaseContainerComponent {
             typeSpecRelativePath = Path.fromParts(".", "typeSpec"),
             originTypeSpecPath = widgetBus.rootPath.append(
                 ...typeSpecRelativePath,
-            );
+            ),
+            // The id under which the always-active DocumentNodesMeta
+            // root registers; the mode-gated viewer looks it up to
+            // attach its renderer handler (configured here, not in
+            // the modules).
+            documentNodesMetaId = "documentNodesMeta";
         widgetBus.wrapper.setProtocolHandlerImplementation(
             ...SimpleProtocolHandler.create("typeSpecProperties@"),
+        );
+
+        // per document-node properties (geometry/constraints), the
+        // parallel channel to typeSpecProperties@
+        widgetBus.wrapper.setProtocolHandlerImplementation(
+            // does not raise when not found, instead returns null: the
+            // root registration lands after the first TypeSpecMeta
+            // update, but consumers (pane-styler) can update earlier.
+            ...SimpleProtocolHandler.create("nodeProperties@", {
+                notFoundFallbackValue: null,
+            }),
         );
 
         // the source style patches
@@ -320,13 +340,19 @@ class TypeStageController extends _BaseContainerComponent {
                             .toString(),
                         "stylePatchesSource",
                     ],
-                    // special, reqired only for the root instance
+                    // special, required only for the root instance
+                    // CAUTION: also important, to identify as "root":
+                    //           The absence of "@parentProperties"!!!
                     ["/font", "rootFont"],
+                    ...ENVIRONMENT_PROVIDER_ENTRIES, // "environment@viewport" etc.
+                    [widgetBus.rootPath.append("width").toString(), "width"],
+                    [widgetBus.rootPath.append("height").toString(), "height"],
+                    // end special root dependencies
                 ],
                 TypeSpecMeta,
                 zones,
                 TYPE_SPEC_PROPERTIES_GENERATORS,
-                isInheritingPropertyFn,
+                [inheritancePolicyGen],
                 typeSpecDefaultsMap,
             ],
             [
@@ -361,49 +387,21 @@ class TypeStageController extends _BaseContainerComponent {
             [
                 {
                     zone: "type_spec-manager",
-                },
-                [],
-                SelectAndDragByOptions,
-                "Create",
-                "", //'drag and drop into Rap-Editor.'
-                [
-                    // options [type, label, value]
-                    [
-                        DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_CREATE,
-                        "Type Spec",
-                        "TypeSpec",
-                    ],
-                ],
-            ],
-            [
-                {
-                    zone: "type_spec-manager",
                     relativeRootPath: typeSpecRelativePath,
                 },
-                [
-                    ["children", "activeActors"],
-                    [
-                        widgetBus.rootPath.append("editingTypeSpec").toString(),
-                        "editingActor",
-                    ],
-                ],
+                [["./children", "childrenOrderedMap"]],
                 TypeSpecTreeEditor,
+                zones,
+                [], // eventHandlers
+                "TypeSpec-Tree ", // label
+                true, // dragEntries
+                true, // deletableEntries (drag to wastebasket instead)
                 {
-                    // dataTransferTypes
-                    PATH: DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_PATH,
-                    CREATE: DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_CREATE,
+                    // treeConfig
+                    editingTypeSpecPath:
+                        widgetBus.rootPath.append("editingTypeSpec"),
+                    typeSpecRootPath: originTypeSpecPath,
                 },
-                Path.fromParts(".", "children"),
-            ],
-            [
-                {
-                    zone: "type_spec-manager",
-                },
-                [["typeSpec", "rootCollection"]],
-                WasteBasketDropTarget,
-                "Drop here to delete",
-                "", //'drag and drop into trash-bin.'
-                [DATA_TRANSFER_TYPES.TYPE_SPEC_TYPE_SPEC_PATH],
             ],
             [
                 {},
@@ -457,6 +455,39 @@ class TypeStageController extends _BaseContainerComponent {
                 getRegisteredPropertySetup(`${GENERIC}documentRendererMode`)
                     .label, //label
             ],
+            [
+                {
+                    zone: "editor-manager",
+                },
+                [],
+                CollapsibleContainer,
+                zones,
+                "Stage Size",
+                "minimal",
+                "stage_size", //classNameParticle
+                // widgets
+                [
+                    ...[
+                        ["width", "Width"],
+                        ["height", "Height"],
+                    ].map(([name, label]) => {
+                        return [
+                            {
+                                zone: "main",
+                                relativeRootPath: Path.fromParts(".", name),
+                            },
+                            [],
+                            UIValueUnitPairInput,
+                            require("raw:zones"),
+                            true,
+                            label,
+                            `ui-stage_size-${name}`,
+                        ];
+                    }),
+                ],
+                false, // open
+                false, // scroll
+            ],
             [{ zone: "editor-manager" }, [], StaticTag, "hr"],
             [
                 { zone: "editor-manager" },
@@ -483,16 +514,40 @@ class TypeStageController extends _BaseContainerComponent {
                 },
                 [
                     "documentRendererMode",
-                    "width",
-                    "height",
-                    "environment@layout",
                     [
                         `typeSpecProperties@${originTypeSpecPath.toString()}`,
                         "properties@",
                     ],
+                    [
+                        `nodeProperties@${originTypeSpecPath.toString()}`,
+                        "nodeProperties@",
+                    ],
                 ],
                 TypeStagePaneStyler,
                 proseMirrorHostElement,
+            ],
+            [
+                // Always-active, DOM-free document-tree meta layer: the
+                // viewer/editor attach to it via its id; without a
+                // renderer it walks the document with zero attachments.
+                // ORDERING: must update BEFORE both renderers — its
+                // node-properties scopes are their input; a renderer
+                // updating first reads the previous edit's scope
+                // (the one-cycle-lag bug).
+                // No zone: DOM-less widgets are first-class.
+                {
+                    id: documentNodesMetaId,
+                    relativeRootPath: Path.fromParts(".", "document"),
+                },
+                [
+                    ["../proseMirrorSchema/nodes", "nodeSpec"],
+                    ["../proseMirrorSchema/marks", "markSpec"],
+                    ["../nodeSpecToTypeSpec", "nodeSpecToTypeSpec"],
+                ],
+                DocumentNodesMeta,
+                zones,
+                proseMirrorDefaultSchemaSpec,
+                originTypeSpecPath,
             ],
             [
                 {
@@ -529,6 +584,7 @@ class TypeStageController extends _BaseContainerComponent {
                 UIDocumentViewer,
                 zones,
                 originTypeSpecPath,
+                documentNodesMetaId,
                 // baseClass = "typeroof-document",
             ],
             [
@@ -658,6 +714,9 @@ class TypeStageController extends _BaseContainerComponent {
         this.widgetBus.wrapper
             .getProtocolHandlerImplementation("styleLinkProperties@")
             .resetUpdatedLog();
+        this.widgetBus.wrapper
+            .getProtocolHandlerImplementation("nodeProperties@")
+            .resetUpdatedLog();
         super.update(...args);
     }
     initialUpdate(...args) {
@@ -669,6 +728,9 @@ class TypeStageController extends _BaseContainerComponent {
             .resetUpdatedLog();
         this.widgetBus.wrapper
             .getProtocolHandlerImplementation("styleLinkProperties@")
+            .resetUpdatedLog();
+        this.widgetBus.wrapper
+            .getProtocolHandlerImplementation("nodeProperties@")
             .resetUpdatedLog();
         super.initialUpdate(...args);
     }

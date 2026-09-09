@@ -26,12 +26,12 @@ import {
 } from "../../generic.mjs";
 import { TypeStagePaneStyler } from "../type-stage/pane-styler.typeroof.jsx";
 import { GENERIC } from "../../registered-properties-definitions.mjs";
-import {
-    isInheritingPropertyFn,
-    getRegisteredPropertySetup,
-} from "../../registered-properties.mjs";
+import { getRegisteredPropertySetup } from "../../registered-properties.mjs";
 import { getTypeSpecDefaultsMap } from "../type-stage/defaults.mjs";
-import { TYPE_SPEC_PROPERTIES_GENERATORS } from "../type-stage/properties-generators.mjs";
+import {
+    TYPE_SPEC_PROPERTIES_GENERATORS,
+    inheritancePolicyGen,
+} from "../type-stage/properties-generators.mjs";
 import {
     StylePatchSourcesMeta,
     TypeSpecMeta,
@@ -42,6 +42,8 @@ import {
     UIStylePatchesMap,
 } from "../type-stage/style-patches.typeroof.jsx";
 import { RampProseMirrorContext } from "../type-stage/prosemirror.typeroof.jsx";
+import { DocumentNodesMeta } from "../type-stage/document-nodes-meta/index.mjs";
+import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
 
 import {
     initTypeSpecCoherenceFn,
@@ -49,7 +51,10 @@ import {
 } from "../type-stage/index.typeroof.jsx";
 
 import { LengthModel } from "../../length-models.mjs";
+
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
+
+import { ENVIRONMENT_PROVIDER_ENTRIES } from "../../environment-provider.mjs";
 
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
@@ -76,7 +81,6 @@ const RampModel = _BaseLayoutModel.createClass(
 
 class TypeSpecSelect extends GenericSelect {
     static BASE_CLASS = "ui_type_spec_select";
-    _metaData = new Map();
     _typeSpecLabels = new Map();
     constructor(widgetBus, labelContent) {
         const allowNull = []; // use for root? otherwise, root could be included in the values...
@@ -98,36 +102,26 @@ class TypeSpecSelect extends GenericSelect {
 
     _optionGetLabel(key /*, value*/) {
         const labels = [];
-        if (this._metaData.has(key))
-            labels.push(...this._metaData.get(key).labels);
-
         let treePrefix = "";
         if (this._typeSpecLabels.has(key)) {
             const { treePrefix: prefix, label } = this._typeSpecLabels.get(key);
             treePrefix = prefix;
             // We omit TypeSpec labels in the ramp, instead we focus on
             // the "Edge" labels.
-            if (label !== "") labels.push(`label: ${label}`);
+            if (label !== "") labels.push(label);
         }
 
         if (key === ".")
             //root
             labels.unshift("Origin TypeSpec");
 
-        const text = labels.length === 0 ? key : labels.join(" ");
+        const text = labels.length === 0 ? key : labels.join("/");
         return `${treePrefix}${text}`;
     }
 
     *_optionsGen(rootTypeSpec) {
         // idempotent: options are fully rebuilt on every update
         this._typeSpecLabels.clear();
-
-        // this._metaData holds every reachable node (the leaves and all
-        // their ancestors up to "."). It is the single source of truth for
-        // visibility, so we check it once here for the root and once per
-        // child at enqueue time (needed anyway to know each node's last
-        // *visible* child).
-        if (!this._metaData.has(".")) return;
 
         const layers = [
             // [path, typeSpec, ancestorPrefix, isLast, isRoot]
@@ -158,8 +152,7 @@ class TypeSpecSelect extends GenericSelect {
                 "children",
             )) {
                 const childPath = currentPath.append("children", key);
-                if (this._metaData.has(childPath.toString(Path.RELATIVE)))
-                    visibleChildren.push([childPath, childTypeSpec]);
+                visibleChildren.push([childPath, childTypeSpec]);
             }
 
             // For the child level: a guide pipe if this node has a following
@@ -182,42 +175,6 @@ class TypeSpecSelect extends GenericSelect {
         }
     }
 
-    _updateMetaData(nodeSpecToTypeSpec) {
-        /* pass */
-        // This is a stub! in the final options we want to have all
-        // items that are targets in nodeSpecToTypeSpec, e.g.
-        //  for(const edge of nodeSpecToTypeSpec.values())
-        //          const linkStr = edge.get('link').value;
-        // AND all of the parents of that link up to the "rootTypeSpec"
-        // which would be just '.'
-        // The paths are folded with the `children` part, we don't need
-        // the paths to the "children" items, as they are just structure
-        // and can't be active TypeSpec
-        const upsertEdge = (linkStr, nodeKey = null, edgeLabel = "") => {
-            if (!this._metaData.has(linkStr)) {
-                this._metaData.set(linkStr, { labels: [] });
-            }
-            const data = this._metaData.get(linkStr);
-            if (nodeKey !== null && edgeLabel !== "")
-                data.labels.push(`${edgeLabel} (Node: ${nodeKey})`);
-            else if (nodeKey !== null) data.labels.push(nodeKey);
-            else if (edgeLabel !== "") data.labels.push(edgeLabel);
-        };
-
-        this._metaData.clear();
-        for (const [nodeKey, edge] of nodeSpecToTypeSpec) {
-            const linkStr = edge.get("link").value;
-            upsertEdge(linkStr, nodeKey, edge.get("label").value);
-            if (linkStr === ".") continue;
-            let linkPath = Path.fromParts(linkStr);
-            while (linkPath.parts.length) {
-                // removes ['children', key]
-                linkPath = linkPath.parent.parent;
-                upsertEdge(linkPath.toString(Path.RELATIVE));
-            }
-        }
-    }
-
     _updateValue(activePath) {
         this._select.value = activePath.isEmpty
             ? "." // root? must it be a Path?
@@ -226,13 +183,12 @@ class TypeSpecSelect extends GenericSelect {
 
     update(changedMap) {
         let _changedMap = changedMap;
-        if (changedMap.has("nodeSpecToTypeSpec")) {
-            this._updateMetaData(changedMap.get("nodeSpecToTypeSpec"));
-            // Now ensure options are updated.
-            if (!changedMap.has("options")) {
-                _changedMap = new Map(changedMap);
-                _changedMap.set("options", this.getEntry("options"));
-            }
+        if (
+            changedMap.has("nodeSpecToTypeSpec") &&
+            !changedMap.has("options")
+        ) {
+            _changedMap = new Map(changedMap);
+            _changedMap.set("options", this.getEntry("options"));
         }
         super.update(_changedMap);
     }
@@ -282,9 +238,24 @@ class RampController extends _BaseContainerComponent {
             typeSpecRelativePath = Path.fromParts(".", "typeSpec"),
             originTypeSpecPath = widgetBus.rootPath.append(
                 ...typeSpecRelativePath,
-            );
+            ),
+            // Id symmetry with the type-stage layout (configured in the
+            // controller, not in the module); ramp has no viewer, so
+            // nothing looks the meta root up.
+            documentNodesMetaId = "documentNodesMeta";
         widgetBus.wrapper.setProtocolHandlerImplementation(
             ...SimpleProtocolHandler.create("typeSpecProperties@"),
+        );
+
+        // per document-node properties (geometry/constraints), the
+        // parallel channel to typeSpecProperties@
+        widgetBus.wrapper.setProtocolHandlerImplementation(
+            // does not raise when not found, instead returns null: the
+            // root registration lands after the first TypeSpecMeta
+            // update, but consumers (pane-styler) can update earlier.
+            ...SimpleProtocolHandler.create("nodeProperties@", {
+                notFoundFallbackValue: null,
+            }),
         );
 
         // the source style patches
@@ -327,13 +298,17 @@ class RampController extends _BaseContainerComponent {
                             .toString(),
                         "stylePatchesSource",
                     ],
-                    // special, reqired only for the root instance
+                    // special, required only for the root instance
+                    // CAUTION: also important, to identify as "root":
+                    //           The absence of "@parentProperties"!!!
                     ["/font", "rootFont"],
+                    ...ENVIRONMENT_PROVIDER_ENTRIES, // "environment@viewport" etc.
+                    // end special root dependencies
                 ],
                 TypeSpecMeta,
                 zones,
                 TYPE_SPEC_PROPERTIES_GENERATORS,
-                isInheritingPropertyFn,
+                [inheritancePolicyGen],
                 typeSpecDefaultsMap,
             ],
             [
@@ -380,6 +355,25 @@ class RampController extends _BaseContainerComponent {
                 new Map([...zones, ["main", propertiesManagerContainer]]),
             ],
             [
+                // Always-active, DOM-free document-tree meta layer. Ramp
+                // is editor-only: nothing ever attaches — the meta tree
+                // walks the document with zero attachments (the design
+                // center's purest case).
+                {
+                    id: documentNodesMetaId,
+                    relativeRootPath: Path.fromParts(".", "document"),
+                },
+                [
+                    ["../proseMirrorSchema/nodes", "nodeSpec"],
+                    ["../proseMirrorSchema/marks", "markSpec"],
+                    ["../nodeSpecToTypeSpec", "nodeSpecToTypeSpec"],
+                ],
+                DocumentNodesMeta,
+                zones,
+                proseMirrorDefaultSchemaSpec,
+                originTypeSpecPath,
+            ],
+            [
                 {},
                 [],
                 RampProseMirrorContext,
@@ -402,12 +396,13 @@ class RampController extends _BaseContainerComponent {
             [
                 {},
                 [
-                    "width",
-                    "height",
-                    "environment@layout",
                     [
                         `typeSpecProperties@${originTypeSpecPath.toString()}`,
                         "properties@",
+                    ],
+                    [
+                        `nodeProperties@${originTypeSpecPath.toString()}`,
+                        "nodeProperties@",
                     ],
                 ],
                 TypeStagePaneStyler,
@@ -461,6 +456,9 @@ class RampController extends _BaseContainerComponent {
         this.widgetBus.wrapper
             .getProtocolHandlerImplementation("styleLinkProperties@")
             .resetUpdatedLog();
+        this.widgetBus.wrapper
+            .getProtocolHandlerImplementation("nodeProperties@")
+            .resetUpdatedLog();
         super.update(...args);
     }
     initialUpdate(...args) {
@@ -472,6 +470,9 @@ class RampController extends _BaseContainerComponent {
             .resetUpdatedLog();
         this.widgetBus.wrapper
             .getProtocolHandlerImplementation("styleLinkProperties@")
+            .resetUpdatedLog();
+        this.widgetBus.wrapper
+            .getProtocolHandlerImplementation("nodeProperties@")
             .resetUpdatedLog();
         super.initialUpdate(...args);
     }

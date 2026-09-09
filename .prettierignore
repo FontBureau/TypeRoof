@@ -32,6 +32,16 @@
 !**/*.test.mjs
 !lib/js/tests/**/*
 !lib/js/components/length-models.mjs
+!lib/js/components/type-spec-paths.mjs
 
 # Ignore glyph-groups.yaml
 lib/assets/glyph-groups.yaml
+!lib/js/components/cascading-map.mjs
+!lib/js/components/cascading-map.test.mjs
+!lib/js/components/layouts/type-stage/document-nodes-meta/
+!lib/js/components/layouts/type-stage/scope-resolution.mjs
+!lib/js/components/layouts/type-stage/live-properties.test.mjs
+!lib/js/components/layouts/type-stage/node-properties.mjs
+!lib/js/components/layouts/type-stage/node-properties-generators.mjs
+!lib/js/components/layouts/type-stage/node-properties.test.mjs
+!lib/js/components/layouts/type-stage/document-nodes-meta/style-link-id-equivalence.test.mjs

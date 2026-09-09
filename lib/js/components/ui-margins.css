@@ -1,0 +1,14 @@
+.ui-value_unit_pair {
+    display: flex;
+    align-items: center;
+    gap: 0.75em;
+    padding: 0.25em 0;
+
+    & :is(.number-and-range-input, .ui_plain_select) {
+        display: contents;
+    }
+
+    & .number-and-range-input .ui_toggle_button {
+        display: none;
+    }
+}

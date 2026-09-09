@@ -1,21 +1,67 @@
+import { zip } from "../../../util.mjs";
 import { _BaseComponent } from "../../basics/component.mjs";
-import { SPECIFIC } from "../../registered-properties-definitions.mjs";
+import { SPECIFIC, LAYOUT } from "../../registered-properties-definitions.mjs";
 import { HierarchicalScopeTypeSpecnion } from "./type-specnion.mjs";
+import { pathSpecValuesFromObjectGen } from "./synthetic-values.mjs";
 import { STYLE_PATCH_PROPERTIES_GENERATORS } from "./properties-generators.mjs";
+import {
+    HierarchicalScopeNodeProperties,
+    getRootNodePropertiesMap,
+    NODE_PROPERTIES_INHERITANCE_POLICY,
+} from "./node-properties.mjs";
+import { NODE_PROPERTIES_GENERATORS } from "./node-properties-generators.mjs";
+import {
+    ENVIRONMENT_PROVIDER_KEYS,
+    ENVIRONMENT_PROVIDER_ENTRIES,
+} from "../../environment-provider.mjs";
+
+/**
+ * Derive the root scope's defaults map from the frozen base map and the
+ * externally injected values (root font). Returns a FRESH map — the
+ * base map is never mutated (it's a frozen FreezableMap whose .set()
+ * silently no-ops, which is why in-place seeding silently dropped these
+ * injections). Environment facts and root width/height moved to the
+ * nodeProperties@ channel (getRootNodePropertiesMap).
+ */
+export function seedTypeSpecDefaults(
+    baseDefaultsMap,
+    // environment is defunct (no typeSpecnion consumer; the
+    // nodeProperties@ channel reads environment facts from its own
+    // root defaults). width/height seed the root's layout/*
+    // LengthModels — the root node-properties scope reads them through
+    // the typeSpec layer (the settled typeSpecnion map).
+    { rootFont = null, environment = null, width = null, height = null },
+) {
+    const typeSpecDefaultsMap = new Map(baseDefaultsMap);
+    if (rootFont !== null) typeSpecDefaultsMap.set(`${SPECIFIC}font`, rootFont);
+    if (environment !== null)
+        throw new Error(
+            "VALUE ERROR environment facts don't seed the typeSpecnion " +
+                "defaults; the nodeProperties@ channel owns them " +
+                "(getRootNodePropertiesMap).",
+        );
+    for (const [dimension, value] of [
+        ["width", width],
+        ["height", height],
+    ])
+        if (value !== null)
+            typeSpecDefaultsMap.set(`${LAYOUT}${dimension}`, value);
+    return typeSpecDefaultsMap;
+}
 
 export class TypeSpecLiveProperties extends _BaseComponent {
     constructor(
         widgetBus,
         typeSpecPropertiesGenerators,
-        isInheritingPropertyFn = null,
+        inheritancePolicyGenerators,
         typeSpecDefaultsMap = null,
     ) {
         super(widgetBus);
         this._propertiesGenerators = typeSpecPropertiesGenerators;
+        this._inheritancePolicyGenerators = inheritancePolicyGenerators;
         this._typeSpecnion = null;
+        this._nodeProperties = null;
         this.propertyValuesMap = null;
-        // only used if also hasParentProperties
-        this._isInheritingPropertyFn = isInheritingPropertyFn;
         if (this.hasParentProperties && typeSpecDefaultsMap !== null)
             throw new Error(
                 `VALUE ERROR ${this} typeSpecDefaultsMap must be null if hasParentProperties.`,
@@ -35,6 +81,14 @@ export class TypeSpecLiveProperties extends _BaseComponent {
         return this._typeSpecnion;
     }
 
+    get nodeProperties() {
+        if (this._nodeProperties === null)
+            throw new Error(
+                "LIFECYCLE ERROR this._nodeProperties is null, must update initially first.",
+            );
+        return this._nodeProperties;
+    }
+
     get hasParentProperties() {
         return this.widgetBus.wrapper.dependencyReverseMapping.has(
             "@parentProperties",
@@ -42,28 +96,29 @@ export class TypeSpecLiveProperties extends _BaseComponent {
     }
 
     update(changedMap) {
-        const hasRootFont =
-            this.widgetBus.wrapper.dependencyReverseMapping.has("rootFont");
-        let typeSpecnionChanged = false;
+        const getEntry = (key) =>
+            changedMap.has(key) ? changedMap.get(key) : this.getEntry(key);
 
+        let typeSpecnionChanged = false;
         if (
-            changedMap.has("typeSpec") ||
-            changedMap.has("@parentProperties") ||
-            changedMap.has("rootFont")
+            [
+                "typeSpec",
+                "@parentProperties",
+                "rootFont",
+                ...ENVIRONMENT_PROVIDER_ENTRIES,
+                "width",
+                "height",
+            ].some((k) => changedMap.has(k))
         ) {
             const hasLocalChanges = changedMap.has("typeSpec"),
                 fontChanged = changedMap.has("rootFont"),
-                typeSpec_ = changedMap.has("typeSpec")
-                    ? changedMap.get("typeSpec")
-                    : this.getEntry("typeSpec"),
+                typeSpec_ = getEntry("typeSpec"),
                 // I had a case where typeSpec is a dynamic model
                 // it would be nice to define the dependency in such a
                 // way that it would be unwrapped here.
                 typeSpec = typeSpec_.hasWrapped ? typeSpec_.wrapped : typeSpec_;
             if (this.hasParentProperties) {
-                const parentProperties = changedMap.has("@parentProperties")
-                        ? changedMap.get("@parentProperties")
-                        : this.getEntry("@parentProperties"),
+                const parentProperties = getEntry("@parentProperties"),
                     localChanged =
                         hasLocalChanges || this._typeSpecnion === null,
                     parentChanged =
@@ -76,36 +131,66 @@ export class TypeSpecLiveProperties extends _BaseComponent {
                         this._propertiesGenerators,
                         typeSpec,
                         parentProperties.typeSpecnion,
-                        this._isInheritingPropertyFn,
+                        this._inheritancePolicyGenerators,
                     );
                     typeSpecnionChanged = true;
                 }
             } else {
                 // typeSpecDefaultsMap only comes in at root, when
                 // !this.hasParentProperties
-                let typeSpecDefaultsMap = this._typeSpecDefaultsMap;
                 // This is a hack, but it will work solidly for a while.
                 // Eventually I'd like to figure a more conceptually robust way
                 // how to distribute this kind of external, from the TypeSpec
                 // structure, injected/inherited dynamic dependencies; or maybe
                 // just formalize this.
-                if (hasRootFont) {
-                    const fontValue = (
-                        changedMap.has("rootFont")
-                            ? changedMap.get("rootFont")
-                            : this.getEntry("rootFont")
-                    ).value;
-                    typeSpecDefaultsMap = new Map(this._typeSpecDefaultsMap);
-                    typeSpecDefaultsMap.set(`${SPECIFIC}font`, fontValue);
-                }
+                // NOTE: seedTypeSpecDefaults derives a FRESH map: the base
+                // map is frozen (its .set() silently no-ops), so in-place
+                // seeding would silently drop the injected keys.
+                const reverseMapping =
+                        this.widgetBus.wrapper.dependencyReverseMapping,
+                    hasRootFont = reverseMapping.has("rootFont"),
+                    typeSpecDefaultsMap = seedTypeSpecDefaults(
+                        this._typeSpecDefaultsMap,
+                        {
+                            rootFont: hasRootFont
+                                ? getEntry("rootFont").value
+                                : null,
+                            width: reverseMapping.has("width")
+                                ? getEntry("width")
+                                : null,
+                            height: reverseMapping.has("height")
+                                ? getEntry("height")
+                                : null,
+                        },
+                    );
+                const rootNodePropertiesMap = getRootNodePropertiesMap(
+                    Object.fromEntries(
+                        zip(
+                            ENVIRONMENT_PROVIDER_KEYS,
+                            ENVIRONMENT_PROVIDER_ENTRIES.map(getEntry),
+                        ),
+                    ),
+                );
 
                 this._typeSpecnion = new HierarchicalScopeTypeSpecnion(
                     this._propertiesGenerators,
                     typeSpec,
                     typeSpecDefaultsMap,
+                    this._inheritancePolicyGenerators,
                     // potentiallly, here a local typespecnion with a typespec populated withh all the default values...
                 );
                 typeSpecnionChanged = true;
+                this._nodeProperties =
+                    HierarchicalScopeNodeProperties.createRoot(
+                        NODE_PROPERTIES_GENERATORS,
+                        // the node's settled style map (incl. the
+                        // seeded layout/width|height LengthModels)
+                        this._typeSpecnion.getProperties(),
+                        rootNodePropertiesMap,
+                        // No inheritance policy yet: the socket is live, the
+                        // width-semantics takeover supplies the content.
+                        NODE_PROPERTIES_INHERITANCE_POLICY,
+                    );
             }
         }
         if (typeSpecnionChanged) {
@@ -115,6 +200,21 @@ export class TypeSpecLiveProperties extends _BaseComponent {
                     `typeSpecProperties@`,
                 );
             protocolHandlerImplementation.setUpdated(identifier);
+            // Only the root instance (and only when its layout
+            // registered the protocol) has a nodeProperties@
+            // registration — e.g. type-tools-grid hasn't.
+            if (
+                this._nodeProperties !== null &&
+                this.widgetBus.wrapper.hasProtocolHandlerRegistration(
+                    "nodeProperties@",
+                )
+            ) {
+                const [npIdentifier, npProtocolHandlerImplementation] =
+                    this.widgetBus.getProtocolHandlerRegistration(
+                        `nodeProperties@`,
+                    );
+                npProtocolHandlerImplementation.setUpdated(npIdentifier);
+            }
         }
     }
 
@@ -150,7 +250,7 @@ export class StylePatchSourceLiveProperties extends _BaseComponent {
                 {
                     // keeping these for now so we can re-use generators
                     // from LocalScopeTypeSpecnion.*_propertiesGenerator
-                    hasParentProtperty: () => false,
+                    hasParentProperty: () => false,
                     getParentProperty: (...args) => {
                         throw new Error(
                             `KEY ERROR ${this}.getParentProperty ${args.join(",     ")}`,

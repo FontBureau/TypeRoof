@@ -8,6 +8,11 @@ import {
 
 import { _BaseComponent } from "../basics/component.mjs";
 
+import {
+    resolveTypeSpecLinkFromAnchor,
+    logicalLevelSegmentsToModelTreeSegments,
+} from "../type-spec-paths.mjs";
+
 import { Schema /*, DOMParser*/ } from "prosemirror-model";
 import { EditorState, Plugin } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
@@ -84,6 +89,24 @@ export function getPathsOfTypes(
     return result.values();
 }
 
+/**
+ * Mirror of getPathOfTypes for the content-collection indexes: the
+ * document-node-path segments. resolved.path carries triples
+ * [node, index, startOffset]; the sibling index at i+1 is the node's
+ * key in its parent's content collection — the same key the meta tree
+ * (document-nodes-meta) uses for its per-node rootPaths and hence for
+ * nodeProperties@<path> registration ids. Yields one index per resolved
+ * ancestor (a top-level block resolves to a single doc ancestor, i.e.
+ * [0]); the count is path.length / 3. These are the segments a consumer
+ * joins as content/<i> to build a document-node path.
+ */
+export function getPathOfContentIndexes(path /* resolved.path */) {
+    const contentIndexes = [];
+    for (let i = 0, l = path.length; i < l; i += 3)
+        contentIndexes.push(path[i + 1]);
+    return contentIndexes;
+}
+
 /* We need this a lot, as it seems, there are still some duplicates in this module! */
 function _getBestTypeSpecPropertiesId(
     typeSpecLink,
@@ -91,32 +114,53 @@ function _getBestTypeSpecPropertiesId(
     protocolHandlerImplementation,
     originTypeSpecPath,
     asPath = false,
+    getTypeSpecEntry = null,
 ) {
     const currentTypeSpecPath = Path.fromString(typeSpecLink),
         format = (path) => `${protocolHandlerName}${path}`;
+
     if (protocolHandlerImplementation === null)
         throw new Error(
             `KEY ERROR ProtocolHandler for identifier "${protocolHandlerName}" not found.`,
         );
 
-    // getProtocolHandlerImplementation
-    let testPath =
-        currentTypeSpecPath.parts.length === 0 ||
-        currentTypeSpecPath.parts[0] === "children"
-            ? // the initial "children" is part from typeSpecLink
-              originTypeSpecPath.append(...currentTypeSpecPath)
-            : originTypeSpecPath.append("children", ...currentTypeSpecPath);
+    // Stored links are logical by definition: raw parts are the logical
+    // level names, and a literal "children" level only exists if a
+    // typeSpec is so named. The model tree "children" segments exist only
+    // at the final origin boundary — exactly one conversion site.
+    const initialParts = logicalLevelSegmentsToModelTreeSegments(
+        currentTypeSpecPath.parts,
+    );
+    let testPath = originTypeSpecPath.append(...initialParts);
+
+    // The fallback walk is the only place 'excludeFromFallback' is
+    // consulted: explicit link hits (first iteration) skip this check,
+    // so an explicitly-chosen flagged spec still resolves to itself.
+    let skippedFallbackLevel = false;
     while (true) {
         if (!originTypeSpecPath.isRootOf(testPath))
-            // We have gone to far up. This also prevents that
+            // We have gone too far up. This also prevents that
             // a currentTypeSpecPath could potentially inject '..'
             // to break out of originTypeSpecPath, though,
             // the latter seems unlikely, as we parse it in here.
             break;
         const typeSpecPropertiesId = format(testPath);
-        if (protocolHandlerImplementation.hasRegistered(typeSpecPropertiesId))
+        if (protocolHandlerImplementation.hasRegistered(typeSpecPropertiesId)) {
+            // Only intermediates of the fallback walk (not the explicit
+            // link hit) consult the flag: pass through a flagged level.
+            if (
+                skippedFallbackLevel &&
+                getTypeSpecEntry !== null &&
+                getTypeSpecEntry(testPath).get("excludeFromFallback").value
+            ) {
+                // Fallback-through: this level is invisible to the walk.
+                testPath = testPath.slice(0, -2);
+                continue;
+            }
             return asPath ? testPath : typeSpecPropertiesId;
+        }
         // Move towards root and continue; // remove 'children' and `{key}`
+        skippedFallbackLevel = true;
         testPath = testPath.slice(0, -2);
     }
     return asPath ? originTypeSpecPath : format(originTypeSpecPath);
@@ -175,16 +219,67 @@ export function getTypeSpecPropertiesIdMethod(
     const typeKey = pathOfTypes.at(-1),
         typeSpecLink = !nodeSpecToTypeSpec.has(typeKey)
             ? ""
-            : nodeSpecToTypeSpec.get(typeKey).get("link").value;
+            : nodeSpecToTypeSpec.get(typeKey).get("link").value,
+        parsedLink = Path.fromString(typeSpecLink),
+        // Link discriminator: only an explicitly absolute link ("/…")
+        // is origin-anchored. Everything else — bare names, "./…",
+        // leading ".." — is anchored at the parent node's resolved
+        // spec (parent-anchored). An empty link "" is origin-
+        // anchored by construction (it has no absolute marker) and
+        // resolves to nothing → fallback to root (root-of-self).
+        isAbsolute = parsedLink.isExplicitlyAbsolute,
+        isRelative = !isAbsolute && parsedLink.parts.length > 0;
     // asPath=true returns a Path, otherwise the id string; the cache
     // always stores just the Path.
-    const resolvedPath = _getBestTypeSpecPropertiesId(
-        typeSpecLink,
-        protocolHandlerName,
-        protocolHandlerImplementation,
-        this._originTypeSpecPath,
-        true, // asPath
-    );
+    let resolvedPath = null;
+    if (isRelative) {
+        // The anchor is the parent node's resolved spec; the document
+        // root's parent is the origin itself. Recursing on the parent
+        // path memoizes naturally (same cache). The Step-2 helper
+        // consumes ".." on logical levels strictly BEFORE any append,
+        // and returns null for out-of-bounds (broken link → normal
+        // fallback walk below).
+        const anchorPath =
+                pathOfTypes.length > 1
+                    ? // calling itself, we are avoiding the `this`
+                      // interface, we don't know the shape of the caller.
+                      getTypeSpecPropertiesIdMethod.call(
+                          this,
+                          pathOfTypes.slice(0, -1),
+                          true /* asPath */,
+                          nodeSpecToTypeSpecName,
+                          protocolHandlerName,
+                      )
+                    : this._originTypeSpecPath,
+            candidatePath = resolveTypeSpecLinkFromAnchor(
+                this._originTypeSpecPath,
+                anchorPath,
+                parsedLink.parts,
+            );
+        // Accept only a registered candidate path; an out-of-bounds or
+        // unregistered candidate is a broken link → normal fallback walk.
+        if (
+            candidatePath !== null &&
+            protocolHandlerImplementation.hasRegistered(
+                `${protocolHandlerName}${candidatePath}`,
+            )
+        )
+            // The explicit relative link hits the candidate directly;
+            // excludeFromFallback does NOT apply to explicit hits.
+            resolvedPath = candidatePath;
+    }
+    if (resolvedPath === null) {
+        // Broken relative link or absolute link (origin anchored)
+        // resolve empty/relative links toward root.
+        resolvedPath = _getBestTypeSpecPropertiesId(
+            typeSpecLink,
+            protocolHandlerName,
+            protocolHandlerImplementation,
+            this._originTypeSpecPath,
+            true, // asPath
+            (testPath) => this.getEntry(testPath), // fallback-walk flag check
+        );
+    }
     if (memo === undefined)
         _typeSpecPropertiesIdCache.set(nodeSpecToTypeSpec, (memo = new Map()));
     memo.set(memoKey, resolvedPath);
@@ -1265,7 +1360,13 @@ export class ProseMirror extends _BaseComponent {
 
         if (this._originTypeSpecPath !== null) {
             const typeSpecs = this._getTypeSpecs(this.view.state),
-                [, selectedTypeSpecPath] = typeSpecs.entries().next().value,
+                firstEntry = typeSpecs.entries().next().value;
+            // With silent nodes (noStyler), getTypeSpecs can be empty
+            // when the selection is not inside any node the resolver
+            // covers (e.g. cursor gaps between blocks). Guard against
+            // the genuinely-empty case: no selection → no edit target.
+            if (firstEntry === undefined) return;
+            const [, selectedTypeSpecPath] = firstEntry,
                 editingTypeSpec = this.getEntry("editingTypeSpec");
             if (this._originTypeSpecPath.equals(selectedTypeSpecPath))
                 this._changeState(() =>

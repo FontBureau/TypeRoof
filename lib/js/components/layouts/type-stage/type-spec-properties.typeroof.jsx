@@ -7,7 +7,11 @@ import {
     UILineOfTextInput,
     DynamicTag,
     CollapsibleContainer,
+    UIToggleButton,
 } from "../../generic.mjs";
+
+import { createLabelAndIcon } from "../../icons.mjs";
+
 import { FontSelect } from "../../font-loading.mjs";
 import { typeSpecGetDefaults } from "./defaults.mjs";
 import {
@@ -32,7 +36,10 @@ import {
     UIManualAxesLocations,
 } from "../../ui-manual-axis-locations.mjs";
 
-import { ManualMarginsModel } from "../../type-spec-models.mjs";
+import {
+    ManualBlockMarginsModel,
+    ManualInlineMarginsModel,
+} from "../../type-spec-models.mjs";
 
 import { UIMargins } from "../../ui-margins.typeroof.jsx";
 
@@ -154,12 +161,21 @@ const uiElementMap = new Map([
             ],
         ],
         [
-            ManualMarginsModel,
+            ManualBlockMarginsModel,
             [
                 UIMargins,
                 require("settings:rootPath"),
                 require("zones"),
                 ({ h }) => <h4 class="ui-margins-label">Vertical Margins</h4>,
+            ],
+        ],
+        [
+            ManualInlineMarginsModel,
+            [
+                UIMargins,
+                require("settings:rootPath"),
+                require("zones"),
+                ({ h }) => <h4 class="ui-margins-label">Horizontal Margins</h4>,
             ],
         ],
     ]),
@@ -278,7 +294,13 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                     "openTypeFeatures",
                     "axesLocations",
                 ],
-                horizontal: ["columnWidth", "textAlign"],
+                horizontal: [
+                    "columnCount",
+                    "columnGutter",
+                    "lineLength",
+                    "inlineMargins",
+                    "textAlign",
+                ],
                 vertical: ["leading", "blockMargins"],
                 // we don't use sections.color activeley, instead we
                 // use UIColorChooserTwoColorsWithSwap to control these
@@ -499,6 +521,36 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 "typespec_inherent_settings", //classNameParticle
                 [
                     // widgets
+                    [
+                        {
+                            rootPath: typeSpecPath,
+                            zone: "main",
+                        },
+                        [["noStyler", "boolean"]],
+                        UIToggleButton,
+                        "ui_toggle-no_styler", // classToken
+                        createLabelAndIcon("No Styler", "toggle_on"), // labelIsOn
+                        createLabelAndIcon("No Styler", "toggle_off"), // labelIsOff
+                        "Toggle this TypeSpec is activeley styled.",
+                    ],
+                    [
+                        {
+                            rootPath: typeSpecPath,
+                            zone: "main",
+                        },
+                        [["excludeFromFallback", "boolean"]],
+                        UIToggleButton,
+                        "ui_toggle-exclude_from_fallback", // classToken
+                        createLabelAndIcon(
+                            "Exclude from Fallback",
+                            "toggle_on",
+                        ), // labelIsOn
+                        createLabelAndIcon(
+                            "Exclude from Fallback",
+                            "toggle_off",
+                        ), // labelIsOff
+                        "Toggle this TypeSpec is considered in fallback resolution.",
+                    ],
                     [
                         {
                             rootPath: typeSpecPath,

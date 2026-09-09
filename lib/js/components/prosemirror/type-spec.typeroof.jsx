@@ -24,16 +24,17 @@ import {
 import {
     COLOR,
     GENERIC,
+    LAYOUT,
     SPECIFIC,
-    LEADING,
     ProcessedPropertiesSystemMap,
 } from "../registered-properties-definitions.mjs";
 
 import {
-    getPropertyValue,
     actorApplyCSSColors,
     actorApplyCssProperties,
     setTypographicPropertiesToSample,
+    DIRECT_PROPERTY,
+    REMOVE_PROPERTY,
 } from "../actors/properties-util.mjs";
 
 import { setLanguageTag } from "../language-tags.typeroof.jsx";
@@ -48,9 +49,12 @@ import { toggleMark, removeMark } from "./commands.ts";
 import {
     getPathOfTypes,
     getPathsOfTypes,
+    getPathOfContentIndexes,
     getTypeSpecPropertiesIdMethod,
     getTypeSpecsMethod,
 } from "./integration.typeroof.jsx";
+
+import { getStyleLinkPropertiesId } from "../layouts/type-stage/document-nodes-meta/derivations.mjs";
 
 import {
     getStylePatchLinkForIntent,
@@ -59,6 +63,10 @@ import {
 } from "../type-spec-models.mjs";
 
 import { applyHtmlAttrsBag as _applyHtmlAttrsBag } from "./html-attrs.ts";
+
+import { modelTreeSegmentsToLogicalLevelSegments } from "../type-spec-paths.mjs";
+
+import { CascadingMap } from "../cascading-map.mjs";
 
 export function typeSpecGetFontMethod(changedMap, propertyValuesMap) {
     const fontPPSRecord = ProcessedPropertiesSystemMap.createSimpleRecord(
@@ -234,55 +242,82 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
         this.outerElement = outerElement;
         this.pmNode = pmNode;
     }
+    // Destroy hooks are the styler's way to participate in
+    // styled→silent (noStyler) transitions: the inline styles and the
+    // lang attribute it set are removed, so the element renders
+    // inherit-only until another styler re-provisions.
+    destroy() {
+        this.innerElement.removeAttribute("style");
+        this.outerElement.removeAttribute("style");
+        this.outerElement.removeAttribute("lang");
+    }
     update(changedMap) {
-        const innerPropertiesData = [
-                ["generic/textAlign", "text-align", ""],
-                ["generic/direction", "direction", ""],
-                // it's more complex, should get basefontSize and multiply with that
-                // to determine the PT
-                //, ['generic/columnWidth', 'width', 'em', val=>val*0.5/*it's supposed to be EN*/]
+        // geometry from the nodeProperties@ channel (unregistered, may
+        // be null until the root registers), style from properties@.
+        const nodePropertiesEntry = changedMap.has("nodeProperties@")
+                ? changedMap.get("nodeProperties@")
+                : this.getEntry("nodeProperties@"),
+            nodePropertiesMap =
+                nodePropertiesEntry === null
+                    ? new Map()
+                    : nodePropertiesEntry.nodeProperties.getProperties(),
+            innerPropertiesData = [
+                [`${GENERIC}textAlign`, "text-align", ""],
+                [`${GENERIC}direction`, "direction", ""],
+                [`${LAYOUT}width`, "width", "pt"],
                 [
-                    "generic/columnWidth",
-                    (
-                        element,
-                        value,
-                        propertiesValueMap,
-                        getDefault /*, useUnit*/,
-                    ) => {
-                        const [, baseFontSize] = getPropertyValue(
-                                propertiesValueMap,
-                                getDefault,
-                                "generic/baseFontSize",
-                            ),
-                            columnWidthPT = value * baseFontSize * 0.5;
-                        element.style.setProperty(
-                            "width",
-                            `${columnWidthPT}pt`,
-                        );
-                    },
+                    `${GENERIC}inlineMargins/start/pt`,
+                    "padding-inline-start",
+                    "",
                 ],
+                [`${GENERIC}inlineMargins/end/pt`, "padding-inline-end", ""],
             ],
             outerPropertiesData = [
                 // using this to define a margin-top
-                [`${LEADING}leading/line-height-em`, "--line-height", "em"],
+
+                // FIXME: use baseFontSize and set absolutely in pt
+                // just like lineLengthPT, as this depends on lineLengthPT
+                // and it should be in the according size. ALTHOUGH, maybe
+                // both should be based on the final fontSize value???
+                // currently using baseFontSize would break the least
+                // existing code!! It's not that important, however, as
+                // em is calculated in the parent and the descendant inherits
+                // the absolute value from the parent, so the number stays
+                // stable in CSS inheritance terms.
+
+                // from the node channel: the actual line width
+                [`${LAYOUT}leading/line-height-em`, "--line-height", "em"],
                 [`${GENERIC}blockMargins/start`, "--margin-block-start", ""],
                 [`${GENERIC}blockMargins/end`, "--margin-block-end", ""],
             ],
-            propertyValuesMap = (
-                changedMap.has("properties@")
-                    ? changedMap.get("properties@")
-                    : this.getEntry("properties@")
-            ).typeSpecnion.getProperties(),
-            // Next sibling's resolved properties. Only present when a next
-            // sibling exists — last child has no nextProperties@ wired.
+            // Style from the typeSpecnion, geometry from the
+            // nodeProperties@ channel — named layers, node wins on
+            // collision (CascadingMap resolves first-match). Behavior-
+            // identical to the former spread-merge (node keys spread
+            // last, i.e. overrode); the layers make the two sources
+            // inspectable (Phase 5b consumer polish).
+            propertyValuesMap = new CascadingMap([
+                ["node", nodePropertiesMap],
+                [
+                    "style",
+                    (changedMap.has("properties@")
+                        ? changedMap.get("properties@")
+                        : this.getEntry("properties@")
+                    ).typeSpecnion.getProperties(),
+                ],
+            ]),
+            // Next sibling's node-properties map (its style facts are
+            // in the cascade's typeSpec layer). Only present when a
+            // next sibling exists — last child has no
+            // nextNodeProperties@ wired.
             nextProperties =
                 this.widgetBus.wrapper.dependencyReverseMapping.has(
-                    "nextProperties@",
+                    "nextNodeProperties@",
                 )
-                    ? (changedMap.has("nextProperties@")
-                          ? changedMap.get("nextProperties@")
-                          : this.getEntry("nextProperties@")
-                      ).typeSpecnion.getProperties()
+                    ? (changedMap.has("nextNodeProperties@")
+                          ? changedMap.get("nextNodeProperties@")
+                          : this.getEntry("nextNodeProperties@")
+                      ).nodeProperties.getProperties()
                     : null;
         // console.log(`${this}.update propertyValuesMap:`, ...propertyValuesMap.keys());
         if (changedMap.has("rootFont") || changedMap.has("properties@")) {
@@ -323,6 +358,11 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                         // FIXME: this is a hack!
                         return [true, `0pt`];
                     }
+                    if (property.startsWith(LAYOUT))
+                        // nodeProperties@ keys are unregistered by
+                        // design; when absent (non-root scopes) the CSS
+                        // property stays unset.
+                        return [false, ""];
                     return [true, getRegisteredPropertySetup(property).default];
                 };
             // console.log(`${this}.update propertyValuesMap ...`, ...propertyValuesMap.keys(), '!', propertyValuesMap);
@@ -348,6 +388,26 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
             // console.log(`${this}.update(${[...changedMap.keys()].join(', ')}), propertyValuesMap:`, ...propertyValuesMap);
             // FIXME: also properties that are not explicitly set in here
             // should have a value!
+
+            // only apply if >1
+            // display must be block for a column-layout to work
+            // we use `display:table` as a hack by default
+            const columnCount = propertyValuesMap.get(`${GENERIC}columnCount`);
+            if (columnCount && columnCount > 1) {
+                innerPropertiesData.push(
+                    [`${GENERIC}columnCount`, "column-count", ""],
+                    [`${GENERIC}columnGutter/pt`, "column-gap", ""],
+                    [`${LAYOUT}columnWidth`, "column-width", "pt"],
+                    [DIRECT_PROPERTY, "display", "block"],
+                );
+            } else {
+                innerPropertiesData.push(
+                    [REMOVE_PROPERTY, "column-count"],
+                    [REMOVE_PROPERTY, "column-gap"],
+                    [REMOVE_PROPERTY, "column-width"],
+                    [REMOVE_PROPERTY, "display"],
+                );
+            }
             actorApplyCssProperties(
                 this.innerElement,
                 propertyValuesMap,
@@ -387,7 +447,7 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                     ),
                     nsFontSize = nsProps.get(`${GENERIC}fontSize`),
                     nsLineHeightEm = nsProps.get(
-                        `${LEADING}leading/line-height-em`,
+                        `${LAYOUT}leading/line-height-em`,
                     );
                 if (
                     marginEndValue !== null &&
@@ -462,7 +522,9 @@ class NodeTypeSpecLabel extends _BaseComponent {
 
             this.element.setAttribute(
                 "title",
-                `${label} :: Node ${this._nodeTypeName} :: TypeSpec ${typeSpecLabel !== "" ? " " + typeSpecLabel : ""} ${this._typeSpecPath}`,
+                `${label} :: Node ${this._nodeTypeName} :: ` +
+                    `TypeSpec ${typeSpecLabel !== "" ? " " + typeSpecLabel : ""} ` +
+                    `/${modelTreeSegmentsToLogicalLevelSegments(this._typeSpecPath.parts).join("/")}`,
             );
             this.label.textContent = label;
         }
@@ -483,7 +545,7 @@ class NodeTypeSpecLabel extends _BaseComponent {
     }
 }
 
-class UIDocumentNodeOutfitter extends _BaseContainerComponent {
+export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
     constructor(
         widgetBus,
         _zones,
@@ -512,6 +574,9 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         this._nodeOutfitterOptions = nodeOutfitterOptions;
 
         this._nextProperties = null;
+        this._nextNodeProperties = null; // cached next-sibling nodeProperties@ id
+        this._nodeProperties = null; // cached nodeProperties@ id (rebuild probe)
+        this._lastSilent = null;
         {
             const initialWidgets = this._staticWidgets;
             this._initialWidgetsAmount = initialWidgets.length;
@@ -600,8 +665,15 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         ];
     }
 
+    // A resolved spec with "noStyler" renders inherit-only: the
+    // outfitter's dynamic styler widget is not provisioned (the
+    // subscription still exists for its marks, which resolve style
+    // links from this spec regardless).
+    _isSilent() {
+        return this.getEntry("noStyler").value === true;
+    }
+
     _createWidgetDefinition() {
-        // update/replace this dynamically depending on the value of
         // nextProperties which we, at this point, hopefully always, can
         // determine using pmNode, parenContent and pmNode-Index => I hope
         // we can't/won't create clashes with nodes that exist as duplicates,
@@ -619,13 +691,28 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                 ],
             ];
 
-        // Conditionally include next sibling's typeSpecnion for
-        // resolving lineHeightAfter/emAfter margin units.
-        if (
-            this._nextProperties !== null &&
-            this._nextProperties !== ownProperties
-        )
-            stylerDependencies.push([this._nextProperties, "nextProperties@"]);
+        // The per-document-node channel: the editor consumes the same
+        // per-node property maps as the viewer. this._nodeProperties is
+        // set by _checkNodeProperties (called in _provisionWidgets before
+        // this definition is built); fall back to a fresh computation on
+        // the initial provision. If the id has no live registration
+        // (transient edit state) the protocol's notFoundFallbackValue:null
+        // degrades the styler to an empty node layer, as before.
+        stylerDependencies.push([
+            this._nodeProperties ?? this._documentNodePathId(),
+            "nodeProperties@",
+        ]);
+
+        // Conditionally include the next sibling's nodeProperties
+        // (which carry its style facts via the typeSpec layer) for
+        // resolving lineHeightAfter/emAfter margin units. The
+        // node-properties channel is the single source: fontSize comes
+        // through its typeSpec layer, leading through the layout keys.
+        if (this._nextNodeProperties !== null)
+            stylerDependencies.push([
+                this._nextNodeProperties,
+                "nextNodeProperties@",
+            ]);
 
         return [
             {},
@@ -638,6 +725,38 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
 
     // requires this.getEntry(nodeSpecToTypeSpecName),
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
+
+    // The per-document-node nodeProperties@ registration id for this
+    // node: the absolute document-node path. Composed as the resolved
+    // document model path (read off the widget bus's "document"
+    // dependency — the codebase idiom, no baked-in path) + content/<i>
+    // segments from the PM resolved path's sibling indexes — the same
+    // keys the meta tree (document-nodes-meta) uses for its per-node
+    // rootPaths/registration ids (verified: model content keys are the
+    // PM sibling indexes). Recomputed on each call; callers cache and
+    // compare to detect a changed id (node moved/re-resolved).
+    _documentNodePathId(pos = null) {
+        const view = this.widgetBus.getWidgetById("proseMirror").view,
+            resolved = view.state.doc.resolve(pos ?? this._getPos()),
+            indexes = getPathOfContentIndexes(resolved.path),
+            segments = indexes.map((i) => `content/${i}`).join("/"),
+            documentPath = this.widgetBus.getExternalName("document");
+        return (
+            `nodeProperties@${documentPath}` + (segments ? `/${segments}` : "")
+        );
+    }
+
+    // Mirrors _checkNextProperties: recompute the nodeProperties@ id and
+    // report whether it changed since the last provision. PM NodeViews
+    // persist across edits/moves, so the id is NOT wrapper-lifetime-
+    // stable (unlike the viewer, which excludes nodeProperties@ from its
+    // rebuild check). Caches the id for _createWidgetDefinition.
+    _checkNodeProperties(/*compareResult*/) {
+        const nodeProperties = this._documentNodePathId(),
+            hasChanged = this._nodeProperties !== nodeProperties;
+        if (hasChanged) this._nodeProperties = nodeProperties;
+        return hasChanged;
+    }
 
     _checkNextProperties(/*compareResult*/) {
         // NOTE: if this._nextProperties is null it must be set in here!
@@ -674,13 +793,21 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         }
 
         const nextTypeSpecProperties =
-            nextPathOfTypes !== null
-                ? this._getTypeSpecPropertiesId(nextPathOfTypes)
-                : null;
-        const hasChanged = this._nextProperties !== nextTypeSpecProperties;
-        if (hasChanged)
-            // update the cached value as well
+                nextPathOfTypes !== null
+                    ? this._getTypeSpecPropertiesId(nextPathOfTypes)
+                    : null,
+            // The next sibling's node-properties id: the document-node
+            // path at its position (null when there's no next sibling).
+            nextNodePropertiesId =
+                nextNode !== null ? this._documentNodePathId(nextPos) : null,
+            hasChanged =
+                this._nextProperties !== nextTypeSpecProperties ||
+                this._nextNodeProperties !== nextNodePropertiesId;
+        if (hasChanged) {
+            // update the cached values as well
             this._nextProperties = nextTypeSpecProperties;
+            this._nextNodeProperties = nextNodePropertiesId;
+        }
         return hasChanged;
     }
 
@@ -696,14 +823,21 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         // figure out the nextProperties@ of this._pmNode and if
         // they have changed, rebuild the UIDocumentTypeSpecStyler.
 
+        const silentChanged = this._lastSilent !== this._isSilent();
+        this._lastSilent = this._isSilent();
         const requireUpdateDynamicWidget =
             this._checkNextProperties(compareResult) ||
+            this._checkNodeProperties(compareResult) ||
+            silentChanged ||
             removedDynamicWidgets.length === 0; // is initial
         // do we need to replace/renew the dynamic widget
         if (!requireUpdateDynamicWidget) {
             // don't change
             this._widgets.push(...removedDynamicWidgets);
             removedDynamicWidgets.splice(0, Infinity);
+        } else if (this._isSilent()) {
+            // silent: no styler widget definition; destroyed leftovers
+            // below clear the element's inline styles.
         } else {
             const widgetDefinitions = [this._createWidgetDefinition()];
             this._initWidgets(widgetDefinitions); // pushes into this._widgets
@@ -748,7 +882,7 @@ export class UIDocumentStyleStyler extends _BaseComponent {
         this.element.style = "";
     }
     update(changedMap) {
-        const propertiesData = [["generic/direction", "direction", ""]],
+        const propertiesData = [[`${GENERIC}direction`, "direction", ""]],
             propertyValuesMap = (
                 changedMap.has("properties@")
                     ? changedMap.get("properties@")
@@ -910,26 +1044,15 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             // no applicable edge: the unknown-style fallback applies
             return null;
         const [fieldName, styleLink] = styleLinkEntry,
-            typeSpecPath = typeSpecProperties.slice(
-                "typeSpecProperties@".length,
-            ),
-            styleLinkPropertiesId = `styleLinkProperties@${Path.fromParts(
-                typeSpecPath,
-                fieldName,
-                styleLink,
-            )}`,
-            protocolHandlerImplementation =
-                this.widgetBus.getProtocolHandlerImplementation(
-                    "styleLinkProperties@",
-                    null,
-                );
-        if (protocolHandlerImplementation === null)
-            throw new Error(
-                `KEY ERROR ProtocolHandler for identifier "styleLinkProperties@" not found.`,
+            typeSpecPropertiesPath = Path.fromString(
+                typeSpecProperties.slice("typeSpecProperties@".length),
             );
-        if (!protocolHandlerImplementation.hasRegistered(styleLinkPropertiesId))
-            return null;
-        return styleLinkPropertiesId;
+        return getStyleLinkPropertiesId(
+            this.widgetBus,
+            typeSpecPropertiesPath,
+            fieldName,
+            styleLink,
+        );
     }
 
     _createStyleStylerWrapper(styleLinkProperties, domElemment) {
@@ -1023,6 +1146,31 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
     // the element's tag, the element is swapped and PM's view desc is
     // patched to it (see _swapMarkElement). Flushed from a microtask,
     // so callers can schedule freely within update cycles.
+    // Deterministically drain _newlySubscribedMarks on the next frame.
+    // The MutationObserver is a trigger heuristic:
+    // _checkNewlySubscribedMarks' fallback loop already finalizes any
+    // mark whose element is attached but whose insertion produced no
+    // matching mutation record — but nothing re-invokes it if the
+    // observer stays silent. Firefox, on editor→viewer→editor, delivers
+    // no (matching) records for the freshly mounted view until focus,
+    // leaving marks unstyled until a click; Chromium delivers them.
+    // This sweep makes finalization independent of that timing.
+    // (requestAnimationFrame falls back to a macrotask where it is
+    // unavailable — jsdom, workers.)
+    _scheduleNewMarksSweep() {
+        if (this._newMarksSweepScheduled) return;
+        this._newMarksSweepScheduled = true;
+        const schedule =
+            typeof requestAnimationFrame === "function"
+                ? requestAnimationFrame
+                : (fn) => setTimeout(fn, 0);
+        schedule(() => {
+            this._newMarksSweepScheduled = false;
+            if (this._newlySubscribedMarks.size === 0) return;
+            this._checkNewlySubscribedMarks([]);
+        });
+    }
+
     _scheduleMarkTagCorrectionFlush() {
         if (this._markTagCorrectionFlushScheduled) return;
         this._markTagCorrectionFlushScheduled = true;
@@ -1175,6 +1323,14 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 // unused so far!
                 [parentContentsPath.toString(), "parentContent"],
                 ["nodeSpecToTypeSpec"],
+                // The resolved document model path: the base of the
+                // nodeProperties@<documentNodePath> ids the outfitter
+                // composes (read via getExternalName("document") — the
+                // codebase idiom, no baked-in path assumption).
+                ["document"],
+                // The resolved spec's own "noStyler" flag gates dynamic
+                // styler provisioning (silent nodes render inherit-only).
+                [typeSpecPath.append("noStyler").toString(), "noStyler"],
             ];
         const Constructor = UIDocumentNodeOutfitter,
             args = [
@@ -1353,6 +1509,14 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             );
         }
         this._newlySubscribedMarks.set(domElement, mark);
+        // The MutationObserver is the fast path, but it is a trigger
+        // heuristic: if it delivers no record matching this element
+        // (Firefox re-mount timing: editor→viewer→editor yields none
+        // until focus), the mark would wait unstyled indefinitely.
+        // Schedule a deterministic drain; the fallback loop in
+        // _checkNewlySubscribedMarks finalizes the element once it is
+        // attached. A no-op if the observer already drained the map.
+        this._scheduleNewMarksSweep();
     }
 
     unsubscribeMark(domElement) {
