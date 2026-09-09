@@ -15,6 +15,7 @@ import {
     actorApplyCSSColors,
     actorApplyCssProperties,
     setTypographicPropertiesToSample,
+    getVerboseFontVariationSettings,
 } from "../properties-util.mjs";
 
 import { setLanguageTagDirect } from "../../language-tags.typeroof.jsx";
@@ -555,7 +556,8 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
 
         if (
             changedMap.has("animationProperties@") ||
-            changedMap.has("globalT")
+            changedMap.has("globalT") ||
+            changedMap.has("verboseFontVariationSettings")
         ) {
             const animationProperties = changedMap.has("animationProperties@")
                     ? changedMap.get("animationProperties@")
@@ -635,6 +637,11 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
                 this._content,
                 propertyValuesMap,
                 true,
+                {
+                    verboseFontVariationSettings:
+                        getVerboseFontVariationSettings(this),
+                    font,
+                },
             );
             setLanguageTagDirect(this._content, propertyValuesMap);
         }
