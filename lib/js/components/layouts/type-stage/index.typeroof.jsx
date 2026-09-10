@@ -187,6 +187,12 @@ export function createTypeStageModelVariantWithDefaults(
         // the root of all typeSpecs
         ["document", NodeModel],
         ["showParameters", BooleanModel],
+        // When true, the `font-variation-settings` applied to the samples
+        // (and the parameters display) list all axes of the font explicitly,
+        // including those that are at their default location. Otherwise,
+        // only the axes that differ from their default location are listed.
+        // The equivalent of the legacy tools "applyDefaultsExplicitly" flag.
+        ["verboseFontVariationSettings", BooleanModel],
         ["showNodeTypeSpecLabels", BooleanModel],
         _getType(
             "documentRendererMode",
@@ -537,6 +543,15 @@ class TypeStageController extends _BaseContainerComponent {
                 UICheckboxInput,
                 "show-parameters", // classToken
                 getRegisteredPropertySetup(`${GENERIC}showParameters`).label, //label
+            ],
+            [
+                { zone: "editor-manager" },
+                [["verboseFontVariationSettings", "value"]],
+                UICheckboxInput,
+                "verbose-font-variation-settings", // classToken
+                getRegisteredPropertySetup(
+                    `${GENERIC}verboseFontVariationSettings`,
+                ).label, //label
             ],
             [
                 { zone: "editor-manager" },

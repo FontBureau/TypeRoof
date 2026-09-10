@@ -377,6 +377,15 @@ export class UIDocumentElement extends _BaseContainerComponent {
             dependencyMappings = [
                 [typeSpecProperties, "properties@"],
                 ["/font", "rootFont"],
+                // A layout level setting (like showParameters in the
+                // editor); the document root is a direct child of the
+                // layout, hence its parent is the layouts root path.
+                [
+                    this._documentRootPath.parent
+                        .append("verboseFontVariationSettings")
+                        .toString(),
+                    "verboseFontVariationSettings",
+                ],
             ];
         if (
             nextTypeSpecProperties !== null &&
@@ -632,6 +641,16 @@ export class UIDocumentTextRun extends _BaseContainerComponent {
                     : [
                           [styleLinkProperties, "properties@"],
                           ["/font", "rootFont"],
+                          // A layout level setting (like showParameters
+                          // in the editor); the document root is a direct
+                          // child of the layout, hence its parent is the
+                          // layouts root path.
+                          [
+                              this._documentRootPath.parent
+                                  .append("verboseFontVariationSettings")
+                                  .toString(),
+                              "verboseFontVariationSettings",
+                          ],
                       ],
             Constructor =
                 styleLinkProperties === null
