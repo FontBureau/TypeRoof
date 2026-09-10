@@ -37,10 +37,6 @@ import {
     TypeSpecMeta,
 } from "../type-stage/meta.typeroof.jsx";
 import { TypeSpecPropertiesManager } from "../type-stage/type-spec-properties.typeroof.jsx";
-import {
-    StylePatchPropertiesManager,
-    UIStylePatchesMap,
-} from "../type-stage/style-patches.typeroof.jsx";
 import { RampProseMirrorContext } from "../type-stage/prosemirror.typeroof.jsx";
 
 import {
@@ -261,12 +257,6 @@ class RampController extends _BaseContainerComponent {
                 },
                 proseMirrorEditorMenuContainer,
             ),
-            stylePatchesManagerContainer = widgetBus.domTool.createElement(
-                "div",
-                {
-                    class: "style_patches-manager",
-                },
-            ),
             // The editor pane: sized + document-styled by
             // TypeStagePaneStyler (like in type-stage).
             proseMirrorHostElement = widgetBus.domTool.createElement("div", {
@@ -276,7 +266,6 @@ class RampController extends _BaseContainerComponent {
                 ..._zones,
                 ["properties-manager", propertiesManagerContainer],
                 ["editor-manager", editorManagerContainer],
-                ["style_patches-manager", stylePatchesManagerContainer],
                 ["prose-mirror-editor-menu", proseMirrorEditorMenuContainer],
             ]),
             typeSpecRelativePath = Path.fromParts(".", "typeSpec"),
@@ -353,13 +342,6 @@ class RampController extends _BaseContainerComponent {
                 true,
             ],
             [
-                { zone: "main" },
-                [],
-                Collapsible,
-                "Styles",
-                stylePatchesManagerContainer,
-            ],
-            [
                 { zone: "properties-manager" },
                 [
                     ["editingTypeSpec", "value"],
@@ -378,6 +360,9 @@ class RampController extends _BaseContainerComponent {
                 ],
                 TypeSpecPropertiesManager,
                 new Map([...zones, ["main", propertiesManagerContainer]]),
+                // Inline text styles (Marks) are not supported in the
+                // ramp layout, hence no "Style Links" UI.
+                { showStyleLinks: false },
             ],
             [
                 {},
@@ -419,34 +404,6 @@ class RampController extends _BaseContainerComponent {
                 UICheckboxInput,
                 "show-parameters", // classToken
                 getRegisteredPropertySetup(`${GENERIC}showParameters`).label, //label
-            ],
-            [
-                {
-                    zone: "style_patches-manager",
-                    relativeRootPath: Path.fromParts(".", "stylePatchesSource"),
-                },
-                [
-                    [".", "childrenOrderedMap"],
-                    ["../editingStylePatch", "stylePatchPath"],
-                ],
-                UIStylePatchesMap, // search for e.g. UIAxesMathLocation in videoproof-array-v2.mjs
-                zones,
-                [], // eventHandlers
-                null, // label 'Style Patches'
-                true, // dragAndDrop
-                true, // deletableEntries
-            ],
-            [
-                {
-                    zone: "style_patches-manager",
-                    relativeRootPath: Path.fromParts(".", "stylePatchesSource"),
-                },
-                [
-                    [".", "childrenOrderedMap"],
-                    ["../editingStylePatch", "stylePatchPath"],
-                ],
-                StylePatchPropertiesManager,
-                new Map([...zones, ["main", stylePatchesManagerContainer]]),
             ],
         ];
         this._initWidgets(widgets);
