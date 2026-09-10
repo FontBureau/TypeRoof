@@ -322,16 +322,22 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
             // Next sibling's node-properties map (its style facts are
             // in the cascade's typeSpec layer). Only present when a
             // next sibling exists — last child has no
-            // nextNodeProperties@ wired.
-            nextProperties =
+            // nextNodeProperties@ wired. A wired id can still resolve
+            // to a null entry transiently (sibling registration not
+            // yet live; notFoundFallbackValue: null) — degrade to the
+            // own-properties fallback, like a last child.
+            nextPropertiesEntry =
                 this.widgetBus.wrapper.dependencyReverseMapping.has(
                     "nextNodeProperties@",
                 )
-                    ? (changedMap.has("nextNodeProperties@")
-                          ? changedMap.get("nextNodeProperties@")
-                          : this.getEntry("nextNodeProperties@")
-                      ).nodeProperties.getProperties()
-                    : null;
+                    ? changedMap.has("nextNodeProperties@")
+                        ? changedMap.get("nextNodeProperties@")
+                        : this.getEntry("nextNodeProperties@")
+                    : null,
+            nextProperties =
+                nextPropertiesEntry === null
+                    ? null
+                    : nextPropertiesEntry.nodeProperties.getProperties();
         // console.log(`${this}.update propertyValuesMap:`, ...propertyValuesMap.keys());
         if (changedMap.has("rootFont") || changedMap.has("properties@")) {
             // This also triggers when font changes in a parent trickle
@@ -858,7 +864,7 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         );
         const requiresFullInitialUpdate = super._provisionWidgets.call(this);
 
-        // figure out the nextProperties@ of this._pmNode and if
+        // figure out the nextNodeProperties@ of this._pmNode and if
         // they have changed, rebuild the UIDocumentTypeSpecStyler.
 
         const silentChanged = this._lastSilent !== this._isSilent();

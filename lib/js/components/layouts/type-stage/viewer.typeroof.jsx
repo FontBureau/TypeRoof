@@ -33,7 +33,7 @@ import { require } from "../../dependency-injection.mjs";
 import {
     getRenderingDirectives,
     computeAttrDrivenDiff,
-    resolveNextTypeSpecProperties,
+    resolveNextNodePropertiesId,
     typeSpecStylerDependencyMappings,
     getStyleLinkPropertiesId,
     getWrapMarks,
@@ -301,14 +301,14 @@ export class UIDocumentElement extends _UIDocumentAttachment {
 
     _createTypeSpecStylerWrapper(
         typeSpecProperties,
-        nextTypeSpecProperties = null,
+        nextNodeProperties = null,
         typeSpecPath = null,
     ) {
         const settings = {},
             dependencyMappings = typeSpecStylerDependencyMappings(
                 typeSpecProperties,
                 `nodeProperties@${this._documentNodePath.toString()}`,
-                nextTypeSpecProperties,
+                nextNodeProperties,
                 typeSpecPath,
             );
         // A layout level setting (like showParameters in the
@@ -412,9 +412,10 @@ export class UIDocumentElement extends _UIDocumentAttachment {
 
     // A resolved spec with "noStyler" renders inherit-only: the
     // node never provisions a styler, though the resolved spec still
-    // speaks for its marks and the margins of a sibling nextProperties@.
-    // _hasTypeSpecStyling (a spec is resolvable at all) stays true for
-    // silent nodes — the gate applies only to provisioning.
+    // speaks for its marks and the margins of a sibling's
+    // nextNodeProperties@. _hasTypeSpecStyling (a spec is resolvable at
+    // all) stays true for silent nodes — the gate applies only to
+    // provisioning.
     _provisionTypeSpecStyler() {
         const typeSpecPath = this._getTypeSpecPropertiesId(
                 this._pathOfTypes,
@@ -425,23 +426,20 @@ export class UIDocumentElement extends _UIDocumentAttachment {
             ),
             // A resolved spec with "noStyler" renders inherit-only:
             // no styler is provisioned, though the resolved spec still
-            // speaks for its marks and a sibling's nextProperties@.
+            // speaks for its marks and a sibling's nextNodeProperties@.
             // (_provisionTypeSpecStyler is only reached when
             // _hasTypeSpecStyling holds, so the path resolves here.)
             silent = this.getEntry(typeSpecPath).get("noStyler").value;
-        // Compute the next sibling's typeSpecProperties for
-        // resolving lineHeightAfter/emAfter margin units.
-        // TODO (parity edge case): this uses the sibling's original
-        // typeKey; when the sibling's type is unknown, ProseMirror
-        // resolves no per-node typeSpec for it. Fixing this requires
-        // resolving the sibling's effective type (cf. the
-        // determineUnknownType classification) — parked for now.
-        const nextTypeSpecProperties = resolveNextTypeSpecProperties(
-            (pathOfTypes, asPath) =>
-                this._getTypeSpecPropertiesId(pathOfTypes, asPath),
+        // Compute the next sibling's nodeProperties@ registration id
+        // for resolving lineHeightAfter/emAfter margin units — the
+        // same channel the editor wires as nextNodeProperties@ (the
+        // sibling's fontSize/line-height-em live in its node-properties
+        // scope; a typeSpec-based lookup can't resolve the layout
+        // keys).
+        const nextNodeProperties = resolveNextNodePropertiesId(
             this.getEntry(this.widgetBus.rootPath.parent),
             this.widgetBus.rootPath.parts.at(-1),
-            this._pathOfTypes,
+            this._documentNodePath,
         );
         const oldId =
             this._typeSpecStylerWrapper !== null
@@ -452,7 +450,7 @@ export class UIDocumentElement extends _UIDocumentAttachment {
             if (silent) return null; // no styler provisioned
             this._typeSpecStylerWrapper = this._createTypeSpecStylerWrapper(
                 typeSpecProperties,
-                nextTypeSpecProperties,
+                nextNodeProperties,
                 typeSpecPath,
             );
             this._widgets.splice(0, 0, this._typeSpecStylerWrapper);
@@ -466,21 +464,32 @@ export class UIDocumentElement extends _UIDocumentAttachment {
             this._typeSpecStylerWrapper = null;
             return null;
         } else {
-            const oldWrapper = this._widgets[oldId];
-            // Only properties@ is compared: the nodeProperties@ mapping
-            // needs no rebuild check — its id is document-path-keyed
-            // (`nodeProperties@<documentNodePath>`) and the document
-            // path is stable for this wrapper's lifetime (a moved or
-            // rebuilt node gets a new wrapper via the meta tree),
-            // unlike properties@ which follows typeSpec resolution and
-            // can change in place (typeSpec relinking).
+            const oldWrapper = this._widgets[oldId],
+                oldNextNodeProperties = oldWrapper.dependencyReverseMapping.has(
+                    "nextNodeProperties@",
+                )
+                    ? oldWrapper.dependencyReverseMapping.get(
+                          "nextNodeProperties@",
+                      )
+                    : null;
+            // Compared: properties@ — it follows typeSpec resolution
+            // and can change in place (typeSpec relinking); and
+            // nextNodeProperties@ — the next sibling's identity can
+            // change while this node's wrapper persists (a sibling
+            // edit that doesn't rebuild this node). The own
+            // nodeProperties@ mapping needs no rebuild check — its id
+            // is document-path-keyed (`nodeProperties@<documentNodePath>`)
+            // and the document path is stable for this wrapper's
+            // lifetime (a moved or rebuilt node gets a new wrapper via
+            // the meta tree).
             if (
                 oldWrapper.dependencyReverseMapping.get("properties@") !==
-                typeSpecProperties
+                    typeSpecProperties ||
+                oldNextNodeProperties !== nextNodeProperties
             ) {
                 const newWrapper = this._createTypeSpecStylerWrapper(
                     typeSpecProperties,
-                    nextTypeSpecProperties,
+                    nextNodeProperties,
                     typeSpecPath,
                 );
                 this._widgets.splice(oldId, 1, newWrapper);
