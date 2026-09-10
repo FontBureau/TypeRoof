@@ -13,7 +13,7 @@ agent-created: true
 Date: 2026-08-24
 Status: initial analysis (further rounds to be amended)
 Scope: `lib/js/components/prosemirror`, `lib/js/components/layouts/type-stage`,
-`lib/js/components/type-spec-models.mjs`, `lib/js/components/type-spec-fundamentals.mjs`
+`lib/js/components/type-spec/models.mjs`, `lib/js/components/type-spec-fundamentals.mjs`
 
 Central question: how can certain node types be prevented from receiving
 TypeSpec styling? Desire: assign nodes to a TypeSpec that does not actively
@@ -97,7 +97,7 @@ node-level TypeSpecs would not automatically suppress that.
 
 The existing NULL-STYLE semantics are narrower than they may appear.
 
-In `type-spec-models.mjs:290-307`, `stylePatch === ""` means:
+In `type-spec/models.mjs:290-307`, `stylePatch === ""` means:
 
 - the style-link remains valid/selectable,
 - intent tag binding still applies,
@@ -122,7 +122,7 @@ For TypeSpecs, it is useful to distinguish three concepts:
 
 These should not be represented by the same empty string.
 
-The existing comment in `type-spec-fundamentals.mjs` already identifies this
+The existing comment in `type-spec/fundamentals.mjs` already identifies this
 ambiguity: empty path currently means both root and NULL-TypeSpec.
 
 ## Recommended semantic model

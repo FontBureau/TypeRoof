@@ -33,7 +33,7 @@ it **cannot fail**:
    **root, always.**
 
 The central ambiguity is already documented as an open problem in the
-code, at `type-spec-fundamentals.mjs:451`:
+code, at `type-spec/fundamentals.mjs:451`:
 
 > "FIXME: can't decide whether it's an explicit NULL or root as root is
 > the empty path and NULL as well! … I wonder if it makes sense to have
@@ -45,7 +45,7 @@ the semantics.
 
 ## Precedents that already exist
 
-**1. NULL-STYLE vs. unlinked** (`type-spec-models.mjs:300ff`,
+**1. NULL-STYLE vs. unlinked** (`type-spec/models.mjs:300ff`,
 `stylePatchLinkModelMixin`): style-link edges have a `mode` enum
 `link | unlinked` plus `stylePatch: ""` as NULL-STYLE. Three states:
 
@@ -78,7 +78,7 @@ implemented**, it's just coupled to "typeKey unknown" instead of an
 explicit decision.
 
 **3. The UI label `EMPTY_TYPESPEC_LINK_LABEL = '(NULL-TYPESPEC)'`**
-already exists (`type-spec-fundamentals.mjs:252`) — but is currently used
+already exists (`type-spec/fundamentals.mjs:252`) — but is currently used
 for "link points nowhere / not found", not for an explicit NULL.
 
 **4. The "silent" flag idea has a relative in the code**: the long
@@ -100,7 +100,7 @@ the `stylePatchLinkModelMixin` pattern exactly: a `mode` enum on
 `StylePatchLinkModeEnumModel`. With this:
 
 - "edge absent" remains the default (root fallback), backward compatible;
-- the FIXME in `type-spec-fundamentals.mjs:451` gets resolved (NULL is no
+- the FIXME in `type-spec/fundamentals.mjs:451` gets resolved (NULL is no
   longer a path but a mode);
 - granularity matches the requirement exactly: "certain node-types";
 - the UI pattern (`LinksMapKeyChangeSelect` with a special-options group)
@@ -213,7 +213,7 @@ design trap. They decompose into orthogonal aspects:
 ## Why "don't skip on walk" must be controllable: the language container
 
 `TypeSpecModel` includes `languageTagModelMixin`
-(`type-spec-models.mjs:409`). A top-level `german` container carries the
+(`type-spec/models.mjs:409`). A top-level `german` container carries the
 language tag and language-specific defaults. If node type `h4` is not
 defined under `german`, resolution tries `german/h4` and walks up. If
 "shim" implied skip-on-walk, the walk would pass through `german` to
@@ -697,8 +697,8 @@ implementation plan.
   2026-08-24).
 - Working tree is **dirty** (uncommitted, comment-only changes):
   - `integration.typeroof.jsx`: typo fix in the `isRootOf` guard comment.
-  - `type-spec-models.mjs`: +6 comment lines at ~line 220
-    (inlineMargins/columnGap note). **All `type-spec-models.mjs` line
+  - `type-spec/models.mjs`: +6 comment lines at ~line 220
+    (inlineMargins/columnGap note). **All `type-spec/models.mjs` line
     numbers in this document refer to the dirty tree; against `2f6ac4b2`
     they shift by −6 after line 220.**
 - `docs/planning/type-spec-resolution/` is untracked so far.
@@ -742,8 +742,8 @@ touching it.
 |---|---|---|
 | `prosemirror/models.typeroof.jsx:417` | `NodeSpecToTypeSpecEdgeModel` = `{link: StringModel, label: StringModel}` | relative links live in `link` (free-form string, no validation); design comment block ~330–420 (shim, relative paths, normalization, i18n) precedes it |
 | `models.typeroof.jsx:422` | `NodeSpecToTypeSpecMapModel` | keyed by typeKey |
-| `type-spec-models.mjs:407` (dirty tree: 413) | `TypeSpecModel` | **gets the two new flags** `excludeFromFallback`, `noStyler` (BooleanModel, default false); `children` self-reference at the following line |
-| `type-spec-models.mjs:300ff` | `stylePatchLinkModelMixin`, `StylePatchLinkModeEnumModel` | the mode-enum *pattern* precedent (round 4: pattern only, not semantics) |
+| `type-spec/models.mjs:407` (dirty tree: 413) | `TypeSpecModel` | **gets the two new flags** `excludeFromFallback`, `noStyler` (BooleanModel, default false); `children` self-reference at the following line |
+| `type-spec/models.mjs:300ff` | `stylePatchLinkModelMixin`, `StylePatchLinkModeEnumModel` | the mode-enum *pattern* precedent (round 4: pattern only, not semantics) |
 | `metamodel/path.ts` | `Path`: `RELATIVE`/`PARENT`/`ROOT`, `explicitAnchoring`, `isExplicitlyRelative`; `sanitize` consumes `..` one part per part (the pair trap, round 3); `isRootOf`, `toRelative`, `append`, `slice` | relative-link discriminator + the logical↔storage helper builds on this |
 
 ### Styler provisioning — PM side (`prosemirror/type-spec.typeroof.jsx`)
@@ -792,7 +792,7 @@ touching it.
 
 ### UI for the mapping (relative links enterable today)
 
-- `type-spec-fundamentals.mjs:467` `UINodeToTypeSpecLinksValue`
+- `type-spec/fundamentals.mjs:467` `UINodeToTypeSpecLinksValue`
   (free-text input, no validation), `:426`
   `UIStyleNodeToTypeSpecValueLabel` (label resolution via `getEntry`,
   carries the round-1 NULL/root FIXME at ~451), `:1306`

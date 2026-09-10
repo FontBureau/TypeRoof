@@ -11,7 +11,7 @@ import { _BaseComponent } from "../basics/component.mjs";
 import {
     resolveTypeSpecLinkFromAnchor,
     logicalLevelSegmentsToModelTreeSegments,
-} from "../type-spec-paths.mjs";
+} from "../type-spec/paths.mjs";
 
 import { Schema /*, DOMParser*/ } from "prosemirror-model";
 import { EditorState, Plugin } from "prosemirror-state";

@@ -60,11 +60,11 @@ import {
     getStylePatchLinkForIntent,
     getStylePatchLinkForMark,
     getStylePatchTagForIntent,
-} from "../type-spec-models.mjs";
+} from "../type-spec/models.mjs";
 
 import { applyHtmlAttrsBag as _applyHtmlAttrsBag } from "./html-attrs.ts";
 
-import { modelTreeSegmentsToLogicalLevelSegments } from "../type-spec-paths.mjs";
+import { modelTreeSegmentsToLogicalLevelSegments } from "../type-spec/paths.mjs";
 
 import { CascadingMap } from "../cascading-map.mjs";
 
@@ -850,7 +850,7 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
     }
 
     // NOTE: I adopted the pattern of intial widgets and dynamic widgets
-    // from the pattern in UILeadingAlgorithm in components/type-spec-fundamentals.mjs
+    // from the pattern in UILeadingAlgorithm in components/type-spec/fundamentals.mjs
     _provisionWidgets(compareResult) {
         const removedDynamicWidgets = this._widgets.splice(
             this._initialWidgetsAmount,
