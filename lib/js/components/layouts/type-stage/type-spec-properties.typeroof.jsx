@@ -193,10 +193,13 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
     initialUpdate =
         _BaseDynamicCollectionContainerComponent.prototype.initialUpdate;
 
-    constructor(widgetBus, zones) {
+    constructor(widgetBus, zones, options = {}) {
         // provision widgets dynamically!
         super(widgetBus, zones);
         this._collapsibleStates = new Map();
+        // Layouts that don't support inline text styles (e.g. ramp) can
+        // opt out of the "Style Links" UI.
+        this._showStyleLinks = options.showStyleLinks !== false;
     }
     get dependencies() {
         const dependencies = super.dependencies;
@@ -440,42 +443,55 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 this._getCollapsibleState("typespec_color_collapsible", true), // open
                 false, // scroll
             ],
-            [
-                { zone: "main", id: "typespec_style_links_collapsible" },
-                [],
-                CollapsibleContainer,
-                this._zones,
-                "Style Links",
-                "minimal",
-                "typespec_style_links", //classNameParticle
-                [
-                    [
-                        { rootPath: typeSpecPath, zone: "main" },
-                        [
-                            [".", "typeSpecPath"],
-                            ["./intentStyleLinks", "localStyleLinks"],
-                            ["./stylePatchesSource", "stylesSourceMap"],
-                        ],
-                        UIStylePatchesLinksContainer,
-                        require("raw:zones"),
-                    ],
-                    [
-                        { rootPath: typeSpecPath, zone: "main" },
-                        [
-                            [".", "typeSpecPath"],
-                            ["./markStyleLinks", "localStyleLinks"],
-                            ["./stylePatchesSource", "stylesSourceMap"],
-                        ],
-                        UIMarkStyleLinksContainer,
-                        require("raw:zones"),
-                    ],
-                ],
-                this._getCollapsibleState(
-                    "typespec_style_links_collapsible",
-                    false,
-                ), // open
-                false, // scroll
-            ],
+            ...(this._showStyleLinks
+                ? [
+                      [
+                          {
+                              zone: "main",
+                              id: "typespec_style_links_collapsible",
+                          },
+                          [],
+                          CollapsibleContainer,
+                          this._zones,
+                          "Style Links",
+                          "minimal",
+                          "typespec_style_links", //classNameParticle
+                          [
+                              [
+                                  { rootPath: typeSpecPath, zone: "main" },
+                                  [
+                                      [".", "typeSpecPath"],
+                                      ["./intentStyleLinks", "localStyleLinks"],
+                                      [
+                                          "./stylePatchesSource",
+                                          "stylesSourceMap",
+                                      ],
+                                  ],
+                                  UIStylePatchesLinksContainer,
+                                  require("raw:zones"),
+                              ],
+                              [
+                                  { rootPath: typeSpecPath, zone: "main" },
+                                  [
+                                      [".", "typeSpecPath"],
+                                      ["./markStyleLinks", "localStyleLinks"],
+                                      [
+                                          "./stylePatchesSource",
+                                          "stylesSourceMap",
+                                      ],
+                                  ],
+                                  UIMarkStyleLinksContainer,
+                                  require("raw:zones"),
+                              ],
+                          ],
+                          this._getCollapsibleState(
+                              "typespec_style_links_collapsible",
+                              false,
+                          ), // open
+                          false, // scroll
+                      ],
+                  ]
+                : []),
             filteredTypeDriven([...sections.rest], true),
             [
                 {
