@@ -1080,6 +1080,7 @@ select and drag
 
 .ui_key_moments_link_navigation-list_item-input,
 .ui_more_raps-list_item-input {
+    cursor: pointer;
     text-decoration: none;
 }
 
@@ -1318,6 +1319,11 @@ select and drag
 
 .ui_more_axes {
     order: 1;
+
+    /* No axes left uncovered by the rap: don't show a lone heading. */
+    &.ui_more_axes-empty {
+        display: none;
+    }
 
     .ui_more_axes-item-active {
         color: hsl(0deg 100% 50%);

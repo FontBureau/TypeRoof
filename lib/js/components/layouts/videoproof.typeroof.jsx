@@ -1464,7 +1464,8 @@ const VideoproofModel = _BaseLayoutModel.createClass(
                     unwrapPotentialWriteProxy(activeActors),
                     "0/instance/activeActors/0/instance/keyMoments",
                 );
-                duration.value = videoproofActorKeyMoments.size * 2;
+                if (videoproofActorKeyMoments.size !== 0)
+                    duration.value = videoproofActorKeyMoments.size * 2;
                 return;
             }
 
@@ -1587,18 +1588,20 @@ export class UIMoreAxes extends _BaseComponent {
             if (axisRange.min === axisRange.max)
                 // Nothing to animate.
                 continue;
-            const button = this._domTool.createFragmentFromHTML(
-                this.constructor.TEMPLATE_ITEM,
-            ).firstElementChild;
+            const item = this._domTool.createFragmentFromHTML(
+                    this.constructor.TEMPLATE_ITEM,
+                ).firstElementChild,
+                button = item.querySelector(
+                    ".ui_key_moments_link_navigation-list_item-input",
+                );
             // Label as in the legacy app: name min default max.
             button.textContent = `${axisRange.name || axisTag.trim()} ${axisRange.min} ${axisRange.default} ${axisRange.max}`;
-            button.title = `Animate the ${axisTag.trim()} axis.`;
             button.addEventListener(
                 "click",
                 this._toggleHandler.bind(this, axisTag.trim()),
             );
             this._buttons.set(axisTag.trim(), button);
-            this._itemsContainer.append(button);
+            this._itemsContainer.append(item);
         }
         this.element.classList.toggle(
             "ui_more_axes-empty",
