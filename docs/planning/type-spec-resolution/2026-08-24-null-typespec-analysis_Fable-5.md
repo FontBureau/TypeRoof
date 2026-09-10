@@ -804,7 +804,7 @@ touching it.
 
 | design item (round) | primary sites |
 |---|---|
-| flags on TypeSpecModel (2) | `type-spec-models.mjs:407` + UI in `type-spec-properties.typeroof.jsx` |
+| flags on TypeSpecModel (2) | `type-spec/models.mjs:407` + UI in `type-spec-properties.typeroof.jsx` |
 | `excludeFromFallback` in walk (2) | `integration.typeroof.jsx:110–121` |
 | `noStyler` gate, PM (2,5) | `type-spec.typeroof.jsx:1156ff` wrapper creation / outfitter widgets |
 | `noStyler` gate, Viewer (2,5) | `viewer.typeroof.jsx:484ff` |
@@ -840,7 +840,7 @@ documentation.
 
 Source state pinned against `2f6ac4b2` + comment-only dirt. Biggest
 handoff risks recorded: zero resolver test coverage, the dirty-tree
-line-number offset in `type-spec-models.mjs`, and the two verified
+line-number offset in `type-spec/models.mjs`, and the two verified
 traps (missing `destroy()`, line-1268 destructuring). Line numbers are
 otherwise as of this record and will drift — symbol names are the
 stable reference.
