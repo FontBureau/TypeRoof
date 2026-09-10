@@ -15,7 +15,7 @@ import {
 import {
     TypeSpecModel,
     StylePatchesMapModel,
-} from "../../type-spec-models.mjs";
+} from "../../type-spec/models.mjs";
 import {
     ProseMirrorSchemaModel,
     NodeSpecToTypeSpecMapModel,
@@ -30,7 +30,7 @@ import {
 } from "../../generic.mjs";
 import { GENERIC } from "../../registered-properties-definitions.mjs";
 import { getRegisteredPropertySetup } from "../../registered-properties.mjs";
-import { UINodeSpecToTypeSpecLinksMap } from "../../type-spec-fundamentals.mjs";
+import { UINodeSpecToTypeSpecLinksMap } from "../../type-spec/fundamentals.mjs";
 import { getTypeSpecDefaultsMap } from "./defaults.mjs";
 
 import { LengthModel } from "../../length-models.mjs";

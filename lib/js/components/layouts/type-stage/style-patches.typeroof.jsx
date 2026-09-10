@@ -13,7 +13,7 @@ import {
     availableStylePatchTypes,
     validateStyleName,
     createStylePatch,
-} from "../../type-spec-models.mjs";
+} from "../../type-spec/models.mjs";
 import { FontSelect } from "../../font-loading.mjs";
 import { _BaseTypeDrivenContainerComponentMixin } from "../../type-driven-ui-basics.mjs";
 import { typeSpecGetDefaults } from "./defaults.mjs";

@@ -28,7 +28,7 @@ import {
 import { genericTypeToUIElement } from "../../type-driven-ui.mjs";
 import { TYPESPEC_PPS_MAP } from "./pps-maps.mjs";
 import { UIshowProcessedPropertiesCollapsible } from "../../processed-properties.mjs";
-import { TypeSpecModel } from "../../type-spec-models.mjs";
+import { TypeSpecModel } from "../../type-spec/models.mjs";
 import { identity } from "../../../util.mjs";
 
 import {
@@ -39,7 +39,7 @@ import {
 import {
     ManualBlockMarginsModel,
     ManualInlineMarginsModel,
-} from "../../type-spec-models.mjs";
+} from "../../type-spec/models.mjs";
 
 import { UIMargins } from "../../ui-margins.typeroof.jsx";
 
@@ -62,7 +62,7 @@ import { UIColorChooserTwoColorsWithSwap } from "../../ui-color-chooser.mjs";
 import {
     UIStylePatchesLinksContainer,
     UIMarkStyleLinksContainer,
-} from "../../type-spec-fundamentals.mjs";
+} from "../../type-spec/fundamentals.mjs";
 
 class UIFontLabel extends DynamicTag {
     constructor(

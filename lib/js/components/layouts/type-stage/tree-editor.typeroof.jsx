@@ -6,8 +6,8 @@ import { _UIBaseMap, UINoInputProviderMapKey } from "../../basics/ui-map.mjs";
 import { createIcon, createIconAndLabel } from "../../icons.mjs";
 import { DATA_TRANSFER_TYPES } from "../../data-transfer-types.mjs";
 import { Path } from "../../../metamodel.mjs";
-import { TypeSpecModel } from "../../type-spec-models.mjs";
-import { modelTreeSegmentsToLogicalLevelSegments } from "../../type-spec-paths.mjs";
+import { TypeSpecModel } from "../../type-spec/models.mjs";
+import { modelTreeSegmentsToLogicalLevelSegments } from "../../type-spec/paths.mjs";
 
 import "./tree-editor.css";
 

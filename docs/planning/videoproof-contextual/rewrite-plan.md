@@ -162,7 +162,7 @@ The file had three layers:
 - `UIAxesMathLocationsSumItem`: reads typeKey in `_provisionWidgets`, switches
   widget tree via `_createWrapperForType`
 
-**StylePatch (`type-spec-models.mjs`)** — Heterogeneous type dispatch:
+**StylePatch (`type-spec/models.mjs`)** — Heterogeneous type dispatch:
 - `SimpleStylePatchModel` (leaf) / `CompositeStylePatchModel` (combinator)
 - `StylePatchModel` (dynamic wrapper)
 

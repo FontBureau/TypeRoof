@@ -12,7 +12,7 @@ import {
 import {
     TypeSpecModel,
     StylePatchesMapModel,
-} from "../../type-spec-models.mjs";
+} from "../../type-spec/models.mjs";
 import {
     ProseMirrorSchemaModel,
     NodeSpecToTypeSpecMapModel,
