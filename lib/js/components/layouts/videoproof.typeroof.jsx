@@ -7,6 +7,7 @@ import {
     CoherenceFunction,
     StaticDependency,
     BooleanDefaultTrueModel,
+    StringModel,
     GENERATED_DATA,
 } from "../../metamodel.mjs";
 
@@ -39,6 +40,7 @@ import { FontSelect } from "../font-loading.mjs";
 import {
     timeControlModelMixin,
     AnimationTGenerator,
+    TNumberModel,
 } from "../animation-fundamentals.mjs";
 
 import {
@@ -103,6 +105,7 @@ import {
     AxesMathLocationsSumModel,
     createAxesMathItem,
     applyAxesMathLocations,
+    getAxesMathAxisTags,
 } from "../axes-math-models.mjs";
 
 import { UIAxesMath } from "../axes-math.mjs";
@@ -1375,7 +1378,260 @@ const VideoproofModel = _BaseLayoutModel.createClass(
             }
         },
     ),
+
+    // "But wait, there's more!" — the quick dial for the axes that the
+    // rap (axesMath) doesn't cover.
+    //
+    // `moreAxisTag` is the axis tag currently played by the "wait there's
+    // more" layer at ./activeActors/0. Empty (the default) means the layer
+    // is inert — no keyMoments — and the videoproof actor animates as usual.
+    //
+    // `moreAxisPausedT` remembers the global `t` at which the videoproof
+    // actor was paused when the quick dial was engaged. It is written into
+    // the generated keyMoments as "Children Time" (numericProperties/t),
+    // which freezes the whole sub-tree below the layer, and it is restored
+    // into `t` when the quick dial is disengaged again (see UIMoreAxes).
+    ["moreAxisTag", StringModel],
+    ["moreAxisPausedT", TNumberModel],
+    CoherenceFunction.create(
+        [
+            "updateRap", // the videoproof actor keyMoments have settled
+            "activeActors",
+            "moreAxisTag",
+            "moreAxisPausedT",
+            "font",
+            "duration",
+        ],
+        function updateMoreRap({
+            activeActors,
+            moreAxisTag,
+            moreAxisPausedT,
+            font,
+            duration,
+        }) {
+            const layerKeyMomentsPath = "0/instance/keyMoments",
+                axisRanges = font.value.axisRanges,
+                // From an OpenType font a tag with less than four chars is
+                // filled up to four chars with spaces, axisRanges is keyed
+                // that way, see _toAbsoluteLocations in axes-math-models.
+                axisTag = moreAxisTag.value
+                    ? `${moreAxisTag.value}    `.slice(0, 4)
+                    : "",
+                axisRange =
+                    axisTag !== "" && Object.hasOwn(axisRanges, axisTag)
+                        ? axisRanges[axisTag]
+                        : null,
+                // The signature is stored as the label of the first
+                // generated keyMoment. Comparing it is the cheap way to
+                // find out whether the generated keyMoments are still
+                // up to date: this runs on a hot path, `t` is set in
+                // animation speed.
+                signature =
+                    axisRange === null
+                        ? ""
+                        : `more ${axisTag.trim()}: ${axisRange.min}/${axisRange.default}/${axisRange.max}` +
+                          ` @${moreAxisPausedT.value}`;
+
+            let activeActorsRO = unwrapPotentialWriteProxy(activeActors);
+            const currentSignature = (() => {
+                const keyMoments = getEntry(
+                    activeActorsRO,
+                    layerKeyMomentsPath,
+                );
+                return keyMoments.size === 0
+                    ? ""
+                    : getEntry(keyMoments, "0/label").value;
+            })();
+            if (currentSignature === signature) return;
+
+            const activeActorsDraft = unwrapPotentialWriteProxy(
+                    activeActors,
+                    "ensureDraft",
+                ),
+                keyMomentsDraft = getDraftEntry(
+                    activeActorsDraft,
+                    layerKeyMomentsPath,
+                );
+            keyMomentsDraft.splice(0, Infinity);
+
+            if (axisRange === null) {
+                if (moreAxisTag.value !== "")
+                    // The axis is not in the (new) font.
+                    moreAxisTag.value = "";
+                // Restore the duration of the videoproof actor animation,
+                // same formula as in applyAxesMathLocations.
+                const videoproofActorKeyMoments = getEntry(
+                    unwrapPotentialWriteProxy(activeActors),
+                    "0/instance/activeActors/0/instance/keyMoments",
+                );
+                if (videoproofActorKeyMoments.size !== 0)
+                    duration.value = videoproofActorKeyMoments.size * 2;
+                return;
+            }
+
+            // The order of the legacy app's calculateKeyframes: min,
+            // default, max for opsz, default, min, max for all other
+            // axes; and, as this is a loop, back to the first value.
+            // Values equal to the default are skipped, e.g. for an axis
+            // like ital, where default === min.
+            const { default: defaultValue } = axisRange,
+                values = (
+                    axisTag.trim() === "opsz"
+                        ? ["min", "default", "max"]
+                        : ["default", "min", "max"]
+                )
+                    .filter(
+                        (key) =>
+                            key === "default" ||
+                            axisRange[key] !== defaultValue,
+                    )
+                    .map((key) => axisRange[key]);
+
+            const KeyMomentModel = keyMomentsDraft.constructor.Model;
+            for (const [i, value] of values.entries()) {
+                const keyMoment = KeyMomentModel.createPrimalDraft(
+                    keyMomentsDraft.dependencies,
+                );
+                keyMoment.getDraftFor("label").value =
+                    i === 0 ? signature : `${axisTag.trim()} ${value}`;
+                if (axisTag.trim() === "opsz")
+                    // Otherwise sanitizeAxes (manualAxesLocationsModelMixin)
+                    // deletes the opsz location again.
+                    keyMoment.getDraftFor("autoOPSZ").value = false;
+                keyMoment
+                    .getDraftFor("axesLocations")
+                    .setSimpleValue(axisTag, value);
+                // "Children Time": freeze the videoproof actor (and its
+                // cells) at the moment the quick dial was engaged.
+                keyMoment
+                    .getDraftFor("numericProperties")
+                    .setSimpleValue("t", moreAxisPausedT.value);
+                keyMomentsDraft.push(keyMoment);
+            }
+            // Connect end with start, so default -> min -> default -> max
+            // transitions back into default.
+            getDraftEntry(activeActorsDraft, "0/instance/isLoop").value = true;
+            duration.value = values.length * 2;
+        },
+    ),
 );
+/**
+ * The "But wait, there's more!" quick dial: one button per axis of the
+ * font that is not covered by the rap (axesMath). Engaging one of them
+ * pauses the videoproof actor — the layer at ./activeActors/0 freezes its
+ * sub-tree via "Children Time" — and animates that single axis instead.
+ * See the moreAxisTag/updateMoreRap part of VideoproofModel.
+ */
+export class UIMoreAxes extends _BaseComponent {
+    static TEMPLATE = `<div class="ui_more_axes ui_key_moments_link_navigation">
+    <h4 class="ui_key_moments_link_navigation-label">But wait, there's more!</h4>
+    <ol class="ui_key_moments_link_navigation-list"></ol>
+</div>`;
+    static TEMPLATE_ITEM = `<li class="ui_key_moments_link_navigation-list_item">
+    <a class="ui_key_moments_link_navigation-list_item-input"></a>
+</li>`;
+
+    constructor(widgetBus) {
+        super(widgetBus);
+        this._buttons = new Map();
+        [this.element, this._itemsContainer] = this._initTemplate();
+    }
+
+    _initTemplate() {
+        const container = this._domTool.createFragmentFromHTML(
+                this.constructor.TEMPLATE,
+            ).firstElementChild,
+            items = container.querySelector(
+                ".ui_key_moments_link_navigation-list",
+            );
+        this._insertElement(container);
+        return [container, items];
+    }
+
+    _toggleHandler(axisTag /*, event*/) {
+        this._changeState(() => {
+            const moreAxisTag = this.getEntry("moreAxisTag"),
+                moreAxisPausedT = this.getEntry("moreAxisPausedT"),
+                t = this.getEntry("t"),
+                playing = this.getEntry("playing");
+            if (moreAxisTag.value === axisTag) {
+                moreAxisTag.value = "";
+                // Resume the videoproof actor animation where it was paused.
+                t.value = moreAxisPausedT.value;
+                return;
+            }
+            if (moreAxisTag.value === "")
+                // Remember where the videoproof actor is paused. Switching
+                // directly from one "more" axis to another keeps it.
+                moreAxisPausedT.value = t.value;
+            moreAxisTag.value = axisTag;
+            // Play the "more" animation from its start.
+            t.value = 0;
+            playing.value = true;
+        });
+    }
+
+    _updateItems(font, axesMath) {
+        const axisRanges = font.value.axisRanges,
+            // Tags of a font are padded to four chars, the tags in the
+            // axesMath model are not, see _toAbsoluteLocations in
+            // axes-math-models.
+            usedTags = new Set(
+                Array.from(getAxesMathAxisTags(axesMath), (axisTag) =>
+                    `${axisTag}    `.slice(0, 4),
+                ),
+            );
+        this._domTool.clear(this._itemsContainer);
+        this._buttons.clear();
+        for (const [axisTag, axisRange] of Object.entries(axisRanges)) {
+            if (usedTags.has(axisTag)) continue;
+            if (axisRange.min === axisRange.max)
+                // Nothing to animate.
+                continue;
+            const item = this._domTool.createFragmentFromHTML(
+                    this.constructor.TEMPLATE_ITEM,
+                ).firstElementChild,
+                button = item.querySelector(
+                    ".ui_key_moments_link_navigation-list_item-input",
+                );
+            // Label as in the legacy app: name min default max.
+            button.textContent = `${axisRange.name || axisTag.trim()} ${axisRange.min} ${axisRange.default} ${axisRange.max}`;
+            button.addEventListener(
+                "click",
+                this._toggleHandler.bind(this, axisTag.trim()),
+            );
+            this._buttons.set(axisTag.trim(), button);
+            this._itemsContainer.append(item);
+        }
+        this.element.classList.toggle(
+            "ui_more_axes-empty",
+            this._buttons.size === 0,
+        );
+    }
+
+    _updateActive(moreAxisTag) {
+        for (const [axisTag, button] of this._buttons)
+            button.classList.toggle(
+                "ui_more_axes-item-active",
+                axisTag === moreAxisTag,
+            );
+    }
+
+    update(changedMap) {
+        if (changedMap.has("font") || changedMap.has("axesMath")) {
+            const font = changedMap.has("font")
+                    ? changedMap.get("font")
+                    : this.getEntry("font"),
+                axesMath = changedMap.has("axesMath")
+                    ? changedMap.get("axesMath")
+                    : this.getEntry("axesMath");
+            this._updateItems(font, axesMath);
+            this._updateActive(this.getEntry("moreAxisTag").value);
+        } else if (changedMap.has("moreAxisTag"))
+            this._updateActive(changedMap.get("moreAxisTag").value);
+    }
+}
+
 export class UIAlignment extends _BaseComponent {
     static TEMPLATE = `<div class="ui_alignment">
     <label class="radio-main-label">Cell Alignment</label>
@@ -1956,7 +2212,7 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                 class: "sidebar-group",
             }),
             keyMomentsContainer = widgetBus.domTool.createElement("div", {
-                class: "sidebar-group",
+                class: "sidebar-group videoproof_layout-key_moments",
             }),
             // FIXME: the main reason for this container is so far to have
             // a height restriction for the contextual model. But it
@@ -2405,6 +2661,24 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                 // updateDefaultsDependencies
                 videoProofActorUpdateDefaultsDependencies,
                 { zone: "keyMoments", label: null }, //keyMomentsOptions
+            ],
+            [
+                { zone: "keyMoments" },
+                [
+                    "moreAxisTag",
+                    "moreAxisPausedT",
+                    "axesMath",
+                    // `font` is an internalized dependency of the layout
+                    // model, it is not reachable as an entry, hence the
+                    // application root font.
+                    ["/font", "font"],
+                    // `t` and `playing` are not rendered by this widget,
+                    // they are read and written when a quick dial button
+                    // is engaged/disengaged.
+                    "t",
+                    "playing",
+                ],
+                UIMoreAxes,
             ],
         ];
         this._initWidgets(widgets);
