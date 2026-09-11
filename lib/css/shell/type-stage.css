@@ -11,7 +11,11 @@ prosemirror
      * with explicit widths (LengthModel) their sum may exceed the host
      * width — they must keep their resolved size, the host scrolls. */
     flex-shrink: 0;
-
+    /* These elements will have a fixed width set, but their children
+     * may grow bigger than that, it's allowed to define an overflowing
+     * width, in compare mode the left pane would overlap the right pane,
+     * if we didn't allow to grow.*/
+    min-width: fit-content;
     --label-width-or-margin-inline-start: 2.5rem;
 }
 
@@ -156,6 +160,8 @@ prosemirror
         "content"
         "bottom"
         "space-after";
+
+    width: fit-content;
 
     & > [data-node-content] {
         grid-area: content;
