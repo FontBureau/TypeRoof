@@ -1,0 +1,141 @@
+/**
+ * Comments are positioned within the layout zone, hence it must be the
+ * containing block for the absolutely positioned comment balloons.
+ */
+.typeroof-main > .typeroof-layout {
+    position: relative;
+}
+
+/* While picking a position for a new comment the whole document uses
+ * the crosshair cursor, so it doesn't change over the layout contents.
+ */
+body.ui_comments-picking,
+body.ui_comments-picking * {
+    cursor: crosshair !important;
+}
+
+/**
+ * A zero sized anchor at the origin of the layout zone content box, so
+ * that the children can use coordinates relative to it directly.
+ */
+.ui_comments {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    overflow: visible;
+    z-index: 10;
+    /* Don't block interaction with the layout, the balloons opt back in. */
+    pointer-events: none;
+}
+
+.ui_comment {
+    position: absolute;
+    /* The tip is at the bottom center, pointing at the stored position. */
+    transform: translate(-50%, -100%);
+    margin-top: -0.75em;
+    box-sizing: border-box;
+    /* Without max-content the shrink-to-fit width would depend on the
+     * distance to the right edge of the layout zone.
+     */
+    width: max-content;
+    max-width: 300px;
+    border-radius: 0.5em;
+    background: hsl(50, 85%, 80%);
+    color: black;
+    font-size: 0.9rem;
+    line-height: 1.3;
+    overflow-wrap: break-word;
+    pointer-events: auto;
+    display: flex;
+    align-items: stretch;
+
+    /* The author rule above beats the user agent [hidden] rule. */
+    &[hidden] {
+        display: none;
+    }
+
+    &::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -0.75em;
+        border: 0.75em solid transparent;
+        border-top-color: hsl(50, 85%, 80%);
+        border-bottom-width: 0;
+    }
+}
+
+.ui_comment-text {
+    max-height: 80px;
+    overflow-y: auto;
+    padding: 0.5em 0.75em;
+}
+
+.ui_comment-delete_button {
+    display: flex;
+    align-items: center;
+    padding: 0.5em;
+    border: 0;
+    background: hsl(50, 85%, 80%);
+    color: inherit;
+    cursor: pointer;
+    height: auto;
+
+    .material-symbols-outlined {
+        font-size: 1.2em;
+    }
+}
+
+.ui_comment-draft {
+    padding: 0.5em;
+    width: 260px;
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 0.5em;
+}
+
+.ui_comment-input {
+    background-color: hsl(50, 85%, 90%);
+    border-color: hsl(50, 50%, 50%);
+    width: 100%;
+    height: auto;
+    box-sizing: border-box;
+
+    &:focus-within {
+        outline: 1px solid hsl(50, 50%, 50%);
+    }
+}
+
+.ui_comment-buttons {
+    display: flex;
+    gap: 0.5em;
+}
+
+.ui_comments-add_button {
+    display: block;
+}
+
+.ui_comments-show_comments {
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
+    margin-top: 0.25em;
+}
+
+/* The draft balloon stays visible, it is not a comment yet and hiding
+ * it would strand the user in an invisible input.
+ */
+.ui_comments-hidden .ui_comment:not(.ui_comment-draft) {
+    display: none;
+}
+
+/* The layout element a comment is anchored to, or that is hovered while
+ * picking a position for a new comment.
+ */
+.ui_comments-highlight {
+    outline: 3px solid hsla(50, 85%, 50%, 25%) !important;
+    position: absolute;
+}
