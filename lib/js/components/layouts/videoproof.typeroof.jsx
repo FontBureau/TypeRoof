@@ -6,6 +6,7 @@ import {
     unwrapPotentialWriteProxy,
     CoherenceFunction,
     StaticDependency,
+    BooleanModel,
     BooleanDefaultTrueModel,
     GENERATED_DATA,
 } from "../../metamodel.mjs";
@@ -1091,6 +1092,12 @@ const VideoproofModel = _BaseLayoutModel.createClass(
         },
     ),
     ["showParameters", BooleanDefaultTrueModel],
+    // When true, the `font-variation-settings` applied to the samples
+    // (and the parameters display) list all axes of the font explicitly,
+    // including those that are at their default location. Otherwise,
+    // only the axes that differ from their default location are listed.
+    // The equivalent of the legacy tools "applyDefaultsExplicitly" flag.
+    ["verboseFontVariationSettings", BooleanModel],
     CoherenceFunction.create(
         [
             "settleDynamicInstance",
@@ -1493,8 +1500,13 @@ class UIParameterAxesDisplay extends _BaseComponent {
         return [element];
     }
     update(changedMap) {
-        if (changedMap.has("animationProperties@")) {
-            const animationProperties = changedMap.get("animationProperties@"),
+        if (
+            changedMap.has("animationProperties@") ||
+            changedMap.has("verboseFontVariationSettings")
+        ) {
+            const animationProperties = changedMap.has("animationProperties@")
+                    ? changedMap.get("animationProperties@")
+                    : this.getEntry("animationProperties@"),
                 // the globalT name is defined for the Parent UIParametersDisplay
                 // however, we read it here. It's interesting, as we don't
                 // require it as a local dependency, animationProperties@
@@ -1507,7 +1519,12 @@ class UIParameterAxesDisplay extends _BaseComponent {
                     animationProperties.animanion.getPropertiesFromGlobalT(
                         globalT,
                     );
-            renderAxesParameterDisplay(this.element, propertyValuesMap);
+            renderAxesParameterDisplay(this.element, propertyValuesMap, {
+                verboseFontVariationSettings: this.getEntry(
+                    "verboseFontVariationSettings",
+                ).value,
+                font: this.getEntry("font").value,
+            });
         }
     }
 }
@@ -1668,6 +1685,13 @@ class UIParametersDisplay extends _BaseContainerComponent {
                         [
                             `animationProperties@${widgetBus.rootPath}`,
                             "animationProperties@",
+                        ],
+                        [`${widgetBus.rootPath.append("font")}`, "font"],
+                        [
+                            widgetBus.getExternalName(
+                                "verboseFontVariationSettings",
+                            ),
+                            "verboseFontVariationSettings",
                         ],
                     ],
                     UIParameterAxesDisplay,
@@ -2082,8 +2106,27 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
             // let's init a Layer here, we ensured there is one at ./activeActors/0/instance
             (() => {
                 const layerActorType =
-                    activatableActorTypes.get(LAYER_TYPE_KEY);
-                return getActorWidgetSetup({
+                        activatableActorTypes.get(LAYER_TYPE_KEY),
+                    // `verboseFontVariationSettings` is a setting of this
+                    // layout, but it is required by the actor renderers,
+                    // which are generic and nested arbitrarily deep, hence
+                    // it is injected into all of them, at all levels.
+                    extraActorDependencies = [
+                        [
+                            widgetBus.rootPath
+                                .append("verboseFontVariationSettings")
+                                .toString(),
+                            "verboseFontVariationSettings",
+                        ],
+                    ],
+                    getActorWidgetSetupWithLayoutDependencies = (setup) =>
+                        getActorWidgetSetup({
+                            ...setup,
+                            extraActorDependencies,
+                            getActorWidgetSetup:
+                                getActorWidgetSetupWithLayoutDependencies,
+                        });
+                return getActorWidgetSetupWithLayoutDependencies({
                     typeKey: LAYER_TYPE_KEY, // ?
                     typeLabel: layerActorType.get("label").value,
                     typeClass: layerActorType.get("typeClass").value,
@@ -2097,7 +2140,6 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                         ["layer", zones.get("videoproof")],
                     ]),
                     layerBaseClass: "videoproof_layout-layer",
-                    getActorWidgetSetup,
                 });
             })(),
             [
@@ -2339,6 +2381,17 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
             ],
             [
                 {
+                    zone: "general",
+                },
+                [["verboseFontVariationSettings", "value"]],
+                UICheckboxInput,
+                "verbose-font-variation-settings", // classToken
+                getRegisteredPropertySetup(
+                    "generic/verboseFontVariationSettings",
+                ).label, //label
+            ],
+            [
+                {
                     zone: "before-layout",
                     rootPath: videoProofActorPath,
                     // getEntry is injected by ComponentWrapper and only
@@ -2359,6 +2412,12 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                             .append("showParameters")
                             .toString(),
                         "showParameters",
+                    ],
+                    [
+                        this.widgetBus.rootPath
+                            .append("verboseFontVariationSettings")
+                            .toString(),
+                        "verboseFontVariationSettings",
                     ],
                 ],
                 UIParametersDisplay,
