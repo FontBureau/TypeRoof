@@ -24,7 +24,8 @@
     "stylelint:fix": "stylelint . --fix",
     "stylelint:check": "stylelint .",
     "typecheck": "tscw --noEmit --pretty false --project ./tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [
     "typography",
@@ -58,6 +59,7 @@
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^6.0.3",
+    "@vitest/coverage-v8": "^5.0.1",
     "browserslist": "^4.28.8",
     "concurrently": "^8.2.2",
     "eslint": "^9.35.0",
@@ -74,7 +76,7 @@
     "typescript-eslint": "^8.43.0",
     "vite": "^8.1.5",
     "vite-plugin-static-copy": "^4.1.1",
-    "vitest": "^4.1.10"
+    "vitest": "^5.0.1"
   },
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.44.1"
