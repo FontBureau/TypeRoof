@@ -148,10 +148,16 @@ export const ensureDimensionBoundnessCoherenceFn = CoherenceFunction.create(
         // width/height are instances of lengthModel:
         //      struct fields ({value, unit}).
         const widthUnit = width.get("unit"),
-            heightUnit = height.get("unit");
-        if (widthUnit.isEmpty)
+            heightUnit = height.get("unit"),
+            widthValue = width.get("value");
+        if (widthUnit.isEmpty) {
             widthUnit.value = widthUnit.constructor.Model.defaultValue; // "percent-layout";
-        // value is filled by LengthModel's own coherence.
+            // The migration value is explicit here, not the default of
+            // the generic LengthValueModel: "100% layout" is a rule of
+            // the width field's legacy migration, not of every length.
+            if (widthValue.isEmpty) widthValue.value = 100;
+        }
+        // otherwise value is filled by LengthModel's own coherence.
     },
 );
 
