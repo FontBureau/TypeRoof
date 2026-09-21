@@ -39,11 +39,11 @@ import {
 
 import { setLanguageTag } from "../language-tags.typeroof.jsx";
 
-import { createIcon } from "../icons.mjs";
+import { createIcon, createLabelAndIcon } from "../icons.mjs";
 
 import { renderAxesParameterDisplay } from "../axes-parameters.mjs";
 
-import { setBlockType } from "prosemirror-commands";
+import { setBlockType, lift, wrapIn } from "prosemirror-commands";
 import { toggleMark, removeMark } from "./commands.ts";
 
 import {
@@ -1984,6 +1984,139 @@ export class UIProseMirrorMenuBlocks extends _BaseComponent {
         }
     }
 }
+/**
+ * Nesting controls for block structure: "lift" moves the active
+ * block(s) out of their parent container; "nest" wraps the selection
+ * into a container node. Both are plain ProseMirror commands
+ * (prosemirror-commands: lift, wrapIn); their active states are the
+ * commands' dry-run results:
+ *
+ *  - lift is enabled iff lifting the selection is valid (i.e. it is
+ *    nested and the grandparent accepts the node type);
+ *  - the nest <select> lists all container-capable node types for
+ *    which wrapIn succeeds at the current selection; empty list means
+ *    no nesting is possible here and the select is disabled.
+ *
+ * Purely editor-state driven (no model dependencies); updateView is
+ * forwarded by UIProseMirrorMenu like for the other menus.
+ */
+export class UIProseMirrorMenuNesting extends _BaseComponent {
+    constructor(widgetBus, label = null) {
+        super(widgetBus);
+        [this.element, this._liftButton, this._nestButton, this._nestSelect] =
+            this._initTemplate(label);
+    }
+
+    _getTemplate(h, label = null) {
+        const liftButton = (
+                <button
+                    type="button"
+                    class="ui_prose_mirror_menu-lift"
+                    title="Lift out of container"
+                >
+                    {createLabelAndIcon("Lift", "output")}
+                </button>
+            ),
+            nestButton = (
+                <button type="button" class="ui_prose_mirror_menu-nest-button">
+                    {createLabelAndIcon("Wrap", "input")}
+                </button>
+            ),
+            nestSelect = (
+                <select class="ui_prose_mirror_menu-nest-select"></select>
+            ),
+            container = (
+                <div class="ui_prose_mirror_menu-container ui_prose_mirror_menu-container-nesting">
+                    {label !== null ? (
+                        <span class="typeroof-ui-label">{label}</span>
+                    ) : (
+                        ""
+                    )}
+                    <div
+                        class="ui_prose_mirror_menu-nest"
+                        title="Nest into container"
+                    >
+                        {nestButton}
+                        {nestSelect}
+                    </div>
+                    {liftButton}
+                </div>
+            );
+        return [container, liftButton, nestButton, nestSelect];
+    }
+
+    _initTemplate(label = null) {
+        const [container, liftButton, nestButton, nestSelect] =
+            this._getTemplate(this._domTool.h, label);
+        this._insertElement(container);
+        liftButton.addEventListener(
+            "pointerdown",
+            this._liftClickHandler.bind(this),
+        );
+        nestButton.addEventListener(
+            "pointerdown",
+            this._nestClickHandler.bind(this),
+        );
+        return [container, liftButton, nestButton, nestSelect];
+    }
+
+    _liftClickHandler(event) {
+        if (!this._editorView) return;
+        event.preventDefault();
+        this._editorView.focus(); // important to keep the selection alive
+        if (this._liftButton.disabled) return;
+        const { dispatch, state } = this._editorView;
+        lift(state, dispatch);
+    }
+
+    _nestClickHandler(/*event*/) {
+        if (!this._editorView) return;
+        event.preventDefault();
+        this._editorView.focus(); // important to keep the selection alive
+        if (this._nestButton.disabled) return;
+        const nodeTypeName = this._nestSelect.value;
+        if (nodeTypeName === "") return;
+        const { dispatch, state } = this._editorView,
+            nodeType = state.schema.nodes[nodeTypeName];
+        wrapIn(nodeType)(state, dispatch);
+    }
+
+    _getNestCandidates(state) {
+        const candidates = [];
+        for (const [name, nodeType] of Object.entries(state.schema.nodes)) {
+            // container-capable: not the doc, not inline, has content
+            if (name === "doc" || nodeType.isInline || !nodeType.spec.content)
+                continue;
+            // Authoritative check: the command itself (dry-run) decides,
+            // content-expression edge cases included.
+            if (wrapIn(nodeType)(state)) candidates.push(name);
+        }
+        return candidates;
+    }
+
+    updateView(view /*, prevState = null*/) {
+        this._editorView = view;
+        const { state } = view,
+            h = this._domTool.h,
+            candidates = this._getNestCandidates(state);
+        this._liftButton.disabled = !lift(state);
+        const oldValue = this._nestSelect.value;
+        this._nestSelect.replaceChildren(
+            ...candidates.map((name) => <option value={name}>{name}</option>),
+        );
+        if (candidates.includes(oldValue)) this._nestSelect.value = oldValue;
+        this._nestSelect.disabled = candidates.length === 0;
+        this._nestButton.disabled = candidates.length === 0;
+    }
+
+    destroyView() {
+        this._editorView = null;
+        this._liftButton.disabled = true;
+        this._nestSelect.disabled = true;
+        this._nestButton.disabled = true;
+    }
+}
+
 export class UIProseMirrorMenuStyles extends _BaseComponent {
     constructor(
         widgetBus,
@@ -2257,6 +2390,7 @@ export class UIProseMirrorMenu extends _IDPublisherMixin(
     static ID_MAP = Object.freeze({
         menuStyles: "proseMirrorMenuStyles",
         menuBlocks: "proseMirrorMenuBlocks",
+        menuNesting: "proseMirrorMenuNesting",
         menuOG: "proseMirrorMenuOG",
     });
     constructor(widgetBus, zones, originTypeSpecPath, menuSettings) {
@@ -2266,6 +2400,12 @@ export class UIProseMirrorMenu extends _IDPublisherMixin(
                 ["typeSpec", "nodeSpecToTypeSpec"],
                 UIProseMirrorMenuBlocks,
                 "Elements:",
+            ],
+            [
+                { ...menuSettings, id: new.target.ID_MAP.menuNesting },
+                [], // no model dependencies — purely editor-state driven
+                UIProseMirrorMenuNesting,
+                "Element Nesting:",
             ],
             [
                 { ...menuSettings, id: new.target.ID_MAP.menuStyles },
