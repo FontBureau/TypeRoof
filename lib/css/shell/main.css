@@ -1956,6 +1956,15 @@ prosemirror menu
     }
 }
 
+.ui_prose_mirror_menu-container-nesting {
+    & > * {
+        display: block flex;
+    }
+    .material-symbols-outlined {
+        font-size: 1.5rem !important;
+    }
+}
+
 .ui_prose_mirror_menu-simple {
     display: flex;
     gap: 0.25em;
