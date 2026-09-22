@@ -41,6 +41,8 @@ body > .wrapper {
      * when we scroll after the end of the container was reached.
      */
     overscroll-behavior-x: contain;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
 }
 
 /******************************************************************************

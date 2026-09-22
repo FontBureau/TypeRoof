@@ -6,7 +6,7 @@ import tseslint from "typescript-eslint";
 export default [
     // Global ignores
     {
-        ignores: ["**/vendor/**", "_site/**", "dist/**"],
+        ignores: ["**/vendor/**", "_site/**", "dist/**", "coverage/**"],
     },
     eslint.configs.recommended,
     react.configs.flat.recommended,
