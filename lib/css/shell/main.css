@@ -1960,6 +1960,7 @@ prosemirror menu
     & > * {
         display: block flex;
     }
+
     .material-symbols-outlined {
         font-size: 1.5rem !important;
     }
