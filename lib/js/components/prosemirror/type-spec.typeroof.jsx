@@ -376,10 +376,23 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                     [`${COLOR}backgroundColor`, "background-color"],
                 ],
                 getDefault = (property) => {
-                    if (property.startsWith(`${GENERIC}blockMargins/`)) {
-                        // FIXME: this is a hack!
-                        return [true, `0pt`];
+                    for (const prefix of [
+                        `${GENERIC}blockMargins/`,
+                        `${GENERIC}inlineMargins/`,
+                        `${GENERIC}columnGutter/`,
+                    ]) {
+                        if (property.startsWith(prefix))
+                            // This is a hack!
+                            // FIXME(hack): consumer-side default for derived terminal keys (*/pt)
+                            // that no style produced. The proper mechanism is DEMARCATION_FALLBACK:
+                            // a third demarcation yielding into a scope-local, non-inheritable
+                            // cascade layer (local > inherited > fallback > defaults) — override
+                            // by precedence, no resolver changes, never a style fact. See
+                            // docs/planning/DEMARCATION_FALLBACK.md. Delete this branch (and the
+                            // blockMargins one above) once implemented.
+                            return [true, `0pt`];
                     }
+
                     if (property.startsWith(LAYOUT))
                         // nodeProperties@ keys are unregistered by
                         // design; when absent (non-root scopes) the CSS
