@@ -36,10 +36,9 @@ import {
     UIManualAxesLocations,
 } from "../../ui-manual-axis-locations.mjs";
 
-import {
-    ManualBlockMarginsModel,
-    ManualInlineMarginsModel,
-} from "../../type-spec/models.mjs";
+import { ManualBlockMarginsModel } from "../../type-spec/models.mjs";
+
+import { ManualInlineMarginsModel } from "../../type-spec/horizontal-layout-models.mjs";
 
 import { UIMargins } from "../../ui-margins.typeroof.jsx";
 
@@ -300,10 +299,11 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                     "axesLocations",
                 ],
                 horizontal: [
-                    "columnCount",
-                    "columnGutter",
-                    "lineLength",
-                    "inlineMargins",
+                    "horizontalLayout",
+                    //    "columnCount",
+                    //    "columnGutter",
+                    //    "lineLength",
+                    //    "inlineMargins",
                     "textAlign",
                 ],
                 vertical: ["leading", "blockMargins"],
