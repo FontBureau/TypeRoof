@@ -2,7 +2,7 @@ import {
     _BaseContainerComponent,
     SimpleProtocolHandler,
 } from "../../basics/component.mjs";
-import { _BaseLayoutModel } from "../../main-model.mjs";
+import { _BaseLayoutModel, CommentsModel } from "../../main-model.mjs";
 import {
     PathModelOrEmpty,
     Path,
@@ -51,10 +51,13 @@ import {
 import { LengthModel } from "../../length-models.mjs";
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 
+import { createCommentsWidgets } from "../../ui-comments.mjs";
+
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
 const RampModel = _BaseLayoutModel.createClass(
     "RampModel",
+    ["comments", CommentsModel],
     // The root TypeSpec
     ["typeSpec", TypeSpecModel],
     ["editingTypeSpec", PathModelOrEmpty],
@@ -448,6 +451,7 @@ class RampController extends _BaseContainerComponent {
                 StylePatchPropertiesManager,
                 new Map([...zones, ["main", stylePatchesManagerContainer]]),
             ],
+            ...createCommentsWidgets(zones),
         ];
         this._initWidgets(widgets);
     }
