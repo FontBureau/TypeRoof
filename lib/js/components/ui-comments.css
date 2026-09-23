@@ -26,23 +26,26 @@ body.ui_comments-picking * {
     height: 0;
     overflow: visible;
     z-index: 10;
+
     /* Don't block interaction with the layout, the balloons opt back in. */
     pointer-events: none;
 }
 
 .ui_comment {
     position: absolute;
+
     /* The tip is at the bottom center, pointing at the stored position. */
     transform: translate(-50%, -100%);
     margin-top: -0.75em;
     box-sizing: border-box;
+
     /* Without max-content the shrink-to-fit width would depend on the
      * distance to the right edge of the layout zone.
      */
     width: max-content;
     max-width: 300px;
     border-radius: 0.5em;
-    background: hsl(50, 85%, 80%);
+    background: hsl(50deg 85% 80%);
     color: black;
     font-size: 0.9rem;
     line-height: 1.3;
@@ -63,7 +66,7 @@ body.ui_comments-picking * {
         left: 50%;
         margin-left: -0.75em;
         border: 0.75em solid transparent;
-        border-top-color: hsl(50, 85%, 80%);
+        border-top-color: hsl(50deg 85% 80%);
         border-bottom-width: 0;
     }
 }
@@ -79,7 +82,7 @@ body.ui_comments-picking * {
     align-items: center;
     padding: 0.5em;
     border: 0;
-    background: hsl(50, 85%, 80%);
+    background: hsl(50deg 85% 80%);
     color: inherit;
     cursor: pointer;
     height: auto;
@@ -98,14 +101,14 @@ body.ui_comments-picking * {
 }
 
 .ui_comment-input {
-    background-color: hsl(50, 85%, 90%);
-    border-color: hsl(50, 50%, 50%);
+    background-color: hsl(50deg 85% 90%);
+    border-color: hsl(50deg 50% 50%);
     width: 100%;
     height: auto;
     box-sizing: border-box;
 
     &:focus-within {
-        outline: 1px solid hsl(50, 50%, 50%);
+        outline: 1px solid hsl(50deg 50% 50%);
     }
 }
 
@@ -136,6 +139,6 @@ body.ui_comments-picking * {
  * picking a position for a new comment.
  */
 .ui_comments-highlight {
-    outline: 3px solid hsla(50, 85%, 50%, 25%) !important;
+    outline: 3px solid hsl(50deg 85% 50% / 25%) !important;
     position: absolute;
 }
