@@ -25,14 +25,16 @@ Latin:
         Reference: '*§¶†‡•'
         Quotation: "\"'“”‚„‹›«»′″"
         Parenthetical: '()[]{}'
-        Math: '+÷×−±<>≤≥≈≠=^~¬∕­/'
-        Commercial: '®©™#@⁒ʹʺ/\¦|_№⟨⟩µ⁄'
+        Math: '+÷×−±<>≤≥≈≠=^~¬∕­/Ω∆'
+        Commercial: '®©™#@⁒ʹʺ/\¦|_№⟨⟩µ⁄₴₸�'
 Greek:
     Uppercase: ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ
     Lowercase: αβγδεζηθικλμνξοπρστυφχψως
+    Symbols: ʹ͵;·΄΅Ϗϗ
 Cyrillic:
     Uppercase: АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ
     Lowercase: абвгдежзийклмнопрстуфхцчшщъыьэюя
+    Symbols: ₴₸Ω←↑→↓∆
 World:
     Figures:
         _default: "0123456789"
