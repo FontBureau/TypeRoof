@@ -10,7 +10,9 @@ agent-created: true
 
 # {{title}}
 
-Status: planning. Code lives in `column-layout.mjs` next to this report, not yet wired into `lib/`.
+Status: **delivered** (2026-09, branch `runion/horizontal-layout`).
+Code lives in `lib/js/components/layouts/type-stage/horizontal-layout-runion.mjs`;
+see §10 for the delivery status against this report.
 
 ## 1. Goal
 
@@ -184,3 +186,53 @@ is dropped gracefully by the existing resolution rule.
 - Whether per-count gap overrides are ever needed (escape hatch exists in the
   normalized runtime form; not modeled).
 - UI for the algorithm choice (analogous to the leading UI) — out of scope here.
+
+## 10. Delivery status (2026-09, branch `runion/horizontal-layout`)
+
+Delivered in `lib/js/components/layouts/type-stage/horizontal-layout-runion.mjs`,
+executed in the node-properties channel (`horizontalLayoutRunionGen`), configured
+via `HorizontalLayoutRunionModel` and the dynamic algorithm UI. Deviations and
+extensions against the plan above:
+
+**Architecture (vs §7).** The proposal's `columns/setup` synthetic in the
+typeSpecnion became a two-channel design: the style channel yields the
+description (`horizontalLayout/algorithm`, `horizontalLayout/*` config keys,
+fully inheriting); the node channel decides *where* it executes, converts
+`availableWidth` pt→EN at the boundary, runs the runion, and yields pt facts.
+An executing scope *consumes* the description (inheritance-policy tombstones),
+so children fill the column instead of re-running the algorithm — this
+replaced the "re-run per node" instability (geometry depended on each node's
+fontSize). `availableWidth` is pt at the boundary (§9 point resolved).
+
+**Result contract (vs §1).** `{lineLength, columnCount, columnGutter,
+marginStart, marginEnd, fullWidth}` — marginLeft/Right renamed to
+marginStart/End, `fullWidth` added; margins route to
+`generic/inlineMargins/{start,end}(/pt)` (padding-inline in CSS).
+
+**New semantics beyond the plan.**
+- `minPadding` (EN, default 0): reserved up front (`budget = width − reserve`),
+  re-added to the remainder, split by `paddingRatio`.
+- Empty `columns` list: pure min-driven growth; columns *widen* (unbounded
+  max) instead of padding. `growColumns: false` + empty = explicit single
+  padded column. Unset `growColumns` ≡ `false`; unset `minLineLength` ≡ 1.
+- Overflow instead of shrink: nothing fits ⇒ one column at the (config-aware)
+  minimum, wider than the available width; the host scrolls. The runion never
+  returns null.
+- Configured maxes are authoritative: `minLineLengthFor = min(min, maxFor)` —
+  an explicit narrow max waives the general minimum; growth ceiling uses
+  `min(minLineLength, ...columns)`.
+- `paddingRatio` default is `[0, 1]` (left-aligned), not 3/5–2/5.
+- Gutter: constant/linear with exact solve (§5 kept); missing or invalid
+  gutter resorts to constant 0; points outside `[min,max]` are not an error
+  (the clamp is output-side, slope defined by raw points).
+- All EN→pt conversions truncate to 2 decimals toward zero (string
+  manipulation) for sub-centipt fit wiggle-room.
+
+**§8 drive-by, resolved.** The `resolveSyntheticProperties` drop-check bug was
+fixed in the resolver rewrite (`args.length` check, delete-and-continue
+semantics); the i18n plumbing did not port (locale config became typeSpecnion
+inheritance, per the model comments).
+
+**Still open.** Per-count gap overrides (escape hatch unused, not modeled);
+the dead-zone check is warning-only; column-count-based gap algorithm was
+deferred (the registry is extensible).
