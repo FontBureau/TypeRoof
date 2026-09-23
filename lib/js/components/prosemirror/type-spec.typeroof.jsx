@@ -118,10 +118,23 @@ class UIParametersDisplay extends _BaseComponent {
             ).typeSpecnion,
             propertyValuesMap = typeSpecnion.getProperties();
 
-        if (changedMap.has("properties@")) {
+        if (
+            changedMap.has("properties@") ||
+            changedMap.has("verboseFontVariationSettings")
+        ) {
             renderAxesParameterDisplay(
                 this._parametersElement,
                 propertyValuesMap,
+                {
+                    verboseFontVariationSettings: this.getEntry(
+                        "verboseFontVariationSettings",
+                    ).value,
+                    font: typeSpecGetFontMethod.call(
+                        this,
+                        changedMap,
+                        propertyValuesMap,
+                    ),
+                },
             );
             // To get the backgroundColor, let's do the full blending of
             // all background colors that could be relevant here. This means,
@@ -312,7 +325,10 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
             );
         }
 
-        if (changedMap.has("properties@")) {
+        if (
+            changedMap.has("properties@") ||
+            changedMap.has("verboseFontVariationSettings")
+        ) {
             // , getDefault = property => [true, _getRegisteredPropertySetup(property).default]
             const innerColorPropertiesMap = [[`${COLOR}textColor`, "color"]],
                 outerColorPropertiesMap = [
@@ -364,6 +380,16 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                 this.innerElement,
                 propertyValuesMap,
                 true, // skipFontSize: we need it in outerElement!
+                {
+                    verboseFontVariationSettings: this.getEntry(
+                        "verboseFontVariationSettings",
+                    ).value,
+                    font: typeSpecGetFontMethod.call(
+                        this,
+                        changedMap,
+                        propertyValuesMap,
+                    ),
+                },
             );
             setLanguageTag(this.outerElement, propertyValuesMap);
 
@@ -543,6 +569,12 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                         "properties@",
                     ],
                     [this.widgetBus.getExternalName("rootFont"), "rootFont"],
+                    [
+                        this.widgetBus.getExternalName(
+                            "verboseFontVariationSettings",
+                        ),
+                        "verboseFontVariationSettings",
+                    ],
                     // Read in the activationTest.
                     ["showParameters"],
                 ],
@@ -616,6 +648,12 @@ class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                 [
                     this.widgetBus.getExternalName("parentContent"),
                     "parentContent",
+                ],
+                [
+                    this.widgetBus.getExternalName(
+                        "verboseFontVariationSettings",
+                    ),
+                    "verboseFontVariationSettings",
                 ],
             ];
 
@@ -782,7 +820,10 @@ export class UIDocumentStyleStyler extends _BaseComponent {
             );
         }
 
-        if (changedMap.has("properties@")) {
+        if (
+            changedMap.has("properties@") ||
+            changedMap.has("verboseFontVariationSettings")
+        ) {
             // , getDefault = property => [true, _getRegisteredPropertySetup(property).default]
             const colorPropertiesMap = [
                     ["colors/backgroundColor", "background-color"],
@@ -812,7 +853,21 @@ export class UIDocumentStyleStyler extends _BaseComponent {
                 getDefault,
                 propertiesData,
             );
-            setTypographicPropertiesToSample(this.element, propertyValuesMap);
+            setTypographicPropertiesToSample(
+                this.element,
+                propertyValuesMap,
+                false,
+                {
+                    verboseFontVariationSettings: this.getEntry(
+                        "verboseFontVariationSettings",
+                    ).value,
+                    font: typeSpecGetFontMethod.call(
+                        this,
+                        changedMap,
+                        propertyValuesMap,
+                    ),
+                },
+            );
             setLanguageTag(this.element, propertyValuesMap);
         }
     }
@@ -940,6 +995,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                     : [
                           [styleLinkProperties, "properties@"],
                           ["/font", "rootFont"],
+                          ["verboseFontVariationSettings"],
                       ],
             Constructor =
                 styleLinkProperties === null
@@ -1166,6 +1222,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             dependencyMappings = [
                 [typeSpecProperties, "properties@"],
                 ["/font", "rootFont"],
+                ["verboseFontVariationSettings"],
                 ["showParameters"],
                 // The label widget's activationTest (see _staticWidgets)
                 // reads showNodeTypeSpecLabels; it must be a declared
