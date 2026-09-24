@@ -26,6 +26,14 @@
       [
         "section",
         {
+          "horizontalLayout": {
+            "instance": {
+              "columns": [
+                "53"
+              ]
+            },
+            "horizontalLayoutAlgorithmTypeKey": "HorizontalLayoutRunionModel"
+          },
           "label": "section"
         }
       ],
