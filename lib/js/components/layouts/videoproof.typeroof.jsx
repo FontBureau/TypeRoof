@@ -1519,6 +1519,11 @@ const VideoproofModel = _BaseLayoutModel.createClass(
                 keyMoment
                     .getDraftFor("numericProperties")
                     .setSimpleValue("t", moreAxisPausedT.value);
+                // All of these keyMoments are generated from moreAxisTag,
+                // moreAxisPausedT and the font, which are serialized, so
+                // they are omitted from serialization and re-created on
+                // load by this function.
+                keyMoment[GENERATED_DATA] = "moreAxes";
                 keyMomentsDraft.push(keyMoment);
             }
             // Connect end with start, so default -> min -> default -> max
