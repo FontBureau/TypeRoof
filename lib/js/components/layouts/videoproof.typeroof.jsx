@@ -821,6 +821,8 @@ class UIVideoproofArrayLayers extends _BaseContainerComponent {
 // Maybe something else will be better to use bur for now we choose the Map!
 const LAYER_TYPE_KEY = "LayerActorModel";
 
+const getDefaultVideoproofDuration = (keyMomentsSize) => keyMomentsSize * 2;
+
 // NOTE: in the CoherenceFunctions operating with the proxies is slow.
 // Reading, is slow and consequently also writing. On top, the CoherenceFunctions
 // in this model are on a hot path, as `t` is set in animation speed this
@@ -1474,7 +1476,9 @@ const VideoproofModel = _BaseLayoutModel.createClass(
                     "0/instance/activeActors/0/instance/keyMoments",
                 );
                 if (videoproofActorKeyMoments.size !== 0)
-                    duration.value = videoproofActorKeyMoments.size * 2;
+                    duration.value = getDefaultVideoproofDuration(
+                        videoproofActorKeyMoments.size,
+                    );
                 return;
             }
 
@@ -1520,7 +1524,7 @@ const VideoproofModel = _BaseLayoutModel.createClass(
             // Connect end with start, so default -> min -> default -> max
             // transitions back into default.
             getDraftEntry(activeActorsDraft, "0/instance/isLoop").value = true;
-            duration.value = values.length * 2;
+            duration.value = getDefaultVideoproofDuration(values.length);
         },
     ),
 );
