@@ -38,6 +38,12 @@ export const AnyModel = _AbstractGenericModel.createClass("AnyModel"),
     NumberModel = _AbstractNumberModel.createClass("NumberModel", {
         /*defaultValue: 0*/
     }),
+    NumberDefaultZeroModel = _AbstractNumberModel.createClass("NumberModel", {
+        defaultValue: 0,
+    }),
+    NumberDefaultZeroOrEmptyModel = _AbstractSimpleOrEmptyModel.createClass(
+        NumberDefaultZeroModel,
+    ),
     // Default is false.
     BooleanModel = _AbstractGenericModel.createClass("BooleanModel", {
         sanitizeFN: function (rawValue) {

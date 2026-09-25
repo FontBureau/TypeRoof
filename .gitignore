@@ -20,3 +20,6 @@ _site
 
 # agentic tool
 .goosehints
+
+# vitest coverage output
+coverage/

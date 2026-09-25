@@ -1,0 +1,36 @@
+.ui_dynamic_struct_container {
+    & > :first-child .ui_generic_select-select {
+        appearance: auto;
+    }
+}
+
+.ui_dynamic_struct_container-children {
+    background: #dfdfdf;
+    padding: 0.2em;
+
+    .ui_dynamic_struct_container {
+        border: solid #eee;
+        border-width: 0.2em 0;
+        margin: 0.2em;
+    }
+}
+
+.ui_grow_columns {
+    display: flex;
+    align-items: center;
+    gap: 0.75em;
+    padding: 0.25em 0;
+
+    & > * {
+        display: contents;
+        padding: 0;
+    }
+
+    input[type="number"] {
+        width: 2em;
+    }
+
+    & > label {
+        text-wrap: nowrap;
+    }
+}

@@ -31,7 +31,7 @@ function _getEntry(
             (accum: _BaseModel, part: string, i: number) => {
                 if (!(accum instanceof _BaseContainerModel))
                     throw new Error(
-                        `CONTAINER ENTRY ERROR no container at ${part}#${i} in ${accum} path: ${pathInstance.toString()}.`,
+                        `CONTAINER ENTRY ERROR no container at ${part}#i:${i} in ${accum} path: ${pathInstance.toString()}.`,
                     );
                 const fn = (
                     accum as unknown as Record<
@@ -41,7 +41,7 @@ function _getEntry(
                 )[fnName];
                 if (!fn)
                     throw new Error(
-                        `VALUE ERROR container has no method "${fnName}" at "${part}#${i}" in path: ${pathInstance.toString()}.`,
+                        `VALUE ERROR container has no method "${fnName}" at "${part}#i:${i}" in path: ${pathInstance.toString()}.`,
                     );
                 return fn.call(accum, part) as _BaseModel;
             },

@@ -12,6 +12,12 @@ prosemirror
      * width — they must keep their resolved size, the host scrolls. */
     flex-shrink: 0;
 
+    /* These elements will have a fixed width set, but their children
+     * may grow bigger than that, it's allowed to define an overflowing
+     * width, in compare mode the left pane would overlap the right pane,
+     * if we didn't allow to grow. */
+    min-width: fit-content;
+
     --label-width-or-margin-inline-start: 2.5rem;
 }
 
@@ -76,7 +82,12 @@ prosemirror
         line-height: var(--line-height);
 
         /* FIXME: not functioning in Firefox, requires workaround! */
+
+        /*
+         * has a bug in Chrome and is not supported in Firefox yet.
+         * https://issues.chromium.org/issues/559001358
         text-box: trim-start text;
+         */
 
         --space-before: var(--margin-block-start, 0);
         --space-after: var(--margin-block-end, 0);
@@ -117,7 +128,11 @@ prosemirror
         }
 
         > *:first-child {
+            /*
+             * has a bug in Chrome and is not supported in Firefox yet.
+             * https://issues.chromium.org/issues/559001358
             text-box: trim-start text;
+            */
         }
 
         > *:not(:first-child) {
@@ -148,9 +163,13 @@ prosemirror
         "content"
         "bottom"
         "space-after";
+    width: fit-content;
 
     & > [data-node-content] {
         grid-area: content;
+
+        /* this element receives the padding and width */
+        box-sizing: border-box;
     }
 
     & > .ui-parameters-display {
@@ -250,6 +269,9 @@ prosemirror
 .typeroof-document *[data-node-type] {
     padding: var(--space-before) 0 var(--space-after) 0;
     line-height: var(--line-height);
+
+    /* this element receives the padding and width */
+    box-sizing: border-box;
 
     /* In order to achive a pixel-perfect match between the prosemirror
      * elements and the document, this switches the layout engine to treat
