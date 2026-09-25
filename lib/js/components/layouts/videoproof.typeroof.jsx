@@ -1608,7 +1608,8 @@ export class UIMoreAxes extends _BaseComponent {
                     ".ui_key_moments_link_navigation-list_item-input",
                 );
             // Label as in the legacy app: name min default max.
-            button.textContent = `${axisRange.name || axisTag.trim()} ${axisRange.min} ${axisRange.default} ${axisRange.max}`;
+            button.textContent = `${axisTag.trim()}: ${axisRange.name} `;
+            button.title = `${axisTag.trim()} ${axisRange.min} ${axisRange.default} ${axisRange.max}`;
             button.addEventListener(
                 "click",
                 this._toggleHandler.bind(this, axisTag.trim()),
