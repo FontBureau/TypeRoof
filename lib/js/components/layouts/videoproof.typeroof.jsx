@@ -109,7 +109,7 @@ import {
     getAxesMathAxisTags,
 } from "../axes-math-models.mjs";
 
-import { UIAxesMath } from "../axes-math.mjs";
+import { UIAxesMath, UIKeyMomentsLinkNavigation } from "../axes-math.mjs";
 
 import { UIOTFeaturesChooserCollapsible as UIOTFeaturesChooser } from "../ui-opentype-features.typeroof.jsx";
 
@@ -1534,6 +1534,19 @@ const VideoproofModel = _BaseLayoutModel.createClass(
     ),
 );
 /**
+ * As in the legacy app: navigating to a keyMoment of the rap leaves the
+ * "more axes" quick dial, i.e. the videoproof actor animation continues
+ * from that keyMoment.
+ */
+class UIVideoproofKeyMomentsLinkNavigation extends UIKeyMomentsLinkNavigation {
+    _setKeyMomentT(keyMomentT) {
+        const moreAxisTag = this.getEntry("moreAxisTag");
+        if (moreAxisTag.value !== "") moreAxisTag.value = "";
+        super._setKeyMomentT(keyMomentT);
+    }
+}
+
+/**
  * The "But wait, there's more!" quick dial: one button per axis of the
  * font that is not covered by the rap (axesMath). Engaging one of them
  * pauses the videoproof actor — the layer at ./activeActors/0 freezes its
@@ -2769,7 +2782,12 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                 "Rap Editor",
                 // updateDefaultsDependencies
                 videoProofActorUpdateDefaultsDependencies,
-                { zone: "keyMoments", label: null }, //keyMomentsOptions
+                {
+                    zone: "keyMoments",
+                    label: null,
+                    Widget: UIVideoproofKeyMomentsLinkNavigation,
+                    dependencies: ["moreAxisTag"],
+                }, //keyMomentsOptions
             ],
             [
                 { zone: "keyMoments" },
