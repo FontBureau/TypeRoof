@@ -134,6 +134,7 @@ export class TypeStageProseMirrorContext extends BaseProseMirrorContext {
                     typeSpecLabels: (getEntry) =>
                         getEntry("showNodeTypeSpecLabels").value,
                 } /*nodeOutfitterOptions*/,
+                new.target.ID_MAP.proseMirror, // proseMirrorID
             ],
             // NOTE: the document-level styling (backgroundColor,
             // language tag) for the editor pane is applied by

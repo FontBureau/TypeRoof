@@ -68,6 +68,8 @@ import { modelTreeSegmentsToLogicalLevelSegments } from "../type-spec/paths.mjs"
 
 import { CascadingMap } from "../cascading-map.mjs";
 
+import cssEscape from "css.escape";
+
 export function typeSpecGetFontMethod(changedMap, propertyValuesMap) {
     const fontPPSRecord = ProcessedPropertiesSystemMap.createSimpleRecord(
         SPECIFIC,
@@ -254,6 +256,15 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
         this.innerElement = innerElement;
         this.outerElement = outerElement;
         this.pmNode = pmNode;
+        {
+            const nodePropertiesPath =
+                    this.widgetBus.getExternalName("nodeProperties@"),
+                anchorName = `--${cssEscape(nodePropertiesPath)}`;
+            this.outerElement.style.setProperty(
+                "--node-anchor-name",
+                anchorName,
+            );
+        }
     }
     // Destroy hooks are the styler's way to participate in
     // styled→silent (noStyler) transitions: the inline styles and the
@@ -277,7 +288,6 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
             innerPropertiesData = [
                 [`${GENERIC}textAlign`, "text-align", ""],
                 [`${GENERIC}direction`, "direction", ""],
-                [`${LAYOUT}width`, "width", "pt"],
                 [
                     `${GENERIC}inlineMargins/start/pt`,
                     "padding-inline-start",
@@ -302,6 +312,10 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                 [`${LAYOUT}leading/line-height-em`, "--line-height", "em"],
                 [`${GENERIC}blockMargins/start`, "--margin-block-start", ""],
                 [`${GENERIC}blockMargins/end`, "--margin-block-end", ""],
+                // width used to be on inner, but since the type labels
+                // have moved to the block start instead of the side in
+                // a grid layout, it's required on the outer element.
+                [`${LAYOUT}width`, "width", "pt"],
             ],
             // Style from the typeSpecnion, geometry from the
             // nodeProperties@ channel — named layers, node wins on
@@ -527,16 +541,19 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
 }
 
 class NodeTypeSpecLabel extends _BaseComponent {
-    constructor(widgetBus, typeSpecPath, nodeTypeName) {
+    constructor(widgetBus, typeSpecPath, nodeTypeName, nodePropertiesPath) {
         super(widgetBus);
         this._typeSpecPath = typeSpecPath;
         this._nodeTypeName = nodeTypeName;
         const h = widgetBus.domTool.h;
+
+        const anchorName = `--${cssEscape(nodePropertiesPath)}`;
         this.element = (
             <div class="ui_type_spec_label">
                 <span>[…]</span>
             </div>
         );
+        this.element.style.positionAnchor = anchorName;
         this.label = this.element.querySelector("span");
         this._insertElement(this.element);
     }
@@ -665,54 +682,6 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                 UIParametersDisplay,
                 ["ui_type_spec_ramp"],
             ],
-            [
-                {
-                    zone: "outer",
-                    // If the `typeSpecLabels` option is a function it is
-                    // treated itself as the activationTest function,
-                    // leaving it to the caller how to implement it. It
-                    // receives the dependency-enforcing getEntry as its
-                    // argument (see ComponentWrapper._activationTestGetEntry).
-                    // Otherwise, the activationTest will only return true
-                    // if the value of the option is strictly `true`;
-                    activationTest: (getEntry) => {
-                        // see UIParametersDisplay above: no outer zone
-                        // when outer === inner
-                        if (
-                            this._structuralElements.outer ===
-                            this._structuralElements.inner
-                        )
-                            return false;
-                        if (
-                            typeof this._nodeOutfitterOptions
-                                ?.typeSpecLabels === "function"
-                        )
-                            return this._nodeOutfitterOptions.typeSpecLabels(
-                                getEntry,
-                            );
-                        return (
-                            this._nodeOutfitterOptions.typeSpecLabels === true
-                        );
-                    },
-                },
-                [
-                    [
-                        this._typeSpecPath.append("label").toString(),
-                        "typeSpecLabel",
-                    ],
-                    [
-                        this.widgetBus.getExternalName("nodeSpecToTypeSpec"),
-                        "nodeSpecToTypeSpec",
-                    ],
-                    ["editingTypeSpec"],
-                    // Read in the activationTest (indirectly, via the
-                    // typeSpecLabels option function).
-                    ["showNodeTypeSpecLabels"],
-                ],
-                NodeTypeSpecLabel,
-                this._typeSpecPath.toRelative(this._originTypeSpecPath),
-                this._pmNode.type.name,
-            ],
         ];
     }
 
@@ -724,7 +693,7 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         return this.getEntry("noStyler").value === true;
     }
 
-    _createWidgetDefinition() {
+    _createStylerWidgetDefinition() {
         // nextProperties which we, at this point, hopefully always, can
         // determine using pmNode, parenContent and pmNode-Index => I hope
         // we can't/won't create clashes with nodes that exist as duplicates,
@@ -780,6 +749,66 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         ];
     }
 
+    _createLableWidgetDefinition() {
+        return [
+            {
+                // NOTE: zone could be the anchor pool, very straight
+                // forward AND would be implementable in the viewer
+                // the same, could be a quick fix for a big problem.
+                zone: "anchor-targets-container",
+                // If the `typeSpecLabels` option is a function it is
+                // treated itself as the activationTest function,
+                // leaving it to the caller how to implement it. It
+                // receives the dependency-enforcing getEntry as its
+                // argument (see ComponentWrapper._activationTestGetEntry).
+                // Otherwise, the activationTest will only return true
+                // if the value of the option is strictly `true`;
+                activationTest: (getEntry) => {
+                    // see UIParametersDisplay above: no outer zone
+                    // when outer === inner
+                    if (
+                        this._structuralElements.outer ===
+                        this._structuralElements.inner
+                    )
+                        return false;
+                    if (
+                        typeof this._nodeOutfitterOptions?.typeSpecLabels ===
+                        "function"
+                    )
+                        return this._nodeOutfitterOptions.typeSpecLabels(
+                            getEntry,
+                        );
+                    return this._nodeOutfitterOptions.typeSpecLabels === true;
+                },
+            },
+            [
+                [
+                    this._typeSpecPath.append("label").toString(),
+                    "typeSpecLabel",
+                ],
+                [
+                    this.widgetBus.getExternalName("nodeSpecToTypeSpec"),
+                    "nodeSpecToTypeSpec",
+                ],
+                ["editingTypeSpec"],
+                // Read in the activationTest (indirectly, via the
+                // typeSpecLabels option function).
+                ["showNodeTypeSpecLabels"],
+            ],
+            NodeTypeSpecLabel,
+            this._typeSpecPath.toRelative(this._originTypeSpecPath),
+            this._pmNode.type.name,
+            this._nodeProperties ?? this._documentNodePathId(),
+        ];
+    }
+
+    _createWidgetDefinitions() {
+        return [
+            this._createStylerWidgetDefinition(),
+            this._createLableWidgetDefinition(),
+        ];
+    }
+
     // requires this.getEntry(nodeSpecToTypeSpecName),
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
 
@@ -807,7 +836,7 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
     // report whether it changed since the last provision. PM NodeViews
     // persist across edits/moves, so the id is NOT wrapper-lifetime-
     // stable (unlike the viewer, which excludes nodeProperties@ from its
-    // rebuild check). Caches the id for _createWidgetDefinition.
+    // rebuild check). Caches the id for _createWidgetDefinitions.
     _checkNodeProperties(/*compareResult*/) {
         const nodeProperties = this._documentNodePathId(),
             hasChanged = this._nodeProperties !== nodeProperties;
@@ -896,7 +925,7 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
             // silent: no styler widget definition; destroyed leftovers
             // below clear the element's inline styles.
         } else {
-            const widgetDefinitions = [this._createWidgetDefinition()];
+            const widgetDefinitions = this._createWidgetDefinitions();
             this._initWidgets(widgetDefinitions); // pushes into this._widgets
         }
 
@@ -1039,10 +1068,18 @@ export class UIDocumentStyleStyler extends _BaseComponent {
 export class TypeSpecSubscriptions extends _CommonContainerComponent {
     constructor(
         widgetBus,
-        zones,
+        _zones,
         originTypeSpecPath,
         nodeOutfitterOptions = {},
+        proseMirrorID,
     ) {
+        // Used via UIDocumentNodeOutfitter for NodeTypeSpecLabel
+        const anchorTargetsContainer =
+            widgetBus.getWidgetById(proseMirrorID).anchorTargetsContainer;
+        const zones = new Map([
+            ..._zones,
+            ["anchor-targets-container", anchorTargetsContainer],
+        ]);
         super(widgetBus, zones);
         this._originTypeSpecPath = originTypeSpecPath;
         this._subscribers = new Map();
@@ -1060,6 +1097,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             },
             nodeOutfitterOptions,
         );
+        this._proseMirrorID = proseMirrorID;
     }
 
     get dependencies() {

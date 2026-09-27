@@ -950,7 +950,8 @@ export class ProseMirror extends _BaseComponent {
                 this._idMap.subscriptions,
                 ...args,
             );
-        [this.element, this.view] = this.initTemplate(classes, element);
+        [this.element, this.view, this.anchorTargetsContainer] =
+            this.initTemplate(classes, element);
     }
 
     // Be a bit cautious with the availability of items in the cache
@@ -978,6 +979,7 @@ export class ProseMirror extends _BaseComponent {
 
     destroy() {
         if (this.view && !this.view.isDestroyed) this.view.destroy();
+        this.anchorTargetsContainer.remove();
     }
 
     _initProseMirrorView(element) {
@@ -1093,9 +1095,16 @@ export class ProseMirror extends _BaseComponent {
             element = frag.firstElementChild;
             this._insertElement(element);
         }
+
+        const h = this._domTool.h,
+            anchorTargetsContainer = (
+                <div class="ui_prosemirror_host-anchor_targets_container"></div>
+            );
+        element.append(anchorTargetsContainer);
+
         for (const name of classes) element.classList.add(name);
         const view = this._initProseMirrorView(element);
-        return [element, view];
+        return [element, view, anchorTargetsContainer];
     }
 
     _rawCreateMetamodelNode(cacheMap /* null or a map*/, pmNode, dependencies) {
