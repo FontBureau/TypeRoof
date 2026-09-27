@@ -2065,12 +2065,12 @@ export class UIProseMirrorMenuNesting extends _BaseComponent {
                     class="ui_prose_mirror_menu-lift"
                     title="Lift out of container"
                 >
-                    {createLabelAndIcon("Lift", "output")}
+                    {createLabelAndIcon("Lift", "pip_exit")}
                 </button>
             ),
             nestButton = (
                 <button type="button" class="ui_prose_mirror_menu-nest-button">
-                    {createLabelAndIcon("Wrap", "input")}
+                    {createLabelAndIcon("Wrap", "pip")}
                 </button>
             ),
             nestSelect = (

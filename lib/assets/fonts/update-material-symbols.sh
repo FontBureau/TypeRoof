@@ -25,15 +25,15 @@ ICON_NAMES=(
     format_clear
     format_italic
     info
-    input
     keyboard_arrow_down
     keyboard_arrow_up
     keyboard_double_arrow_left
     keyboard_double_arrow_right
     menu
     open_in_full
-    output
     pause
+    pip
+    pip_exit
     place_item
     play_arrow
     refresh
