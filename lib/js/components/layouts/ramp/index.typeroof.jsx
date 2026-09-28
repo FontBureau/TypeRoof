@@ -311,6 +311,8 @@ class RampController extends _BaseContainerComponent {
                     //           The absence of "@parentProperties"!!!
                     ["/font", "rootFont"],
                     ...ENVIRONMENT_PROVIDER_ENTRIES, // "environment@viewport" etc.
+                    [widgetBus.rootPath.append("width").toString(), "width"],
+                    [widgetBus.rootPath.append("height").toString(), "height"],
                     // end special root dependencies
                 ],
                 TypeSpecMeta,
