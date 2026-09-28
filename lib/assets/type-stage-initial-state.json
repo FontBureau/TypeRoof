@@ -1,9 +1,8 @@
 {
-  "typeSpec": {
+"typeSpec": {
     "languageTag": {
       "language": "en"
     },
-    "lineLength": "53.0",
     "baseFontSize": "14",
     "textColor": {
       "instance": {
@@ -26,8 +25,20 @@
       [
         "section",
         {
+          "blockMargins": {
+            "start": {
+              "value": "2.00000",
+              "unit": "baseEm"
+            }
+          },
           "horizontalLayout": {
             "instance": {
+              "minLineLength": "40",
+              "minPadding": "5",
+              "paddingRatioStart": "60.00000",
+              "growColumns": {
+                "mode": "infinity"
+              },
               "columns": [
                 "53"
               ]
@@ -45,13 +56,9 @@
               "h1",
               {
                 "blockMargins": {
-                  "start": {
-                    "unit": "baseEm",
-                    "value": "2.00000"
-                  },
                   "end": {
-                    "unit": "lineHeightAfter",
-                    "value": "1.00000"
+                    "value": "1.00000",
+                    "unit": "lineHeightAfter"
                   }
                 },
                 "relativeFontSize": "4.571428571",
@@ -68,11 +75,6 @@
             [
               "h2",
               {
-                "blockMargins": {
-                  "start": {
-                    "value": "0.00000"
-                  }
-                },
                 "relativeFontSize": "1.785714286",
                 "autoOPSZ": "1",
                 "axesLocations": [
