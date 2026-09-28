@@ -1,0 +1,638 @@
+---json
+{
+  "permalink": "{{ page.filePathStem }}",
+  "layout": null
+}
+---
+{#-
+  Three rows of "HODnop01" at opsz 144, 14 and 8. The opsz 144 and 8
+  rows are built from the parametric axes and step through them one at
+  a time, see opsz144 and opsz8 below.
+-#}
+{%- set sample = "HODnop01" %}
+{%- set stageWidth = 1336 %}
+{%- set textWidth = 445 %}
+{%- set fontSize = 32 %}
+{%- set opsz144FontSize = 42 %}
+{%- set opsz8FontSize = 24 %}
+{%- set white = [255, 255, 255] %}
+{#-
+  Rows that step through the parametric axes, one settings block each.
+  label, y      actor label and vertical position
+  fontSize      optional, defaults to fontSize
+  startDuration duration of the moment at startAxes
+  changes       applied one after the other; every change is kept, so each
+                location builds on the previous one
+    label, duration, axes   the moment that animates to the changed axes
+    pause                   duration of the "pause" moment that holds them
+    isActive                marks that pause as the active key moment
+  Every row shares startAxes, waitDuration, and fadeIn, see below.
+-#}
+{#- the axes location every row starts from; its key order is the order
+    the axes are written in -#}
+{%- set startAxes = {
+  "opsz": "14",
+  "XOUC": "90", "XOUA": "84", "XOLC": "85", "XOLA": "78", "XOFI": "88", "XOET": "94", "XDOT": "144",
+  "YOUC": "66", "YOUA": "56", "YOLC": "58", "YOLA": "53", "YOFI": "56", "YOET": "56",
+  "XTUC": "400", "XTUR": "561", "XTUD": "410", "XTUA": "258", "XTLC": "243", "XTLR": "337", "XTLD": "248", "XTLA": "235", "XTFI": "329", "XTET": "642", "XUCD": "69", "XLCD": "54", "XETS": "40", "XTTW": "5",
+  "YTUC": "750", "YTJD": "-104", "YTLC": "511", "YTAS": "767", "YTDE": "-240", "YTFI": "771", "YTTL": "60",
+  "XSHU": "104", "XSHL": "74", "XSHF": "129", "YSHU": "50", "YSHL": "40", "YSHF": "47", "XSVU": "55", "XSVL": "54", "XSVF": "61", "YSVU": "165", "YSVL": "70", "YSVF": "117", "XVAU": "18",
+  "TN00": "0", "TN01": "0", "TN02": "0", "TN03": "0", "TN04": "0", "TN05": "0", "TN06": "0", "TN07": "0", "TN08": "0", "TN09": "0", "TN10": "0", "TN11": "0", "TN12": "0", "TN13": "0", "TN14": "0", "TN15": "0", "TN16": "0", "TN17": "0", "TN18": "0", "TN19": "0", "TN20": "0", "TN21": "0", "TN22": "0", "TN23": "0", "TN24": "0", "TN25": "0"
+} %}
+{#- settings shared by every row:
+    waitDuration  time before the row starts changing
+    fadeIn        duration of the fade in, at startAxes -#}
+{%- set waitDuration = 1 %}
+{%- set fadeIn = 3 %}
+{%- set wdth50 = {
+  "label": "wdth50",
+  "x": 410,
+  "y": 550,
+  "startDuration": 5,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "85", "XOUA": "78", "XOLC": "78", "XOLA": "69", "XOFI": "80", "XOET": "90", "XDOT": "122"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "64", "YOUA": "49", "YOLC": "57", "YOLA": "42", "YOFI": "58", "YOET": "56"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "220", "XTUR": "305", "XTUD": "248", "XTUA": "240", "XTLC": "124", "XTLR": "168", "XTLD": "147", "XTLA": "202", "XTFI": "213", "XTET": "434", "XTTW": "5"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-104", "YTLC": "508", "YTAS": "767", "YTDE": "-240", "YTFI": "771", "YTOS": "10", "YTTL": "50"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "79", "XSHL": "50", "XSHF": "104", "YSHU": "48", "YSHL": "40", "YSHF": "44", "XSVU": "55", "XSVL": "56", "XSVF": "58", "YSVU": "155", "YSVL": "66", "YSVF": "102", "XVAU": "18"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "152", "XUCS": "97", "XUCR": "32", "XUCD": "64", "XLCS": "73", "XLCR": "25", "XLCD": "39", "XFIR": "31", "XETS": "28"}, "pause": 1},
+    {"label": "TN19", "duration": 2, "axes": {"TN19": "100"}, "pause": 578, "isActive": true}
+  ]
+} %}
+{%- set wdth125 = {
+  "label": "wdth125",
+  "x": 410,
+  "y": 150,
+  "startDuration": 28,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "92", "XOUA": "74", "XOLC": "88", "XOLA": "74", "XOFI": "87", "XOET": "92", "XDOT": "144"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "66", "YOUA": "46", "YOLC": "58", "YOLA": "46", "YOFI": "62", "YOET": "56"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "591", "XTUR": "793", "XTUD": "601", "XTUA": "324", "XTLC": "433", "XTLR": "531", "XTLD": "412", "XTLA": "324", "XTFI": "518", "XTET": "855", "XTTW": "5"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-128", "YTLC": "510", "YTAS": "767", "YTDE": "-240", "YTFI": "771", "YTOS": "16", "YTTL": "89"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "124", "XSHL": "99", "XSHF": "189", "YSHU": "50", "YSHL": "42", "YSHF": "47", "XSVU": "65", "XSVL": "60", "XSVF": "61", "YSVU": "165", "YSVL": "70", "YSVF": "112", "XVAU": "18"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "320", "XUCS": "189", "XUCR": "48", "XUCD": "115", "XLCS": "159", "XLCR": "45", "XLCD": "88", "XFIR": "46", "XETS": "52"}, "pause": 1},
+    {"label": "TN18", "duration": 2, "axes": {"TN18": "100"}, "pause": 555, "isActive": true}
+  ]
+} %}
+{%- set wght100 = {
+  "label": "wght100",
+  "x": 0,
+  "y": 350,
+  "startDuration": 51,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "40", "XOUA": "42", "XOLC": "42", "XOLA": "42", "XOFI": "38", "XOET": "38", "XDOT": "91"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "31", "YOUA": "22", "YOLC": "30", "YOLA": "22", "YOFI": "28", "YOET": "30"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "470", "XTUR": "668", "XTUD": "477", "XTUA": "235", "XTLC": "306", "XTLR": "431", "XTLD": "312", "XTLA": "235", "XTFI": "430", "XTET": "682", "XTTW": "2"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-95", "YTLC": "510", "YTAS": "757", "YTDE": "-240", "YTFI": "774", "YTOS": "11", "YTTL": "68"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "114", "XSHL": "84", "XSHF": "128", "YSHU": "24", "YSHL": "20", "YSHF": "24", "XSVU": "27", "XSVL": "28", "XSVF": "24", "YSVU": "163", "YSVL": "88", "YSVF": "138", "XVAU": "26"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "256", "XUCS": "158", "XUCR": "42", "XUCD": "90", "XLCS": "127", "XLCR": "34", "XLCD": "67", "XFIR": "39", "XETS": "31"}, "pause": 1},
+    {"label": "TN20", "duration": 2, "axes": {"TN20": "100"}, "pause": 532, "isActive": true}
+  ]
+} %}
+{%- set wght1000 = {
+  "label": "wght1000",
+  "x": 860,
+  "y": 350,
+  "startDuration": 74,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "250", "XOUA": "102", "XOLC": "242", "XOLA": "102", "XOFI": "245", "XOET": "214", "XDOT": "246"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "81", "YOUA": "59", "YOLC": "79", "YOLA": "59", "YOFI": "68", "YOET": "82"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "250", "XTUR": "342", "XTUD": "304", "XTUA": "282", "XTLC": "170", "XTLR": "204", "XTLD": "208", "XTLA": "282", "XTFI": "268", "XTET": "629", "XTTW": "5"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-120", "YTLC": "536", "YTAS": "767", "YTDE": "-240", "YTFI": "776", "YTOS": "13", "YTTL": "63"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "89", "XSHL": "74", "XSHF": "124", "YSHU": "65", "YSHL": "60", "YSHF": "62", "XSVU": "73", "XSVL": "78", "XSVF": "60", "YSVU": "143", "YSVL": "60", "YSVF": "97", "XVAU": "20"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "250", "XUCS": "110", "XUCR": "32", "XUCD": "75", "XLCS": "90", "XLCR": "27", "XLCD": "68", "XFIR": "30", "XETS": "40"}, "pause": 1},
+    {"label": "TN21", "duration": 2, "axes": {"TN21": "100"}, "pause": 509, "isActive": true}
+  ]
+} %}
+{%- set wght100_wdth125 = {
+  "label": "wght100_wdth125",
+  "x": 0,
+  "y": 150,
+  "startDuration": 97,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "42", "XOUA": "49", "XOLC": "44", "XOLA": "49", "XOFI": "36", "XOET": "41", "XDOT": "91"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "31", "YOUA": "17", "YOLC": "34", "YOLA": "17", "YOFI": "33", "YOET": "35"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "661", "XTUR": "900", "XTUD": "678", "XTUA": "301", "XTLC": "498", "XTLR": "625", "XTLD": "498", "XTLA": "324", "XTFI": "600", "XTET": "899", "XTTW": "2"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-120", "YTLC": "510", "YTAS": "757", "YTDE": "-240", "YTFI": "774", "YTOS": "14", "YTTL": "49"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "134", "XSHL": "110", "XSHF": "208", "YSHU": "24", "YSHL": "22", "YSHF": "24", "XSVU": "32", "XSVL": "29", "XSVF": "24", "YSVU": "163", "YSVL": "88", "YSVF": "132", "XVAU": "22"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "256", "XUCS": "202", "XUCR": "50", "XUCD": "136", "XLCS": "179", "XLCR": "47", "XLCD": "110", "XFIR": "50", "XETS": "43"}, "pause": 1},
+    {"label": "TN24", "duration": 2, "axes": {"TN24": "100"}, "pause": 486, "isActive": true}
+  ]
+} %}
+{%- set wght1000_wdth125 = {
+  "label": "wght1000_wdth125",
+  "x": 860,
+  "y": 150,
+  "startDuration": 120,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "252", "XOUA": "103", "XOLC": "244", "XOLA": "98", "XOFI": "244", "XOET": "212", "XDOT": "246"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "81", "YOUA": "52", "YOLC": "78", "YOLA": "52", "YOFI": "74", "YOET": "82"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "441", "XTUR": "574", "XTUD": "494", "XTUA": "352", "XTLC": "360", "XTLR": "398", "XTLD": "388", "XTLA": "371", "XTFI": "364", "XTET": "842", "XTTW": "5"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-144", "YTLC": "536", "YTAS": "767", "YTDE": "-240", "YTFI": "776", "YTOS": "18", "YTTL": "110"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "109", "XSHL": "99", "XSHF": "184", "YSHU": "65", "YSHL": "62", "YSHF": "62", "XSVU": "83", "XSVL": "85", "XSVF": "60", "YSVU": "143", "YSVL": "60", "YSVF": "92", "XVAU": "20"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "250", "XUCS": "154", "XUCR": "40", "XUCD": "121", "XLCS": "138", "XLCR": "39", "XLCD": "101", "XFIR": "40", "XETS": "52"}, "pause": 1},
+    {"label": "TN22", "duration": 2, "axes": {"TN22": "100"}, "pause": 463, "isActive": true}
+  ]
+} %}
+{%- set wght100_wdth50 = {
+  "label": "wght100_wdth50",
+  "x": 0,
+  "y": 550,
+  "startDuration": 143,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "35", "XOUA": "38", "XOLC": "36", "XOLA": "36", "XOFI": "35", "XOET": "34", "XDOT": "70"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "29", "YOUA": "13", "YOLC": "29", "YOLA": "12", "YOFI": "30", "YOET": "30"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "290", "XTUR": "412", "XTUD": "342", "XTUA": "217", "XTLC": "188", "XTLR": "260", "XTLD": "218", "XTLA": "202", "XTFI": "286", "XTET": "474", "XTTW": "1"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-95", "YTLC": "508", "YTAS": "757", "YTDE": "-240", "YTFI": "774", "YTOS": "10", "YTTL": "31"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "89", "XSHL": "60", "XSHF": "102", "YSHU": "22", "YSHL": "20", "YSHF": "22", "XSVU": "27", "XSVL": "29", "XSVF": "21", "YSVU": "156", "YSVL": "88", "YSVF": "124", "XVAU": "22"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "105", "XUCS": "110", "XUCR": "34", "XUCD": "94", "XLCS": "80", "XLCR": "27", "XLCD": "48", "XFIR": "33", "XETS": "19"}, "pause": 1},
+    {"label": "TN25", "duration": 2, "axes": {"TN25": "100"}, "pause": 440, "isActive": true}
+  ]
+} %}
+{%- set wght1000_wdth50 = {
+  "label": "wght1000_wdth50",
+  "x": 860,
+  "y": 550,
+  "startDuration": 166,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "246", "XOUA": "96", "XOLC": "236", "XOLA": "92", "XOFI": "237", "XOET": "195", "XDOT": "224"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "79", "YOUA": "54", "YOLC": "78", "YOLA": "53", "YOFI": "70", "YOET": "76"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "75", "XTUR": "86", "XTUD": "118", "XTUA": "264", "XTLC": "80", "XTLR": "68", "XTLD": "112", "XTLA": "249", "XTFI": "70", "XTET": "446", "XTTW": "5"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-120", "YTLC": "534", "YTAS": "777", "YTDE": "-240", "YTFI": "776", "YTOS": "12", "YTTL": "57"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "32", "XSHL": "25", "XSHF": "99", "YSHU": "63", "YSHL": "60", "YSHF": "60", "XSVU": "78", "XSVL": "100", "XSVF": "82", "YSVU": "143", "YSVL": "70", "YSVF": "70", "XVAU": "20"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "150", "XUCS": "39", "XUCR": "24", "XUCD": "24", "XLCS": "36", "XLCR": "18", "XLCD": "38", "XFIR": "23", "XETS": "28"}, "pause": 1},
+    {"label": "TN23", "duration": 2, "axes": {"TN23": "100"}, "pause": 417, "isActive": true}
+  ]
+} %}
+{%- set opsz144_regular = {
+  "label": "opsz144_regular",
+  "x": 410,
+  "y": 285,
+  "fontSize": opsz144FontSize,
+  "startDuration": 189,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "84", "XOUA": "60", "XOLC": "78", "XOLA": "56", "XOFI": "80", "XOET": "91", "XDOT": "116"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "16", "YOUA": "20", "YOLC": "14", "YOLA": "19", "YOFI": "14", "YOET": "30"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "348", "XTUR": "470", "XTUD": "410", "XTUA": "251", "XTLC": "224", "XTLR": "308", "XTLD": "254", "XTLA": "206", "XTFI": "320", "XTET": "633", "XTTW": "0"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-7", "YTLC": "471", "YTAS": "756", "YTDE": "-230", "YTFI": "773", "YTOS": "11", "YTTL": "67"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "82", "XSHL": "61", "XSHF": "109", "YSHU": "12", "YSHL": "10", "YSHF": "12", "XSVU": "14", "XSVL": "14", "XSVF": "14", "YSVU": "153", "YSVL": "84", "YSVF": "91", "XVAU": "54"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "267", "XUCS": "113", "XUCR": "32", "XUCD": "44", "XLCS": "89", "XLCR": "24", "XLCD": "34", "XFIR": "28", "XETS": "30"}, "pause": 1},
+    {"label": "TN00", "duration": 2, "axes": {"TN00": "100"}, "pause": 394, "isActive": true}
+  ]
+} %}
+{%- set opsz8_regular = {
+  "label": "opsz8_regular",
+  "x": 410,
+  "y": 405,
+  "fontSize": opsz8FontSize,
+  "startDuration": 212,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "112", "XOUA": "107", "XOLC": "106", "XOLA": "102", "XOFI": "110", "XOET": "118", "XDOT": "162"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "91", "YOUA": "78", "YOLC": "88", "YOLA": "78", "YOFI": "88", "YOET": "82"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "400", "XTUR": "561", "XTUD": "388", "XTUA": "246", "XTLC": "243", "XTLR": "340", "XTLD": "236", "XTLA": "235", "XTFI": "355", "XTET": "658", "XTTW": "6"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-159", "YTLC": "536", "YTAS": "767", "YTDE": "-240", "YTFI": "775", "YTOS": "11", "YTTL": "60"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "104", "XSHL": "74", "XSHF": "139", "YSHU": "75", "YSHL": "68", "YSHF": "72", "XSVU": "80", "XSVL": "76", "XSVF": "80", "YSVU": "149", "YSVL": "78", "YSVF": "140", "XVAU": "18"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "320", "XUCS": "145", "XUCR": "40", "XUCD": "76", "XLCS": "112", "XLCR": "32", "XLCD": "61", "XFIR": "37", "XETS": "33"}, "pause": 1},
+    {"label": "TN09", "duration": 2, "axes": {"TN09": "100"}, "pause": 371, "isActive": true}
+  ]
+} %}
+{%- set opsz144_wdth50 = {
+  "label": "opsz144_wdth50",
+  "x": 410,
+  "y": 485,
+  "fontSize": opsz144FontSize,
+  "startDuration": 235,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "78", "XOUA": "52", "XOLC": "71", "XOLA": "49", "XOFI": "72", "XOET": "80", "XDOT": "95"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "19", "YOUA": "12", "YOLC": "14", "YOLA": "12", "YOFI": "16", "YOET": "30"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "168", "XTUR": "214", "XTUD": "242", "XTUA": "233", "XTLC": "106", "XTLR": "140", "XTLD": "153", "XTLA": "166", "XTFI": "148", "XTET": "425", "XTTW": "0"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-7", "YTLC": "468", "YTAS": "756", "YTDE": "-230", "YTFI": "773", "YTOS": "10", "YTTL": "86"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "58", "XSHL": "37", "XSHF": "84", "YSHU": "10", "YSHL": "10", "YSHF": "10", "XSVU": "14", "XSVL": "15", "XSVF": "10", "YSVU": "143", "YSVL": "79", "YSVF": "76", "XVAU": "49"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "100", "XUCS": "65", "XUCR": "24", "XUCD": "40", "XLCS": "50", "XLCR": "17", "XLCD": "19", "XFIR": "24", "XETS": "18"}, "pause": 1},
+    {"label": "TN02", "duration": 2, "axes": {"TN02": "100"}, "pause": 348, "isActive": true}
+  ]
+} %}
+{%- set opsz8_wdth50 = {
+  "label": "opsz8_wdth50",
+  "x": 410,
+  "y": 605,
+  "fontSize": opsz8FontSize,
+  "startDuration": 258,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "107", "XOUA": "98", "XOLC": "100", "XOLA": "87", "XOFI": "102", "XOET": "114", "XDOT": "140"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "89", "YOUA": "66", "YOLC": "72", "YOLA": "58", "YOFI": "78", "YOET": "82"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "220", "XTUR": "305", "XTUD": "236", "XTUA": "224", "XTLC": "128", "XTLR": "171", "XTLD": "140", "XTLA": "202", "XTFI": "185", "XTET": "450", "XTTW": "6"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-159", "YTLC": "533", "YTAS": "767", "YTDE": "-240", "YTFI": "770", "YTOS": "10", "YTTL": "72"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "74", "XSHL": "50", "XSHF": "104", "YSHU": "73", "YSHL": "68", "YSHF": "70", "XSVU": "80", "XSVL": "77", "XSVF": "71", "YSVU": "146", "YSVL": "84", "YSVF": "125", "XVAU": "18"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "152", "XUCS": "97", "XUCR": "36", "XUCD": "69", "XLCS": "68", "XLCR": "28", "XLCD": "46", "XFIR": "34", "XETS": "21"}, "pause": 1},
+    {"label": "TN11", "duration": 2, "axes": {"TN11": "100"}, "pause": 325, "isActive": true}
+  ]
+} %}
+{%- set opsz144_wdth125 = {
+  "label": "opsz144_wdth125",
+  "x": 410,
+  "y": 85,
+  "fontSize": opsz144FontSize,
+  "startDuration": 281,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "86", "XOUA": "62", "XOLC": "80", "XOLA": "54", "XOFI": "79", "XOET": "89", "XDOT": "116"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "16", "YOUA": "22", "YOLC": "14", "YOLA": "18", "YOFI": "20", "YOET": "30"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "539", "XTUR": "702", "XTUD": "601", "XTUA": "311", "XTLC": "414", "XTLR": "502", "XTLD": "418", "XTLA": "295", "XTFI": "490", "XTET": "846", "XTTW": "0"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-7", "YTLC": "470", "YTAS": "756", "YTDE": "-230", "YTFI": "773", "YTOS": "16", "YTTL": "57"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "102", "XSHL": "86", "XSHF": "169", "YSHU": "12", "YSHL": "12", "YSHF": "12", "XSVU": "24", "XSVL": "20", "XSVF": "14", "YSVU": "153", "YSVL": "84", "YSVF": "86", "XVAU": "54"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "267", "XUCS": "157", "XUCR": "41", "XUCD": "90", "XLCS": "136", "XLCR": "37", "XLCD": "68", "XFIR": "37", "XETS": "42"}, "pause": 1},
+    {"label": "TN01", "duration": 2, "axes": {"TN01": "100"}, "pause": 302, "isActive": true}
+  ]
+} %}
+{%- set opsz8_wdth125 = {
+  "label": "opsz8_wdth125",
+  "x": 410,
+  "y": 205,
+  "fontSize": opsz8FontSize,
+  "startDuration": 304,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "114", "XOUA": "97", "XOLC": "109", "XOLA": "98", "XOFI": "108", "XOET": "116", "XDOT": "162"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "91", "YOUA": "66", "YOLC": "88", "YOLA": "72", "YOFI": "92", "YOET": "82"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "591", "XTUR": "793", "XTUD": "578", "XTUA": "312", "XTLC": "433", "XTLR": "534", "XTLD": "401", "XTLA": "324", "XTFI": "490", "XTET": "871", "XTTW": "6"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-184", "YTLC": "536", "YTAS": "767", "YTDE": "-240", "YTFI": "775", "YTOS": "16", "YTTL": "116"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "124", "XSHL": "99", "XSHF": "199", "YSHU": "75", "YSHL": "70", "YSHF": "72", "XSVU": "90", "XSVL": "82", "XSVF": "80", "YSVU": "149", "YSVL": "78", "YSVF": "135", "XVAU": "18"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "320", "XUCS": "189", "XUCR": "48", "XUCD": "122", "XLCS": "159", "XLCR": "45", "XLCD": "94", "XFIR": "46", "XETS": "45"}, "pause": 1},
+    {"label": "TN10", "duration": 2, "axes": {"TN10": "100"}, "pause": 279, "isActive": true}
+  ]
+} %}
+{%- set opsz144_wght100 = {
+  "label": "opsz144_wght100",
+  "x": 0,
+  "y": 285,
+  "fontSize": opsz144FontSize,
+  "startDuration": 327,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "34", "XOUA": "30", "XOLC": "34", "XOLA": "30", "XOFI": "30", "XOET": "36", "XDOT": "64"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "13", "YOUA": "8", "YOLC": "9", "YOLA": "6", "YOFI": "7", "YOET": "6"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "418", "XTUR": "571", "XTUD": "434", "XTUA": "240", "XTLC": "288", "XTLR": "402", "XTLD": "290", "XTLA": "240", "XTFI": "418", "XTET": "677", "XTTW": "0"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-5", "YTLC": "471", "YTAS": "748", "YTDE": "-230", "YTFI": "768", "YTOS": "11", "YTTL": "44"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "92", "XSHL": "71", "XSHF": "142", "YSHU": "9", "YSHL": "6", "YSHF": "12", "XSVU": "6", "XSVL": "11", "XSVF": "7", "YSVU": "152", "YSVL": "112", "YSVF": "112", "XVAU": "52"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "256", "XUCS": "126", "XUCR": "35", "XUCD": "78", "XLCS": "104", "XLCR": "26", "XLCD": "58", "XFIR": "32", "XETS": "21"}, "pause": 1},
+    {"label": "TN03", "duration": 2, "axes": {"TN03": "100"}, "pause": 256, "isActive": true}
+  ]
+} %}
+{%- set opsz8_wght100 = {
+  "label": "opsz8_wght100",
+  "x": 0,
+  "y": 405,
+  "fontSize": opsz8FontSize,
+  "startDuration": 350,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "62", "XOUA": "60", "XOLC": "64", "XOLA": "60", "XOFI": "60", "XOET": "62", "XDOT": "109"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "56", "YOUA": "50", "YOLC": "60", "YOLA": "50", "YOFI": "54", "YOET": "56"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "470", "XTUR": "668", "XTUD": "452", "XTUA": "235", "XTLC": "306", "XTLR": "434", "XTLD": "301", "XTLA": "235", "XTFI": "450", "XTET": "698", "XTTW": "3"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-150", "YTLC": "536", "YTAS": "757", "YTDE": "-240", "YTFI": "780", "YTOS": "11", "YTTL": "96"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "114", "XSHL": "84", "XSHF": "142", "YSHU": "49", "YSHL": "48", "YSHF": "49", "XSVU": "47", "XSVL": "49", "XSVF": "43", "YSVU": "150", "YSVL": "96", "YSVF": "158", "XVAU": "26"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "256", "XUCS": "158", "XUCR": "42", "XUCD": "98", "XLCS": "127", "XLCR": "34", "XLCD": "74", "XFIR": "38", "XETS": "24"}, "pause": 1},
+    {"label": "TN12", "duration": 2, "axes": {"TN12": "100"}, "pause": 233, "isActive": true}
+  ]
+} %}
+{%- set opsz144_wght1000 = {
+  "label": "opsz144_wght1000",
+  "x": 860,
+  "y": 285,
+  "fontSize": opsz144FontSize,
+  "startDuration": 373,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "244", "XOUA": "88", "XOLC": "234", "XOLA": "89", "XOFI": "237", "XOET": "211", "XDOT": "218"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "34", "YOUA": "30", "YOLC": "36", "YOLA": "26", "YOFI": "26", "YOET": "56"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "198", "XTUR": "251", "XTUD": "306", "XTUA": "271", "XTLC": "151", "XTLR": "174", "XTLD": "214", "XTLA": "264", "XTFI": "225", "XTET": "620", "XTTW": "2"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-3", "YTLC": "496", "YTAS": "756", "YTDE": "-230", "YTFI": "778", "YTOS": "13", "YTTL": "57"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "68", "XSHL": "61", "XSHF": "104", "YSHU": "28", "YSHL": "30", "YSHF": "27", "XSVU": "32", "XSVL": "38", "XSVF": "12", "YSVU": "131", "YSVL": "78", "YSVF": "71", "XVAU": "56"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "198", "XUCS": "78", "XUCR": "25", "XUCD": "54", "XLCS": "68", "XLCR": "18", "XLCD": "48", "XFIR": "20", "XETS": "30"}, "pause": 1},
+    {"label": "TN04", "duration": 2, "axes": {"TN04": "100"}, "pause": 210, "isActive": true}
+  ]
+} %}
+{%- set opsz8_wght1000 = {
+  "label": "opsz8_wght1000",
+  "x": 860,
+  "y": 405,
+  "fontSize": opsz8FontSize,
+  "startDuration": 396,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "272", "XOUA": "125", "XOLC": "264", "XOLA": "125", "XOFI": "266", "XOET": "238", "XDOT": "264"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "106", "YOUA": "92", "YOLC": "104", "YOLA": "92", "YOFI": "100", "YOET": "98"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "250", "XTUR": "342", "XTUD": "281", "XTUA": "274", "XTLC": "170", "XTLR": "206", "XTLD": "197", "XTLA": "282", "XTFI": "266", "XTET": "675", "XTTW": "6"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-175", "YTLC": "561", "YTAS": "767", "YTDE": "-240", "YTFI": "780", "YTOS": "13", "YTTL": "58"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "89", "XSHL": "74", "XSHF": "134", "YSHU": "90", "YSHL": "88", "YSHF": "87", "XSVU": "98", "XSVL": "100", "XSVF": "78", "YSVU": "127", "YSVL": "68", "YSVF": "120", "XVAU": "20"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "250", "XUCS": "110", "XUCR": "32", "XUCD": "82", "XLCS": "90", "XLCR": "26", "XLCD": "74", "XFIR": "30", "XETS": "32"}, "pause": 1},
+    {"label": "TN13", "duration": 2, "axes": {"TN13": "100"}, "pause": 187, "isActive": true}
+  ]
+} %}
+{%- set opsz144_wght100_wdth125 = {
+  "label": "opsz144_wght100_wdth125",
+  "x": 0,
+  "y": 85,
+  "fontSize": opsz144FontSize,
+  "startDuration": 419,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "32", "XOUA": "34", "XOLC": "31", "XOLA": "32", "XOFI": "28", "XOET": "20", "XDOT": "64"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "16", "YOUA": "11", "YOLC": "8", "YOLA": "8", "YOFI": "8", "YOET": "8"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "614", "XTUR": "810", "XTUD": "632", "XTUA": "290", "XTLC": "486", "XTLR": "596", "XTLD": "470", "XTLA": "291", "XTFI": "571", "XTET": "887", "XTTW": "0"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-12", "YTLC": "471", "YTAS": "748", "YTDE": "-230", "YTFI": "768", "YTOS": "16", "YTTL": "65"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "114", "XSHL": "98", "XSHF": "168", "YSHU": "9", "YSHL": "8", "YSHF": "12", "XSVU": "9", "XSVL": "8", "XSVF": "7", "YSVU": "170", "YSVL": "102", "YSVF": "105", "XVAU": "42"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "278", "XUCS": "172", "XUCR": "43", "XUCD": "114", "XLCS": "153", "XLCR": "39", "XLCD": "91", "XFIR": "41", "XETS": "33"}, "pause": 1},
+    {"label": "TN07", "duration": 2, "axes": {"TN07": "100"}, "pause": 164, "isActive": true}
+  ]
+} %}
+{%- set opsz8_wght100_wdth125 = {
+  "label": "opsz8_wght100_wdth125",
+  "x": 0,
+  "y": 205,
+  "fontSize": opsz8FontSize,
+  "startDuration": 442,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "64", "XOUA": "72", "XOLC": "67", "XOLA": "67", "XOFI": "60", "XOET": "65", "XDOT": "120"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "54", "YOUA": "44", "YOLC": "58", "YOLA": "40", "YOFI": "56", "YOET": "56"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "661", "XTUR": "900", "XTUD": "649", "XTUA": "387", "XTLC": "496", "XTLR": "622", "XTLD": "485", "XTLA": "323", "XTFI": "545", "XTET": "888", "XTTW": "3"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-176", "YTLC": "536", "YTAS": "757", "YTDE": "-240", "YTFI": "776", "YTOS": "16", "YTTL": "68"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "134", "XSHL": "109", "XSHF": "197", "YSHU": "49", "YSHL": "50", "YSHF": "49", "XSVU": "47", "XSVL": "45", "XSVF": "43", "YSVU": "148", "YSVL": "100", "YSVF": "142", "XVAU": "26"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "256", "XUCS": "202", "XUCR": "50", "XUCD": "136", "XLCS": "174", "XLCR": "47", "XLCD": "108", "XFIR": "49", "XETS": "55"}, "pause": 1},
+    {"label": "TN16", "duration": 2, "axes": {"TN16": "100"}, "pause": 141, "isActive": true}
+  ]
+} %}
+{%- set opsz144_wght1000_wdth125 = {
+  "label": "opsz144_wght1000_wdth125",
+  "x": 860,
+  "y": 85,
+  "fontSize": opsz144FontSize,
+  "startDuration": 465,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "246", "XOUA": "87", "XOLC": "237", "XOLA": "97", "XOFI": "236", "XOET": "209", "XDOT": "218"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "35", "YOUA": "37", "YOLC": "35", "YOLA": "37", "YOFI": "32", "YOET": "56"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "389", "XTUR": "483", "XTUD": "504", "XTUA": "302", "XTLC": "341", "XTLR": "369", "XTLD": "391", "XTLA": "322", "XTFI": "294", "XTET": "832", "XTTW": "0"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-5", "YTLC": "496", "YTAS": "756", "YTDE": "-230", "YTFI": "778", "YTOS": "18", "YTTL": "67"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "88", "XSHL": "86", "XSHF": "164", "YSHU": "28", "YSHL": "32", "YSHF": "27", "XSVU": "36", "XSVL": "44", "XSVF": "12", "YSVU": "120", "YSVL": "106", "YSVF": "66", "XVAU": "48"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "225", "XUCS": "122", "XUCR": "33", "XUCD": "88", "XLCS": "114", "XLCR": "31", "XLCD": "35", "XFIR": "30", "XETS": "42"}, "pause": 1},
+    {"label": "TN05", "duration": 2, "axes": {"TN05": "100"}, "pause": 118, "isActive": true}
+  ]
+} %}
+{%- set opsz8_wght1000_wdth125 = {
+  "label": "opsz8_wght1000_wdth125",
+  "x": 860,
+  "y": 205,
+  "fontSize": opsz8FontSize,
+  "startDuration": 488,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "274", "XOUA": "140", "XOLC": "266", "XOLA": "138", "XOFI": "266", "XOET": "236", "XDOT": "264"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "106", "YOUA": "94", "YOLC": "109", "YOLA": "88", "YOFI": "100", "YOET": "94"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "441", "XTUR": "574", "XTUD": "499", "XTUA": "381", "XTLC": "360", "XTLR": "410", "XTLD": "386", "XTLA": "371", "XTFI": "308", "XTET": "907", "XTTW": "6"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-200", "YTLC": "560", "YTAS": "767", "YTDE": "-240", "YTFI": "780", "YTOS": "18", "YTTL": "108"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "109", "XSHL": "99", "XSHF": "194", "YSHU": "90", "YSHL": "90", "YSHF": "87", "XSVU": "108", "XSVL": "122", "XSVF": "118", "YSVU": "132", "YSVL": "78", "YSVF": "80", "XVAU": "20"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "310", "XUCS": "154", "XUCR": "40", "XUCD": "93", "XLCS": "144", "XLCR": "37", "XLCD": "93", "XFIR": "40", "XETS": "44"}, "pause": 1},
+    {"label": "TN14", "duration": 2, "axes": {"TN14": "100"}, "pause": 95, "isActive": true}
+  ]
+} %}
+{%- set opsz144_wght100_wdth50 = {
+  "label": "opsz144_wght100_wdth50",
+  "x": 0,
+  "y": 485,
+  "fontSize": opsz144FontSize,
+  "startDuration": 511,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "28", "XOUA": "30", "XOLC": "28", "XOLA": "30", "XOFI": "22", "XOET": "32", "XDOT": "58"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "14", "YOUA": "6", "YOLC": "8", "YOLA": "6", "YOFI": "7", "YOET": "6"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "238", "XTUR": "310", "XTUD": "256", "XTUA": "191", "XTLC": "172", "XTLR": "212", "XTLD": "188", "XTLA": "191", "XTFI": "184", "XTET": "464", "XTTW": "0"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-6", "YTLC": "468", "YTAS": "750", "YTDE": "-230", "YTFI": "773", "YTOS": "10", "YTTL": "50"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "68", "XSHL": "46", "XSHF": "82", "YSHU": "7", "YSHL": "6", "YSHF": "7", "XSVU": "6", "XSVL": "6", "XSVF": "4", "YSVU": "162", "YSVL": "96", "YSVF": "98", "XVAU": "32"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "122", "XUCS": "78", "XUCR": "27", "XUCD": "66", "XLCS": "64", "XLCR": "19", "XLCD": "42", "XFIR": "25", "XETS": "9"}, "pause": 1},
+    {"label": "TN08", "duration": 2, "axes": {"TN08": "100"}, "pause": 72, "isActive": true}
+  ]
+} %}
+{%- set opsz8_wght100_wdth50 = {
+  "label": "opsz8_wght100_wdth50",
+  "x": 0,
+  "y": 605,
+  "fontSize": opsz8FontSize,
+  "startDuration": 534,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "57", "XOUA": "59", "XOLC": "58", "XOLA": "58", "XOFI": "56", "XOET": "58", "XDOT": "104"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "54", "YOUA": "28", "YOLC": "60", "YOLA": "25", "YOFI": "57", "YOET": "46"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "290", "XTUR": "408", "XTUD": "326", "XTUA": "206", "XTLC": "188", "XTLR": "266", "XTLD": "206", "XTLA": "192", "XTFI": "250", "XTET": "488", "XTTW": "6"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-149", "YTLC": "532", "YTAS": "757", "YTDE": "-240", "YTFI": "770", "YTOS": "10", "YTTL": "68"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "89", "XSHL": "60", "XSHF": "112", "YSHU": "47", "YSHL": "48", "YSHF": "46", "XSVU": "42", "XSVL": "41", "XSVF": "40", "YSVU": "140", "YSVL": "81", "YSVF": "102", "XVAU": "22"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "160", "XUCS": "110", "XUCR": "34", "XUCD": "94", "XLCS": "88", "XLCR": "27", "XLCD": "59", "XFIR": "33", "XETS": "16"}, "pause": 1},
+    {"label": "TN17", "duration": 2, "axes": {"TN17": "100"}, "pause": 49, "isActive": true}
+  ]
+} %}
+{%- set opsz144_wght1000_wdth50 = {
+  "label": "opsz144_wght1000_wdth50",
+  "x": 860,
+  "y": 485,
+  "fontSize": opsz144FontSize,
+  "startDuration": 557,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "239", "XOUA": "88", "XOLC": "228", "XOLA": "82", "XOFI": "229", "XOET": "198", "XDOT": "196"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "30", "YOUA": "24", "YOLC": "35", "YOLA": "19", "YOFI": "28", "YOET": "56"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "72", "XTUR": "66", "XTUD": "170", "XTUA": "247", "XTLC": "46", "XTLR": "49", "XTLD": "104", "XTLA": "220", "XTFI": "44", "XTET": "438", "XTTW": "0"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-12", "YTLC": "494", "YTAS": "756", "YTDE": "-230", "YTFI": "768", "YTOS": "12", "YTTL": "62"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "32", "XSHL": "24", "XSHF": "78", "YSHU": "26", "YSHL": "26", "YSHF": "24", "XSVU": "26", "XSVL": "34", "XSVF": "22", "YSVU": "180", "YSVL": "112", "YSVF": "116", "XVAU": "56"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "156", "XUCS": "35", "XUCR": "17", "XUCD": "25", "XLCS": "28", "XLCR": "11", "XLCD": "28", "XFIR": "15", "XETS": "18"}, "pause": 1},
+    {"label": "TN06", "duration": 2, "axes": {"TN06": "100"}, "pause": 26, "isActive": true}
+  ]
+} %}
+{%- set opsz8_wght1000_wdth50 = {
+  "label": "opsz8_wght1000_wdth50",
+  "x": 860,
+  "y": 605,
+  "fontSize": opsz8FontSize,
+  "startDuration": 580,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "268", "XOUA": "114", "XOLC": "257", "XOLA": "114", "XOFI": "258", "XOET": "239", "XDOT": "242"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "104", "YOUA": "86", "YOLC": "108", "YOLA": "86", "YOFI": "104", "YOET": "108"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "74", "XTUR": "86", "XTUD": "129", "XTUA": "269", "XTLC": "56", "XTLR": "48", "XTLD": "116", "XTLA": "269", "XTFI": "64", "XTET": "443", "XTTW": "6"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-175", "YTLC": "558", "YTAS": "767", "YTDE": "-240", "YTFI": "774", "YTOS": "12", "YTTL": "78"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "56", "XSHL": "50", "XSHF": "89", "YSHU": "88", "YSHL": "88", "YSHF": "88", "XSVU": "98", "XSVL": "146", "XSVF": "75", "YSVU": "127", "YSVL": "74", "YSVF": "72", "XVAU": "20"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "240", "XUCS": "64", "XUCR": "24", "XUCD": "38", "XLCS": "60", "XLCR": "19", "XLCD": "36", "XFIR": "22", "XETS": "36"}, "pause": 1},
+    {"label": "TN15", "duration": 2, "axes": {"TN15": "100"}, "pause": 3, "isActive": true}
+  ]
+} %}
+{%- macro color(rgb, alpha) -%}
+{
+                "instance": {
+                  "R": "{{ rgb[0] }}",
+                  "G": "{{ rgb[1] }}",
+                  "B": "{{ rgb[2] }}"{% if alpha %},
+                  "alpha": "{{ alpha }}"{% endif %}
+                },
+                "colorTypeKey": "RGB"
+              }
+{%- endmacro %}
+{%- macro pairs(items) -%}
+{%- if items | length == 1 -%}
+[["{{ items[0][0] }}", "{{ items[0][1] }}"]]
+{%- else -%}
+[
+{%- for item in items %}
+                ["{{ item[0] }}", "{{ item[1] }}"]{{ "," if not loop.last }}
+{%- endfor %}
+              ]
+{%- endif -%}
+{%- endmacro %}
+{%- macro axesOf(location) -%}
+{%- set items = [] %}
+{%- for axis, value in location %}{% set _ = items.push([axis, value]) %}{% endfor %}
+{{- pairs(items) -}}
+{%- endmacro %}
+{%- macro axesRow(row) %}
+{#- locations[i] is the location after changes[i - 1]; a list, because
+    a {% set %} inside a for loop does not outlive its iteration -#}
+{%- set locations = [startAxes] %}
+{%- for change in row.changes %}
+  {%- set _ = locations.push(locations | last | merge(change.axes)) %}
+{%- endfor %}
+      {
+        "instance": {
+          "label": "{{ row.label }}",
+          "keyMoments": [
+            {
+              "label": "wait",
+              "duration": "{{ waitDuration }}",
+              "easing": "linear",
+              "numericProperties": {{ pairs([["x", row.x], ["y", row.y], ["width", textWidth]]) }},
+              "axesLocations": {{ axesOf(startAxes) }},
+              "fontSize": "{{ row.fontSize or fontSize }}",
+              "textColor": {{ color(white, "0.00000") }},
+              "textRun": "{{ sample }}",
+              "textAlign": "center"
+            },
+            {
+              "label": "start",
+              "duration": "{{ row.startDuration }}",
+              "easing": "linear",
+              "numericProperties": {{ pairs([["y", row.y], ["width", textWidth]]) }},
+              "axesLocations": {{ axesOf(startAxes) }},
+              "textColor": {{ color(white, "0.00000") }}
+            },
+            {
+              "label": "fade in",
+              "duration": "{{ fadeIn }}",
+              "easing": "linear",
+              "axesLocations": {{ axesOf(startAxes) }},
+              "textColor": {{ color(white, "100.00000") }}
+            },
+{%- for change in row.changes %}
+            {
+              "label": "{{ change.label }}",
+              "duration": "{{ change.duration }}",
+              "easing": "linear",
+              "axesLocations": {{ axesOf(locations[loop.index]) }}
+            },
+            {
+              "label": "pause",
+              "duration": "{{ change.pause }}",
+              "easing": "linear",
+              {%- if change.isActive %}
+              "isActive": "1",{% endif %}
+              "axesLocations": {{ axesOf(locations[loop.index]) }},
+              "textColor": {{ color(white, "100.00000") }}
+            }{{ "," if (not loop.last) }} 
+{%- endfor %}
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      }
+{%- endmacro -%}
+{
+  "activeState": {
+    "t": "1",
+    "duration": "30",
+    "keyMoments": [
+      {
+        "label": "Key Moment 1",
+        "duration": "1",
+        "easing": "linear",
+        "isActive": "1",
+        "textColor": {
+          "instance": {
+            "R": "255",
+            "G": "255",
+            "B": "255"
+          },
+          "colorTypeKey": "RGB"
+        },
+        "stageBackgroundColor": {
+          "instance": {
+            "R": "0",
+            "G": "0",
+            "B": "0"
+          },
+          "colorTypeKey": "RGB"
+        }
+      }
+    ],
+    "activeActors": [
+      {
+        "instance": {
+          "label": "text 14",
+          "keyMoments": [
+            {
+              "label": "start",
+              "duration": "1",
+              "easing": "linear",
+              "numericProperties": {{ pairs([["x", 410], ["y", 350], ["width", textWidth]]) }},
+              "axesLocations": [["opsz", "14"]],
+              "fontSize": "32",
+              "textColor": {{ color(white, "0.00000") }},
+              "textRun": "{{ sample }}",
+              "textAlign": "center"
+            },
+            {
+              "label": "fade in",
+              "duration": "3",
+              "easing": "linear",
+              "textColor": {{ color(white, "100.00000") }}
+            },
+            {
+              "label": "stay",
+              "duration": "583",
+              "easing": "linear",
+              "isActive": "1"
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      },
+      {{- axesRow(wdth50) }},
+      {{- axesRow(wdth125) }},
+      {{- axesRow(wght100) }},
+      {{- axesRow(wght1000) }},
+      {{- axesRow(wght100_wdth125) }},
+      {{- axesRow(wght1000_wdth125) }},
+      {{- axesRow(wght100_wdth50) }},
+      {{- axesRow(wght1000_wdth50) }},
+      {{- axesRow(opsz144_regular) }},
+      {{- axesRow(opsz8_regular) }},
+      {{- axesRow(opsz144_wdth50) }},
+      {{- axesRow(opsz8_wdth50) }},
+      {{- axesRow(opsz144_wdth125) }},
+      {{- axesRow(opsz8_wdth125) }},
+      {{- axesRow(opsz144_wght100) }},
+      {{- axesRow(opsz8_wght100) }},
+      {{- axesRow(opsz144_wght1000) }},
+      {{- axesRow(opsz8_wght1000) }},
+      {{- axesRow(opsz144_wght100_wdth125) }},
+      {{- axesRow(opsz8_wght100_wdth125) }},
+      {{- axesRow(opsz144_wght1000_wdth125) }},
+      {{- axesRow(opsz8_wght1000_wdth125) }},
+      {{- axesRow(opsz144_wght100_wdth50) }},
+      {{- axesRow(opsz8_wght100_wdth50) }},
+      {{- axesRow(opsz144_wght1000_wdth50) }},
+      {{- axesRow(opsz8_wght1000_wdth50) }}
+    ],
+    "width": "{{ stageWidth }}",
+    "height": "800",
+    "zoomLevel": {
+      "type": "app-default",
+      "scaling": "100.00000"
+    },
+    "editingActor": "./4"
+  },
+  "activeLayoutKey": "MotionStage",
+  "activeFontKey": "from-url AmstelvarA2 Roman wght400 Version_0-001"
+}
