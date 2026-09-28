@@ -78,6 +78,7 @@ export class RampProseMirrorContext extends BaseProseMirrorContext {
                 zones,
                 originTypeSpecPath,
                 { typeSpecLabels: true } /*nodeOutfitterOptions*/,
+                new.target.ID_MAP.proseMirror, // proseMirrorID
             ],
             // NOTE: document-level styling (backgroundColor, language
             // tag) of the editor pane is applied by
