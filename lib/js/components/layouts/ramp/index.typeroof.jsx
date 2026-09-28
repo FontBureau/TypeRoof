@@ -387,6 +387,7 @@ class RampController extends _BaseContainerComponent {
                 ],
                 TypeSpecPropertiesManager,
                 new Map([...zones, ["main", propertiesManagerContainer]]),
+                { showMarkStyleLinks: false },
             ],
             [
                 {},
