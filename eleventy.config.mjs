@@ -118,6 +118,10 @@ export default function (eleventyConfig) {
         return pages.map(prune);
     });
 
+    // Nunjucks has no object spread; `a | merge(b, c)` stands in for
+    // `{...a, ...b, ...c}` and returns a new object, later keys win.
+    eleventyConfig.addFilter('merge', (...objects)=>Object.assign({}, ...objects));
+
     // This creates directory listings for docs/states-library
     const libDir = 'docs/states-library'
    , directoryTemplate = `# States Library{% if page.url != "/${libDir}/" %}: {{page.url | remove: "/${libDir}" | remove_last: "/" }}{% endif %}
