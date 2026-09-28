@@ -288,12 +288,10 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
             innerPropertiesData = [
                 [`${GENERIC}textAlign`, "text-align", ""],
                 [`${GENERIC}direction`, "direction", ""],
-                [
-                    `${GENERIC}inlineMargins/start/pt`,
-                    "padding-inline-start",
-                    "",
-                ],
-                [`${GENERIC}inlineMargins/end/pt`, "padding-inline-end", ""],
+                // from the node channel: the local inline padding and
+                // column gap (unit-faithful pt, computed per node)
+                [`${LAYOUT}paddingInlineStart`, "padding-inline-start", "pt"],
+                [`${LAYOUT}paddingInlineEnd`, "padding-inline-end", "pt"],
             ],
             outerPropertiesData = [
                 // using this to define a margin-top
@@ -390,11 +388,7 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                     [`${COLOR}backgroundColor`, "background-color"],
                 ],
                 getDefault = (property) => {
-                    for (const prefix of [
-                        `${GENERIC}blockMargins/`,
-                        `${GENERIC}inlineMargins/`,
-                        `${GENERIC}columnGutter/`,
-                    ]) {
+                    for (const prefix of [`${GENERIC}blockMargins/`]) {
                         if (property.startsWith(prefix))
                             // This is a hack!
                             // FIXME(hack): consumer-side default for derived terminal keys (*/pt)
@@ -445,7 +439,7 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
             if (columnCount && columnCount > 1) {
                 innerPropertiesData.push(
                     [`${GENERIC}columnCount`, "column-count", ""],
-                    [`${GENERIC}columnGutter/pt`, "column-gap", ""],
+                    [`${LAYOUT}columnGap`, "column-gap", "pt"],
                     [`${LAYOUT}columnWidth`, "column-width", "pt"],
                     [DIRECT_PROPERTY, "display", "block"],
                 );
