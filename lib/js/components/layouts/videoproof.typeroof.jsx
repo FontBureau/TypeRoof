@@ -42,6 +42,7 @@ import {
     timeControlModelMixin,
     AnimationTGenerator,
     TNumberModel,
+    getDefaultVideoproofDuration,
 } from "../animation-fundamentals.mjs";
 
 import {
@@ -820,8 +821,6 @@ class UIVideoproofArrayLayers extends _BaseContainerComponent {
 // Map is nice as it a) keeps order, b) is unique like a set, c) we can store more context,
 // Maybe something else will be better to use bur for now we choose the Map!
 const LAYER_TYPE_KEY = "LayerActorModel";
-
-const getDefaultVideoproofDuration = (keyMomentsSize) => keyMomentsSize * 2;
 
 // NOTE: in the CoherenceFunctions operating with the proxies is slow.
 // Reading, is slow and consequently also writing. On top, the CoherenceFunctions
