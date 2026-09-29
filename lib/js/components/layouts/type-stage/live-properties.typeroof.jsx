@@ -25,21 +25,15 @@ import {
  */
 export function seedTypeSpecDefaults(
     baseDefaultsMap,
-    // environment is defunct (no typeSpecnion consumer; the
-    // nodeProperties@ channel reads environment facts from its own
-    // root defaults). width/height seed the root's layout/*
-    // LengthModels — the root node-properties scope reads them through
-    // the typeSpec layer (the settled typeSpecnion map).
-    { rootFont = null, environment = null, width = null, height = null },
+    // width/height seed the root's layout/* LengthModels — the root
+    // node-properties scope reads them through the typeSpec layer (the
+    // settled typeSpecnion map). Environment facts don't seed the
+    // typeSpecnion defaults; the nodeProperties@ channel owns them
+    // (getRootNodePropertiesMap).
+    { rootFont = null, width = null, height = null },
 ) {
     const typeSpecDefaultsMap = new Map(baseDefaultsMap);
     if (rootFont !== null) typeSpecDefaultsMap.set(`${SPECIFIC}font`, rootFont);
-    if (environment !== null)
-        throw new Error(
-            "VALUE ERROR environment facts don't seed the typeSpecnion " +
-                "defaults; the nodeProperties@ channel owns them " +
-                "(getRootNodePropertiesMap).",
-        );
     for (const [dimension, value] of [
         ["width", width],
         ["height", height],
