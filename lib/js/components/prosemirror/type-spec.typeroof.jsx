@@ -1130,6 +1130,16 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             nodeOutfitterOptions,
         );
         this._proseMirrorID = proseMirrorID;
+        // Guards the scheduled callbacks (rAF/timeout/microtask) that
+        // can't be cancelled once queued — they must no-op after
+        // destroy instead of touching the torn-down component.
+        this._destroyed = false;
+    }
+
+    destroy() {
+        this._destroyed = true;
+        this._marksDomObserver.disconnect();
+        super.destroy();
     }
 
     get dependencies() {
@@ -1311,6 +1321,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 : (fn) => setTimeout(fn, 0);
         schedule(() => {
             this._newMarksSweepScheduled = false;
+            if (this._destroyed) return;
             if (this._newlySubscribedMarks.size === 0) return;
             this._checkNewlySubscribedMarks([]);
         });
@@ -1321,6 +1332,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         this._markTagCorrectionFlushScheduled = true;
         queueMicrotask(() => {
             this._markTagCorrectionFlushScheduled = false;
+            if (this._destroyed) return;
             this._flushMarkTagCorrections();
         });
     }

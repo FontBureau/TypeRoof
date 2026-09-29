@@ -772,8 +772,13 @@ export class UIDocumentViewer extends _BaseContainerComponent {
         ];
         this._initWidgets(widgets);
         this.__attachHandler = this._attachHandler.bind(this);
-        const meta = this.widgetBus.getWidgetById(documentNodesMetaId, null);
-        meta?.attachRenderer(this.__attachHandler);
+        // No null fallback: without the meta widget the viewer renders
+        // nothing — indefinitely and silently. Widget ordering
+        // currently guarantees the meta exists; fail loud if that ever
+        // changes. (The reverse race — handler before tree — is
+        // handled by DocumentNodesMeta.initialUpdate.)
+        const meta = this.widgetBus.getWidgetById(documentNodesMetaId);
+        meta.attachRenderer(this.__attachHandler);
     }
 
     // The renderer handler, called per document node by the meta tree.
