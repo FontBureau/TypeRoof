@@ -1368,14 +1368,20 @@ export class ProseMirror extends _BaseComponent {
         }
 
         if (this._originTypeSpecPath !== null) {
-            const typeSpecs = this._getTypeSpecs(this.view.state),
-                firstEntry = typeSpecs.entries().next().value;
+            const typeSpecs = this._getTypeSpecs(this.view.state);
             // With silent nodes (noStyler), getTypeSpecs can be empty
             // when the selection is not inside any node the resolver
             // covers (e.g. cursor gaps between blocks). Guard against
             // the genuinely-empty case: no selection → no edit target.
-            if (firstEntry === undefined) return;
-            const [, selectedTypeSpecPath] = firstEntry,
+            if (typeSpecs.size === 0) return;
+            // nodesBetween traverses pre-order (outermost ancestor
+            // first): the LAST entry is the closest match to the
+            // selection — with nested typeSpecs (e.g. a heading inside
+            // a section) the editing target is the innermost node's
+            // typeSpec, not the outermost. For a range selection
+            // spanning siblings that's the deepest node in document
+            // order.
+            const [, selectedTypeSpecPath] = [...typeSpecs.entries()].at(-1),
                 editingTypeSpec = this.getEntry("editingTypeSpec");
             if (this._originTypeSpecPath.equals(selectedTypeSpecPath))
                 this._changeState(() =>
