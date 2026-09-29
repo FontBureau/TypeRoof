@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="editor-not-wired-to-nodeproperties--analysis-uncommitted-working-note" class="heading_anchor" href="#editor-not-wired-to-nodeproperties--analysis-uncommitted-working-note" aria-hidden="true">#</a>Editor not wired to <code>nodeProperties@</code> — analysis (uncommitted working note)</h1>
+<p><strong>Date</strong>: 2026-09-07 · <strong>Context</strong>: Phase 5b (node→node channel,
+<code>thoughts/plans/2026-09-06-1613-phase-5b-node-to-node-channel.md</code>),
+surfaced during Phase 4 review. <strong>Status</strong>: open design issue, parked
+for the width-semantics takeover.</p>
+<h2><a id="symptom" class="heading_anchor" href="#symptom" aria-hidden="true">#</a>Symptom</h2>
+<p>Same document, same node (<code>heading-1</code>), compare mode:</p>
+<ul>
+<li><strong>Editor</strong> h1: no <code>width</code> style; geometry-ish properties (<code>padding-inline</code>)
+land on the inner <code>&lt;div data-node-content&gt;</code>.</li>
+<li><strong>Viewer</strong> h1: <code>width: 1200pt</code> on the <code>&lt;h1&gt;</code> element itself.</li>
+</ul>
+<h2><a id="mechanism" class="heading_anchor" href="#mechanism" aria-hidden="true">#</a>Mechanism</h2>
+<p>Both renderers instantiate the same styler class
+(<code>UIDocumentTypeSpecStyler</code>), but with different wiring:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Editor (ProseMirror)</th>
+<th>Viewer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Styler host</td>
+<td><code>UIDocumentNodeOutfitter._createWidgetDefinition</code> (<code>lib/js/components/prosemirror/type-spec.typeroof.jsx:658-689</code>)</td>
+<td><code>UIDocumentElement._createTypeSpecStylerWrapper</code> (<code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx:305-320</code>)</td>
+</tr>
+<tr>
+<td>inner/outer</td>
+<td><code>inner</code> = content div, <code>outer</code> = block element (<code>integration.typeroof.jsx:374-380</code>) — <strong>intentional and correct</strong></td>
+<td><code>inner === outer</code> = the block element</td>
+</tr>
+<tr>
+<td><code>properties@</code> (typeSpecnion)</td>
+<td>mapped</td>
+<td>mapped</td>
+</tr>
+<tr>
+<td><code>nodeProperties@</code></td>
+<td><strong>not mapped</strong></td>
+<td>mapped per document node (<code>nodeProperties@&lt;documentNodePath&gt;</code> via <code>typeSpecStylerDependencyMappings</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Consequence: the editor computes style from the <strong>typeSpecnion only</strong>;
+the viewer computes from <strong>typeSpecnion + the node-properties channel</strong>.
+Two different property universes for the same node.</p>
+<h2><a id="the-immediate-width-leak-minor-downstream" class="heading_anchor" href="#the-immediate-width-leak-minor-downstream" aria-hidden="true">#</a>The immediate width leak (minor, downstream)</h2>
+<p>The styler’s <code>innerPropertiesData</code> maps <code>layout/width → width</code>
+(<code>type-spec.typeroof.jsx:263</code>) with the contract <em>“<code>layout/*</code> keys are
+unregistered; when absent (non-root scopes) the CSS property stays
+unset”</em> (<code>:345-348</code>). Pre-5b that held: per-node payloads delegated to
+the root scope’s effective map, where <code>layout/width</code> is absent for
+document nodes (verified empirically: at <code>6a300acc</code> every viewer block
+has no width set).</p>
+<p>5b Phase 2 replaced delegation with real per-node scopes
+(<code>CascadingMap([local, parent → … → rootScope])</code>), and the root scope’s
+pane <code>layout/width</code> (the 1200pt) now <strong>inherits through the cascade into
+every node</strong>. The viewer (the only consumer mapping <code>nodeProperties@</code>)
+applies it to block elements. Editor unaffected because it never reads
+the channel.</p>
+<h2><a id="decision-recorded" class="heading_anchor" href="#decision-recorded" aria-hidden="true">#</a>Decision recorded</h2>
+<p>The inner/outer element split in the editor is <strong>intentional and
+correct</strong> (operator, 2026-09-07). The issue to fix is the <strong>property
+source divergence</strong>: the editor must be wired onto
+<code>nodeProperties@&lt;documentNodePath&gt;</code> so editor and viewer consume the
+identical per-node property maps, and width semantics (which nodes see
+<code>layout/width</code>, inheritance demarcation of the root pane width) get
+decided once, in the channel, for both renderers.</p>
+<p>Open points for the takeover:</p>
+<ul>
+<li>Where the editor’s outfitter learns the documentNodePath for the
+mapping (it has the PM node/<code>getPos()</code>; the meta tree owns the
+canonical paths).</li>
+<li>Whether the editor’s <code>innerPropertiesData</code> width entry should apply
+to the inner div once the channel is mapped, or move.</li>
+<li>Root-scope <code>layout/width|height</code> inheritance demarcation (the pane
+width must not cascade into document nodes) — restores the
+“absent → unset” contract for both renderers at once.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

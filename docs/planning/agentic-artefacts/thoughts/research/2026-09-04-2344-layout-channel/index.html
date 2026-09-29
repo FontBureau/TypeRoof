@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-layout-channel-demarcation_layout--parent-node-layout-facts" class="heading_anchor" href="#research-layout-channel-demarcation_layout--parent-node-layout-facts" aria-hidden="true">#</a>Research: Layout channel (DEMARCATION_LAYOUT + parent-node layout facts)</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>How to implement the “layout channel”: style inheritance (typeSpec→typeSpec) is
+separate from layout propagation (document node→document node, e.g. a column
+container’s computed <code>column-width</code> becomes the child text node’s available
+width). Planned design (from session discussion):</p>
+<ul>
+<li><code>LAYOUT = 'layout/'</code> string prefix (naming convention only, no registry
+entries), parallel to <code>GENERIC</code>/<code>SPECIFIC</code> in
+registered-properties-definitions.mjs</li>
+<li><code>DEMARCATION_LAYOUT</code> symbol as a third routing bucket in
+<code>collectPropertyGeneratorEntries</code></li>
+<li><code>getLayoutFacts()</code> accessor on the typeSpecnion</li>
+<li>Child scopes receive parent layout facts as an extra input, merged:
+defaults &lt; inherited &lt; layoutFacts &lt; local</li>
+<li>Update propagation rides the existing <code>typeSpecProperties@</code> cascade (parent
+typeSpecnion rebuild ⇒ layout facts recompute ⇒ children rebuild), so no new
+protocol channel is needed</li>
+<li>Root environment values become the degenerate depth-0 case of the same
+channel; <code>specific/root/*</code> naming may be retired in favor of <code>layout/*</code></li>
+</ul>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p>The typeSpecnion is a per-typeSpec scope machine with a 2-bucket routing
+(<code>DEMARCATION_PROPERTY</code> local / <code>DEMARCATION_INHERITANCE</code> controls) collected by
+<code>collectPropertyGeneratorEntries</code> and resolved by
+<code>LocalScopeTypeSpecnion.resolveSyntheticProperties</code>. A third bucket and a facts
+map slot are mechanically feasible: the touch points are few and known (3
+collect call sites, the 4-tuple return of <code>_initPropertyValuesMaps</code>,
+<code>PatchedTypeSpecnion</code>, <code>_getParentMaps</code>). The parent→child transport problem is
+already solved: children pull the parent’s <code>TypeSpecLiveProperties</code> object via
+the <code>@parentProperties</code> dependency mapping (structural path
+<code>rootPath.append(&quot;..&quot;,&quot;..&quot;)</code>), and document-node widgets can compute the
+parent’s <em>effective</em> typeSpec path at runtime via the relative-link mechanism
+(<code>_getTypeSpecPropertiesId(pathOfTypes.slice(0,-1))</code>). No test asserts on the
+literal <code>specific/root</code> keys; the pane-sizing test observes the
+environment→availableWidth pipeline behaviorally.</p>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-typespecnion-core--libjscomponentslayoutstype-stagetype-specnionmjs--520-loc" class="heading_anchor" href="#1-typespecnion-core--libjscomponentslayoutstype-stagetype-specnionmjs--520-loc" aria-hidden="true">#</a>1. TypeSpecnion core (<code>lib/js/components/layouts/type-stage/type-specnion.mjs</code>, 520 LOC)</h3>
+<ul>
+<li>Demarcation symbols: <code>DEMARCATION_PROPERTY</code>, <code>DEMARCATION_INHERITANCE</code>,
+<code>TOMBSTONE</code> (:13-17). No other demarcations exist; unknown ones throw in
+<code>collectPropertyGeneratorEntries</code> (:60-64).</li>
+<li><code>collectPropertyGeneratorEntries(propertiesGen, defaultDemarcation)</code> (:36-66)
+returns the 2-tuple <code>[propertyValuesMap, inheritanceControls]</code>. Call sites:
+<code>type-specnion.mjs:409</code> (policy gens, default INHERITANCE), <code>:497</code>
+(<code>_initPropertyValuesMaps</code>, default PROPERTY), <code>defaults.mjs:244</code> (defaults,
+PROPERTY, slot 1 discarded deliberately).</li>
+<li><code>HierarchicalScopeTypeSpecnion</code> (:366-520): constructor args
+<code>(propertiesGenerators, typeSpec, parentTypeSpecnionOrTypeSpecDefaultsMap, inheritancePolicyGenerators)</code>; 3rd arg polymorphic (:378-381). Computes
+4-tuple <code>[_rawProperties, _localPropertyValuesMap, _propertyValuesMap, _inheritanceControls]</code> in <code>_initPropertyValuesMaps</code> (:487-519).</li>
+<li><code>_getParentMaps()</code> (:468-485): root uses raw <code>typeSpecDefaultsMap</code> for both
+parent slots (FIXME :474-476); otherwise
+<code>parentTypeSpecnion.getInheritableProperties()</code>.</li>
+<li><code>getInheritableProperties()</code> (:402-449): applies policy + explicit controls,
+tombstones withheld, control synthetics resolved against own settled
+properties with <code>allowParentOnlyResolution=true</code>.</li>
+<li><code>PatchedTypeSpecnion</code> (:316-356): terminal derived view (no
+<code>parentTypeSpecnion</code>, children never descend through it); merges
+<code>filteredParent ++ (raw ++ patch)</code>. Sole caller:
+<code>live-properties.typeroof.jsx:341</code> (StyleLinkLiveProperties).</li>
+<li><code>_BaseTypeSpecnion.getInheritableProperties()</code> defaults to <code>getProperties()</code>
+(:116-118) — a <code>getLayoutFacts()</code> accessor can follow the same pattern.</li>
+<li><code>resolveSyntheticProperties</code> (:148-308): prune-loop for unresolvable
+synthetics (optional → drop, required → <code>UnresolvableDependenciesError</code>),
+then topological-sort resolution (Kahn in metamodel/topological-sort.ts;
+stale-edge guard added in e765ac75).</li>
+</ul>
+<h3><a id="2-construction--update-lifecycle--live-propertiestyperoofjsx-" class="heading_anchor" href="#2-construction--update-lifecycle--live-propertiestyperoofjsx-" aria-hidden="true">#</a>2. Construction &amp; update lifecycle (<code>live-properties.typeroof.jsx</code>)</h3>
+<ul>
+<li><code>new HierarchicalScopeTypeSpecnion</code> production call sites (both here):
+child :82-87 (parent = <code>parentProperties.typeSpecnion</code>), root :134-140
+(parent = typeSpecDefaultsMap). Test call sites: type-specnion.test.mjs:92,94,203.</li>
+<li><code>TypeSpecLiveProperties.update</code> rebuild triggers (:56-63): <code>typeSpec</code>,
+<code>@parentProperties</code>, <code>rootFont</code>, all <code>ENVIRONMENT_PROVIDER_ENTRIES</code>,
+<code>width</code>, <code>height</code>.</li>
+<li>Root defaults seeding (:90-142): environment values under
+<code>specific/root/environment/...</code> (:109-119), <code>specific/root/width|height</code>
+(:121-132). ⚠️ Mutation hazard: when no <code>rootFont</code> is wired, the seeding
+mutates <code>this._typeSpecDefaultsMap</code> in place (:119/:128) — <code>Object.freeze</code>
+on the Map does not prevent <code>.set()</code>; the copy at :105 (rootFont branch)
+shows the intent. Relevant if a layout-facts slot follows this pattern.</li>
+<li><code>hasParentProperties</code> XOR (:44-48): defaults map iff no <code>@parentProperties</code>.</li>
+<li>On rebuild: <code>setUpdated</code> on <code>typeSpecProperties@</code> (:144-151) — this is the
+existing cascade that layout-facts propagation can ride.</li>
+<li><code>defaults.mjs:164-253</code> <code>getTypeSpecDefaultsMap</code>: runs
+TYPE_SPEC_PROPERTIES_GENERATORS over the primal model, demarcation-routed
+(PROPERTY default), inheritance controls discarded (comment :239-243);
+would need to handle/discard a LAYOUT bucket the same way.</li>
+</ul>
+<h3><a id="3-parentchild-transport-already-solved" class="heading_anchor" href="#3-parentchild-transport-already-solved" aria-hidden="true">#</a>3. Parent→child transport (already solved)</h3>
+<p>Chain: parent <code>TypeSpecLiveProperties</code> (registrant of
+<code>typeSpecProperties@&lt;parentPath&gt;</code>) → <code>@parentProperties</code> dependency mapping
+(<code>meta.typeroof.jsx:215-222</code>, structural path <code>rootPath.append(&quot;..&quot;,&quot;..&quot;)</code>) →
+child <code>update()</code> (<code>live-properties.typeroof.jsx:73-88</code>) → child’s
+<code>HierarchicalScopeTypeSpecnion</code>. Root omits <code>@parentProperties</code> deliberately
+(<code>index.typeroof.jsx:324-327</code>).</p>
+<p>Document-node widgets (viewer.typeroof.jsx):</p>
+<ul>
+<li><code>nodeSpecToTypeSpec</code>: external model dep mapping node typeKey → link;
+relative links anchor at the parent node’s resolved spec
+(integration.typeroof.jsx:218-232, recursive with <code>pathOfTypes.slice(0,-1)</code>).</li>
+<li>Parent’s effective typeSpec path computable at child:
+<code>this._getTypeSpecPropertiesId(this._pathOfTypes.slice(0,-1), true)</code>;
+sibling-path precedent at viewer.typeroof.jsx:537-542.</li>
+<li>Caveat: viewer world resolves <em>effective</em> paths (fallback walk may land on
+an ancestor); meta world uses <em>structural</em> parent path. A layout channel
+keyed by path must pick one semantics.</li>
+</ul>
+<h3><a id="4-generator-inventory--properties-generatorsmjs--748-loc" class="heading_anchor" href="#4-generator-inventory--properties-generatorsmjs--748-loc" aria-hidden="true">#</a>4. Generator inventory (<code>properties-generators.mjs</code>, 748 LOC)</h3>
+<p>18 generators; full table in session notes. Layout-relevant:</p>
+<ul>
+<li><code>environmentGen</code> (:53): forwards <code>specific/root/environment/&lt;path&gt;</code> as
+<code>specific/environment/&lt;path&gt;</code>; tombstones root key (:71, INHERITANCE).</li>
+<li><code>availableSizesGen</code> (:81): reads <code>specific/root/{width,height}</code> + root env;
+yields <code>generic/availableWidth|Height</code> (plain, pt) + <code>generic/width|height</code>
+identity synthetics (explicit PROPERTY, :108-112); tombstones
+<code>specific/root/*</code> (:92-94).</li>
+<li><code>horizontalLayoutRunion</code> (:553): yields inlineMargins/lineLength/columnGutter/
+columnCount locals + <code>/pt</code> synthetic variants (:577-589); inheritance
+re-routes <code>generic/width</code> ← <code>generic/availableWidth</code> (:648-652) and
+<code>generic/availableWidth</code> ← lineLength·0.5·fontSize (:658-666); lineLength
+tombstone commented out (:668).</li>
+<li><code>inheritancePolicyGen</code> (:744-748): yields <code>[name, TOMBSTONE]</code> for every
+non-inheriting property per <code>isInheritingPropertyFn</code>
+(registered-properties.mjs:425); <code>specific/*</code> keys are unregistered →
+default inheriting → hence the explicit tombstones.</li>
+</ul>
+<p>Generator lists: <code>TYPE_SPEC_PROPERTIES_GENERATORS</code> (:681-697, used by
+type-stage + ramp + defaults.mjs), <code>STYLE_PATCH_PROPERTIES_GENERATORS</code>
+(:704-721, stylePatch scopes — stubbed parent API, no typeSpecnion),
+<code>TYPE_TOOLS_GRID_*</code> (type-tools-grid.mjs:1562-1590, no
+environmentGen/availableSizesGen/horizontalLayoutRunion).</p>
+<h3><a id="5-consumers-of-the-output-maps" class="heading_anchor" href="#5-consumers-of-the-output-maps" aria-hidden="true">#</a>5. Consumers of the output maps</h3>
+<p><code>getProperties()</code> consumers (all hold the live <code>TypeSpecLiveProperties</code>
+object via protocol handler, no serialization): typeSpecGetDefaults
+(defaults.mjs:90), StyleLinksMeta (meta.typeroof.jsx:152), TypeStagePaneStyler
+(pane-styler.typeroof.jsx:41 — applies <code>generic/availableWidth|Height</code> as CSS
+pt, :46-52), UIFontLabel, UIProcessedProperties (processed-properties.mjs:118,131),
+typeToolsGridGetDefaults (type-tools-grid.mjs:1080), UIGrid, ProseMirror
+stylers (type-spec.typeroof.jsx:122,157,282,292,799 — :150-160 walks the
+<code>parentTypeSpecnion</code> chain blending backgrounds; :253 consumes
+<code>generic/width</code>), language-tags UI, UIManualAxesLocations,
+UIInheritedStyleLinksList. <code>getInheritableProperties()</code> and <code>createPatched</code>
+are internal-only (+ tests). <code>generic/height</code> is yielded but consumed nowhere.</p>
+<h3><a id="6-test-surface" class="heading_anchor" href="#6-test-surface" aria-hidden="true">#</a>6. Test surface</h3>
+<ul>
+<li><code>type-specnion.test.mjs</code>: direct machinery unit tests (synthetic resolution,
+inheritance controls, tombstones, unresolvable drops/throws) with fake keys —
+primary observer of a new DEMARCATION_LAYOUT bucket.</li>
+<li><code>type-stage-pane-sizing/index.test.mjs</code>: behavioral end-to-end of
+environment→<code>specific/root/environment</code>→availableSizesGen→<code>availableWidth</code>→CSS
+(asserts <code>&quot;600pt&quot;</code> etc.) — would break on renamed keys.</li>
+<li><code>type-stage-toggles/harness.mjs:151-163</code>: registers <code>environment@</code> keys from
+<code>ENVIRONMENT_PROVIDER_KEYS</code>; <code>grid-range-axis/index.test.mjs:98-102</code> same
+pattern (but grid generator list lacks the env generators).</li>
+<li>No test asserts literal <code>specific/root</code> / <code>availableWidth</code> strings.</li>
+<li><code>LAYOUT</code>/<code>layout/</code> prefix: does not exist anywhere; name is free.</li>
+</ul>
+<h2><a id="code-references-key-touch-points-for-implementation" class="heading_anchor" href="#code-references-key-touch-points-for-implementation" aria-hidden="true">#</a>Code References (key touch points for implementation)</h2>
+<ul>
+<li><code>lib/js/components/layouts/type-stage/type-specnion.mjs:13-17</code> — demarcation symbols (add DEMARCATION_LAYOUT)</li>
+<li><code>lib/js/components/layouts/type-stage/type-specnion.mjs:36-66</code> — collectPropertyGeneratorEntries (3rd bucket)</li>
+<li><code>lib/js/components/layouts/type-stage/type-specnion.mjs:487-519</code> — _initPropertyValuesMaps 4-tuple (→ 5-tuple)</li>
+<li><code>lib/js/components/layouts/type-stage/type-specnion.mjs:468-485</code> — _getParentMaps (layout facts input slot)</li>
+<li><code>lib/js/components/layouts/type-stage/type-specnion.mjs:402-449</code> — getInheritableProperties (sibling: getLayoutFacts)</li>
+<li><code>lib/js/components/layouts/type-stage/type-specnion.mjs:316-356,461-465</code> — PatchedTypeSpecnion/createPatched (parallel merge or deliberate bypass)</li>
+<li><code>lib/js/components/registered-properties-definitions.mjs:14-34</code> — prefix constants (add LAYOUT)</li>
+<li><code>lib/js/components/layouts/type-stage/live-properties.typeroof.jsx:73-88,109-142</code> — child/root construction + defaults seeding (mutation hazard :119/:128)</li>
+<li><code>lib/js/components/layouts/type-stage/meta.typeroof.jsx:215-222</code> — @parentProperties structural path</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:174-269</code> — parent effective path resolution</li>
+<li><code>lib/js/components/layouts/type-stage/defaults.mjs:234-251</code> — defaults construction (discard LAYOUT bucket)</li>
+<li><code>lib/js/components/layouts/type-stage/properties-generators.mjs:53-115,553-668</code> — environmentGen/availableSizesGen/horizontalLayoutRunion (rename specific/root→layout, re-demarcate layout facts)</li>
+</ul>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ol>
+<li>Path semantics for a node-addressed layout channel in the viewer world:
+structural (<code>rootPath.append(&quot;..&quot;,&quot;..&quot;)</code>) vs. effective/fallback-resolved
+(integration.typeroof.jsx walk) — must match whichever map the facts live on.</li>
+<li>Merge precedence of layoutFacts vs. inherited vs. local in the child’s
+<code>_propertyValuesMap</code> (session lean: defaults &lt; inherited &lt; layoutFacts &lt; local).</li>
+<li>Whether <code>specific/environment/*</code> (descendant-visible env keys) also renames
+to <code>layout/*</code>, or only the <code>specific/root/*</code> segment.</li>
+<li><code>PatchedTypeSpecnion</code>: does a style patch ever need to override a layout
+fact (e.g. patched width)? Currently it bypasses origin inheritance
+controls; layout facts likely bypass too, but decide explicitly.</li>
+<li>Does <code>inheritancePolicyGen</code> need to learn about the layout bucket
+(tombstoning layout facts for non-inheriting names), or do layout facts
+have their own pass-down discipline?</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

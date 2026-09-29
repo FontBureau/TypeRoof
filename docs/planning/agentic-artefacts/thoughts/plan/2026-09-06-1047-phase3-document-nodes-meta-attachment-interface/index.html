@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="phase-3-documentnodesmeta-attachment-interface--implementation-plan" class="heading_anchor" href="#phase-3-documentnodesmeta-attachment-interface--implementation-plan" aria-hidden="true">#</a>Phase 3: DocumentNodesMeta Attachment Interface — Implementation Plan</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Implement Phase 3 of the cycle plan (the ownership flip): <code>DocumentNodesMeta</code>
+becomes an always-active, <strong>DOM-free</strong> widget tree over <code>./document</code> in both
+layouts; the mode-gated viewer attaches to it via a callback that returns
+widget descriptions, and owns all DOM. Per-node
+<code>nodeProperties@&lt;documentNodePath&gt;</code> registrations are wired (payload: live
+delegation to the root map — behavior-neutral; 5b installs real per-node
+scopes).</p>
+<p>This plan is the Step-0 design the cycle plan requires before code. It was
+converged with the operator in session 2026-09-06 (three review rounds).</p>
+<h2><a id="design-locked-with-operator-2026-09-06" class="heading_anchor" href="#design-locked-with-operator-2026-09-06" aria-hidden="true">#</a>Design (locked with operator, 2026-09-06)</h2>
+<ol>
+<li>
+<p><strong>The meta tree is DOM-free.</strong> No <code>DocumentNodesMeta*</code> class touches
+<code>domTool</code>, holds an element, or calls <code>insertBefore</code>. DOM knowledge lives
+in the handler (bound to the viewer) and the viewer-side attachment
+classes. (Operator: “The Viewer owns the DOM, the Meta doesn’t know
+anything about the dom.”)</p>
+</li>
+<li>
+<p><strong>Discovery via <code>getWidgetById</code></strong> (the prosemirror switchboard pattern,
+<code>prosemirror.typeroof.jsx:33-37</code>). The <strong>id is configured in the layout
+controller, not in the meta module</strong>: the controller defines
+<code>const documentNodesMetaId = &quot;documentNodesMeta&quot;</code>, puts it in the meta
+tuple’s settings, and passes it to the viewer tuple as an arg.</p>
+</li>
+<li>
+<p><strong>Attach/detach API</strong> (single-argument; the host element does NOT travel —
+the viewer’s handler closes over its own article):</p>
+<pre class="language-js"><code class="language-js"><span class="token comment">// UIDocumentViewer constructor:</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span>__attachHandler <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_attachHandler</span><span class="token punctuation">.</span><span class="token function">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> meta <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>widgetBus<span class="token punctuation">.</span><span class="token function">getWidgetById</span><span class="token punctuation">(</span>documentNodesMetaId<span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+meta<span class="token operator">?.</span><span class="token function">attachRenderer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>__attachHandler<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// UIDocumentViewer destroy:</span>
+meta<span class="token operator">?.</span><span class="token function">detachRenderer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>__attachHandler<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span>__attachHandler <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span></code></pre>
+<p>Handler identity (the stored binding) is the key into the meta tree’s
+per-level <code>Set&lt;handlerFn&gt;</code> / <code>Map&lt;handlerFn, wrapper&gt;</code> structures. The
+<code>null</code> fallback + <code>?.</code> covers full-teardown ordering (meta is destroyed
+before the viewer; <code>_destroyWidget</code> deletes the id from <code>_idToWidget</code>).</p>
+</li>
+<li>
+<p><strong>Handler contract.</strong> Per meta node, the meta tree calls
+<code>handlerFn(metaInfo, domParent)</code> and gets back a widget description
+<code>[settings, dependencyMappings, Constructor, ...args]</code> which the <strong>meta
+node initializes itself</strong> (<code>_initWrapper</code> in the meta node’s context —
+<code>require(&quot;raw:zones&quot;)</code> works there, the CollapsibleContainer pattern).
+<code>null</code> return = this renderer doesn’t render this node.</p>
+<pre class="language-js"><code class="language-js">metaInfo <span class="token operator">=</span> <span class="token punctuation">{</span>
+    typeKey<span class="token punctuation">,</span>            <span class="token comment">// "text" vs. element dispatch result</span>
+    rootPath<span class="token punctuation">,</span>           <span class="token comment">// absolute document-node path</span>
+    documentRootPath<span class="token punctuation">,</span>
+    pathOfTypes<span class="token punctuation">,</span>        <span class="token comment">// ancestor type chain</span>
+    context<span class="token punctuation">,</span>            <span class="token comment">// inInlineContext, hasTypeSpecStyling, …</span>
+    renderingPlan<span class="token punctuation">,</span>      <span class="token comment">// element nodes: resolveElementRenderingPlan result</span>
+    reposition<span class="token punctuation">,</span>         <span class="token comment">// false on attach; true on reorder notification</span>
+<span class="token punctuation">}</span></code></pre>
+<p><code>domParent</code> is an <strong>opaque token</strong> the meta forwards but never interprets:
+the article at the root container (supplied by the handler itself via
+closure — see 5), an attachment’s <code>wrapper.widget.node</code> at nested levels.
+If a handler returns <code>null</code> for a node, its children attach with the
+nearest rendered ancestor’s <code>domParent</code> (edge case; the 5a viewer never
+returns <code>null</code>).</p>
+</li>
+<li>
+<p><strong>DOM insertion is viewer-side.</strong> The description’s <code>Constructor</code> is the
+attachment widget (<code>UIDocumentElement</code>/<code>UIDocumentTextRun</code>, existing
+names — <code>type-spec-styler.test.mjs:81</code> uses
+<code>Object.create(UIDocumentElement.prototype)</code>, untouched). Its constructor
+receives <code>domParent</code> + a viewer-owned <strong>attachment registry</strong> (<code>Map</code>,
+keyed by <code>metaInfo.rootPath</code>, created by <code>UIDocumentViewer</code> and passed
+through the handler’s returned args), resolves siblings against earlier
+siblings’ registry entries (today’s <code>_insertIntoSlot</code> algorithm, moved
+into a viewer-side helper), inserts, and registers itself. <code>destroy()</code>
+unregisters and removes the node (existing <code>node.parentElement</code> guard).
+Provisioning order guarantees parents and earlier siblings attach first.</p>
+</li>
+<li>
+<p><strong>Reorder</strong> (G5): the meta container’s <code>_reorderChildren</code> re-calls the
+handler for each affected key with <code>metaInfo.reposition = true</code>. The
+handler re-inserts the existing attachment’s node via the registry and
+returns <code>null</code>; the meta creates no new wrapper. The old monkey-patch,
+<code>_insertIntoSlot</code>, <code>_insertNodeIntoSlot</code>, and the container’s
+<code>_destroyWidget</code> override all disappear from the meta side.</p>
+</li>
+<li>
+<p><strong>Cascade.</strong> Every meta-tree level implements the same <code>attach(fn)</code> /
+<code>detach(fn)</code> pair: containers store the handler set and cascade to
+existing children; newly provisioned children attach stored handlers at
+creation. <code>DocumentNodesMetaNode</code> (dispatcher) attaches its typeKey-child
+after creating it; on typeKey rebuild the old child’s attachments die with
+it. Meta element/text-run invoke the handler, initialize the description,
+keep <code>Map&lt;handlerFn, wrapper&gt;</code>, and (element) cascade into their child
+<code>DocumentNodesMetaNodes</code> with the attachment’s node as <code>domParent</code>.
+Structurally N renderers; 5a attaches exactly one, no multi-renderer tests.</p>
+</li>
+<li>
+<p><strong>Update timing, two scenarios:</strong></p>
+<ul>
+<li><strong>Boot (viewer mode, the default):</strong> controller provisioning constructs
+all widgets in tuple order (meta before viewer) → viewer constructor
+attaches (handler stored at the root) → updates run in tuple order →
+meta’s <code>initialUpdate</code> provisions the tree, each node attaches stored
+handlers during <code>_provisionWidgets</code> and adds the attachment wrappers to
+its <code>requiresFullInitialUpdate</code> return (the <code>UIDocumentTextRun</code> dynamic
+styler-widget pattern). Same-cycle article population.</li>
+<li><strong>Mode switch (editor→viewer, tree built, no meta dependency changed):</strong>
+the attach cascade walks existing nodes synchronously and calls
+<code>attachmentWrapper.widget.initialUpdate(rootState)</code> with <code>rootState</code>
+<strong>cached by the meta root on every <code>update</code></strong> (<code>compareResult.newState</code>).
+The cache is current: any document change wakes the meta tree. Detach is
+a synchronous <code>_destroyWidget</code> cascade. (Riskiest mechanism — the spike
+validates it first.)</li>
+</ul>
+</li>
+<li>
+<p><strong>Per-node registrations on the dispatcher.</strong>
+<code>DocumentNodesMetaNode</code> settings carry
+<code>{&quot;nodeProperties@&quot;: widgetBus.rootPath.toString()}</code> — NOT the
+typeKey-child: <code>UIDocumentNode._provisionWidgets</code> creates the new wrapper
+before destroying the old, and <code>SimpleProtocolHandler.register</code> throws on
+duplicates (<code>component.mjs:195-198</code>). The dispatcher survives typeKey
+rebuilds; list keys are stable across moves (G5-safe). Payload: the
+registered component exposes <code>get nodeProperties()</code> live-delegating to the
+root registration’s <code>nodeProperties</code>; each meta node maps the root id as
+<code>&quot;rootNodeProperties@&quot;</code> and pushes <code>setUpdated(ownId)</code> on change, guarded
+by <code>hasProtocolHandlerRegistration</code> (live-properties idiom).</p>
+</li>
+<li>
+<p><strong>Consumer migration (cycle-plan decision 4).</strong>
+<code>typeSpecStylerDependencyMappings</code> (<code>document-nodes-meta.mjs:367</code>)
+switches its hard-coded root <code>nodeProperties@</code> id to
+<code>nodeProperties@&lt;documentNodePath&gt;</code> (from <code>metaInfo.rootPath</code>). Pane
+stylers (context-free) keep the root id. Mark style-link stylers have no
+<code>nodeProperties@</code> dep — untouched.</p>
+</li>
+</ol>
+<h2><a id="class-inventory" class="heading_anchor" href="#class-inventory" aria-hidden="true">#</a>Class inventory</h2>
+<p><strong>New module</strong> <code>lib/js/components/layouts/type-stage/document-nodes-meta.typeroof.jsx</code>
+(widget classes → <code>.typeroof.jsx</code>; no <code>.prettierignore</code> entry needed; the
+existing <code>.mjs</code> stays the pure-function library):</p>
+<ul>
+<li><code>DocumentNodesMeta</code> (root, <code>_BaseContainerComponent</code>): handler set,
+<code>attachRenderer</code>/<code>detachRenderer</code>, <code>pathOfTypes</code> seed, <code>rootState</code> cache.</li>
+<li><code>DocumentNodesMetaNodes</code> (<code>_BaseDynamicMapContainerComponent</code>): dynamic-map
+provisioning over <code>content</code>, key→meta-node bookkeeping, handler cascade,
+<code>_reorderChildren</code> via reposition notifications.</li>
+<li><code>DocumentNodesMetaNode</code> (<code>_BaseContainerComponent</code>): typeKey dispatch +
+node-identity rebuild (adopted from <code>UIDocumentNode</code>), per-node
+<code>nodeProperties@</code> registration, handler→child attach.</li>
+<li><code>DocumentNodesMetaElement</code>: plan derivation, <code>pathOfTypes</code>/<code>childrenContext</code>
+extension, child-container provisioning always (the recursion), handler
+invocation, <code>domParent</code> forwarding.</li>
+<li><code>DocumentNodesMetaTextRun</code>: thin — context pass-through + handler
+invocation.</li>
+</ul>
+<p><strong>Viewer</strong> (<code>viewer.typeroof.jsx</code>): <code>UIDocumentViewer</code> (article, pane styler,
+attach/detach, attachment registry, <code>_attachHandler</code>); <code>UIDocumentElement</code>/
+<code>UIDocumentTextRun</code> as attachment widgets (DOM creation from
+<code>metaInfo.renderingPlan</code>, attr-diff application, typeSpec-styler
+provisioning, mark wrappers + mark stylers, text updates, self-insertion via
+registry + <code>domParent</code>).</p>
+<p><strong>Registrations</strong>: meta tuple (id from controller, <code>relativeRootPath: ./document</code>, deps nodeSpec/markSpec/nodeSpecToTypeSpec, no zone, no
+activationTest) <strong>before</strong> the viewer tuple in type-stage; same tuple in ramp
+(no viewer there — the design center’s purest case).</p>
+<h2><a id="implementation-steps" class="heading_anchor" href="#implementation-steps" aria-hidden="true">#</a>Implementation steps</h2>
+<ol>
+<li><strong>Spike (validates design point 8):</strong> minimal <code>DocumentNodesMeta</code> root +
+registration in type-stage; boot in viewer mode and editor→viewer
+round-trip; G1/G2 green. Stop and report if mid-cycle
+<code>initialUpdate(cachedRootState)</code> misbehaves.</li>
+<li>Meta node/container/element/text-run classes + handler cascade + per-node
+registrations.</li>
+<li>Viewer becomes the attachment (handler, registry, self-insertion,
+reposition handling).</li>
+<li>Ramp registration.</li>
+<li>Consumer migration (design point 10).</li>
+<li>Verification (below); pause with commit message + file list; commit on
+OKOK.</li>
+</ol>
+<h2><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success criteria</h2>
+<ul>
+<li>Automated: <code>npm run typecheck</code>, <code>npm run lint</code>, <code>npm test</code> green; the G1–G7
+behavior suite passes <strong>unmodified</strong>.</li>
+<li>New assertion (in the G1/G2 suite): in editor-only mode no
+<code>article.typeroof-document</code> exists while per-node <code>nodeProperties@</code>
+registrations are live (<code>hasRegistered(&quot;nodeProperties@&lt;documentNodePath&gt;&quot;)</code>
+via the world’s protocol handler).</li>
+<li>Manual (required, not optional): wikipedia demo — editor, viewer, compare
+modes render and switch identically; ramp layout renders, labels/parameters
+work.</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What we’re NOT doing</h2>
+<ul>
+<li>No real per-node <code>HierarchicalScopeNodeProperties</code> (5b).</li>
+<li>No outfitter migration (5b or later).</li>
+<li>No multi-renderer tests (the maps support N; one is exercised).</li>
+<li>No behavior changes: parked FIXMEs stay parked (tag-change re-resolution,
+leaf-ness transitions, next-sibling unknown-type). The pinned mark-wrap
+quirk (G7) fix is the first post-5a commit.</li>
+</ul>
+<h2><a id="commit-discipline-operator-instruction-absolute" class="heading_anchor" href="#commit-discipline-operator-instruction-absolute" aria-hidden="true">#</a>Commit discipline (operator instruction, absolute)</h2>
+<p>Before EVERY commit: stop, present commit message + file list, proceed only
+on operator’s “OKOK”. Commit messages carry the metadata trailer read from
+its actual sources at commit time (provider/model from
+<code>~/.config/goose/config.yaml</code>, <code>agent: goose v&lt;version&gt;</code>).</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

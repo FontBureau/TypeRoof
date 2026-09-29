@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Silent TypeSpecs and TypeSpec Flags (user-doc source) - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="silent-typespecs-no-styler-and-typespec-flags" class="heading_anchor" href="#silent-typespecs-no-styler-and-typespec-flags" aria-hidden="true">#</a>Silent TypeSpecs (No Styler) and TypeSpec Flags</h1>
+<p>Source material for user-facing documentation of the shim-flags &amp;
+relative-linking feature. Not linked into the user docs; kept here as
+the canonical description of the semantics.</p>
+<p>A TypeSpec can carry two flags that change how the node it resolves to
+is rendered and how it participates in typeSpec resolution. Both are
+toggled in the TypeSpec properties panel of the type stage.</p>
+<h2><a id="no-styler-silent-typespecs" class="heading_anchor" href="#no-styler-silent-typespecs" aria-hidden="true">#</a>No Styler (silent TypeSpecs)</h2>
+<p>A TypeSpec with <strong>No Styler</strong> set makes its node render <em>inherit-only</em>:
+the node element itself gets no inline font, color, margin, or language
+styling from that spec. This is useful for in-between structural nodes
+(“shims”) that exist in the tree only to organize resolution, not to
+style their own node.</p>
+<p><strong>A silent spec doesn’t style its node but still governs its marks.</strong>
+This is a feature, not a leak: marks (bold, italic, user styles) inside
+a silent node still resolve their style links from the silent spec’s
+chain, so a silent spec with local property overrides shows those
+properties on every marked span within it. A property-empty silent spec
+(the typical shim) produces a chain identical to its typeSpec-tree
+parent’s, so the effect is invisible in the common case.</p>
+<h3><a id="the-mark-rendering-palette" class="heading_anchor" href="#the-mark-rendering-palette" aria-hidden="true">#</a>The mark-rendering palette</h3>
+<p>What a mark renders as depends on the edge configuration of the
+resolved spec:</p>
+<table>
+<thead>
+<tr>
+<th>edge state</th>
+<th>mark renders as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>linked to a style patch</td>
+<td>spec chain + patch</td>
+</tr>
+<tr>
+<td>null-link (<code>&quot;&quot;</code>)</td>
+<td>spec chain, no patch — <strong>not bare</strong></td>
+</tr>
+<tr>
+<td>tombstone (<code>unlinked</code>)</td>
+<td>bare + <code>unknown-style</code> class</td>
+</tr>
+<tr>
+<td>no edge (nothing inherited)</td>
+<td>bare + <code>unknown-style</code> class</td>
+</tr>
+</tbody>
+</table>
+<p>There is <strong>no edge configuration yielding fully-bare marks without the
+<code>unknown-style</code> class</strong> — the palette is “chain-styled” or
+“bare-with-marker”.</p>
+<h2><a id="exclude-from-fallback" class="heading_anchor" href="#exclude-from-fallback" aria-hidden="true">#</a>Exclude from Fallback</h2>
+<p>During typeSpec resolution, a node type whose link does not resolve
+directly falls back toward the root, walking up the typeSpec tree. A
+TypeSpec with <strong>Exclude from Fallback</strong> set is <em>passed through</em> by that
+walk: it is invisible as a fallback landing, and resolution continues to
+its parent. An <em>explicit</em> link to such a spec still resolves to it —
+the flag only affects the fallback walk, never direct hits.</p>
+<h2><a id="typespec-links-are-relative-by-default" class="heading_anchor" href="#typespec-links-are-relative-by-default" aria-hidden="true">#</a>TypeSpec links are relative by default</h2>
+<p>Node-type → TypeSpec links follow these anchoring rules:</p>
+<table>
+<thead>
+<tr>
+<th>written link</th>
+<th>anchored at</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>this/is/relative</code></td>
+<td>the parent node’s resolved spec</td>
+</tr>
+<tr>
+<td><code>./this/is/relative</code></td>
+<td>the parent node’s resolved spec</td>
+</tr>
+<tr>
+<td><code>../this/is/relative</code></td>
+<td>the parent node’s resolved spec</td>
+</tr>
+<tr>
+<td><code>/this/is/absolute</code></td>
+<td>the typeSpec root (origin)</td>
+</tr>
+</tbody>
+</table>
+<p><code>..</code> consumes one nesting level at a time. If <code>..</code> climbs past the
+origin the link is treated as <em>broken</em> and resolution falls back toward
+the root — excess <code>..</code> is never silently clamped. In the mapping UI, a
+link that can’t be resolved against the root tree shows as
+<code>(relative: &lt;link&gt;)</code>, because relative links are anchored at the parent
+node’s spec and can only be fully resolved in document context.</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

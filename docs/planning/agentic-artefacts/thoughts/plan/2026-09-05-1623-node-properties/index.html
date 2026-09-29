@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="node-properties-implementation-plan" class="heading_anchor" href="#node-properties-implementation-plan" aria-hidden="true">#</a>Node Properties Implementation Plan</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Style inheritance (typeSpec→typeSpec) and layout/geometry propagation
+(document node→document node) are currently conflated in the typeSpecnion
+(<code>specific/root/*</code> keys, re-route gymnastics in <code>horizontalLayoutRunion</code>).
+We build a <strong>second, parallel property channel</strong>: per-document-node
+properties (“node properties”), computed by generators from (a) the node’s
+resolved typeSpecnion map and (b) the parent node’s outbound facts,
+transported via a new <code>nodeProperties@&lt;path&gt;</code> protocol, consumed by stylers
+and by child nodes. The typeSpecnion stays style-pure and shared per
+typeSpec; node properties are per node instance.</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li><code>HierarchicalScopeTypeSpecnion</code>
+(<code>lib/js/components/layouts/type-stage/type-specnion.mjs:366-520</code>) is the
+per-typeSpec scope machine: 2-bucket demarcation routing
+(<code>collectPropertyGeneratorEntries</code> :36-66), synthetic resolution
+(<code>LocalScopeTypeSpecnion</code> statics :148-308), inheritance controls +
+tombstones (<code>getInheritableProperties</code> :402-449).</li>
+<li>Environment facts are injected into the root typeSpecnion defaults as
+<code>specific/root/environment/...</code> and <code>specific/root/width|height</code>
+(<code>live-properties.typeroof.jsx:109-133</code>), consumed by
+<code>environmentGen</code>/<code>availableSizesGen</code> (<code>properties-generators.mjs:53-115</code>)
+which yield <code>generic/availableWidth|Height</code> (pt) → pane-styler
+(<code>pane-styler.typeroof.jsx:46-52</code>) and <code>generic/width</code>
+(prosemirror/type-spec.typeroof.jsx:253).</li>
+<li><code>horizontalLayoutRunion</code> (<code>properties-generators.mjs:553-668</code>) fakes
+geometry via inheritance re-routes/tombstones — works only because
+typeSpec tree == node tree today.</li>
+<li>Parent→child typeSpecnion transport exists: <code>@parentProperties</code>
+dependency mapping (<code>meta.typeroof.jsx:215-222</code>), child reads
+<code>parentProperties.typeSpecnion</code> (<code>live-properties.typeroof.jsx:73-88</code>).</li>
+<li>Document-node widgets resolve their (and their parent’s) <em>effective</em>
+typeSpec path via <code>nodeSpecToTypeSpec</code> relative links
+(<code>prosemirror/integration.typeroof.jsx:174-269</code>; parent path via
+<code>pathOfTypes.slice(0,-1)</code>).</li>
+<li>Mutation hazard: root seeding mutates the shared defaults map in place
+when no rootFont is wired (<code>live-properties.typeroof.jsx:119,128</code>;
+<code>Object.freeze(new Map())</code> doesn’t prevent <code>.set()</code>).</li>
+</ul>
+<h3><a id="key-discoveries" class="heading_anchor" href="#key-discoveries" aria-hidden="true">#</a>Key Discoveries:</h3>
+<ul>
+<li>Generator/demarcation/SyntheticValue machinery is scope-generic; only the
+class names say “typeSpec” (research doc §1).</li>
+<li>Unknown demarcations throw (<code>type-specnion.mjs:60-64</code>) — misuse fails loud.</li>
+<li>No test asserts literal <code>specific/root</code> keys; pane-sizing test observes the
+env→availableWidth→CSS pipeline behaviorally.</li>
+<li><code>LAYOUT</code>/<code>layout/</code>/<code>nodeProperties</code> names are all free (research §6).</li>
+<li>typeSpecnions are shared per typeSpec across elements with different node
+parents — hence node properties CANNOT live inside the typeSpecnion.</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<ul>
+<li><code>CascadingMap</code> util: Map-backed labeled layers, read-only Map-like
+surface (<code>get/has/size/keys/values/entries/[Symbol.iterator]</code>), lazy
+key→layer index, duplicate-label throw at construction, <code>getLayer(label)</code>,
+<code>toMap()</code>, nested-cascade reads (flattening deferred, documented).</li>
+<li>Scope machinery generalized: <code>LocalScopeTypeSpecnion</code> statics and the
+hierarchical scope class reusable for any property scope, typeSpecnion a
+thin subclass/alias (zero behavior change).</li>
+<li><code>HierarchicalScopeNodeProperties</code>: same machinery, own generator list,
+inputs = node typeSpecnion map + parent node properties (+ reserved
+<code>hostContext</code> = NodeModel, not in v1).</li>
+<li><code>nodeProperties@&lt;path&gt;</code> protocol transporting per-node outbound maps;
+children consume via effective parent path (relative-link mechanism).</li>
+<li>Root degenerate case: environment = depth-0 node properties;
+<code>specific/root/*</code> and <code>availableSizesGen</code> leave the typeSpecnion;
+pane-styler/type-spec styler consume <code>layout/availableWidth</code> etc. from
+node properties.</li>
+<li>Defaults-map seeding is derive-not-mutate with a genuinely frozen map.</li>
+</ul>
+<h3><a id="verification-of-end-state" class="heading_anchor" href="#verification-of-end-state" aria-hidden="true">#</a>Verification of end state:</h3>
+<ul>
+<li><code>npm run typecheck</code>, <code>npx eslint</code> clean; full vitest suite green.</li>
+<li>pane-sizing test passes reading from node properties (assertions updated
+only if the CSS unit story changes — it shouldn’t).</li>
+<li>New unit tests: CascadingMap, node-properties scope resolution.</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>No <code>DEMARCATION_LAYOUT</code> in the typeSpecnion (parallel structure instead).</li>
+<li>No layout-dependent synthetics <em>inside</em> typeSpecnion generators.</li>
+<li>No typeSpecnion <code>mapSetProperties</code> → CascadingMap migration (explicit
+follow-up phase, optional).</li>
+<li>No UI for column layout beyond what exists; no <code>pageGutter</code>.</li>
+<li>No <code>hostContext</code>/NodeModel generator argument in v1.</li>
+<li>No flattening of nested CascadingMaps (comment only).</li>
+</ul>
+<h2><a id="naming-locked" class="heading_anchor" href="#naming-locked" aria-hidden="true">#</a>Naming (locked)</h2>
+<ul>
+<li>Protocol: <code>nodeProperties@&lt;path&gt;</code></li>
+<li>Class: <code>HierarchicalScopeNodeProperties</code></li>
+<li>Key prefix: <code>LAYOUT = 'layout/'</code> in registered-properties-definitions.mjs
+(naming convention only, no registry entries) — used for geometry keys
+like <code>layout/availableWidth</code>. NOT <code>node/</code> (collides conceptually with the
+channel name).</li>
+<li>CascadingMap layer labels: <code>&quot;local&quot;</code>, <code>&quot;parent&quot;</code>, <code>&quot;environment&quot;</code>
+(convention enforced by constructors, not by generators).</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Extract-then-build: generalize the scope machinery in a pure refactor
+(no behavior change, full suite green), then build node properties as a
+second instance of that machinery with new generators, protocol, and
+wiring, migrating environment handling and geometry out of the typeSpecnion
+incrementally (root scope before node→node channel).</p>
+<h3><a id="review-findings-incorporated-2026-09-05-two-delegated-code-reviews" class="heading_anchor" href="#review-findings-incorporated-2026-09-05-two-delegated-code-reviews" aria-hidden="true">#</a>Review findings incorporated (2026-09-05, two delegated code reviews)</h3>
+<ul>
+<li>Phase 2 verified substantially pure (5 importers, no typeSpec coupling);
+generator argument order stays <code>gen(outerAPI, host)</code> — node-properties
+generators use the SAME order (a plan draft had it reversed).</li>
+<li>Phase 3 premise corrected: FreezableMap.set() on frozen instance silently
+no-ops (doesn’t throw); the hazard is silent <em>loss</em> of seeding, not
+corruption; the fix changes behavior in the no-rootFont case (bug fix).</li>
+<li>Phase 4: <code>nodeProperties@</code> protocol registration (both controllers)
+moved UP from Phase 5 — the shared pane-styler would otherwise request
+an unregistered protocol (BLOCKER). Environment accessor reads the
+parent/defaults map, not the host map. Width/height reads guarded for
+ramp (no such deps).</li>
+<li>Phase 5: registration asymmetry (UIDocumentElement registers, TextRun
+consume-only — duplicate registration would throw); imperative
+lifecycle-hooked register/unregister (resolved paths can change while
+the node widget persists); consumers read an accessor off the
+registering widget (like <code>.typeSpecnion</code>), not a bare map; styler
+rebuild-check must also compare <code>nodeProperties@</code>; scope construction
+independent of the styler branch (unknown/silent nodes must not break
+the channel); memo-key aliasing note for the 4th arg of
+getTypeSpecPropertiesIdMethod.</li>
+<li>Dead/broken code noted travelling with the Phase 2 move
+(<code>getOwnProperty</code>’s unreachable throw, <code>{$this.constructor.name}</code>
+template, <code>writtable</code> typo) — preserved deliberately in the pure move;
+may be fixed separately.</li>
+</ul>
+<hr>
+<h2><a id="phase-1-cascadingmap--3e86f6dc" class="heading_anchor" href="#phase-1-cascadingmap--3e86f6dc" aria-hidden="true">#</a>Phase 1: CascadingMap ✅ (3e86f6dc)</h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p>New dependency-free util; the read interface everything else will speak.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-cascadingmap" class="heading_anchor" href="#1-cascadingmap" aria-hidden="true">#</a>1. CascadingMap</h4>
+<p><strong>File</strong>: <code>lib/js/components/cascading-map.mjs</code> (new)
+<strong>Changes</strong>:</p>
+<pre class="language-js"><code class="language-js"><span class="token comment">/**
+ * Read-only Map-like facade over labeled layers in precedence order
+ * (first hit wins). Layers are immutable Maps (or nested CascadingMaps);
+ * on change, construct a new CascadingMap.
+ *
+ * NOTE: layers may be CascadingMaps themselves; lookups then recurse.
+ * If deep chains ever show up in profiles, flattening nested cascades
+ * at construction (splicing inner layers in place) preserves precedence
+ * and restores O(1) — an internal change, the read interface stays
+ * identical.
+ */</span>
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">CascadingMap</span> <span class="token punctuation">{</span>
+    <span class="token comment">// layers: iterable of [label, map]; insertion order = precedence.</span>
+    <span class="token comment">// Duplicate labels throw (a duplicated precedence slot is a wiring bug).</span>
+    <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">layers</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">/* Map-backed _layers; _indexCache = null */</span> <span class="token punctuation">}</span>
+
+    <span class="token comment">// Lazily built key -> winning-layer index; serves size/has/keys/get.</span>
+    <span class="token function">_index</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">/* first-hit-wins pass over _layers */</span> <span class="token punctuation">}</span>
+
+    <span class="token keyword">get</span> <span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token function">has</span><span class="token punctuation">(</span><span class="token parameter">key</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token function">get</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token operator">*</span><span class="token function">keys</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token operator">*</span><span class="token function">values</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token operator">*</span><span class="token function">entries</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token punctuation">[</span>Symbol<span class="token punctuation">.</span>iterator<span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token function">forEach</span><span class="token punctuation">(</span><span class="token parameter">fn<span class="token punctuation">,</span> thisArg</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span> <span class="token comment">// Map parity for consumers that expect it</span>
+
+    <span class="token comment">// Layer access: ancestry reads ("parent", "parent.parent", ...)</span>
+    <span class="token comment">// and precedence-bypass for generators.</span>
+    <span class="token function">getLayer</span><span class="token punctuation">(</span><span class="token parameter">label</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span> <span class="token comment">// -> the layer (Map|CascadingMap) | undefined</span>
+
+    <span class="token function">toMap</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span> <span class="token comment">// debug/boundary snapshot</span>
+<span class="token punctuation">}</span></code></pre>
+<p>Not extending <code>Map</code> (honest interface); mutation methods absent (calling
+them is a loud TypeError).</p>
+<h4><a id="2-unit-tests" class="heading_anchor" href="#2-unit-tests" aria-hidden="true">#</a>2. Unit tests</h4>
+<p><strong>File</strong>: <code>lib/js/components/cascading-map.test.mjs</code> (new)
+<strong>Changes</strong>: behavior tests — a key in two layers reads from the
+higher-precedence one; iterating yields each key once; <code>size</code> matches
+the deduped key count; duplicate labels throw; a nested cascade reads
+through; <code>getLayer</code> returns the addressed layer; <code>toMap()</code> equals
+repeated reads. No assertions on internal caching.</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria:</h3>
+<ul>
+<li>Automated: <code>npx vitest run lib/js/components/cascading-map.test.mjs</code> green;
+full suite unchanged; eslint clean.</li>
+<li>Manual: API reads naturally at two call-site sketches (styler, generator).</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause for confirmation before Phase 2.</p>
+<hr>
+<h2><a id="phase-2-scope-machinery-extraction-pure-refactor--f54eb52b" class="heading_anchor" href="#phase-2-scope-machinery-extraction-pure-refactor--f54eb52b" aria-hidden="true">#</a>Phase 2: Scope machinery extraction (pure refactor) ✅ (f54eb52b)</h2>
+<h3><a id="overview-2" class="heading_anchor" href="#overview-2" aria-hidden="true">#</a>Overview</h3>
+<p>Move the scope-generic machinery out of type-specnion naming without any
+behavior change. All existing tests must pass unchanged.</p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-neutral-home-for-scope-statics" class="heading_anchor" href="#1-neutral-home-for-scope-statics" aria-hidden="true">#</a>1. Neutral home for scope statics</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/scope-resolution.mjs</code> (new)
+<strong>Changes</strong>: move <code>resolveSyntheticProperties</code>,
+<code>propertiesGenerator</code>, <code>initPropertyValuesMap</code> (currently
+<code>LocalScopeTypeSpecnion</code> statics, type-specnion.mjs:148-308) here as plain
+exports. <code>propertiesGenerator</code>’s outer-API wrapper
+(<code>hasParentProperty</code>/<code>getParentProperty</code>) moves unchanged.</p>
+<h4><a id="2-generalize-the-hierarchical-scope-class" class="heading_anchor" href="#2-generalize-the-hierarchical-scope-class" aria-hidden="true">#</a>2. Generalize the hierarchical scope class</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/scope-resolution.mjs</code>
+<strong>Changes</strong>: <code>HierarchicalScopeTypeSpecnion</code>’s generic core (constructor,
+<code>_initPropertyValuesMaps</code>, <code>_getParentMaps</code>, <code>getInheritableProperties</code>,
+tombstone/controls, <code>createPatched</code>, <code>PatchedTypeSpecnion</code>) becomes
+<code>HierarchicalScopeProperties</code> (+ <code>_BaseScopeProperties</code>). The polymorphic
+3rd-arg check keys off the new base class.</p>
+<h4><a id="3-compatibility-subclasses" class="heading_anchor" href="#3-compatibility-subclasses" aria-hidden="true">#</a>3. Compatibility subclasses</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/type-specnion.mjs</code>
+<strong>Changes</strong>: <code>LocalScopeTypeSpecnion</code> re-exports the statics (or deprecated
+alias); <code>HierarchicalScopeTypeSpecnion extends HierarchicalScopeProperties</code> (possibly zero-body). Keep demarcation symbol
+exports and <code>collectPropertyGeneratorEntries</code> here or move+re-export —
+whichever keeps import diffs smallest across the ~10 consumer files
+(type-tools-grid, defaults.mjs, properties-generators.mjs, tests).</p>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria:</h3>
+<ul>
+<li>Automated: full vitest suite green, typecheck, eslint — all unchanged.</li>
+<li>Manual: <code>git diff</code> shows moves/renames only; no logic edits.</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause for confirmation before Phase 3.</p>
+<hr>
+<h2><a id="phase-3-defaults-hygiene-mutation-hazard-fix--f9836e43--build-fix-6c206093" class="heading_anchor" href="#phase-3-defaults-hygiene-mutation-hazard-fix--f9836e43--build-fix-6c206093" aria-hidden="true">#</a>Phase 3: Defaults hygiene (mutation-hazard fix) ✅ (f9836e43 + build fix 6c206093)</h2>
+<h3><a id="overview-3" class="heading_anchor" href="#overview-3" aria-hidden="true">#</a>Overview</h3>
+<p>Root seeding derives a fresh frozen map instead of mutating the shared
+defaults map (<code>live-properties.typeroof.jsx:119,128</code> hazard).</p>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-freeze-the-base-defaults-map-for-real" class="heading_anchor" href="#1-freeze-the-base-defaults-map-for-real" aria-hidden="true">#</a>1. Freeze the base defaults map for real</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/defaults.mjs:250-251</code>
+<strong>Changes</strong>: <code>getTypeSpecDefaultsMap</code> result built into a <code>FreezableMap</code>
+and <code>.freeze()</code>d (FreezableMap enforces: <code>.set()</code> throws after freeze).</p>
+<h4><a id="2-pure-seeding" class="heading_anchor" href="#2-pure-seeding" aria-hidden="true">#</a>2. Pure seeding</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/live-properties.typeroof.jsx:90-142</code>
+<strong>Changes</strong>: extract a pure <code>seedTypeSpecDefaults(baseMap, {rootFont, environment, width, height})</code> returning a fresh map; the update path
+always assigns the fresh map (identity change becomes the change signal).
+Both rootFont and non-rootFont branches go through it.</p>
+<p><strong>Corrected premise</strong> (from review): <code>getTypeSpecDefaultsMap</code> already
+returns a frozen <code>FreezableMap</code> (defaults.mjs:250-251), and
+<code>FreezableMap.set()</code> on a frozen instance <strong>silently no-ops</strong>
+(metamodel/base-model.ts:86-89) — it does NOT throw. So the current
+no-rootFont branch doesn’t corrupt the shared map; it <strong>silently drops</strong>
+environment/width injection (latent bug: both current layouts wire
+rootFont, so it never fires). Derive-not-mutate therefore <em>changes</em>
+behavior in the no-rootFont case (silent-loss → working injection) —
+this is a bug fix, not “no behavior change”. Do not change
+<code>FreezableMap</code> semantics globally.</p>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria:</h3>
+<ul>
+<li>Automated: suite green; new behavior test asserting the base defaults
+map is unchanged after seeding (identity + content), and that the
+seeded result contains the injected keys.</li>
+<li>Manual: n/a.</li>
+</ul>
+<p><strong>Implementation Note</strong>: small phase; can merge into Phase 2 review.</p>
+<hr>
+<h2><a id="phase-4-nodeproperties-core--root-scope-environment-migration--05eaf4f9" class="heading_anchor" href="#phase-4-nodeproperties-core--root-scope-environment-migration--05eaf4f9" aria-hidden="true">#</a>Phase 4: NodeProperties core + root scope (environment migration) ✅ (05eaf4f9)</h2>
+<h3><a id="overview-4" class="heading_anchor" href="#overview-4" aria-hidden="true">#</a>Overview</h3>
+<p><code>HierarchicalScopeNodeProperties</code> + first generators; environment becomes
+depth-0 node properties; <code>specific/root/*</code> leaves the typeSpecnion;
+pane-styler consumes from the new channel. No viewer/node wiring yet —
+root scope only, served from the existing root TypeSpecLiveProperties
+lifecycle position.</p>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-node-properties-module" class="heading_anchor" href="#1-node-properties-module" aria-hidden="true">#</a>1. Node properties module</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/node-properties.mjs</code> (new)
+<strong>Changes</strong>:</p>
+<pre class="language-js"><code class="language-js"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">HierarchicalScopeNodeProperties</span> <span class="token keyword">extends</span> <span class="token class-name">HierarchicalScopeProperties</span> <span class="token punctuation">{</span>
+    <span class="token comment">// constructor(nodePropertiesGenerators, hostMap, parentNodePropertiesOrDefaultsMap, policyGens?)</span>
+    <span class="token comment">// hostMap: the node's resolved typeSpecnion properties map</span>
+    <span class="token comment">// Generator signature: keep the shared static's calling convention</span>
+    <span class="token comment">// gen(outerAPI, host) (scope-resolution.mjs:propertiesGenerator) —</span>
+    <span class="token comment">// i.e. node-properties generators are (outerNodePropertiesAPI, hostMap),</span>
+    <span class="token comment">// SAME order as typeSpec generators; do NOT reverse.</span>
+    <span class="token comment">//</span>
+    <span class="token comment">// The scope's effective map IS a cascade (not a copied merge):</span>
+    <span class="token comment">//   CascadingMap([["local", localMap], ["parent", parentEffectiveMap]])</span>
+    <span class="token comment">// where parentEffectiveMap is itself the parent's cascade — inheritance</span>
+    <span class="token comment">// in the node channel is cascade nesting; getLayer("parent").getLayer("parent")</span>
+    <span class="token comment">// walks ancestors. This validates cascade-as-effective-map in production</span>
+    <span class="token comment">// ahead of the optional Phase 6 typeSpecnion migration.</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// Root defaults: environment as depth-0 facts, keyed layout/environment/...</span>
+<span class="token keyword">export</span> <span class="token keyword">function</span> <span class="token function">getRootNodePropertiesMap</span><span class="token punctuation">(</span>environmentValues <span class="token comment">/* from environment@ */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token operator">...</span> <span class="token punctuation">}</span></code></pre>
+<h4><a id="2-first-node-properties-generators" class="heading_anchor" href="#2-first-node-properties-generators" aria-hidden="true">#</a>2. First node-properties generators</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/node-properties-generators.mjs</code> (new)
+<strong>Changes</strong>: <code>availableSizesGen</code> migrated here: reads
+<code>layout/environment/...</code> + root <code>width/height</code> (from host map or root
+widget deps), yields <code>layout/availableWidth|Height</code> (pt, plain values),
+<code>layout/width|height</code> identity synthetics. Uses
+<code>lengthToCSSUnit</code> with an environment accessor <strong>over the scope’s
+parent/defaults map</strong> (where the environment facts live after seeding),
+NOT over the host map — the host typeSpecnion carries no environment keys
+once seeding is removed.</p>
+<h4><a id="3-layout-prefix" class="heading_anchor" href="#3-layout-prefix" aria-hidden="true">#</a>3. <code>LAYOUT</code> prefix</h4>
+<p><strong>File</strong>: <code>lib/js/components/registered-properties-definitions.mjs:14-34</code>
+<strong>Changes</strong>: add <code>LAYOUT = 'layout/'</code> to the const group (convention only;
+NOT added to <code>SYMBOLIC_TO_PREFIXES</code>).</p>
+<h4><a id="4-root-wiring-protocol-registration-included--moved-up-from-phase-5" class="heading_anchor" href="#4-root-wiring-protocol-registration-included--moved-up-from-phase-5" aria-hidden="true">#</a>4. Root wiring (protocol registration included — moved up from Phase 5)</h4>
+<p><strong>Files</strong>: <code>live-properties.typeroof.jsx</code>, <code>pane-styler.typeroof.jsx</code>,
+<code>prosemirror/type-spec.typeroof.jsx:253</code>,
+<strong><code>type-stage/index.typeroof.jsx</code> AND <code>ramp/index.typeroof.jsx</code></strong> (both!)
+<strong>Changes</strong>:</p>
+<ul>
+<li><strong>Both</strong> layout controllers: <code>setProtocolHandlerImplementation( ...SimpleProtocolHandler.create(&quot;nodeProperties@&quot;))</code> + add
+<code>resetUpdatedLog()</code> for the new handler in the update/initialUpdate
+paths (mirroring <code>typeSpecProperties@</code> at type-stage/index.typeroof.jsx:281-296,
+:662-685; ramp/index.typeroof.jsx:241…, :411-430). Registration must land
+in this phase — the shared TypeStagePaneStyler is wired in both layouts,
+and without the protocol its dependency resolution produces a nonsense
+model path (component.mjs:479-487).</li>
+<li>Root TypeSpecLiveProperties (or its host) also builds the root
+HierarchicalScopeNodeProperties after the typeSpecnion settles; root
+width/height reads must be guarded per-layout
+(<code>wrapper.dependencyReverseMapping.has(dimension)</code> pattern,
+live-properties.typeroof.jsx:122-127) because ramp declares no
+width/height widget deps (ramp/index.typeroof.jsx:283-288).</li>
+<li>Pane-styler reads <code>layout/availableWidth|Height</code> from the node-properties
+map instead of <code>generic/availableWidth|Height</code> from typeSpecnion; same for
+<code>generic/width</code> consumer at type-spec.typeroof.jsx:253 → <code>layout/width</code>.
+Pane-styler keeps receiving <code>properties@</code> for colors/lang alongside.</li>
+</ul>
+<h4><a id="5-remove-from-typespecnion" class="heading_anchor" href="#5-remove-from-typespecnion" aria-hidden="true">#</a>5. Remove from typeSpecnion</h4>
+<p><strong>File</strong>: <code>properties-generators.mjs</code>
+<strong>Changes</strong>: delete <code>environmentGen</code> + <code>availableSizesGen</code> from
+<code>TYPE_SPEC_PROPERTIES_GENERATORS</code>; remove <code>specific/root/*</code> seeding from
+live-properties (replaced by root node-properties defaults); keep
+<code>horizontalLayoutRunion</code>’s style-side yields, remove/neutralize its
+geometry re-routes that reference <code>generic/availableWidth</code> (they now
+belong to the node channel; until Phase 5, children keep receiving
+<code>generic/availableWidth</code> via the existing typeSpecnion inheritance so
+nothing regresses).</p>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria:</h3>
+<ul>
+<li>Automated: suite green incl. pane-sizing (now fed via nodeProperties);
+eslint; typecheck.</li>
+<li>Manual: wikipedia demo pane sizing behaves as before (px values in pt).</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause for manual confirmation — this is the first
+behavior-carrying phase.</p>
+<hr>
+<h2><a id="phase-5a-document-tree-walkerrenderer-separation-pure-refactor" class="heading_anchor" href="#phase-5a-document-tree-walkerrenderer-separation-pure-refactor" aria-hidden="true">#</a>Phase 5a: Document-tree walker/renderer separation (pure refactor)</h2>
+<h3><a id="overview-5" class="heading_anchor" href="#overview-5" aria-hidden="true">#</a>Overview</h3>
+<p><code>UIDocumentElement</code> today conflates (1) document-tree infrastructure
+(walking the pmNode tree, maintaining node widgets keyed by node
+identity, typeSpec-path resolution, <code>pathOfTypes</code> context) with
+(2) viewer DOM creation/styling. The walker must exist regardless of
+which renderers are active (editor, viewer, side-by-side) — node
+properties are computed per document node, not per renderer, and must
+not be duplicated (or diverge) between editor and viewer.</p>
+<h3><a id="changes-required-4" class="heading_anchor" href="#changes-required-4" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-extract-the-walker" class="heading_anchor" href="#1-extract-the-walker" aria-hidden="true">#</a>1. Extract the walker</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/document-nodes-meta.typeroof.jsx</code> (new)
+<strong>Changes</strong>: extract the tree-walking/node-identity/context machinery
+from <code>UIDocumentElement</code>/<code>UIDocumentNodes</code> into a renderer-independent
+<code>DocumentNodesMeta</code> layer (a widget-tree component over the shared
+document model). It owns node lifecycle (create/update/destroy per
+pmNode identity), <code>pathOfTypes</code> context propagation, and effective
+typeSpec-path resolution (consuming <code>nodeSpecToTypeSpec</code> as today).</p>
+<h4><a id="2-viewer-attaches-to-the-tree" class="heading_anchor" href="#2-viewer-attaches-to-the-tree" aria-hidden="true">#</a>2. Viewer attaches to the tree</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx</code>
+<strong>Changes</strong>: <code>UIDocumentElement</code> &amp; co. become renderer attachments to
+<code>DocumentNodesMeta</code> nodes: DOM creation/styling consume the tree layer’s
+node identity + context instead of owning the walk.</p>
+<h3><a id="success-criteria-4" class="heading_anchor" href="#success-criteria-4" aria-hidden="true">#</a>Success Criteria:</h3>
+<ul>
+<li>Automated: full suite green — pure move, behavior-neutral.</li>
+<li>Manual: viewer renders identically; side-by-side mode works as before.</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause for manual confirmation — this is a
+structural refactor of the viewer’s core.</p>
+<hr>
+<h2><a id="phase-5b-nodenode-channel-" class="heading_anchor" href="#phase-5b-nodenode-channel-" aria-hidden="true">#</a>Phase 5b: Node→node channel ✅</h2>
+<p>Implemented 2026-09-06/07 via the sub-plan
+<code>docs/planning/agentic-artefacts/thoughts/plan/2026-09-06-1613-phase-5b-node-to-node-channel.md</code>
+(commits <code>39d49e69</code>, <code>97987ac1</code>, <code>5bcbca3d</code>, <code>2ca096df</code>, <code>7e3c81b8</code>,
+<code>55511293</code>, <code>f51e36bb</code>). The editor-side <code>nodeProperties@</code> wiring
+follow-up is DONE (2026-09-07): the sub-plan
+<code>docs/planning/agentic-artefacts/thoughts/plan/2026-09-07-1440-editor-nodeproperties-wiring.md</code>
+(commits <code>8a73a4c5</code>, <code>6e54e2e7</code>, <code>671a37d9</code>) wired the editor styler onto
+the channel and installed the inheritance-policy socket (empty); its
+resolved analysis note is archived at
+<code>docs/planning/agentic-artefacts/thoughts/notes/2026-09-07-editor-not-on-nodeProperties-channel.md</code>.
+Still parked with the operator: width semantics (the stub generator
+yields <code>layout/availableWidth</code>; no <code>layout/width</code> application yet —
+root <code>layout/width</code> demarcation, now unblocked by the policy socket)
+and column division.</p>
+<h3><a id="overview-6" class="heading_anchor" href="#overview-6" aria-hidden="true">#</a>Overview</h3>
+<p>Per-document-node <code>HierarchicalScopeNodeProperties</code> instances owned by
+the (renderer-independent) <code>DocumentNodesMeta</code> layer; transport via
+<code>nodeProperties@&lt;nodeId&gt;</code>; children consume parent’s outbound map;
+renderer widgets (viewer + prosemirror outfitter) consume as needed.</p>
+<h3><a id="changes-required-5" class="heading_anchor" href="#changes-required-5" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-protocol-handler" class="heading_anchor" href="#1-protocol-handler" aria-hidden="true">#</a>1. Protocol handler</h4>
+<p>Already registered in Phase 4 (both controllers). Nothing to do here.</p>
+<h4><a id="2-per-node-instances-in-documentnodesmeta" class="heading_anchor" href="#2-per-node-instances-in-documentnodesmeta" aria-hidden="true">#</a>2. Per-node instances in DocumentNodesMeta</h4>
+<p><strong>Files</strong>: <code>document-nodes-meta.typeroof.jsx</code>,
+<code>prosemirror/integration.typeroof.jsx</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>DocumentNodesMeta</code> owns one <code>NodePropertiesLiveProperties</code>-style
+component per document node (encapsulates scope rebuild +
+<code>setUpdated</code>, the TypeSpecLiveProperties role — but NO Meta analogue:
+the meta layer itself provides the tree structure).</li>
+<li><strong>Registration ids must incorporate node identity</strong>, not just the
+typeSpec path: multiple nodes sharing one typeSpec (the common case!)
+would collide at <code>nodeProperties@&lt;typeSpecPath&gt;</code>
+(<code>SimpleProtocolHandler.register</code> throws on duplicates,
+component.mjs:195-198). Id shape e.g. <code>nodeProperties@&lt;typeSpecPath&gt;#&lt;nodeId&gt;</code>
+or keyed by node path with typeSpec resolution on the consumer side.</li>
+<li>Scope construction is renderer-independent: unknown / silent nodes
+must not break the channel for descendants; their host map is the
+root (origin) typeSpecnion, matching the existing resolution fallback
+(integration.typeroof.jsx:246-262).</li>
+<li>Registration is lifecycle-hooked and imperative
+(<code>impl.register</code>/<code>unregister</code> in <code>update</code>/<code>destroy</code>), not one-shot via
+wrapper restOptions: resolved paths can change while the node widget
+persists (viewer.typeroof.jsx:995-998 short-circuit), and wrapper
+restOptions registration only unregisters in <code>destroy()</code>
+(component.mjs:760-781). Consumers receive the registering component
+and read an accessor (e.g. <code>.nodeProperties</code>) off it — same contract
+as <code>typeSpecProperties@</code> consumers reading <code>.typeSpecnion</code>.</li>
+<li>Parent effective typeSpec path computed via
+<code>_getTypeSpecPropertiesId(pathOfTypes.slice(0,-1), true)</code>; consume only
+if registered (<code>_getStyleLinkPropertiesId</code> null-check pattern,
+viewer.typeroof.jsx:661-685). Note the memo cache in
+getTypeSpecPropertiesIdMethod omits the protocol name from its key
+(integration.typeroof.jsx:187-189) — safe due to <code>hasRegistered</code>
+re-validation (:194-201), but pass the 4th arg deliberately.</li>
+<li>After rebuilding its scope, the producer calls
+<code>setUpdated(identifier)</code> on the protocol handler in <code>update</code>, before
+children compute (parent-first iteration order — verify this ordering
+with a test first), mirroring live-properties.typeroof.jsx:145-153.</li>
+<li>Text nodes: consume-only, no registration (nothing consumes a text
+node’s outbound map).</li>
+</ul>
+<h4><a id="3-styler-composition-point" class="heading_anchor" href="#3-styler-composition-point" aria-hidden="true">#</a>3. Styler composition point</h4>
+<p><strong>File</strong>: <code>prosemirror/type-spec.typeroof.jsx</code> (UIDocumentTypeSpecStyler)
+<strong>Changes</strong>: the styler receives both channels (<code>properties@</code> =
+typeSpecProperties map, <code>nodeProperties@&lt;path&gt;</code> map — same input shape as
+the existing optional <code>nextProperties@</code>, type-spec.typeroof.jsx:296-303;
+constructor args unchanged) and itself constructs
+<code>new CascadingMap([[&quot;node&quot;, nodePropertiesMap], [&quot;style&quot;, typeSpecPropertiesMap]])</code>
+— first-hit-wins: node properties (geometry, more specific to the box)
+precede style properties on key conflicts. The cascade is rebuilt on
+update when either input’s identity changed; existing <code>propertiesData</code>
+lookups read through the facade unchanged.
+<strong>Rebuild-check extension (required)</strong>: <code>_provisionTypeSpecStyler</code>’s
+replace-or-keep test compares only <code>properties@</code>
+(viewer.typeroof.jsx:579-583); it must also compare
+<code>dependencyReverseMapping.get(&quot;nodeProperties@&quot;)</code>, or a re-resolved
+parent path keeps a stale wrapper.</p>
+<h4><a id="4-migration-of-remaining-geometry" class="heading_anchor" href="#4-migration-of-remaining-geometry" aria-hidden="true">#</a>4. Migration of remaining geometry</h4>
+<p><strong>File</strong>: <code>properties-generators.mjs</code> (<code>horizontalLayoutRunion</code>)
+<strong>Changes</strong>: geometry yields (<code>/pt</code> synthetics, availableWidth re-route)
+move to node-properties generators reading <code>layout/availableWidth</code> from the
+parent; the typeSpecnion keeps style-only yields (columnCount, lineLength,
+inlineMargins values). <strong>Consumer update required</strong>: when the
+<code>generic/availableWidth</code> re-routes leave the typeSpecnion, the
+<code>innerPropertiesData</code> read of <code>`${GENERIC}width`</code>
+(type-spec.typeroof.jsx:245) must switch to the <code>layout/</code> key.</p>
+<h3><a id="success-criteria-5" class="heading_anchor" href="#success-criteria-5" aria-hidden="true">#</a>Success Criteria:</h3>
+<ul>
+<li>Automated: suite green; new behavioral test: a node inside a column
+container receives the container’s per-column width as
+<code>layout/availableWidth</code> (assert via resolved CSS width).</li>
+<li>Manual: multi-column demo renders correct column widths; nested nodes
+resolve correct inherited geometry.</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause for manual confirmation.</p>
+<hr>
+<h2><a id="phase-6-optional-follow-up-typespecnion-merge--cascadingmap" class="heading_anchor" href="#phase-6-optional-follow-up-typespecnion-merge--cascadingmap" aria-hidden="true">#</a>Phase 6: (Optional follow-up) typeSpecnion merge → CascadingMap</h2>
+<h3><a id="overview-7" class="heading_anchor" href="#overview-7" aria-hidden="true">#</a>Overview</h3>
+<p>Replace <code>mapSetProperties(new Map(), parent, local)</code> merges in the
+typeSpecnion with CascadingMap composition; <code>outerTypespecnionAPI</code> becomes
+cascade reads. Motivation: allocation churn on rebuilds, ancestor access
+via getLayer. Deferred until Phases 1–5 prove the interface.</p>
+<hr>
+<h2><a id="follow-up-out-of-scope-recorded-renderers-on-metadocumenttree" class="heading_anchor" href="#follow-up-out-of-scope-recorded-renderers-on-metadocumenttree" aria-hidden="true">#</a>Follow-up (out of scope, recorded): renderers on MetaDocumentTree</h2>
+<p>Once <code>DocumentNodesMeta</code> (Phase 5a) exists as the renderer-independent
+document-tree layer, refactor <strong>both</strong> the viewer (<code>UIDocumentElement</code>
+&amp; co.) and the prosemirror editor (<code>UIDocumentNodeOutfitter</code>) to attach
+as much as possible to it — the outfitter currently duplicates
+tree-walking knowledge. Synergy noted during planning; explicitly not
+part of this plan’s phases.</p>
+<hr>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<p><strong>Tests assert behavior (inputs → observable outcomes), not
+function/method implementations.</strong> E.g. for CascadingMap: “a key present
+in two layers reads from the higher-precedence layer”, not “_index()
+builds a Map”. Implementation refactors must not require test rewrites.</p>
+<h3><a id="unit-tests" class="heading_anchor" href="#unit-tests" aria-hidden="true">#</a>Unit Tests:</h3>
+<ul>
+<li><code>cascading-map.test.mjs</code> (Phase 1) — behavior of the Map-like surface:
+precedence, dedupe on iteration, label access, nesting, snapshot
+equivalence.</li>
+<li><code>node-properties.test.mjs</code> (Phase 4/5) — scope behavior through a fake
+generator set (mirrors type-specnion.test.mjs patterns: re-route,
+tombstone, unresolvable synthetic drop/throw) — asserted on the resolved
+maps, not internals.</li>
+<li>Defaults-seeding purity (Phase 3): seeding twice yields equal maps;
+the base map is unchanged.</li>
+</ul>
+<h3><a id="integration-tests" class="heading_anchor" href="#integration-tests" aria-hidden="true">#</a>Integration Tests:</h3>
+<ul>
+<li>pane-sizing (updated) — environment→root nodeProperties→CSS.</li>
+<li>toggles harness — keeps passing unchanged (harness registers
+<code>environment@</code>; root node properties read from it).</li>
+<li>New: column-layout behavioral test (Phase 5) — container with
+columnCount → child text node CSS width equals computed column width.</li>
+</ul>
+<h2><a id="working-agreements" class="heading_anchor" href="#working-agreements" aria-hidden="true">#</a>Working Agreements</h2>
+<ol>
+<li><strong>Small, reviewable steps</strong>: each phase lands as one or a few small
+commits; no phase bundles unrelated changes.</li>
+<li><strong>Commit gate</strong>: before <em>every</em> commit, stop with the proposed commit
+message (and file list) and wait for explicit operator acknowledgement.</li>
+<li><strong>Docs commit last</strong>: as the final step, commit the research and plan
+documents into <code>docs/planning/agentic-artefacts/thoughts/</code>
+(preserving the <code>research/</code> and <code>plans/</code> subdirectories).</li>
+<li><strong><code>.prettierignore</code> on new <code>.mjs</code> files</strong>: the repo ignores everything
+by default (<code>*</code>) and un-ignores per pattern; <code>*.ts</code>/<code>*.jsx</code> are covered
+but each new <code>.mjs</code> file must get an explicit <code>!lib/js/...</code> entry in
+<code>.prettierignore</code>. Applies to: <code>cascading-map.mjs</code>,
+<code>cascading-map.test.mjs</code>, <code>scope-resolution.mjs</code>, <code>node-properties.mjs</code>,
+<code>node-properties-generators.mjs</code>, <code>node-properties.test.mjs</code>.</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

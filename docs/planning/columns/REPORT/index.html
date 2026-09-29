@@ -31,10 +31,16 @@
 <li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
 <li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
 <li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li>
+<li><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-initial-analysis/">PPS: Initial Analysis</a></li>
 <li><a href="/TypeRoof/docs/planning/metamodel/assessment-2026-07/">Metamodel: 2026-07</a></li>
 <li class="active"><a href="/TypeRoof/docs/planning/columns/REPORT/">Columns: Runion Report</a></li>
 <li><a href="/TypeRoof/docs/planning/overview/architectural-overview/">Architectural Overview</a></li>
-<li><a href="/TypeRoof/docs/planning/performance-investigation-viewer-update-propagation-260820/">Perf: Viewer Update Propagation</a></li></ul></li>
+<li><a href="/TypeRoof/docs/planning/performance-investigation-viewer-update-propagation-260820/">Perf: Viewer Update Propagation</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Fable-5/">TypeSpec Resolution: NULL-TypeSpec Analysis</a></li>
+<li><a href="/TypeRoof/docs/planning/DEMARCATION_FALLBACK/">DEMARCATION_FALLBACK</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Kimi-K3/">TypeSpec Resolution: NULL-TypeSpec Analysis (Kimi-K3)</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-implementation-plan_Fable-5/">TypeSpec Resolution: Implementation Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-second-analysis_Fable-5.1/">PPS: Second Analysis (Fable-5.1)</a></li></ul></li>
 <li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
 <li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
 <li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
@@ -54,7 +60,9 @@
             </div>
             <div class="typeroof-main">
                 <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="columns-runion--analysis--design-report" class="heading_anchor" href="#columns-runion--analysis--design-report" aria-hidden="true">#</a>Columns Runion — Analysis &amp; Design Report</h1>
-<p>Status: planning. Code lives in <code>column-layout.mjs</code> next to this report, not yet wired into <code>lib/</code>.</p>
+<p>Status: <strong>delivered</strong> (2026-09, branch <code>runion/horizontal-layout</code>).
+Code lives in <code>lib/js/components/layouts/type-stage/horizontal-layout-runion.mjs</code>;
+see §10 for the delivery status against this report.</p>
 <h2><a id="1-goal" class="heading_anchor" href="#1-goal" aria-hidden="true">#</a>1. Goal</h2>
 <p>A runion (<code>runion_01_columns</code>) consumed via <code>SyntheticValue</code> that derives
 <code>{ columns, lineLengthEn, columnGapEn, marginLeftEn, marginRightEn }</code> from
@@ -230,6 +238,50 @@ are copy-pasted and do not describe their difference.</li>
 normalized runtime form; not modeled).</li>
 <li>UI for the algorithm choice (analogous to the leading UI) — out of scope here.</li>
 </ul>
+<h2><a id="10-delivery-status-2026-09-branch-runionhorizontal-layout-" class="heading_anchor" href="#10-delivery-status-2026-09-branch-runionhorizontal-layout-" aria-hidden="true">#</a>10. Delivery status (2026-09, branch <code>runion/horizontal-layout</code>)</h2>
+<p>Delivered in <code>lib/js/components/layouts/type-stage/horizontal-layout-runion.mjs</code>,
+executed in the node-properties channel (<code>horizontalLayoutRunionGen</code>), configured
+via <code>HorizontalLayoutRunionModel</code> and the dynamic algorithm UI. Deviations and
+extensions against the plan above:</p>
+<p><strong>Architecture (vs §7).</strong> The proposal’s <code>columns/setup</code> synthetic in the
+typeSpecnion became a two-channel design: the style channel yields the
+description (<code>horizontalLayout/algorithm</code>, <code>horizontalLayout/*</code> config keys,
+fully inheriting); the node channel decides <em>where</em> it executes, converts
+<code>availableWidth</code> pt→EN at the boundary, runs the runion, and yields pt facts.
+An executing scope <em>consumes</em> the description (inheritance-policy tombstones),
+so children fill the column instead of re-running the algorithm — this
+replaced the “re-run per node” instability (geometry depended on each node’s
+fontSize). <code>availableWidth</code> is pt at the boundary (§9 point resolved).</p>
+<p><strong>Result contract (vs §1).</strong> <code>{lineLength, columnCount, columnGutter, marginStart, marginEnd, fullWidth}</code> — marginLeft/Right renamed to
+marginStart/End, <code>fullWidth</code> added; margins route to
+<code>generic/inlineMargins/{start,end}(/pt)</code> (padding-inline in CSS).</p>
+<p><strong>New semantics beyond the plan.</strong></p>
+<ul>
+<li><code>minPadding</code> (EN, default 0): reserved up front (<code>budget = width − reserve</code>),
+re-added to the remainder, split by <code>paddingRatio</code>.</li>
+<li>Empty <code>columns</code> list: pure min-driven growth; columns <em>widen</em> (unbounded
+max) instead of padding. <code>growColumns: false</code> + empty = explicit single
+padded column. Unset <code>growColumns</code> ≡ <code>false</code>; unset <code>minLineLength</code> ≡ 1.</li>
+<li>Overflow instead of shrink: nothing fits ⇒ one column at the (config-aware)
+minimum, wider than the available width; the host scrolls. The runion never
+returns null.</li>
+<li>Configured maxes are authoritative: <code>minLineLengthFor = min(min, maxFor)</code> —
+an explicit narrow max waives the general minimum; growth ceiling uses
+<code>min(minLineLength, ...columns)</code>.</li>
+<li><code>paddingRatio</code> default is <code>[0, 1]</code> (left-aligned), not 3/5–2/5.</li>
+<li>Gutter: constant/linear with exact solve (§5 kept); missing or invalid
+gutter resorts to constant 0; points outside <code>[min,max]</code> are not an error
+(the clamp is output-side, slope defined by raw points).</li>
+<li>All EN→pt conversions truncate to 2 decimals toward zero (string
+manipulation) for sub-centipt fit wiggle-room.</li>
+</ul>
+<p><strong>§8 drive-by, resolved.</strong> The <code>resolveSyntheticProperties</code> drop-check bug was
+fixed in the resolver rewrite (<code>args.length</code> check, delete-and-continue
+semantics); the i18n plumbing did not port (locale config became typeSpecnion
+inheritance, per the model comments).</p>
+<p><strong>Still open.</strong> Per-count gap overrides (escape hatch unused, not modeled);
+the dead-zone check is warning-only; column-count-based gap algorithm was
+deferred (the registry is extensible).</p>
 </div>
             </div>
         </div> <!-- wrapper -->

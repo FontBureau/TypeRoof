@@ -8,22 +8,23 @@ import {
     CollapsibleContainer,
 } from "./generic.mjs";
 
-import { MarginUnitModel } from "./type-spec-models.mjs";
+import "./ui-margins.css";
 
-class UIMarginInput extends _BaseContainerComponent {
-    constructor(
-        widgetBus,
-        zones /* a language subtagRegistryMap*/,
-        label,
-        //classes,
-    ) {
-        //, ['unit', MarginUnitOrEmptyModel] => _AbstractEnumModel
+export class UIValueUnitPairInput extends _BaseContainerComponent {
+    constructor(widgetBus, _zones, label) {
+        //, ['unit', BlockMarginUnitOrEmptyModel] => _AbstractEnumModel
         //, ['value', PercentNumberOrEmptyModel]
+        const localZoneElement = widgetBus.domTool.createElement("div", {
+            class: "ui-value_unit_pair",
+        });
+        widgetBus.insertElement(localZoneElement);
+        const zones = new Map([..._zones, ["local", localZoneElement]]);
+        const UnitModel = widgetBus.getEntry("./unit").constructor.Model;
         super(widgetBus, zones, [
             //value
             [
                 {
-                    zone: "main",
+                    zone: "local",
                 },
                 [
                     ["value", "value"], // require('settings:internalPropertyName', 'value')
@@ -53,16 +54,16 @@ class UIMarginInput extends _BaseContainerComponent {
             //unit
             [
                 {
-                    zone: "main",
+                    zone: "local",
                 },
                 [
                     ["unit", "value"], // require('settings:internalPropertyName', 'value')
                 ],
                 UISelectOrEmptyInput,
-                () => MarginUnitModel.defaultValue, //require('getDefault')
+                () => UnitModel.defaultValue, //require('getDefault')
                 () => false, // require('requireUpdateDefaults')
                 "", // require('label'),
-                MarginUnitModel.enumItems, // require('items')
+                UnitModel.enumItems, // require('items')
             ],
         ]);
     }
@@ -89,7 +90,7 @@ export class UIMargins extends _BaseContainerComponent {
                 return [
                     { zone: "main", rootPath: widgetBus.rootPath.append(pos) },
                     [],
-                    UIMarginInput,
+                    UIValueUnitPairInput,
                     zones,
                     `${pos[0].toUpperCase()}${pos.slice(1)}`, //  require('label')
                     [`ui_margins-input-${pos}`], // require('classes')

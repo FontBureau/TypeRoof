@@ -3,12 +3,12 @@
         "languageTag": {
             "language": "en"
         },
-        "columnWidth": "53.0",
+        "lineLength": "53.0",
         "baseFontSize": "14",
         "textColor": {
             "instance": {
                 "L": "0.00000",
-                "C": "0.00000",
+                "C": "0.0000000",
                 "alpha": "100.00000"
             },
             "colorTypeKey": "OKLCH"
@@ -16,7 +16,7 @@
         "backgroundColor": {
             "instance": {
                 "L": "100.00000",
-                "C": "0.00000",
+                "C": "0.0000000",
                 "alpha": "100.00000"
             },
             "colorTypeKey": "OKLCH"
@@ -24,125 +24,81 @@
         "autoOPSZ": "1",
         "children": [
             [
-                "0",
+                "headings",
                 {
-                    "blockMargins": {
-                        "start": {
-                            "unit": "baseEm",
-                            "value": "2.00000"
-                        }
-                    },
-                    "relativeFontSize": "4.571428571",
-                    "autoOPSZ": "1",
-                    "axesLocations": [["wght", "700"]],
                     "children": [
                         [
-                            "1",
+                            "h1",
                             {
+                                "blockMargins": {
+                                    "start": {
+                                        "unit": "baseEm",
+                                        "value": "2.00000"
+                                    },
+                                    "end": {
+                                        "unit": "lineHeightAfter",
+                                        "value": "1.00000"
+                                    }
+                                },
+                                "relativeFontSize": "4.571428571",
+                                "autoOPSZ": "1",
+                                "axesLocations": [["wght", "700"]],
+                                "label": "Heading 1"
+                            }
+                        ],
+                        [
+                            "h2",
+                            {
+                                "blockMargins": {
+                                    "start": {
+                                        "value": "0.00000"
+                                    }
+                                },
                                 "relativeFontSize": "1.785714286",
                                 "autoOPSZ": "1",
                                 "axesLocations": [["wght", "600"]],
-                                "children": [
-                                    [
-                                        "2",
-                                        {
-                                            "relativeFontSize": "1.285714286",
-                                            "autoOPSZ": "1",
-                                            "axesLocations": [["wght", "550"]],
-                                            "label": "Headline 3"
-                                        }
-                                    ]
-                                ],
-                                "label": "Headline 2"
+                                "label": "Heading 2"
+                            }
+                        ],
+                        [
+                            "h3",
+                            {
+                                "relativeFontSize": "1.285714286",
+                                "autoOPSZ": "1",
+                                "axesLocations": [["wght", "550"]],
+                                "label": "Heading 3"
                             }
                         ]
                     ],
-                    "label": "Headline 1"
+                    "label": "Headings"
                 }
             ],
             [
-                "3",
+                "paragraphs",
                 {
-                    "relativeFontSize": "1.285714286",
-                    "backgroundColor": {
-                        "instance": {
-                            "L": "100.00000",
-                            "C": "34.00000",
-                            "H": "0.2400000",
-                            "alpha": "38.00000"
-                        },
-                        "colorTypeKey": "OKLCH"
-                    },
-                    "autoOPSZ": "1",
                     "children": [
                         [
-                            "4",
+                            "t1",
                             {
-                                "backgroundColor": {
-                                    "instance": {
-                                        "L": "100.00000",
-                                        "C": "60.00000",
-                                        "alpha": "50.00000"
-                                    },
-                                    "colorTypeKey": "OKLCH"
-                                },
+                                "relativeFontSize": "1.285714286",
+                                "autoOPSZ": "1",
+                                "label": "Text 1"
+                            }
+                        ],
+                        [
+                            "t2",
+                            {
                                 "relativeFontSize": "1",
                                 "autoOPSZ": "1",
-                                "label": "Text 2",
-                                "intentStyleLinks": [
-                                    [
-                                        "italic",
-                                        {
-                                            "stylePatch": "italic",
-                                            "mode": "link"
-                                        }
-                                    ],
-                                    [
-                                        "bold",
-                                        {
-                                            "stylePatch": "bold",
-                                            "mode": "link"
-                                        }
-                                    ],
-                                    [
-                                        "bold italic",
-                                        {
-                                            "stylePatch": "bold italic",
-                                            "mode": "link"
-                                        }
-                                    ]
-                                ]
+                                "label": "Text 2"
                             }
                         ]
                     ],
-                    "label": "Text 1",
-                    "intentStyleLinks": [
-                        [
-                            "italic",
-                            {
-                                "stylePatch": "italic",
-                                "mode": "link"
-                            }
-                        ],
-                        [
-                            "bold",
-                            {
-                                "stylePatch": "bold",
-                                "mode": "link"
-                            }
-                        ],
-                        [
-                            "bold italic",
-                            {
-                                "stylePatch": "bold italic",
-                                "mode": "link"
-                            }
-                        ]
-                    ]
+                    "label": "Paragraphs"
                 }
             ],
             [
-                "5",
+                "generic",
                 {
                     "backgroundColor": {
                         "instance": {
@@ -163,29 +119,32 @@
                 "italic",
                 {
                     "stylePatch": "italic",
-                    "mode": "link"
+                    "mode": "link",
+                    "tag": "em"
                 }
             ],
             [
                 "bold",
                 {
                     "stylePatch": "bold",
-                    "mode": "link"
+                    "mode": "link",
+                    "tag": "strong"
+                }
+            ],
+            [
+                "bold italic",
+                {
+                    "stylePatch": "bold italic",
+                    "mode": "link",
+                    "tag": "strong"
                 }
             ]
         ],
         "markStyleLinks": [
             [
-                "link",
-                {
-                    "stylePatch": "link",
-                    "mode": "link"
-                }
-            ],
-            [
                 "strong",
                 {
-                    "stylePatch": "bold italic",
+                    "stylePatch": "bold",
                     "mode": "link"
                 }
             ]
@@ -867,63 +826,63 @@
         [
             "heading-1",
             {
-                "link": "./children/0",
+                "link": "/headings/h1",
                 "label": "H1"
             }
         ],
         [
             "heading-2",
             {
-                "link": "./children/0/children/1",
+                "link": "/headings/h2",
                 "label": "H2"
             }
         ],
         [
             "heading-3",
             {
-                "link": "./children/0/children/1/children/2",
+                "link": "/headings/h3",
                 "label": "H3"
             }
         ],
         [
             "paragraph",
             {
-                "link": "./children/3",
+                "link": "/paragraphs/t1",
                 "label": "T1"
             }
         ],
         [
             "paragraph-2",
             {
-                "link": "./children/3/children/4",
+                "link": "/paragraphs/t2",
                 "label": "T2"
             }
         ],
         [
             "figcaption",
             {
-                "link": "./children/3/children/4",
+                "link": "/paragraphs/t2",
                 "label": ""
             }
         ],
         [
             "li-inline",
             {
-                "link": "./children/3",
+                "link": "/paragraphs/t1",
                 "label": ""
             }
         ],
         [
             "li-block",
             {
-                "link": "./children/3",
+                "link": "/paragraphs/t1",
                 "label": ""
             }
         ],
         [
             "generic-block",
             {
-                "link": "./children/5",
+                "link": "/generic",
                 "label": ""
             }
         ]

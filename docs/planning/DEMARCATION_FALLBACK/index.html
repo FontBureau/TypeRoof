@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/large-file-investigation-260723/">Large File Investigation</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li>
+<li><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-initial-analysis/">PPS: Initial Analysis</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-2026-07/">Metamodel: 2026-07</a></li>
+<li><a href="/TypeRoof/docs/planning/columns/REPORT/">Columns: Runion Report</a></li>
+<li><a href="/TypeRoof/docs/planning/overview/architectural-overview/">Architectural Overview</a></li>
+<li><a href="/TypeRoof/docs/planning/performance-investigation-viewer-update-propagation-260820/">Perf: Viewer Update Propagation</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Fable-5/">TypeSpec Resolution: NULL-TypeSpec Analysis</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/DEMARCATION_FALLBACK/">DEMARCATION_FALLBACK</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Kimi-K3/">TypeSpec Resolution: NULL-TypeSpec Analysis (Kimi-K3)</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-implementation-plan_Fable-5/">TypeSpec Resolution: Implementation Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-second-analysis_Fable-5.1/">PPS: Second Analysis (Fable-5.1)</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="demarcation_fallback-scope-local-non-inheritable-fallback-values" class="heading_anchor" href="#demarcation_fallback-scope-local-non-inheritable-fallback-values" aria-hidden="true">#</a>DEMARCATION_FALLBACK: Scope-Local, Non-Inheritable Fallback Values</h1>
+<blockquote>
+<p><strong>Status:</strong> Proposal, not yet implemented. Written 2026-09-21 during
+the horizontal-layout WIP (column layout propagation in the
+type-stage layout). The immediate motivation is a consumer-side
+default hack in the document styler; the mechanism is general.</p>
+</blockquote>
+<h2><a id="problem" class="heading_anchor" href="#problem" aria-hidden="true">#</a>Problem</h2>
+<p>Derived terminal keys — e.g. <code>generic/inlineMargins/start/pt</code>, the
+unit-compiled CSS-string forms produced by <code>inlineLengthUnitsGen</code> —
+exist only when a style is fully described (value + unit set). Some
+consumers request such keys unconditionally: the document styler
+(<code>lib/js/components/prosemirror/type-spec.typeroof.jsx</code>) maps them to
+<code>padding-inline-*</code> on every update. When the key is absent, the
+consumer must rescue the situation — currently via <code>getDefault</code>
+hacks:</p>
+<pre class="language-js"><code class="language-js"><span class="token keyword">if</span> <span class="token punctuation">(</span>property<span class="token punctuation">.</span><span class="token function">startsWith</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token constant">GENERIC</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">blockMargins/</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token comment">// FIXME: this is a hack!</span>
+    <span class="token keyword">return</span> <span class="token punctuation">[</span><span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">0pt</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span>property<span class="token punctuation">.</span><span class="token function">startsWith</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token constant">GENERIC</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">inlineMargins/</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token comment">// FIXME: this is a hack! see docs/planning/DEMARCATION_FALLBACK.md</span>
+    <span class="token keyword">return</span> <span class="token punctuation">[</span><span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">0pt</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">]</span><span class="token punctuation">;</span></code></pre>
+<p>This is the wrong place for a default: it is repeated per consumer,
+invisible to the producer, and (worse) it falls through to
+<code>getRegisteredPropertySetup(property)</code> for keys the registry doesn’t
+know — derived keys are unregistered by construction, so the rescue
+itself can fail with <code>KEY ERROR</code> (observed live).</p>
+<p>Defaults belong producer-side.</p>
+<h2><a id="requirements" class="heading_anchor" href="#requirements" aria-hidden="true">#</a>Requirements</h2>
+<ol>
+<li><strong>Overridable by real styles.</strong> A fallback yields only when neither
+the local scope nor any ancestor produced the property.</li>
+<li><strong>Survives the optional-synthetic drop.</strong> A local optional
+<code>SyntheticValue</code> that fails to resolve must reveal the fallback,
+not erase it.</li>
+<li><strong>Never a style fact.</strong> A fallback must not inherit to children,
+must not be editable model state, and must not fake a “described”
+style toward generator input-checks (the node channel reads
+<em>absence</em> as “not configured” — e.g. the fill logic in
+<code>manualHorizontalLayoutGen</code>).</li>
+</ol>
+<h2><a id="rejected-designs" class="heading_anchor" href="#rejected-designs" aria-hidden="true">#</a>Rejected Designs</h2>
+<h3><a id="raw-map-ordering-yield-first-later-yields-override" class="heading_anchor" href="#raw-map-ordering-yield-first-later-yields-override" aria-hidden="true">#</a>Raw-map ordering (“yield first, later yields override”)</h3>
+<p>A defaults generator placed first in the generator list yields plain
+values; later yields overwrite them in the raw map
+(<code>mapSetProperties</code>: later wins). Two sharp edges:</p>
+<ul>
+<li><strong>The optional-drop erases the shadowed entry.</strong> Overrides happen in
+the <em>raw</em> map, before resolution. If the overriding entry is an
+optional synthetic whose dependencies don’t resolve, the resolver
+prunes it — and the fallback is already gone (this is the known
+collision caveat documented at <code>availableSizesGen</code>). Fixing this
+requires restore-on-prune surgery in <code>resolveSyntheticProperties</code>.</li>
+<li><strong>“Non-inheritable” is per-name, not per-value.</strong> Inheritance
+controls (<code>TOMBSTONE</code>) withhold a property <em>name</em> from children.
+Tombstoning a fallback key would also withhold a real value the
+scope produced for that name — breaking style inheritance. The
+machinery cannot distinguish “this value is just the fallback” from
+“this value is real.”</li>
+</ul>
+<h3><a id="conditional-yielding-only-yield-if-not-inherited" class="heading_anchor" href="#conditional-yielding-only-yield-if-not-inherited" aria-hidden="true">#</a>Conditional yielding (“only yield if not inherited”)</h3>
+<p>A generator-body check like
+<code>if (!outerTypespecnionAPI.hasParentProperty(key)) yield …</code> is an
+imperative duplicate of cascade precedence, with added failure modes:
+it reads the parent state at build time, and <code>hasParentProperty</code>
+consults the <em>union</em> of inherited + defaults — a default could
+wrongly suppress a fallback. The layered design makes the check
+unnecessary; precedence is the mechanism.</p>
+<h2><a id="proposed-mechanism" class="heading_anchor" href="#proposed-mechanism" aria-hidden="true">#</a>Proposed Mechanism</h2>
+<p>A third demarcation, next to <code>DEMARCATION_PROPERTY</code> and
+<code>DEMARCATION_INHERITANCE</code> (<code>type-specnion.mjs</code>):</p>
+<pre class="language-js"><code class="language-js"><span class="token keyword">export</span> <span class="token keyword">const</span> <span class="token constant">DEMARCATION_FALLBACK</span> <span class="token operator">=</span> <span class="token function">Symbol</span><span class="token punctuation">(</span><span class="token string">"DEMARCATION_FALLBACK"</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>Generators yield <code>[key, value, DEMARCATION_FALLBACK]</code>. Fallbacks do
+<strong>not</strong> enter the raw property map; they form a new, scope-local layer
+of the effective cascade:</p>
+<pre><code>local (resolved)  &gt;  inherited  &gt;  fallback  &gt;  typeSpecDefaultsMap
+</code></pre>
+<h3><a id="semantics" class="heading_anchor" href="#semantics" aria-hidden="true">#</a>Semantics</h3>
+<ul>
+<li><strong>Override by layer precedence, not mutation.</strong> A real local yield
+wins (local &gt; fallback). An <em>inherited real value</em> also wins
+(inherited &gt; fallback) — a property raw-map ordering could never
+express, since a local fallback would shadow a parent’s real value.</li>
+<li><strong>The optional-drop problem evaporates.</strong> A pruned local synthetic
+simply reveals the layer below. No resolver changes for
+restore-on-prune.</li>
+<li><strong>Non-inheritable for free.</strong> <code>getInheritableProperties</code> projects
+the resolved <em>own</em> map (plus controls); the fallback layer is not
+part of it. Children of an unset scope don’t inherit the fallback —
+each scope re-yields its own, which is exactly what “default” should
+mean: scope-local, never a style fact.</li>
+</ul>
+<h3><a id="fallback-vs-defaults--typespecdefaultsmap-" class="heading_anchor" href="#fallback-vs-defaults--typespecdefaultsmap-" aria-hidden="true">#</a>Fallback vs. defaults (<code>typeSpecDefaultsMap</code>)</h3>
+<p>The layers are adjacent but distinct in origin and destiny:</p>
+<ul>
+<li><strong>Defaults</strong> are the root scope’s <em>parent substitute</em> (“what would a
+parent say, if the root had one”), derived from
+<code>REGISTERED_PROPERTIES</code>. Crucially, they are also <strong>seeded into the
+typeSpec model draft</strong>, where they become real, editable, inheriting
+local style. Defaults are <em>pre-filled answers</em>.</li>
+<li><strong>Fallbacks</strong> are every scope’s own safety net: computed at
+resolution time, never model state, never inherited, never editable.
+Fallbacks are <em>the absence of an answer, made readable</em>.</li>
+</ul>
+<p>Defaults apply to settable registered style properties (user knobs);
+fallbacks apply to derived terminal keys that have no registry entry
+and no UI. The defaults layer’s cascade role stays untouched.</p>
+<h2><a id="implementation-sketch" class="heading_anchor" href="#implementation-sketch" aria-hidden="true">#</a>Implementation Sketch</h2>
+<ol>
+<li>
+<p><strong><code>type-specnion.mjs</code></strong>: export the symbol; document the contract
+(see Constraints).</p>
+</li>
+<li>
+<p><strong><code>scope-resolution.mjs</code></strong>:</p>
+<ul>
+<li><code>collectPropertyGeneratorEntries</code>: third bucket keyed by
+<code>DEMARCATION_FALLBACK</code>.</li>
+<li>Inheritance policy generators yielding <code>DEMARCATION_FALLBACK</code>:
+reject with the existing <code>console.error</code> + ignore idiom (same as
+the <code>DEMARCATION_PROPERTY</code> guard there).</li>
+<li><code>HierarchicalScopeProperties._initPropertyValuesMaps</code> (and
+<code>LocalScopeProperties</code>, for uniformity): build the fallback layer,
+add it to the effective <code>CascadingMap</code> between inherited and
+defaults.</li>
+<li>Local resolution: synthetics may legitimately depend on
+fallback-valued keys (a synthetic computing from a margin only
+the fallback provided). Construct the resolution parent map as
+<code>CascadingMap([inherited, fallback, defaults])</code>.</li>
+<li><code>PatchedScopeProperties</code>: same layer treatment as the origin
+scope.</li>
+</ul>
+</li>
+<li>
+<p><strong>Guard at collection time</strong> (scope-resolution side, not in the
+demarcation-agnostic <code>collectPropertyGeneratorEntries</code>): reject
+fallback yields for keys that are <em>registered properties</em> —
+warn-and-ignore (<code>console.error</code>, <code>VALUE ERROR</code> prefix), following
+the codebase idiom. Rationale: registered properties are
+model-seeded with defaults, so a fallback there is permanently
+shadowed dead weight and signals “the author wanted a default.” Add
+a non-throwing <code>hasRegisteredProperty(key)</code> lookup rather than
+wrapping <code>getFromRegistry</code> in try/catch.</p>
+</li>
+<li>
+<p><strong>Consumer cleanup</strong>: a new <code>inlineMarginsDefaultsGen</code> (first in
+the generator list for clarity, though order no longer matters)
+yields:</p>
+<pre class="language-js"><code class="language-js"><span class="token keyword">yield</span> <span class="token punctuation">[</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token constant">GENERIC</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">inlineMargins/start/pt</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span> <span class="token string">"0pt"</span><span class="token punctuation">,</span> <span class="token constant">DEMARCATION_FALLBACK</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token keyword">yield</span> <span class="token punctuation">[</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token constant">GENERIC</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">inlineMargins/end/pt</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span> <span class="token string">"0pt"</span><span class="token punctuation">,</span> <span class="token constant">DEMARCATION_FALLBACK</span><span class="token punctuation">]</span><span class="token punctuation">;</span></code></pre>
+<p>Then delete both <code>getDefault</code> hack branches in
+<code>type-spec.typeroof.jsx</code>.</p>
+</li>
+</ol>
+<h2><a id="constraints-review-rules-not-machine-checked" class="heading_anchor" href="#constraints-review-rules-not-machine-checked" aria-hidden="true">#</a>Constraints (review rules, not machine-checked)</h2>
+<ul>
+<li><strong>Fallbacks only for terminal derived values</strong> (<code>*/pt</code> CSS strings;
+conceivably unitless facts like <code>0</code>). Never for semantic
+intermediates (<code>inlineMargins/start</code>, <code>…/value</code>, <code>columnCount</code>,
+<code>blockMargins/*</code>): the node channel’s generator-body input checks
+read <em>absence</em> as “not described”; a fallback there fakes a
+description and breaks fill semantics.
+<ul>
+<li>The registry guard (Implementation, point 3) covers the
+“default-covered property” half of this rule. It deliberately does
+<strong>not</strong> pattern-match key names (e.g. “must end in <code>/pt</code>”) — that
+would hard-code today’s naming convention into the mechanism and
+false-positive on legitimate future fallbacks.</li>
+</ul>
+</li>
+<li>Fallbacks are plain values, not synthetics (first version; a
+synthetic fallback can come later if a real need appears).</li>
+<li>Initially a style-channel (typeSpecnion) feature. The node
+channel has its own defaulting idioms (fill semantics); don’t grow
+fallback yields there without a demonstrated need.</li>
+</ul>
+<h2><a id="risks--notes" class="heading_anchor" href="#risks--notes" aria-hidden="true">#</a>Risks / Notes</h2>
+<ul>
+<li>Adding a cascade layer touches <code>_initPropertyValuesMaps</code>, on the hot
+path of every scope build. It is additive (one more <code>CascadingMap</code>
+entry) and does not change existing layers’ behavior.</li>
+<li>The raw-map collision caveat at <code>availableSizesGen</code> (two generators
+yielding the same property; a later optional drop erasing an earlier
+resolvable entry) remains a raw-map-versus-raw-map issue.
+<code>DEMARCATION_FALLBACK</code> does not fix it — but fallbacks are no longer
+party to it, which removes the need for the resolver’s
+restore-on-prune variant of this proposal.</li>
+<li>With the mechanism in place, the <code>typeSpecDefaultsMap</code>’s <em>cascade</em>
+role (parent substitute for root generator input-checks) could in
+theory be re-expressed as root-scope fallback yields. Out of scope:
+its model-seeding role is separate and stays.</li>
+</ul>
+<h2><a id="context--history" class="heading_anchor" href="#context--history" aria-hidden="true">#</a>Context / History</h2>
+<p>Emerged from the horizontal-layout WIP: introducing a <code>ForeignKey.NULL</code>
+default for the <code>horizontalLayout</code> registered property removed the
+concrete Manual default that had been <em>masking</em> the absence of derived
+<code>inlineMargins/*/pt</code> keys (the seeded <code>0 en</code> margins made the <code>/pt</code>
+synthetics resolve everywhere). Each masked-absence removal along this
+path (leading → fill geometry → inline margins) surfaced the same
+pattern: consumer-side rescue where producer-side fallback is wanted.</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

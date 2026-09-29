@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/large-file-investigation-260723/">Large File Investigation</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li>
+<li><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-initial-analysis/">PPS: Initial Analysis</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-2026-07/">Metamodel: 2026-07</a></li>
+<li><a href="/TypeRoof/docs/planning/columns/REPORT/">Columns: Runion Report</a></li>
+<li><a href="/TypeRoof/docs/planning/overview/architectural-overview/">Architectural Overview</a></li>
+<li><a href="/TypeRoof/docs/planning/performance-investigation-viewer-update-propagation-260820/">Perf: Viewer Update Propagation</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Fable-5/">TypeSpec Resolution: NULL-TypeSpec Analysis</a></li>
+<li><a href="/TypeRoof/docs/planning/DEMARCATION_FALLBACK/">DEMARCATION_FALLBACK</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Kimi-K3/">TypeSpec Resolution: NULL-TypeSpec Analysis (Kimi-K3)</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-implementation-plan_Fable-5/">TypeSpec Resolution: Implementation Plan</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-second-analysis_Fable-5.1/">PPS: Second Analysis (Fable-5.1)</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="processed-properties-system-pps--second-analysis" class="heading_anchor" href="#processed-properties-system-pps--second-analysis" aria-hidden="true">#</a>Processed Properties System (PPS) — Second Analysis</h1>
+<ul>
+<li>Date: 2026-09-19</li>
+<li>Agent/model: <code>anthropic/claude-fable-5.1</code> (goose)</li>
+<li>Builds on: <a href="2026-09-19-initial-analysis.md"><code>2026-09-19-initial-analysis.md</code></a>,
+authored by <code>moonshotai/kimi-k3</code> (referred to below as <strong>Kimi</strong>).</li>
+</ul>
+<h2><a id="0-scope-and-method" class="heading_anchor" href="#0-scope-and-method" aria-hidden="true">#</a>0. Scope and method</h2>
+<p>The operator asked for an independent repeat of the research behind the
+initial analysis: same three questions (purpose / why annoying / how to
+refactor), same working tree (<code>dbe55886</code> plus the uncommitted
+<code>horizontalLayout</code> work in <code>type-spec/models.mjs</code>, <code>properties-generators.mjs</code>,
+<code>defaults.mjs</code>, <code>registered-properties.mjs</code>), and a comparison against
+Kimi’s conclusions.</p>
+<p>Method: single-agent, read-only survey — no subagents. I read the core
+definitions (<code>registered-properties-definitions.mjs</code>,
+<code>registered-properties.mjs</code>), every <code>get*PPSMap</code> factory, all <code>getDefaults</code>
+implementations (<code>defaults.mjs</code>, <code>type-tools-grid.mjs</code>, <code>videoproof</code>,
+<code>motion-stage</code>, <code>node-specs</code>, <code>style-patches</code>, <code>ui-contextual-template</code>),
+the resolver table in <code>type-driven-ui-basics.mjs</code>, the scope machinery
+(<code>scope-resolution.mjs</code>, <code>type-specnion.mjs</code>, <code>live-properties.typeroof.jsx</code>,
+<code>meta.typeroof.jsx</code>), the generators (<code>properties-generators.mjs</code>), and
+<code>git log</code> for the files/commits Kimi cited. Every file:line reference in the
+initial document was re-checked; the results are in section 1.</p>
+<p>Structure of this document:</p>
+<ul>
+<li><strong>Section 1</strong> — verification of Kimi’s claims (agree / corrected).</li>
+<li><strong>Section 2</strong> — <strong>diverging conclusions</strong>, marked ⚠. These are the places
+where I disagree with the initial analysis on substance, not detail.</li>
+<li><strong>Section 3</strong> — findings Kimi did not cover.</li>
+<li><strong>Section 4</strong> — refactoring directions, re-evaluated.</li>
+</ul>
+<p>Where I quote or paraphrase the initial analysis, it is attributed as
+<strong>[Kimi]</strong>. Everything not so marked is mine.</p>
+<h2><a id="1-verification-of-the-initial-analysis" class="heading_anchor" href="#1-verification-of-the-initial-analysis" aria-hidden="true">#</a>1. Verification of the initial analysis</h2>
+<h3><a id="11-confirmed-no-material-difference" class="heading_anchor" href="#11-confirmed-no-material-difference" aria-hidden="true">#</a>1.1 Confirmed (no material difference)</h3>
+<table>
+<thead>
+<tr>
+<th>[Kimi] claim</th>
+<th>Status</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Three namespaces (model field / registry <code>[prefix, registryKey]</code> / runtime <code>fullKey</code>) joined by <code>ProcessedPropertiesSystemRecord</code></td>
+<td>✔</td>
+<td>Accurate reading of <code>registered-properties-definitions.mjs:102-138</code>.</td>
+</tr>
+<tr>
+<td><code>ProcessedPropertiesSystemMap</code> is the iteration source for <code>_defineGenericWidgets</code></td>
+<td>✔</td>
+<td><code>type-driven-ui-basics.mjs:341-370</code>. Note it also accepts a bare string and calls <code>fromPrefix</code> itself (line 346-348).</td>
+</tr>
+<tr>
+<td>Registry entries carry <code>default/inherit/label/min/max/step/unit</code>; no validation</td>
+<td>✔</td>
+<td></td>
+</tr>
+<tr>
+<td>Effective map is <code>CascadingMap([local, inherited, defaults])</code></td>
+<td>✔</td>
+<td><code>scope-resolution.mjs:546-550</code>.</td>
+</tr>
+<tr>
+<td>Root <code>defaults</code> layer is built by running the same generators over a synthetic primal draft</td>
+<td>✔</td>
+<td><code>defaults.mjs:166-268</code>.</td>
+</tr>
+<tr>
+<td><code>inheritancePolicyGen</code> tombstones <code>inherit: false</code> properties</td>
+<td>✔</td>
+<td><code>properties-generators.mjs:731-735</code>.</td>
+</tr>
+<tr>
+<td>Self-documented “double use” of <code>prefix</code>, <code>fullKey</code> FIXME, <code>createSimpleRecord</code> “hopefully temporary”, <code>_PPS_ENTRY_MARKER</code> “until fully integrated”</td>
+<td>✔</td>
+<td>def.mjs:114, 173-187. <code>_PPS_ENTRY_MARKER</code> is written but <strong>never read</strong> anywhere in <code>lib/</code> — it is dead, not merely temporary.</td>
+</tr>
+<tr>
+<td>~8 near-identical factory loops</td>
+<td>✔</td>
+<td>Actual count: <code>pps-maps.mjs</code> ×2, <code>fundamentals.mjs</code> ×2, <code>type-tools-grid.mjs</code> ×2, <code>models.mjs</code> ×1, <code>ui-horizontal-layout.typeroof.jsx</code> ×2 (both one-liners around <code>fromPrefix</code>) = 9.</td>
+</tr>
+<tr>
+<td>Two dispatchers <code>getPPSMapForModel(parentPPSRecord, FieldType)</code> (grid) vs <code>_getPPSMapForModel(FieldType, ppsRecord)</code> (fundamentals, ui-horizontal-layout) with swapped argument order</td>
+<td>✔</td>
+<td>Real footgun; confirmed. The <code>ppsMap</code> resolver in <code>type-driven-ui-basics.mjs:220-221</code> calls the <em>injectable</em> variant with grid order.</td>
+</tr>
+<tr>
+<td><code>_excludesTypeSpecPPSMap</code>, <code>_skipPrefix</code>, <code>_skipFullKey</code> as hidden policy</td>
+<td>✔</td>
+<td>Also <code>_excludesNodeSpecPPSMap</code>, <code>_excludesTypeToolsGridPPSMap</code> (“I did not sanity check this, it’s just copy pasta”).</td>
+</tr>
+<tr>
+<td>Dead <code>parentPPSRecord</code> stub in <code>getTypeSpecPPSMap</code> propagated by copy</td>
+<td>✔</td>
+<td>Present in <code>pps-maps.mjs</code> ×2 and <code>type-tools-grid.mjs:getGridPropertiesPPSMap</code>.</td>
+</tr>
+<tr>
+<td>Raw string prefixes <code>'axesLocations/'</code>, <code>'intentStyleLinks/'</code>, <code>'markStyleLinks/'</code> with “we should use a symbol here!”</td>
+<td>✔</td>
+<td>Interesting detail: <code>INTENT_STYLE_LINKS</code>/<code>MARK_STYLE_LINKS</code> constants <strong>do exist</strong> (def.mjs:38-39) but <code>pps-maps.mjs:53-56</code> still uses literals.</td>
+</tr>
+<tr>
+<td>Growth path type-spec-ramp → grid (<code>28c47aa2</code>) → …; <code>25a8fe79</code> consolidation</td>
+<td>✔</td>
+<td>Commit messages verified.</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="12-corrected-details" class="heading_anchor" href="#12-corrected-details" aria-hidden="true">#</a>1.2 Corrected details</h3>
+<ul>
+<li><strong>[Kimi]</strong> “<code>type-specnion.mjs</code> is now only re-export aliases of
+<code>scope-resolution.mjs</code>”. Not quite: it also <em>owns</em> the
+<code>DEMARCATION_PROPERTY</code> / <code>DEMARCATION_INHERITANCE</code> / <code>TOMBSTONE</code> symbols
+(<code>type-specnion.mjs:7-11</code>), which <code>scope-resolution.mjs</code> imports back. The
+dependency is circular-ish by design (symbols module ↔ machinery module), not
+a leftover shim.</li>
+<li><strong>[Kimi]</strong> “<code>fullKey</code> … <code>registryFullKey</code> (<code>${prefix}${registryKey}</code>)”.
+Correct, but the more important observation is <em>which one each consumer
+uses</em> — see ⚠ 2.3: <code>defaults.mjs</code> looks the registry up by <code>fullKey</code>,
+<code>type-tools-grid.mjs</code> by <code>registryFullKey</code>. Only the latter is correct for
+re-rooted records.</li>
+<li><strong>[Kimi]</strong> puts <code>LANGUAGE</code> among the registry prefixes in passing; it is in
+fact <strong>not</strong> in <code>SYMBOLIC_TO_PREFIXES</code> (def.mjs:40), so
+<code>getFromRegistry</code> refuses it even though <code>REGISTERED_PROPERTIES[LANGUAGE]</code>
+exists (<code>registered-properties.mjs:133</code>). The <code>[LANGUAGE]</code> registry block is
+therefore unreachable through the public API. Small, but it shows the
+registry’s “which prefixes count” gate is a second, separate policy list.</li>
+</ul>
+<h2><a id="2--diverging-conclusions" class="heading_anchor" href="#2--diverging-conclusions" aria-hidden="true">#</a>2. ⚠ Diverging conclusions</h2>
+<p>These are the points where I come to a <strong>different conclusion</strong> than the
+initial analysis. They are called out prominently because they change what
+a refactoring should target.</p>
+<h3><a id="-21-there-is-no-second-pull-inheritance-implementation" class="heading_anchor" href="#-21-there-is-no-second-pull-inheritance-implementation" aria-hidden="true">#</a>⚠ 2.1 There is no second (“pull”) inheritance implementation</h3>
+<p><strong>[Kimi]</strong> wrote: <em>“every widget gets a pre-bound <code>getDefault</code> … that
+pull-reads the parent’s effective propertiesMap by <code>fullKey</code> … So inheritance
+exists twice by design: push (the scope cascade computes effective values) and
+pull (widgets query the parent’s effective map for display).”</em></p>
+<p><strong>I disagree.</strong> <code>typeSpecGetDefaults</code> reads <code>getLiveProperties()</code>, and in
+<code>type-spec-properties.typeroof.jsx:248-258</code> that is
+<code>this.getEntry(\</code>typeSpecProperties@${typeSpecPath}`)<code>— the</code>TypeSpecLiveProperties<code> registered **for the typeSpec being edited itself** (</code>meta.typeroof.jsx:263<code>, key </code>widgetBus.rootPath<code>), not for its parent. Its </code>typeSpecnion.getProperties()<code>is the own scope's</code>CascadingMap([local,
+inherited, defaults])<code>. When the model field is empty, the generator does not yield a local value, so the read falls through to </code>inherited<code>/</code>defaults`
+— which is exactly the <em>push</em> result.</p>
+<p>So the widget path is a plain <strong>read of the already-computed cascade</strong>. There
+is one inheritance mechanism, and <code>getDefaults</code> is a view on it. The
+<code>FIXME: … Better then hard-coding the parent path in here</code> comment in
+<code>defaults.mjs:84-86</code> (and its copy in <code>type-tools-grid.mjs</code>) describes a
+state of affairs that no longer exists; the “root gives KEY ERROR” case is
+handled by <code>typeSpecPropertiesKey === &quot;typeSpecProperties@&quot;</code> → <code>null</code>.</p>
+<p>Consequence for refactoring: Kimi’s strategic item <em>“Unify push/pull
+defaults”</em> (section 4 F) has no target. What <em>can</em> be unified is the
+per-prefix branching inside the <code>getDefaults</code> copies (Kimi’s B), which is a
+different, smaller problem.</p>
+<h3><a id="-22-the-fromprefix-confusion-is-a-symptom-the-cause-is-an-unstated-generator--ppsmap-contract" class="heading_anchor" href="#-22-the-fromprefix-confusion-is-a-symptom-the-cause-is-an-unstated-generator--ppsmap-contract" aria-hidden="true">#</a>⚠ 2.2 The <code>fromPrefix</code> confusion is a symptom; the cause is an unstated generator ↔ ppsMap contract</h3>
+<p><strong>[Kimi]</strong> identified the concrete symptom correctly: <em>“<code>prefix = GENERIC</code>
+while <code>fullKey = ${parentPPSRecord.propertyRoot}${fieldName}</code> — two different
+bases for two roles … <code>fromPrefix</code> cannot express that combination, which is
+exactly the confusion that triggered this research.”</em></p>
+<p><strong>I read the cause differently.</strong> For <code>ui-horizontal-layout.typeroof.jsx</code>,
+<code>fromPrefix(GENERIC, …)</code> is <strong>correct</strong>, not a limitation:
+<code>manualHorizontalLayoutRunion</code> (<code>properties-generators.mjs:488-560</code>) yields
+<strong>flat</strong> keys — <code>generic/columnCount</code>, <code>generic/lineLength</code>,
+<code>generic/columnGutter</code>, <code>generic/inlineMargins/start</code> — <em>not</em>
+<code>generic/horizontalLayout/columnCount</code>. So the <code>fullKey</code> a widget must read
+is <code>${GENERIC}${fieldName}</code>, and that is what <code>fromPrefix</code> produces.</p>
+<p>The leading case is different because <code>leadingGen</code>
+(<code>properties-generators.mjs:250-291</code>) yields <strong>nested</strong> keys:
+<code>leading/leading/algorithm</code>, <code>leading/leading/line-height-em</code>,
+<code>leading/leading/minLeading</code>, …. Hence <code>getManualLeadingPPSMap</code> must
+re-root <code>fullKey</code> under <code>parentPPSRecord.propertyRoot</code> and additionally remap
+<code>leading → line-height-em</code>.</p>
+<p>In other words: <strong>a ppsMap has to mirror the key layout that the matching
+generator yields, and nothing in the code states, enforces, or even
+co-locates that pairing.</strong> <code>getManualLeadingPPSMap</code> lives in
+<code>type-spec/fundamentals.mjs</code>; <code>leadingGen</code> lives in
+<code>layouts/type-stage/properties-generators.mjs</code>; the registry entry
+<code>[GENERIC].leading</code> / <code>[LEADING].leading</code> lives in a third file. Copying
+the leading factory as a template for horizontal layout therefore <em>looks</em>
+plausible and is wrong — precisely what happened. The <code>fromPrefix</code> API is
+not the problem; the missing contract is.</p>
+<p>This also explains why <code>defaults.mjs:getTypeSpecDefaultsMap</code> needs
+special-case branches per <code>fullKey</code> (<code>blockMargins</code>, <code>inlineMargins</code>,
+<code>columnGutter</code>, <code>lineLength</code>, <code>horizontalLayout</code>): each is a struct whose
+generator flattens it in its own way, and the defaults builder has to
+un-flatten by hand.</p>
+<h3><a id="-23-registry-lookup-by-fullkey-is-broken-for-re-rooted-records-bug-not-just-smell" class="heading_anchor" href="#-23-registry-lookup-by-fullkey-is-broken-for-re-rooted-records-bug-not-just-smell" aria-hidden="true">#</a>⚠ 2.3 Registry lookup by <code>fullKey</code> is broken for re-rooted records (bug, not just smell)</h3>
+<p>Not covered by <strong>[Kimi]</strong>.</p>
+<p><code>getFromRegistry</code> splits the identifier at the <strong>first</strong> <code>/</code>
+(<code>def.mjs:59-72</code>): <code>generic/horizontalLayout/columnCount</code> →
+<code>['generic/', 'horizontalLayout/columnCount']</code> → registry miss →
+falls back to <code>modelDefaultValue</code> or throws KEY ERROR.</p>
+<ul>
+<li><code>defaults.mjs:getFallback(fullKey, …)</code> and <code>typeSpecGetDefaults</code> pass
+<code>fullKey</code>. For every record whose <code>fullKey</code> is re-rooted under a parent
+(<code>getManualLeadingPPSMap</code>, <code>getAutoLinearLeadingPPSMap</code>,
+<code>getLineWidthLeadingPPSMap</code>, anything built from <code>parentPPSRecord</code>), the
+registry <code>default</code> / <code>label</code> / <code>unit</code> is <strong>unreachable</strong> through this path.
+It works today only because those UIs get <code>label</code>/<code>unit</code> via the resolver
+table, which calls <code>getRegisteredPropertySetup(ppsRecord)</code> → uses
+<code>registryCredentials</code> (correct), and because the live map usually has the
+value.</li>
+<li><code>type-tools-grid.mjs:typeToolsGridGetDefaults</code> <strong>already does it right</strong>:
+<code>_getFallback(registryFullKey, …)</code> (lines 1096, 1142). The two “copies”
+Kimi called near-verbatim differ in exactly this semantic detail.</li>
+<li><code>isInheritingPropertyFn(property)</code> (<code>registered-properties.mjs:442-447</code>)
+has the same flaw: for any nested key the lookup misses and the fallback
+<code>{inherit: true}</code> applies. Every nested key <strong>silently inherits</strong>,
+regardless of registry intent. The special case for <code>COLOR</code> (<code>split('/', 2)</code>) is a one-off patch for the same class of problem.</li>
+</ul>
+<p>This is a prerequisite fix for any refactoring that wants to lean on the
+registry as the single policy location (Kimi’s E).</p>
+<h3><a id="-24-prefix-carries-three-semantics-not-two" class="heading_anchor" href="#-24-prefix-carries-three-semantics-not-two" aria-hidden="true">#</a>⚠ 2.4 <code>prefix</code> carries three semantics, not two</h3>
+<p><strong>[Kimi]</strong> described the “double use” of <code>prefix</code> (registry group +
+path base). There is a <strong>third</strong>: behavioral flag. <code>SPECIFIC</code> means “no
+registry default, caller must supply one”; <code>'axesLocations/'</code>,
+<code>OPENTYPE_FEATURES</code>, <code>LANGUAGE</code> mean “value is font-dependent, key is
+<code>${prefix}${fieldName}</code> not <code>fullKey</code>”; <code>DIMENSION</code> in grid is “log this
+case”. These branches are what the <code>getDefaults</code> copies and <code>_skipPrefix</code>
+actually switch on. Splitting the record into <code>registryRef</code> + <code>propertyKey</code>
+(Kimi’s C) does not address this axis; it needs its own explicit field or
+strategy object.</p>
+<h2><a id="3-additional-findings" class="heading_anchor" href="#3-additional-findings" aria-hidden="true">#</a>3. Additional findings</h2>
+<ul>
+<li><strong><code>registryKey</code> is almost unused.</strong> The remap facility that motivates the
+record (“different values/instances can use the same setup”) is exercised
+in exactly one place: <code>type-tools-grid.mjs:getPPSMapForModel</code>
+(<code>gridAxisType</code>, <code>gridAxisSelection</code>, <code>start</code>/<code>end</code>). Everywhere else
+<code>registryKey === null → modelFieldName</code>. The abstraction is paid for
+everywhere and used once.</li>
+<li><strong><code>modelFieldName</code> on the record is redundant</strong> with the ppsMap key it is
+stored under; def.mjs:189-191 already says “this may not be required at
+all”. Consumers pass <code>fieldName</code> separately to <code>getDefaults</code> anyway.</li>
+<li><strong><code>fieldName</code> is a mis-named parameter in <code>getDefaults</code>.</strong> In the
+<code>axesLocations/</code>/<code>OPENTYPE_FEATURES</code>/<code>LANGUAGE</code> branch it is an axis tag
+or feature tag (<code>'YTFI'</code>, <code>'kern'</code>), not a model field; elsewhere callers
+pass <code>null</code> (“fieldName not required here”). It is a per-prefix sub-key.</li>
+<li><strong>Synthetic records as ad-hoc queries.</strong> <code>createSimpleRecord(prefix, \</code>@${newValue}`)<code>(type-bound default via</code>[LEADING][‘@AutoLinearLeading’]<code>), </code>createSimpleRecord(SPECIFIC, ‘font’)<code>, </code>createSimpleRecord(GENERIC,
+‘fontSize’)<code>, </code>createSimpleRecord(root, ‘irrelevant’)<code>— the record is being used as a *lookup handle* for</code>getDefaults<code>, which then only reads </code>.prefix<code>and</code>.fullKey<code>. A two-string tuple would do; the class adds ceremony without adding checks (the constructor only validates that </code>prefix<code>is not</code>undefined`).</li>
+<li><strong><code>ui-contextual-template</code> opts out entirely.</strong> Its injected <code>getDefaults</code>
+ignores the property stream and reads the model directly via
+<code>Path.fromString(ppsRecord.fullKey).toRelative(propertyRoot)</code>. The comment
+(<em>“Maybe a good learning for the next system: include a full path to the
+source model?”</em>) is a design signal: for pure-UI containers the PPS is
+being used only as a path encoder.</li>
+<li><strong>The <code>ppsMap</code> resolver hard-codes a model.</strong> <code>type-driven-ui-basics.mjs: 217-218</code> special-cases <code>LineWidthLeadingModel</code> before consulting
+<code>injectable.getPPSMapForModel</code>. The 20-line comment above it is the most
+honest description of the open design question in the codebase.</li>
+<li><strong>Debug noise in the uncommitted work.</strong> <code>horizontalLayoutRunion</code> and the
+<code>horizontalLayout</code> branch in <code>getTypeSpecDefaultsMap</code> contain
+<code>console.log</code> calls; <code>[GENERIC].horizontalLayout.default</code> is a nested
+struct default, i.e. another case for the un-flattening branch list. Not a
+PPS problem, noted for cleanup.</li>
+</ul>
+<h2><a id="4-refactoring-directions-re-evaluated" class="heading_anchor" href="#4-refactoring-directions-re-evaluated" aria-hidden="true">#</a>4. Refactoring directions, re-evaluated</h2>
+<p>Kimi’s items A–F are kept as reference points; my assessment follows each.</p>
+<ul>
+<li><strong>[Kimi] A — declarative override table replacing the factory loops.</strong>
+Agree on the mechanics, but see ⚠ 2.2: the table must be defined <strong>next to
+the generator</strong> that yields the keys (or derived from a shared key-layout
+spec such as <code>PATH_SPEC_AUTO_LINEAR_LEADING</code> in <code>synthetic-values.mjs</code>,
+which already is that spec for leading). A table that lives in a UI module
+reproduces the current problem with less code.</li>
+<li><strong>[Kimi] B — one parameterized <code>getDefaults</code>.</strong> Agree. Precondition:
+settle ⚠ 2.3 first (<code>registryFullKey</code> vs <code>fullKey</code>), otherwise the unified
+function inherits the wrong behavior from <code>defaults.mjs</code>. The
+<code>node-specs.typeroof.jsx:specGetDefaults</code> (no live properties) is the
+minimal core; the others add the live read plus per-prefix handlers.</li>
+<li><strong>[Kimi] C — split <code>registryRef</code> from <code>propertyKey</code>.</strong> Agree, and add the
+third axis from ⚠ 2.4 (read strategy). A record then has: where to find UI
+metadata, where to read/yield the value, how to read it. Rename
+<code>fullKey → propertyKey</code> as the FIXME asks. Drop <code>modelFieldName</code> from the
+record (section 3).</li>
+<li><strong>[Kimi] D — centralize key construction.</strong> Agree; the <code>getStyleLinks</code>
+helper and <code>pathSpec*Gen</code> functions show this is already half-happening.
+Use the existing <code>INTENT_STYLE_LINKS</code>/<code>MARK_STYLE_LINKS</code> constants in
+<code>pps-maps.mjs</code>; add <code>AXES_LOCATIONS</code>.</li>
+<li><strong>[Kimi] E — exclusion policy into the registry.</strong> Agree in principle;
+blocked by ⚠ 2.3 (registry misses for nested keys) and by the
+<code>SYMBOLIC_TO_PREFIXES</code> gate (1.2), which is itself a policy list that would
+need to move.</li>
+<li><strong>[Kimi] F — unify push/pull.</strong> ⚠ <strong>Drop.</strong> There is no pull
+implementation to unify (⚠ 2.1). Replace with: delete the stale
+“hard-coded parent path” FIXMEs after confirming behavior.</li>
+</ul>
+<p>New, mine:</p>
+<ul>
+<li><strong>G — Make the generator ↔ ppsMap pairing explicit (the actual fix for the
+triggering question).</strong> Each struct-valued field type that has a custom
+generator (<code>LeadingAlgorithmModel</code>, <code>HorizontalLayoutAlgorithmModel</code>,
+<code>ManualBlockMarginsModel</code>, <code>InlineLengthValueModel</code>, …) gets one
+co-located definition: <em>key layout</em> (flat vs re-rooted; renames such as
+<code>leading → line-height-em</code>), from which <strong>both</strong> the generator’s yield
+keys <strong>and</strong> the ppsMap <code>fullKey</code>s are derived. <code>getTypeSpecDefaultsMap</code>’s
+branch list then becomes a lookup over the same definitions. This is the
+only direction that prevents the copy-the-wrong-template failure mode.</li>
+<li><strong>H — Fix <code>getFromRegistry</code>/<code>isInheritingPropertyFn</code> key resolution.</strong>
+Either look up by <code>registryCredentials</code> everywhere (records are available
+at all <code>getDefaults</code> call sites) or make <code>_getPrefixAndName</code> aware of
+nested keys. Small, independent, and it corrects a silent inheritance bug.</li>
+<li><strong>I — Remove dead weight now</strong>: <code>_PPS_ENTRY_MARKER</code>, the <code>parentPPSRecord</code>
+stubs in <code>pps-maps.mjs</code>/<code>type-tools-grid.mjs</code>, the <code>'irrelevant'</code> record in
+<code>ui-char-groups.mjs</code>, and the <code>console.log</code>s in the uncommitted
+<code>horizontalLayout</code> code. None of this needs design work.</li>
+</ul>
+<p>Suggested order: H, I (independent, small) → G for one field type as a pilot
+(leading, since the pathSpec already exists) → B → A/C/D together → E.</p>
+<h2><a id="5-method-note" class="heading_anchor" href="#5-method-note" aria-hidden="true">#</a>5. Method note</h2>
+<p>Single-agent survey, all <code>file:line</code> references taken directly from the
+working tree on 2026-09-19 (HEAD <code>dbe55886</code> + uncommitted changes). The
+initial analysis was re-read after my own survey, not before, to reduce
+anchoring; agreement in section 1 is therefore independent confirmation
+rather than acceptance.</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

@@ -32,6 +32,8 @@ ICON_NAMES=(
     menu
     open_in_full
     pause
+    pip
+    pip_exit
     place_item
     play_arrow
     refresh

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="cascadingmap-reuse--phase-6-feasibility--analysis-uncommitted-working-note" class="heading_anchor" href="#cascadingmap-reuse--phase-6-feasibility--analysis-uncommitted-working-note" aria-hidden="true">#</a>CascadingMap reuse / Phase 6 feasibility — analysis (uncommitted working note)</h1>
+<p><strong>Date</strong>: 2026-09-07 (updated end-of-day as a session handoff) ·
+<strong>Context</strong>: umbrella plan
+<code>thoughts/plans/2026-09-05-1623-node-properties.md</code> Phase 6 (optional:
+typeSpecnion merge → CascadingMap), surfaced while planning the editor
+<code>nodeProperties@</code> wiring. <strong>Status</strong>: the machinery unification predicted
+below has LANDED (see “State after the 2026-09-07 session”); the
+effective-map unification + shared base class remain Phase 6 work.</p>
+<h2><a id="question" class="heading_anchor" href="#question" aria-hidden="true">#</a>Question</h2>
+<p>Is there more potential for re-use and unification between
+<code>HierarchicalScopeTypeSpecnion</code> and <code>HierarchicalScopeNodeProperties</code>?
+<code>HierarchicalScopeProperties</code> looks like a candidate base, but it builds
+its effective map with <code>new Map</code> copies, and the CascadingMap transition
+was planned for later (umbrella Phase 6). This note maps exactly where
+CascadingMap makes re-use feasible, and what stays separate.</p>
+<h2><a id="the-two-effective-map-strategies" class="heading_anchor" href="#the-two-effective-map-strategies" aria-hidden="true">#</a>The two effective-map strategies</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><code>HierarchicalScopeProperties</code> (typeSpecnion)</th>
+<th><code>HierarchicalScopeNodeProperties</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>effective map</td>
+<td><code>mapSetProperties(new Map(), filteredParent, local)</code> — <strong>copies</strong> parent+local into a fresh <code>Map</code> (<code>scope-resolution.mjs:_initPropertyValuesMaps</code>)</td>
+<td><code>CascadingMap([[&quot;local&quot;, local], [&quot;parent&quot;, parentMap]])</code> — <strong>no copy</strong>, layered read (<code>node-properties.mjs</code> constructor)</td>
+</tr>
+<tr>
+<td>parent consumption</td>
+<td>parent’s <code>getInheritableProperties()</code></td>
+<td>parent’s <code>getInheritableProperties()</code> (since <code>f2c5aee9</code>; via the factory/call-site — see below)</td>
+</tr>
+<tr>
+<td>demarcation routing</td>
+<td><code>collectPropertyGeneratorEntries</code> → <code>[raw, inheritanceControls]</code></td>
+<td><strong>shared</strong> <code>collectPropertyGeneratorEntries</code> (since <code>6e54e2e7</code>)</td>
+</tr>
+<tr>
+<td>inheritance policy</td>
+<td>full <code>getInheritableProperties()</code> → shared <code>resolveInheritableProperties(scope)</code></td>
+<td><strong>shared</strong> <code>resolveInheritableProperties(scope)</code>, memoized per instance (since <code>6e54e2e7</code> + <code>f2c5aee9</code>)</td>
+</tr>
+<tr>
+<td>synthetic resolution</td>
+<td><code>resolveSyntheticProperties</code> static</td>
+<td>same static (already shared)</td>
+</tr>
+<tr>
+<td>generator invocation</td>
+<td><code>LocalScopeProperties.propertiesGenerator</code></td>
+<td><strong>shared</strong> <code>LocalScopeProperties.propertiesGenerator</code> (since <code>6e54e2e7</code>)</td>
+</tr>
+<tr>
+<td>construction</td>
+<td>one class, single constructor</td>
+<td><strong>factories</strong>: <code>createRoot</code> / <code>createChild</code> / <code>createFromParentMap</code> (since <code>d0b46d08</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Only the first row still diverges — the effective-map strategy
+(copy-Map vs CascadingMap). Everything else unified during the
+2026-09-07 session, exactly as the “What unifies WITHOUT CascadingMap”
+section below predicted.</p>
+<h2><a id="why-subclassing-hierarchicalscopeproperties-now-is-premature" class="heading_anchor" href="#why-subclassing-hierarchicalscopeproperties-now-is-premature" aria-hidden="true">#</a>Why subclassing <code>HierarchicalScopeProperties</code> now is premature</h2>
+<p>Making node-properties extend <code>HierarchicalScopeProperties</code> today would
+either (a) force node-properties off its no-copy cascade — a regression
+on the design 5b installed to validate cascade-as-effective-map — or
+(b) require overriding most of <code>_initPropertyValuesMaps</code> (the
+<code>mapSetProperties</code> copy at <code>:503-507</code>), which is inheritance in name
+only. The copy is the obstacle, and it is exactly what Phase 6 removes.</p>
+<h2><a id="what-unified-without-cascadingmap-landed-2026-09-07" class="heading_anchor" href="#what-unified-without-cascadingmap-landed-2026-09-07" aria-hidden="true">#</a>What unified WITHOUT CascadingMap (LANDED 2026-09-07)</h2>
+<p>These were pure unification refactors, independent of the effective-map
+strategy — all landed in the editor-wiring cycle:</p>
+<ol>
+<li><strong>Generator invocation</strong> — node-properties calls
+<code>LocalScopeProperties.propertiesGenerator(...)</code> instead of its inline
+loop. Picks up demarcation triples for free.</li>
+<li><strong>Demarcation routing</strong> — <code>collectPropertyGeneratorEntries(...)</code> →
+<code>[rawProperties, inheritanceControls]</code>.</li>
+<li><strong>Inheritance policy</strong> — extract the body of
+<code>HierarchicalScopeProperties.getInheritableProperties</code> into a shared
+module-level <code>resolveInheritableProperties(scope)</code> in
+<code>scope-resolution.mjs</code>; both classes call it. The body is already
+generic (operates on <code>getProperties()</code>, <code>localPropertyNames</code>,
+<code>_inheritancePolicyGenerators</code>, <code>_inheritanceControls</code> — nothing
+typeSpec-specific).</li>
+<li><strong>Parent-projection consumption</strong> — node-properties reads the
+parent’s <code>getInheritableProperties()</code> (the contract), not its raw
+<code>getProperties()</code>.</li>
+</ol>
+<p>After these four, the <strong>only</strong> genuinely class-specific code left is the
+effective-map construction: copy-Map vs CascadingMap. That is the right
+amount of separation to carry into Phase 6.</p>
+<h2><a id="state-after-the-2026-09-07-session-handoff" class="heading_anchor" href="#state-after-the-2026-09-07-session-handoff" aria-hidden="true">#</a>State after the 2026-09-07 session (handoff)</h2>
+<p>Commits, in order:</p>
+<ul>
+<li><code>7ee17784</code> — <strong>bug fix</strong>: document-node scopes consumed the dispatcher’s
+OWN settled map as their parent (<code>parentSettledProperties</code> resolved
+<code>_widgets[0]</code> — the node itself), a self-loop that left every document
+node showing the root width’s initial value forever. Replaced with
+<code>ancestorSettledProperties</code>, resolved strictly from the
+<code>_parentScopeChain</code>; the dead <code>parentSettledProperties</code> was removed.
+Setting the Stage Size width now trickles the document width through
+the whole <code>nodeProperties@</code> tree.</li>
+<li><code>d0b46d08</code> — <strong>constructor split</strong> into factories: <code>createRoot</code>
+(defaults map as parent layer), <code>createChild</code> (parent scope instance →
+<code>getInheritableProperties()</code> projection), <code>createFromParentMap</code>
+(G8 contract: the parent’s pre-projected map taken verbatim). The
+union “parent scope OR defaults map” constructor argument and its
+<code>instanceof</code> discrimination are gone.</li>
+<li><code>f2c5aee9</code> — <strong>the cascade consumes the control projection</strong>:
+<code>ancestorSettledProperties</code> and the meta-root lazy getter return
+<code>getInheritableProperties()</code> (tombstones/re-routes applied) instead of
+the raw effective map; <code>DocumentNodeProperties.inheritableSettledProperties</code>
+added. <code>getInheritableProperties()</code> is <strong>memoized per scope instance</strong>
+(the document-node change guard compares the parent map by identity).
+Behavior-neutral with the empty policy (projection === effective map);
+verified live: a <code>layout/width</code> tombstone now withholds width from
+children and grandchildren while the node keeps its own.</li>
+<li><code>5167c4b2</code> — unrelated whack-a-mole: deterministic mark-styling drain
+(Firefox re-mount bug), not part of this analysis.</li>
+</ul>
+<p><strong>Phase-6-relevant facts learned this session:</strong></p>
+<ol>
+<li><strong>The live document-node tree passes MAPS, not scope instances.</strong>
+<code>DocumentNodeProperties</code> builds its scope via <code>createFromParentMap</code>
+with the ancestor’s pre-projected map (the G8 contract). The
+<code>createChild</code> instance path is exercised only by unit tests, not the
+live tree. A shared Phase 6 base class must therefore work with
+<strong>map-only parents</strong> — the instance-based <code>getInheritableProperties()</code>
+call in <code>createChild</code> is a convenience, not the tree’s mechanism.</li>
+<li><strong>Projection memoization matters for correctness.</strong> The document-node
+scope build’s rebuild guard compares the parent map by identity; an
+unmemoized <code>getInheritableProperties()</code> (fresh Map per call once a
+policy yields controls) would read as perpetual change. Phase 6’s
+shared base must preserve per-instance memoization (or identity
+stability) of the projection.</li>
+<li><strong>The empty policy is the only thing keeping behavior stable.</strong> The
+<code>DEMARCATION_INHERITANCE</code> machinery is fully live end-to-end; the
+width semantics (what actually gets tombstoned/re-routed) is parked
+until “the engine is in a good shape”. That’s the next content
+decision, independent of Phase 6’s structural unification.</li>
+<li><strong>The self-loop class of bug is now documented in-code.</strong> The
+<code>ancestorSettledProperties</code> / <code>parentPayload</code> pair both self-skip via
+<code>_parentScopeChain</code>; reading <code>_widgets[0]</code> (this node’s own scope) as
+“the parent” is the trap. Any Phase 6 refactor of the meta tree’s
+scope-build wiring must preserve that distinction.</li>
+</ol>
+<h2><a id="what-phase-6-cascadingmap-then-unlocks" class="heading_anchor" href="#what-phase-6-cascadingmap-then-unlocks" aria-hidden="true">#</a>What Phase 6 (CascadingMap) then unlocks</h2>
+<p>Once the typeSpecnion’s effective map is a <code>CascadingMap</code> instead of a
+<code>mapSetProperties</code> copy:</p>
+<ul>
+<li>Both classes construct <code>CascadingMap([[&quot;local&quot;, local], [&quot;parent&quot;, parentProjection]])</code> identically → the effective-map construction
+unifies, and a <strong>shared base class becomes natural</strong> (it no longer
+forces a copy on either).</li>
+<li><strong>Allocation churn drops</strong>: today every typeSpecnion rebuild copies the
+full parent+local map; the cascade is O(layers) construction + lazy
+key index, no copy. This is the stated Phase 6 motivation.</li>
+<li><strong>Ancestor access</strong>: <code>getLayer(&quot;parent&quot;).getLayer(&quot;parent&quot;)</code> walks
+ancestors without re-deriving intermediate maps — the node channel
+already relies on this (umbrella G8 contract); Phase 6 gives the
+typeSpecnion the same.</li>
+</ul>
+<h3><a id="watch-items-for-phase-6-not-in-scope-now" class="heading_anchor" href="#watch-items-for-phase-6-not-in-scope-now" aria-hidden="true">#</a>Watch-items for Phase 6 (not in scope now)</h3>
+<ul>
+<li><code>CascadingMap</code> layers may nest; if deep chains ever profile hot,
+flatten at construction (splice inner layers in place) — internal
+change, read interface identical (noted in <code>cascading-map.mjs</code>).</li>
+<li>The typeSpecnion’s <code>_getParentMaps</code> root FIXME (<code>scope-resolution.mjs:466-472</code>:
+“at the root … differentiate whether to inherit or take from
+defaults”) must be resolved against cascade layering semantics.</li>
+<li>Read-interface parity: consumers of the typeSpecnion effective map
+currently get a <code>Map</code>; <code>CascadingMap</code> is a read-only Map-like facade
+(no mutation methods). Any consumer that <em>mutates</em> the result (none
+should) would break loud — verify at Phase 6.</li>
+</ul>
+<h2><a id="bottom-line" class="heading_anchor" href="#bottom-line" aria-hidden="true">#</a>Bottom line</h2>
+<p>The generator/routing/policy/parent-projection machinery is <strong>already
+unified</strong> (2026-09-07 session) — pure reuse, behavior-neutral, validated
+live. What remains for Phase 6 is the effective-map unification and the
+shared base class: move the typeSpecnion from copy-Map
+(<code>mapSetProperties</code>) to <code>CascadingMap</code>, at which point both classes
+construct <code>CascadingMap([[&quot;local&quot;, local], [&quot;parent&quot;, parentProjection]])</code>
+identically and a shared base becomes natural. Subclassing before that
+would couple node-properties to the copy semantics the umbrella plan
+intends to retire. When doing it, respect the session-learned
+constraints above: map-only parents in the live tree, memoized
+projection identity, and the self-vs-ancestor distinction in the
+scope-build wiring.</p>
+<hr>
+<h2><a id="additions-from-review-2026-09-07-pre-phase-6" class="heading_anchor" href="#additions-from-review-2026-09-07-pre-phase-6" aria-hidden="true">#</a>Additions from review (2026-09-07, pre-Phase-6)</h2>
+<p>Verified against the codebase before starting Phase 6:</p>
+<ol>
+<li>
+<p><strong>Iteration order changes — the one behavior-visible semantic
+difference.</strong> <code>mapSetProperties(new Map(), filteredParent, local)</code>
+iterates parent keys first (local overrides keep the parent’s
+insertion position; local-only keys append). <code>CascadingMap</code> iterates
+local keys first, then parent-only keys. CSS actors are <strong>safe</strong>:
+<code>actorApplyCssProperties</code>/<code>actorApplyCSSColors</code> never iterate the
+property map — they iterate their own ordered <code>propertyDescriptions</code>
+and do keyed lookups (<code>properties-util.mjs:140-171</code>). But any
+consumer that iterates the effective map for display or
+serialization (UI parameters display, <code>getStyleLinks</code>, debug
+helpers, tests asserting entry order) may see reordered output.
+→ Add to Phase 6 scope: audit map-iterating consumers for order
+sensitivity; add a behavior test if any is user-visible.</p>
+<p><strong>RESOLVED (same day, confirmed with user):</strong> the audit found NO
+order-sensitive consumers — all 27 <code>getProperties()</code> call sites use
+keyed lookups (<code>has</code>/<code>get</code>); the only map iterations are <code>...map</code>
+spreads into fresh Maps (order-agnostic); the display widget
+(<code>type-spec-properties.typeroof.jsx</code>) iterates the <em>registry</em>
+(<code>TYPESPEC_PPS_MAP.keys()</code>), not the effective map. <strong>Iteration
+order unites on LOCAL-FIRST</strong> (the cascade’s native order, already
+live in the node-properties channel since Phase 4) — no
+compatibility shim needed.</p>
+</li>
+<li>
+<p><strong>Watch-item #3 (mutation audit) is now VERIFIED, close it.</strong> All 27
+non-test <code>.getProperties()</code> call sites treat the result as read-only;
+no consumer mutates the returned map (the only <code>.set()</code> hits are
+unrelated local Maps in animation code). The read-only facade breaks
+nobody.</p>
+</li>
+<li>
+<p><strong>The root FIXME becomes <em>addressable</em>, not just a risk.</strong>
+<code>_getParentMaps</code>’s “at the root … differentiate whether to inherit
+or take from defaults” (scope-resolution.mjs:466-472) is awkward in
+copy-merge semantics but maps naturally onto cascade layering:
+<code>[[&quot;local&quot;, ...], [&quot;inherited&quot;, ...], [&quot;defaults&quot;, ...]]</code> with
+per-read precedence via <code>getLayer</code>. Phase 6 should treat the FIXME
+as a design input to the layer scheme, not merely a hazard to
+preserve.</p>
+</li>
+<li>
+<p><strong><code>PatchedScopeProperties</code>/<code>createPatched</code> is in scope.</strong>
+<code>createPatched</code> already passes an ARRAY of parent maps
+(<code>[this.getInheritableProperties(), this._getParentMaps()[1]]</code>) —
+the patched scope is a two-layer cascade in waiting; Phase 6 should
+convert it alongside, not leave it on copy-merge semantics.</p>
+</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

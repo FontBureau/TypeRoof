@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="phase-5b-nodenode-channel--implementation-plan" class="heading_anchor" href="#phase-5b-nodenode-channel--implementation-plan" aria-hidden="true">#</a>Phase 5b: Node→Node Channel — Implementation Plan</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Install <strong>real per-document-node <code>HierarchicalScopeNodeProperties</code> scopes</strong>
+owned by the <code>DocumentNodesMeta</code> layer, replacing the 5a root-map
+live-delegation payloads. Children consume their parent’s effective map
+through the cascade’s <code>&quot;parent&quot;</code> layer; geometry (available widths) starts
+flowing document-node→document-node. The old typeSpecnion geometry stream
+(orphaned since Phase 4) is commented out with pointers to the new home.</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<p>Verified against code at <code>6a300acc</code> (see research doc for full references):</p>
+<ul>
+<li>5a pre-built the transport: per-node <code>nodeProperties@&lt;documentNodePath&gt;</code>
+registrations exist on every <code>DocumentNodesMetaNode</code> dispatcher
+(<code>document-nodes-meta/index.mjs:268-279</code>); consumers map per-node ids
+(<code>viewer.typeroof.jsx:306-314</code>, <code>derivations.mjs:362-388</code>); the payload
+accessor contract is <code>get nodeProperties()</code> (<code>index.mjs:226-229</code>),
+currently live-delegating to the root scope via <code>rootNodeProperties@</code>.</li>
+<li>Root scope lives in <code>TypeSpecLiveProperties.update</code>
+(<code>live-properties.typeroof.jsx:134-210</code>); root registration gated in
+<code>meta.typeroof.jsx:264-273</code>; protocol installed in both controllers with
+<code>notFoundFallbackValue: null</code> (<code>type-stage/index.typeroof.jsx:292-300</code>,
+<code>ramp/index.typeroof.jsx:251-259</code>).</li>
+<li><strong>hostMap gap</strong>: no meta node consumes <code>typeSpecProperties@</code> today. Meta
+nodes have <code>pathOfTypes</code> context (<code>index.mjs:527-535</code>,
+<code>derivations.mjs:274</code>) and <code>widgetBus.originTypeSpecPath</code>
+(<code>index.mjs:526</code>) — the inputs <code>getTypeSpecPropertiesIdMethod</code>
+(<code>integration.typeroof.jsx:170-272</code>) needs.</li>
+<li><strong>Framework constraints</strong>:
+<ul>
+<li>A widget cannot change its own external dependency mappings after
+creation (<code>component.mjs:488-501</code> — a changed external id would become
+a nonsense model path). The established answer is provisioned child
+wrappers rebuilt on id change (<code>viewer.typeroof.jsx:404-472</code>).</li>
+<li>Registrations must sit on the dispatcher, not the typeKey child:
+typeKey rebuilds create new-before-old and the duplicate-registration
+throw would fire (<code>index.mjs:274-277</code>, <code>component.mjs:195-198</code>).</li>
+<li>Updates are strictly parent-first: provisioning completes before
+children update, containers recurse depth-first
+(<code>component.mjs:1184-1282</code>).</li>
+</ul>
+</li>
+<li><strong>Gaps</strong>: <code>nodeProperties@</code> missing from both controllers’
+<code>resetUpdatedLog()</code> cycles (<code>type-stage/index.typeroof.jsx:700-727</code>,
+<code>ramp/index.typeroof.jsx:448-464</code>); memo-key aliasing in
+<code>getTypeSpecPropertiesIdMethod</code> (<code>integration.typeroof.jsx:181-197</code> —
+do not pass the 4th arg with the default protocol in the same session).</li>
+<li><strong>Old channel orphaned but intact</strong>: <code>environmentGen</code>
+(<code>properties-generators.mjs:53-73</code>), old <code>availableSizesGen</code>
+(:81-~170), <code>horizontalLayoutRunion</code> geometry re-routes (:648-666) still
+produced, read by nothing; <code>horizontalWidthSum</code> (:534) is the known
+pre-existing lint error.</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<ul>
+<li>Each document-node dispatcher’s <code>nodeProperties@&lt;documentNodePath&gt;</code>
+payload answers <code>getProperties()</code> with a real per-node scope:
+<code>CascadingMap([[&quot;local&quot;, locals], [&quot;parent&quot;, parentEffectiveMap]])</code>,
+parent = parent dispatcher’s scope (document-path math), top-level
+nodes falling back to the root scope (<code>rootNodeProperties@</code>).</li>
+<li>Scope updates propagate: a parent scope rebuild marks its registration
+updated; children rebuild seeing the settled parent map in the same
+cycle (framework parent-first order, pinned by a behavior test).</li>
+<li><code>horizontalLayoutNodePropertiesGen</code> stub in
+<code>node-properties-generators.mjs</code> with proven mechanics: unit-tested
+synthetic resolution through the node cascade; column-container
+behavior test (child CSS width = computed column width).</li>
+<li>Old typeSpecnion geometry generators commented out (not deleted), each
+with a hint pointing at <code>node-properties-generators.mjs</code>.</li>
+<li><code>nodeProperties@</code> covered by <code>resetUpdatedLog()</code> in both controllers.</li>
+<li>Full battery green: <code>npx vitest run</code>, <code>npx eslint</code>,
+<code>npm run typecheck</code>, <code>npm run build:app</code>.</li>
+</ul>
+<h3><a id="key-discoveries" class="heading_anchor" href="#key-discoveries" aria-hidden="true">#</a>Key Discoveries:</h3>
+<ul>
+<li>Dependency-mapping change ⇒ provisioned child wrapper, not own update
+(<code>component.mjs:488-501</code>; pattern at <code>viewer.typeroof.jsx:404-472</code>).</li>
+<li>The umbrella plan’s “imperative lifecycle-hooked registration” is moot:
+ids are document-path-keyed (5a), stable for the dispatcher’s lifetime;
+declarative settings registration suffices (<code>component.mjs:765-782</code>).</li>
+<li>The plan’s <code>_getTypeSpecPropertiesId(pathOfTypes.slice(0,-1), true)</code>
+parent mechanism belongs to the typeSpec channel; the node channel’s
+parent lookup is document-path math (5a design center).</li>
+<li><code>_provisionTypeSpecStyler</code>’s rebuild-check extension is <strong>unnecessary</strong>:
+per-node <code>nodeProperties@</code> ids never change for a live wrapper (unlike
+<code>properties@</code>). Documented finding; no code change.</li>
+<li>Text-node delegation must route to the <strong>parent element’s</strong> scope, not
+the root: a text run inside a column container must see the container’s
+<code>layout/availableWidth</code>.</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>No <code>hostContext</code>/NodeModel generator argument (umbrella plan defers).</li>
+<li>No moving of the root scope out of <code>TypeSpecLiveProperties</code> (decision 5).</li>
+<li>No deletion of old generators — comment out with hints (decision 6).</li>
+<li>No changes to the <code>typeSpecProperties@</code> channel itself.</li>
+<li>No multi-renderer attachments; no outfitter migration.</li>
+<li>No removal of the existing <code>horizontalWidthSum</code> lint error unless the
+Phase 3 stub consumes it (allowed, resolves it).</li>
+</ul>
+<h2><a id="operator-decisions-2026-09-06-locked" class="heading_anchor" href="#operator-decisions-2026-09-06-locked" aria-hidden="true">#</a>Operator Decisions (2026-09-06, locked)</h2>
+<ol>
+<li>Dispatcher owns the registration + accessor; scope lives in a
+provisioned per-element scope component (framework constraint, see
+Current State). Approved.</li>
+<li>hostMap via <code>typeSpecProperties@&lt;effectivePath&gt;</code> dependency mapping on
+the scope component. No objections.</li>
+<li>Keep text-node registrations; text payloads delegate to the <strong>parent
+element’s</strong> scope. Approved (parent-scope amendment here).</li>
+<li>Geometry generator: stub + proof of working mechanics; operator takes
+over the exact width semantics from there. Approved.</li>
+<li>Root scope stays in <code>TypeSpecLiveProperties</code>. Approved.</li>
+<li>Old generators commented out with hint comments, not deleted.
+<code>horizontalWidthSum</code> stays unless the stub consumes it. Approved.</li>
+<li>Ordering proof as a G-suite behavior test (widget level), not a unit
+test. Approved.</li>
+<li><code>resetUpdatedLog()</code> for <code>nodeProperties@</code> in both controllers.
+Approved (“the only correct thing to do”).</li>
+</ol>
+<h2><a id="working-agreements-operator-instruction-absolute" class="heading_anchor" href="#working-agreements-operator-instruction-absolute" aria-hidden="true">#</a>Working Agreements (operator instruction, absolute)</h2>
+<ol>
+<li><strong>Small, verifiable commits</strong> — each phase lands as one or a few
+small commits; no commit bundles unrelated changes.</li>
+<li><strong>Commit gate</strong>: before EVERY commit, stop, present the commit message
+and file list, wait for the operator’s review or “OKOK” before
+committing and proceeding.</li>
+<li><strong>Behavior tests, not implementation details</strong> — added tests assert
+inputs → observable outcomes (resolved maps, CSS values, registration
+liveness), never private methods/internal structure.</li>
+<li>New <code>.mjs</code> files need explicit <code>!lib/js/...</code> entries in
+<code>.prettierignore</code> (deny-by-default repo convention).</li>
+<li>Verification battery per landing: <code>npx vitest run</code>, <code>npx eslint</code>,
+<code>npm run typecheck</code>, <code>npm run build:app</code>.</li>
+<li>Commit messages carry the metadata trailer read from actual sources
+(provider/model from <code>~/.config/goose/config.yaml</code>,
+<code>agent: goose v&lt;version&gt;</code>).</li>
+<li>Docs archive as the <strong>final commit</strong> (Phase 6): research, plan and
+handoff into <code>docs/planning/agentic-artefacts/thoughts/</code>, each into
+the subdirectory where it belongs. Nothing else ships in that commit.</li>
+</ol>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Bottom-up within the channel: hygiene first (updated-log semantics must
+be correct before per-node pushes exist), then the scope machinery with
+the ordering proof test-first, then the geometry stub proving generator
+mechanics, then old-channel teardown, then consumer polish; the archive
+commit (Phase 6) closes the cycle.</p>
+<hr>
+<h2><a id="phase-1-channel-hygiene--resetupdatedlog--delegation-lock-test" class="heading_anchor" href="#phase-1-channel-hygiene--resetupdatedlog--delegation-lock-test" aria-hidden="true">#</a>Phase 1: Channel hygiene — resetUpdatedLog + delegation lock test</h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p><code>nodeProperties@</code> joins the per-cycle <code>resetUpdatedLog()</code> in both layout
+controllers. Without this, Phase 2’s per-node <code>setUpdated</code> pushes would
+keep every consumer firing on every update (the updated-log is never
+cleared). A G-suite assertion pins the current delegation behavior as the
+regression baseline for Phase 2.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-reset-the-nodeproperties-updated-log-each-cycle" class="heading_anchor" href="#1-reset-the-nodeproperties-updated-log-each-cycle" aria-hidden="true">#</a>1. Reset the nodeProperties@ updated-log each cycle</h4>
+<p><strong>Files</strong>: <code>lib/js/components/layouts/type-stage/index.typeroof.jsx</code>
+(:700-727), <code>lib/js/components/layouts/ramp/index.typeroof.jsx</code> (:448-464)
+<strong>Changes</strong>: add <code>&quot;nodeProperties@&quot;</code> to the set of protocol handlers whose
+<code>resetUpdatedLog()</code> is invoked in the update/initialUpdate paths, mirroring
+the existing <code>typeSpecProperties@</code>/<code>stylePatchProperties@</code>/
+<code>styleLinkProperties@</code> resets. No other logic change.</p>
+<h4><a id="2-g-suite-pin-current-delegation-behavior" class="heading_anchor" href="#2-g-suite-pin-current-delegation-behavior" aria-hidden="true">#</a>2. G-suite: pin current delegation behavior</h4>
+<p><strong>File</strong>: <code>lib/js/tests/type-stage-viewer-behavior/index.test.mjs</code>
+<strong>Changes</strong>: extend the existing per-node registration assertion
+(:331-357) — behaviorally, per node: the registration exists AND its
+payload’s <code>getProperties()</code> resolves the same <code>layout/availableWidth</code> as
+the root registration’s payload (the delegation contract Phase 2 will
+replace). Assert resolved values, not the delegation mechanism.</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-verification" class="heading_anchor" href="#automated-verification" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[x] <code>npx vitest run</code> green (all suites, incl. extended G-suite) — 256/256</li>
+<li>[x] <code>npx eslint</code> clean (except the known <code>horizontalWidthSum</code>)</li>
+<li>[x] <code>npm run typecheck</code> clean</li>
+<li>[x] <code>npm run build:app</code> passes</li>
+</ul>
+<h4><a id="manual-verification" class="heading_anchor" href="#manual-verification" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[ ] Wikipedia demo: editor/viewer/compare modes unchanged; ramp renders.</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause with commit message + file list; commit on
+OKOK before Phase 2.</p>
+<hr>
+<h2><a id="phase-2-per-node-scopes-ordering-test-first" class="heading_anchor" href="#phase-2-per-node-scopes-ordering-test-first" aria-hidden="true">#</a>Phase 2: Per-node scopes (ordering test first)</h2>
+<h3><a id="overview-2" class="heading_anchor" href="#overview-2" aria-hidden="true">#</a>Overview</h3>
+<p>The core phase. Each element meta node provisions a scope component
+holding a real <code>HierarchicalScopeNodeProperties</code>; the dispatcher’s
+<code>.nodeProperties</code> accessor switches from root-delegation to the scope;
+text runs delegate to the parent element’s scope. The parent-first
+ordering proof lands as a <strong>failing behavior test first</strong>, then the
+implementation makes it pass.</p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-ordering-proof-behavior-test-first-commit-fails-red" class="heading_anchor" href="#1-ordering-proof-behavior-test-first-commit-fails-red" aria-hidden="true">#</a>1. Ordering-proof behavior test (first commit, fails red)</h4>
+<p><strong>File</strong>: <code>lib/js/tests/type-stage-viewer-behavior/index.test.mjs</code>
+<strong>Changes</strong>: new test with a multi-level document (container with a
+layout-relevant typeSpec containing a paragraph). Assert behaviorally:
+the child node’s <code>nodeProperties@</code> payload scope’s <code>&quot;parent&quot;</code> layer
+<strong>is</strong> the parent dispatcher’s effective map (object identity via the
+public <code>getLayer(&quot;parent&quot;)</code> API), and after a typeSpec edit that changes
+the parent’s scope, the child’s next <code>getProperties()</code> observes the
+parent’s settled map (no stale intermediate). Fails before Phase 2
+implementation (payloads are root delegations), passes after.</p>
+<h4><a id="2-scope-component-per-element-node" class="heading_anchor" href="#2-scope-component-per-element-node" aria-hidden="true">#</a>2. Scope component per element node</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li>New internal component class (e.g. <code>DocumentNodeProperties</code>, base
+<code>_BaseComponent</code>), provisioned by <code>DocumentNodesMetaElement</code> in
+<code>_provisionWidgets</code> following the viewer’s <code>_provisionTypeSpecStyler</code>
+rebuild-or-keep pattern (<code>viewer.typeroof.jsx:404-472</code>): rebuilt when
+its resolved <code>typeSpecProperties@</code> id or parent <code>nodeProperties@</code> id
+changes.</li>
+<li>Dependency mappings: <code>[resolvedTypeSpecPropertiesId, &quot;hostProperties@&quot;]</code>,
+<code>[parentNodePropertiesId, &quot;@parentNodeProperties&quot;]</code> (or direct
+construction args where the framework allows — the scope component’s
+parent-scope input can be read off the registered component at build
+time, like <code>live-properties.typeroof.jsx:73-88</code> does for
+<code>@parentProperties</code>).</li>
+<li>On update: rebuild the scope when <code>hostProperties@</code> was marked updated
+or the parent scope identity changed; then
+<code>setUpdated(ownNodePropertiesId)</code> on the protocol handler — the push
+happens in the scope component, guarded by
+<code>hasProtocolHandlerRegistration</code> (idiom at
+<code>live-properties.typeroof.jsx:196-208</code>), so the registration owner
+(dispatcher) need not be the pusher.</li>
+<li>Expose <code>get nodeProperties()</code> returning the scope (accessor contract
+unchanged for consumers).</li>
+<li>Effective typeSpec path resolved via <code>getTypeSpecPropertiesIdMethod</code>
+with the default protocol — <strong>bound as a class field/closure inside
+<code>index.mjs</code></strong> (class-field bindings don’t survive being passed across
+module boundaries — 5a landmine); <code>_originTypeSpecPath</code> from
+<code>widgetBus.originTypeSpecPath</code> (<code>index.mjs:526</code>).</li>
+<li>Silent/unknown nodes: the typeSpec fallback walk lands on the root
+typeSpecnion (<code>integration.typeroof.jsx:148</code>) — the hostMap is then the
+root typeSpecnion’s properties; the scope still builds (the channel
+must not break for descendants, per umbrella plan).</li>
+</ul>
+<h4><a id="3-dispatcher-accessor--provisioning-wiring" class="heading_anchor" href="#3-dispatcher-accessor--provisioning-wiring" aria-hidden="true">#</a>3. Dispatcher accessor + provisioning wiring</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>DocumentNodesMetaNode</code>’s <code>get nodeProperties()</code> (:226-229) delegates
+to the dispatched child’s scope component when present (element nodes),
+else to the <strong>parent element scope</strong> (text runs) — replacing the
+<code>rootNodeProperties@</code> mapping where applicable. The <code>rootNodeProperties@</code>
+mapping stays for the top-level fallback (children of
+<code>DocumentNodesMetaDocument</code>).</li>
+<li><code>DocumentNodesMetaTextRun</code> (<code>:496-513</code>) provisions no scope component;
+its dispatcher answers with the parent element’s scope.</li>
+<li>Parent scope discovery = document-path math on <code>widgetBus.rootPath</code>
+(strip trailing <code>content/&lt;key&gt;</code> pairs to address ancestor dispatchers),
+with <code>hasRegistered</code> guard and <code>rootNodeProperties@</code> fallback for
+top-level nodes.</li>
+</ul>
+<h4><a id="4-unit-tests-per-node-scope-behavior" class="heading_anchor" href="#4-unit-tests-per-node-scope-behavior" aria-hidden="true">#</a>4. Unit tests: per-node scope behavior</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/node-properties.test.mjs</code>
+<strong>Changes</strong>: behavior tests on the resolved maps — child scope reads
+parent’s locals through the cascade; local-over-parent precedence; a
+rebuilt parent scope is observed by a subsequently built child (settled-
+map semantics at the scope level, complementing the widget-level G-test).</p>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-verification-1" class="heading_anchor" href="#automated-verification-1" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[x] New ordering test fails before implementation, passes after
+(red: <code>97987ac1</code>; green with the scope machinery)</li>
+<li>[x] G1–G7 pass <strong>unmodified</strong>; pane-sizing passes unmodified</li>
+<li>[x] <code>npx vitest run</code>, <code>npx eslint</code>, <code>npm run typecheck</code>,
+<code>npm run build:app</code> all green — 257/257</li>
+</ul>
+<h4><a id="manual-verification-1" class="heading_anchor" href="#manual-verification-1" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[ ] Wikipedia demo: all modes render identically; ramp works.</li>
+</ul>
+<p><strong>Implementation Note</strong>: commit(s) gated on OKOK. Suggested split:
+(a) failing ordering test, (b) scope machinery making it green.</p>
+<p><strong>Implementation deviations recorded</strong> (2026-09-06, operator-informed):
+the scope component is provisioned in the element <strong>constructor</strong> (not
+the first <code>_provisionWidgets</code>): renderer attachments are initialized
+before the element’s first update, and their stylers read the payload
+immediately — the <code>_renderingPlan</code> ctor-derivation precedent. The
+parent scope arrives via the ctor-arg chain; a <code>&quot;@parentNodeProperties&quot;</code>
+dependency mapping serves as the rebuild <em>trigger</em> (the noStyler
+precedent), with the parent registration id threaded through the
+containers. The payload contract is scope-like (<code>.getProperties()</code>);
+unbuilt scope components delegate to the parent payload.</p>
+<hr>
+<h2><a id="phase-3-geometry-generator-stub--proof" class="heading_anchor" href="#phase-3-geometry-generator-stub--proof" aria-hidden="true">#</a>Phase 3: Geometry generator stub + proof</h2>
+<h3><a id="overview-3" class="heading_anchor" href="#overview-3" aria-hidden="true">#</a>Overview</h3>
+<p><code>horizontalLayoutNodePropertiesGen</code> in <code>node-properties-generators.mjs</code>:
+the node-channel home for column geometry. Stub depth per operator
+decision 4 — mechanics proven, exact width semantics left to the
+operator.</p>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-generator-stub" class="heading_anchor" href="#1-generator-stub" aria-hidden="true">#</a>1. Generator stub</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/node-properties-generators.mjs</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>horizontalLayoutNodePropertiesGen(outerNodePropertiesAPI, hostMap)</code>:
+reads style facts from the <strong>hostMap</strong> (<code>generic/lineLength</code>,
+<code>generic/columnCount</code>, <code>generic/fontSize</code> — the style-side yields of
+<code>horizontalLayoutRunion</code> that stay in the typeSpecnion); reads the
+parent’s <code>layout/availableWidth</code> via
+<code>outerNodePropertiesAPI.getParentProperty(...)</code>; yields a per-column
+<code>layout/availableWidth</code> local (plain value or <code>SyntheticValue</code> with
+explicit dependency list, mirroring <code>properties-generators.mjs:659-666</code>).</li>
+<li>Registered in <code>NODE_PROPERTIES_GENERATORS</code> after <code>availableSizesGen</code>.</li>
+<li>Width-semantics yields (re-route <code>layout/width ← layout/availableWidth</code>,
+tombstones) <strong>left as marked stub sites</strong> for the operator — decide
+which nodes see <code>layout/width</code> (research doc §6: today all nodes inherit
+root’s <code>layout/width</code> through delegation; the styler’s
+<code>innerPropertiesData</code> reads it at <code>type-spec.typeroof.jsx:263</code>).</li>
+<li><code>horizontalWidthSum</code> may be consumed here if wanted (resolves the
+pre-existing lint error) — operator’s call at takeover.</li>
+</ul>
+<h4><a id="2-proof-tests-behavior" class="heading_anchor" href="#2-proof-tests-behavior" aria-hidden="true">#</a>2. Proof tests (behavior)</h4>
+<p><strong>Files</strong>: <code>lib/js/components/layouts/type-stage/node-properties.test.mjs</code>,
+<code>lib/js/tests/type-stage-viewer-behavior/index.test.mjs</code> (or pane-sizing
+suite if it fits the harness)
+<strong>Changes</strong>:</p>
+<ul>
+<li>Unit level: a container scope whose hostMap carries lineLength/fontSize
+yields the expected per-column <code>layout/availableWidth</code>; a child scope
+inherits that value through the <code>&quot;parent&quot;</code> layer (assert resolved
+values, not internals).</li>
+<li>Widget level (the umbrella plan’s 5b success criterion): a document
+with a column container → child text node’s resolved CSS width equals
+the computed column width.</li>
+</ul>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-verification-2" class="heading_anchor" href="#automated-verification-2" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[x] New proof tests green; full battery green — 261/261 (3 unit
+tests in <code>node-properties.test.mjs</code>; G9 in the behavior suite:
+per-node scope answers the host typeSpecnion’s computed content
+width)</li>
+<li>[x] <code>npm run build:app</code> passes (export checks)</li>
+</ul>
+<h4><a id="manual-verification-2" class="heading_anchor" href="#manual-verification-2" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[ ] Multi-column demo renders correct column widths.</li>
+</ul>
+<p><strong>Implementation Note</strong>: commit(s) gated on OKOK. <strong>Handoff point</strong>: the
+exact width semantics are the operator’s from here.</p>
+<p><strong>Handoff state</strong> (2026-09-06): the stub yields <code>layout/availableWidth</code>
+(the horizontalLayoutRunion formula) computed from the hostMap; <strong>no
+<code>layout/width</code> yield</strong> — the CSS-width consumer reads <code>layout/width</code>
+(<code>type-spec.typeroof.jsx:263</code>), and per-node width application is the
+operator’s width-semantics decision. The delegation-baseline assertion
+was updated accordingly (per-node <code>availableWidth</code> defined everywhere;
+<code>layout/width</code> inherited from the root scope everywhere).</p>
+<hr>
+<h2><a id="phase-4-old-channel-teardown-comment-out" class="heading_anchor" href="#phase-4-old-channel-teardown-comment-out" aria-hidden="true">#</a>Phase 4: Old-channel teardown (comment-out)</h2>
+<h3><a id="overview-4" class="heading_anchor" href="#overview-4" aria-hidden="true">#</a>Overview</h3>
+<p>The orphaned typeSpecnion geometry stream is commented out (not deleted,
+decision 6), each site with a hint pointing at the new home. Style-side
+yields of <code>horizontalLayoutRunion</code> stay untouched.</p>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-comment-out-orphaned-producers" class="heading_anchor" href="#1-comment-out-orphaned-producers" aria-hidden="true">#</a>1. Comment out orphaned producers</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/properties-generators.mjs</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>environmentGen</code> (:53-73) and old <code>availableSizesGen</code> (:81-~170):
+comment out, remove from <code>TYPE_SPEC_PROPERTIES_GENERATORS</code> (:681-698),
+hint comment: superseded by <code>node-properties-generators.mjs</code>
+(<code>getRootNodePropertiesMap</code> + <code>availableSizesGen</code>).</li>
+<li><code>horizontalLayoutRunion</code> geometry re-routes (:648-666): comment out
+with hint pointing at <code>horizontalLayoutNodePropertiesGen</code>; style locals
+and <code>/pt</code> synthetics stay.</li>
+<li><code>horizontalWidthSum</code> (:534-545): stays unless Phase 3 consumed it.</li>
+<li>Verify no remaining <code>specific/root/*</code> consumer exists before commenting
+(research: none; re-grep at implementation time).</li>
+</ul>
+<h4><a id="2-dead-seeding-hint" class="heading_anchor" href="#2-dead-seeding-hint" aria-hidden="true">#</a>2. Dead seeding hint</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/live-properties.typeroof.jsx</code>
+<strong>Changes</strong>: <code>seedTypeSpecDefaults</code> (:26-46) keeps its signature; add a
+hint comment that the <code>environment</code>/<code>width</code>/<code>height</code> options are dead at
+the call site (:148-155) since environment moved to the nodeProperties
+channel. No signature change (avoid churn; the function is tested).</p>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-verification-3" class="heading_anchor" href="#automated-verification-3" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[x] Full battery green — pane-sizing unchanged in assertions (261/261)</li>
+<li>[x] No new lint errors — <code>horizontalWidthSum</code> <strong>resolved</strong> (commented
+out alongside the two generators; the orphaned <code>_ucFirst</code>,
+<code>DEMARCATION_*</code> and <code>lengthToCSSUnit</code>/<code>PATH_SPEC_ENVIRONMENT_PROVIDER</code>
+imports went with them)</li>
+</ul>
+<h4><a id="manual-verification-3" class="heading_anchor" href="#manual-verification-3" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[ ] Wikipedia demo unchanged; ramp unchanged.</li>
+</ul>
+<p><strong>Implementation notes</strong> (2026-09-07): the “verify no remaining
+<code>specific/root/*</code> consumer” re-grep confirmed none. The dead
+<code>seedTypeSpecDefaults</code> options got the hint comment (signature kept;
+no caller passes them).</p>
+<p><strong>Implementation Note</strong>: commit gated on OKOK.</p>
+<hr>
+<h2><a id="phase-5-consumer-polish" class="heading_anchor" href="#phase-5-consumer-polish" aria-hidden="true">#</a>Phase 5: Consumer polish</h2>
+<h3><a id="overview-5" class="heading_anchor" href="#overview-5" aria-hidden="true">#</a>Overview</h3>
+<p>Behavior-neutral <code>CascadingMap</code> swap in the styler (the precedence is
+already node-over-style via spread-merge; the facade makes it explicit);
+document the rebuild-check finding.</p>
+<h3><a id="changes-required-4" class="heading_anchor" href="#changes-required-4" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-styler-merge--cascadingmap" class="heading_anchor" href="#1-styler-merge--cascadingmap" aria-hidden="true">#</a>1. Styler merge → CascadingMap</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/type-spec.typeroof.jsx</code>
+<strong>Changes</strong>: replace the spread-merge at :288-294 with
+<code>new CascadingMap([[&quot;node&quot;, nodePropertiesMap], [&quot;style&quot;, typeSpecPropertiesMap]])</code> — read interface unchanged for
+<code>innerPropertiesData</code> lookups. Behavior-neutral: precedence already
+node-over-style. (Pane-styler keeps its merge — it composes different
+inputs; swap only if it reads naturally.)</p>
+<h4><a id="2-document-the-rebuild-check-finding" class="heading_anchor" href="#2-document-the-rebuild-check-finding" aria-hidden="true">#</a>2. Document the rebuild-check finding</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx</code>
+<strong>Changes</strong>: comment at the <code>_provisionTypeSpecStyler</code> rebuild-check
+(:458-461) noting why <code>nodeProperties@</code> needs no comparison: per-node ids
+are document-path-keyed and stable for the wrapper’s lifetime (unlike
+<code>properties@</code> which follows typeSpec resolution).</p>
+<h3><a id="success-criteria-4" class="heading_anchor" href="#success-criteria-4" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-verification-4" class="heading_anchor" href="#automated-verification-4" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[x] Full battery green — 261/261</li>
+</ul>
+<h4><a id="manual-verification-4" class="heading_anchor" href="#manual-verification-4" aria-hidden="true">#</a>Manual Verification:</h4>
+<ul>
+<li>[ ] Wikipedia demo unchanged.</li>
+</ul>
+<p><strong>Implementation Note</strong>: commit gated on OKOK.</p>
+<p><strong>Implementation notes</strong> (2026-09-07): the <code>CascadingMap</code> swap landed
+in <code>type-spec.typeroof.jsx</code> (layers <code>&quot;node&quot;</code> / <code>&quot;style&quot;</code>, node wins —
+behavior-identical to the spread-merge). The rebuild-check finding is
+documented at the <code>_provisionTypeSpecStyler</code> site
+(<code>viewer.typeroof.jsx</code>): <code>nodeProperties@</code> needs no comparison — its id
+is document-path-keyed and stable for the wrapper’s lifetime, unlike
+<code>properties@</code> which follows typeSpec resolution.</p>
+<hr>
+<h2><a id="phase-6-archive-final-commit-of-the-plan" class="heading_anchor" href="#phase-6-archive-final-commit-of-the-plan" aria-hidden="true">#</a>Phase 6: Archive (final commit of the plan)</h2>
+<h3><a id="overview-6" class="heading_anchor" href="#overview-6" aria-hidden="true">#</a>Overview</h3>
+<p>The <strong>final commit</strong> of this plan puts the session’s <code>thoughts/</code> files
+into the archive under <code>docs/planning/agentic-artefacts/thoughts/</code>, each
+into the subdirectory where it belongs (5a precedent: <code>6a300acc</code>, which
+also archived its handoff document). Nothing else ships in this commit.</p>
+<h3><a id="changes-required-5" class="heading_anchor" href="#changes-required-5" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-move-the-artefacts" class="heading_anchor" href="#1-move-the-artefacts" aria-hidden="true">#</a>1. Move the artefacts</h4>
+<p><strong>Changes</strong>:</p>
+<ul>
+<li>(done) <code>thoughts/research/2026-09-06-1536-phase-5b-node-to-node-channel.md</code> →
+<code>docs/planning/agentic-artefacts/thoughts/research/</code></li>
+<li>(done) <code>thoughts/plans/2026-09-06-1613-phase-5b-node-to-node-channel.md</code> →
+<code>docs/planning/agentic-artefacts/thoughts/plan/</code></li>
+<li>(done) <code>thoughts/handoffs/2026-09-06-phase-5b-handoff.md</code> →
+<code>docs/planning/agentic-artefacts/thoughts/plan/</code> (alongside its plan,
+as <code>handoff-phase3-document-nodes-meta.md</code> did)</li>
+<li>Update cross-references in the moved documents (frontmatter <code>research:</code>/
+<code>handoff:</code>/<code>umbrella-plan:</code> paths) to their new locations.</li>
+<li>Mark the umbrella plan’s Phase 5b section ✅ with the commit hashes of
+this cycle (the umbrella plan itself stays at <code>thoughts/plans/</code> until
+its own completion archives it).</li>
+</ul>
+<h3><a id="success-criteria-5" class="heading_anchor" href="#success-criteria-5" aria-hidden="true">#</a>Success Criteria:</h3>
+<h4><a id="automated-verification-5" class="heading_anchor" href="#automated-verification-5" aria-hidden="true">#</a>Automated Verification:</h4>
+<ul>
+<li>[ ] <code>git status</code> clean after the commit; moved files render their
+cross-references correctly</li>
+</ul>
+<p><strong>Implementation Note</strong>: commit gated on OKOK — this is the closing act
+of the cycle; nothing follows it.</p>
+<hr>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<p><strong>Tests assert behavior (inputs → observable outcomes), not
+implementation details</strong> (operator rule). Resolved maps, CSS values,
+registration liveness, layer identity via the public <code>getLayer</code> API —
+never private methods or internal structure.</p>
+<h3><a id="unit-tests" class="heading_anchor" href="#unit-tests" aria-hidden="true">#</a>Unit Tests:</h3>
+<ul>
+<li><code>node-properties.test.mjs</code>: per-node cascade behavior (parent locals
+visible through <code>&quot;parent&quot;</code> layer, local precedence, settled-parent
+observation); geometry generator proof (column width math through
+synthetics).</li>
+</ul>
+<h3><a id="integrationbehavior-tests" class="heading_anchor" href="#integrationbehavior-tests" aria-hidden="true">#</a>Integration/Behavior Tests:</h3>
+<ul>
+<li><code>type-stage-viewer-behavior/index.test.mjs</code> (G-suite): delegation
+baseline (Phase 1); parent-first ordering proof (Phase 2, red→green);
+column-layout CSS width (Phase 3, umbrella 5b criterion).</li>
+<li><code>type-stage-pane-sizing/index.test.mjs</code>: unchanged assertions through
+all phases — the guard that the channel swap is behavior-preserving.</li>
+</ul>
+<h2><a id="risk-register" class="heading_anchor" href="#risk-register" aria-hidden="true">#</a>Risk Register</h2>
+<ul>
+<li><strong>Ordering assumption</strong>: if parent-first provisioning does not hold as
+read (component.mjs:1184-1282), the Phase 2 red test surfaces it
+before any implementation rides on it.</li>
+<li><strong>Scope rebuild churn</strong>: a scope rebuilt per update allocates a new
+CascadingMap per node — acceptable at document scales; note in code if
+profiling shows otherwise (flattening comment in
+<code>cascading-map.mjs:8-14</code> applies).</li>
+<li><strong>Ramp layout</strong>: no width/height widget deps — the guard pattern
+(<code>live-properties.typeroof.jsx:160-170</code>) already handles it; per-node
+scopes must not assume <code>layout/width</code> locals exist.</li>
+<li><strong>Memo aliasing</strong>: never call <code>getTypeSpecPropertiesIdMethod</code> with the
+4th arg <code>&quot;nodeProperties@&quot;</code> in the same process that also uses the
+default — cache thrash (correctness holds via <code>hasRegistered</code>
+re-validation, <code>integration.typeroof.jsx:190-197</code>, but performance
+suffers).</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

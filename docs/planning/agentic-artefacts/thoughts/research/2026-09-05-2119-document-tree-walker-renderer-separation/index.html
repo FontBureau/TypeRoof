@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-document-tree-walkerrenderer-separation-phase-5a" class="heading_anchor" href="#research-document-tree-walkerrenderer-separation-phase-5a" aria-hidden="true">#</a>Research: Document-tree walker/renderer separation (Phase 5a)</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Responsibility map and extraction boundary for separating the document-tree
+walker from the viewer DOM renderer (<code>UIDocumentElement</code>/<code>UIDocumentNodes</code>/
+<code>UIDocumentTextRun</code>), including what <code>UIDocumentNodeOutfitter</code> duplicates —
+groundwork for Phase 5a of <code>thoughts/plans/2026-09-05-1623-node-properties.md</code>
+(Phases 1–4 committed at <code>05eaf4f9</code>).</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<ul>
+<li><strong>There is no explicit recursive “walk” to extract.</strong> Tree traversal in the
+viewer is <em>emergent</em> from the component framework: <code>_BaseDynamicMapContainerComponent</code>
+provisioning (<code>UIDocumentNodes</code>), per-node typeKey dispatch (<code>UIDocumentNode</code>),
+and <code>_provisionWidgets</code> lifecycles. The “walker” is a shape of the widget
+tree, not a function — the extraction boundary must therefore be drawn
+through widget classes, not through a walk algorithm.</li>
+<li><strong>Large parts are already pure tree infrastructure.</strong> All four module-level
+helpers in <code>viewer.typeroof.jsx</code>, <code>UIDocumentNode</code> in its entirety, the
+<code>pathOfTypes</code> construction/propagation, the mark-descriptor pipeline
+(<code>_getWrapMarks</code>/<code>_wrapResultsAreEqual</code>), and <code>_provisionTypeSpecStyler</code>
+touch no DOM.</li>
+<li><strong>Entanglement concentrates in six places</strong> (detailed §1.4): the
+<code>UIDocumentElement</code> constructor, <code>_applyAttrDrivenDOMUpdates</code>,
+<code>_createTypeSpecStylerWrapper</code>, <code>UIDocumentTextRun._provisionWidgets</code>
+(coupled via the <code>_MARK_ELEMENT</code> symbol), and the <code>UIDocumentNodes</code> slot
+insertion/reorder/destroy quartet (coupled via the <code>insertDocumentNode</code>
+monkey-patch).</li>
+<li><strong>The outfitter duplicates four algorithms</strong> the viewer also implements
+(<code>pathOfTypes</code> construction, next-sibling resolution, <code>noStyler</code>/styler
+lifecycle, resolved-spec change detection) but expresses them over
+ProseMirror positions instead of the metamodel. <code>getTypeSpecPropertiesIdMethod</code>
+is already the single shared source of truth. A renderer-independent layer
+must supply the outfitter exactly four things: stable per-node identity,
+ancestor type chains, next-sibling resolution, lifecycle events.</li>
+<li><strong>The meta-layer conventions are well established</strong> (<code>TypeSpecMeta</code>,
+<code>ActorsMeta</code>): DOM-less two-tier widget trees, protocol registration via
+settings with model-path ids, <code>@parentProperties</code> dependency mapping,
+<code>setUpdated</code> push notification. Per-node <code>nodeProperties@</code> ids must
+incorporate the document-node model path — <code>SimpleProtocolHandler.register</code>
+throws on duplicates (<code>component.mjs:195-198</code>).</li>
+<li><strong>The test safety net has real gaps.</strong> Compare/side-by-side mode is
+completely untested; node add/remove/reorder, typeKey-change rebuild,
+text-run/mark updates, and per-node styling are all unasserted. 12 concrete
+gaps with test sketches in §4.3 — G1–G7 are the minimum for 5a’s
+“pure move, behavior-neutral” claim to be falsifiable.</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-viewer-core-responsibility-inventory--libjscomponentslayoutstype-stageviewertyperoofjsx--1246-lines" class="heading_anchor" href="#1-viewer-core-responsibility-inventory--libjscomponentslayoutstype-stageviewertyperoofjsx--1246-lines" aria-hidden="true">#</a>1. Viewer core responsibility inventory (<code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx</code>, 1246 lines)</h3>
+<p>Category legend: <strong>(A)</strong> tree infrastructure, <strong>(B)</strong> viewer DOM, <strong>©</strong> mixed.</p>
+<h4><a id="11-widget-tree-and-entry-api" class="heading_anchor" href="#11-widget-tree-and-entry-api" aria-hidden="true">#</a>1.1 Widget tree and entry API</h4>
+<pre><code>TypeStageController
+└─ UIDocumentViewer                (article.typeroof-document; viewer root, 1188-1246)
+   ├─ TypeStagePaneStyler          (pane styling of the container)
+   └─ UIDocumentNodes              (dynamic-map over &quot;content&quot; collection, 1017-1186)
+      └─ per collection key: UIDocumentNode        (typeKey dispatch, 927-1011)
+         └─ per typeKey (&quot;contentWidget&quot; id):
+            ├─ UIDocumentTextRun   (typeKey === &quot;text&quot;, 601-925)
+            │   ├─ GenericUpdater  (forwards &quot;text&quot; → _updateNode)
+            │   └─ dynamic: UIDocumentStyleStyler / UIDocumentUnknownStyleStyler per mark
+            └─ UIDocumentElement   (all other typeKeys, 186-592)
+                ├─ dynamic [0]: UIDocumentTypeSpecStyler (if _hasTypeSpecStyling &amp;&amp; !noStyler)
+                └─ UIDocumentNodes (recursive, over &quot;./content&quot;)   ← unless _treatAsLeaf
+</code></pre>
+<p>The walk is driven by the standard framework <code>update(changedMap)</code> →
+<code>_provisionWidgets</code> machinery. Instantiation: <code>index.typeroof.jsx:541-558</code>,
+gated by <code>showViewerActivationTest</code> (mode ∈ {viewer, compare}), deps
+<code>nodeSpec</code>/<code>markSpec</code>/<code>nodeSpecToTypeSpec</code>/<code>documentRendererMode</code>.</p>
+<h4><a id="12-pure-a--could-move-to-documentnodesmeta-unchanged" class="heading_anchor" href="#12-pure-a--could-move-to-documentnodesmeta-unchanged" aria-hidden="true">#</a>1.2 Pure (A) — could move to <code>DocumentNodesMeta</code> unchanged</h4>
+<ul>
+<li>Module helpers: <code>_getMMChildIsBlock</code> (76-92), <code>_specChildrenInInlineContext</code>
+(101-106), <code>_getRenderingAttrDirectives</code> (114-124), <code>_determineUnknownType</code>
+(134-176). Zero DOM references.</li>
+<li><code>UIDocumentNode</code> <strong>in its entirety</strong> (927-1010): <code>_createWrapperForType</code>
+(944-997, typeKey dispatch + dependency wiring), <code>_provisionWidgets</code>
+(999-1010, node-identity rebuild rule). Its only DOM coupling is indirect
+(sibling <code>.node</code> lookups performed by <code>UIDocumentNodes</code>).</li>
+<li><code>pathOfTypes</code> construction/propagation: viewer seed (1240), element
+extension (287), childrenContext (289-296), text-run read (887).</li>
+<li><code>UIDocumentElement._getRenderingDirectives</code> (424-447) and
+<code>_provisionTypeSpecStyler</code> (515-591, incl. next-sibling <code>pathOfTypes</code>
+computation 537-550) — DOM touch is only the <code>args = [this.node, this.node]</code>
+delegation at 407.</li>
+<li><code>UIDocumentTextRun._getWrapMarks</code> (721-818), <code>_wrapResultsAreEqual</code>
+(820-834), <code>_getStyleLinkPropertiesId</code> (693-711), <code>_getEffectiveStyleLinks</code>
+(713-719) — the mark-descriptor pipeline is DOM-free until <code>_createWrapperDOM</code>.</li>
+<li><code>UIDocumentNodes._createWrapper</code> (1153-1185) — per-key factory.</li>
+<li><code>_getTypeSpecPropertiesId</code> fields (370, 661) — imported pure resolution.</li>
+</ul>
+<h4><a id="13-pure-b--stays-with-the-viewer" class="heading_anchor" href="#13-pure-b--stays-with-the-viewer" aria-hidden="true">#</a>1.3 Pure (B) — stays with the viewer</h4>
+<ul>
+<li><code>UIDocumentElement.destroy</code> (364-368); the DOM creation block inside the
+constructor (306-324) once plan derivation is factored out.</li>
+<li><code>UIDocumentTextRun._updateNode</code> (632-645), <code>getTextNode</code> (647-659),
+<code>_swapNode</code> (663-667), <code>_createWrapperDOM</code> (837-853), <code>destroy</code> (626-630).</li>
+<li><code>UIDocumentViewer</code>’s <code>article</code> creation + <code>insertElement</code> (1195-1198).</li>
+<li><code>UIDocumentElementTypeSpecDropTarget</code> (40-69) — DOM-event widget, unrelated
+to tree walking.</li>
+</ul>
+<h4><a id="14---the-six-entanglement-sites-needing-splits" class="heading_anchor" href="#14---the-six-entanglement-sites-needing-splits" aria-hidden="true">#</a>1.4 © — the six entanglement sites needing splits</h4>
+<ol>
+<li><strong><code>UIDocumentElement</code> constructor (187-362)</strong> — spec-branch
+tag/inline-context/unknown-type resolution interleaved line-by-line with
+element creation and zone registration, plus recursive child wiring.
+Natural seam: a pure <code>resolveElementRenderingPlan(mmNode, specs, context)</code>
+→ <code>{tag, attributes, additionalAttrs, innerHtml, childrenInInlineContext, treatAsLeaf}</code>; the constructor then only applies the plan and wires children.</li>
+<li><strong><code>UIDocumentElement._applyAttrDrivenDOMUpdates</code> (456-493)</strong> — derivation
+already delegated; split into “compute plan diff” (A) + “apply to node” (B).
+Fields <code>_appliedAttributes</code>/<code>_appliedInnerHtml</code> (302-303) belong to the
+apply half.</li>
+<li><strong><code>UIDocumentElement._createTypeSpecStylerWrapper</code> (372-415)</strong> —
+registration-id/dependency-mapping construction fused with <code>this.node</code> as
+styler target. Split at the <code>args = [this.node, this.node]</code> line (407).</li>
+<li><strong><code>UIDocumentTextRun._provisionWidgets</code> (882-924)</strong> — descriptor
+computation/comparison + wrapper-DOM surgery + widget splice. The
+<code>_MARK_ELEMENT</code> symbol (836, 851, 863, 906, 908) is the precise coupling
+point: descriptors carry their DOM elements.</li>
+<li><strong><code>UIDocumentTextRun._createStylerWidgets</code> (855-880)</strong> — per-mark id
+resolution fused with element extraction and styler binding.</li>
+<li><strong><code>UIDocumentNodes._insertIntoSlot</code> / <code>_insertNodeIntoSlot</code> /
+<code>_reorderChildren</code> / <code>_destroyWidget</code> (1054-1151)</strong> — model-order
+resolution (<code>keyToIndex</code>/<code>indexOfKey</code>, sibling lookup through
+<code>_keyToWidget</code> → <code>contentWidget</code> → <code>.node</code>) fused with
+<code>insertBefore</code>/<code>append</code>/<code>removeChild</code>. The seam is exactly the documented
+bypass of ComponentWrapper element management (comment 1113-1123); the
+<code>childrenWidgetBus.insertDocumentNode</code> monkey-patch (1035-1038) would need
+a defined interface in any extraction.</li>
+</ol>
+<h4><a id="15-incidental-findings-is-state" class="heading_anchor" href="#15-incidental-findings-is-state" aria-hidden="true">#</a>1.5 Incidental findings (IS-state)</h4>
+<ul>
+<li><code>UIDocumentTextRun._stylerWrapper</code> (617) is dead: assigned <code>null</code>, never read.</li>
+<li><code>UIDocumentNodes._nodeSlots</code> (1030) is dead: created, never used.</li>
+<li>FIXMEs pinning unfinished behavior: tag change on reused widget not
+re-resolved (217, 459-464); leaf-ness change on <code>html</code> attr not rebuildable
+(482-490); next-sibling unknown-type resolution parked (531-535).</li>
+</ul>
+<h3><a id="2-the-outfitters-parallel-walk-and-the-duplication-map" class="heading_anchor" href="#2-the-outfitters-parallel-walk-and-the-duplication-map" aria-hidden="true">#</a>2. The outfitter’s parallel walk and the duplication map</h3>
+<p><strong>Location correction:</strong> <code>UIDocumentNodeOutfitter</code> lives in
+<code>lib/js/components/prosemirror/type-spec.typeroof.jsx:532-793</code>, not in
+<code>integration.typeroof.jsx</code> (which holds only a comment at :378). The
+resolver machinery (<code>getTypeSpecPropertiesIdMethod</code>) is
+<code>integration.typeroof.jsx:170-269</code>; the PM-side attachment
+(<code>ProsemirrorNodeView</code>) is <code>integration.typeroof.jsx:294-446</code>.</p>
+<h4><a id="21-how-the-outfitter-walks-it-doesnt--prosemirror-does" class="heading_anchor" href="#21-how-the-outfitter-walks-it-doesnt--prosemirror-does" aria-hidden="true">#</a>2.1 How the outfitter “walks”: it doesn’t — ProseMirror does</h4>
+<p>Per PM document node, PM instantiates <code>ProsemirrorNodeView</code>
+(<code>integration.typeroof.jsx:294</code>), which builds DOM and calls
+<code>subscriptionsWidget.subscribe(domElement, structuralElements, node, getPos, …)</code>
+(382-390). The registry <code>TypeSpecSubscriptions</code> (<code>type-spec.typeroof.jsx:892</code>)
+coordinates per-node updates:</p>
+<ul>
+<li>Subscriptions keyed <strong>by DOM element</strong> (<code>_subscribers</code> Map, 899, 1303-1316);
+node position via stored <code>getPos()</code> closure, re-evaluated on demand.</li>
+<li><code>pathOfTypes</code> derived per update from PM’s resolved path:
+<code>view.state.doc.resolve(getPos())</code> → <code>getPathOfTypes(resolved.path, node.type.name)</code> (<code>integration.typeroof.jsx:34-54</code>, used at
+<code>type-spec.typeroof.jsx:1270</code>) — the PM-position analogue of the viewer’s
+metamodel parent-chain recursion.</li>
+<li>Next-sibling resolution inside the outfitter: <code>_checkNextProperties</code>
+(<code>type-spec.typeroof.jsx:699-736</code>) — <code>getPos() + node.nodeSize</code>,
+<code>doc.resolve</code>, <code>nodeAfter</code>, <code>getPathOfTypes</code>.</li>
+<li>Change detection <code>_updateWidget</code> (1461-1512): compares <code>pathOfTypes</code>
+element-wise, <code>typeSpecProperties</code> string, <code>Path.equals</code> on
+<code>typeSpecPath</code>/<code>parentContentsPath</code>.</li>
+<li>The outfitter does <strong>not</strong> wire <code>nodeProperties@</code> (unlike the viewer);
+<code>UIDocumentTypeSpecStyler.update</code> tolerates null (<code>type-spec.typeroof.jsx:250-256</code>).</li>
+</ul>
+<h4><a id="22-duplication-map-viewer--outfitter" class="heading_anchor" href="#22-duplication-map-viewer--outfitter" aria-hidden="true">#</a>2.2 Duplication map (viewer ↔ outfitter)</h4>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Viewer side</th>
+<th>Outfitter/PM side</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TypeSpec id resolution</td>
+<td>viewer:14, aliases 370, 661</td>
+<td>type-spec:697, 1255; impl integration:170-269</td>
+<td><strong>Shared</strong> — single source of truth</td>
+</tr>
+<tr>
+<td><code>pathOfTypes</code> construction</td>
+<td>viewer:287, 289-296, seed 1237-1241</td>
+<td>integration:34-54 via <code>doc.resolve(getPos())</code></td>
+<td><strong>Duplicated algorithm</strong>, different position source</td>
+</tr>
+<tr>
+<td>Next-sibling <code>nextProperties@</code></td>
+<td>viewer:529-549 (metamodel <code>indexOfKey</code>)</td>
+<td>type-spec:699-736 (<code>getPos()+nodeSize</code>, <code>nodeAfter</code>)</td>
+<td><strong>Duplicated algorithm</strong></td>
+</tr>
+<tr>
+<td><code>noStyler</code> gating + styler lifecycle</td>
+<td>viewer:507-598</td>
+<td>type-spec:655-657, 739-792</td>
+<td><strong>Duplicated lifecycle</strong></td>
+</tr>
+<tr>
+<td>Styler wrapper creation</td>
+<td>viewer:371-412 (deps incl. <code>nodeProperties@</code>)</td>
+<td>type-spec:659-695 + 1216-1254 (legacy <code>parentContent</code>)</td>
+<td><strong>Near-duplicate</strong></td>
+</tr>
+<tr>
+<td>Resolved-spec change detection</td>
+<td>viewer:578-592</td>
+<td>type-spec:1461-1512</td>
+<td><strong>Duplicated logic</strong>, different substrates</td>
+</tr>
+<tr>
+<td>Tag/attr/innerHTML DOM construction</td>
+<td>viewer:202-276, 414-448, 457-504</td>
+<td>integration:324-344, 393-427</td>
+<td><strong>Duplicated DOM-building</strong> (PM NodeView semantics)</td>
+</tr>
+<tr>
+<td>Mark style-link stylers</td>
+<td>viewer:855-881, 883-925</td>
+<td>type-spec:1050-1074, 1402-1436</td>
+<td><strong>Parallel machinery</strong> (PM side MutationObserver-deferred)</td>
+</tr>
+<tr>
+<td>Child insertion/reorder/removal</td>
+<td>viewer:1051-1147 (manual slots)</td>
+<td>PM’s own view tree (<code>contentDOM</code>)</td>
+<td><strong>Genuinely different</strong></td>
+</tr>
+<tr>
+<td>Unknown-type handling</td>
+<td>viewer:236-264, <code>_determineUnknownType</code></td>
+<td>n/a (unknown nodes not in PM schema)</td>
+<td><strong>Viewer only</strong></td>
+</tr>
+</tbody>
+</table>
+<h4><a id="23-what-a-renderer-independent-layer-must-supply-the-outfitter" class="heading_anchor" href="#23-what-a-renderer-independent-layer-must-supply-the-outfitter" aria-hidden="true">#</a>2.3 What a renderer-independent layer must supply the outfitter</h4>
+<p>The outfitter’s only PM-coupled inputs are: (1) <code>getPos</code>/<code>pmNode</code>,
+(2) <code>getWidgetById(&quot;proseMirror&quot;).view</code> for <code>doc.resolve</code>,
+(3) subscribe/update/unsubscribe calls from <code>ProsemirrorNodeView</code>,
+(4) the <code>structuralElements {outer, inner}</code> DOM pair. Everything else is
+already renderer-independent. A <code>DocumentNodesMeta</code> layer would need to
+supply exactly: <strong>stable per-node identity</strong> (replacing the domElement key),
+<strong>ancestor type chains</strong> (<code>pathOfTypes</code>), <strong>next-sibling resolution</strong>
+(replacing <code>getPos()+nodeSize</code>/<code>nodeAfter</code>), and <strong>lifecycle events</strong>
+(add/change/remove). The viewer already derives (1)-(3) from the metamodel;
+the comment at viewer:381-383 (“per-node <code>nodeProperties@</code> resolution arrives
+with the document-tree channel (Phase 5)”) confirms the consolidation is
+anticipated.</p>
+<h3><a id="3-meta-layer-conventions-a-documentnodesmeta-must-follow" class="heading_anchor" href="#3-meta-layer-conventions-a-documentnodesmeta-must-follow" aria-hidden="true">#</a>3. Meta-layer conventions a <code>DocumentNodesMeta</code> must follow</h3>
+<p>Established by <code>TypeSpecMeta</code> (<code>meta.typeroof.jsx:256</code>), <code>ActorsMeta</code>
+(<code>actors/actors-meta.mjs:19</code>), and the <code>*LiveProperties</code> leaves
+(<code>live-properties.typeroof.jsx</code>):</p>
+<ol>
+<li><strong>Two-tier structure</strong>: container (<code>_BaseContainerComponent</code> /
+<code>_BaseDynamicMapContainerComponent</code>) that only wires children + leaf
+<code>_BaseComponent</code> holding computed state. <code>[HANDLE_CHANGED_AS_NEW] = true</code>
+when items can’t update in place (meta:188; actors-meta:20).</li>
+<li><strong>No DOM</strong>: never set <code>zone</code> in child settings (hostElement stays <code>null</code>,
+<code>component.mjs:1044-1047</code>); never call <code>insertElement</code>. Placemarker
+comments are only created <code>if(widgetWrapper.host)</code> (component.mjs:1309) —
+host-less widgets are first-class.</li>
+<li><strong>Child wiring tuple idiom</strong>: <code>_getWidgetSetup(rootPath)</code> → <code>[settings, dependencyMappings, Constructor, ...args]</code>; <code>_createWrapper</code> →
+<code>this._initWrapper(this._childrenWidgetBus, …)</code> (meta:209-241).</li>
+<li><strong>Registration via settings, id = model path</strong>: <code>{&quot;nodeProperties@&quot;: widgetBus.rootPath.toString()}</code> in child settings; registration happens
+automatically on wrapper create/destroy (component.mjs:291-296).
+<code>SimpleProtocolHandler.register</code> throws on duplicates
+(component.mjs:195-198) ⇒ per-node ids must incorporate the document-node
+model path. Today only one id exists — <code>nodeProperties@&lt;rootTypeSpecPath&gt;</code>
+(meta:271-274, produced by root <code>TypeSpecLiveProperties</code>,
+live-properties:180-185) — consumers hard-code the root path
+(viewer:381-386, 1209-1212).</li>
+<li><strong>Parent channel via dependency mapping</strong>: map parent’s protocol id to
+<code>&quot;@parentProperties&quot;</code> with relative path math (<code>rootPath.append(&quot;..&quot;,&quot;..&quot;)</code>
+for <code>children/{index}</code>, meta:216-221); root-vs-child detection via
+<code>widgetBus.wrapper.dependencyReverseMapping.has(&quot;@parentProperties&quot;)</code>
+(live-properties:88-92) with constructor invariant enforcement (61-69).</li>
+<li><strong>Update lifecycle</strong>: <code>update(changedMap)</code> reading <code>changedMap.has(k) ? changedMap.get(k) : this.getEntry(k)</code>; rebuild
+<code>new HierarchicalScopeNodeProperties(generators, hostMap, parentScope|defaultsMap)</code> (node-properties.mjs:36-76) only on input change;
+then <code>getProtocolHandlerRegistration(&quot;nodeProperties@&quot;)</code> →
+<code>impl.setUpdated(identifier)</code>, guarded by <code>hasProtocolHandlerRegistration</code>
+when conditional (live-properties:189-207). Null-guard getters throw
+LIFECYCLE ERROR before first update (76-92).</li>
+<li><strong>Container housekeeping</strong>: override <code>dependencies</code>/<code>modelDependencies</code>
+when children can be empty (meta:63-74); manual provisioning follows
+<code>StyleLinksMeta._provisionWidgets</code> (meta:125-172): diff keyed maps,
+<code>_destroyWidget</code> removed, <code>this._widgets.splice(0, Infinity, …)</code>,
+<code>_createWidget</code> + return <code>requiresFullInitialUpdate</code>; clear maps in
+<code>destroy()</code>.</li>
+<li><strong>Top-controller installation</strong>: handler installed once via
+<code>setProtocolHandlerImplementation(...SimpleProtocolHandler.create( &quot;nodeProperties@&quot;, {notFoundFallbackValue: null}))</code>
+(index.typeroof.jsx:291-294); the <code>null</code> fallback is the established idiom
+for consumers updating before first registration.</li>
+<li><strong>Consumer attachment</strong>: renderer widgets declare
+<code>[</code>nodeProperties@${resolvedNodePath}<code>, &quot;nodeProperties@&quot;]</code> and read the
+component via <code>getEntry</code>; registry-membership checks
+(<code>hasRegistered(id)</code>) when ids are computed dynamically
+(viewer:693-708; integration:180-215).</li>
+</ol>
+<p>Phase 1–4 artifacts relevant here: <code>HierarchicalScopeNodeProperties</code>
+(node-properties.mjs:26; cascade of <code>[[&quot;local&quot;, local], [&quot;parent&quot;, parentMap]]</code>,
+64-67), <code>getRootNodePropertiesMap</code> (102-110), <code>NODE_PROPERTIES_GENERATORS</code>
+with <code>availableSizesGen</code> (node-properties-generators.mjs:25-56).</p>
+<h3><a id="4-render-mode-mechanics-and-the-test-safety-net" class="heading_anchor" href="#4-render-mode-mechanics-and-the-test-safety-net" aria-hidden="true">#</a>4. Render-mode mechanics and the test safety net</h3>
+<h4><a id="41-mode-mechanics" class="heading_anchor" href="#41-mode-mechanics" aria-hidden="true">#</a>4.1 Mode mechanics</h4>
+<ul>
+<li><code>DocumentRendererModeModel</code> (<code>document-renderer-mode/model.mjs:4-8</code>):
+enum <code>[&quot;editor&quot;, &quot;viewer&quot;, &quot;compare&quot;]</code>, default <code>&quot;viewer&quot;</code>; model key at
+<code>index.typeroof.jsx:192-196</code>.</li>
+<li>Mode switching is <strong>activationTest-driven provisioning</strong>, not imperative
+mount/unmount: <code>showEditorActivationTest</code> (index:213-218, mode ∈
+{editor, compare}), <code>showViewerActivationTest</code> (index:220-225, mode ∈
+{viewer, compare}). <code>UIDocumentViewer</code> registered at index:539-560, zone
+<code>layout</code>, rootPath <code>./document</code>.</li>
+<li><strong>Compare mode</strong>: both tests true ⇒ <code>.ui_prosemirror_host</code> + ProseMirror
+context AND <code>article.typeroof-document</code> coexist as flex children of
+<code>.typeroof-layout</code> (CSS <code>lib/css/shell/type-stage.css:6-13</code>).</li>
+<li><strong>Leaving a mode destroys the whole subtree</strong>; returning rebuilds from the
+model (documented by type-stage-toggles test: “the old host element is
+destroyed by the switch, must re-query”).</li>
+</ul>
+<h4><a id="42-existing-harness-tests" class="heading_anchor" href="#42-existing-harness-tests" aria-hidden="true">#</a>4.2 Existing harness tests</h4>
+<p>Shared harness <code>lib/js/tests/type-stage-toggles/harness.mjs</code> (<code>buildWorld</code>):
+boots the real <code>TypeStageController</code> headlessly in jsdom (real wikipedia
+initial state, fixture <code>lib/js/tests/fixtures/typography-small.html</code> ingested
+via <code>ingestWikipediaDocument</code>, real zones, <code>environment@</code> handler
+pre-registered). Updates driven manually via draft → metamorphose →
+<code>setState</code> → <code>root.update(new StateComparison(old, new))</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Suite</th>
+<th>Asserts</th>
+<th>Transitively covers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type-stage-toggles</code></td>
+<td>viewer-default boot; →editor mounts <code>.ProseMirror</code>; labels/parameters provisioning; viewer→editor round-trip</td>
+<td>activation-based mode switching with loaded document</td>
+</tr>
+<tr>
+<td><code>type-stage-document-replace</code></td>
+<td>same-structure doc replace: element <strong>reused</strong>, attr-driven DOM follows (href/title/img/figcaption)</td>
+<td><code>UIDocumentNode</code> same-typeKey reuse + <code>_applyAttrDrivenDOMUpdates</code></td>
+</tr>
+<tr>
+<td><code>type-stage-pane-sizing</code></td>
+<td><code>environment@layout</code> → pt widths on editor host and viewer article; height, bg-color, lang</td>
+<td><code>TypeStagePaneStyler</code> both panes; editor→viewer switch</td>
+</tr>
+<tr>
+<td><code>environment-dispatch</code></td>
+<td><code>SimpleProtocolHandler</code> updated-log mechanics (pure unit)</td>
+<td>env-only update dispatch</td>
+</tr>
+</tbody>
+</table>
+<p>Run via <code>npm test</code> (vitest); single suite e.g.
+<code>npx vitest run lib/js/tests/type-stage-toggles</code>. Note: two of three DOM
+suites are silently <strong>skipped</strong> when the fixture is absent (<code>skipIf</code>), while
+<code>type-stage-document-replace</code> would hard-fail — inconsistent guard.</p>
+<h4><a id="43-coverage-gaps-behaviors-5a-must-preserve-currently-unasserted" class="heading_anchor" href="#43-coverage-gaps-behaviors-5a-must-preserve-currently-unasserted" aria-hidden="true">#</a>4.3 Coverage gaps (behaviors 5a must preserve, currently unasserted)</h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Behavior</th>
+<th>Gap test sketch</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>G1</td>
+<td><strong>Compare mode mounts both panes</strong></td>
+<td>set <code>&quot;compare&quot;</code>; assert layout zone contains both <code>.ui_prosemirror_host</code> and <code>article.typeroof-document</code>, both with resolved <code>style.width</code></td>
+</tr>
+<tr>
+<td>G2</td>
+<td><strong>Viewer DOM correct after editor→viewer round-trip</strong></td>
+<td>viewer→editor→viewer; re-query article; assert <code>[data-node-type]</code> sequence + textContent match document</td>
+</tr>
+<tr>
+<td>G3</td>
+<td><strong>Node add lifecycle</strong> (<code>_createWrapper</code>/<code>_insertNodeIntoSlot</code>)</td>
+<td>splice node into <code>document.content</code> at index 0/middle; assert child order + <code>data-node-type</code> sequence</td>
+</tr>
+<tr>
+<td>G4</td>
+<td><strong>Node remove lifecycle</strong> (<code>_destroyWidget</code>)</td>
+<td>delete a content key; assert count/order of remaining children</td>
+</tr>
+<tr>
+<td>G5</td>
+<td><strong>Node reorder</strong> (<code>_reorderChildren</code>)</td>
+<td>move a key; assert DOM order follows collection order</td>
+</tr>
+<tr>
+<td>G6</td>
+<td><strong>typeKey change at same position</strong> rebuilds wrapper</td>
+<td>change a node’s <code>typeKey</code>; assert new element identity + <code>[data-node-type=&quot;&lt;new&gt;&quot;]</code></td>
+</tr>
+<tr>
+<td>G7</td>
+<td><strong>Text-run updates + mark wrap/unwrap</strong></td>
+<td>change <code>text</code>; assert textContent. Add/remove <code>strong</code> mark; assert <code>[data-style-name]</code> wrapper appears/disappears</td>
+</tr>
+<tr>
+<td>G8</td>
+<td>Per-node typeSpec styling incl. <code>noStyler</code> silent path</td>
+<td>change typeSpec fontSize; assert inline style on node element; toggle <code>noStyler</code>, assert styles cleared</td>
+</tr>
+<tr>
+<td>G9</td>
+<td>Unknown-type rendering (<code>data-unknown-*</code>)</td>
+<td>produce unknown node; assert <code>[data-unknown-type]</code> attr + resolved tag</td>
+</tr>
+<tr>
+<td>G10</td>
+<td>Viewer zone placement / local zones</td>
+<td>assert article’s parent is <code>.typeroof-layout</code>; drop targets land in node-local container</td>
+</tr>
+<tr>
+<td>G11</td>
+<td>Live edit propagation in compare mode</td>
+<td>change document text via draft in compare mode; assert viewer article updates while editor stays mounted</td>
+</tr>
+<tr>
+<td>G12</td>
+<td>Leaf/verbatim-html + htmlTag transition warn paths</td>
+<td>change <code>html</code> attr to/from null; pin current <code>console.warn</code> + stale-content behavior</td>
+</tr>
+</tbody>
+</table>
+<p>G1–G7 are the minimum set making 5a’s “pure move, behavior-neutral” claim
+falsifiable; G8–G12 guard the ©-site splits.</p>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx:186-592</code> — <code>UIDocumentElement</code> (per non-text node; main entanglement site)</li>
+<li><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx:601-925</code> — <code>UIDocumentTextRun</code> (text nodes + mark wrappers; <code>_MARK_ELEMENT</code> coupling at 836)</li>
+<li><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx:927-1011</code> — <code>UIDocumentNode</code> (node-identity/typeKey dispatch; already pure tree infra)</li>
+<li><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx:1017-1186</code> — <code>UIDocumentNodes</code> (dynamic-map container; slot insertion 1054-1151; monkey-patch 1035-1038)</li>
+<li><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx:1188-1246</code> — <code>UIDocumentViewer</code> (root; <code>pathOfTypes</code> seed at 1240)</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:532-793</code> — <code>UIDocumentNodeOutfitter</code> (actual location)</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:892-1512</code> — <code>TypeSpecSubscriptions</code> (PM-side per-node registry/walk coordinator)</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:170-269</code> — <code>getTypeSpecPropertiesIdMethod</code> (shared typeSpec-path resolution, memoized)</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:34-54</code> — <code>getPathOfTypes</code> (PM-position analogue of viewer’s context recursion)</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:294-446</code> — <code>ProsemirrorNodeView</code> (PM-delegated per-node DOM + subscription lifecycle)</li>
+<li><code>lib/js/components/layouts/type-stage/meta.typeroof.jsx:186-330</code> — <code>TypeSpecChildrenMeta</code>/<code>TypeSpecMeta</code> (the meta-layer template; <code>@parentProperties</code> idiom 215-222)</li>
+<li><code>lib/js/components/layouts/type-stage/live-properties.typeroof.jsx:48-209</code> — <code>TypeSpecLiveProperties</code> (leaf lifecycle template; root nodeProperties production 180-207)</li>
+<li><code>lib/js/components/layouts/type-stage/node-properties.mjs:26-110</code> — <code>HierarchicalScopeNodeProperties</code>, <code>getRootNodePropertiesMap</code> (Phases 1–4)</li>
+<li><code>lib/js/components/actors/actors-meta.mjs:19-45</code> — <code>ActorsMeta</code> (secondary renderer-independent layer example)</li>
+<li><code>lib/js/components/basics/component.mjs:195-198</code> — duplicate-registration throw (drives per-node id requirement)</li>
+<li><code>lib/js/components/basics/component.mjs:1043-1061</code> — <code>_initWrapper</code> (<code>zone</code> omitted ⇒ DOM-less child)</li>
+<li><code>lib/js/components/layouts/type-stage/index.typeroof.jsx:213-227, 539-560</code> — mode activation tests + viewer registration</li>
+<li><code>lib/js/components/document-renderer-mode/model.mjs:4-8</code> — mode enum</li>
+<li><code>lib/js/tests/type-stage-toggles/harness.mjs</code> — headless jsdom bootstrap (<code>buildWorld</code>)</li>
+</ul>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ol>
+<li><strong>Where does <code>DocumentNodesMeta</code> sit in the widget tree?</strong> The viewer is
+gated by <code>showViewerActivationTest</code>; the meta layer must exist regardless
+of mode (node properties are per document node, not per renderer). Always
+active at <code>TypeStageController</code> level? RootPath <code>./document</code> like the
+viewer?</li>
+<li><strong>Id shape for per-node registrations</strong>: <code>nodeProperties@&lt;absolute documentNodePath&gt;</code> (framework-idiomatic, id = model path) vs.
+<code>nodeProperties@&lt;typeSpecPath&gt;#&lt;nodeId&gt;</code> (plan’s example). The framework
+convention (§3.4) favors the document-node path; typeSpec resolution then
+happens on the consumer side or inside the node’s own scope construction.</li>
+<li><strong>Does the meta layer replace <code>UIDocumentNode</code>’s dispatch or wrap it?</strong>
+<code>UIDocumentNode</code> is already pure (A) — the two-landing strategy
+(delegation first, ownership flip second) needs a decision on whether
+<code>DocumentNodesMeta</code> adopts the <code>UIDocumentNodes</code>/<code>UIDocumentNode</code> classes
+wholesale (viewer becomes a DOM attachment <em>inside</em> them) or parallels
+them (viewer subscribes to meta-node lifecycle events).</li>
+<li><strong>The <code>insertDocumentNode</code> monkey-patch</strong> (viewer:1035-1038) is the
+viewer’s DOM-insertion hook into the widget tree — what defined interface
+replaces it (callback arg? overridable method? zone-like insertion API)?</li>
+<li><strong>Outfitter consolidation scope</strong>: 5a extracts from the viewer only;
+switching the outfitter to consume the meta layer is implied by 5b but
+not scheduled. Confirm the boundary: does 5a’s <code>DocumentNodesMeta</code> API
+need to be outfitter-compatible from day one (the four supplies in §2.3),
+or is outfitter migration explicitly later?</li>
+<li><strong>Dead code</strong> (<code>_stylerWrapper</code> viewer:617, <code>_nodeSlots</code> viewer:1030) and
+the inconsistent fixture skip-guards: remove/fix during 5a or as separate
+hygiene commits beforehand?</li>
+<li><strong>Next-sibling unknown-type resolution</strong> is parked (viewer:531-535 FIXME)
+— does the meta layer inherit the limitation or is 5a the moment to pin
+the current behavior with a test (G12-adjacent)?</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

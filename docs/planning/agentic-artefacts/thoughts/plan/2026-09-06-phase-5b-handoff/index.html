@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="handoff-node-properties--phase-5b-nodenode-channel" class="heading_anchor" href="#handoff-node-properties--phase-5b-nodenode-channel" aria-hidden="true">#</a>Handoff: Node Properties — Phase 5b (node→node channel)</h1>
+<p><strong>Date</strong>: 2026-09-06
+<strong>Repo</strong>: TypeRoof, branch <code>demo/wikipedia</code> @ <code>6a300acc</code>
+<strong>State</strong>: clean worktree, 256/256 tests green, Phases 1–5a done.</p>
+<h2><a id="what-this-session-should-do" class="heading_anchor" href="#what-this-session-should-do" aria-hidden="true">#</a>What this session should do</h2>
+<p>Run a <strong>new RPI cycle</strong> (<code>/research_codebase</code> → plan → implement) for
+<strong>Phase 5b of the node-properties plan</strong>: the per-document-node
+<code>nodeProperties@</code> channel. Node-property scopes become per-document-node
+instances owned by <code>DocumentNodesMeta</code>; children consume their parent’s
+effective map; geometry migrates out of the typeSpecnion.</p>
+<h2><a id="must-read-first-in-order" class="heading_anchor" href="#must-read-first-in-order" aria-hidden="true">#</a>Must-read first (in order)</h2>
+<ol>
+<li><strong>The umbrella plan</strong>: <code>thoughts/plans/2026-09-05-1623-node-properties.md</code>
+— Phases 1–4 and 5a are marked ✅ with commit hashes. Phase 5b’s section
+is the spec, BUT it predates 5a’s implementation — treat its
+<code>document-nodes-meta.typeroof.jsx</code> references as approximations and
+verify against the actual 5a code. The plan’s “Review findings
+incorporated” section and Working Agreements (behavior tests, small
+commits, commit gate, <code>.prettierignore</code> on new <code>.mjs</code>) still govern.</li>
+<li><strong>The prior research</strong>: <code>thoughts/research/2026-09-04-2344-layout-channel.md</code>
+— background on the demarcation/typeSpecnion machinery (mostly landed
+by now).</li>
+<li><strong>5a’s archive</strong>: <code>docs/planning/agentic-artefacts/thoughts/</code> (research +
+plan dirs) contains the walker-separation RPI artefacts — shows how
+DocumentNodesMeta was actually shaped.</li>
+</ol>
+<h2><a id="architecture-so-far-committed" class="heading_anchor" href="#architecture-so-far-committed" aria-hidden="true">#</a>Architecture so far (committed)</h2>
+<ul>
+<li><code>CascadingMap</code> — <code>lib/js/components/cascading-map.mjs</code>: read-only
+Map-facade over labeled <code>[label, map]</code> layers, first-hit-wins, lazy
+key→layer index, <code>getLayer(label)</code>, duplicate-label throw.
+(<code>3e86f6dc</code>)</li>
+<li>Scope machinery generalized — <code>scope-resolution.mjs</code>
+(<code>LocalScopeProperties</code>, <code>HierarchicalScopeProperties</code>, demarcations
+re-exported via <code>type-specnion.mjs</code>). (<code>f54eb52b</code>)</li>
+<li>Defaults hygiene — <code>seedTypeSpecDefaults</code> derives fresh maps.
+(<code>f9836e43</code>)</li>
+<li><strong><code>nodeProperties@</code> root channel</strong> (<code>05eaf4f9</code>):
+<code>lib/js/components/layouts/type-stage/node-properties.mjs</code> —
+<code>HierarchicalScopeNodeProperties</code> (standalone scope; constructor args
+<code>(generatorsMap, hostMap, parentNodePropertiesOrDefaultsMap, inheritancePolicyGenerators)</code>; effective map is
+<code>CascadingMap([[&quot;local&quot;, local], [&quot;parent&quot;, parentEffectiveMap]])</code>);
+<code>getRootNodePropertiesMap(environmentValues)</code> → <code>layout/environment/*</code>.
+<code>node-properties-generators.mjs</code> — <code>availableSizesGen</code> (root-only,
+resolves <code>layout/width|height</code> LengthModels against environment facts
+→ <code>layout/availableWidth|Height</code> + identity synthetics, pt).
+Root <code>TypeSpecLiveProperties</code> builds the root scope, registers
+<code>nodeProperties@&lt;rootPath&gt;</code> (root only; <code>meta.typeroof.jsx</code> settings
+gate). Both layout controllers register the protocol with
+<code>notFoundFallbackValue: null</code>. Pane-styler + <code>UIDocumentTypeSpecStyler</code>
+consume <code>layout/*</code> keys via merged maps.</li>
+<li><strong><code>DocumentNodesMeta</code></strong> (5a, <code>8dbd2055</code>…<code>62262b87</code>):
+<code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs</code>
+(<code>DocumentNodesMeta</code> class at :521) + <code>derivations.mjs</code> (pure
+document-tree derivations). The renderer-independent walker; viewer
+attaches to it.</li>
+</ul>
+<h2><a id="phase-5b-spec-highlights-from-the-umbrella-plan--verify-against-code" class="heading_anchor" href="#phase-5b-spec-highlights-from-the-umbrella-plan--verify-against-code" aria-hidden="true">#</a>Phase 5b spec highlights (from the umbrella plan — verify against code)</h2>
+<ul>
+<li>Per-node <code>NodePropertiesLiveProperties</code>-style component owned by
+<code>DocumentNodesMeta</code>; <strong>no Meta analogue</strong> — the meta layer <em>is</em> the
+structure.</li>
+<li><strong>Registration ids must incorporate node identity</strong>, not just the
+typeSpec path: nodes sharing one typeSpec would collide at
+<code>nodeProperties@&lt;typeSpecPath&gt;</code> (SimpleProtocolHandler.register throws
+on duplicates, <code>component.mjs:195-198</code>). Id shape e.g.
+<code>nodeProperties@&lt;typeSpecPath&gt;#&lt;nodeId&gt;</code>, or keyed by node path.</li>
+<li>Registration is imperative + lifecycle-hooked (<code>register</code>/<code>unregister</code>
+in update/destroy), NOT wrapper restOptions one-shot — resolved paths
+can change while the node widget persists.</li>
+<li>Consumers read an accessor off the registering component (like
+<code>.typeSpecnion</code>), not a bare map.</li>
+<li>Parent effective path via
+<code>_getTypeSpecPropertiesId(pathOfTypes.slice(0,-1), true)</code>; consume
+only-if-registered (<code>_getStyleLinkPropertiesId</code> pattern).
+getTypeSpecPropertiesIdMethod memo-key aliasing: pass the 4th arg
+(<code>&quot;nodeProperties@&quot;</code>) deliberately (integration.typeroof.jsx:187-201).</li>
+<li>Producer calls <code>setUpdated(identifier)</code> after rebuild, before children
+(parent-first order — <strong>verify this ordering with a test first</strong>).</li>
+<li>Text nodes: consume-only.</li>
+<li>Styler: <code>UIDocumentTypeSpecStyler</code> builds
+<code>CascadingMap([[&quot;node&quot;, nodePropertiesMap], [&quot;style&quot;, typeSpecMap]])</code>
+itself (first-hit-wins, node first). <code>_provisionTypeSpecStyler</code>
+rebuild-check must also compare <code>nodeProperties@</code>
+(viewer.typeroof.jsx:579-583).</li>
+<li>Geometry migration: <code>horizontalLayoutRunion</code>’s geometry yields
+(<code>/pt</code> synthetics, availableWidth re-route) move to node-properties
+generators; <code>innerPropertiesData</code>’s <code>generic/width</code> read
+(type-spec.typeroof.jsx) → <code>layout/width</code> (already partially done in
+Phase 4 via root channel).</li>
+</ul>
+<h2><a id="open-research-questions-for-the-new-cycle" class="heading_anchor" href="#open-research-questions-for-the-new-cycle" aria-hidden="true">#</a>Open research questions for the new cycle</h2>
+<ol>
+<li>How does DocumentNodesMeta’s provisioning (index.mjs:521+,
+<code>_provisionWidgets</code> at :204/:440) host per-node scopes — where does
+each node’s <code>hostMap</code> (its resolved typeSpecnion properties) come
+from in the meta layer?</li>
+<li>Registration id scheme: node identity source (pmNode identity? path?
+a stable key from the meta layer?) — must survive document edits
+sensibly and be computable by children for the parent lookup.</li>
+<li>Update ordering: does the meta layer update strictly parent-first so
+a child’s scope build sees the parent’s settled map? Test it.</li>
+<li>How does the Phase-4 root channel (in TypeSpecLiveProperties) relate
+to the meta layer’s root node — same registration or a handoff?
+Currently the root scope is built in <code>live-properties.typeroof.jsx</code>
+update; decide whether 5b moves/keeps it.</li>
+<li><code>hostContext</code>/NodeModel generator arg — still out of scope?</li>
+</ol>
+<h2><a id="working-agreements-unchanged" class="heading_anchor" href="#working-agreements-unchanged" aria-hidden="true">#</a>Working agreements (unchanged)</h2>
+<ul>
+<li>Behavior tests (inputs → observable outcomes), not implementation.</li>
+<li>Small, reviewable commits; <strong>commit gate</strong>: before every commit, stop
+with the proposed message + file list and wait for explicit
+acknowledgement (“okok”).</li>
+<li>New <code>.mjs</code> files need explicit <code>!lib/js/...</code> entries in <code>.prettierignore</code>.</li>
+<li>Verification battery per landing: <code>npx vitest run</code>, <code>npx eslint</code>,
+<code>npm run typecheck</code>, <strong><code>npm run build:app</code></strong> (bundler export checks
+catch what vitest misses — learned the hard way in Phase 2/3).</li>
+<li>Commit message trailer: model/provider/agent metadata (see git log).</li>
+<li>Docs archive at the end: research + plan into
+<code>docs/planning/agentic-artefacts/thoughts/{research,plan}/</code> (precedent:
+<code>6a300acc</code>).</li>
+<li>Known pre-existing lint error (not yours): <code>horizontalWidthSum</code> unused
+in <code>properties-generators.mjs</code> — belongs to the horizontal-layout WIP;
+resolve when the geometry migration lands (5b may consume it).</li>
+</ul>
+<h2><a id="current-branch-tail" class="heading_anchor" href="#current-branch-tail" aria-hidden="true">#</a>Current branch tail</h2>
+<pre><code>6a300acc docs: archive document-tree walker/renderer separation RPI artefacts
+62262b87 [type-stage] DocumentNodesMeta ownership flip: meta drives, viewer attaches
+8dbd2055 [type-stage] extract pure document-tree derivations into document-nodes-meta
+05eaf4f9 [type-stage] nodeProperties@ channel: root scope + environment migration
+f54eb52b [type-stage] extract scope-generic machinery into scope-resolution.mjs
+3e86f6dc [components] add CascadingMap: read-only Map facade over labeled layers
+</code></pre>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

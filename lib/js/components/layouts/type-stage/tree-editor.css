@@ -1,0 +1,110 @@
+.tree_editor-key::before {
+    content: "#";
+}
+
+.ui_type_spec_tree_editor {
+    /* Root */
+    &:not(& &) {
+        > ol {
+            border: 1px solid #999;
+            padding: 0.25em;
+            background-color: white;
+        }
+
+        margin: 1em 0;
+    }
+
+    .ui_type_spec_tree-item-label {
+        &.active {
+            .ui_type_spec_tree-item-label-edit {
+                display: none;
+            }
+
+            .ui_type_spec_tree-item-label-edit_off {
+                display: inline;
+            }
+
+            font-weight: bolder;
+        }
+
+        &:not(.active) {
+            .ui_type_spec_tree-item-label-edit {
+                display: inline;
+            }
+
+            .ui_type_spec_tree-item-label-edit_off {
+                display: none;
+            }
+        }
+    }
+
+    .ui-button_add_button {
+        display: flex;
+    }
+
+    .ui_base_map-item {
+        display: flex;
+        padding: 0.25em 0;
+        border-bottom: 0.25em solid transparent;
+        flex-flow: row wrap;
+        align-items: flex-start;
+        line-height: 2;
+        border: none;
+
+        & > * {
+            line-height: 1.3;
+        }
+
+        & > .ui_base_map-key {
+            flex-grow: 1;
+            flex-shrink: 1;
+            flex-basis: min-content;
+
+            & > .ui_base_map-key-input {
+                padding: 0;
+            }
+        }
+
+        /* Indent nested levels. */
+        & > :is([class*="_map-item-drag_handle"]) {
+            order: -1;
+            margin-inline-end: 0.5em;
+            margin-inline-start: calc(
+                var(--indentation-width, 1em) * var(--structural-depth, 0) +
+                    0.25em
+            );
+        }
+
+        & > :is(.ui_button-remove) {
+            order: 10;
+        }
+
+        & > :is(.ui_type_spec_tree_editor) {
+            order: 100;
+            flex-basis: 100%;
+        }
+    }
+
+    .ui_base_map-item {
+        border-top: 1px solid var(--fieldset-border-color);
+        background-color: transparent;
+    }
+
+    .ui_base_map-items {
+        background-color: transparent;
+
+        &:empty {
+            border: var(--indicator-padding) solid transparent;
+            padding-top: var(--indicator-padding);
+            margin-inline-start: calc(
+                var(--indentation-width, 1em) * var(--structural-depth, 0) +
+                    0.25em
+            );
+        }
+
+        &:empty::before {
+            content: "";
+            padding: 0;
+        }
+    }
+}

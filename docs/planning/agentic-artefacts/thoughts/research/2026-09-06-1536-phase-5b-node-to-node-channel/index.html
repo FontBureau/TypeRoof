@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-phase-5b--nodenode-nodeproperties-channel" class="heading_anchor" href="#research-phase-5b--nodenode-nodeproperties-channel" aria-hidden="true">#</a>Research: Phase 5b — node→node nodeProperties@ channel</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>How is the committed code (Phases 1–5a) actually shaped, so Phase 5b of the
+node-properties umbrella plan can install <strong>real per-document-node
+<code>HierarchicalScopeNodeProperties</code> scopes</strong> owned by <code>DocumentNodesMeta</code>,
+transported via <code>nodeProperties@&lt;id&gt;</code>, consumed by children (parent effective
+map) and by the viewer’s <code>UIDocumentTypeSpecStyler</code>? The umbrella plan’s 5b
+section predates 5a — its <code>document-nodes-meta.typeroof.jsx</code> references are
+approximations; this research verifies everything against the code at
+<code>6a300acc</code>. Focus: the handoff’s five open questions (hostMap source,
+registration id scheme, update ordering, root-channel relation, hostContext).</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p>5a built exactly the scaffolding 5b needs — and made several 5b spec items
+<strong>moot or already-done</strong>:</p>
+<ul>
+<li><strong>Registration ids are already per-node</strong>: <code>nodeProperties@&lt;absolute documentNodePath&gt;</code> registered declaratively (wrapper settings) on every
+<code>DocumentNodesMetaNode</code> dispatcher (<code>document-nodes-meta/index.mjs:268-279</code>).
+The umbrella plan’s collision worry (<code>nodeProperties@&lt;typeSpecPath&gt;</code> shared
+by nodes) was designed away in 5a: the id is the <strong>model path</strong>, so it is
+unique by construction and stable across reorders (list keys) and typeSpec
+edits. The plan’s “imperative lifecycle-hooked registration” requirement
+was motivated by typeSpec-path-keyed ids that could change under a live
+widget — with document-path ids the declarative settings registration
+(register on create / unregister on destroy, <code>component.mjs:765-768, 777-782</code>) is sufficient for the id; what changes per update is the
+<strong>payload’s scope</strong>, not the id.</li>
+<li><strong>Payloads currently live-delegate to the root map</strong> (<code>get nodeProperties()</code>
+at <code>index.mjs:226-229</code> → <code>rootNodeProperties@</code> → root
+<code>TypeSpecLiveProperties.nodeProperties</code>). 5b = replace that delegation with
+a real per-node scope, keeping the accessor contract.</li>
+<li><strong>Consumers already subscribe per-node</strong>: <code>UIDocumentTypeSpecStyler</code>
+dependency mappings carry <code>nodeProperties@&lt;documentNodePath&gt;</code>
+(<code>derivations.mjs:362-388</code>, <code>viewer.typeroof.jsx:306-314</code>) — the 5b
+consumer position is already wired.</li>
+<li><strong>Update ordering is strictly parent-first</strong> by framework mechanism
+(provisioning completes before child updates, containers recurse
+depth-first) — verified by code reading; the umbrella plan still asks for
+a behavior test pinning this.</li>
+<li><strong>The hostMap (resolved typeSpecnion properties) does NOT exist in the
+meta layer today.</strong> No meta node consumes <code>typeSpecProperties@</code>. The
+resolution machinery (<code>getTypeSpecPropertiesIdMethod</code> + <code>pathOfTypes</code>) is
+used only by renderer attachments. 5b’s central wiring task: meta nodes
+resolve their effective typeSpec path and map <code>typeSpecProperties@&lt;path&gt;</code>
+as a dependency to obtain the hostMap.</li>
+<li><strong>Root channel stays in <code>TypeSpecLiveProperties</code></strong> (Phase 4,
+<code>live-properties.typeroof.jsx:134-210</code>); the meta tree’s document root
+delegates to it. A handoff/move is optional, not required.</li>
+<li><strong>Two gaps found</strong>: (1) <code>nodeProperties@</code> is <strong>not</strong> covered by
+<code>resetUpdatedLog()</code> in either layout controller — the updated-log grows
+monotonically, consumers re-fire every cycle; (2) the memo cache in
+<code>getTypeSpecPropertiesIdMethod</code> keys omit the protocol name — cross-protocol
+use (4th arg <code>&quot;nodeProperties@&quot;</code>) is correct only because of per-hit
+<code>hasRegistered</code> re-validation, and would thrash the shared cache level.</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-documentnodesmeta-layer-q1-hosting-per-node-scopes" class="heading_anchor" href="#1-documentnodesmeta-layer-q1-hosting-per-node-scopes" aria-hidden="true">#</a>1. DocumentNodesMeta layer (Q1: hosting per-node scopes)</h3>
+<p><code>lib/js/components/layouts/type-stage/document-nodes-meta/</code> = <code>index.mjs</code>
+(615 LOC, widget classes) + <code>derivations.mjs</code> (539 LOC, pure functions).
+There is <strong>no</strong> <code>document-nodes-meta.mjs</code> or <code>.typeroof.jsx</code> — those names
+in older docs are stale.</p>
+<p>Class inventory (<code>index.mjs</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Lines</th>
+<th>Base</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RendererAttachments</code></td>
+<td>45-99</td>
+<td>—</td>
+<td>per-node handler→wrapper bookkeeping; attach/detach/reposition</td>
+</tr>
+<tr>
+<td><code>DocumentNodesMetaDocument</code></td>
+<td>105-138</td>
+<td><code>_BaseContainerComponent</code></td>
+<td>the document root node itself</td>
+</tr>
+<tr>
+<td><code>DocumentNodesMetaNode</code></td>
+<td>145-250</td>
+<td><code>_BaseContainerComponent</code></td>
+<td><strong>dispatcher</strong>: typeKey dispatch + node-identity rebuild; owns the per-node <code>nodeProperties@</code> registration + <code>get nodeProperties()</code></td>
+</tr>
+<tr>
+<td><code>DocumentNodesMetaNodes</code></td>
+<td>256-342</td>
+<td><code>_BaseDynamicMapContainerComponent</code></td>
+<td>dynamic-map container over a node’s <code>content</code>; creates per-node dispatchers</td>
+</tr>
+<tr>
+<td><code>_DocumentNodesMetaDispatchedNode</code></td>
+<td>346-368</td>
+<td><code>_BaseContainerComponent</code></td>
+<td>shared base of element/text-run</td>
+</tr>
+<tr>
+<td><code>DocumentNodesMetaElement</code></td>
+<td>375-491</td>
+<td>dispatched base</td>
+<td>rendering-plan derivation, <code>pathOfTypes</code>/context extension, child-container provisioning</td>
+</tr>
+<tr>
+<td><code>DocumentNodesMetaTextRun</code></td>
+<td>496-513</td>
+<td>dispatched base</td>
+<td>thin; context pass-through</td>
+</tr>
+<tr>
+<td><code>DocumentNodesMeta</code> (root)</td>
+<td>521-614</td>
+<td><code>_BaseContainerComponent</code></td>
+<td>seeds <code>pathOfTypes</code>, sets <code>widgetBus.originTypeSpecPath</code> (:526), attach/detachRenderer, rootState cache</td>
+</tr>
+</tbody>
+</table>
+<p>Key mechanics:</p>
+<ul>
+<li><strong>Provisioning/identity</strong> (<code>index.mjs:204-220</code>): dispatcher reads its node
+via <code>getEntry(rootPath.parent).get(key)</code>; same typeKey → widget reuse
+(empty provision set); typeKey change → new wrapper built <strong>before</strong> old
+destroyed (:211-213, required because the duplicate-registration throw at
+<code>component.mjs:195-198</code> would fire otherwise). Registration sits on the
+dispatcher, not the typeKey child (<code>index.mjs:274-277</code> comment).</li>
+<li><strong>Dynamic-map provisioning</strong>: <code>_BaseDynamicMapContainerComponent</code>
+(<code>basics/component.mjs:1690-1867</code>); NEW → <code>_createWrapper(rootPath)</code>
+(<code>index.mjs:268-310</code>); CHANGED keeps the wrapper (no HANDLE_CHANGED_AS_NEW).</li>
+<li><strong><code>pathOfTypes</code></strong>: seeded <code>[docTypeKey]</code> in root ctor (:527-535); extended
+per element in <code>resolveElementRenderingPlan</code> (<code>derivations.mjs:274</code>);
+<code>childrenContext</code> copy (:276-283); text runs contribute nothing
+(<code>index.mjs:508</code>).</li>
+<li><strong><code>originTypeSpecPath</code> on the widgetBus</strong> (:526): available to every meta
+node — the anchor needed for effective typeSpec path resolution inside
+the meta layer.</li>
+<li><strong>No per-node <code>setUpdated</code> push today</strong>: only the root registration is
+marked updated, by <code>TypeSpecLiveProperties.update</code>
+(<code>live-properties.typeroof.jsx:187-208</code>).</li>
+</ul>
+<p><strong>hostMap source (Q1 answer)</strong>: nowhere yet. Meta-node dependency mappings
+(<code>index.mjs:163-190, 280-294, 456-473, 546-555</code>) contain only <code>content</code>,
+<code>attrs</code>, <code>text</code>, <code>marks</code>, <code>nodeSpec</code>, <code>markSpec</code>, <code>nodeSpecToTypeSpec</code>, and
+the <code>rootNodeProperties@</code> delegation. The resolved typeSpecnion lives on
+<code>TypeSpecLiveProperties</code> (<code>live-properties.typeroof.jsx:48-87</code>); only
+renderer attachments resolve <code>typeSpecProperties@&lt;effectivePath&gt;</code> today
+(<code>viewer.typeroof.jsx:406-412, 428</code> via <code>_getTypeSpecPropertiesId</code>).
+For 5b, a meta node must (a) hold <code>_originTypeSpecPath</code> (readable from
+<code>widgetBus.originTypeSpecPath</code>), (b) bind
+<code>_getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod</code> — <strong>as a bound
+closure or class field in-module</strong> (class-field bindings don’t survive being
+passed across module boundaries — 5a landmine), © map
+<code>typeSpecProperties@&lt;effectivePath&gt;</code> as a dependency to receive the
+<code>TypeSpecLiveProperties</code> whose <code>.typeSpecnion.getProperties()</code> is the
+hostMap.</p>
+<h3><a id="2-registration-id-scheme-q2--largely-settled-by-5a" class="heading_anchor" href="#2-registration-id-scheme-q2--largely-settled-by-5a" aria-hidden="true">#</a>2. Registration id scheme (Q2 — largely settled by 5a)</h3>
+<ul>
+<li>Id = <code>nodeProperties@&lt;absolute documentNodePath&gt;</code> (e.g.
+<code>…/document/content/3/content/1</code>), declared in wrapper settings
+(<code>index.mjs:268-279</code>: <code>settings = { rootPath, nodeKey: key, &quot;nodeProperties@&quot;: rootPath.toString() }</code>).</li>
+<li>Settings keys ending in <code>@</code> become protocol registrations
+(<code>component.mjs:292-297</code>); <code>ComponentWrapper.create</code> registers the widget
+itself (<code>component.mjs:765-768</code>); <code>destroy()</code> unregisters
+(<code>component.mjs:777-782</code>). Duplicate ids throw (<code>component.mjs:195-198</code>).</li>
+<li>Node identity across edits = the <strong>list key</strong> in the parent’s <code>content</code>
+OrderedMap: stable across content updates at the key and across reorders
+(G5-safe per 5a); a replaced document’s node at the same key reuses the
+dispatcher (only typeKey change rebuilds).</li>
+<li><strong>Text nodes also register today</strong> (the dispatcher is type-agnostic);
+the plan says text nodes are consume-only — keeping their registration is
+harmless (nothing consumes it) but is a divergence to decide on.</li>
+<li>Parent lookup = <strong>document-path math</strong> (5a design center: “Parent lookup =
+path math”), i.e. strip trailing <code>content/&lt;key&gt;</code> pairs from the node’s
+rootPath to address ancestor dispatchers. The umbrella plan’s
+<code>_getTypeSpecPropertiesId(pathOfTypes.slice(0,-1), true)</code> parent-EFFECTIVE-
+PATH mechanism belongs to the <em>typeSpec</em> channel; for the node channel’s
+parent-map input it is the wrong tool (it resolves typeSpec paths and
+validates against the <code>typeSpecProperties@</code> registry semantics). It
+remains the right tool for the <strong>hostMap</strong> lookup (§1).</li>
+</ul>
+<h3><a id="3-update-ordering-q3--parent-first-by-mechanism" class="heading_anchor" href="#3-update-ordering-q3--parent-first-by-mechanism" aria-hidden="true">#</a>3. Update ordering (Q3 — parent-first, by mechanism)</h3>
+<p><code>_BaseContainerComponent.update</code> (<code>component.mjs:1184-1187</code>) runs
+<code>_provisionWidgets</code> fully, then updates children in order
+(<code>component.mjs:1264-1282</code>); container children recurse — so a parent’s
+scope rebuild inside its <code>update</code>/<code>_provisionWidgets</code> <strong>settles before any
+child’s update runs</strong>. New wrappers get <code>initialUpdate</code>
+(<code>component.mjs:1221-1222</code>); mid-cycle attachments get the cached
+<code>widgetBus.rootState</code> (<code>index.mjs:68, 600-613</code>). The viewer already relies
+on this (“Parents attach before their children”,
+<code>viewer.typeroof.jsx:790-794</code>). Umbrella plan requirement stands: pin with
+a behavior test before building on it (a child’s scope build must observe
+the parent’s settled map in the same cycle).</p>
+<h3><a id="4-phase-4-root-channel-vs-meta-root-q4" class="heading_anchor" href="#4-phase-4-root-channel-vs-meta-root-q4" aria-hidden="true">#</a>4. Phase-4 root channel vs. meta root (Q4)</h3>
+<ul>
+<li>Root scope built in <code>TypeSpecLiveProperties.update</code>, non-parent branch
+(<code>live-properties.typeroof.jsx:134-210</code>):
+<code>getRootNodePropertiesMap(environmentValues)</code> (<code>node-properties.mjs:102-111</code>
+→ <code>layout/environment/...</code> keys) + guarded <code>layout/width|height</code>
+LengthModels (<code>:164-170</code>, guard = <code>reverseMapping.has(dimension)</code> because
+ramp wires no width/height deps) →
+<code>new HierarchicalScopeNodeProperties(NODE_PROPERTIES_GENERATORS, hostMap, rootNodePropertiesMap)</code> (<code>:180-184</code>).</li>
+<li>Registration of <code>nodeProperties@&lt;rootPath&gt;</code> via <code>TypeSpecMeta</code> settings,
+<strong>gated</strong> on <code>typeSpecDefaultsMap !== null</code> (<code>meta.typeroof.jsx:264-273</code>).</li>
+<li><code>HierarchicalScopeNodeProperties</code> (<code>node-properties.mjs:26-92</code>):
+constructor <code>(propertiesGenerators, hostMap, parentNodePropertiesOrDefaultsMap, inheritancePolicyGenerators=[])</code>;
+3rd arg polymorphic via <code>instanceof</code> (:41-45); effective map =
+<code>CascadingMap([[&quot;local&quot;, local], [&quot;parent&quot;, parentMap]])</code> (:63-66);
+outerAPI <code>{hasParentProperty, getParentProperty}</code> over the parent map
+(:50-53); accessors <code>getProperties()</code>, <code>getOwnProperty(name, default?)</code>,
+<code>localPropertyNames</code>. Generators: <code>gen(outerAPI, hostMap)</code> — same order
+as typeSpec generators.</li>
+<li><code>availableSizesGen</code> (<code>node-properties-generators.mjs:23-48</code>): reads
+<code>layout/width|height</code> from <strong>hostMap</strong>, <code>layout/environment/&lt;key&gt;/&lt;dim&gt;</code>
+via <code>getParentProperty</code>; guards on missing width/height (:30) and null
+environment values (:37); yields <code>layout/available{Width,Height}</code> (pt)
+<ul>
+<li><code>layout/{width,height}</code> identity synthetics.</li>
+</ul>
+</li>
+<li>Protocol installed in <strong>both</strong> controllers with
+<code>{notFoundFallbackValue: null}</code> (<code>type-stage/index.typeroof.jsx:292-300</code>,
+<code>ramp/index.typeroof.jsx:251-259</code>).</li>
+<li>Consumers: <code>TypeStagePaneStyler</code> (<code>pane-styler.typeroof.jsx:36-93</code>, merges
+<code>new Map([...typeSpecnion, ...nodePropertiesMap])</code>, node wins) and
+<code>UIDocumentTypeSpecStyler</code> (<code>type-spec.typeroof.jsx:253-266</code>, same
+spread-merge at :288-294, reads <code>${LAYOUT}width</code> at :263).</li>
+<li><strong>Relation decision for 5b</strong>: the meta document root
+(<code>DocumentNodesMetaDocument</code>) currently has no nodeProperties role; the
+root scope can stay in <code>TypeSpecLiveProperties</code> — meta nodes already
+delegate to it via <code>rootNodeProperties@</code>. Moving it is optional.</li>
+</ul>
+<h3><a id="5-protocollifecycle-patterns" class="heading_anchor" href="#5-protocollifecycle-patterns" aria-hidden="true">#</a>5. Protocol/lifecycle patterns</h3>
+<ul>
+<li><code>SimpleProtocolHandler</code> (<code>component.mjs:171-248</code>): <code>register</code> throws on
+duplicates (:195-198) and returns a bound <code>_unregister</code>; <code>getUpdated(id)</code>
+→ <code>[wasUpdated, value]</code>; <code>setUpdated</code> adds to a <code>Set</code> log;
+<code>resetUpdatedLog</code> clears it; <code>getRegistered</code> returns
+<code>notFoundFallbackValue</code> (here <code>null</code>) instead of throwing (:217-218).</li>
+<li><strong>Gap: <code>nodeProperties@</code> is never reset.</strong> Controllers reset only
+<code>typeSpecProperties@</code>, <code>stylePatchProperties@</code>, <code>styleLinkProperties@</code>
+(type-stage <code>index.typeroof.jsx:700-727</code>; ramp <code>:448-464</code>). Today the one
+root registration stays “updated” forever → consumers re-apply every
+cycle (harmless: idempotent CSS). With per-node <code>setUpdated</code> pushes in
+5b the log must be reset per cycle or every consumer re-fires every
+update.</li>
+<li>Imperative register/unregister precedent exists:
+<code>environment-provider.mjs:105</code> (<code>this._unregisterFns.set(key, this._handler.register(key, value))</code>); also <code>ui-map.mjs:1019</code>.</li>
+<li>Consumer accessor contract: consumers receive the <strong>registered component</strong>
+and read an accessor — <code>.typeSpecnion</code> / <code>.nodeProperties</code>
+(<code>pane-styler.typeroof.jsx:49-59</code>, <code>type-spec.typeroof.jsx:251-259</code>;
+null-tolerant because of <code>notFoundFallbackValue: null</code>).</li>
+<li>Consume-only-if-registered idiom: <code>getStyleLinkPropertiesId</code>
+(<code>derivations.mjs:393-412</code>) — build id, <code>hasRegistered</code> check, return
+<code>null</code> when absent.</li>
+<li><code>getTypeSpecPropertiesIdMethod</code> (<code>integration.typeroof.jsx:170-272</code>):
+WeakMap memo per <code>nodeSpecToTypeSpec</code> model instance; <strong>memoKey =
+<code>${origin}|${asPath}|${pathOfTypes.join(&quot;\n&quot;)}</code> — the protocol name is
+NOT in the key</strong> (:181-186); every hit is re-validated with
+<code>hasRegistered(</code>${protocolHandlerName}${cached}<code>)</code> (:190-197), so
+cross-protocol aliasing stays correct but a miss recomputes and
+overwrites the shared cache slot (thrash if both protocols alternate on
+the same pathOfTypes). Passing the 4th arg <code>&quot;nodeProperties@&quot;</code> works but,
+per §2, the node channel’s parent lookup should be document-path math —
+the method’s real 5b use is the hostMap’s typeSpec path with the default
+4th arg, where no aliasing arises.</li>
+<li>Rebuild-check gap (confirmed): <code>_provisionTypeSpecStyler</code>’s
+replace-or-keep test compares <strong>only</strong> <code>properties@</code>
+(<code>viewer.typeroof.jsx:458-461</code>: <code>oldWrapper.dependencyReverseMapping .get(&quot;properties@&quot;) !== typeSpecProperties</code>). Per the plan it must also
+compare <code>nodeProperties@</code> once per-node payloads diverge — today all
+per-node ids delegate to the same root map, so a stale wrapper is
+invisible; with real scopes a re-resolved parent path would strand a
+stale <code>nodeProperties@&lt;oldPath&gt;</code> mapping.</li>
+<li>Styler composition today is a <strong>spread-merge copy</strong>
+(<code>type-spec.typeroof.jsx:288-294</code>), not a <code>CascadingMap</code> — precedence is
+already node-over-style, matching the plan’s
+<code>CascadingMap([[&quot;node&quot;,…],[&quot;style&quot;,…]])</code> semantics; switching to the
+facade is a deliberate (non-behavioral) choice.</li>
+</ul>
+<h3><a id="6-geometry-migration-surface" class="heading_anchor" href="#6-geometry-migration-surface" aria-hidden="true">#</a>6. Geometry-migration surface</h3>
+<p><code>properties-generators.mjs</code> was last touched by <code>e012337f</code> (pre-Phase-4);
+Phase 4 did <strong>not</strong> modify it. State today:</p>
+<ul>
+<li>Old typeSpecnion geometry stream <strong>fully intact but orphaned</strong>:
+<code>environmentGen</code> (:53-73) and the old <code>availableSizesGen</code> (:81-~170,
+yields <code>generic/available{Width,Height}</code> + <code>generic/width|height</code>
+synthetics, tombstones <code>specific/root/*</code> at :91-95) are still in
+<code>TYPE_SPEC_PROPERTIES_GENERATORS</code> (:681-698). <strong>No consumer anywhere in
+<code>lib/js</code> reads the <code>generic/available*|generic/width|height</code> keys</strong> —
+all CSS application reads <code>layout/*</code> from the nodeProperties channel.</li>
+<li><code>horizontalLayoutRunion</code> (:553-668): style locals (<code>inlineMargins/*</code>,
+<code>lineLength</code>, <code>columnGutter</code> values; <code>columnCount</code> at :596-598); <code>/pt</code>
+synthetics (:577-594, <code>enToPt</code> = value/2·fontSize); <strong>both inheritance
+re-routes still verbatim</strong> — <code>generic/width ← generic/availableWidth</code>
+(:648-652) and <code>generic/availableWidth ← lineLength·0.5·fontSize</code>
+(:659-666); only a commented-out lineLength tombstone (:668).</li>
+<li><code>horizontalWidthSum</code> (:534-545): confirmed unused (the known lint error);
+intended for absolute column-layout width (commented-out yield :628-637).</li>
+<li><code>innerPropertiesData</code> width read: <code>${LAYOUT}width</code> at
+<code>type-spec.typeroof.jsx:263</code>; <code>getDefault</code> returns <code>[false, &quot;&quot;]</code> for all
+<code>LAYOUT</code> keys (:345-349) — “when absent (non-root scopes) the CSS
+property stays unset”.</li>
+<li><strong>Observation for 5b semantics</strong>: today every per-node id delegates to
+the root map, so <strong>every node’s styler sees the root’s <code>layout/width</code>
+and applies it as CSS width</strong>. With real per-node scopes, the cascade
+([local, parent]) inherits <code>layout/width</code> from the root through the
+parent layer unless generators tombstone/re-route it — the plan’s
+“availableWidth re-route moves to node-properties generators” must
+decide which nodes see <code>layout/width</code> (identity synthetic exists only
+at root today) vs. only <code>layout/availableWidth</code>.</li>
+<li>Old seeding remnant: <code>seedTypeSpecDefaults</code> (<code>live-properties.typeroof.jsx:26-46</code>)
+still accepts <code>environment</code>/<code>width</code>/<code>height</code> options but the root call
+site (:148-155) passes only <code>rootFont</code> — the <code>specific/root/*</code> seeding
+path is dead code at the call site.</li>
+</ul>
+<h3><a id="7-test-surface" class="heading_anchor" href="#7-test-surface" aria-hidden="true">#</a>7. Test surface</h3>
+<ul>
+<li><code>lib/js/tests/type-stage-viewer-behavior/index.test.mjs</code> — the G1–G7
+behavior safety net (5a); must pass unmodified; already asserts per-node
+<code>nodeProperties@</code> registrations live in editor-only mode.</li>
+<li><code>lib/js/tests/type-stage-pane-sizing/index.test.mjs</code> — env→nodeProperties→CSS
+end-to-end (asserts <code>&quot;600pt&quot;</code>, <code>&quot;300pt&quot;</code>, <code>&quot;112.5pt&quot;</code>); fed by the new
+channel, assertions unchanged since Phase 4.</li>
+<li><code>lib/js/components/layouts/type-stage/node-properties.test.mjs</code> — unit
+tests: root map env keys, percent/absolute resolution (75% of 800px →
+450pt), identity synthetics, empty-host scope, <strong>child scope inherits
+<code>layout/availableWidth</code> through the <code>&quot;parent&quot;</code> cascade layer</strong> — the
+closest existing model for 5b’s node→node cascade.</li>
+<li><code>live-properties.test.mjs</code>, <code>type-specnion.test.mjs</code> — scope machinery
+behavior patterns to mirror.</li>
+<li>No test exercises <code>columnCount</code>/column widths — the plan’s new
+column-layout behavior test is genuinely new coverage.</li>
+<li><code>.prettierignore</code>: entries for <code>document-nodes-meta/</code>,
+<code>node-properties{,-generators,.test}.mjs</code>, <code>scope-resolution.mjs</code>,
+<code>cascading-map{,.test}.mjs</code> all present; any <strong>new</strong> <code>.mjs</code> still needs
+its own <code>!</code> line.</li>
+</ul>
+<h3><a id="8-hostcontextnodemodel-q5" class="heading_anchor" href="#8-hostcontextnodemodel-q5" aria-hidden="true">#</a>8. hostContext/NodeModel (Q5)</h3>
+<p>No generator receives a NodeModel/host context today; generator signature
+is uniformly <code>gen(outerAPI, hostMap)</code>. The umbrella plan defers
+<code>hostContext</code> out of v1 — confirmed nothing in the committed code forces
+it. Note the meta node itself has the pmNode-derived model entry
+(<code>getEntry(rootPath.parent).get(key)</code>), so a future hostContext is
+available at scope-construction sites.</p>
+<h2><a id="code-references-5b-touch-points" class="heading_anchor" href="#code-references-5b-touch-points" aria-hidden="true">#</a>Code References (5b touch points)</h2>
+<ul>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs:268-310</code> — per-node registration + <code>rootNodeProperties@</code> delegation (the 5b replacement site)</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs:226-229</code> — <code>get nodeProperties()</code> live delegation (payload accessor contract)</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs:204-220</code> — dispatcher provisioning, typeKey rebuild, registration-on-dispatcher rationale</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs:521-614</code> — meta root: <code>widgetBus.originTypeSpecPath</code> (:526), pathOfTypes seed, rootState cache</li>
+<li><code>lib/js/components/layouts/type-stage/node-properties.mjs:26-111</code> — scope class + <code>getRootNodePropertiesMap</code></li>
+<li><code>lib/js/components/layouts/type-stage/node-properties-generators.mjs:23-57</code> — <code>availableSizesGen</code>, <code>NODE_PROPERTIES_GENERATORS</code></li>
+<li><code>lib/js/components/layouts/type-stage/live-properties.typeroof.jsx:134-210</code> — root scope build + root <code>setUpdated</code> push</li>
+<li><code>lib/js/components/layouts/type-stage/meta.typeroof.jsx:264-273</code> — root registration settings gate</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:170-272</code> — <code>getTypeSpecPropertiesIdMethod</code> (+ memo aliasing :181-197)</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/derivations.mjs:362-388</code> — <code>typeSpecStylerDependencyMappings</code> (consumer wiring)</li>
+<li><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx:296-320</code> — <code>_createTypeSpecStylerWrapper</code> (per-node id construction)</li>
+<li><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx:404-472</code> — <code>_provisionTypeSpecStyler</code> rebuild-check (<code>properties@</code>-only at :458-461)</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:253-294</code> — styler channel merge + <code>${LAYOUT}width</code> read</li>
+<li><code>lib/js/components/layouts/type-stage/properties-generators.mjs:553-668</code> — <code>horizontalLayoutRunion</code> re-routes (:648-666) to migrate; <code>horizontalWidthSum</code> :534</li>
+<li><code>lib/js/components/basics/component.mjs:171-248</code> — SimpleProtocolHandler; :292-297, :765-782 settings registration lifecycle</li>
+<li><code>lib/js/components/layouts/type-stage/index.typeroof.jsx:292-300, 700-727</code> — protocol install; resetUpdatedLog gap</li>
+<li><code>lib/js/components/layouts/ramp/index.typeroof.jsx:251-259, 448-464</code> — same for ramp</li>
+</ul>
+<h2><a id="open-questions-for-the-plan-phase" class="heading_anchor" href="#open-questions-for-the-plan-phase" aria-hidden="true">#</a>Open Questions (for the plan phase)</h2>
+<ol>
+<li><strong>Scope ownership locus</strong>: does <code>DocumentNodesMetaNode</code> (dispatcher)
+build/own the scope itself, or a dedicated child component
+(“NodePropertiesLiveProperties-style”)? The dispatcher already owns the
+registration and the accessor; a child component would re-map all
+dependencies. Lean: dispatcher owns, mirroring TypeSpecLiveProperties’
+role without a Meta analogue (plan: “the meta layer <em>is</em> the structure”).</li>
+<li><strong>hostMap dependency</strong>: mapping <code>typeSpecProperties@&lt;effectivePath&gt;</code> on
+each meta element node makes every meta node depend on the typeSpec
+registry’s update cycle — check interaction with the dispatcher’s
+typeKey-rebuild (mapping change → wrapper re-provision?) and with
+silent/unknown nodes (fallback walk lands on root typeSpecnion —
+matches the existing resolution fallback).</li>
+<li><strong><code>nodeProperties@</code> resetUpdatedLog</strong>: add to both controllers’ update
+cycles (list of handler names to reset), or per-node pushes will keep
+consumers firing every cycle.</li>
+<li><strong>Which nodes yield <code>layout/width</code></strong>: identity synthetic is root-only
+today; with cascade inheritance every descendant sees it through the
+parent layer. The geometry migration must define per-node width
+semantics (re-route from parent’s <code>layout/availableWidth</code>? tombstone?)
+before <code>horizontalLayoutRunion</code>’s re-routes leave the typeSpecnion.</li>
+<li><strong>Text-node registration</strong>: keep (harmless, uniform) or drop per the
+plan’s consume-only note?</li>
+<li><strong>Styler merge → CascadingMap</strong>: behavior-neutral swap; do it with the
+rebuild-check fix or separately?</li>
+<li><strong>Old channel teardown order</strong>: <code>environmentGen</code>/old <code>availableSizesGen</code>
+and the re-routes are orphaned producers — remove in 5b (with
+<code>horizontalWidthSum</code> lint resolution) or a cleanup commit after?</li>
+<li><strong>Parent-first ordering test</strong>: umbrella plan demands verifying the
+ordering with a behavior test <em>before</em> building on it — candidate
+location: <code>node-properties.test.mjs</code> (cascade level) vs. a viewer-
+behavior test at widget level.</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

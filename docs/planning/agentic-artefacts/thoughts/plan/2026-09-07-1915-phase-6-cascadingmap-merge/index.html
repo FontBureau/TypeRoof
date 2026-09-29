@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="phase-6-typespecnion-merge--cascadingmap--implementation-plan" class="heading_anchor" href="#phase-6-typespecnion-merge--cascadingmap--implementation-plan" aria-hidden="true">#</a>Phase 6: typeSpecnion merge → CascadingMap — Implementation Plan</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Umbrella Phase 6 (optional follow-up, now activated): replace the
+typeSpecnion’s <code>mapSetProperties(new Map(), parent, local)</code> copy-merge
+with <code>CascadingMap</code> composition, converging both scope classes on the
+identical construction
+<code>CascadingMap([[&quot;local&quot;, local], [&quot;parent&quot;, parentProjection]])</code>.
+Motivation (umbrella): allocation churn on rebuilds, ancestor access via
+<code>getLayer</code>. Once both classes build the same cascade, extract the shared
+construction into a base class — the <strong>final effort</strong> of this plan.</p>
+<p>Everything else the handoff predicted as unifiable has already landed
+(2026-09-07 session: generator invocation, demarcation routing,
+inheritance policy, parent-projection consumption). Only the
+effective-map strategy still diverges.</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<p>Verified against code at <code>5167c4b2</code>:</p>
+<ul>
+<li><code>scope-resolution.mjs</code> has NO CascadingMap import. The divergence is
+exactly two copy sites:
+<ul>
+<li><code>_getParentMaps</code> (<code>scope-resolution.mjs:474-495</code>): copies the parent
+projection <code>new Map(parentPropertyValuesMap)</code> (:493).</li>
+<li><code>_initPropertyValuesMaps</code> (<code>:497-525</code>): copies again via
+<code>mapSetProperties(new Map(), filteredParentPropertyValuesMap, localPropertyValuesMap)</code> (:516-520).</li>
+</ul>
+</li>
+<li><code>PatchedScopeProperties</code> (<code>:309-346</code>) repeats the same pattern:
+style-patch merged into local via <code>mapSetProperties</code>, then copy-merged
+over <code>filteredParentPropertyValuesMap</code>. Its callers already pass an
+ARRAY of parent maps (<code>createPatched</code>, <code>:464-471</code>) — a two-layer
+cascade in waiting.</li>
+<li><code>HierarchicalScopeNodeProperties</code> (<code>node-properties.mjs:139-142</code>)
+already constructs <code>new CascadingMap([[&quot;local&quot;, ...], [&quot;parent&quot;, ...]])</code>; its <code>getInheritableProperties()</code> is memoized per instance
+(<code>:166-173</code>).</li>
+<li><code>HierarchicalScopeProperties.getInheritableProperties()</code>
+(<code>scope-resolution.mjs:460-462</code>) is NOT memoized; identity stability
+currently holds only because the empty policy hits the early return
+<code>if (!allControls.size) return ownProperties</code> (<code>:385</code>). A non-empty
+policy would return a fresh map per call.</li>
+<li>Iteration-order audit (handoff review addition 1, RESOLVED): no
+order-sensitive consumers. Iteration order unites on LOCAL-FIRST (the
+cascade’s native order, live in the node channel since Phase 4). No
+compatibility shim. The research doc refines this: whole-map iteration
+sites DO exist (<code>getStyleLinks</code>, <code>processed-properties.mjs:131</code>,
+pane-styler/type-spec spreads, axes display) but are order-agnostic
+transforms — visible only in serialized/debug output, if at all.</li>
+<li>Mutation audit (handoff review addition 2, VERIFIED): no consumer
+mutates the returned map; the read-only CascadingMap facade breaks
+nobody.</li>
+<li><code>_BaseScopeProperties</code> (<code>:62-133</code>) already provides the common read
+surface (<code>getProperties</code>, <code>getInheritableProperties</code>, <code>getOwnProperty</code>,
+<code>localPropertyNames</code>, <code>getPropertyValuesMap</code>); both target classes
+extend it (node-properties does NOT — it is standalone, see Open
+Questions).</li>
+</ul>
+<h2><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required</h2>
+<h3><a id="step-1--root-layer-scheme-three-layers-decided-option-b--landed" class="heading_anchor" href="#step-1--root-layer-scheme-three-layers-decided-option-b--landed" aria-hidden="true">#</a>Step 1 — Root layer scheme: three layers (DECIDED: option B) ✅ LANDED</h3>
+<p>The <code>_getParentMaps</code> root FIXME (<code>scope-resolution.mjs:482-484</code>: “at the
+root … differentiate whether to inherit or take from the defaults”)
+maps naturally onto cascade layering (handoff review addition 3).
+DECISION: three layers —
+<code>[[&quot;local&quot;, local], [&quot;inherited&quot;, parentProjection], [&quot;defaults&quot;, defaultsMap]]</code> with per-read precedence via <code>getLayer</code>. At
+the root the “inherited” layer is empty/absent and “defaults” carries
+the typeSpec defaults map; below the root both layers are present.</p>
+<p><strong>Required inline documentation</strong> (operator instruction): because no
+consumer differentiates “inherited” vs “defaults” yet, the layer scheme
+must carry a comment at the construction site explaining WHY the
+distinction exists (the FIXME’s inherit-vs-default semantics, the
+per-read <code>getLayer</code> potential, and that current consumers read the
+effective view only). The missing consumer means missing documentation
+— the code must supply it.</p>
+<h3><a id="step-2--hierarchicalscopeproperties-effective-map--cascadingmap--landed" class="heading_anchor" href="#step-2--hierarchicalscopeproperties-effective-map--cascadingmap--landed" aria-hidden="true">#</a>Step 2 — <code>HierarchicalScopeProperties</code> effective map → CascadingMap ✅ LANDED</h3>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/scope-resolution.mjs</code></p>
+<ul>
+<li><code>_initPropertyValuesMaps</code>: replace the <code>mapSetProperties(new Map(), filteredParent, local)</code> copy with the three-layer cascade per the
+Step 1 decision: <code>[[&quot;local&quot;, localPropertyValuesMap], [&quot;inherited&quot;, parentProjection], [&quot;defaults&quot;, defaultsMap]]</code> (layers absent when
+empty, e.g. “inherited” at the root).</li>
+<li><code>_getParentMaps</code>: drop the intermediate <code>new Map(...)</code> copy; the
+cascade layers reference the parent’s projection directly (immutable
+after construction — memoization constraint, see Step 4). The
+function’s two-map return contract simplifies accordingly; check
+<code>createPatched</code>’s use of <code>_getParentMaps()[1]</code>.</li>
+<li>No changes to generator invocation, demarcation routing, or synthetic
+resolution — all already shared.</li>
+</ul>
+<p><strong>Tests</strong> (behavior, not implementation — umbrella Testing Strategy):
+assert on resolved maps via the public surface: parent key readable
+through child; local key overrides parent on same name; tombstoned key
+absent from child’s projection but present in own <code>getProperties()</code>;
+defaults readable at root. No assertions on <code>_index()</code>, layer internals,
+or map identity between layers.</p>
+<h3><a id="step-3--patchedscopeproperties--cascadingmap--landed" class="heading_anchor" href="#step-3--patchedscopeproperties--cascadingmap--landed" aria-hidden="true">#</a>Step 3 — <code>PatchedScopeProperties</code> → CascadingMap ✅ LANDED</h3>
+<p><strong>File</strong>: <code>scope-resolution.mjs</code> (same file, separate commit)</p>
+<ul>
+<li>Local layer = style patch applied over raw properties (the existing
+<code>mapSetProperties(new Map(), rawProperties, stylePatch)</code> merge is a
+LOCAL construction, not a parent copy — it may stay a plain Map).</li>
+<li>Effective map = FLAT cascade (DECIDED): <code>[[&quot;local&quot;, patchedLocal], [&quot;parent&quot;, ownProjection], [&quot;inherited&quot;, grandParentMap]]</code> —
+preserving the current precedence patched-local &gt; own outbound
+projection &gt; grand-parent filtered map. The grand-parent slot uses the
+label “inherited”, matching the Step 1 vocabulary. No wrapping of
+plain Maps in single-layer cascades.</li>
+</ul>
+<p><strong>Tests</strong>: style patch overrides origin property; non-patched properties
+still resolve from the origin’s outbound map; grand-parent tombstones
+remain honored (per the existing NOTE at <code>:322-327</code>).</p>
+<h3><a id="step-4--shared-base-class-final-effort--landed" class="heading_anchor" href="#step-4--shared-base-class-final-effort--landed" aria-hidden="true">#</a>Step 4 — Shared base class (FINAL effort) ✅ LANDED</h3>
+<p>Both classes now construct identical cascades. Extract:</p>
+<ul>
+<li>The cascade construction <code>CascadingMap([[&quot;local&quot;, local], [&quot;parent&quot;, parentMap]])</code> into the shared base.</li>
+<li><strong>Memoized <code>getInheritableProperties()</code></strong> into the base — owning the
+per-instance memoization for BOTH classes (the typeSpecnion currently
+relies on the empty-policy early return; once a policy yields controls
+the identity-stability constraint from the handoff applies to it too).</li>
+<li>Respect the session-learned constraints (handoff): map-only parents in
+the live document-node tree (<code>createFromParentMap</code> / G8 contract);
+memoized projection identity (document-node rebuild guard compares by
+identity); self-vs-ancestor distinction in scope-build wiring
+(<code>_parentScopeChain</code>, never <code>_widgets[0]</code>).</li>
+<li>Base class (DECIDED: option c): the new shared base EXTENDS
+<code>_BaseScopeProperties</code>, <code>HierarchicalScopeNodeProperties</code> joins the
+hierarchy, AND <code>_BaseScopeProperties</code>’s constructor trickery
+(throw-on-get/redefine-on-set accessors, <code>:65-96</code>) is modernized to
+plain field assignment in the same step — the outdated pattern is
+removed, not replicated (CODINGSTYLE).</li>
+</ul>
+<p><strong>Tests</strong>: existing suites (<code>type-specnion.test.mjs</code>,
+<code>node-properties.test.mjs</code>) must pass UNCHANGED — the base extraction is
+behavior-neutral by construction; that is the test.</p>
+<h3><a id="docs-commit-last--in-progress" class="heading_anchor" href="#docs-commit-last--in-progress" aria-hidden="true">#</a>Docs commit (last) — IN PROGRESS</h3>
+<p>Commit exactly THREE documents into the existing structure under
+<code>docs/planning/agentic-artefacts/thoughts/</code>:</p>
+<ol>
+<li>The handoff note <code>2026-09-07-cascadingmap-reuse-phase6.md</code>
+(repo root) → <code>notes/2026-09-07-cascadingmap-reuse-phase6.md</code>
+(decided: <code>notes/</code>, precedent
+<code>notes/2026-09-07-editor-not-on-nodeProperties-channel.md</code>).</li>
+<li>This plan → <code>plan/2026-09-07-1915-phase-6-cascadingmap-merge.md</code>.</li>
+<li>The research document →
+<code>research/2026-09-07-1918-phase-6-cascadingmap-merge.md</code>.</li>
+</ol>
+<p>The pre-existing <code>thoughts/</code> tree (umbrella plan, editor-wiring plan,
+earlier research) is NOT part of this commit — those belong to their
+own cycles.</p>
+<h2><a id="decisions-operator-2026-09-07" class="heading_anchor" href="#decisions-operator-2026-09-07" aria-hidden="true">#</a>Decisions (operator, 2026-09-07)</h2>
+<ol>
+<li><strong>Root layer scheme → option B (three layers)</strong>: nice-to-have but
+cheap now; MUST add inline documentation at the construction site
+explaining why the “inherited” vs “defaults” distinction exists, as
+the missing consumer means missing documentation.</li>
+<li><strong>Base class → option c</strong>: extend <code>_BaseScopeProperties</code>, node
+channel joins the hierarchy, constructor trickery modernized to plain
+field assignment in the same step.</li>
+<li><strong>Patched scope → flat, “inherited” label</strong> for the grand-parent
+map; no nesting.</li>
+</ol>
+<h2><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h2>
+<ul>
+<li>Automated: full verification battery green PER LANDING:
+<code>npx vitest run</code>, <code>npx eslint</code>, <code>npm run typecheck</code>, <code>npm run build:app</code>.</li>
+<li>Behavior: wikipedia demo type-setting unchanged (typeSpecnion-driven
+styling is behavior-neutral); live check that inheritance controls
+(a <code>layout/width</code> tombstone) still withhold/re-route identically
+through the typeSpecnion path.</li>
+<li>Structural: no <code>mapSetProperties(new Map(), ...)</code> parent-copy remains
+in the scope classes; both construct CascadingMap cascades (three-layer
+per Step 1, flat “inherited” per Step 3); shared base owns construction
+<ul>
+<li>memoized projection; <code>_BaseScopeProperties</code> constructor trickery
+removed; the layer-scheme rationale is documented inline at the
+construction site.</li>
+</ul>
+</li>
+</ul>
+<h2><a id="working-agreements" class="heading_anchor" href="#working-agreements" aria-hidden="true">#</a>Working Agreements</h2>
+<ol>
+<li><strong>Small, reviewable steps</strong>: each step lands as one or a few small
+commits; no step bundles unrelated changes.</li>
+<li><strong>Commit gate</strong>: before EVERY commit, stop with the proposed commit
+message (and file list) and wait for explicit operator
+acknowledgement. No commits and no file writes without explicit
+permission (OKOK).</li>
+<li><strong>Docs commit last</strong>: exactly the three documents listed above.</li>
+<li><strong><code>.prettierignore</code> on new <code>.mjs</code> files</strong>: this phase modifies
+existing files only; any new <code>.mjs</code> file (e.g. a shared-base module,
+if extracted to its own file) needs an explicit <code>!lib/js/...</code> entry.</li>
+<li><strong>Behavior tests</strong>: tests assert inputs → observable outcomes on the
+resolved maps, never function/method implementations. Implementation
+refactors must not require test rewrites.</li>
+<li><strong>Verification battery per landing</strong>: <code>npx vitest run</code>, <code>npx eslint</code>,
+<code>npm run typecheck</code>, <code>npm run build:app</code>.</li>
+</ol>
+<h2><a id="watch-items-not-in-scope" class="heading_anchor" href="#watch-items-not-in-scope" aria-hidden="true">#</a>Watch-items (not in scope)</h2>
+<ul>
+<li>CascadingMap layer nesting depth: if deep chains profile hot, flatten
+at construction (internal change, read interface identical — noted in
+<code>cascading-map.mjs</code>).</li>
+<li>Width-semantics policy content (what actually gets tombstoned /
+re-routed): parked until “the engine is in a good shape” — independent
+of this structural unification.</li>
+<li><code>mapSetProperties</code> itself remains used internally by
+<code>resolveInheritableProperties</code> (<code>:374-378</code>, control merging) and
+<code>PatchedScopeProperties</code>’ local merge — only the parent-copy uses are
+retired.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

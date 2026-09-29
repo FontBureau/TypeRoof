@@ -12,7 +12,15 @@ prosemirror
      * width — they must keep their resolved size, the host scrolls. */
     flex-shrink: 0;
 
-    --label-width-or-margin-inline-start: 2.5rem;
+    /* These elements will have a fixed width set, but their children
+     * may grow bigger than that, it's allowed to define an overflowing
+     * width, in compare mode the left pane would overlap the right pane,
+     * if we didn't allow to grow. */
+    min-width: fit-content;
+
+    /* for our labels we use anchor positioning but e.g. in compare mode
+     * the viewer and the editor would set the same anchors */
+    anchor-scope: all;
 }
 
 :where(.ProseMirror, .typeroof-document) {
@@ -74,12 +82,25 @@ prosemirror
 
     *[data-node-type] {
         line-height: var(--line-height);
+        padding: var(--space-before) 0 var(--space-after) 0;
 
         /* FIXME: not functioning in Firefox, requires workaround! */
+
+        /*
+         * has a bug in Chrome and is not supported in Firefox yet.
+         * https://issues.chromium.org/issues/559001358
         text-box: trim-start text;
+         */
 
         --space-before: var(--margin-block-start, 0);
         --space-after: var(--margin-block-end, 0);
+
+        .has-node-labels &::before {
+            content: "";
+            anchor-name: var(--node-anchor-name);
+            height: 1.3rem;
+            display: block;
+        }
     }
 
     /* These rules were compensating an older, more "hacky" way on how
@@ -94,10 +115,6 @@ prosemirror
         --space-after: 0;
     }
     */
-    .editor-advanced:not(.has-node-labels) &,
-    &.typeroof-document:not(.has-node-labels) {
-        margin-inline-start: var(--label-width-or-margin-inline-start, 0);
-    }
 
     .editor-simple & {
         /* this is a very simple editor instance */
@@ -117,7 +134,11 @@ prosemirror
         }
 
         > *:first-child {
+            /*
+             * has a bug in Chrome and is not supported in Firefox yet.
+             * https://issues.chromium.org/issues/559001358
             text-box: trim-start text;
+            */
         }
 
         > *:not(:first-child) {
@@ -131,67 +152,15 @@ prosemirror
 }
 
 .editor-advanced *[data-node-type] {
-    /* only acceptable for block-style
-     * this way, the label-columns in the ramp on the left can
-     * spread over the entire height of the element including its
-     * margins, which are here expressed as template areas which wont
-     * be occupied by elements.
-     */
-    display: grid;
-    grid-template-columns: auto;
-    grid-template-rows:
-        var(--space-before, 0)
-        auto auto
-        var(--space-after, 0);
-    grid-template-areas:
-        "space-before"
-        "content"
-        "bottom"
-        "space-after";
+    width: fit-content;
 
     & > [data-node-content] {
-        grid-area: content;
+        /* this element receives the padding and width */
+        box-sizing: border-box;
     }
 
     & > .ui-parameters-display {
-        grid-area: bottom;
         line-height: 1.3;
-    }
-}
-
-.editor-advanced.has-node-labels *[data-node-type] {
-    grid-template-columns: var(--label-width-or-margin-inline-start, 0) auto;
-    grid-template-areas:
-        "label space-before"
-        "label content"
-        "label bottom"
-        "label space-after";
-
-    & > .ui_type_spec_label {
-        position: relative;
-        grid-area: label;
-
-        > span {
-            /* this way (psoition absolute) the label does not
-             * influence the height of the actual element, even
-             * if the element is smaller than the lavel.
-             */
-            position: absolute;
-            width: stretch; /* only use available space */
-            font-size: 1rem;
-            background-color: transparent;
-            line-height: 1.3;
-            padding: 0.3rem;
-            margin-inline-end: 0.3em;
-            text-align: center;
-            text-overflow: ellipsis;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-
-        &.ui_type_spec-editing {
-            background-color: #eef;
-        }
     }
 }
 
@@ -248,8 +217,10 @@ prosemirror
 }
 
 .typeroof-document *[data-node-type] {
-    padding: var(--space-before) 0 var(--space-after) 0;
     line-height: var(--line-height);
+
+    /* this element receives the padding and width */
+    box-sizing: border-box;
 
     /* In order to achive a pixel-perfect match between the prosemirror
      * elements and the document, this switches the layout engine to treat
@@ -260,4 +231,31 @@ prosemirror
      * instrumentation that we can't change easily.
      */
     display: table;
+}
+
+.ui_prosemirror_host-anchor_targets_container {
+    width: 0;
+    height: 0;
+
+    &:not(.has-node-labels &) {
+        display: none;
+    }
+}
+
+.ui_type_spec_label {
+    position: absolute;
+    inset-block: anchor(start) anchor(end);
+    inset-inline: anchor(start) anchor(end);
+    z-index: 1234;
+    padding: 0.15rem;
+    font-size: 0.85rem;
+    pointer-events: none;
+    font-weight: bolder;
+    color: var(--text-color);
+    background: var(--sidebar-bg-color);
+    border-top: 1px solid var(--fieldset-border-color);
+
+    &.ui_type_spec-editing {
+        background: lavender;
+    }
 }

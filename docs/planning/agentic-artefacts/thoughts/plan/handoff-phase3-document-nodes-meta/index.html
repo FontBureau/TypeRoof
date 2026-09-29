@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="handoff-phase-3-of-the-document-tree-walkerrenderer-separation-typeroof-2026-09-05" class="heading_anchor" href="#handoff-phase-3-of-the-document-tree-walkerrenderer-separation-typeroof-2026-09-05" aria-hidden="true">#</a>Handoff: Phase 3 of the document-tree walker/renderer separation (TypeRoof, 2026-09-05)</h1>
+<h2><a id="situation" class="heading_anchor" href="#situation" aria-hidden="true">#</a>Situation</h2>
+<p>We are in an RPI cycle implementing Phase 5a of <code>thoughts/plans/2026-09-05-1623-node-properties.md</code>
+(umbrella). The cycle plan is <code>docs/planning/agentic-artefacts/thoughts/plan/2026-09-05-2159-document-tree-walker-renderer-separation.md</code>,
+research is <code>docs/planning/agentic-artefacts/thoughts/research/2026-09-05-2119-document-tree-walker-renderer-separation.md</code>.
+<strong>Read the plan first; it is the source of truth.</strong> Phases 0–2 are committed and green on branch
+<code>demo/wikipedia</code>:</p>
+<ul>
+<li><code>4f46a476</code> Phase 0: hygiene (dead code, fixture skip-guards)</li>
+<li><code>debe5f94</code> Phase 1: behavior safety net <code>lib/js/tests/type-stage-viewer-behavior/index.test.mjs</code> (G1–G7)</li>
+<li><code>8dbd2055</code> Phase 2: pure derivations extracted to
+<code>lib/js/components/layouts/type-stage/document-nodes-meta.mjs</code> (DOM-free function library:
+<code>resolveElementRenderingPlan</code>, <code>getWrapMarks</code>, <code>computeAttrDrivenDiff</code>, etc.). The viewer delegates.</li>
+</ul>
+<p><strong>Your job: Phase 3 — the ownership flip.</strong> This is where <code>DocumentNodesMeta</code> actually comes into
+existence. Despite the module name, <strong>no meta widget tree exists yet</strong> — Phase 2 produced only a
+function library; the viewer’s <code>UIDocumentNodes</code>/<code>UIDocumentNode</code>/<code>UIDocumentElement</code> tree is still
+the only document-tree structure, still mode-gated, still walking the document itself.</p>
+<h2><a id="design-center-operator-confirmed-non-negotiable" class="heading_anchor" href="#design-center-operator-confirmed-non-negotiable" aria-hidden="true">#</a>Design center (operator-confirmed, non-negotiable)</h2>
+<p><strong>We always have meta and the nodeProperties; optionally we can attach DOM rendering, or future
+renderers.</strong> Locked decisions (see plan “Decisions” section):</p>
+<ol>
+<li><code>DocumentNodesMeta</code> always active at the top controller of <strong>both</strong> layouts
+(<code>layouts/type-stage/index.typeroof.jsx</code> and <code>layouts/ramp/index.typeroof.jsx</code>), rootPath
+<code>./document</code>, <strong>no activationTest</strong> — parallel to the viewer/editor registrations. The viewer
+keeps its <code>showViewerActivationTest</code>.</li>
+<li>Per-node registration id = <strong><code>nodeProperties@&lt;absolute documentNodePath&gt;</code></strong> (id = model path,
+framework convention; <code>SimpleProtocolHandler.register</code> throws on duplicates). Parent lookup =
+path math. Payload for now: the root node-properties map (behavior-neutral; 5b installs real
+per-node scopes).</li>
+<li><strong>Adopt, don’t parallel</strong>: <code>UIDocumentNodes</code>/<code>UIDocumentNode</code> (and the pure halves of
+<code>UIDocumentElement</code>/<code>UIDocumentTextRun</code>) form the meta tree; DOM rendering becomes an optional
+attachment created by the meta nodes. Do NOT build a second parallel tree with sync logic.</li>
+<li>Consumers that know their document-node path subscribe to <strong>their own</strong>
+<code>nodeProperties@&lt;documentNodePath&gt;</code> id (behavior-neutral today, exercises the scheme, is the 5b
+position); context-free consumers (pane styler) keep the root id.</li>
+</ol>
+<h2><a id="work-items-plan-phase-3-with-the-design-step-the-operator-expects-first" class="heading_anchor" href="#work-items-plan-phase-3-with-the-design-step-the-operator-expects-first" aria-hidden="true">#</a>Work items (plan Phase 3, with the design step the operator expects FIRST)</h2>
+<p><strong>Step 0 — attachment interface design, review before code.</strong> The plan names the seams but not the
+mechanism. Produce a short written design for operator review covering:</p>
+<ul>
+<li>How <code>DocumentNodesMeta</code> (always on) exposes per-node lifecycle to optional renderers — likely a
+renderer-registration on the meta root; the viewer registers/unregisters on its
+activationTest-driven create/destroy (mode switches!).</li>
+<li>How the mode-gated viewer discovers and hooks the meta tree (both are children of the same
+controller; widget lookup conventions: <code>getWidgetById</code>, protocol handlers).</li>
+<li>The insertion-callback interface replacing the <code>insertDocumentNode</code> monkey-patch
+(viewer.typeroof.jsx <code>UIDocumentNodes</code> constructor, formerly :1035-1038) — e.g. meta container
+resolves order/siblings and calls <code>attachment.insertNode(domNode, beforeDomNode|null)</code>, no-op
+when no renderer attached.</li>
+<li>Whether <code>UIDocumentNodes</code>/<code>UIDocumentNode</code> classes move into a meta module wholesale and the
+viewer classes become subclasses/attachments, or the meta tree gains an attachment slot per node.
+Key framework facts: DOM-less widgets are first-class (omit <code>zone</code> in settings ⇒
+<code>hostElement: null</code>); dynamic-map provisioning lives in <code>_BaseDynamicMapContainerComponent</code>;
+<code>UIDocumentNode</code> is already pure tree infrastructure (research §1.2).</li>
+<li>Ramp layout check: ramp is editor-only (no viewer, no mode switching);
+<code>RampProseMirrorContext</code> at <code>layouts/ramp/index.typeroof.jsx:90</code>; <code>nodeProperties@</code> handler
+already installed at :250. Meta must work there with zero attachments.</li>
+</ul>
+<p><strong>Step 1 — implement</strong> (after design OK):</p>
+<ol>
+<li><code>DocumentNodesMeta</code> dynamic-map container + meta node classes (adopt from viewer code), in
+<code>document-nodes-meta.mjs</code> or a new <code>.typeroof.jsx</code> if JSX/widget classes warrant it
+(housekeeping: new <code>.mjs</code> files need an explicit un-ignore line in <code>.prettierignore</code>).</li>
+<li>Register always-active in both layout controllers (rootPath <code>./document</code>, deps
+<code>nodeSpec</code>/<code>markSpec</code>/<code>nodeSpecToTypeSpec</code>).</li>
+<li>Viewer becomes an attachment: <code>UIDocumentViewer</code> keeps its activationTest + root <code>&lt;article&gt;</code>,
+attaches to the meta tree instead of owning the walk; monkey-patch → defined insertion callback.</li>
+<li>Per-node <code>nodeProperties@&lt;documentNodePath&gt;</code> registrations in meta nodes
+(<code>setUpdated</code> push on change, <code>hasProtocolHandlerRegistration</code> guard idiom, payload = root map).</li>
+<li>Consumer migration per decision 4.</li>
+</ol>
+<p><strong>Step 2 — verify (required before commit):</strong></p>
+<ul>
+<li><code>npm run typecheck</code>, <code>npm run lint</code>, <code>npm test</code> — the G1–G7 behavior suite MUST pass <strong>unmodified</strong>.</li>
+<li>New assertion (add to the behavior suite): in editor-only mode no <code>article.typeroof-document</code>
+exists while per-node <code>nodeProperties@</code> registrations are live (observable via the protocol
+handler).</li>
+<li>Manual (required, not optional): wikipedia demo — editor, viewer, compare modes render and switch
+identically; ramp layout renders, labels/parameters work.</li>
+</ul>
+<h2><a id="commit-discipline-operator-instruction-absolute" class="heading_anchor" href="#commit-discipline-operator-instruction-absolute" aria-hidden="true">#</a>Commit discipline (operator instruction, absolute)</h2>
+<p>Before EVERY commit: stop, present commit message + file list, proceed only on operator’s “OKOK”.
+Commit messages carry the metadata trailer read from its actual sources at commit time:
+provider = <code>grep -m1 '^active_provider:' ~/.config/goose/config.yaml | sed 's/^[^:]*: *//'</code>;
+model = <code>awk -v p=&quot;$PROVIDER&quot; '$0 ~ &quot;^  &quot; p &quot;:$&quot; {f=1; next} /^  [a-z]/ {f=0} f &amp;&amp; /model:/ {sub(/.*model: */,&quot;&quot;); print; exit}' ~/.config/goose/config.yaml</code>;
+agent = <code>goose --version | head -1 | tr -d ' '</code> → <code>agent: goose v&lt;version&gt;</code>.</p>
+<h2><a id="after-phase-3" class="heading_anchor" href="#after-phase-3" aria-hidden="true">#</a>After Phase 3</h2>
+<ul>
+<li>Follow-up already noted in the plan (“Follow-up Items”): the pinned mark-wrap quirk (G7) —
+<code>UIDocumentTextRun</code> dependency mappings lack <code>&quot;marks&quot;</code>; ~1–3 line fix + flip G7 assertions.
+Good first post-5a commit; verifies the new meta dependency wiring end-to-end.</li>
+<li>Phase 4 (archive): <code>git mv</code> research + plan into <code>docs/planning/agentic-artefacts/thoughts/{research,plan}/</code>,
+update cross-references, final archiving commit (also gated on OKOK).</li>
+<li>The <code>thoughts/</code> directory is currently untracked — expected; it lands with the archiving commit.</li>
+</ul>
+<h2><a id="known-landmines-learned-in-phases-12" class="heading_anchor" href="#known-landmines-learned-in-phases-12" aria-hidden="true">#</a>Known landmines (learned in Phases 1–2)</h2>
+<ul>
+<li>Class-field bindings (<code>_getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod</code>) don’t survive
+being passed as callbacks across module boundaries — pass bound closures.</li>
+<li>List-model iteration yields <code>[key, value]</code> pairs; splice/move only via the state draft chain
+(<code>draft.get(&quot;activeState&quot;).get(&quot;document&quot;).get(&quot;content&quot;)...</code>), never <code>getDraft()</code> on immutable
+sub-models.</li>
+<li>Schema typeKeys are names like <code>heading-2</code>/<code>paragraph</code> (not <code>h2</code>/<code>p</code>); <code>&quot;strong&quot;</code> is a mark, not
+a node.</li>
+<li>Pre-existing lint error unrelated to this work: <code>properties-generators.mjs:534</code>
+<code>horizontalWidthSum</code> unused — leave alone.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

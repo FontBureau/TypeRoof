@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-editorviewer-styling-divergence-nodeproperties-wiring" class="heading_anchor" href="#research-editorviewer-styling-divergence-nodeproperties-wiring" aria-hidden="true">#</a>Research: Editor/Viewer Styling Divergence (nodeProperties@ wiring)</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>The styling of the editor and the viewer have diverged: the viewer’s
+styler consumes the per-document-node <code>nodeProperties@</code> channel, the
+editor’s styler does not. Context: umbrella plan
+<code>thoughts/plans/2026-09-05-1623-node-properties.md</code> (Phase 5b done,
+follow-ups parked) and the working analysis note
+<code>2026-09-07-editor-not-on-nodeProperties-channel.md</code>. Document the
+current wiring of both renderers, the shared styler, and the
+node-properties channel as they exist today.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p>Both renderers instantiate the same <code>UIDocumentTypeSpecStyler</code>, which
+internally builds <code>CascadingMap([[&quot;node&quot;, nodePropertiesMap], [&quot;style&quot;, typeSpecnionMap]])</code> (node layer wins). The <strong>viewer</strong> maps
+<code>nodeProperties@&lt;documentNodePath&gt;</code> per node into the styler, so its
+node layer carries real per-node maps. The <strong>editor</strong> never maps
+<code>nodeProperties@</code>; the styler reads it unregistered, the protocol’s
+<code>notFoundFallbackValue: null</code> kicks in, and the node layer degrades to
+an empty Map — the editor styles from the typeSpecnion alone.</p>
+<p>Consequence for width: the root node-properties scope carries the pane’s
+<code>layout/width|height</code> (identity synthetics over <code>layout/availableWidth| Height</code>), and <strong>no demarcation exists</strong> in
+<code>HierarchicalScopeNodeProperties</code> — root <code>layout/width</code> cascades through
+the nested parent layers into every document node’s effective map. The
+viewer (node layer populated) applies it as CSS <code>width</code> on block
+elements; the editor (node layer empty) does not — the “<code>layout/*</code>
+absent → unset” contract holds only where the channel is unwired.</p>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-the-shared-styler-uidocumenttypespecstyler" class="heading_anchor" href="#1-the-shared-styler-uidocumenttypespecstyler" aria-hidden="true">#</a>1. The shared styler: UIDocumentTypeSpecStyler</h3>
+<p><code>lib/js/components/prosemirror/type-spec.typeroof.jsx</code></p>
+<ul>
+<li>Constructor <code>:232-242</code>: <code>(widgetBus, innerElement, outerElement, pmNode = null)</code> — receives <strong>no property maps</strong>; all data arrives via
+<code>update(changedMap)</code>.</li>
+<li><code>update</code> reads three channels: <code>nodeProperties@</code> (<code>:253-261</code>,
+null-tolerant: unregistered entry → empty <code>new Map()</code> at <code>:260</code>),
+<code>properties@</code> (<code>:300-303</code>, <code>.typeSpecnion.getProperties()</code>),
+<code>nextProperties@</code> (<code>:306-316</code>, only when wired).</li>
+<li>Cascade construction <code>:296-305</code>: <code>new CascadingMap([[&quot;node&quot;, nodePropertiesMap], [&quot;style&quot;, typeSpecnion.getProperties()]])</code> —
+first-hit-wins, node layer precedes style layer. Introduced in
+<code>f51e36bb</code> (“Phase 5b consumer polish”), replacing the <code>05eaf4f9</code>
+spread-merge; behavior-identical per the comment <code>:290-295</code>.</li>
+<li><code>innerPropertiesData</code> <code>:262-272</code> (applied to inner): <code>text-align</code>,
+<code>direction</code>, <strong><code>${LAYOUT}width</code> → <code>width</code>, unit <code>pt</code> (<code>:265</code>)</strong>,
+<code>padding-inline-start/end</code>.</li>
+<li><code>outerPropertiesData</code> <code>:273-289</code> (applied to outer): <code>--line-height</code>,
+<code>--margin-block-start/end</code> (all custom properties).</li>
+<li>The “<code>layout/*</code> absent → unset” contract: <code>getDefault</code> <code>:351-362</code>;
+for keys starting with <code>LAYOUT</code> it returns <code>[false, &quot;&quot;]</code> (comment
+<code>:356-360</code>: “nodeProperties@ keys are unregistered by design; when
+absent (non-root scopes) the CSS property stays unset”). This makes
+the empty-Map degradation safe.</li>
+<li>Column layout <code>:390-405</code>: <code>generic/columnCount &gt; 1</code> pushes
+column-count/gap/width + <code>display:block</code> onto innerPropertiesData.</li>
+<li><code>destroy()</code> <code>:247-251</code> removes <code>style</code> from both elements, <code>lang</code>
+from outer (styled→silent transitions).</li>
+<li>Historical: the width entry was <code>${GENERIC}width</code> before <code>05eaf4f9</code>
+switched it to <code>${LAYOUT}width</code>; no <code>generic/width</code> read remains.</li>
+</ul>
+<h3><a id="2-viewer-wiring-channel-mapped" class="heading_anchor" href="#2-viewer-wiring-channel-mapped" aria-hidden="true">#</a>2. Viewer wiring (channel mapped)</h3>
+<p><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx</code> +
+<code>document-nodes-meta/derivations.mjs</code></p>
+<ul>
+<li><code>_createTypeSpecStylerWrapper</code> <code>:300-320</code>: builds mappings via
+<code>typeSpecStylerDependencyMappings(typeSpecProperties, </code>+<code>nodeProperties@${this._documentNodePath.toString()}</code>+<code>, …)</code> (<code>:308</code>).</li>
+<li><code>_documentNodePath</code> = <code>metaInfo.rootPath</code> (the absolute document-node
+path from the meta tree), set in <code>_UIDocumentAttachment</code> <code>:231</code>.</li>
+<li><code>typeSpecStylerDependencyMappings</code> (<code>derivations.mjs:362-386</code>):
+<code>[typeSpecProperties, &quot;properties@&quot;]</code>, <code>[nodePropertiesId, &quot;nodeProperties@&quot;]</code> (<code>:370</code>), <code>[&quot;/font&quot;, &quot;rootFont&quot;]</code>, conditional
+<code>noStyler</code> (<code>:378-381</code>, provisioning trigger only) and conditional
+<code>nextProperties@</code> (<code>:382-385</code>).</li>
+<li>Element targets: <code>args = [this.node, this.node]</code> (<code>:313</code>) —
+<strong>inner === outer</strong>, the node’s local container; no <code>pmNode</code>.</li>
+<li>Rebuild check <code>_provisionTypeSpecStyler</code> <code>:456-477</code>: compares <strong>only</strong>
+<code>dependencyReverseMapping.get(&quot;properties@&quot;)</code> against the freshly
+resolved id (<code>:464-466</code>). <code>nodeProperties@</code> is deliberately excluded
+(comment <code>:458-463</code>): its id is document-path-keyed and stable for
+the wrapper’s lifetime; a moved/rebuilt node gets a new wrapper from
+the meta tree anyway.</li>
+</ul>
+<h3><a id="3-editor-wiring-channel-not-mapped" class="heading_anchor" href="#3-editor-wiring-channel-not-mapped" aria-hidden="true">#</a>3. Editor wiring (channel NOT mapped)</h3>
+<p><code>lib/js/components/prosemirror/type-spec.typeroof.jsx</code> +
+<code>integration.typeroof.jsx</code></p>
+<ul>
+<li>Call chain: <code>ProsemirrorNodeView</code> (<code>integration.typeroof.jsx:294</code>) →
+<code>TypeSpecSubscriptions.subscribe</code> (<code>type-spec.typeroof.jsx:1307</code>) →
+<code>_createTypeSpecStylerWrapper</code> (<code>:1227</code>) → <code>UIDocumentNodeOutfitter</code>
+(<code>:543</code>) → <code>_createWidgetDefinition</code> (<code>:669</code>).</li>
+<li>Element split (<code>integration.typeroof.jsx:334-380</code>, passed as
+<code>structuralElements</code> at <code>:374-380</code>): <strong>outer</strong> = block element
+(<code>data-node-type</code>, <code>this.dom</code>), <strong>inner</strong> = content div
+(<code>data-node-content</code>, PM <code>contentDOM</code>) — for reproducing atoms inner
+=== outer. Recorded as intentional and correct (operator, 2026-09-07).</li>
+<li>Outfitter-level mappings (<code>:1229-1252</code>): <code>properties@</code> (node-specific
+<code>typeSpecProperties@&lt;path&gt;</code>), <code>rootFont</code>, <code>showParameters</code>,
+<code>showNodeTypeSpecLabels</code>, <code>parentContent</code>, <code>nodeSpecToTypeSpec</code>,
+<code>noStyler</code>.</li>
+<li>Styler dependencies <code>_createWidgetDefinition</code> <code>:676-695</code>:
+<code>properties@</code> (<code>:678</code>), <code>rootFont</code> (<code>:679</code>), <code>parentContent</code>
+(<code>:682-685</code>), conditional <code>nextProperties@</code> (<code>:688-695</code>).
+<strong><code>nodeProperties@</code> is absent</strong> — neither here nor in the
+outfitter-level mappings.</li>
+<li>The styler nonetheless calls <code>this.getEntry(&quot;nodeProperties@&quot;)</code>
+(<code>:255-257</code>, comment: “unregistered, may be null until the root
+registers”); with the protocol’s <code>notFoundFallbackValue: null</code> this
+yields <code>null</code> → empty Map (<code>:258-261</code>). The editor’s cascade node
+layer is therefore always empty: it styles from the typeSpecnion
+only. (Note: it does NOT fall back to the root registration either.)</li>
+<li>Node identity lives on the <strong>outfitter</strong>, not the styler:
+<code>this._pmNode</code>, <code>this._getPos</code>, <code>this._typeSpecPath</code>,
+<code>this._originTypeSpecPath</code> (<code>:565-568</code>); the styler is constructed
+with <code>pmNode = null</code> even in the editor (<code>:698-700</code> pass only
+inner/outer). <code>pathOfTypes</code> is derived per update via
+<code>view.state.doc.resolve(getPos())</code> + <code>getPathOfTypes</code>
+(<code>:1283-1286</code>; <code>integration.typeroof.jsx:34-53</code>).</li>
+<li>Widget keying: subscriptions keyed by <code>domElement</code>
+(<code>_subscribers</code> Map, <code>:1324</code>); <code>_updateWidget</code> (<code>:1455-1518</code>)
+re-derives <code>pathOfTypes</code>/<code>typeSpecProperties</code>/<code>typeSpecPath</code>/
+<code>parentContentsPath</code> and rebuilds the wrapper on change; the styler
+inside the outfitter is a single positional dynamic widget rebuilt by
+<code>_provisionWidgets</code> (<code>:754-800</code>) on nextProperties/silent/initial.</li>
+</ul>
+<h3><a id="4-the-node-properties-channel-phase-5b-state" class="heading_anchor" href="#4-the-node-properties-channel-phase-5b-state" aria-hidden="true">#</a>4. The node-properties channel (Phase 5b state)</h3>
+<p><code>document-nodes-meta/index.mjs</code>, <code>node-properties.mjs</code>,
+<code>node-properties-generators.mjs</code>, <code>live-properties.typeroof.jsx</code></p>
+<ul>
+<li>Protocol handler: <code>SimpleProtocolHandler.create(&quot;nodeProperties@&quot;, { notFoundFallbackValue: null })</code> in both controllers
+(type-stage <code>index.typeroof.jsx:296-300</code>, ramp <code>index.typeroof.jsx :252-259</code>); <code>resetUpdatedLog()</code> in update/initialUpdate of both.</li>
+<li>Two identifier families in one registry:
+<ul>
+<li><strong>Root</strong>: <code>nodeProperties@&lt;typeSpecPath&gt;</code> — registered only by the
+root <code>TypeSpecLiveProperties</code> (<code>meta.typeroof.jsx:266-275</code>, guarded
+by <code>typeSpecDefaultsMap !== null</code>); payload accessor
+<code>.nodeProperties</code> (<code>live-properties.typeroof.jsx:86-92</code>).</li>
+<li><strong>Per node</strong>: <code>nodeProperties@&lt;absoluteDocumentNodePath&gt;</code> (e.g.
+<code>nodeProperties@0/2</code>) — registered by the meta dispatcher
+(<code>document-nodes-meta/index.mjs:409-453</code>, id at <code>:419</code>, comment
+“locked decision 2” <code>:415-418</code>). Payload is scope-like
+(<code>.getProperties()</code>), <code>:216-227, 343-345</code>. Text runs are
+consume-only, delegating to the parent element’s scope (<code>:902-937</code>).</li>
+</ul>
+</li>
+<li>Scope construction (<code>node-properties.mjs:35-74</code>): generators run as
+<code>gen(outerAPI, hostMap)</code>; demarcation third elements are <strong>ignored</strong>
+(<code>:55-57</code>); effective map = <code>CascadingMap([[&quot;local&quot;, local], [&quot;parent&quot;, parentMap]])</code> (<code>:63-66</code>) — inheritance is cascade nesting.
+<code>inheritancePolicyGenerators</code> is accepted (<code>:39</code>) and stored (<code>:73</code>)
+but <strong>never read anywhere</strong> — no demarcation/tombstone mechanism
+exists in the node channel.</li>
+<li>Root scope (<code>live-properties.typeroof.jsx:162-190</code>): defaults map =
+<code>getRootNodePropertiesMap(environmentValues)</code> — <strong>environment facts
+only</strong> (<code>layout/environment/...</code>, <code>node-properties.mjs:102-111</code>); the
+pane’s width/height LengthModels enter the <strong>host map</strong> as
+<code>layout/width</code> / <code>layout/height</code> (<code>:171-176</code>, guarded per-layout via
+<code>dependencyReverseMapping.has(dimension)</code>).</li>
+<li>Generators (<code>node-properties-generators.mjs:210-213</code>):
+<ul>
+<li><code>availableSizesGen</code> (<code>:134-160</code>): active only where the host map
+has <code>layout/width|height</code> (i.e. root only); yields
+<code>layout/availableWidth|Height</code> (pt) <strong>and <code>layout/width|height</code> as
+identity synthetics</strong> (<code>:153-158</code>).</li>
+<li><code>horizontalLayoutNodePropertiesGen</code> (<code>:184-204</code>): <strong>stub</strong>; yields
+<code>layout/availableWidth</code> from <code>lineLengthEN * 0.5 * fontSizePT</code>;
+<strong>deliberately no <code>layout/width</code></strong> (comment <code>:199-203</code>: “Until then
+nodes inherit the parent’s width (today: the root pane width — 5a
+behavior).”)</li>
+</ul>
+</li>
+<li>Per-node scopes (<code>index.mjs:568-638</code>): host map = the node’s resolved
+typeSpecnion map; parent arg = parent node’s <strong>settled effective
+map</strong> (“the G8 contract”, <code>:613-622</code>); rebuild guarded on typeSpecnion
+<ul>
+<li>parent-map identity (<code>:584-591</code>); defers while parent is unsettled
+(<code>:606-612</code>); <code>setUpdated</code> via has-guard idiom (<code>:627-637</code>).</li>
+</ul>
+</li>
+<li>Chain threading: no parent-widget chain in the framework; dispatchers
+read <code>parentSettledProperties</code> (<code>index.mjs:236-252</code>); meta root seeds
+top-level dispatchers from the root registration (<code>:992-998</code>); the
+trigger-only mapping <code>[&quot;@parentNodeProperties&quot;]</code> (<code>:802</code>) exists so a
+parent rebuild’s <code>setUpdated</code> re-triggers the child.</li>
+</ul>
+<h3><a id="5-the-width-divergence-mechanism-as-built-today" class="heading_anchor" href="#5-the-width-divergence-mechanism-as-built-today" aria-hidden="true">#</a>5. The width divergence mechanism (as built today)</h3>
+<ol>
+<li>Root host map gets <code>layout/width</code> = pane width LengthModel
+(<code>live-properties.typeroof.jsx:171-176</code>).</li>
+<li>Root <code>availableSizesGen</code> resolves it to pt and re-yields
+<code>layout/width</code> as an identity synthetic
+(<code>node-properties-generators.mjs:153-158</code>) — the root effective map
+now carries <code>layout/width: 1200pt</code>.</li>
+<li>Every per-node scope nests the parent’s effective map as its
+<code>&quot;parent&quot;</code> cascade layer with no demarcation or tombstone
+(<code>node-properties.mjs:55-57, 63-66</code>) — <code>layout/width</code> inherits into
+every document node’s effective map. Confirmed by test expectations:
+<code>lib/js/tests/type-stage-viewer-behavior/index.test.mjs:392-393, 525</code> (node <code>layout/width</code> equals root <code>layout/width</code>).</li>
+<li>Viewer: styler’s node layer is the per-node map →
+<code>innerPropertiesData</code> <code>[layout/width → width, pt]</code>
+(<code>type-spec.typeroof.jsx:265</code>) applies <code>width: 1200pt</code> to the block
+element (inner === outer, <code>viewer.typeroof.jsx:313</code>).</li>
+<li>Editor: styler’s node layer is empty (channel unmapped) →
+<code>getDefault</code> returns <code>[false, &quot;&quot;]</code> for <code>layout/*</code>
+(<code>type-spec.typeroof.jsx:356-360</code>) → CSS width stays unset;
+geometry-ish properties (<code>padding-inline-*</code>) land on the inner
+<code>data-node-content</code> div from the style layer.</li>
+</ol>
+<p>Pre-5b the same contract held in the viewer because per-node payloads
+delegated to the root scope where <code>layout/width</code> was absent for
+document nodes (empirically verified at <code>6a300acc</code>; see the analysis
+note). 5b’s real per-node scopes made the root pane width visible to
+every node.</p>
+<h3><a id="6-typespecnion-side-context" class="heading_anchor" href="#6-typespecnion-side-context" aria-hidden="true">#</a>6. TypeSpecnion side (context)</h3>
+<ul>
+<li>Old <code>environmentGen</code>/<code>availableSizesGen</code>/geometry re-routes are
+commented out, not deleted, in <code>properties-generators.mjs:45-72, 630-679</code> (“Phase 5b teardown … plan decision 6”).</li>
+<li><code>specific/root/width|height</code> seeding remains in <code>seedTypeSpecDefaults</code>
+(<code>live-properties.typeroof.jsx:45-50</code>) but is dead — comment <code>:28-34</code>
+says no caller passes them.</li>
+<li><code>LAYOUT = 'layout/'</code> is a naming convention only, deliberately not in
+<code>SYMBOLIC_TO_PREFIXES</code> and not registered
+(<code>registered-properties-definitions.mjs:23-28</code>).</li>
+</ul>
+<h3><a id="7-pane-styler-the-channels-intended-width-consumer" class="heading_anchor" href="#7-pane-styler-the-channels-intended-width-consumer" aria-hidden="true">#</a>7. Pane styler (the channel’s intended width consumer)</h3>
+<p><code>pane-styler.typeroof.jsx:64-70</code> maps <code>layout/availableWidth|Height</code> →
+CSS <code>width</code>/<code>height</code> (pt) with the same <code>[false, &quot;&quot;]</code> no-default
+treatment; wired to the <strong>root</strong> registration in all three places
+(type-stage <code>index.typeroof.jsx:521-524</code>, ramp <code>index.typeroof.jsx :403-406</code>, <code>viewer.typeroof.jsx:737-740</code>).</p>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:231-242</code> — styler constructor (no property maps)</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:253-261</code> — null-tolerant unregistered <code>nodeProperties@</code> read</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:262-272</code> — innerPropertiesData incl. <code>layout/width → width</code> (:265)</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:296-305</code> — CascadingMap([node, style]) construction</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:351-362</code> — getDefault; <code>layout/*</code> absent→unset contract (:356-360)</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:565-568</code> — outfitter holds <code>_pmNode</code>/<code>_getPos</code>/paths</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:669-703</code> — editor styler deps (no nodeProperties@)</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:334-380</code> — editor inner/outer element split</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:170-269</code> — getTypeSpecPropertiesIdMethod (typeSpec path resolution, memoized)</li>
+<li><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx:300-320</code> — viewer styler wrapper; nodeProperties@ id at :308; inner===outer at :313</li>
+<li><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx:456-477</code> — rebuild check compares only properties@</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/derivations.mjs:362-386</code> — typeSpecStylerDependencyMappings</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs:409-453</code> — per-node <code>nodeProperties@&lt;rootPath&gt;</code> registration (:419)</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs:568-638</code> — per-node scope construction (G8 contract)</li>
+<li><code>lib/js/components/layouts/type-stage/node-properties.mjs:35-74</code> — HierarchicalScopeNodeProperties; no demarcation; unused inheritancePolicyGenerators (:39, :73)</li>
+<li><code>lib/js/components/layouts/type-stage/node-properties.mjs:102-111</code> — getRootNodePropertiesMap (environment facts only)</li>
+<li><code>lib/js/components/layouts/type-stage/node-properties-generators.mjs:134-160</code> — availableSizesGen + layout/width identity synthetics</li>
+<li><code>lib/js/components/layouts/type-stage/node-properties-generators.mjs:184-204</code> — horizontalLayoutNodePropertiesGen stub (no layout/width)</li>
+<li><code>lib/js/components/layouts/type-stage/live-properties.typeroof.jsx:162-214</code> — root scope build; layout/width|height host seeding (:171-176)</li>
+<li><code>lib/js/components/layouts/type-stage/index.typeroof.jsx:296-300</code> / <code>lib/js/components/layouts/ramp/index.typeroof.jsx:252-259</code> — protocol registration (both controllers)</li>
+<li><code>lib/js/components/registered-properties-definitions.mjs:23-28</code> — LAYOUT prefix, convention only</li>
+<li><code>lib/js/tests/type-stage-viewer-behavior/index.test.mjs:380-393, 519-525</code> — tests asserting inherited layout/width</li>
+</ul>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<p>(carried over from the analysis note, annotated with what this research
+established)</p>
+<ul>
+<li><strong>Where does the editor learn the documentNodePath for the mapping?</strong>
+The outfitter holds <code>pmNode</code>/<code>getPos()</code> and derives <code>pathOfTypes</code>
+(typeSpec-keyed), but the canonical <em>document-node</em> paths live in the
+meta tree (<code>metaInfo.rootPath</code> → <code>nodeProperties@&lt;rootPath&gt;</code>).
+Bridging PM positions to meta-tree paths is undesigned. Also: the
+editor currently does not instantiate from the meta tree at all
+(the Phase 5a/“renderers on MetaDocumentTree” follow-up).</li>
+<li><strong>Editor rebuild semantics</strong>: the viewer excludes <code>nodeProperties@</code>
+from its rebuild check because document paths are wrapper-lifetime
+stable; whether that argument transfers to PM NodeViews (which
+persist across document edits/moves) is unverified.</li>
+<li><strong>Width on inner vs outer in the editor</strong> once the channel is
+mapped: the <code>layout/width → width</code> entry is in innerPropertiesData
+(the <code>data-node-content</code> div); whether that is the right target is
+undecided.</li>
+<li><strong>Root <code>layout/width|height</code> demarcation</strong>: the channel has no
+mechanism (demarcation ignored, <code>inheritancePolicyGenerators</code>
+unread). Design needed for how the pane width stops cascading into
+document nodes — restores “absent → unset” for both renderers.</li>
+<li><strong>Ramp layout</strong>: registers the protocol and wires the pane styler,
+but declares no width/height widget deps; whether ramp document
+nodes exhibit the same divergence is unverified.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

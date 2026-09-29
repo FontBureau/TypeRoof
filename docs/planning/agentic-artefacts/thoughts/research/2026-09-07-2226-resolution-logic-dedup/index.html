@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="resolution-logic-dedup--research" class="heading_anchor" href="#resolution-logic-dedup--research" aria-hidden="true">#</a>Resolution-Logic Dedup — Research</h1>
+<h2><a id="question" class="heading_anchor" href="#question" aria-hidden="true">#</a>Question</h2>
+<p>The prosemirror editor (<code>type-spec.typeroof.jsx</code>) and the viewer/meta
+layer (<code>viewer.typeroof.jsx</code>, <code>document-nodes-meta/</code>) each resolve
+typeSpec-property ids and styleLink ids. How much is duplicated, and
+what is the minimal, high-value dedup? (Umbrella follow-up from
+2026-09-07 decision: extract shared resolution, defer structural
+outfitter refactor.)</p>
+<h2><a id="findings" class="heading_anchor" href="#findings" aria-hidden="true">#</a>Findings</h2>
+<h3><a id="1-gettypespecpropertiesidmethod--already-the-single-source-of-truth" class="heading_anchor" href="#1-gettypespecpropertiesidmethod--already-the-single-source-of-truth" aria-hidden="true">#</a>1. <code>getTypeSpecPropertiesIdMethod</code> — ALREADY the single source of truth</h3>
+<p>Canonical home: <code>lib/js/components/prosemirror/integration.typeroof.jsx:188</code>
+(<code>export function getTypeSpecPropertiesIdMethod</code>). It is a <em>method-style</em>
+function (called with <code>.call(this, ...)</code> or assigned
+<code>this._getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod</code>), taking
+<code>(pathOfTypes, asPath, nodeSpecToTypeSpecName, protocolHandlerName)</code> and
+reading <code>this.getEntry(...)</code>, <code>this._originTypeSpecPath</code>,
+<code>this.widgetBus</code>. Memoized per component instance via
+<code>_typeSpecPropertiesIdCache</code> keyed by the <code>nodeSpecToTypeSpec</code> model.</p>
+<p>Consumers (assignment pattern, all identical):</p>
+<ul>
+<li><code>prosemirror/type-spec.typeroof.jsx</code> — 4 classes (:719, :1349, :2020,
+:2290)</li>
+<li><code>viewer.typeroof.jsx</code> — 2 (:298, :550)</li>
+<li><code>document-nodes-meta/index.mjs</code> — 1 (:721)</li>
+</ul>
+<p><code>document-nodes-meta/derivations.mjs:539</code> re-exports it for meta-layer
+consumers.</p>
+<p><strong>Verdict: nothing to dedup.</strong> One implementation, N consumers via
+assignment. (The re-export through derivations.mjs is a thin convenience;
+import-from-source would be equally fine.)</p>
+<h3><a id="2-stylelinkproperties-id-resolution--real-duplication-two-variants" class="heading_anchor" href="#2-stylelinkproperties-id-resolution--real-duplication-two-variants" aria-hidden="true">#</a>2. <code>styleLinkProperties@</code> id resolution — REAL duplication, two variants</h3>
+<p><strong>Editor variant</strong> (<code>prosemirror/type-spec.typeroof.jsx:1026-1047</code>,
+method on UIDocumentNodeOutfitter, also used by the editor’s mark/styler
+creation at :1115, :1636, :1655):</p>
+<ul>
+<li>signature <code>(typeSpecProperties /* id string */, styleLinkEntry /* [fieldName, styleLink] | null */)</code></li>
+<li>null entry → null</li>
+<li>builds id via <code>Path.fromParts(typeSpecPath, fieldName, styleLink)</code></li>
+<li>registered? → id : null</li>
+</ul>
+<p><strong>Viewer/meta variant</strong> (<code>viewer.typeroof.jsx:585</code> method → shared
+<code>getStyleLinkPropertiesId</code> in
+<code>document-nodes-meta/derivations.mjs:393-412</code>):</p>
+<ul>
+<li>signature <code>(widgetBus, typeSpecPropertiesPath /* Path */, styleLinkType, styleLink)</code></li>
+<li>builds id via <code>typeSpecPropertiesPath.append(styleLinkType, styleLink)</code></li>
+<li>registered? → id : null</li>
+<li><strong>no null-entry branch</strong> — callers handle the absent-link case
+upstream (unknown-style fallback)</li>
+</ul>
+<p>Differences are <strong>cosmetic + one semantic detail</strong>:</p>
+<ul>
+<li>argument plumbing (id-string+tuple vs. Path+two args)</li>
+<li>the null-entry guard placement (inside editor method vs. at viewer
+call sites)</li>
+</ul>
+<p>Both share: id string shape <code>styleLinkProperties@&lt;path&gt;/&lt;type&gt;/&lt;link&gt;</code>,
+protocol lookup, <code>hasRegistered</code> gate, throw-if-no-protocol-handler.</p>
+<h3><a id="3-what-is-not-shared-and-shouldnt-be" class="heading_anchor" href="#3-what-is-not-shared-and-shouldnt-be" aria-hidden="true">#</a>3. What is NOT shared (and shouldn’t be)</h3>
+<ul>
+<li><strong><code>nextProperties@</code> id derivation</strong> (outfitter :787-794) —
+editor-only concept (next-sibling properties for block margins);
+viewer/meta have no equivalent. Out of scope.</li>
+<li><strong>Mark wrapping pipelines</strong>: <code>getWrapMarks</code> /
+<code>wrapResultsAreEqual</code> already live in <code>derivations.mjs</code> (moved there
+during 5a) and are consumed by the meta layer; the editor has its own
+mark pipeline in type-spec.typeroof.jsx that was NOT moved. That is
+the larger structural duplication — <strong>deliberately out of scope</strong>
+(parked with the outfitter structural refactor).</li>
+</ul>
+<h2><a id="recommendation-for-the-plan-phase" class="heading_anchor" href="#recommendation-for-the-plan-phase" aria-hidden="true">#</a>Recommendation (for the plan phase)</h2>
+<ol>
+<li>Unify styleLink id resolution on the <code>derivations.mjs</code>
+<code>getStyleLinkPropertiesId(widgetBus, path, type, link)</code> signature;
+re-express the editor method as a thin adapter:
+<ul>
+<li>null-entry guard stays in the editor adapter (its callers rely on it)</li>
+<li>id-string → Path conversion at the adapter boundary
+(or flip the shared signature to accept both — pick during planning;
+adapter-thin is DRY-er and safer)</li>
+</ul>
+</li>
+<li>Leave <code>getTypeSpecPropertiesIdMethod</code> as is (already unified);
+optionally drop the derivations.mjs re-export if it serves no
+purpose beyond aliasing (minor cleanup, plan decides).</li>
+<li>Explicitly NOT in scope: mark pipeline unification, nextProperties@,
+outfitter structural attachment.</li>
+</ol>
+<h2><a id="test-surface" class="heading_anchor" href="#test-surface" aria-hidden="true">#</a>Test surface</h2>
+<ul>
+<li><code>prosemirror/type-spec-styler.test.mjs</code> exercises the outfitter
+(incl. its <code>_getStyleLinkPropertiesId</code> via Object.create stubs) —
+must keep passing; ideal regression net for the adapter swap.</li>
+<li>Viewer-side styleLink resolution is exercised by
+<code>type-stage-toggles</code> / <code>document-replace</code> behavior tests (styled
+marks render with data-style-name attributes).</li>
+</ul>
+<h2><a id="effort-estimate" class="heading_anchor" href="#effort-estimate" aria-hidden="true">#</a>Effort estimate</h2>
+<p>Small: ~1 shared function + 1 editor adapter + call-site updates at
+4 editor sites. One phase, one commit, low risk.</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

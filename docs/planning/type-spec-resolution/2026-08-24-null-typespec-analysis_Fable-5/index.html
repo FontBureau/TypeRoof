@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>NULL-TypeSpec / Silent Nodes — Design Analysis - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/large-file-investigation-260723/">Large File Investigation</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li>
+<li><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-initial-analysis/">PPS: Initial Analysis</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-2026-07/">Metamodel: 2026-07</a></li>
+<li><a href="/TypeRoof/docs/planning/columns/REPORT/">Columns: Runion Report</a></li>
+<li><a href="/TypeRoof/docs/planning/overview/architectural-overview/">Architectural Overview</a></li>
+<li><a href="/TypeRoof/docs/planning/performance-investigation-viewer-update-propagation-260820/">Perf: Viewer Update Propagation</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Fable-5/">TypeSpec Resolution: NULL-TypeSpec Analysis</a></li>
+<li><a href="/TypeRoof/docs/planning/DEMARCATION_FALLBACK/">DEMARCATION_FALLBACK</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Kimi-K3/">TypeSpec Resolution: NULL-TypeSpec Analysis (Kimi-K3)</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-implementation-plan_Fable-5/">TypeSpec Resolution: Implementation Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-second-analysis_Fable-5.1/">PPS: Second Analysis (Fable-5.1)</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="null-typespec--silent-nodes--clean-slate-analysis" class="heading_anchor" href="#null-typespec--silent-nodes--clean-slate-analysis" aria-hidden="true">#</a>NULL-TypeSpec / silent nodes — clean-slate analysis</h1>
+<ul>
+<li>Date: 2026-08-24</li>
+<li>Agent: Fable-5</li>
+<li>Scope: <code>_getBestTypeSpecPropertiesId</code> in <code>lib/js/components/prosemirror/integration.typeroof.jsx</code>
+and the question: how to prevent, for certain node types, that TypeSpec
+styling is applied at all.</li>
+<li>Status: round 1 — clean-slate analysis; further rounds to be amended below.</li>
+</ul>
+<h2><a id="current-state-why-at-least-the-root-typespec-always-applies" class="heading_anchor" href="#current-state-why-at-least-the-root-typespec-always-applies" aria-hidden="true">#</a>Current state: why at least the root TypeSpec always applies</h2>
+<p><code>_getBestTypeSpecPropertiesId</code> (<code>integration.typeroof.jsx:88</code>) is built so
+it <strong>cannot fail</strong>:</p>
+<ol>
+<li><code>getTypeSpecPropertiesIdMethod</code> (line 144ff) reads <code>typeSpecLink</code> from
+<code>nodeSpecToTypeSpec</code>. If the <code>typeKey</code> is <strong>not mapped</strong>,
+<code>typeSpecLink = &quot;&quot;</code> — the empty path. But the empty path <em>is</em> the root
+TypeSpec (<code>originTypeSpecPath</code>).</li>
+<li>The <code>while</code> loop walks unregistered paths toward the root
+(<code>testPath.slice(0, -2)</code>).</li>
+<li>The final fallback is unconditional:
+<code>return asPath ? originTypeSpecPath : format(originTypeSpecPath);</code> —
+<strong>root, always.</strong></li>
+</ol>
+<p>The central ambiguity is already documented as an open problem in the
+code, at <code>type-spec/fundamentals.mjs:451</code>:</p>
+<blockquote>
+<p>“FIXME: can’t decide whether it’s an explicit NULL or root as root is
+the empty path and NULL as well! … I wonder if it makes sense to have
+an explicit null path, e.g. one that can’t be a path within a typeSpec.”</p>
+</blockquote>
+<p>The empty string today means both “not mapped → default (root)” and would
+be the natural candidate for “NULL” — that can’t work without splitting
+the semantics.</p>
+<h2><a id="precedents-that-already-exist" class="heading_anchor" href="#precedents-that-already-exist" aria-hidden="true">#</a>Precedents that already exist</h2>
+<p><strong>1. NULL-STYLE vs. unlinked</strong> (<code>type-spec/models.mjs:300ff</code>,
+<code>stylePatchLinkModelMixin</code>): style-link edges have a <code>mode</code> enum
+<code>link | unlinked</code> plus <code>stylePatch: &quot;&quot;</code> as NULL-STYLE. Three states:</p>
+<ul>
+<li>edge absent → inherit,</li>
+<li>edge tombstoned (<code>unlinked</code>) → removes an inherited edge,</li>
+<li>edge with <code>&quot;&quot;</code> → explicitly nothing.</li>
+</ul>
+<p>Exactly this pattern is missing at the NodeSpec→TypeSpec level:
+<code>NodeSpecToTypeSpecEdgeModel</code> (<code>models.typeroof.jsx</code>) is just
+<code>{link: StringModel, label: StringModel}</code> — no mode.</p>
+<p><strong>2. A “no TypeSpec” render path already exists — it’s just not
+selectable</strong>: <code>viewer.typeroof.jsx:214</code>:</p>
+<pre class="language-js"><code class="language-js"><span class="token keyword">this</span><span class="token punctuation">.</span>_hasTypeSpecStyling <span class="token operator">=</span> nodeSpecMap<span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span>typeKey<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>Unknown/default-schema-only node types get <strong>no</strong> TypeSpec styler
+(<code>_provisionTypeSpecStyler</code> is skipped, line 484) and their marks get no
+style links resolved
+(<code>applyStyleLinks = this._context.hasTypeSpecStyling !== false</code>,
+line 692ff — commented as “ProseMirror parity”). On the ProseMirror side
+this arises analogously because nodeViews are only registered for
+metamodel-schema nodes (<code>integration.typeroof.jsx:1314ff</code>) — no nodeView
+→ no subscription → no <code>UIDocumentNodeOutfitter</code>/<code>UIDocumentTypeSpecStyler</code>.</p>
+<p>This is the key finding: <strong>the “silent node” behavior is already fully
+implemented</strong>, it’s just coupled to “typeKey unknown” instead of an
+explicit decision.</p>
+<p><strong>3. The UI label <code>EMPTY_TYPESPEC_LINK_LABEL = '(NULL-TYPESPEC)'</code></strong>
+already exists (<code>type-spec/fundamentals.mjs:252</code>) — but is currently used
+for “link points nowhere / not found”, not for an explicit NULL.</p>
+<p><strong>4. The “silent” flag idea has a relative in the code</strong>: the long
+comment in <code>models.typeroof.jsx</code> (~line 395) about “shim” TypeSpecs —
+layers that provide structure but aren’t meant to be used as block
+definitions themselves. Related, but a different axis (see below).</p>
+<h2><a id="the-three-options-compared" class="heading_anchor" href="#the-three-options-compared" aria-hidden="true">#</a>The three options compared</h2>
+<p><strong>A) Default = silent when not mapped.</strong> Advised against. The root
+fallback is deliberate (the unconditional return), and “not mapped →
+inherits root” is the baseline assumption everywhere — every document
+with unmapped types would change its rendering. Also, it doesn’t resolve
+the <code>&quot;&quot;</code> ambiguity, it just inverts it.</p>
+<p><strong>B) Explicit NULL-TYPESPEC link per node type.</strong> Recommended. Mirrors
+the <code>stylePatchLinkModelMixin</code> pattern exactly: a <code>mode</code> enum on
+<code>NodeSpecToTypeSpecEdgeModel</code> (e.g. <code>link | null-typespec</code>), analogous to
+<code>StylePatchLinkModeEnumModel</code>. With this:</p>
+<ul>
+<li>“edge absent” remains the default (root fallback), backward compatible;</li>
+<li>the FIXME in <code>type-spec/fundamentals.mjs:451</code> gets resolved (NULL is no
+longer a path but a mode);</li>
+<li>granularity matches the requirement exactly: “certain node-types”;</li>
+<li>the UI pattern (<code>LinksMapKeyChangeSelect</code> with a special-options group)
+already exists for NULL-STYLE.</li>
+</ul>
+<p><strong>C) <code>silent</code> flag on the TypeSpec itself.</strong> Different axis: it makes a
+TypeSpec transparent <em>for all its users</em>, rather than exempting one node
+type from styling. Plus a resolution ambiguity:
+<code>_getBestTypeSpecPropertiesId</code> walks up to the next registered ancestor —
+should the walk skip silent TypeSpecs (then it’s the “shim” concept) or
+stop on them? Two plausible answers = design trap. If the “shim” concept
+is wanted anyway, C is its own feature; for the current problem B is more
+direct. B does not preclude C.</p>
+<h2><a id="implications-of-a-null-typespec" class="heading_anchor" href="#implications-of-a-null-typespec" aria-hidden="true">#</a>Implications of a NULL-TYPESPEC</h2>
+<p>Most important point: <strong>silent ≠ unstyled.</strong> The styler sets inline
+styles (<code>font-family</code>, colors) on DOM elements — those cascade to
+children via CSS inheritance. A silent node therefore inherits the
+rendered styling of its parent element. That is presumably exactly the
+intent (“doesn’t actively contribute”).</p>
+<p>But watch out for the custom properties: the generic rules in
+<code>type-stage.css:75</code> and <code>:250</code></p>
+<pre class="language-css"><code class="language-css"><span class="token selector">*[data-node-type]</span> <span class="token punctuation">{</span> <span class="token property">line-height</span><span class="token punctuation">:</span> <span class="token function">var</span><span class="token punctuation">(</span>--line-height<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">/* … */</span> <span class="token punctuation">}</span>
+<span class="token selector">.typeroof-document *[data-node-type]</span> <span class="token punctuation">{</span> <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token function">var</span><span class="token punctuation">(</span>--space-before<span class="token punctuation">)</span> 0 <span class="token function">var</span><span class="token punctuation">(</span>--space-after<span class="token punctuation">)</span> 0<span class="token punctuation">;</span> <span class="token punctuation">}</span></code></pre>
+<p>match on <code>data-node-type</code>, and <code>--line-height</code>/<code>--margin-block-*</code>
+<strong>inherit as custom properties</strong>. A silent node would thus get its
+parent’s line-height and paddings applied — possibly surprising. This
+needs either a deliberate decision (“silent = also inherits the vars”)
+or a marker (e.g. <code>data-silent-node</code>) with a CSS reset.</p>
+<p>Further consequences, all with existing null handling:</p>
+<ul>
+<li><strong>Marks/style links inside a silent node</strong>: no
+<code>intentStyleLinks</code>/<code>markStyleLinks</code> → unknown-style fallback
+(<code>UIDocumentUnknownStyleStyler</code>). Already implemented for the Viewer;
+on the PM side <code>_getStyleLinkPropertiesId</code> already copes with a null
+edge (<code>type-spec.typeroof.jsx:908ff</code>).</li>
+<li><strong><code>nextProperties@</code></strong> (margin resolution <code>lineHeightAfter</code>/<code>emAfter</code>
+against the next sibling): silent sibling → <code>null</code>, which is the same
+state as “last child”, already handled (<code>_checkNextProperties</code>,
+<code>_provisionTypeSpecStyler</code>). Semantically: the predecessor treats the
+silent neighbor like the end of the document — acceptable? Or should
+it “see through” it? To be decided.</li>
+<li><strong>Children of silent nodes</strong>: unproblematic — resolution runs per node
+via <code>nodeSpecToTypeSpec</code> + path, not via the parent’s styler.</li>
+<li><strong>Selection UI</strong> (<code>getTypeSpecsMethod</code>, menu code lines 1861/2131):
+what does the TypeSpec display show for a selection inside a silent
+node? “(NULL-TYPESPEC)” would be consistent.</li>
+<li><strong>Mechanics</strong>: <code>getTypeSpecPropertiesIdMethod</code> would need to be able
+to return <code>null</code>; all call sites (<code>viewer.typeroof.jsx:494/845</code>,
+<code>type-spec.typeroof.jsx:678/1211/1861/2131</code>,
+<code>integration.typeroof.jsx:207</code>) and the memo cache (which currently
+stores only a <code>Path</code>) need a sentinel. On the application side the
+Viewer path can reuse <code>_hasTypeSpecStyling</code> almost unchanged — instead
+of <code>nodeSpecMap.has(typeKey)</code>, “has an effective TypeSpec”.</li>
+</ul>
+<h2><a id="conclusion" class="heading_anchor" href="#conclusion" aria-hidden="true">#</a>Conclusion</h2>
+<p>Recommendation: option B — a <code>mode</code> enum on the
+<code>NodeSpecToTypeSpecEdgeModel</code> edge, modeled on
+<code>stylePatchLinkModelMixin</code>, with the application path generalized via
+the existing <code>_hasTypeSpecStyling</code> mechanics.</p>
+<p>Open design questions before implementation:</p>
+<ol>
+<li>accept or reset custom-property inheritance on silent nodes,</li>
+<li><code>nextProperties</code> semantics at a silent sibling,</li>
+<li>UI representation in selection/label.</li>
+</ol>
+<hr>
+<h1><a id="round-2--shim-concept-decomposition-and-decisions" class="heading_anchor" href="#round-2--shim-concept-decomposition-and-decisions" aria-hidden="true">#</a>Round 2 — shim concept: decomposition and decisions</h1>
+<ul>
+<li>Date: 2026-08-24 (rounds 2a–2d, concluded 21:06)</li>
+<li>Status: concluded; decisions recorded below.</li>
+</ul>
+<h2><a id="direction-change" class="heading_anchor" href="#direction-change" aria-hidden="true">#</a>Direction change</h2>
+<p>Operator: the shim concept is what is currently needed; option B
+(explicit NULL-TYPESPEC link mode on the edge) improves semantics a lot
+and remains a good candidate for later inclusion, but is more work.
+The shared groundwork (resolver sentinel, <code>_hasTypeSpecStyling</code>
+generalization, CSS question) is an investment toward B, not throwaway.</p>
+<h2><a id="two-semantics-hidden-in-shim" class="heading_anchor" href="#two-semantics-hidden-in-shim" aria-hidden="true">#</a>Two semantics hidden in “shim”</h2>
+<ol>
+<li><strong>Skip semantics</strong> (structural shim, the original <code>models.typeroof.jsx</code>
+comment): not a legitimate resolution target; the fallback walk in
+<code>_getBestTypeSpecPropertiesId</code> passes through to the nearest non-shim
+ancestor. The node still gets styled — by the ancestor.</li>
+<li><strong>Null semantics</strong> (silent target): resolving here yields <em>no
+styler</em> — the node renders inherit-only. This is what the original
+question asked for.</li>
+</ol>
+<p>These are not mutually exclusive; bundling them into one flag is the
+design trap. They decompose into orthogonal aspects:</p>
+<ul>
+<li><strong>a) walk-stop / fallback exclusion</strong>: may the fallback walk land here?</li>
+<li><strong>b) silence</strong>: does resolving here produce no styler?</li>
+<li><strong>c) path transparency</strong>: does this level count as a path segment in
+relative-path normalization (<code>../</code> resolution)? — deferred, belongs to
+the relative-linking round.</li>
+</ul>
+<h2><a id="why-dont-skip-on-walk-must-be-controllable-the-language-container" class="heading_anchor" href="#why-dont-skip-on-walk-must-be-controllable-the-language-container" aria-hidden="true">#</a>Why “don’t skip on walk” must be controllable: the language container</h2>
+<p><code>TypeSpecModel</code> includes <code>languageTagModelMixin</code>
+(<code>type-spec/models.mjs:409</code>). A top-level <code>german</code> container carries the
+language tag and language-specific defaults. If node type <code>h4</code> is not
+defined under <code>german</code>, resolution tries <code>german/h4</code> and walks up. If
+“shim” implied skip-on-walk, the walk would pass through <code>german</code> to
+root — losing the language defaults. A language container wants the walk
+to stop there: it acts as the language’s own root.</p>
+<p>Reframing: the walk already stops at any registered typeSpec —
+“landable” is the <em>default</em>, not a flag. The flags are deviations from
+default.</p>
+<h2><a id="decision-independent-booleans-not-an-enum" class="heading_anchor" href="#decision-independent-booleans-not-an-enum" aria-hidden="true">#</a>Decision: independent booleans, not an enum</h2>
+<p>The a×b matrix — all four rows are useful and distinct:</p>
+<table>
+<thead>
+<tr>
+<th><code>excludeFromFallback</code> (a)</th>
+<th><code>noStyler</code> (b)</th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>–</td>
+<td>–</td>
+<td>regular typeSpec (default; also the language container — needs no flag at all)</td>
+</tr>
+<tr>
+<td>✓</td>
+<td>–</td>
+<td>structural glue: fallback passes through, but an <strong>explicit</strong> link still styles normally — exactly what the original shim comment wanted (“would not prevent those shims to be actually used with an absolute path”)</td>
+</tr>
+<tr>
+<td>–</td>
+<td>✓</td>
+<td>silence-subtree: explicit links are silent <strong>and</strong> a fallback walk landing here yields silence — option A of round 1 as per-subtree opt-in (flag the root → all unmapped types silent)</td>
+</tr>
+<tr>
+<td>✓</td>
+<td>✓</td>
+<td>pure NULL-anchor: silent when explicitly chosen, invisible to fallback — “deliberate silence only”</td>
+</tr>
+</tbody>
+</table>
+<p>An enum would forbid rows 3 or 4.</p>
+<p><strong>Decided semantics</strong> (operator-confirmed):</p>
+<ol>
+<li><code>noStyler</code> applies on <strong>both</strong> resolution routes — explicit link and
+fallback landing. Otherwise a walk landing on a silent spec would
+style “normally”: surprising and hard to explain.</li>
+<li>Both flags are <code>BooleanModel</code> on <code>TypeSpecModel</code>, default false —
+existing documents behave identically.</li>
+<li><strong>Naming</strong> (operator-confirmed): <code>excludeFromFallback</code> and <code>noStyler</code>
+— they provide the most context. The words “block”/“inline” are
+reserved vocabulary for the ProseMirror NodeSpec layer (“not a block”
+was rejected for the flag name because of this clash). The PM
+NodeSpec (<code>inline</code> field, content expressions) stays the
+authoritative source for display semantics; PM’s schema machinery
+(content matching, splitting, keymaps) depends on it and a
+typeSpec-level override would fight the editor.</li>
+<li><strong>Shim properties still contribute to the typeSpecnion</strong>
+(operator-confirmed): unset properties already inherit through, and
+<code>TypeSpecLiveProperties</code>/<code>HierarchicalScopeTypeSpecnion</code> registration
+stays untouched. The flags affect only node resolution
+(<code>_getBestTypeSpecPropertiesId</code>) and styler provisioning
+(<code>_hasTypeSpecStyling</code>) — the feature is confined to the resolution
+layer.</li>
+</ol>
+<p>Note: <code>noStyler</code> on the root typeSpec subsumes round-1 option A as a
+per-document opt-in instead of a global semantic change.</p>
+<h2><a id="css-custom-property-leakage--deferred-options-recorded" class="heading_anchor" href="#css-custom-property-leakage--deferred-options-recorded" aria-hidden="true">#</a>CSS custom-property leakage — deferred, options recorded</h2>
+<p>A <code>noStyler</code> node under the generic <code>*[data-node-type]</code> rules
+(<code>type-stage.css:75</code>, <code>:250</code>) still receives inherited <code>--line-height</code>
+and <code>--margin-block-*</code>. Deferred as an implementation detail; two
+candidate solutions (operator):</p>
+<ol>
+<li><strong><code>@property</code> at-rule with <code>inherits: false</code></strong> — caveat: this is a
+<em>global</em> switch per custom property. <code>.editor-simple</code>
+(<code>type-stage.css:106</code>) deliberately relies on inheritance today (sets
+<code>--line-height</code> on the container, child rules consume it). The
+at-rule route requires an audit of all <code>--line-height</code> /
+<code>--margin-block-*</code> consumers first.</li>
+<li><strong>Marker class / selectable attribute</strong> (e.g. the styler-less path
+also emitting <code>data-no-styler</code>, plus a small reset rule) — locally
+scoped, risk-free.</li>
+</ol>
+<h2><a id="relative-linking--i18n--out-of-scope-this-round-design-notes" class="heading_anchor" href="#relative-linking--i18n--out-of-scope-this-round-design-notes" aria-hidden="true">#</a>Relative linking / i18n — out of scope this round, design notes</h2>
+<p>The i18n use case (top-level <code>german</code>, <code>english</code> containers, each with
+an <code>h3</code> child) is literally sketched in the <code>models.typeroof.jsx</code>
+comment (~line 360ff: <code>/en_US/quote/paragraph</code>, <code>/de_DE/quote/paragraph</code>)
+as “Level-2”, with editable typeSpec keys as prerequisite.</p>
+<p>Notes for that future round:</p>
+<ol>
+<li><strong><code>../h3</code> mixes two trees.</strong> “The h3 child of the typespec of the
+parent node”: <code>..</code> traverses the <em>document</em> tree (parent node’s
+resolved typeSpec), <code>/h3</code> the <em>typeSpec</em> tree. Filesystem-style <code>..</code>
+within the typeSpec tree alone means “sibling of the base spec” —
+different. The base-of-relative-paths question must be fixed first;
+“relative to the parent node’s resolved typeSpec” is the sane
+candidate (making it <code>./h3</code> rather than <code>../h3</code>). Aspect © bites
+here: silent/structural levels change what <code>..</code> lands on.</li>
+<li><strong>The cheap i18n path may already exist.</strong>
+<code>_getBestTypeSpecPropertiesId</code> resolves everything relative to
+<code>originTypeSpecPath</code> — links are appended to it, the walk is bounded
+by <code>isRootOf(originTypeSpecPath)</code>. If the origin could be pointed at
+<code>/german</code> instead of the root, the entire document switches language
+with existing per-type links unchanged, provided language containers
+mirror the same child structure. (Where <code>originTypeSpecPath</code> is wired
+up and whether it is selectable has not been verified yet.) Relative
+linking is then only <em>required</em> for mixed-language documents
+(per-subtree switching within one document).</li>
+</ol>
+<h2><a id="round-2-conclusion" class="heading_anchor" href="#round-2-conclusion" aria-hidden="true">#</a>Round 2 conclusion</h2>
+<p>Implement the shim concept as two independent <code>BooleanModel</code> flags on
+<code>TypeSpecModel</code>: <code>excludeFromFallback</code> and <code>noStyler</code>, defaults false.
+<code>noStyler</code> silences both resolution routes. Property contribution to the
+typeSpecnion is unaffected. Shared groundwork (resolver null sentinel,
+memo-cache sentinel, call-site handling, <code>_hasTypeSpecStyling</code>
+generalization) doubles as preparation for a later option B. CSS
+leakage handling and relative linking are deferred with options
+recorded above.</p>
+<hr>
+<h1><a id="round-3--relative-linking-in-nodespectotypespec-origintypespecpath-wiring" class="heading_anchor" href="#round-3--relative-linking-in-nodespectotypespec-origintypespecpath-wiring" aria-hidden="true">#</a>Round 3 — relative linking in nodeSpecToTypeSpec; originTypeSpecPath wiring</h1>
+<ul>
+<li>Date: 2026-08-24 (21:12–21:27)</li>
+<li>Status: analysis concluded; revises one round-2 design point (sentinel).</li>
+</ul>
+<h2><a id="the-anchor-model" class="heading_anchor" href="#the-anchor-model" aria-hidden="true">#</a>The anchor model</h2>
+<p>Operator: “for a relative <code>../hr</code> resolution I need a starting point in
+the typeSpec tree and anchor would be resolved by using the parent node
+type-spec.”</p>
+<p>This construction dissolves the round-2 “mixes two trees” objection: the
+<em>document</em> tree is consulted exactly once, to compute the <strong>anchor</strong> =
+the parent node’s resolved typeSpec (a path in the typeSpec tree). From
+there, all <code>.</code>/<code>..</code> navigation is purely typeSpec-tree-local:</p>
+<ul>
+<li><code>./h3</code> → child <code>h3</code> of the anchor</li>
+<li><code>../hr</code> → sibling of the anchor (up one typeSpec level, then <code>hr</code>)</li>
+<li><code>..</code> beyond <code>originTypeSpecPath</code> → out of bounds → broken link
+(the “not found is planned into it” case) → normal fallback walk</li>
+</ul>
+<p>The recursion is well-founded: resolving a node needs the parent node’s
+resolution, which recurses on <code>pathOfTypes.slice(0, -1)</code> — strictly
+shorter each step, terminating at the document root, no cycles. The
+existing memo cache is compatible: it is keyed by <code>nodeSpecToTypeSpec</code>
+instance + origin + joined <code>pathOfTypes</code> — exactly the inputs of the
+recursive resolution.</p>
+<h2><a id="anchoring-rules" class="heading_anchor" href="#anchoring-rules" aria-hidden="true">#</a>Anchoring rules</h2>
+<p><code>Path</code> (<code>metamodel/path.ts</code>) provides <code>RELATIVE = &quot;.&quot;</code>,
+<code>PARENT = &quot;..&quot;</code>, <code>ROOT = &quot;/&quot;</code> and <code>explicitAnchoring</code> /
+<code>isExplicitlyRelative</code>. Subtlety: a <code>&quot;..&quot;</code>-leading path has
+<code>explicitAnchoring === null</code> (only <code>.</code> and <code>/</code> are explicit anchors), so
+the discriminator must be:</p>
+<blockquote>
+<p>parent-anchored iff <code>isExplicitlyRelative || parts[0] === Path.PARENT</code>;
+everything else (empty, <code>/...</code>, bare <code>h3</code>) stays origin-anchored —
+today’s behavior, fully backward compatible.</p>
+</blockquote>
+<p>Note: the current resolver actively <em>defends against</em> <code>..</code> — the
+<code>isRootOf(originTypeSpecPath)</code> guard (“prevents that a
+currentTypeSpecPath could potentially inject ‘…’”), and
+<code>Path.sanitize</code> consumes <code>..</code> against preceding parts during <code>append</code>.
+Relative links must branch <em>before</em> the append, not be bolted onto it.</p>
+<h2><a id="trap-one-typespec-level--two-path-parts" class="heading_anchor" href="#trap-one-typespec-level--two-path-parts" aria-hidden="true">#</a>Trap: one typeSpec level = two path parts</h2>
+<p>In the typeSpec tree a logical level is the <strong>pair</strong> <code>children/{key}</code>.
+Consequences:</p>
+<ol>
+<li><code>..</code> must consume a <em>pair</em> (<code>slice(0, -2)</code>, like the fallback walk
+already does), but <code>Path.sanitize</code> consumes one part per <code>..</code>. Naive
+<code>anchor.append('children', ...link.parts)</code> with a leading <code>..</code> would
+eat only the <code>children</code> segment — silently wrong. Leading <code>..</code>s must
+be counted and applied as <code>-2</code> slices explicitly.</li>
+<li>The current code interposes only <strong>one</strong> <code>children</code> at the front. A
+multi-segment link <code>quote/paragraph</code> today becomes
+<code>origin/children/quote/paragraph</code> — not a valid typeSpec path unless
+the user spells out <code>children</code> themselves. This is exactly
+normalization item #2 in the <code>models.typeroof.jsx</code> comment
+(“/2/children/3 should become /2/3”).</li>
+</ol>
+<p>Recommendation: a proper bidirectional conversion — <em>logical</em> link
+segments (<code>../hr</code>, <code>quote/paragraph</code>) ↔ <em>storage</em> path
+(<code>children</code>-interleaved) — as a helper used by resolver, UI label, and
+normalization alike. Solves the two-parts problem in one place instead
+of three ad-hoc fixes.</p>
+<h2><a id="interplay-with-round-2--sentinel-design-revision" class="heading_anchor" href="#interplay-with-round-2--sentinel-design-revision" aria-hidden="true">#</a>Interplay with round 2 — sentinel design revision</h2>
+<p>Degradation cases compose cleanly:</p>
+<ul>
+<li>Parent unmapped → parent resolves via fallback (typically origin
+root) → anchor = root → <code>./h3</code> degrades to origin-absolute <code>/h3</code>.</li>
+<li>Relative target not registered → fallback walk from the candidate
+toward origin, honoring <code>excludeFromFallback</code>, as usual.</li>
+</ul>
+<p>But: if the parent resolved to a <code>noStyler</code> spec and the round-2
+resolver returned a bare <code>null</code> sentinel, the anchor would vanish and
+children’s relative links would break — silence must not destroy
+structure. <strong>Revision of round 2</strong>: the resolver <strong>always returns the
+resolved path</strong>; <code>noStyler</code> is read as a flag <em>on the resolved spec</em> at
+styler-provisioning time, not encoded as <code>null</code> in the resolution
+result. This also keeps the memo cache trivially correct (still stores
+only a <code>Path</code>) and shrinks the round-2 call-site changes considerably.
+<code>null</code> remains only for a genuinely-nothing case, if one survives at all.</p>
+<h2><a id="origintypespecpath-wiring--verified" class="heading_anchor" href="#origintypespecpath-wiring--verified" aria-hidden="true">#</a>originTypeSpecPath wiring — verified</h2>
+<ul>
+<li>Constructed at layout level: <code>type-stage/index.typeroof.jsx:276</code> and
+<code>ramp/index.typeroof.jsx:283</code>, both as
+<code>widgetBus.rootPath.append('typeSpec')</code> — the layout model’s
+<code>typeSpec</code> field. <strong>Hardcoded, not selectable.</strong></li>
+<li>Passed as a <strong>constructor argument</strong> into five widget subtrees:
+<code>ProseMirror</code>, <code>TypeSpecSubscriptions</code>, <code>UIDocumentViewer</code>,
+<code>UIProseMirrorMenu</code>, and as the literal dependency string
+<code>typeSpecProperties@${originTypeSpecPath}</code> for <code>TypeStagePaneStyler</code>.</li>
+<li><code>getTypeSpecPropertiesIdMethod</code> caches it per component
+(<code>_tsIdOriginKey</code>) — assumes origin constancy over the component’s
+lifetime.</li>
+</ul>
+<p>Origin-switching (<code>/german</code> as origin) is therefore <em>possible</em> but not
+cheap: a model field for the origin selection plus re-provisioning of
+all five subtrees on change (constructor args, plus a dependency-string
+rebuild for the pane styler). The registry side is fine — <code>TypeSpecMeta</code>
+registers <code>typeSpecProperties@</code> recursively for the whole tree,
+language containers included.</p>
+<p><strong>This flips the round-2 assessment</strong>: with parent-anchored relative
+links, the document root node’s link is absolute (<code>/german</code>) and every
+descendant uses relative links — switching language = <strong>editing one
+link in <code>nodeSpecToTypeSpec</code></strong>, zero wiring changes, works with today’s
+registration as-is, and even allows mixed-language documents. Relative
+linking is not the “later, harder” option; it is plausibly <em>cheaper</em>
+than selectable origin and strictly more capable. Origin-switching
+stays on the shelf.</p>
+<p>Practical note: the link input UI (<code>UINodeToTypeSpecLinksValue</code>,
+custom free-text input on a <code>StringModel</code>) already accepts arbitrary
+strings — relative paths are <em>enterable</em> today, they are just not
+resolved. The feature is almost entirely resolver-side.</p>
+<h2><a id="round-3-conclusion" class="heading_anchor" href="#round-3-conclusion" aria-hidden="true">#</a>Round 3 conclusion</h2>
+<ol>
+<li>Relative links in <code>nodeSpecToTypeSpec</code> are anchored at the <strong>parent
+node’s resolved typeSpec</strong>; discriminator: leading <code>.</code> or <code>..</code>
+(via <code>isExplicitlyRelative || parts[0] === Path.PARENT</code>); bare and
+<code>/</code>-anchored links stay origin-anchored (backward compatible).</li>
+<li>Implement a logical↔storage path conversion helper
+(<code>children</code>-interleaving) shared by resolver, UI, and normalization;
+<code>..</code> consumes a logical level (= a <code>children/{key}</code> pair).</li>
+<li>Round-2 revision: resolver always returns the resolved path;
+<code>noStyler</code> is evaluated at styler-provisioning time from the
+resolved spec, never as a <code>null</code> resolution result.</li>
+<li>Origin stays hardcoded; i18n via absolute root-node link + relative
+descendant links supersedes the origin-switching idea.</li>
+</ol>
+<hr>
+<h1><a id="round-4--cross-review-of-the-kimi-k3-analysis" class="heading_anchor" href="#round-4--cross-review-of-the-kimi-k3-analysis" aria-hidden="true">#</a>Round 4 — cross-review of the Kimi-K3 analysis</h1>
+<ul>
+<li>Date: 2026-08-24 (21:32–21:39)</li>
+<li>Source: <code>2026-08-24-null-typespec-analysis_Kimi-K3.md</code> (independent
+round-1 analysis by another model, same brief).</li>
+<li>Status: concluded. Largely convergent with rounds 1–3 (root-fallback
+mechanics, edge-mode idea, <code>_hasTypeSpecStyling</code> generalization) —
+good mutual validation. Adopted items and conflict resolutions below.</li>
+</ul>
+<h2><a id="adopted-from-kimi-k3" class="heading_anchor" href="#adopted-from-kimi-k3" aria-hidden="true">#</a>Adopted from Kimi-K3</h2>
+<ol>
+<li><strong><code>TypeStagePaneStyler</code> is a separate styling surface.</strong> Pane-level
+background/language always derives from the root TypeSpec
+(<code>pane-styler.typeroof.jsx:29</code>), independent of node-level
+resolution. Suppressing node stylers does not touch it. Missing from
+rounds 1–3; belongs in the consumer list for implementation.</li>
+<li><strong>No cleanup on styled→unstyled transition</strong> (code-verified):
+<code>UIDocumentTypeSpecStyler</code> (<code>type-spec.typeroof.jsx:225</code>) has <strong>no
+<code>destroy()</code></strong> — the <code>destroy</code> methods at lines 737/747 belong to
+<code>UIDocumentUnknownStyleStyler</code>/<code>UIDocumentStyleStyler</code>. It writes
+inline styles (<code>font-family</code>, <code>--units-per-em</code>, colors, …) that
+persist when a node transitions to silent. Implementation
+prerequisite: explicit style cleanup on styler removal.</li>
+<li><strong><code>_prosemirrorDispatchTransaction</code> assumes a non-empty result</strong>
+(code-verified, <code>integration.typeroof.jsx:1268</code>):
+<code>[, selectedTypeSpecPath] = typeSpecs.entries().next().value</code>
+destructures <code>undefined</code> and throws if <code>getTypeSpecsMethod</code> ever
+returns an empty map (e.g. selection entirely inside silent nodes).
+Needs an empty-result path.</li>
+<li><strong>Viewer <code>_hasTypeSpecStyling</code> is constructor-time state</strong> — to
+support flag changes at runtime it must become dynamic: remove/add
+the styler, update the children context (<code>hasTypeSpecStyling</code>),
+clean stale inline styles. Rounds 1–3 said “generalize”, not
+“make dynamic”.</li>
+<li><strong>Sharper NULL-STYLE reading</strong>: <code>stylePatch: &quot;&quot;</code> means “no patch
+override” — the mark still receives TypeSpec-derived treatment
+(font/color/direction) via the unpatched typeSpecnion. Round 1 used
+NULL-STYLE as precedent somewhat too loosely; the precedent is the
+<em>mode-enum pattern</em>, not the runtime semantics.</li>
+<li><strong>“Node has no TypeSpec” ≠ “TypeSpec has no edge for this mark”.</strong>
+Kimi argues silent nodes should <em>not</em> get the <code>unknown-style</code> class
+fallback — that class signals “edge missing”, a different condition.
+Round 1 assumed the fallback applies. Recorded as an <strong>open
+question</strong> for the marks design: distinct rendering for
+“silent-node mark” vs. “unknown-style mark”, or shared?</li>
+</ol>
+<h2><a id="conflicts-with-decided-rounds--resolutions" class="heading_anchor" href="#conflicts-with-decided-rounds--resolutions" aria-hidden="true">#</a>Conflicts with decided rounds — resolutions</h2>
+<ol>
+<li><strong>Enum vs. independent booleans.</strong> Kimi proposes a target-side
+<code>stylingMode: &quot;styled&quot; | &quot;silent&quot;</code> enum. It lacked the
+language-container argument (round 2) and hence never saw the
+four-row matrix; an enum forbids rows 3/4. Notably Kimi’s own remark
+“a silent TypeSpec should stop resolution instead of falling
+through” is exactly row-3 semantics — convergent conclusion, weaker
+vocabulary. <strong>Round-2 decision stands</strong>: <code>excludeFromFallback</code> +
+<code>noStyler</code> booleans.</li>
+<li><strong>Rich resolution record.</strong> Kimi proposes
+<code>{typeSpecPath: Path|null, appliesTypeSpecStyling, reason}</code> as
+resolver return. Superseded by the round-3 revision (resolver always
+returns the resolved path; flags read from the resolved spec at
+provisioning time). Supporting evidence from Kimi itself: it flags
+that null-in-cache needs sentinels <em>and</em> that a target-side flag
+requires cache revalidation when the TypeSpec model changes — both
+problems evaporate under the round-3 design (cached <code>Path</code> stays
+valid; flags are read fresh per provisioning). Kimi found the bugs
+in the design it proposed.</li>
+<li><strong>Staged migration toward “absent mapping → no styling”.</strong> Kimi
+sketches a multi-step migration to eventually flip the default.
+<strong>Rejected</strong> (consistent with round-1 option A): <code>noStyler</code> on the
+root typeSpec yields the same end state per document, opt-in,
+without a breaking semantic change or migration machinery.</li>
+<li><strong>Property-stream warning — agreement.</strong> Kimi’s caution “do not put
+the flag into the inheriting processed-properties stream” is
+precisely round-2 decision #4 (flags affect resolution/provisioning
+only; typeSpecnion untouched). Independent confirmation.</li>
+</ol>
+<h2><a id="additional-clarification-worth-keeping" class="heading_anchor" href="#additional-clarification-worth-keeping" aria-hidden="true">#</a>Additional clarification worth keeping</h2>
+<p>The fallback walks the <strong>TypeSpec tree, not document ancestors</strong> — only
+<code>pathOfTypes.at(-1)</code> is consulted for the mapping lookup (Kimi states
+this explicitly; rounds 1–3 knew it but never wrote it down). Round 3’s
+parent-anchored relative links change exactly this: they introduce the
+document-ancestor dimension <em>deliberately and only</em> for computing the
+anchor of relative links; origin-anchored links keep the pure
+TypeSpec-tree behavior.</p>
+<h2><a id="round-4-conclusion" class="heading_anchor" href="#round-4-conclusion" aria-hidden="true">#</a>Round 4 conclusion</h2>
+<p>Adopted into the implementation checklist: pane-styler as separate
+surface, styler cleanup on transition, empty-result path in
+<code>_prosemirrorDispatchTransaction</code>, dynamic <code>_hasTypeSpecStyling</code>,
+NULL-STYLE precedent narrowed to the pattern (not the semantics).
+New open question: silent-node marks vs. unknown-style rendering.
+Rounds 2–3 decisions unchanged by the cross-review; two of them
+(booleans, path-returning resolver) came out strengthened.</p>
+<hr>
+<h1><a id="round-5--open-questions-moderated-and-decided" class="heading_anchor" href="#round-5--open-questions-moderated-and-decided" aria-hidden="true">#</a>Round 5 — open questions moderated and decided</h1>
+<ul>
+<li>Date: 2026-08-24 (21:45–22:17)</li>
+<li>Status: concluded. Q1–Q3 decided; CSS leakage postponed by operator
+(“we don’t need resolution now”).</li>
+</ul>
+<h2><a id="the-unifying-principle" class="heading_anchor" href="#the-unifying-principle" aria-hidden="true">#</a>The unifying principle</h2>
+<p>All three decisions below are instances of one sentence:</p>
+<blockquote>
+<p><strong>Resolution always succeeds; <code>noStyler</code> suppresses exactly one
+thing: the node’s own styler provisioning.</strong></p>
+</blockquote>
+<p>Marks, margins, selection UI, and the round-3 anchor recursion do not
+consult the flag at all. The flag mutes one output channel of the
+resolved spec; it does not change who speaks.</p>
+<h2><a id="q1--marks-inside-a-silent-node-d1-own-resolved-spec" class="heading_anchor" href="#q1--marks-inside-a-silent-node-d1-own-resolved-spec" aria-hidden="true">#</a>Q1 — marks inside a silent node: <strong>d1</strong> (own resolved spec)</h2>
+<p>Style links inherit through the typeSpecnion, so marks in a silent node
+resolve against the silent node’s <strong>own resolved spec</strong> — the same rule
+as for styled nodes, zero special-casing in mark handling.</p>
+<p>Options considered: (a) <code>unknown-style</code> fallback for everything;
+(b) fully bare, no styler; © bare + distinct marker class;
+(d1) own resolved spec; (d2) nearest non-silent document ancestor’s
+spec (“effective styling context”).</p>
+<p>Decision rationale (operator + challenge):</p>
+<ul>
+<li><strong>Usage premise</strong>: silent specs target in-between structural nodes;
+paragraphs with inline content will most likely not be silent. Marked
+content in silent nodes is an edge case — which defeats (b)'s
+original counter-argument (“kills marks for real content”) and
+removes (d2)'s visual-coherence advantage.</li>
+<li><strong>Control</strong>: edge configuration on the silent spec governs mark
+rendering — null-links and tombstones give explicit levers.</li>
+<li><strong>Least resistance</strong>: d1 is zero-code for mark resolution; d2 would
+need ancestor-walk machinery in a second subsystem plus a
+silent-root special case, re-introducing <code>noStyler</code>-awareness where
+the principle above removes it.</li>
+<li>(b) conceded earlier in the exchange; (d2) conceded after the usage
+premise. The Q1/Q2 “which spec speaks for a silent node” tension
+from the moderation round evaporates under d1: the own spec speaks
+for everything.</li>
+</ul>
+<h3><a id="the-mark-rendering-palette-under-d1-must-be-documented-for-users" class="heading_anchor" href="#the-mark-rendering-palette-under-d1-must-be-documented-for-users" aria-hidden="true">#</a>The mark-rendering palette under d1 (must be documented for users)</h3>
+<p>NULL-STYLE (<code>stylePatch: &quot;&quot;</code>) means <em>no patch override</em> (round-4
+clarification) — the mark still gets a <code>styleLinkProperties@</code>
+registration and <code>UIDocumentStyleStyler</code> applies the <strong>unpatched
+typeSpecnion</strong>: font, colors, direction from the silent spec’s chain.</p>
+<table>
+<thead>
+<tr>
+<th>edge state</th>
+<th>mark renders as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>linked to patch</td>
+<td>spec chain + patch</td>
+</tr>
+<tr>
+<td>null-link (<code>&quot;&quot;</code>)</td>
+<td>spec chain, no patch — <strong>not bare</strong></td>
+</tr>
+<tr>
+<td>tombstone (<code>unlinked</code>)</td>
+<td>bare + <code>unknown-style</code> class</td>
+</tr>
+<tr>
+<td>no edge (nothing inherited)</td>
+<td>bare + <code>unknown-style</code> class</td>
+</tr>
+</tbody>
+</table>
+<p>Consequence: there is <strong>no edge configuration yielding fully-bare marks
+without the <code>unknown-style</code> class</strong>. The palette is “chain-styled” or
+“bare-with-marker”. Accepted (edge case of the edge case), recorded so
+it is not discovered as a surprise later.</p>
+<h3><a id="documentation-requirement" class="heading_anchor" href="#documentation-requirement" aria-hidden="true">#</a>Documentation requirement</h3>
+<p>Under d1, “a silent spec doesn’t style its node but still governs its
+marks” is a <strong>feature with a name</strong>, not a leak — a silent spec with
+local property overrides and marked inline content shows those
+properties on every marked span. Documented, defensible; undocumented,
+a bug report. A property-empty silent spec (the typical shim) produces
+a chain identical to its typeSpec-tree parent’s, so the effect is
+invisible in the common case.</p>
+<h3><a id="hastypespecstyling-narrowing-implementation-consequence" class="heading_anchor" href="#hastypespecstyling-narrowing-implementation-consequence" aria-hidden="true">#</a><code>hasTypeSpecStyling</code> narrowing (implementation consequence)</h3>
+<p>The Viewer’s <code>hasTypeSpecStyling === false</code> must mean strictly “no spec
+resolvable at all” (unknown/default-schema types). A <strong>silent node
+keeps <code>hasTypeSpecStyling: true</code></strong> in its children context; marks
+resolve normally; only <code>_provisionTypeSpecStyler</code> checks the flag on
+the resolved spec. This keeps Kimi’s round-4 distinction (“node has no
+TypeSpec” ≠ “TypeSpec has no edge for this mark”) intact, and the
+existing bare-rendering path remains exclusively for genuinely
+spec-less nodes.</p>
+<h2><a id="q2--nextproperties-at-a-silent-next-sibling---fallback-a" class="heading_anchor" href="#q2--nextproperties-at-a-silent-next-sibling---fallback-a" aria-hidden="true">#</a>Q2 — <code>nextProperties@</code> at a silent next sibling: <strong>©</strong>, fallback (a)</h2>
+<p>Use the silent sibling’s <strong>resolved spec</strong> for
+<code>lineHeightAfter</code>/<code>emAfter</code> margin resolution — under the round-3
+revision the resolver returns a path regardless, so
+<code>_checkNextProperties</code>/<code>_provisionTypeSpecStyler</code> need no special
+casing. Fallback to (a) (treat like “last child”, <code>null</code>) if ©
+surprises in practice.</p>
+<p>(b) “see-through to the next styled sibling” rejected (operator): the
+silent node has a visual appearance in the document; skipping to the
+next spec-carrying node does nothing for document coherence — the
+outcome is basically random.</p>
+<h2><a id="q3--selectionmenu-display-inside-a-silent-node-a" class="heading_anchor" href="#q3--selectionmenu-display-inside-a-silent-node-a" aria-hidden="true">#</a>Q3 — selection/menu display inside a silent node: <strong>(a)</strong></h2>
+<p>Show the resolved spec normally: style buttons work, editing edits the
+spec (its properties still inherit to children, so editing a silent
+spec is meaningful). A “silent” hint in the label is nice-to-have.
+Consequence: <code>getTypeSpecsMethod</code> never returns an empty map from
+silence alone; the round-4 checklist item at
+<code>integration.typeroof.jsx:1268</code> shrinks to a defensive guard.</p>
+<h2><a id="register-after-round-5" class="heading_anchor" href="#register-after-round-5" aria-hidden="true">#</a>Register after round 5</h2>
+<table>
+<thead>
+<tr>
+<th>item</th>
+<th>status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Q1 silent-node marks</td>
+<td><strong>decided: d1</strong></td>
+</tr>
+<tr>
+<td>Q2 nextProperties at silent sibling</td>
+<td><strong>decided: ©, fallback (a)</strong></td>
+</tr>
+<tr>
+<td>Q3 selection/menu display</td>
+<td><strong>decided: (a)</strong></td>
+</tr>
+<tr>
+<td>CSS custom-property leakage</td>
+<td>postponed (operator, round 5)</td>
+</tr>
+<tr>
+<td>relative linking / logical↔storage helper</td>
+<td>decided round 3</td>
+</tr>
+<tr>
+<td>origin-switching</td>
+<td>shelved round 3</td>
+</tr>
+</tbody>
+</table>
+<p>All design questions for the shim/noStyler feature are now decided or
+explicitly deferred. Next step: distill rounds 2–5 into an
+implementation plan.</p>
+<hr>
+<h1><a id="round-6--source-status-record-implementation-handoff" class="heading_anchor" href="#round-6--source-status-record-implementation-handoff" aria-hidden="true">#</a>Round 6 — source status record (implementation handoff)</h1>
+<ul>
+<li>Date: 2026-08-24 22:23</li>
+<li>Purpose: pin the source state the rounds 1–5 design refers to, for an
+implementation that will likely happen in another context/model.</li>
+</ul>
+<h2><a id="baseline" class="heading_anchor" href="#baseline" aria-hidden="true">#</a>Baseline</h2>
+<ul>
+<li>Branch: <code>demo/wikipedia</code>, HEAD <code>2f6ac4b2</code> (“[minor] fix a typo”,
+2026-08-24).</li>
+<li>Working tree is <strong>dirty</strong> (uncommitted, comment-only changes):
+<ul>
+<li><code>integration.typeroof.jsx</code>: typo fix in the <code>isRootOf</code> guard comment.</li>
+<li><code>type-spec/models.mjs</code>: +6 comment lines at ~line 220
+(inlineMargins/columnGap note). <strong>All <code>type-spec/models.mjs</code> line
+numbers in this document refer to the dirty tree; against <code>2f6ac4b2</code>
+they shift by −6 after line 220.</strong></li>
+</ul>
+</li>
+<li><code>docs/planning/type-spec-resolution/</code> is untracked so far.</li>
+<li>Tooling: <code>npm run typecheck</code>, <code>npm run lint</code>, <code>npm run format:write</code>;
+tests via vitest.</li>
+</ul>
+<h2><a id="test-coverage-status-gap-warning" class="heading_anchor" href="#test-coverage-status-gap-warning" aria-hidden="true">#</a>Test coverage status (gap warning)</h2>
+<p><strong>No test exercises the resolver.</strong> <code>_getBestTypeSpecPropertiesId</code>,
+<code>getTypeSpecPropertiesIdMethod</code>, <code>getTypeSpecsMethod</code> are referenced by
+no test file. Existing tests nearby:</p>
+<ul>
+<li><code>prosemirror/integration.test.mjs</code> (702 lines): intent-mark DOM
+round-trip, mark views, reproducing atoms, attr replay, schema
+conversion — good harness patterns to copy for resolver tests.</li>
+<li><code>prosemirror/commands.test.mjs</code>, <code>default-schema.test.mjs</code>.</li>
+</ul>
+<p>Implementation should start by adding characterization tests for the
+current resolver behavior (root fallback, walk, <code>&quot;&quot;</code>-link) before
+touching it.</p>
+<h2><a id="inventory-symbols-the-design-touches" class="heading_anchor" href="#inventory-symbols-the-design-touches" aria-hidden="true">#</a>Inventory: symbols the design touches</h2>
+<h3><a id="resolver-core--libjscomponentsprosemirrorintegrationtyperoofjsx" class="heading_anchor" href="#resolver-core--libjscomponentsprosemirrorintegrationtyperoofjsx" aria-hidden="true">#</a>Resolver core — <code>lib/js/components/prosemirror/integration.typeroof.jsx</code></h3>
+<table>
+<thead>
+<tr>
+<th>line</th>
+<th>symbol</th>
+<th>role in design</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>29</td>
+<td><code>getPathOfTypes</code></td>
+<td>builds pathOfTypes from PM resolved path</td>
+</tr>
+<tr>
+<td>56</td>
+<td><code>getPathsOfTypes</code></td>
+<td>selection → set of pathOfTypes</td>
+</tr>
+<tr>
+<td>88</td>
+<td><code>_getBestTypeSpecPropertiesId</code></td>
+<td>THE resolver: candidate build, walk, unconditional root fallback (line ~122). Gets: relative-link branch (round 3), <code>excludeFromFallback</code> in the walk (round 2)</td>
+</tr>
+<tr>
+<td>135</td>
+<td><code>_typeSpecPropertiesIdCache</code></td>
+<td>WeakMap memo, keyed nodeSpecToTypeSpec instance; memoKey = origin + asPath + pathOfTypes. Stores <code>Path</code> only — stays valid under round-3 design</td>
+</tr>
+<tr>
+<td>144</td>
+<td><code>getTypeSpecPropertiesIdMethod</code></td>
+<td>mapping lookup (<code>&quot;&quot;</code> when unmapped, line 176), memo, calls resolver. Gets: anchor recursion for relative links</td>
+</tr>
+<tr>
+<td>200</td>
+<td><code>getTypeSpecsMethod</code></td>
+<td>selection → Map(typeSpec → path); Q3(a): unchanged behavior, silent specs shown</td>
+</tr>
+<tr>
+<td>1216</td>
+<td><code>ProseMirror._getTypeSpecPropertiesId</code></td>
+<td>method assignment</td>
+</tr>
+<tr>
+<td>1268</td>
+<td><code>_prosemirrorDispatchTransaction</code></td>
+<td><code>[, x] = typeSpecs.entries().next().value</code> — needs defensive guard (round 4/5)</td>
+</tr>
+<tr>
+<td>1305–1345</td>
+<td>schema/nodeViews update</td>
+<td>per-node-type nodeView provisioning; source of “no nodeView → no styling” for unknown types</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="model-layer" class="heading_anchor" href="#model-layer" aria-hidden="true">#</a>Model layer</h3>
+<table>
+<thead>
+<tr>
+<th>file:line</th>
+<th>symbol</th>
+<th>role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>prosemirror/models.typeroof.jsx:417</code></td>
+<td><code>NodeSpecToTypeSpecEdgeModel</code> = <code>{link: StringModel, label: StringModel}</code></td>
+<td>relative links live in <code>link</code> (free-form string, no validation); design comment block ~330–420 (shim, relative paths, normalization, i18n) precedes it</td>
+</tr>
+<tr>
+<td><code>models.typeroof.jsx:422</code></td>
+<td><code>NodeSpecToTypeSpecMapModel</code></td>
+<td>keyed by typeKey</td>
+</tr>
+<tr>
+<td><code>type-spec/models.mjs:407</code> (dirty tree: 413)</td>
+<td><code>TypeSpecModel</code></td>
+<td><strong>gets the two new flags</strong> <code>excludeFromFallback</code>, <code>noStyler</code> (BooleanModel, default false); <code>children</code> self-reference at the following line</td>
+</tr>
+<tr>
+<td><code>type-spec/models.mjs:300ff</code></td>
+<td><code>stylePatchLinkModelMixin</code>, <code>StylePatchLinkModeEnumModel</code></td>
+<td>the mode-enum <em>pattern</em> precedent (round 4: pattern only, not semantics)</td>
+</tr>
+<tr>
+<td><code>metamodel/path.ts</code></td>
+<td><code>Path</code>: <code>RELATIVE</code>/<code>PARENT</code>/<code>ROOT</code>, <code>explicitAnchoring</code>, <code>isExplicitlyRelative</code>; <code>sanitize</code> consumes <code>..</code> one part per part (the pair trap, round 3); <code>isRootOf</code>, <code>toRelative</code>, <code>append</code>, <code>slice</code></td>
+<td>relative-link discriminator + the logical↔storage helper builds on this</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="styler-provisioning--pm-side--prosemirrortype-spectyperoofjsx-" class="heading_anchor" href="#styler-provisioning--pm-side--prosemirrortype-spectyperoofjsx-" aria-hidden="true">#</a>Styler provisioning — PM side (<code>prosemirror/type-spec.typeroof.jsx</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>line</th>
+<th>symbol</th>
+<th>role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>225</td>
+<td><code>UIDocumentTypeSpecStyler</code></td>
+<td><strong>no <code>destroy()</code></strong> — inline styles persist on removal (round 4 item 2); flag check for <code>noStyler</code> gates its provisioning</td>
+</tr>
+<tr>
+<td>486</td>
+<td><code>UIDocumentNodeOutfitter</code></td>
+<td>per-node container; <code>_getTypeSpecPropertiesId</code> at 640; <code>_checkNextProperties</code> at 642ff (Q2 site); dynamic-widget rebuild pattern at <code>_provisionWidgets</code> 690ff</td>
+</tr>
+<tr>
+<td>730/742</td>
+<td><code>UIDocumentUnknownStyleStyler</code> / <code>UIDocumentStyleStyler</code></td>
+<td>mark stylers; the palette of round 5</td>
+</tr>
+<tr>
+<td>831</td>
+<td><code>TypeSpecSubscriptions</code></td>
+<td>subscription registry; <code>subscribe</code> 1233, <code>_subscriptionGetDerrived</code> 1200 (resolves per node), mark finalization 994ff; <code>_createTypeSpecStylerWrapper</code> 1156</td>
+</tr>
+<tr>
+<td>908</td>
+<td><code>_getStyleLinkPropertiesId</code></td>
+<td>copes with null edge already (Q1/d1 needs no change here)</td>
+</tr>
+<tr>
+<td>1861/2131</td>
+<td>menu widgets using <code>_getTypeSpecPropertiesId</code></td>
+<td>Q3(a): unchanged</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="styler-provisioning--viewer-side--layoutstype-stageviewertyperoofjsx-" class="heading_anchor" href="#styler-provisioning--viewer-side--layoutstype-stageviewertyperoofjsx-" aria-hidden="true">#</a>Styler provisioning — Viewer side (<code>layouts/type-stage/viewer.typeroof.jsx</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>line</th>
+<th>symbol</th>
+<th>role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>186</td>
+<td><code>UIDocumentElement</code></td>
+<td><code>_hasTypeSpecStyling = nodeSpecMap.has(typeKey)</code> at 214 — <strong>constructor-time</strong> (round 4: must become dynamic); children context <code>hasTypeSpecStyling</code> at ~294 (round 5: silent keeps <code>true</code>); <code>_pathOfTypes</code> snapshot ~289</td>
+</tr>
+<tr>
+<td>370/618</td>
+<td><code>_getTypeSpecPropertiesId</code> assignments</td>
+<td>resolver consumers</td>
+</tr>
+<tr>
+<td>484/494</td>
+<td><code>_provisionTypeSpecStyler</code></td>
+<td>flag-check site; next-sibling resolution 500–520 (Q2 site, “parity edge case” TODO for unknown sibling types)</td>
+</tr>
+<tr>
+<td>558</td>
+<td><code>UIDocumentTextRun</code></td>
+<td>mark rendering; <code>applyStyleLinks = this._context.hasTypeSpecStyling !== false</code> at ~692 — under round 5 this condition keeps meaning “no spec at all”, NOT silence</td>
+</tr>
+<tr>
+<td>1145</td>
+<td><code>UIDocumentViewer</code></td>
+<td>wiring root of viewer side</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="live-properties--registration-unchanged-by-design-listed-for-orientation" class="heading_anchor" href="#live-properties--registration-unchanged-by-design-listed-for-orientation" aria-hidden="true">#</a>Live properties / registration (unchanged by design, listed for orientation)</h3>
+<ul>
+<li><code>layouts/type-stage/live-properties.typeroof.jsx</code>: <code>TypeSpecLiveProperties</code> (6),
+<code>StyleLinkLiveProperties</code> (257, <code>createPatched</code> at 308 — round-5 palette source).</li>
+<li><code>layouts/type-stage/type-specnion.mjs:245</code>: <code>HierarchicalScopeTypeSpecnion</code> —
+round-2 decision #4: untouched.</li>
+<li><code>layouts/type-stage/meta.typeroof.jsx</code>: <code>TypeSpecMeta</code> registers
+<code>typeSpecProperties@</code> recursively (240ff) — registry side of the walk.</li>
+<li><code>layouts/type-stage/pane-styler.typeroof.jsx:29</code>: <code>TypeStagePaneStyler</code> —
+separate surface, root-bound (round 4 item 1); dependency string built
+at <code>type-stage/index.typeroof.jsx:490</code>.</li>
+</ul>
+<h3><a id="origin-wiring-round-3-verified" class="heading_anchor" href="#origin-wiring-round-3-verified" aria-hidden="true">#</a>Origin wiring (round 3, verified)</h3>
+<ul>
+<li><code>type-stage/index.typeroof.jsx:276</code>, <code>ramp/index.typeroof.jsx:283</code>:
+<code>originTypeSpecPath = widgetBus.rootPath.append('typeSpec')</code> — hardcoded.</li>
+<li>Constructor-arg consumers: <code>ProseMirror</code>, <code>TypeSpecSubscriptions</code>,
+<code>UIDocumentViewer</code>, <code>UIProseMirrorMenu</code> (via
+<code>type-stage/prosemirror.typeroof.jsx</code> contexts), <code>TypeStagePaneStyler</code>
+(dependency string).</li>
+<li>Per-component origin cache: <code>_tsIdOriginKey</code> in
+<code>getTypeSpecPropertiesIdMethod</code>.</li>
+</ul>
+<h3><a id="ui-for-the-mapping-relative-links-enterable-today" class="heading_anchor" href="#ui-for-the-mapping-relative-links-enterable-today" aria-hidden="true">#</a>UI for the mapping (relative links enterable today)</h3>
+<ul>
+<li><code>type-spec/fundamentals.mjs:467</code> <code>UINodeToTypeSpecLinksValue</code>
+(free-text input, no validation), <code>:426</code>
+<code>UIStyleNodeToTypeSpecValueLabel</code> (label resolution via <code>getEntry</code>,
+carries the round-1 NULL/root FIXME at ~451), <code>:1306</code>
+<code>UINodeSpecToTypeSpecLinksMap</code>.</li>
+<li>Labels: <code>typeSpecGetRawLabel</code>/<code>_typeSpecFullLabel</code> at 942/946 —
+Q3(a) “silent” hint would hook here.</li>
+</ul>
+<h2><a id="design--source-cross-reference-compact" class="heading_anchor" href="#design--source-cross-reference-compact" aria-hidden="true">#</a>Design ↔ source cross-reference (compact)</h2>
+<table>
+<thead>
+<tr>
+<th>design item (round)</th>
+<th>primary sites</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>flags on TypeSpecModel (2)</td>
+<td><code>type-spec/models.mjs:407</code> + UI in <code>type-spec-properties.typeroof.jsx</code></td>
+</tr>
+<tr>
+<td><code>excludeFromFallback</code> in walk (2)</td>
+<td><code>integration.typeroof.jsx:110–121</code></td>
+</tr>
+<tr>
+<td><code>noStyler</code> gate, PM (2,5)</td>
+<td><code>type-spec.typeroof.jsx:1156ff</code> wrapper creation / outfitter widgets</td>
+</tr>
+<tr>
+<td><code>noStyler</code> gate, Viewer (2,5)</td>
+<td><code>viewer.typeroof.jsx:484ff</code></td>
+</tr>
+<tr>
+<td>styler cleanup (4)</td>
+<td><code>UIDocumentTypeSpecStyler</code> needs <code>destroy()</code>, <code>type-spec.typeroof.jsx:225</code></td>
+</tr>
+<tr>
+<td>relative-link branch + anchor recursion (3)</td>
+<td><code>integration.typeroof.jsx:88–195</code></td>
+</tr>
+<tr>
+<td>logical↔storage helper (3)</td>
+<td>new; consumed by resolver, labels (fundamentals 426ff), future normalization</td>
+</tr>
+<tr>
+<td>dynamic <code>_hasTypeSpecStyling</code> (4)</td>
+<td><code>viewer.typeroof.jsx:214</code>, <code>_provisionWidgets</code></td>
+</tr>
+<tr>
+<td>line-1268 guard (4,5)</td>
+<td><code>integration.typeroof.jsx:1268</code></td>
+</tr>
+<tr>
+<td>characterization tests first (6)</td>
+<td>new <code>*.test.mjs</code> beside <code>integration.test.mjs</code></td>
+</tr>
+</tbody>
+</table>
+<h2><a id="implementation-status-2026-08-26" class="heading_anchor" href="#implementation-status-2026-08-26" aria-hidden="true">#</a>Implementation status (2026-08-26)</h2>
+<p>All items above are implemented on branch <code>demo/wikipedia</code>:</p>
+<table>
+<thead>
+<tr>
+<th>item</th>
+<th>commit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>characterization tests (resolver baseline)</td>
+<td><code>584fc5c0</code></td>
+</tr>
+<tr>
+<td>logical↔storage helper (<code>type-spec-paths.mjs</code>)</td>
+<td><code>8155278a</code></td>
+</tr>
+<tr>
+<td>flags on TypeSpecModel (+ PPS exclusion, toggle UI <code>2698f8b4</code>)</td>
+<td><code>dfb35c36</code></td>
+</tr>
+<tr>
+<td><code>excludeFromFallback</code> in the walk</td>
+<td><code>9c5d52a3</code></td>
+</tr>
+<tr>
+<td><code>noStyler</code> gate PM side + styler <code>destroy()</code></td>
+<td><code>1d3c5001</code></td>
+</tr>
+<tr>
+<td><code>noStyler</code> gate Viewer side + dynamic flag</td>
+<td><code>554203c7</code></td>
+</tr>
+<tr>
+<td>dispatch guard (empty <code>getTypeSpecs</code>)</td>
+<td><code>e69dcecb</code></td>
+</tr>
+<tr>
+<td>relative links, anchor recursion (relative-by-default)</td>
+<td><code>bc4b775a</code></td>
+</tr>
+<tr>
+<td>mapping-label hint for relative links</td>
+<td><code>5741ed8b</code></td>
+</tr>
+</tbody>
+</table>
+<p>User-doc source: <code>docs/planning/type-spec-resolution/2026-08-26-silent-typespecs-user-doc-source_Fable-5.md</code>
+(silent specs / flags / mark-rendering palette / relative-link
+anchoring) — kept with the plan as source material for user-facing
+documentation.</p>
+<h2><a id="round-6-conclusion" class="heading_anchor" href="#round-6-conclusion" aria-hidden="true">#</a>Round 6 conclusion</h2>
+<p>Source state pinned against <code>2f6ac4b2</code> + comment-only dirt. Biggest
+handoff risks recorded: zero resolver test coverage, the dirty-tree
+line-number offset in <code>type-spec/models.mjs</code>, and the two verified
+traps (missing <code>destroy()</code>, line-1268 destructuring). Line numbers are
+otherwise as of this record and will drift — symbol names are the
+stable reference.</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

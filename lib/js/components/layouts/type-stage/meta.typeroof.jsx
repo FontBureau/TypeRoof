@@ -199,16 +199,9 @@ export class StyleLinksMeta extends _BaseContainerComponent {
 
 export class TypeSpecChildrenMeta extends _BaseDynamicMapContainerComponent {
     [HANDLE_CHANGED_AS_NEW] = true;
-    constructor(
-        widgetBus,
-        zones,
-        typeSpecPropertiesGenerators,
-        isInheritingPropertyFn,
-        widgets = [],
-    ) {
+    constructor(widgetBus, zones, typeSpecPropertiesGenerators, widgets = []) {
         super(widgetBus, zones, widgets);
         this._typeSpecPropertiesGenerators = typeSpecPropertiesGenerators;
-        this._isInheritingPropertyFn = isInheritingPropertyFn;
     }
     /**
      * return => [settings, dependencyMappings, Constructor, ...args];
@@ -263,13 +256,22 @@ export class TypeSpecMeta extends _BaseContainerComponent {
         widgetBus,
         zones,
         typeSpecPropertiesGenerators,
-        isInheritingPropertyFn = null,
+        inheritancePolicyGenerators,
         typeSpecDefaultsMap = null,
     ) {
         const widgets = [
             [
                 {
                     "typeSpecProperties@": widgetBus.rootPath.toString(),
+                    // Only the root TypeSpecLiveProperties produces
+                    // nodeProperties@ (its update builds the root
+                    // HierarchicalScopeNodeProperties); children share
+                    // the settings struct, so the key must be absent here.
+                    ...(typeSpecDefaultsMap !== null
+                        ? {
+                              "nodeProperties@": widgetBus.rootPath.toString(),
+                          }
+                        : {}),
                 },
                 [
                     ...widgetBus.wrapper.getDependencyMapping(
@@ -278,7 +280,7 @@ export class TypeSpecMeta extends _BaseContainerComponent {
                 ],
                 TypeSpecLiveProperties,
                 typeSpecPropertiesGenerators,
-                isInheritingPropertyFn,
+                inheritancePolicyGenerators,
                 typeSpecDefaultsMap,
             ],
             [
@@ -327,7 +329,6 @@ export class TypeSpecMeta extends _BaseContainerComponent {
                 TypeSpecChildrenMeta,
                 zones,
                 typeSpecPropertiesGenerators,
-                isInheritingPropertyFn,
                 [], // widgets
             ],
         ];

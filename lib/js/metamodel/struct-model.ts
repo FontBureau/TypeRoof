@@ -289,7 +289,7 @@ export class _AbstractStructModel extends _BaseContainerModel {
             } else if (value instanceof FallBackValue) {
                 fallBackValues.set(name, value);
             } else if (
-                (value as typeof _BaseModel).prototype instanceof _BaseModel
+                (value as typeof _BaseModel)?.prototype instanceof _BaseModel
             ) {
                 // value can't be equal to _BaseModel, but that's not
                 // intended for direct use anyways.

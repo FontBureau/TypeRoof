@@ -68,16 +68,24 @@ export class RampProseMirrorContext extends BaseProseMirrorContext {
                 proseMirrorDefaultSchema,
                 new.target.ID_MAP,
                 originTypeSpecPath,
-                ["editor-advanced", "has-node-labels"],
+                ["editor-advanced"],
                 proseMirrorHostElement,
             ],
+            [{}, ["showNodeTypeSpecLabels"], UpdateLabelListener],
             [
                 { id: new.target.ID_MAP.subscriptions },
                 ["nodeSpecToTypeSpec", "typeSpec", "document"],
                 TypeSpecSubscriptions,
                 zones,
                 originTypeSpecPath,
-                { typeSpecLabels: true } /*nodeOutfitterOptions*/,
+                {
+                    // The argument is the dependency-enforcing getEntry
+                    // injected into the activationTest (see
+                    // ComponentWrapper._activationTestGetEntry).
+                    typeSpecLabels: (getEntry) =>
+                        getEntry("showNodeTypeSpecLabels").value,
+                } /*nodeOutfitterOptions*/,
+                new.target.ID_MAP.proseMirror, // proseMirrorID
             ],
             // NOTE: document-level styling (backgroundColor, language
             // tag) of the editor pane is applied by
@@ -134,6 +142,7 @@ export class TypeStageProseMirrorContext extends BaseProseMirrorContext {
                     typeSpecLabels: (getEntry) =>
                         getEntry("showNodeTypeSpecLabels").value,
                 } /*nodeOutfitterOptions*/,
+                new.target.ID_MAP.proseMirror, // proseMirrorID
             ],
             // NOTE: the document-level styling (backgroundColor,
             // language tag) for the editor pane is applied by

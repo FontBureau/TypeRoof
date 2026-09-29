@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="phase-5a-document-tree-walkerrenderer-separation--implementation-plan" class="heading_anchor" href="#phase-5a-document-tree-walkerrenderer-separation--implementation-plan" aria-hidden="true">#</a>Phase 5a: Document-Tree Walker/Renderer Separation — Implementation Plan</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Extract the document-tree infrastructure (node-identity-keyed widget
+lifecycle, <code>pathOfTypes</code> context, typeSpec-path resolution, rendering-plan
+derivation) out of the viewer into a renderer-independent <code>DocumentNodesMeta</code>
+layer that <strong>always exists</strong> — in every render mode, in both layouts
+(type-stage and ramp) — and to which DOM rendering attaches <em>optionally</em>.
+The design center (operator-confirmed): <strong>we always have meta and the
+nodeProperties; optionally we can attach DOM rendering, or future renderers.</strong></p>
+<p>This is a pure refactor (behavior-neutral). It implements Phase 5a of the
+umbrella plan <code>2026-09-05-1623-node-properties.md</code> and prepares Phase 5b
+(per-node <code>HierarchicalScopeNodeProperties</code> instances living in the meta
+nodes).</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<p>Full detail in the research doc; the load-bearing facts:</p>
+<ul>
+<li><strong>There is no explicit walk to extract.</strong> Traversal is emergent from the
+component framework: <code>UIDocumentNodes</code> (dynamic-map provisioning),
+<code>UIDocumentNode</code> (typeKey dispatch + node-identity rebuild), and
+<code>_provisionWidgets</code> lifecycles (<code>viewer.typeroof.jsx:927-1186</code>). The
+boundary is drawn through widget classes, not through a walk function.</li>
+<li><strong>Already pure tree infrastructure</strong> (research §1.2): all four module
+helpers (<code>viewer.typeroof.jsx:76-176</code>), <code>UIDocumentNode</code> in its entirety
+(927-1010), <code>pathOfTypes</code> construction/propagation (287, 289-296, 1240),
+the mark-descriptor pipeline (<code>_getWrapMarks</code> 721-818,
+<code>_wrapResultsAreEqual</code> 820-834), <code>_getRenderingDirectives</code> (424-447),
+<code>_provisionTypeSpecStyler</code> (515-591), <code>UIDocumentNodes._createWrapper</code>
+(1153-1185).</li>
+<li><strong>Six entanglement sites</strong> needing splits (research §1.4):
+<ol>
+<li><code>UIDocumentElement</code> constructor (187-362) — seam: pure
+<code>resolveElementRenderingPlan(...) → {tag, attributes, additionalAttrs, innerHtml, childrenInInlineContext, treatAsLeaf}</code></li>
+<li><code>_applyAttrDrivenDOMUpdates</code> (456-493) — seam: compute diff (meta) vs.
+apply to node (viewer)</li>
+<li><code>_createTypeSpecStylerWrapper</code> (372-415) — seam at <code>args=[this.node, this.node]</code> (407)</li>
+<li><code>UIDocumentTextRun._provisionWidgets</code> (882-924) — coupling point: the
+<code>_MARK_ELEMENT</code> symbol (836) smuggling DOM refs through descriptors</li>
+<li><code>_createStylerWidgets</code> (855-880) — per-mark id resolution fused with
+element extraction</li>
+<li><code>UIDocumentNodes</code> slot quartet <code>_insertIntoSlot</code>/<code>_insertNodeIntoSlot</code>/
+<code>_reorderChildren</code>/<code>_destroyWidget</code> (1054-1151) — coupling point: the
+<code>childrenWidgetBus.insertDocumentNode</code> monkey-patch (1035-1038)</li>
+</ol>
+</li>
+<li><strong>The outfitter</strong> (<code>UIDocumentNodeOutfitter</code>,
+<code>prosemirror/type-spec.typeroof.jsx:532-793</code>) duplicates four algorithms
+over ProseMirror positions (research §2.2). It does not walk — PM does.
+Migration of the outfitter to the meta layer is <strong>5b scope, not 5a</strong>, but
+the meta API must be outfitter-compatible: stable node identity, ancestor
+type chains, next-sibling resolution, lifecycle events (research §2.3).</li>
+<li><strong>Meta-layer conventions are established</strong> (research §3): two-tier DOM-less
+widget trees (<code>TypeSpecMeta</code>, <code>ActorsMeta</code>), registration via settings with
+model-path ids, <code>@parentProperties</code> dependency mapping, <code>setUpdated</code> push
+notification, <code>notFoundFallbackValue: null</code> idiom.</li>
+<li><strong>Viewer is mode-gated</strong> (<code>index.typeroof.jsx:220-225, showViewerActivationTest</code>); the meta layer must not be.</li>
+<li><strong>Test gaps</strong>: compare mode, node add/remove/reorder, typeKey rebuild,
+text-run/mark updates are all unasserted (research §4.3).</li>
+</ul>
+<h3><a id="key-discoveries" class="heading_anchor" href="#key-discoveries" aria-hidden="true">#</a>Key Discoveries:</h3>
+<ul>
+<li><code>SimpleProtocolHandler.register</code> throws on duplicate ids
+(<code>component.mjs:195-198</code>) ⇒ per-node ids must be unique ⇒ id = document-node
+model path.</li>
+<li><code>UIDocumentNode</code> is already pure (A) — adoption is natural, not forced.</li>
+<li>DOM-less widgets are first-class: <code>zone</code> omitted ⇒ <code>hostElement: null</code>
+(<code>component.mjs:1044-1047</code>); placemarkers only created <code>if(host)</code> (1309).</li>
+<li>Ramp layout (<code>layouts/ramp/index.typeroof.jsx</code>) is editor-only: no viewer,
+no mode switching; <code>nodeProperties@</code> handler already installed (:250).
+There, <code>DocumentNodesMeta</code> is the only tree layer — the purest case of the
+design center.</li>
+</ul>
+<h2><a id="decisions-locked-with-operator-2026-09-05" class="heading_anchor" href="#decisions-locked-with-operator-2026-09-05" aria-hidden="true">#</a>Decisions (locked with operator, 2026-09-05)</h2>
+<ol>
+<li><strong>Placement</strong>: <code>DocumentNodesMeta</code> always active at the top controller of
+both layouts (type-stage <code>index.typeroof.jsx</code>, ramp <code>index.typeroof.jsx</code>),
+rootPath <code>./document</code>, no activationTest. (Q1-A)</li>
+<li><strong>Registration id shape</strong>: <code>nodeProperties@&lt;absolute documentNodePath&gt;</code>
+(id = model path, framework convention). No typeSpec-id mixing. Parent
+lookup = path math on the consumer/meta side. (Q2-A)</li>
+<li><strong>Structure</strong>: adopt — <code>UIDocumentNodes</code>/<code>UIDocumentNode</code> and the pure
+halves of the element/text-run classes move into
+<code>document-nodes-meta.typeroof.jsx</code>; DOM rendering becomes an optional
+attachment created by the meta nodes. Meta always exists; renderers
+attach. (Q3-A, operator’s refined reading)</li>
+<li><strong>Pre-refactor test net</strong>: G1–G7 only (research §4.3). G8–G12 deferred,
+written during the refactor if a ©-site split needs a guard. (Q4)</li>
+<li><strong>Hygiene first</strong>: dead code + skip-guard consistency as a separate
+commit before the refactor; the next-sibling unknown-type FIXME
+(viewer:531-535) stays parked. (Q5)</li>
+</ol>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<ul>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta.typeroof.jsx</code>
+exists and owns: the document-tree widget structure (per-node lifecycle
+keyed by node-at-position identity), <code>pathOfTypes</code> context propagation,
+effective typeSpec-path resolution, next-sibling resolution, rendering-plan
+and mark-descriptor derivation, and per-node
+<code>nodeProperties@&lt;documentNodePath&gt;</code> protocol registrations (payload:
+the root map until 5b installs real per-node scopes).</li>
+<li>The viewer (<code>viewer.typeroof.jsx</code>) contains only DOM concerns: element
+creation, attr/text application, wrapper DOM, slot insertion — as
+attachment classes instantiated by the meta layer. Its rendered output is
+byte-identical to today.</li>
+<li><code>DocumentNodesMeta</code> is registered always-active in both layouts; the
+viewer registration keeps its activationTest.</li>
+<li>The <code>insertDocumentNode</code> monkey-patch is replaced by a defined
+renderer-attachment interface.</li>
+<li>Full suite green throughout; new behavior tests (G1–G7) pass before and
+after the refactor, unchanged.</li>
+</ul>
+<h3><a id="verification-of-end-state" class="heading_anchor" href="#verification-of-end-state" aria-hidden="true">#</a>Verification of end state:</h3>
+<ul>
+<li><code>npm run typecheck</code>, <code>npm run lint</code>, <code>npm test</code> all green.</li>
+<li>Behavior tests G1–G7 (written in Phase 1 against the unrefactored viewer)
+pass unmodified after Phase 3.</li>
+<li>Manual: viewer renders identically in viewer mode; editor, viewer, and
+compare modes all work in type-stage; ramp layout works.</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>No per-node <code>HierarchicalScopeNodeProperties</code> instances (5b). The per-node
+registrations in Phase 3 transport the root map as payload; consumers keep
+working unchanged.</li>
+<li>No outfitter migration to the meta layer (5b or later). The outfitter keeps
+its PM-position walk for now.</li>
+<li>No behavior changes: the parked FIXMEs (tag-change re-resolution,
+leaf-ness transitions, next-sibling unknown-type) stay parked.</li>
+<li>No changes to <code>getTypeSpecPropertiesIdMethod</code> — already shared, already
+the single source of truth.</li>
+<li>No <code>UIDocumentElementTypeSpecDropTarget</code> restructuring (unrelated to the
+walk; stays exported from the viewer module).</li>
+<li>No flattening/migration of the test harness infrastructure itself beyond
+the skip-guard consistency fix.</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Test-net-first, then two landings: <strong>delegation</strong> (code moves, call graph
+preserved) then <strong>ownership flip</strong> (meta drives, viewer attaches). Each
+landing is separately green and separately reviewed. Tests assert <em>behavior</em>
+(observable DOM/state), never concrete function implementations — the whole
+point is that implementations may move freely.</p>
+<p><strong>Commit discipline (operator instruction)</strong>: before <em>every</em> commit, stop
+and present the commit message + file list; proceed only on operator’s
+“OKOK”. Commit messages carry the standard metadata trailer (model/provider/
+agent, read from their actual sources at commit time).</p>
+<h2><a id="phase-0-hygiene" class="heading_anchor" href="#phase-0-hygiene" aria-hidden="true">#</a>Phase 0: Hygiene</h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p>Behavior-neutral cleanup so the refactor diffs stay readable.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-dead-code-removal" class="heading_anchor" href="#1-dead-code-removal" aria-hidden="true">#</a>1. Dead code removal</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx</code>
+<strong>Changes</strong>: remove <code>UIDocumentTextRun._stylerWrapper</code> (assigned <code>null</code> at
+:617, never read) and <code>UIDocumentNodes._nodeSlots</code> (created at :1030, never
+used).</p>
+<h4><a id="2-consistent-fixture-skip-guards" class="heading_anchor" href="#2-consistent-fixture-skip-guards" aria-hidden="true">#</a>2. Consistent fixture skip-guards</h4>
+<p><strong>Files</strong>: <code>lib/js/tests/type-stage-document-replace/index.test.mjs</code>,
+<code>lib/js/tests/type-stage-toggles/index.test.mjs</code>,
+<code>lib/js/tests/type-stage-pane-sizing/index.test.mjs</code>
+<strong>Changes</strong>: all three DOM suites use the same <code>skipIf(fixture-missing)</code>
+guard (today two skip silently, document-replace would hard-fail).</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria:</h3>
+<ul>
+<li>Automated: <code>npm run typecheck</code>, <code>npm run lint</code>, <code>npm test</code> green.</li>
+<li>Manual: none (no behavior change).</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause with commit message; commit on OKOK.</p>
+<hr>
+<h2><a id="phase-1-behavior-test-safety-net-g1g7" class="heading_anchor" href="#phase-1-behavior-test-safety-net-g1g7" aria-hidden="true">#</a>Phase 1: Behavior-test safety net (G1–G7)</h2>
+<h3><a id="overview-2" class="heading_anchor" href="#overview-2" aria-hidden="true">#</a>Overview</h3>
+<p>Pin current viewer behavior with tests that observe DOM and model state —
+not implementation details — so the “pure move, behavior-neutral” claim of
+Phases 2–3 is falsifiable. All tests are written against the <strong>unrefactored</strong>
+viewer and must pass before any extraction starts.</p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required:</h3>
+<p><strong>File</strong>: <code>lib/js/tests/type-stage-viewer-behavior/index.test.mjs</code> (new;
+reuse the <code>type-stage-toggles</code> harness via a shared import — extract
+<code>buildWorld</code> into <code>lib/js/tests/type-stage-toggles/harness.mjs</code> export if
+not already importable, or a small shared <code>lib/js/tests/harness/</code> module)</p>
+<p>Behavior specs (each asserts observable outcomes only):</p>
+<ol>
+<li><strong>G1 — compare mode mounts both panes</strong>: set
+<code>documentRendererMode.value = &quot;compare&quot;</code>; assert the layout zone contains
+both <code>.ui_prosemirror_host</code> and <code>article.typeroof-document</code>; assert both
+have resolved <code>style.width</code> after an <code>environment@layout</code> publish.</li>
+<li><strong>G2 — viewer DOM correct after editor→viewer round-trip</strong>:
+viewer→editor→viewer; re-query the (fresh) article; assert the
+<code>[data-node-type]</code> sequence and text content match
+<code>activeState.document</code>’s structure.</li>
+<li><strong>G3 — node insertion</strong>: splice a node into <code>document.content</code> at index 0
+and in the middle; assert article child order and <code>data-node-type</code>
+sequence follow the collection.</li>
+<li><strong>G4 — node removal</strong>: delete a content key; assert child count and the
+surviving children’s identity/order.</li>
+<li><strong>G5 — node reorder</strong>: move a key; assert DOM order follows collection
+order.</li>
+<li><strong>G6 — typeKey change at same position</strong>: change a node’s <code>typeKey</code>;
+assert a <em>new</em> element with <code>[data-node-type=&quot;&lt;new&gt;&quot;]</code> replaces the old
+one (element identity differs).</li>
+<li><strong>G7 — text-run update + mark wrap/unwrap</strong>: change a text node’s <code>text</code>,
+assert textContent; add then remove a <code>strong</code> mark, assert a wrapper
+element with <code>[data-style-name]</code> appears then disappears while the text
+content is preserved.</li>
+</ol>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria:</h3>
+<ul>
+<li>Automated: <code>npm test</code> green (new suite included); typecheck/lint green.</li>
+<li>Manual: review that every assertion is behavior-level (DOM/state), with no
+references to viewer-internal method names.</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause with commit message; commit on OKOK. If a
+pinned behavior surprises (e.g. reveals a quirk), stop and report before
+“fixing” anything — quirks get pinned, not fixed, in this phase.</p>
+<hr>
+<h2><a id="phase-2-extraction--delegation-landing" class="heading_anchor" href="#phase-2-extraction--delegation-landing" aria-hidden="true">#</a>Phase 2: Extraction — delegation landing</h2>
+<h3><a id="overview-3" class="heading_anchor" href="#overview-3" aria-hidden="true">#</a>Overview</h3>
+<p>Move tree infrastructure into <code>document-nodes-meta.typeroof.jsx</code> and split
+the six entanglement sites at their named seams. The viewer keeps its
+overall shape: same class names, same registration, same call graph
+direction (viewer code calls into the meta module). No always-on meta
+widget yet — this landing is a <em>code move</em>, not yet an architectural flip.</p>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-new-module-with-the-pure-infrastructure" class="heading_anchor" href="#1-new-module-with-the-pure-infrastructure" aria-hidden="true">#</a>1. New module with the pure infrastructure</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/document-nodes-meta.typeroof.jsx</code> (new)
+<strong>Changes</strong>: receive from <code>viewer.typeroof.jsx</code>:</p>
+<ul>
+<li>the four module helpers (<code>_getMMChildIsBlock</code>,
+<code>_specChildrenInInlineContext</code>, <code>_getRenderingAttrDirectives</code>,
+<code>_determineUnknownType</code>) — unchanged, plus the new pure
+<code>resolveElementRenderingPlan(mmNode, specs, context)</code> extracted from the
+<code>UIDocumentElement</code> constructor’s spec branches (seam 1);</li>
+<li><code>pathOfTypes</code> context construction/propagation helpers (currently inline
+at viewer:287, 289-296, 1240);</li>
+<li>the mark-descriptor pipeline (<code>_getWrapMarks</code>, <code>_wrapResultsAreEqual</code>,
+<code>_getStyleLinkPropertiesId</code>, <code>_getEffectiveStyleLinks</code>) made DOM-free:
+descriptors no longer carry elements via <code>_MARK_ELEMENT</code> (seam 4 — the
+symbol coupling is removed; descriptor→element association becomes an
+explicit parallel structure owned by the viewer attachment);</li>
+<li>typeSpec-path resolution aliases (<code>_getTypeSpecPropertiesId</code>) and
+next-sibling <code>pathOfTypes</code> computation (from <code>_provisionTypeSpecStyler</code>,
+537-550).</li>
+</ul>
+<h4><a id="2-split-the-remaining--sites-in-the-viewer" class="heading_anchor" href="#2-split-the-remaining--sites-in-the-viewer" aria-hidden="true">#</a>2. Split the remaining ©-sites in the viewer</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>UIDocumentElement</code> constructor: apply <code>resolveElementRenderingPlan</code> then
+create DOM (seam 1); <code>_applyAttrDrivenDOMUpdates</code> becomes compute-diff
+(meta util) + apply (viewer) (seam 2); <code>_createTypeSpecStylerWrapper</code>
+receives its target element as an argument instead of reading <code>this.node</code>
+mid-method (seam 3).</li>
+<li><code>UIDocumentTextRun._provisionWidgets</code>/<code>_createStylerWidgets</code>: consume pure
+descriptors from the meta module; wrapper-DOM creation and styler binding
+stay (seams 4–5).</li>
+<li><code>UIDocumentNodes</code> slot quartet: order/sibling resolution expressed as pure
+functions over the collection + <code>_keyToWidget</code>; DOM mutation stays in thin
+apply methods (seam 6). The monkey-patch remains for this landing
+(interface replacement is Phase 3).</li>
+</ul>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria:</h3>
+<ul>
+<li>Automated: full suite green incl. G1–G7; typecheck/lint green.</li>
+<li>Manual: viewer renders identically (spot-check wikipedia demo doc).</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause with commit message; commit on OKOK.</p>
+<hr>
+<h2><a id="phase-3-ownership-flip--meta-drives-viewer-attaches" class="heading_anchor" href="#phase-3-ownership-flip--meta-drives-viewer-attaches" aria-hidden="true">#</a>Phase 3: Ownership flip — meta drives, viewer attaches</h2>
+<p><strong>Detailed implementation plan (Step 0 design, converged 2026-09-06):</strong>
+<code>docs/planning/agentic-artefacts/thoughts/plan/2026-09-06-1047-phase3-document-nodes-meta-attachment-interface.md</code>
+— DOM-free meta tree, <code>getWidgetById</code> discovery with controller-configured
+id, single-argument <code>attachRenderer</code>/<code>detachRenderer</code>, handler returns widget
+descriptions, viewer-side DOM insertion via attachment registry.</p>
+<h3><a id="overview-4" class="heading_anchor" href="#overview-4" aria-hidden="true">#</a>Overview</h3>
+<p>Realize the design center: <code>DocumentNodesMeta</code> becomes an always-active
+widget tree over <code>./document</code>; the viewer’s per-node classes become
+attachments created and driven by the meta nodes. Per-node
+<code>nodeProperties@&lt;documentNodePath&gt;</code> registrations are wired (payload: root
+map — behavior-neutral, nothing consumes the new ids yet; 5b replaces the
+payload with real per-node scopes).</p>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-always-active-meta-layer-in-both-layouts" class="heading_anchor" href="#1-always-active-meta-layer-in-both-layouts" aria-hidden="true">#</a>1. Always-active meta layer in both layouts</h4>
+<p><strong>Files</strong>: <code>lib/js/components/layouts/type-stage/index.typeroof.jsx</code>,
+<code>lib/js/components/layouts/ramp/index.typeroof.jsx</code>,
+<code>lib/js/components/layouts/type-stage/document-nodes-meta.typeroof.jsx</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>DocumentNodesMeta</code> (dynamic-map container over <code>./document/content</code>,
+DOM-less: no <code>zone</code> in settings) registered at the top controller with
+rootPath <code>./document</code>, deps <code>nodeSpec</code>/<code>markSpec</code>/<code>nodeSpecToTypeSpec</code> —
+no activationTest. Same registration in the ramp controller.</li>
+<li>Meta node classes (adopted from Phase 2’s extracted code): per-node
+lifecycle keyed by node-at-position, <code>pathOfTypes</code> propagation, typeSpec
+resolution, rendering-plan/mark-descriptor derivation, next-sibling
+resolution.</li>
+<li>Each meta node declares in its settings
+<code>{&quot;nodeProperties@&quot;: widgetBus.rootPath.toString()}</code> (id = absolute
+document-node path); its <code>update</code> pushes <code>setUpdated</code> on change, guarded
+per the <code>hasProtocolHandlerRegistration</code> idiom. Payload for now: the root
+node-properties map (obtained via the existing root registration).</li>
+</ul>
+<h4><a id="2-viewer-becomes-an-attachment" class="heading_anchor" href="#2-viewer-becomes-an-attachment" aria-hidden="true">#</a>2. Viewer becomes an attachment</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>UIDocumentViewer</code> keeps its activationTest and root <code>&lt;article&gt;</code>; instead
+of owning a <code>UIDocumentNodes</code> walk, it <em>attaches</em> to <code>DocumentNodesMeta</code>:
+attachment classes (per meta node) create/apply DOM, driven by meta-node
+lifecycle.</li>
+<li>The <code>insertDocumentNode</code> monkey-patch (viewer:1035-1038) is replaced by a
+defined interface: the meta container resolves order/siblings and calls
+the attached renderer’s insertion callback (e.g.
+<code>attachment.insertNode(domNode, beforeDomNode|null)</code>), or a no-op when no
+renderer is attached.</li>
+<li>Attachment presence is optional by construction: editor-only mode (and the
+ramp layout) run the full meta tree with zero attachments.</li>
+</ul>
+<h4><a id="3-consumer-migration-mechanical" class="heading_anchor" href="#3-consumer-migration-mechanical" aria-hidden="true">#</a>3. Consumer migration (mechanical)</h4>
+<p><strong>Files</strong>: viewer styler/pane-styler registrations where they hard-code the
+root <code>nodeProperties@&lt;originTypeSpecPath&gt;</code> id
+<strong>Changes</strong> (operator decision, 2026-09-05): consumers that know their
+document-node path subscribe to <strong>their own</strong> <code>nodeProperties@&lt;documentNodePath&gt;</code>
+id. Payloads are identical to the root map today, so this is
+behavior-neutral — but it exercises the per-node registration scheme end to
+end (resolution, notification propagation) and puts consumers in their 5b
+position. Consumers without a node context (e.g. the pane styler on the
+document container) keep the root id.</p>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria:</h3>
+<ul>
+<li>Automated: full suite green incl. G1–G7 <strong>unmodified</strong>; typecheck/lint
+green; a new assertion (in the G1/G2 suite) that in editor-only mode no
+<code>article.typeroof-document</code> exists while <code>nodeProperties@</code> per-node
+registrations are live (observable via the protocol handler).</li>
+<li>Manual: wikipedia demo — editor, viewer, compare modes render and switch
+identically to before; ramp layout renders and labels/parameters work.</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause with commit message; commit on OKOK. This is
+the riskiest landing — manual verification before commit is required, not
+optional.</p>
+<h4><a id="4-tooling-housekeeping-applies-to-all-phases-with-new-files" class="heading_anchor" href="#4-tooling-housekeeping-applies-to-all-phases-with-new-files" aria-hidden="true">#</a>4. Tooling housekeeping (applies to all phases with new files)</h4>
+<p><strong>File</strong>: <code>.prettierignore</code>
+<strong>Changes</strong>: any newly added <code>.mjs</code> file must be explicitly un-ignored
+(operator note, e.g. <code>!lib/js/components/layouts/type-stage/…​.mjs</code>);
+likewise new test suites under <code>lib/js/tests/</code> if not already covered by
+<code>!**/*.test.mjs</code>. Add the un-ignore lines in the same commit that adds the
+file. New <code>.typeroof.jsx</code> files need no entry (already covered).</p>
+<h4><a id="5-open-decision-resolved-by-operator-2026-09-05" class="heading_anchor" href="#5-open-decision-resolved-by-operator-2026-09-05" aria-hidden="true">#</a>5. <s>Open decision</s> (resolved by operator, 2026-09-05)</h4>
+<p>Phase 3 item 3 — decided: consumers with a document-node path subscribe to
+their own <code>nodeProperties@&lt;documentNodePath&gt;</code> id (behavior-neutral today,
+exercises the scheme, is the 5b position). See item 3.</p>
+<hr>
+<h2><a id="phase-4-archive" class="heading_anchor" href="#phase-4-archive" aria-hidden="true">#</a>Phase 4: Archive</h2>
+<h3><a id="overview-5" class="heading_anchor" href="#overview-5" aria-hidden="true">#</a>Overview</h3>
+<p>Move this RPI cycle’s artefacts into the documentation tree.</p>
+<h3><a id="changes-required-4" class="heading_anchor" href="#changes-required-4" aria-hidden="true">#</a>Changes Required:</h3>
+<p><strong>Files</strong>: <code>docs/planning/agentic-artefacts/thoughts/research/2026-09-05-2119-document-tree-walker-renderer-separation.md</code>
+→ <code>docs/planning/agentic-artefacts/thoughts/research/</code>;
+<code>docs/planning/agentic-artefacts/thoughts/plan/2026-09-05-2159-document-tree-walker-renderer-separation.md</code>
+→ <code>docs/planning/agentic-artefacts/thoughts/plan/</code> (via <code>git mv</code>)
+<strong>Changes</strong>: update the front-matter <code>research:</code>/<code>plan:</code> cross-references
+(including the umbrella plan’s pointer if it references this cycle) to the
+new paths.</p>
+<h3><a id="success-criteria-4" class="heading_anchor" href="#success-criteria-4" aria-hidden="true">#</a>Success Criteria:</h3>
+<ul>
+<li>Automated: <code>git status</code> clean after the archiving commit.</li>
+<li>Manual: links resolve.</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause with commit message; commit on OKOK. This is
+the final commit of the cycle.</p>
+<hr>
+<h2><a id="follow-up-items-post-5a-explicitly-out-of-scope-here" class="heading_anchor" href="#follow-up-items-post-5a-explicitly-out-of-scope-here" aria-hidden="true">#</a>Follow-up Items (post-5a, explicitly out of scope here)</h2>
+<ol>
+<li><strong>Fix: dynamically added marks don’t wrap text runs in the viewer.</strong>
+Pinned in G7 (<code>lib/js/tests/type-stage-viewer-behavior/index.test.mjs</code>)
+during Phase 1. Mechanism: <code>UIDocumentTextRun</code>’s dependency mappings
+(<code>viewer.typeroof.jsx:953-961</code>) include <code>&quot;text&quot;</code> but not <code>&quot;marks&quot;</code> (and
+not mark <code>&quot;attrs&quot;</code>), so a marks-only change never triggers the text
+run’s <code>_provisionWidgets</code> — the wrap/unwrap logic there works (proven
+at provisioning time, e.g. compare-mode editor edits appear in the
+viewer after re-provisioning) but is never invoked for marks-only
+updates. Estimated fix: add <code>&quot;marks&quot;</code> (+ maybe mark attrs) to the
+dependency mappings (~1–3 lines), verify no over-provisioning
+(<code>_wrapResultsAreEqual</code> guards DOM surgery), flip the G7
+pinned-quirk assertions to assert wrapping. Best landed as a small
+commit right after 5a — it also verifies the new <code>DocumentNodesMeta</code>
+dependency wiring end-to-end.</li>
+</ol>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<h3><a id="behavior-tests-phase-1-guard-all-later-phases" class="heading_anchor" href="#behavior-tests-phase-1-guard-all-later-phases" aria-hidden="true">#</a>Behavior tests (Phase 1, guard all later phases):</h3>
+<ul>
+<li>G1 compare mode both-panes; G2 round-trip DOM correctness; G3–G5 node
+add/remove/reorder; G6 typeKey rebuild; G7 text-run + mark wrap/unwrap.</li>
+<li>Assertions observe DOM and model state only — no viewer-internal names.</li>
+</ul>
+<h3><a id="deferred-guards-write-during-phases-23-if-a-split-needs-one" class="heading_anchor" href="#deferred-guards-write-during-phases-23-if-a-split-needs-one" aria-hidden="true">#</a>Deferred guards (write during Phases 2–3 if a split needs one):</h3>
+<ul>
+<li>G8 per-node styling/<code>noStyler</code>; G9 unknown-type rendering; G10 zone
+placement; G11 live edit in compare; G12 leaf/htmlTag warn paths (pin,
+don’t fix).</li>
+</ul>
+<h3><a id="regression-suite" class="heading_anchor" href="#regression-suite" aria-hidden="true">#</a>Regression suite:</h3>
+<ul>
+<li>Existing: type-stage-toggles, type-stage-document-replace,
+type-stage-pane-sizing, environment-dispatch — all must pass unmodified.</li>
+</ul>
+<h3><a id="manual" class="heading_anchor" href="#manual" aria-hidden="true">#</a>Manual:</h3>
+<ul>
+<li>Wikipedia demo document in all three modes, both layouts (type-stage,
+ramp), after Phase 3.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

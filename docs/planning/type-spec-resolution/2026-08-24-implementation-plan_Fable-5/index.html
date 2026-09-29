@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Shim Flags &amp; Relative TypeSpec Linking — Implementation Plan - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/large-file-investigation-260723/">Large File Investigation</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li>
+<li><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-initial-analysis/">PPS: Initial Analysis</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-2026-07/">Metamodel: 2026-07</a></li>
+<li><a href="/TypeRoof/docs/planning/columns/REPORT/">Columns: Runion Report</a></li>
+<li><a href="/TypeRoof/docs/planning/overview/architectural-overview/">Architectural Overview</a></li>
+<li><a href="/TypeRoof/docs/planning/performance-investigation-viewer-update-propagation-260820/">Perf: Viewer Update Propagation</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Fable-5/">TypeSpec Resolution: NULL-TypeSpec Analysis</a></li>
+<li><a href="/TypeRoof/docs/planning/DEMARCATION_FALLBACK/">DEMARCATION_FALLBACK</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Kimi-K3/">TypeSpec Resolution: NULL-TypeSpec Analysis (Kimi-K3)</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-implementation-plan_Fable-5/">TypeSpec Resolution: Implementation Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-second-analysis_Fable-5.1/">PPS: Second Analysis (Fable-5.1)</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="implementation-plan--shim-flags--relative-typespec-linking" class="heading_anchor" href="#implementation-plan--shim-flags--relative-typespec-linking" aria-hidden="true">#</a>Implementation plan — shim flags &amp; relative TypeSpec linking</h1>
+<ul>
+<li>Date: 2026-08-24</li>
+<li>Agent: Fable-5</li>
+<li>Design source: <code>2026-08-24-null-typespec-analysis_Fable-5.md</code>
+(rounds 1–6; round 6 pins the source state at <code>2f6ac4b2</code> +
+comment-only dirt).</li>
+<li>Status: plan — not started.</li>
+</ul>
+<h2><a id="working-agreement-binding-for-the-implementing-session" class="heading_anchor" href="#working-agreement-binding-for-the-implementing-session" aria-hidden="true">#</a>Working agreement (binding for the implementing session)</h2>
+<ol>
+<li><strong>Small, reviewable commits.</strong> Each step below is one commit (or
+less — split further if a step grows). Never batch unrelated
+changes.</li>
+<li><strong>Stop before every commit.</strong> Present the proposed commit message
+and the file list for review; <strong>commit only on the operator’s
+explicit OK.</strong> No exceptions (see <code>~/MANNERS.md</code>, <a href="http://COLLABORATION.md">COLLABORATION.md</a> —
+including the commit-message metadata block: model, provider,
+agent version read from their actual sources).</li>
+<li><strong>Tests are about behavior, not about functions.</strong> Test names and
+assertions describe observable outcomes (“an unmapped node type
+resolves to the root typeSpec”), never internals (“_getBest…
+returns originTypeSpecPath”). Do not assert on cache state, call
+counts, or private helpers; assert on resolution results, DOM
+state, and rendered properties. If a test can only be written by
+reaching into a private symbol, that is a design smell to report,
+not to test around.</li>
+<li>After each step: <code>npm run typecheck &amp;&amp; npm run lint</code>, plus the test
+suite. <code>npm run format:write</code> before presenting a diff.</li>
+<li>Line numbers in this plan are from the round-6 record and will
+drift; symbol names are the stable reference.</li>
+</ol>
+<h2><a id="ordering-rationale" class="heading_anchor" href="#ordering-rationale" aria-hidden="true">#</a>Ordering rationale</h2>
+<p>Characterization tests come first (round 6: the resolver has zero test
+coverage — no refactoring without a net). Then model flags (inert
+until read), then resolver changes behind the flags, then provisioning,
+then guards/UI. Every step leaves the tree green and shippable;
+feature-visible behavior switches on only when the flag/link is
+actually used, so no step breaks existing documents.</p>
+<h2><a id="steps" class="heading_anchor" href="#steps" aria-hidden="true">#</a>Steps</h2>
+<h3><a id="step-0--housekeeping-operator-decision" class="heading_anchor" href="#step-0--housekeeping-operator-decision" aria-hidden="true">#</a>Step 0 — housekeeping (operator decision)</h3>
+<p>The tree carries two uncommitted comment-only changes
+(<code>integration.typeroof.jsx</code> typo, <code>type-spec-models.mjs</code> note) and the
+untracked <code>docs/planning/type-spec-resolution/</code>. Decide whether to
+commit these first so the feature series starts clean. Recommended:
+one <code>[docs]</code>/<code>[minor]</code> commit.</p>
+<h3><a id="step-1--characterization-tests-for-the-current-resolver" class="heading_anchor" href="#step-1--characterization-tests-for-the-current-resolver" aria-hidden="true">#</a>Step 1 — characterization tests for the current resolver</h3>
+<p>New file <code>lib/js/components/prosemirror/type-spec-resolution.test.mjs</code>
+(harness patterns from <code>integration.test.mjs</code>). Behaviors to pin, as
+they are <strong>today</strong>:</p>
+<ul>
+<li>an unmapped node type resolves to the root typeSpec;</li>
+<li>a mapped node type with an empty link resolves to the root typeSpec;</li>
+<li>a link to a registered child resolves to that child;</li>
+<li>a link to an unregistered child falls back toward the root, level by
+level (registered grandparent wins over root);</li>
+<li>a link cannot escape the origin (<code>..</code>-injection attempt resolves to
+root — the <code>isRootOf</code> guard);</li>
+<li>multi-segment links: current single-<code>children</code> interposition
+behavior (pin it, including the arguably-broken
+<code>origin/children/a/b</code> shape — it is current behavior);</li>
+<li><code>getTypeSpecsMethod</code>: selection spanning two node types yields both
+resolved typeSpecs.</li>
+</ul>
+<p>No production code changes. Commit 1.</p>
+<h3><a id="step-2--logicalstorage-path-conversion-helper" class="heading_anchor" href="#step-2--logicalstorage-path-conversion-helper" aria-hidden="true">#</a>Step 2 — logical↔storage path conversion helper</h3>
+<p>The round-3 helper: logical link segments (<code>../hr</code>, <code>quote/paragraph</code>)
+↔ storage path (<code>children</code>-interleaved), <code>..</code> consuming one <em>logical</em>
+level (= a <code>children/{key}</code> pair). Location: alongside the resolver in
+<code>integration.typeroof.jsx</code> (or a small new module if it stays
+UI-consumable — decide at review). Pure functions, no side effects
+(CODINGSTYLE). Behavior tests: round-trips, <code>..</code> consumption, out-of-
+bounds <code>..</code> reported (not clamped), rejection/pass-through of
+malformed input. Not yet wired into the resolver. Commit 2.</p>
+<h3><a id="step-3--model-flags-on-typespecmodel" class="heading_anchor" href="#step-3--model-flags-on-typespecmodel" aria-hidden="true">#</a>Step 3 — model flags on TypeSpecModel</h3>
+<p><code>excludeFromFallback</code> and <code>noStyler</code>, BooleanModel, default false
+(<code>type-spec-models.mjs</code>, <code>TypeSpecModel</code> — round-6 model table).
+Check for an existing boolean-with-default model pattern before
+creating anything new (CODINGSTYLE: search before creating). Inert:
+nothing reads them yet. Behavior test: (de)serialization round-trip of
+a typeSpec tree with flags set; existing documents load unchanged.
+UI checkboxes are <strong>not</strong> in this step. Commit 3.</p>
+<h3><a id="step-4--resolver-excludefromfallback-in-the-walk" class="heading_anchor" href="#step-4--resolver-excludefromfallback-in-the-walk" aria-hidden="true">#</a>Step 4 — resolver: <code>excludeFromFallback</code> in the walk</h3>
+<p><code>_getBestTypeSpecPropertiesId</code>: during the fallback walk (not for
+explicit link hits — round-2 row 2 semantics), skip typeSpecs whose
+<code>excludeFromFallback</code> is true. Requires access to the typeSpec
+entries, not only the registry — mind that the memo cache key already
+covers <code>nodeSpecToTypeSpec</code> but <strong>not</strong> typeSpec flag changes; the
+registered-membership re-validation on cache hits is the existing
+correctness valve — verify it suffices for flag flips, otherwise the
+cache needs the typeSpec instance in its key. Behavior tests:</p>
+<ul>
+<li>fallback walk passes through a flagged intermediate to its parent;</li>
+<li>an explicit link to a flagged typeSpec still resolves to it (row 2);</li>
+<li>root flagged + nothing else registered: resolution still returns
+root (the walk’s final fallback is unconditional — flagged root is
+then simply silent via Step 5’s <code>noStyler</code>, if set).
+Commit 4.</li>
+</ul>
+<h3><a id="step-5--provisioning-gate-nostyler--pm-side" class="heading_anchor" href="#step-5--provisioning-gate-nostyler--pm-side" aria-hidden="true">#</a>Step 5 — provisioning gate: <code>noStyler</code>, PM side</h3>
+<p>Round-5 principle: resolution is untouched; only styler provisioning
+consults the flag on the <strong>resolved spec</strong>.</p>
+<ul>
+<li><code>TypeSpecSubscriptions</code>/<code>UIDocumentNodeOutfitter</code>: when the resolved
+typeSpec has <code>noStyler</code>, do not provision <code>UIDocumentTypeSpecStyler</code>
+(subscription itself remains — marks need their parent; Q1/d1 means
+mark resolution is unchanged).</li>
+<li><strong>Prerequisite in the same step</strong>: give <code>UIDocumentTypeSpecStyler</code> a
+<code>destroy()</code> that removes every inline style/CSS property it sets
+(round-4 item 2) — needed for styled→silent transitions.</li>
+<li>Behavior tests: silent node renders without the styler’s inline
+styles; its marks still resolve style links from its own spec (d1);
+toggling the flag on/off adds/removes inline styles without stale
+leftovers.
+Commit 5.</li>
+</ul>
+<h3><a id="step-6--provisioning-gate-nostyler--viewer-side--dynamic-flag" class="heading_anchor" href="#step-6--provisioning-gate-nostyler--viewer-side--dynamic-flag" aria-hidden="true">#</a>Step 6 — provisioning gate: <code>noStyler</code>, Viewer side + dynamic flag</h3>
+<ul>
+<li><code>UIDocumentElement</code>: <code>_hasTypeSpecStyling</code> keeps meaning “a spec is
+resolvable at all” and <strong>stays true for silent nodes</strong> (round-5
+narrowing); <code>_provisionTypeSpecStyler</code> additionally checks <code>noStyler</code>
+on the resolved spec.</li>
+<li>Make the styler provisioning react to flag/mapping changes
+(round-4 item 4: currently constructor-time). Scope honestly: if
+full dynamism explodes, split — static-correct first, dynamism as
+its own commit.</li>
+<li><code>nextProperties@</code>: Q2© — the silent sibling’s resolved spec is
+used as margin reference; expected to need <strong>no code change</strong>
+(resolver returns the path regardless); cover with a behavior test:
+a styled node’s after-margin against a silent next sibling uses the
+sibling’s spec properties.</li>
+<li>Behavior tests mirror Step 5 on the viewer, plus PM↔viewer parity
+for a document containing silent nodes.
+Commit 6.</li>
+</ul>
+<h3><a id="step-7--guards--selection-ui" class="heading_anchor" href="#step-7--guards--selection-ui" aria-hidden="true">#</a>Step 7 — guards &amp; selection UI</h3>
+<ul>
+<li><code>_prosemirrorDispatchTransaction</code> (<code>integration.typeroof.jsx:1268</code>):
+defensive guard for an empty <code>getTypeSpecs</code> result (Q3(a) makes it
+unreachable via silence; guard against the genuinely-empty case).</li>
+<li>Q3(a): selection/menu shows the resolved spec normally — verify no
+change needed; optional “silent” hint in the label
+(<code>_typeSpecFullLabel</code>, fundamentals) as nice-to-have.</li>
+<li>Behavior test: selection inside a silent node shows its spec;
+editing it changes inherited properties of children.
+Commit 7.</li>
+</ul>
+<h3><a id="step-8--resolver-relative-links-anchor-recursion" class="heading_anchor" href="#step-8--resolver-relative-links-anchor-recursion" aria-hidden="true">#</a>Step 8 — resolver: relative links (anchor recursion)</h3>
+<p>Round 3, in <code>getTypeSpecPropertiesIdMethod</code>:</p>
+<ul>
+<li>discriminator: <code>isExplicitlyRelative || parts[0] === Path.PARENT</code> →
+parent-anchored; all else origin-anchored (unchanged);</li>
+<li>anchor = parent node’s resolved spec, recursing on
+<code>pathOfTypes.slice(0, -1)</code>; document root’s parent = origin;</li>
+<li>apply the Step-2 helper for <code>..</code>-pair consumption <strong>before</strong> any
+<code>append</code> (the sanitize trap);</li>
+<li>out-of-bounds <code>..</code> → broken link → normal fallback walk;</li>
+<li>memo cache: inputs unchanged (origin + pathOfTypes +
+nodeSpecToTypeSpec) — recursion memoizes naturally.</li>
+</ul>
+<p>Behavior tests: <code>./h3</code> under a mapped parent; <code>../hr</code> sibling;
+unmapped parent → anchor degrades to root → <code>./h3</code> behaves like <code>/h3</code>;
+out-of-bounds <code>..</code>; deep nesting; flags × relative links (silent
+anchor still anchors — round-3 revision). Commit 8.</p>
+<h3><a id="step-9--mapping-ui" class="heading_anchor" href="#step-9--mapping-ui" aria-hidden="true">#</a>Step 9 — mapping UI</h3>
+<ul>
+<li>Flag checkboxes in the typeSpec properties panel
+(<code>type-spec-properties.typeroof.jsx</code> / TYPESPEC_PPS_MAP route —
+check how existing booleans are wired there).</li>
+<li>Optional: label hint for relative links in
+<code>UIStyleNodeToTypeSpecValueLabel</code> (it currently resolves the raw
+path against the root — relative links will display as broken
+without a resolution hook; at minimum show the raw link string
+distinctly).
+Commit 9 (possibly split UI-per-surface).</li>
+</ul>
+<h3><a id="step-10--documentation" class="heading_anchor" href="#step-10--documentation" aria-hidden="true">#</a>Step 10 — documentation</h3>
+<p>The round-5 documentation requirement (“a silent spec doesn’t style
+its node but still governs its marks” — feature, not leak; the
+mark-rendering palette table). Where user docs live is to be decided
+with the operator. Update the design document’s register. Commit 10.</p>
+<h2><a id="explicitly-out-of-scope-per-design-document" class="heading_anchor" href="#explicitly-out-of-scope-per-design-document" aria-hidden="true">#</a>Explicitly out of scope (per design document)</h2>
+<ul>
+<li>CSS custom-property leakage (postponed, round 5).</li>
+<li>Path normalization / editable typeSpec keys (Level-2/3 in the
+models comment).</li>
+<li>Origin-switching (shelved, round 3).</li>
+<li>Option B edge-mode enum (future; groundwork laid).</li>
+<li><code>TypeStagePaneStyler</code> changes (round 4: separate surface, noted,
+untouched).</li>
+</ul>
+<h2><a id="risk-register" class="heading_anchor" href="#risk-register" aria-hidden="true">#</a>Risk register</h2>
+<table>
+<thead>
+<tr>
+<th>risk</th>
+<th>mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>memo cache vs. typeSpec flag flips (Step 4)</td>
+<td>verify re-validation valve; else extend cache key — decide at Step 4 review</td>
+</tr>
+<tr>
+<td>viewer dynamism explodes (Step 6)</td>
+<td>split commit: static-correct first</td>
+</tr>
+<tr>
+<td>relative-link recursion meets unknown-type siblings (viewer “parity edge case” TODO)</td>
+<td>pin current behavior in Step 1; do not fix silently</td>
+</tr>
+<tr>
+<td>tests bind to internals under pressure</td>
+<td>working-agreement §3; reviewer rejects such tests</td>
+</tr>
+</tbody>
+</table>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

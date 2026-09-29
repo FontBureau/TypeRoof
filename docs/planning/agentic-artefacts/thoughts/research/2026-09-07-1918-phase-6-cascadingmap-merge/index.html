@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-phase-6-pre-state--effective-map-construction-across-the-scope-classes" class="heading_anchor" href="#research-phase-6-pre-state--effective-map-construction-across-the-scope-classes" aria-hidden="true">#</a>Research: Phase 6 pre-state — effective-map construction across the scope classes</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Map the codebase as it exists before Phase 6 (umbrella
+<code>thoughts/plans/2026-09-05-1623-node-properties.md</code>): where the
+typeSpecnion’s copy-merge effective map lives, how the node-properties
+channel’s CascadingMap construction differs, who consumes the effective
+maps and how (keyed vs iterating), and what test patterns exist.
+Companion to handoff <code>2026-09-07-cascadingmap-reuse-phase6.md</code> and plan
+<code>thoughts/plans/2026-09-07-1915-phase-6-cascadingmap-merge.md</code>.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p>The divergence is concentrated in <code>scope-resolution.mjs</code> (528 LOC):
+<code>HierarchicalScopeProperties</code> and <code>PatchedScopeProperties</code> copy-merge
+parent+local into fresh Maps (4 copy/merge constructions inventoried
+below), while <code>HierarchicalScopeNodeProperties</code> (node-properties.mjs,
+207 LOC) constructs <code>CascadingMap([[&quot;local&quot;, local], [&quot;parent&quot;, parent]])</code> with no copy. All other machinery (generator invocation,
+demarcation routing, inheritance policy, parent-projection consumption)
+is already shared via module-level functions in <code>scope-resolution.mjs</code>.
+Only two production modules import these raw modules directly; all other
+consumers reach scopes via protocol payloads. Consumption splits into
+keyed lookups (UI/default resolution) and whole-map iteration
+(style-links, processed properties, spreads into new maps/cascades).
+Tests assert behavior on resolved maps through the public surface.</p>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="scope-resolutionmjs--the-copy-merge-side" class="heading_anchor" href="#scope-resolutionmjs--the-copy-merge-side" aria-hidden="true">#</a><code>scope-resolution.mjs</code> — the copy-merge side</h3>
+<ul>
+<li><code>_BaseScopeProperties</code> (<code>:62-129</code>): abstract base; constructor
+installs throw-on-get/redefine-on-set accessors for
+<code>_localPropertyValuesMap</code>/<code>_propertyValuesMap</code> (<code>:65-96</code>). Provides
+<code>getProperties()</code> (<code>:101</code>), <code>getInheritableProperties()</code> defaulting to
+<code>getProperties()</code> (<code>:104-111</code>), <code>getOwnProperty</code> (<code>:112-120</code>),
+<code>localPropertyNames</code> (<code>:121</code>), <code>getPropertyValuesMap()</code> (<code>:125-128</code>).</li>
+<li><code>HierarchicalScopeProperties</code> (<code>:419-528</code>): constructor
+disambiguates the third argument by <code>instanceof _BaseScopeProperties</code>
+(<code>:431-435</code>) — parent scope instance OR defaults map.
+<ul>
+<li><code>_getParentMaps</code> (<code>:476-493</code>): root case passes
+<code>this._typeSpecDefaultsMap</code> itself, no copy (<code>:485-488</code>); the root
+FIXME at <code>:482-484</code>: “at the root, this is not exact enough, we need
+to differentiate whether to inherit or whether to take a value from
+the defaults.” Then <code>filteredParentPropertyValuesMap = new Map(parentPropertyValuesMap)</code> (<code>:491</code>) — copy #1.</li>
+<li><code>_initPropertyValuesMaps</code> (<code>:495-527</code>): shared generator invocation
+<ul>
+<li>demarcation routing, then <code>mapSetProperties(new Map(), filteredParentPropertyValuesMap, localPropertyValuesMap)</code>
+(<code>:516-520</code>) — copy #2, the effective map.</li>
+</ul>
+</li>
+<li><code>getInheritableProperties()</code> (<code>:460-462</code>): plain <code>return resolveInheritableProperties(this)</code> — NOT memoized; identity
+stability currently holds only via the empty-policy early return at
+<code>:385</code>.</li>
+<li><code>createPatched</code> (<code>:464-474</code>): passes <code>[this.getInheritableProperties(), this._getParentMaps()[1]]</code> — a two-element parentMaps array matching
+<code>_getParentMaps()</code>'s return shape.</li>
+</ul>
+</li>
+<li><code>PatchedScopeProperties extends _BaseScopeProperties</code> (<code>:309-348</code>):
+<code>mapSetProperties(new Map(), rawProperties, stylePatch)</code> into local
+raw (<code>:329-333</code> — local-only merge), then <code>mapSetProperties(new Map(), filteredParentPropertyValuesMap, localPropertyValuesMap)</code> (<code>:340-344</code>)
+— copy #3. NOTE (<code>:319-326</code>): the origin scope’s own
+DEMARCATION_INHERITANCE controls are deliberately bypassed; the
+grand-parent’s controls are honored via the consumed parent maps.</li>
+<li>Module-level functions: <code>mapSetProperties</code> (<code>:12-17</code>, sequential
+Map.set merge), <code>collectPropertyGeneratorEntries</code> (<code>:30-60</code>, routes
+DEMARCATION_PROPERTY vs DEMARCATION_INHERITANCE), and the
+scope-generic <code>resolveInheritableProperties(scope)</code> (<code>:362-409</code>):
+controls merge (<code>:374-378</code>), empty-policy early return (<code>:385</code>), else
+<code>new Map(ownProperties)</code> copy #4 (<code>:403</code>) with tombstone deletions and
+resolved control sets.</li>
+</ul>
+<h3><a id="cascading-mapmjs--the-cascade-side-97-loc" class="heading_anchor" href="#cascading-mapmjs--the-cascade-side-97-loc" aria-hidden="true">#</a><code>cascading-map.mjs</code> — the cascade side (97 LOC)</h3>
+<ul>
+<li>Read-only Map-like facade over labeled layers, insertion order =
+precedence, first hit wins; duplicate labels throw (<code>:18-31</code>).</li>
+<li>Lazy key→winning-layer index, never invalidates (layers immutable,
+<code>:34-47</code>).</li>
+<li>Read surface only: <code>size</code>, <code>has</code>, <code>get</code>, <code>keys</code>, <code>entries</code>, <code>values</code>,
+<code>Symbol.iterator</code>, <code>forEach</code> (<code>:49-81</code>); NO <code>set</code>/<code>delete</code>/<code>clear</code>.
+Iteration is effective-view order: each deduped key at its winning
+layer’s position — local-first for <code>[[&quot;local&quot;], [&quot;parent&quot;]]</code>.</li>
+<li><code>getLayer(label)</code> (<code>:89-91</code>) returns the raw layer (Map or nested
+CascadingMap) or undefined; documented uses: ancestor chains
+(<code>getLayer(&quot;parent&quot;).getLayer(&quot;parent&quot;)</code>) and precedence bypass.</li>
+<li><code>toMap()</code> (<code>:93-96</code>): debug/boundary materialization into a plain Map.</li>
+<li>Header NOTE (<code>:6-10</code>): nested cascades recurse on lookup; if deep
+chains profile hot, flatten at construction — internal change, read
+interface identical.</li>
+</ul>
+<h3><a id="node-propertiesmjs--the-already-migrated-channel-207-loc" class="heading_anchor" href="#node-propertiesmjs--the-already-migrated-channel-207-loc" aria-hidden="true">#</a><code>node-properties.mjs</code> — the already-migrated channel (207 LOC)</h3>
+<ul>
+<li>Constructor (<code>:116-153</code>) builds <code>new CascadingMap([[&quot;local&quot;, localPropertyValuesMap], [&quot;parent&quot;, parentMap]])</code> (<code>:141-144</code>) using
+the same shared functions (<code>LocalScopeProperties.propertiesGenerator</code>,
+<code>collectPropertyGeneratorEntries</code>, <code>initPropertyValuesMap</code>).</li>
+<li>Factories (<code>:47-104</code>): <code>createRoot</code> (raw defaults map as parent
+layer), <code>createChild</code> (parent scope instance →
+<code>getInheritableProperties()</code> projection), <code>createFromParentMap</code> (G8
+contract: pre-projected map taken verbatim).</li>
+<li>Memoized <code>getInheritableProperties()</code> (<code>:165-174</code>): “consumers compare
+the projection by identity across update cycles (the document-node
+scope build’s change guard) — a fresh map per call would read as
+perpetual change once a policy yields controls.”</li>
+<li><code>NODE_PROPERTIES_INHERITANCE_POLICY = Object.freeze([])</code> (<code>:37</code>) —
+intentionally empty socket.</li>
+<li>Does NOT extend <code>_BaseScopeProperties</code>; replicates its read surface
+standalone.</li>
+</ul>
+<h3><a id="consumers-of-the-effective-maps" class="heading_anchor" href="#consumers-of-the-effective-maps" aria-hidden="true">#</a>Consumers of the effective maps</h3>
+<p>Direct importers of the raw modules (excl. tests, <code>_site/</code> build
+output): <code>type-specnion.mjs:23</code> (alias re-export), <code>node-properties.mjs</code>
+(:9 scope-resolution, :1 cascading-map), <code>prosemirror/ type-spec.typeroof.jsx:68</code> (CascadingMap — already builds
+<code>new CascadingMap([[&quot;node&quot;, nodePropertiesMap], ...])</code> at <code>:297</code>).</p>
+<p>Keyed-lookup consumers (<code>has</code>/<code>get</code>): <code>defaults.mjs:90</code>,
+<code>type-tools-grid.mjs</code> (:1080, :1775, :1894, :1926),
+<code>type-spec-properties.typeroof.jsx:85</code>, <code>language-tags.typeroof.jsx:407</code>,
+<code>ui-manual-axis-locations.mjs:650,680</code>, <code>type-spec.typeroof.jsx:161,874</code>.</p>
+<p>Whole-map-iterating consumers: <code>getStyleLinks</code> (via
+<code>meta.typeroof.jsx:152</code>, <code>type-spec-fundamentals.mjs:853</code>,
+<code>type-spec.typeroof.jsx:1758</code>), <code>processed-properties.mjs:131</code>
+(direct for…of over the property map), pane-styler spreads into a fresh
+Map (<code>pane-styler.typeroof.jsx:55,57</code>), <code>type-spec.typeroof.jsx:262,304, 316</code> spreads into cascade layers, <code>axes-parameters.mjs:5</code> iterates for
+unregistered axes. NOTE: the handoff’s review addition 1 concluded “no
+order-sensitive consumers”; this inventory confirms all iterations are
+order-agnostic transforms (link collection, keyed CSS application,
+spreads into fresh maps) — but they ARE iteration sites, so the
+local-first order change is visible in any serialized/debug output.</p>
+<h3><a id="test-patterns-behavior-not-implementation" class="heading_anchor" href="#test-patterns-behavior-not-implementation" aria-hidden="true">#</a>Test patterns (behavior, not implementation)</h3>
+<ul>
+<li><code>cascading-map.test.mjs</code> (151 LOC): public-surface behavior only —
+precedence, deduped iteration, <code>getLayer</code> ancestor chains, duplicate
+labels throw, no mutation methods.</li>
+<li><code>node-properties.test.mjs</code> (278 LOC): asserts on resolved maps via
+public API; explicit comment <code>:178</code> “Behavior asserted on resolved
+maps (public surface), not internals.” Includes policy socket tests
+(tombstone, re-route, resurrection) and <code>getLayer(&quot;parent&quot;)</code> identity.</li>
+<li><code>type-specnion.test.mjs</code> (377 LOC): same assertion style for the
+copy-merge channel (resolveSyntheticProperties, DEMARCATION_INHERITANCE
+controls, style-link inheritance).</li>
+<li><code>lib/js/tests/type-stage-viewer-behavior/index.test.mjs</code> (622 LOC):
+integration; asserts <code>childScope.getProperties().getLayer(&quot;parent&quot;)</code>
+identity (<code>:460</code>) end-to-end.</li>
+</ul>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/components/layouts/type-stage/scope-resolution.mjs:516-520</code> — the typeSpecnion copy-merge (Phase 6 target)</li>
+<li><code>lib/js/components/layouts/type-stage/scope-resolution.mjs:491</code> — the intermediate parent copy</li>
+<li><code>lib/js/components/layouts/type-stage/scope-resolution.mjs:482-484</code> — root FIXME (design input)</li>
+<li><code>lib/js/components/layouts/type-stage/scope-resolution.mjs:460-462</code> — unmemoized typeSpecnion projection</li>
+<li><code>lib/js/components/layouts/type-stage/scope-resolution.mjs:309-348</code> — PatchedScopeProperties</li>
+<li><code>lib/js/components/layouts/type-stage/node-properties.mjs:141-144</code> — the cascade construction to converge on</li>
+<li><code>lib/js/components/layouts/type-stage/node-properties.mjs:165-174</code> — memoized projection + rationale</li>
+<li><code>lib/js/components/cascading-map.mjs:89-91</code> — getLayer</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs:632-640</code> — live-tree G8 contract call site</li>
+</ul>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ul>
+<li>The whole-map-iterating consumers (getStyleLinks, processed-properties,
+pane-styler/type-spec spreads, axes display) are assessed as
+order-agnostic; if any serialized output proves user-visible after the
+swap, a behavior test belongs in Phase 6 scope.</li>
+<li>Whether <code>HierarchicalScopeNodeProperties</code> joins the
+<code>_BaseScopeProperties</code> hierarchy in Step 4 (it currently replicates
+the read surface standalone).</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

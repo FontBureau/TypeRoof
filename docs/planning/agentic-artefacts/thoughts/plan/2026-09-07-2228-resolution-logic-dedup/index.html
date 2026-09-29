@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="resolution-logic-dedup-plan" class="heading_anchor" href="#resolution-logic-dedup-plan" aria-hidden="true">#</a>Resolution-Logic Dedup Plan</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>The editor’s <code>_getStyleLinkPropertiesId</code> (prosemirror/type-spec.typeroof.jsx:1026)
+and the viewer/meta <code>getStyleLinkPropertiesId</code>
+(document-nodes-meta/derivations.mjs:393) are two implementations of the
+same resolution (id shape <code>styleLinkProperties@&lt;path&gt;/&lt;type&gt;/&lt;link&gt;</code>,
+protocol lookup, <code>hasRegistered</code> gate). Unify on the derivations.mjs
+shared function; the editor keeps a thin adapter holding its null-entry
+guard and id-string→Path conversion. One phase, low risk.</p>
+<p><code>getTypeSpecPropertiesIdMethod</code> is already unified (single
+implementation in integration.typeroof.jsx, consumed via assignment) —
+no work. Mark-pipeline and outfitter structural unification are
+explicitly out of scope.</p>
+<h2><a id="current-state" class="heading_anchor" href="#current-state" aria-hidden="true">#</a>Current State</h2>
+<ul>
+<li><strong>Shared</strong>: <code>getStyleLinkPropertiesId(widgetBus, typeSpecPropertiesPath /* Path */, styleLinkType, styleLink)</code>
+(derivations.mjs:393-412) — registered? id : null; throws if no
+protocol handler. Used by viewer (viewer.typeroof.jsx:585 adapter)
+and the meta layer’s mark pipeline.</li>
+<li><strong>Editor</strong>: <code>_getStyleLinkPropertiesId(typeSpecProperties /* id string */, styleLinkEntry /* [fieldName, styleLink] | null */)</code>
+(type-spec.typeroof.jsx:1026-1047) — adds: null-entry guard (returns
+null, “unknown-style fallback”), id-string slicing
+(<code>typeSpecProperties.slice(&quot;typeSpecProperties@&quot;.length)</code>), tuple
+destructuring. 4 call sites: :1115 (<code>_finalizeMarkSubscription</code>),
+:1636, :1655 (mark pipeline), :1026 (definition).</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<p>One implementation (derivations.mjs). The editor method becomes an
+adapter: null guard + id-string→Path conversion + tuple unpack, then
+delegates. Behavior identical.</p>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>Mark pipeline unification (parked with the outfitter structural
+refactor)</li>
+<li><code>nextProperties@</code> (editor-only concept)</li>
+<li>Any change to <code>getTypeSpecPropertiesIdMethod</code></li>
+<li>Any behavior change</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Single phase.</p>
+<h3><a id="phase-1-unify-stylelink-id-resolution" class="heading_anchor" href="#phase-1-unify-stylelink-id-resolution" aria-hidden="true">#</a>Phase 1: Unify styleLink id resolution</h3>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p>Editor adapter delegates to the shared derivations.mjs function.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required:</h3>
+<h4><a id="1-shared-function--no-signature-change-needed" class="heading_anchor" href="#1-shared-function--no-signature-change-needed" aria-hidden="true">#</a>1. Shared function — no signature change needed</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/document-nodes-meta/derivations.mjs</code>
+<strong>Changes</strong>: none to the function itself. (Import cycle check:
+derivations.mjs lives under layouts/type-stage; the editor imports from
+prosemirror/. derivations.mjs already imports from
+prosemirror/integration.typeroof.jsx (re-export at :539), so the editor
+importing derivations.mjs does NOT create a cycle — verify with
+<code>npm run build:app</code>.)</p>
+<h4><a id="2-editor-adapter" class="heading_anchor" href="#2-editor-adapter" aria-hidden="true">#</a>2. Editor adapter</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/type-spec.typeroof.jsx:1026-1047</code>
+<strong>Changes</strong>: rewrite the method body to:</p>
+<pre class="language-js"><code class="language-js"><span class="token function">_getStyleLinkPropertiesId</span><span class="token punctuation">(</span><span class="token parameter">typeSpecProperties<span class="token punctuation">,</span> styleLinkEntry</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>styleLinkEntry <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span>
+        <span class="token comment">// no applicable edge: the unknown-style fallback applies</span>
+        <span class="token keyword">return</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> <span class="token punctuation">[</span>fieldName<span class="token punctuation">,</span> styleLink<span class="token punctuation">]</span> <span class="token operator">=</span> styleLinkEntry<span class="token punctuation">,</span>
+        typeSpecPropertiesPath <span class="token operator">=</span> Path<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span>
+            typeSpecProperties<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token string">"typeSpecProperties@"</span><span class="token punctuation">.</span>length<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token function">getStyleLinkPropertiesId</span><span class="token punctuation">(</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>widgetBus<span class="token punctuation">,</span>
+        typeSpecPropertiesPath<span class="token punctuation">,</span>
+        fieldName<span class="token punctuation">,</span>
+        styleLink<span class="token punctuation">,</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>Import <code>getStyleLinkPropertiesId</code> from
+<code>../layouts/type-stage/document-nodes-meta/derivations.mjs</code>. Verify the
+Path constructor matches how the shared function consumes it
+(<code>Path.fromString</code> vs <code>Path.fromParts</code> — the editor currently uses
+<code>Path.fromParts(typeSpecPath, ...)</code> where typeSpecPath is a string;
+<code>Path.fromParts</code> accepts a string first arg, so check
+<code>Path.fromString</code> is the right primitive or use
+<code>Path.fromParts(typeSpecPath)</code> accordingly).</p>
+<h4><a id="3-equivalence-verification" class="heading_anchor" href="#3-equivalence-verification" aria-hidden="true">#</a>3. Equivalence verification</h4>
+<p>The id must be byte-identical before/after:
+<code>styleLinkProperties@${Path.fromParts(typeSpecPath, fieldName, styleLink)}</code>
+vs.
+<code>styleLinkProperties@${typeSpecPropertiesPath.append(fieldName, styleLink)}</code>.
+Add a unit test asserting both constructions produce the same id for a
+representative input (defends the dedup against future drift).</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria:</h3>
+<ul>
+<li>Automated: full vitest suite green (274), especially
+<code>type-spec-styler.test.mjs</code> (stubs the outfitter, exercises the
+adapter) and the type-stage behavior tests (viewer styleLink
+resolution); eslint; typecheck; <code>npm run build:app</code>.</li>
+<li>Manual: wikipedia demo — styled marks in the editor pane render
+unchanged (bold/italic styling, data-style-name attributes).</li>
+</ul>
+<p><strong>Implementation Note</strong>: commit gate applies — stop with the message
+before committing.</p>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<h3><a id="unit-tests" class="heading_anchor" href="#unit-tests" aria-hidden="true">#</a>Unit Tests:</h3>
+<ul>
+<li>New: id-construction equivalence test (Change 3).</li>
+</ul>
+<h3><a id="integration-tests" class="heading_anchor" href="#integration-tests" aria-hidden="true">#</a>Integration Tests:</h3>
+<ul>
+<li>Existing <code>type-spec-styler.test.mjs</code> — regression net for the
+adapter (uses Object.create stubs; must pass unchanged).</li>
+</ul>
+<h3><a id="edge-cases" class="heading_anchor" href="#edge-cases" aria-hidden="true">#</a>Edge Cases:</h3>
+<ul>
+<li>null styleLinkEntry → null (unknown-style fallback) — adapter-owned,
+unchanged.</li>
+<li>Unregistered styleLink id → null — shared function, unchanged.</li>
+<li>Missing protocol handler → throw — shared function, unchanged.</li>
+</ul>
+<h2><a id="working-agreements" class="heading_anchor" href="#working-agreements" aria-hidden="true">#</a>Working Agreements</h2>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

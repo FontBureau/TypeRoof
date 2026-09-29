@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/large-file-investigation-260723/">Large File Investigation</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-initial-analysis/">PPS: Initial Analysis</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-2026-07/">Metamodel: 2026-07</a></li>
+<li><a href="/TypeRoof/docs/planning/columns/REPORT/">Columns: Runion Report</a></li>
+<li><a href="/TypeRoof/docs/planning/overview/architectural-overview/">Architectural Overview</a></li>
+<li><a href="/TypeRoof/docs/planning/performance-investigation-viewer-update-propagation-260820/">Perf: Viewer Update Propagation</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Fable-5/">TypeSpec Resolution: NULL-TypeSpec Analysis</a></li>
+<li><a href="/TypeRoof/docs/planning/DEMARCATION_FALLBACK/">DEMARCATION_FALLBACK</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Kimi-K3/">TypeSpec Resolution: NULL-TypeSpec Analysis (Kimi-K3)</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-implementation-plan_Fable-5/">TypeSpec Resolution: Implementation Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-second-analysis_Fable-5.1/">PPS: Second Analysis (Fable-5.1)</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="processed-properties-system-pps--initial-analysis" class="heading_anchor" href="#processed-properties-system-pps--initial-analysis" aria-hidden="true">#</a>Processed Properties System (PPS) — Initial Analysis</h1>
+<ul>
+<li>Agent/model: <code>moonshotai/kimi-k3</code> (goose). Attribution added
+2026-09-19; see the follow-up
+<a href="2026-09-19-second-analysis_Fable-5.1.md">second analysis (Fable-5.1)</a>.</li>
+</ul>
+<h2><a id="the-task-this-document-answers" class="heading_anchor" href="#the-task-this-document-answers" aria-hidden="true">#</a>The task this document answers</h2>
+<p>While implementing <code>getManualHorizontalLayoutPPSMap</code> in
+<code>lib/js/components/type-spec/ui-horizontal-layout.typeroof.jsx</code> (a file that
+started as a copy of <code>fundamentals.mjs</code>), the question came up whether a
+helper exists for creating a straightforward ppsMap of GENERIC records
+(answer: yes, <code>ProcessedPropertiesSystemMap.fromPrefix</code>).</p>
+<p>That surfaced a broader suspicion: <strong>the ppsMap / processed-properties
+system is not clearly formulated and seems to mix too many concepts.</strong> The
+operator commissioned a research task with three questions:</p>
+<ol>
+<li>What is the system’s purpose?</li>
+<li>Why is it complicated/annoying to work with?</li>
+<li>How could it be refactored into a more pleasant system?</li>
+</ol>
+<p>The research was done as three parallel read-only code surveys (core
+definitions, consumption/UI side, runtime data side) over the TypeRoof
+codebase, plus a look at git history. This document is the synthesis. It is
+an <em>analysis</em>, not a plan — section 4 lists candidate refactoring
+<strong>directions</strong> only; no refactor planning has been done.</p>
+<h2><a id="1-mental-model-three-namespaces-one-join-key" class="heading_anchor" href="#1-mental-model-three-namespaces-one-join-key" aria-hidden="true">#</a>1. Mental model: three namespaces, one join key</h2>
+<p>The PPS exists because three namespaces all have to agree about “property X”,
+and they evolved to name things differently:</p>
+<table>
+<thead>
+<tr>
+<th>Namespace</th>
+<th>Expressed as</th>
+<th>Lives in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Model fields</strong></td>
+<td><code>modelFieldName</code> (e.g. <code>fontSize</code> in <code>TypeSpecModel.fields</code>)</td>
+<td>metamodel models</td>
+</tr>
+<tr>
+<td><strong>Registry entries</strong></td>
+<td><code>[prefix, registryKey]</code> → <code>{default, inherit, label, min, max, step, unit}</code></td>
+<td><code>REGISTERED_PROPERTIES</code> (<code>registered-properties.mjs:61</code>)</td>
+</tr>
+<tr>
+<td><strong>Runtime properties</strong></td>
+<td><code>fullKey</code> string (e.g. <code>generic/fontSize</code>) in a per-scope <code>propertiesMap</code></td>
+<td>scope machinery (<code>layouts/type-stage/scope-resolution.mjs</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>The registry is grouped by <strong>prefix constants</strong> (<code>GENERIC = 'generic/'</code>,
+<code>COLOR = 'colors/'</code>, <code>NUMERIC = 'numericProperties/'</code>, <code>LEADING</code>,
+<code>DIMENSION</code>, <code>SPECIFIC</code>, …, defined in
+<code>registered-properties-definitions.mjs:14-41</code>). Each entry carries static
+semantics: default value, inheritance flag, UI label, and slider hints
+(<code>min</code>/<code>max</code>/<code>step</code>/<code>unit</code> — consumed by UI widgets, no validation logic).</p>
+<p><code>ProcessedPropertiesSystemRecord</code> is the <strong>join key</strong> between the three
+namespaces: one object carrying <code>prefix</code>, <code>modelFieldName</code>, <code>fullKey</code>,
+<code>registryKey</code>, with derived getters <code>propertyRoot</code> (<code>`${fullKey}/`</code>),
+<code>registryCredentials</code> (<code>[prefix, registryKey]</code>) and <code>registryFullKey</code>
+(<code>`${prefix}${registryKey}`</code>). Given a record you can answer: <em>which
+model field is this</em>, <em>which registry setup applies</em>, and <em>under which key
+does the value travel in the runtime properties stream</em>.</p>
+<p>A <code>ProcessedPropertiesSystemMap</code> is an ordered, type-checked
+<code>fieldName → record</code> map (<code>registered-properties-definitions.mjs:141</code>). Its
+primary use is as the <strong>iteration source for widget generation</strong>:
+<code>_defineGenericWidgets</code> (<code>type-driven-ui-basics.mjs:341</code>) walks it and
+builds one UI widget per field, resolving constructor arguments (label,
+unit, default-getter, …) from the record through the <code>baseResolvers</code> table
+(<code>type-driven-ui-basics.mjs:96-237</code>).</p>
+<h3><a id="the-runtime-side-in-one-paragraph" class="heading_anchor" href="#the-runtime-side-in-one-paragraph" aria-hidden="true">#</a>The runtime side in one paragraph</h3>
+<p>Properties are flat <code>fullKey → value</code> string maps, one per scope
+(typically per document node / per typeSpec). A scope’s effective map is a
+<code>CascadingMap</code> of three layers: <code>local &gt; inherited &gt; defaults</code>
+(<code>scope-resolution.mjs:544-553</code>). Local entries come from generator
+functions yielding <code>[fullKey, value]</code> pairs (<code>properties-generators.mjs</code>,
+collected by <code>collectPropertyGeneratorEntries</code>). Inheritance means: the
+child layers in the parent’s <strong>outbound projection</strong>
+(<code>getInheritableProperties()</code>), where the parent’s inheritance controls are
+applied — <code>TOMBSTONE</code> withholds a property, a value control re-routes it —
+and the default policy tombstones everything the registry marks
+<code>inherit: false</code> (<code>inheritancePolicyGen</code>, <code>properties-generators.mjs:729</code>;
+<code>isInheritingPropertyFn</code>, <code>registered-properties.mjs:442</code>). The root scope’s
+<code>defaults</code> layer is built by running the <em>same</em> generators over a synthetic
+primal draft whose fields were filled by <code>typeSpecGetDefaults</code> with no live
+properties — i.e. reduced to registry defaults (<code>defaults.mjs:168-235</code>).</p>
+<p>Separately, <strong>widgets need to display inherited defaults</strong> (“empty means:
+inherits value V”). For that, every widget gets a pre-bound
+<code>getDefault</code> (resolver at <code>type-driven-ui-basics.mjs:129-135</code>) that
+<em>pull-reads the parent’s effective propertiesMap</em> by <code>fullKey</code> and falls
+back to the registry entry (<code>defaults.mjs:69-141</code>). So inheritance exists
+<strong>twice by design</strong>: push (the scope cascade computes effective values) and
+pull (widgets query the parent’s effective map for display). The root scope
+defaults layer is actually built <em>via</em> the pull mechanism, so the two are
+the same logic expressed through two delivery routes.</p>
+<h2><a id="2-purpose" class="heading_anchor" href="#2-purpose" aria-hidden="true">#</a>2. Purpose</h2>
+<p>Distilled from the class docs, comments, and usage:</p>
+<ol>
+<li><strong>Name mapping between model and property systems.</strong> The class doc
+(<code>registered-properties-definitions.mjs:87-99</code>) states it replaces “the
+older praxis of putting the modelFieldName into the defaults … which
+scales not well”. The mapping decouples model field names from
+registry/property names, so different model instances can share registry
+setup (<code>registryKey ≠ modelFieldName</code>) and properties can be renamed
+without touching models.</li>
+<li><strong>Declarative driver for generic UI generation.</strong> The ppsMap is the spec
+from which type-driven container UIs are built: which fields appear, in
+which order, with which label/unit/default semantics — without
+hand-writing a widget class per field.</li>
+<li><strong>Defaults resolution contract.</strong> <code>getDefaults(getLiveProperties, ppsRecord, fieldName, modelDefault)</code> gives every widget a uniform answer
+to “what do I show when my model field is empty (i.e. inherits)?” —
+live parent value first, registry default second, model default last.</li>
+</ol>
+<h2><a id="3-why-it-is-complicated--annoying" class="heading_anchor" href="#3-why-it-is-complicated--annoying" aria-hidden="true">#</a>3. Why it is complicated / annoying</h2>
+<p><strong>a) The record genuinely mixes too many concepts — the code says so
+itself.</strong></p>
+<ul>
+<li><code>prefix</code> has an admitted <strong>“double use”</strong>: it identifies the registry
+<em>and</em> serves as a path base for reading complex values from a
+propertiesMap — <em>“There’s a good chance that the double use will collide
+at some point and has to be refined”</em> (def.mjs:176-180).</li>
+<li><code>fullKey</code> is documented as the propertiesMap key for reading inherited
+defaults <em>and</em> for yielding values back — <em>“CAUTION: the yield part is
+not implemented!”</em> and <em>“FIXME: should maybe called propertyKey???”</em>
+(def.mjs:185-187).</li>
+<li><code>createSimpleRecord</code> is <em>“Create a ppsRecord on the fly. Hopefully
+temporary until everything is figured out!!! :-D”</em> (def.mjs:173-174).</li>
+<li><code>_PPS_ENTRY_MARKER</code> exists <em>“only until it is fully integrated”</em>
+(def.mjs:114-115).</li>
+</ul>
+<p>A concrete symptom: in the <code>get*PPSMap</code> factories, <code>prefix = GENERIC</code> while
+<code>fullKey = ${parentPPSRecord.propertyRoot}${fieldName}</code> — two different
+bases for two roles of what looks like one concept. <code>fromPrefix</code> cannot
+express that combination (its single argument feeds both), which is exactly
+the confusion that triggered this research.</p>
+<p><strong>b) Massive duplication at the edges.</strong> Around 8 near-identical
+<code>get*PPSMap</code> factory loops (<code>pps-maps.mjs</code> ×2, <code>fundamentals.mjs</code> ×2,
+<code>type-tools-grid.mjs</code> ×2, <code>type-spec/models.mjs</code> ×1, …) that differ only in
+their per-field special cases, plus near-verbatim <code>getDefaults</code>
+implementations (<code>defaults.mjs:typeSpecGetDefaults</code> vs
+<code>type-tools-grid.mjs:1066</code> vs videoproof <code>_getDefaults</code> — the latter
+commented <em>“it should not be required to always have to rewrite these”</em>).
+One factory is self-described as <em>“a very dirty function … because of a
+lack of purpose for the ppsMap”</em> (<code>type-tools-grid.mjs:497</code>). Two
+dispatchers share the name <code>(get|_get)PPSMapForModel</code> with <strong>swapped
+argument order</strong> — a real footgun.</p>
+<p><strong>c) Stringly-typed keys everywhere.</strong> <code>${prefix}${name}</code> concatenation is
+scattered across generators, consumers, and getDefaults implementations;
+raw string prefixes like <code>'axesLocations/'</code> appear with
+<code>// we should use a symbol here!</code> comments in multiple files; consumers
+hand-build synthetic records (<code>createSimpleRecord(prefix, \</code>@AutoLinearLeading`)<code>, </code>createSimpleRecord(root, ‘irrelevant’)<code>with</code>// FIXME: this looks completely useless!`).</p>
+<p><strong>d) Hidden policy in skip-lists.</strong> <code>_excludesTypeSpecPPSMap</code>
+(<code>pps-maps.mjs:23</code>), <code>_skipPrefix</code>/<code>_skipFullKey</code> (<code>defaults.mjs:144-166</code>)
+silently exclude fields from UI/defaults — policy split between registry
+and code.</p>
+<p><strong>e) Dead stubs add noise.</strong> The <code>parentPPSRecord</code> branch in
+<code>getTypeSpecPPSMap</code> is an admitted unused stub (pps-maps.mjs:40-43,
+<em>“called nowhere”</em>). It got copy-pasted into <code>fundamentals.mjs</code> and from
+there into <code>ui-horizontal-layout.typeroof.jsx</code>, propagating confusion.</p>
+<p><strong>f) Organic growth, migration in progress.</strong> Git history shows the spread:
+type-spec-ramp → grid (<code>28c47aa2</code> “re-using some code/concepts from
+type-spec-ramp”) → videoproof → contextual. Consolidation has begun
+(<code>25a8fe79 refactor(ramp): A2 consolidate pps-maps.mjs</code>), and
+<code>type-specnion.mjs</code> is now only re-export aliases of
+<code>scope-resolution.mjs</code> — a half-finished migration. Known fragilities are
+flagged in code: hard-coded parent path with null fallback
+(<code>defaults.mjs:75-82</code> FIXME), the FIXME that property generators feeding
+<code>AnimationLiveProperties</code> don’t support the PPS mapping yet
+(def.mjs:96-99), and an exploratory typed/structured properties map that is
+<em>“not in production”</em> (def.mjs:253-282).</p>
+<h2><a id="4-candidate-refactoring-directions-not-a-plan" class="heading_anchor" href="#4-candidate-refactoring-directions-not-a-plan" aria-hidden="true">#</a>4. Candidate refactoring directions (not a plan)</h2>
+<p>Ordered by invasiveness. A and B are low-risk de-duplication; C–E change
+semantics of the abstraction; F is strategic.</p>
+<p><strong>A. Kill the factory boilerplate (mechanical).</strong> Make <code>fromPrefix</code> the
+single primitive; express special cases as a <strong>declarative override table</strong>
+per model (<code>{overrides: {leading: {fullKey: …}, color: {prefix: COLOR}}, exclude: Set}</code>). All 8 loops collapse to table literals; one
+<code>getPPSMapForModel(parentRecord, Model)</code> with tables registered per model
+class replaces the swapped-argument-order dispatchers.</p>
+<p><strong>B. Unify <code>getDefaults</code> (mechanical).</strong> One parameterized implementation
+<code>makeGetDefaults(getLiveProperties, {prefixHandlers})</code>; the three copies
+differ only in per-prefix branches (COLOR multi-channel, axesLocations,
+SPECIFIC, DIMENSION) — make each a named handler keyed by prefix.</p>
+<p><strong>C. Split the record’s two roles (moderate).</strong> Resolve the “double use”
+FIXME by separating <code>registryRef = [prefix, registryKey]</code> (static UI/
+registry semantics) from <code>propertyKey = fullKey</code> (runtime addressing).
+<code>prefix</code> should only ever index the registry; <code>fullKey</code> should always
+derive from the <em>parent record’s</em> <code>propertyRoot</code>. Rename
+<code>fullKey → propertyKey</code> per the FIXME; decide the “yield” direction:
+implement it or delete the promise.</p>
+<p><strong>D. Centralize key construction (moderate).</strong> All <code>${prefix}${name}</code> /
+<code>${root}${name}</code> concatenation goes through two functions (or a small
+<code>PropertyPath</code> value object); the “should be a symbol” prefixes become real
+constants in one place.</p>
+<p><strong>E. Move exclusion policy into the registry (moderate).</strong> Replace
+<code>_excludesTypeSpecPPSMap</code>/<code>_skipPrefix</code>/<code>_skipFullKey</code> with explicit flags
+on registry entries (<code>ui: false</code>; <code>inherit: false</code> already exists). One
+introspectable policy location.</p>
+<p><strong>F. Strategic.</strong> Unify push/pull defaults (after B they can literally
+share an implementation); evaluate the exploratory
+<code>PropertiesMap</code>/<code>structuredPropertiesGen</code> (def.mjs:253-282) as the endgame
+for D; the static/animated scope duplication
+(<code>HierarchicalScopeProperties</code> vs <code>HierarchicalScopeAnimanion</code>) and the
+generator FIXME (def.mjs:96-99) belong to the scope system but any key
+refactoring must cover both.</p>
+<h2><a id="5-method-note" class="heading_anchor" href="#5-method-note" aria-hidden="true">#</a>5. Method note</h2>
+<p>Research executed by three parallel read-only subagent surveys (core
+definitions; consumption/UI side; runtime data side) plus <code>git log</code>
+archaeology on <code>registered-properties-definitions.mjs</code> and
+pps-related commit messages. All file:line references were taken from the
+survey outputs and spot-checked against the working tree at analysis time.</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>
