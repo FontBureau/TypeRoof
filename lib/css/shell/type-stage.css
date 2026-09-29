@@ -98,10 +98,10 @@ prosemirror
         .has-node-labels &::before {
             content: "";
             anchor-name: var(--node-anchor-name);
-            height: 1.5rem;
+            height: 1.3rem;
             display: block;
-            background: darkgrey;
-            border-top: 1px dashed black;
+            background: var(--sidebar-bg-color);
+            border-top: 1px solid var(--fieldset-border-color);
         }
     }
 
@@ -273,7 +273,8 @@ prosemirror
     top: anchor(start);
     z-index: 1234;
     padding: 0.15rem;
+    font-size: 0.85rem;
     pointer-events: none;
     font-weight: bolder;
-    color: white;
+    color: var(--text-color);
 }
