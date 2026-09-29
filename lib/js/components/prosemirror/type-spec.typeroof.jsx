@@ -378,8 +378,17 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
             );
         }
 
+        // nodeProperties@/nextNodeProperties@ must trigger the apply
+        // block as well: geometry CSS (width, padding-inline-*,
+        // column-gap, column-width) is sourced from the node layer of
+        // the cascade, and the lineHeightAfter/emAfter margin-end
+        // branch reads the NEXT sibling's node properties — a pure
+        // geometry change (column resize, gutter change, sibling
+        // geometry) must not leave stale CSS on the element.
         if (
             changedMap.has("properties@") ||
+            changedMap.has("nodeProperties@") ||
+            changedMap.has("nextNodeProperties@") ||
             changedMap.has("verboseFontVariationSettings")
         ) {
             // , getDefault = property => [true, _getRegisteredPropertySetup(property).default]
