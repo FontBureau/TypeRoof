@@ -21,22 +21,22 @@ jobs:
                       unique_path: roboto-delta-vf
                       files:
                           - [
-                                fonts/LGCAlpha/RobotoDelta-Roman-VF.ttf,
+                                fonts/variable/RobotoDelta\[BARS\,BDSZ\,GRAD\,STLI\,STLO\,STUI\,STUO\,VANG\,VROT\,WDSP\,XOFI\,XOLC\,XOPQ\,XOUC\,XTFI\,XTLC\,XTRA\,XTSP\,XTTW\,XTUC\,XTUD\,XTUR\,YOFI\,YOLB\,YOLC\,YOPE\,YOPQ\,YOUC\,YTAS\,YTDE\,YTFI\,YTLC\,YTOS\,YTTL\,YTUC\,opsz\,wdth\,wght\].ttf,
                                 lib/assets/fonts/RobotoDelta-Roman-VF.woff2,
                             ]
                           - [
-                                fonts/LGCAlpha/RobotoDelta-Italic-VF.ttf,
+                                fonts/variable/RobotoDelta-Italic\[BARS\,BDSZ\,GRAD\,STLI\,STLO\,STUI\,STUO\,VANG\,VROT\,WDSP\,XOFI\,XOLC\,XOPQ\,XOUC\,XTFI\,XTLC\,XTRA\,XTSP\,XTTW\,XTUC\,XTUD\,XTUR\,YOFI\,YOLB\,YOLC\,YOPE\,YOPQ\,YOUC\,YTAS\,YTDE\,YTFI\,YTLC\,YTOS\,YTTL\,YTUC\,opsz\,wdth\,wght\].ttf,
                                 lib/assets/fonts/RobotoDelta-Italic-VF.woff2,
                             ]
                     - repo: googlefonts/amstelvar-avar2
                       unique_path: amstelvar-avar2
                       files:
                           - [
-                                Fonts/AmstelvarA2-Roman_avar2.ttf,
+                                Fonts/variable/Amstelvar[...,GRAD,opsz,wdth,wght].ttf,
                                 lib/assets/fonts/AmstelvarA2-Roman_avar2.woff2,
                             ]
                           - [
-                                Fonts/AmstelvarA2-Italic_avar2.ttf,
+                                Fonts/variable/Amstelvar-Italic[...,GRAD,opsz,wdth,wght].ttf,
                                 lib/assets/fonts/AmstelvarA2-Italic_avar2.woff2,
                             ]
                     - repo: google/fonts
