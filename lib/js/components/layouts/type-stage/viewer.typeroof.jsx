@@ -410,12 +410,15 @@ export class UIDocumentElement extends _UIDocumentAttachment {
         return requiresFullInitialUpdate;
     }
 
-    // A resolved spec with "noStyler" renders inherit-only: the
-    // node never provisions a styler, though the resolved spec still
-    // speaks for its marks and the margins of a sibling's
-    // nextNodeProperties@. _hasTypeSpecStyling (a spec is resolvable at
-    // all) stays true for silent nodes — the gate applies only to
-    // provisioning.
+    // A resolved spec with "noStyler" renders inherit-only via the
+    // STYLER's dormant state (it clears its inline styles and skips
+    // application while the flag is set — see
+    // UIDocumentTypeSpecStyler.update), so a styler is provisioned
+    // regardless of the flag; no provisioning transitions are needed
+    // for silent flips (the noStyler dependency is declared on the
+    // styler wrapper, which the update-relevance filter wakes
+    // directly). _hasTypeSpecStyling (a spec is resolvable at all)
+    // stays true for silent nodes.
     _provisionTypeSpecStyler() {
         const typeSpecPath = this._getTypeSpecPropertiesId(
                 this._pathOfTypes,
@@ -423,13 +426,7 @@ export class UIDocumentElement extends _UIDocumentAttachment {
             ),
             typeSpecProperties = this._getTypeSpecPropertiesId(
                 this._pathOfTypes,
-            ),
-            // A resolved spec with "noStyler" renders inherit-only:
-            // no styler is provisioned, though the resolved spec still
-            // speaks for its marks and a sibling's nextNodeProperties@.
-            // (_provisionTypeSpecStyler is only reached when
-            // _hasTypeSpecStyling holds, so the path resolves here.)
-            silent = this.getEntry(typeSpecPath).get("noStyler").value;
+            );
         // Compute the next sibling's nodeProperties@ registration id
         // for resolving lineHeightAfter/emAfter margin units — the
         // same channel the editor wires as nextNodeProperties@ (the
@@ -446,8 +443,7 @@ export class UIDocumentElement extends _UIDocumentAttachment {
                 ? this._widgets.indexOf(this._typeSpecStylerWrapper)
                 : -1;
         if (oldId === -1) {
-            // inital (or after a silent state)
-            if (silent) return null; // no styler provisioned
+            // inital
             this._typeSpecStylerWrapper = this._createTypeSpecStylerWrapper(
                 typeSpecProperties,
                 nextNodeProperties,
@@ -455,14 +451,6 @@ export class UIDocumentElement extends _UIDocumentAttachment {
             );
             this._widgets.splice(0, 0, this._typeSpecStylerWrapper);
             return this._typeSpecStylerWrapper;
-        } else if (silent) {
-            // styled→silent: destroy the existing styler (clears the
-            // inline styles it set) and provision nothing.
-            const oldWrapper = this._widgets[oldId];
-            this._widgets.splice(oldId, 1);
-            oldWrapper.destroy();
-            this._typeSpecStylerWrapper = null;
-            return null;
         } else {
             const oldWrapper = this._widgets[oldId],
                 oldNextNodeProperties = oldWrapper.dependencyReverseMapping.has(

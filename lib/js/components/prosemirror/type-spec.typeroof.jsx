@@ -256,26 +256,55 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
         this.innerElement = innerElement;
         this.outerElement = outerElement;
         this.pmNode = pmNode;
+        this._nodeAnchorName = null;
         {
             const nodePropertiesPath =
-                    this.widgetBus.getExternalName("nodeProperties@"),
-                anchorName = `--${cssEscape(nodePropertiesPath)}`;
+                this.widgetBus.getExternalName("nodeProperties@");
+            this._nodeAnchorName = `--${cssEscape(nodePropertiesPath)}`;
             this.outerElement.style.setProperty(
                 "--node-anchor-name",
-                anchorName,
+                this._nodeAnchorName,
             );
         }
     }
+
     // Destroy hooks are the styler's way to participate in
     // styled→silent (noStyler) transitions: the inline styles and the
     // lang attribute it set are removed, so the element renders
     // inherit-only until another styler re-provisions.
-    destroy() {
+    _cleanUp(keepNodeAnchor = true) {
         this.innerElement.removeAttribute("style");
         this.outerElement.removeAttribute("style");
         this.outerElement.removeAttribute("lang");
+        // preserve the --node-anchor-name
+        if (keepNodeAnchor && this._nodeAnchorName !== null)
+            this.outerElement.style.setProperty(
+                "--node-anchor-name",
+                this._nodeAnchorName,
+            );
     }
+
+    destroy() {
+        this._cleanUp(false);
+    }
+
     update(changedMap) {
+        // A resolved spec with "noStyler" renders inherit-only: the
+        // styler goes DORMANT — the inline styles and the lang
+        // attribute it set are removed (same effect as destroy()) —
+        // until the flag clears. Self-contained: the noStyler
+        // dependency is declared on this widget (where present), so
+        // silent transitions need no provisioning wake-up of the
+        // parent — the viewer's attachment can't be woken by this
+        // flag (it isn't declared there), which made the viewer's
+        // styled↔silent provisioning branches unreachable before.
+        if (
+            this.widgetBus.wrapper.dependencyReverseMapping.has("noStyler") &&
+            this.getEntry("noStyler").value === true
+        ) {
+            this._cleanUp();
+            return;
+        }
         // geometry from the nodeProperties@ channel (unregistered, may
         // be null until the root registers), style from properties@.
         const nodePropertiesEntry = changedMap.has("nodeProperties@")
