@@ -71,6 +71,8 @@ import {
 
 import { actorApplyCSSColors } from "../actors/properties-util.mjs";
 
+import { DEFAULT_TEXT as VIDEOPROOF_INPUT_DEFAULT_TEXT } from "../actors/videoproof-input.typeroof.jsx";
+
 import {
     getRegisteredPropertySetup,
     isInheritingPropertyFn,
@@ -125,6 +127,7 @@ const activatableVideoproofActorTypes = (() => {
     const videoproofActors = [
             "VideoproofArrayV2ActorModel",
             "VideoproofContextualActorModel",
+            "VideoproofInputActorModel",
         ],
         availableVideoproofActorTypesDraft =
             AvailableActorTypesModel.createPrimalDraft({});
@@ -1162,6 +1165,10 @@ const VideoproofModel = _BaseLayoutModel.createClass(
                         .get("options")
                         .set(defaultCharGroup);
                 }
+                if (KeyMomentModel.fields.has("textRun"))
+                    // The initial text, as in the legacy "type-your-own".
+                    newKeyMoment.get("textRun").value =
+                        VIDEOPROOF_INPUT_DEFAULT_TEXT;
                 getVideoproofActorDraft("keyMoments").push(newKeyMoment);
             }
         },
@@ -2618,8 +2625,16 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                 {
                     zone: "general",
                     rootPath: videoProofActorPath.append("keyMoments", "0"),
+                    // getEntry is injected by ComponentWrapper and only
+                    // serves declared dependencies.
+                    activationTest: (getEntry) =>
+                        getEntry("keyMoment").has("cellAlignment"),
                 },
-                [["cellAlignment", "value"]],
+                // keyMoment: read in the activationTest.
+                [
+                    ["cellAlignment", "value"],
+                    [".", "keyMoment"],
+                ],
                 UIAlignment,
                 () =>
                     getRegisteredPropertySetup("generic/cellAlignment").default,
@@ -2679,8 +2694,16 @@ class VideoproofController extends _BaseTypeDrivenContainerComponentMixin(
                 {
                     zone: "general",
                     rootPath: videoProofActorPath.append("keyMoments", "0"),
+                    // getEntry is injected by ComponentWrapper and only
+                    // serves declared dependencies.
+                    activationTest: (getEntry) =>
+                        getEntry("keyMoment").has("showCellBoxes"),
                 },
-                [["showCellBoxes", "value"]],
+                // keyMoment: read in the activationTest.
+                [
+                    ["showCellBoxes", "value"],
+                    [".", "keyMoment"],
+                ],
                 UICheckboxOrEmptyInput,
                 () =>
                     getRegisteredPropertySetup("generic/showCellBoxes").default,
