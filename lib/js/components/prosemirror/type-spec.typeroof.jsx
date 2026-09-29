@@ -256,6 +256,16 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
         this.innerElement = innerElement;
         this.outerElement = outerElement;
         this.pmNode = pmNode;
+        // Snapshot the pre-styler inline state (e.g. styles from the
+        // document node's htmlAttrs bag, applied before this styler is
+        // provisioned): cleanup restores exactly this instead of
+        // wiping the whole attributes, so styles/attributes the styler
+        // doesn't own survive.
+        this._preStylerState = {
+            innerStyle: innerElement.getAttribute("style"),
+            outerStyle: outerElement.getAttribute("style"),
+            outerLang: outerElement.getAttribute("lang"),
+        };
         this._nodeAnchorName = null;
         {
             const nodePropertiesPath =
@@ -273,9 +283,13 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
     // lang attribute it set are removed, so the element renders
     // inherit-only until another styler re-provisions.
     _cleanUp(keepNodeAnchor = true) {
-        this.innerElement.removeAttribute("style");
-        this.outerElement.removeAttribute("style");
-        this.outerElement.removeAttribute("lang");
+        const restore = (element, attribute, value) => {
+            if (value === null) element.removeAttribute(attribute);
+            else element.setAttribute(attribute, value);
+        };
+        restore(this.innerElement, "style", this._preStylerState.innerStyle);
+        restore(this.outerElement, "style", this._preStylerState.outerStyle);
+        restore(this.outerElement, "lang", this._preStylerState.outerLang);
         // preserve the --node-anchor-name
         if (keepNodeAnchor && this._nodeAnchorName !== null)
             this.outerElement.style.setProperty(
