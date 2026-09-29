@@ -1080,6 +1080,7 @@ select and drag
 
 .ui_key_moments_link_navigation-list_item-input,
 .ui_more_raps-list_item-input {
+    cursor: pointer;
     text-decoration: none;
 }
 
@@ -1306,6 +1307,27 @@ select and drag
 
 .ui_alignment input:checked + .ui_alignment-radio_icon {
     color: black;
+}
+
+/* The rap items (ui_key_moments_link_navigation) are inserted lazily,
+   i.e. after the quick dial, which is inserted when the layout is built.
+   Ordering is therefore done here, so the quick dial is below the rap. */
+.videoproof_layout-key_moments {
+    display: flex;
+    flex-direction: column;
+}
+
+.ui_more_axes {
+    order: 1;
+
+    /* No axes left uncovered by the rap: don't show a lone heading. */
+    &.ui_more_axes-empty {
+        display: none;
+    }
+
+    .ui_more_axes-item-active {
+        color: hsl(0deg 100% 50%);
+    }
 }
 
 .ui_axes_math-locations_sum-items {
