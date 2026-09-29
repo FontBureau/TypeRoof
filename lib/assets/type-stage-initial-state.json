@@ -33,14 +33,32 @@
           },
           "horizontalLayout": {
             "instance": {
-              "minLineLength": "40",
+              "minLineLength": "33",
               "minPadding": "5",
+              "columnGutter": {
+                "instance": {
+                  "a": {
+                    "columnWidth": "65",
+                    "gutter": "3"
+                  },
+                  "b": {
+                    "columnWidth": "40",
+                    "gutter": "2"
+                  },
+                  "minGutter": "1.5",
+                  "maxGutter": "3.5"
+                },
+                "columnGutterAlgorithmTypeKey": "linear"
+              },
               "paddingRatioStart": "60.00000",
               "growColumns": {
                 "mode": "infinity"
               },
               "columns": [
-                "53"
+                "65",
+                "65",
+                "50",
+                "40"
               ]
             },
             "horizontalLayoutAlgorithmTypeKey": "HorizontalLayoutRunionModel"
