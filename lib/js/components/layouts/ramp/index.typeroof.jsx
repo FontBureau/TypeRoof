@@ -7,6 +7,7 @@ import {
     PathModelOrEmpty,
     Path,
     BooleanModel,
+    BooleanDefaultTrueModel,
     CoherenceFunction,
 } from "../../../metamodel.mjs";
 import {
@@ -81,6 +82,8 @@ const RampModel = _BaseLayoutModel.createClass(
     // only the axes that differ from their default location are listed.
     // The equivalent of the legacy tools "applyDefaultsExplicitly" flag.
     ["verboseFontVariationSettings", BooleanModel],
+    // Default true (unlike type-stage): labels are present on load.
+    ["showNodeTypeSpecLabels", BooleanDefaultTrueModel],
     ["width", LengthModel],
     ["height", LengthModel],
     ensureDimensionBoundnessCoherenceFn,
@@ -434,6 +437,13 @@ class RampController extends _BaseContainerComponent {
                 getRegisteredPropertySetup(
                     `${GENERIC}verboseFontVariationSettings`,
                 ).label, //label
+            ],
+            [
+                { zone: "editor-manager" },
+                [["showNodeTypeSpecLabels", "value"]],
+                UICheckboxInput,
+                "show-node-type-spec-labels", // classToken
+                "Show Element Labels", //label
             ],
             [
                 {
