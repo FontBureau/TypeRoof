@@ -100,8 +100,6 @@ prosemirror
             anchor-name: var(--node-anchor-name);
             height: 1.3rem;
             display: block;
-            background: var(--sidebar-bg-color);
-            border-top: 1px solid var(--fieldset-border-color);
         }
     }
 
@@ -163,29 +161,6 @@ prosemirror
 
     & > .ui-parameters-display {
         line-height: 1.3;
-    }
-}
-
-.editor-advanced.has-node-labels *[data-node-type] {
-    & > .ui_type_spec_label {
-        > span {
-            /* this way (psoition absolute) the label does not
-             * influence the height of the actual element, even
-             * if the element is smaller than the lavel.
-             */
-            font-size: 1rem;
-            background-color: transparent;
-            line-height: 1.3;
-            padding: 0.3rem;
-            text-align: center;
-            text-overflow: ellipsis;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-
-        &.ui_type_spec-editing {
-            background-color: #eef;
-        }
     }
 }
 
@@ -269,12 +244,18 @@ prosemirror
 
 .ui_type_spec_label {
     position: absolute;
-    left: anchor(start);
-    top: anchor(start);
+    inset-block: anchor(start) anchor(end);
+    inset-inline: anchor(start) anchor(end);
     z-index: 1234;
     padding: 0.15rem;
     font-size: 0.85rem;
     pointer-events: none;
     font-weight: bolder;
     color: var(--text-color);
+    background: var(--sidebar-bg-color);
+    border-top: 1px solid var(--fieldset-border-color);
+
+    &.ui_type_spec-editing {
+        background: lavender;
+    }
 }
