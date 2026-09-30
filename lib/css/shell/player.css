@@ -49,6 +49,23 @@ body > .wrapper > *:not(.typeroof-main) {
     overflow: hidden;
 }
 
+/* ui-comments.css makes .typeroof-layout a containing block
+ * (position: relative) for comment balloons — it out-specifies the
+ * plain .typeroof-layout rule above and drops the layout element back
+ * into normal flow, exposing the (hidden) sidebar's reserved grid
+ * column. The player anchors the layout element to the viewport (it
+ * flows under the chrome); absolute is a containing block too, so the
+ * comments overlay keeps working. */
+.wrapper.player .typeroof-main > .typeroof-layout {
+    position: absolute;
+
+    /* The shared layout.css sets scrollbar-gutter: stable (keeps the
+     * editor's layout from jumping when scrollbars appear); in the
+     * player — letterboxed, no scrolling — the reserved gutter shows
+     * as a visible border where content should be. */
+    scrollbar-gutter: auto;
+}
+
 .wrapper:not(.visible) > *:not(.typeroof-main) {
     visibility: hidden;
 }
