@@ -28,6 +28,7 @@
 !lib/js/components/document-renderer-mode/*
 !lib/js/components/classes-and-styles-manager.mjs
 !lib/js/components/environment-provider.mjs
+!lib/js/components/screen-wake-lock.mjs
 !lib/js/font-info.mjs
 !**/*.test.mjs
 !lib/js/tests/**/*
