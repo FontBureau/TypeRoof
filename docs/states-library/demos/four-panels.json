@@ -2,26 +2,23 @@
   "activeState": {
     "t": "0.9500000",
     "duration": "24",
-    "isLoop": "0",
     "perpetual": "1",
-    "playing": "0",
     "activeActors": [
       {
         "instance": {
-          "isLoop": "0",
           "label": "Temp",
           "keyMoments": [
             {
               "label": "Key Moment 1",
               "duration": "1",
+              "easing": "linear",
               "isActive": "1",
               "numericProperties": [
                 [
                   "z-index",
                   "1"
                 ]
-              ],
-              "autoOPSZ": "0"
+              ]
             }
           ]
         },
@@ -29,7 +26,6 @@
       },
       {
         "instance": {
-          "isLoop": "0",
           "label": "Main",
           "activeActors": [
             {
@@ -40,7 +36,7 @@
                   {
                     "label": "On Position",
                     "duration": "1",
-                    "isActive": "0",
+                    "easing": "linear",
                     "numericProperties": [
                       [
                         "x",
@@ -50,12 +46,12 @@
                         "y",
                         "0"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   },
                   {
                     "label": "Move Out",
                     "duration": "4",
+                    "easing": "linear",
                     "isActive": "1",
                     "numericProperties": [
                       [
@@ -66,12 +62,12 @@
                         "y",
                         "0"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   },
                   {
                     "label": "End",
                     "duration": "1",
+                    "easing": "linear",
                     "isActive": "1",
                     "numericProperties": [
                       [
@@ -86,13 +82,12 @@
                         "t",
                         "1"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   },
                   {
                     "label": "Reset",
                     "duration": "0",
-                    "isActive": "0",
+                    "easing": "linear",
                     "numericProperties": [
                       [
                         "t",
@@ -106,12 +101,12 @@
                         "y",
                         "0"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   },
                   {
                     "label": "Start, Move In",
                     "duration": "14",
+                    "easing": "linear",
                     "isActive": "1",
                     "numericProperties": [
                       [
@@ -126,19 +121,18 @@
                         "x",
                         "720"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   }
                 ],
                 "activeActors": [
                   {
                     "instance": {
-                      "isLoop": "0",
                       "label": "Slide1",
                       "keyMoments": [
                         {
                           "label": "Key Moment 1",
                           "duration": "1",
+                          "easing": "linear",
                           "isActive": "1",
                           "numericProperties": [
                             [
@@ -164,8 +158,8 @@
                         {
                           "label": "Key Moment 2",
                           "duration": "1",
+                          "easing": "linear",
                           "isActive": "1",
-                          "autoOPSZ": "0",
                           "textColor": {
                             "instance": {
                               "L": "100.00000"
@@ -177,12 +171,12 @@
                       "activeActors": [
                         {
                           "instance": {
-                            "isLoop": "0",
                             "label": "Background",
                             "keyMoments": [
                               {
                                 "label": "Key Moment 1",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
                                 "numericProperties": [
                                   [
@@ -206,6 +200,7 @@
                               {
                                 "label": "Key Moment 2",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
                                 "fillColor": {
                                   "instance": {
@@ -221,12 +216,12 @@
                         },
                         {
                           "instance": {
-                            "isLoop": "0",
                             "label": "Roboto",
                             "keyMoments": [
                               {
                                 "label": "Key Moment 1",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
                                 "numericProperties": [
                                   [
@@ -238,7 +233,6 @@
                                     "0"
                                   ]
                                 ],
-                                "autoOPSZ": "0",
                                 "axesLocations": [
                                   [
                                     "wght",
@@ -263,14 +257,13 @@
                               {
                                 "label": "Key Moment 2",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "x",
                                     "0"
                                   ]
                                 ],
-                                "autoOPSZ": "0",
                                 "axesLocations": [
                                   [
                                     "wght",
@@ -285,14 +278,13 @@
                               {
                                 "label": "Key Moment 3",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "x",
                                     "-310"
                                   ]
                                 ],
-                                "autoOPSZ": "0",
                                 "axesLocations": [
                                   [
                                     "wght",
@@ -309,6 +301,7 @@
                               {
                                 "label": "Key Moment 4",
                                 "duration": "0",
+                                "easing": "linear",
                                 "isActive": "1",
                                 "numericProperties": [
                                   [
@@ -320,13 +313,13 @@
                                     "1026"
                                   ]
                                 ],
-                                "autoOPSZ": "0",
                                 "textAlign": "right",
                                 "positioningHorizontal": "right"
                               },
                               {
                                 "label": "Key Moment 5",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
                                 "numericProperties": [
                                   [
@@ -334,7 +327,6 @@
                                     "720"
                                   ]
                                 ],
-                                "autoOPSZ": "0",
                                 "axesLocations": [
                                   [
                                     "wght",
@@ -350,8 +342,8 @@
                               {
                                 "label": "Key Moment 6",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
-                                "autoOPSZ": "0",
                                 "axesLocations": [
                                   [
                                     "wght",
@@ -365,12 +357,12 @@
                         },
                         {
                           "instance": {
-                            "isLoop": "0",
                             "label": "Flex Worm",
                             "keyMoments": [
                               {
                                 "label": "0: positioning",
                                 "duration": "0",
+                                "easing": "linear",
                                 "isActive": "1",
                                 "numericProperties": [
                                   [
@@ -386,13 +378,12 @@
                                     "0"
                                   ]
                                 ],
-                                "autoOPSZ": "0",
                                 "positioningHorizontal": "left"
                               },
                               {
                                 "label": "0: time control",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "x",
@@ -402,13 +393,12 @@
                                     "t",
                                     "1"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "1: positioning",
                                 "duration": "0",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "x",
@@ -418,13 +408,12 @@
                                     "t",
                                     "0"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "1: time control",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "x",
@@ -434,13 +423,12 @@
                                     "t",
                                     "1"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "2: positioning",
                                 "duration": "0",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "x",
@@ -450,13 +438,12 @@
                                     "t",
                                     "0"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "2: time control",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "x",
@@ -466,20 +453,18 @@
                                     "t",
                                     "1"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               }
                             ],
                             "activeActors": [
                               {
                                 "instance": {
-                                  "isLoop": "0",
                                   "label": "",
                                   "keyMoments": [
                                     {
                                       "label": "Start Time Control",
                                       "duration": "0",
-                                      "isActive": "0",
+                                      "easing": "linear",
                                       "numericProperties": [
                                         [
                                           "x",
@@ -489,37 +474,34 @@
                                           "t",
                                           "0.2548500881834215"
                                         ]
-                                      ],
-                                      "autoOPSZ": "0"
+                                      ]
                                     },
                                     {
                                       "label": "Pin Inital",
                                       "duration": "0.7451499118165785",
-                                      "isActive": "0",
+                                      "easing": "linear",
                                       "numericProperties": [
                                         [
                                           "x",
                                           "-136.15625"
                                         ]
-                                      ],
-                                      "autoOPSZ": "0"
+                                      ]
                                     },
                                     {
                                       "label": "Advance",
                                       "duration": "0",
-                                      "isActive": "0",
+                                      "easing": "linear",
                                       "numericProperties": [
                                         [
                                           "x",
                                           "170.859375"
                                         ]
-                                      ],
-                                      "autoOPSZ": "0"
+                                      ]
                                     },
                                     {
                                       "label": "End Time Control",
                                       "duration": "0.2548500881834215",
-                                      "isActive": "0",
+                                      "easing": "linear",
                                       "numericProperties": [
                                         [
                                           "t",
@@ -529,20 +511,18 @@
                                           "x",
                                           "170.859375"
                                         ]
-                                      ],
-                                      "autoOPSZ": "0"
+                                      ]
                                     }
                                   ],
                                   "activeActors": [
                                     {
                                       "instance": {
-                                        "isLoop": "0",
                                         "label": "",
                                         "keyMoments": [
                                           {
                                             "label": "0: Initialization",
                                             "duration": "0",
-                                            "isActive": "0",
+                                            "easing": "linear",
                                             "numericProperties": [
                                               [
                                                 "x",
@@ -557,7 +537,6 @@
                                                 "422.9375"
                                               ]
                                             ],
-                                            "autoOPSZ": "0",
                                             "axesLocations": [
                                               [
                                                 "wdth",
@@ -571,14 +550,13 @@
                                           {
                                             "label": "1: Contraction",
                                             "duration": "1.7",
-                                            "isActive": "0",
+                                            "easing": "linear",
                                             "numericProperties": [
                                               [
                                                 "x",
                                                 "0"
                                               ]
                                             ],
-                                            "autoOPSZ": "0",
                                             "axesLocations": [
                                               [
                                                 "wdth",
@@ -589,21 +567,19 @@
                                           {
                                             "label": "2: Re-alignment",
                                             "duration": "0",
-                                            "isActive": "0",
+                                            "easing": "linear",
                                             "numericProperties": [
                                               [
                                                 "x",
                                                 "307.015625"
                                               ]
                                             ],
-                                            "autoOPSZ": "0",
                                             "textAlign": "left"
                                           },
                                           {
                                             "label": "3: Expansion",
                                             "duration": "1",
-                                            "isActive": "0",
-                                            "autoOPSZ": "0",
+                                            "easing": "linear",
                                             "axesLocations": [
                                               [
                                                 "wdth",
@@ -639,13 +615,12 @@
                   {
                     "label": "Pause",
                     "duration": "10",
-                    "isActive": "0",
-                    "autoOPSZ": "0"
+                    "easing": "linear"
                   },
                   {
                     "label": "Start, Move In",
                     "duration": "4",
-                    "isActive": "0",
+                    "easing": "linear",
                     "numericProperties": [
                       [
                         "t",
@@ -659,13 +634,12 @@
                         "y",
                         "720"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   },
                   {
                     "label": "On Position",
                     "duration": "1",
-                    "isActive": "0",
+                    "easing": "linear",
                     "numericProperties": [
                       [
                         "x",
@@ -675,13 +649,12 @@
                         "y",
                         "0"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   },
                   {
                     "label": "Move Out",
                     "duration": "4",
-                    "isActive": "0",
+                    "easing": "linear",
                     "numericProperties": [
                       [
                         "y",
@@ -691,13 +664,12 @@
                         "x",
                         "0"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   },
                   {
                     "label": "End",
                     "duration": "1",
-                    "isActive": "0",
+                    "easing": "linear",
                     "numericProperties": [
                       [
                         "t",
@@ -711,12 +683,12 @@
                         "x",
                         "-720"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   },
                   {
                     "label": "Reset",
                     "duration": "0",
+                    "easing": "linear",
                     "isActive": "1",
                     "numericProperties": [
                       [
@@ -731,21 +703,19 @@
                         "y",
                         "720"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   }
                 ],
                 "activeActors": [
                   {
                     "instance": {
-                      "isLoop": "0",
                       "label": "Slide 2",
                       "keyMoments": [
                         {
                           "label": "Key Moment 1",
                           "duration": "1",
+                          "easing": "linear",
                           "isActive": "1",
-                          "autoOPSZ": "0",
                           "textColor": {
                             "instance": {
                               "L": "100.00000",
@@ -758,12 +728,12 @@
                       "activeActors": [
                         {
                           "instance": {
-                            "isLoop": "0",
                             "label": "Background",
                             "keyMoments": [
                               {
                                 "label": "Key Moment 1",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
                                 "numericProperties": [
                                   [
@@ -790,12 +760,12 @@
                         },
                         {
                           "instance": {
-                            "isLoop": "0",
                             "label": "opsz",
                             "keyMoments": [
                               {
                                 "label": "Key Moment 1",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
                                 "autoOPSZ": "1",
                                 "fontSize": "8"
@@ -803,6 +773,7 @@
                               {
                                 "label": "Key Moment 2",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
                                 "autoOPSZ": "1",
                                 "fontSize": "144"
@@ -811,12 +782,12 @@
                             "activeActors": [
                               {
                                 "instance": {
-                                  "isLoop": "0",
                                   "label": "Optical Size",
                                   "keyMoments": [
                                     {
                                       "label": "Key Moment 1",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
                                       "numericProperties": [
                                         [
@@ -824,7 +795,6 @@
                                           "559"
                                         ]
                                       ],
-                                      "autoOPSZ": "0",
                                       "textRun": "Optical Size",
                                       "positioningVertical": "bottom",
                                       "heightTreatment": "baselineToBottomFix"
@@ -835,12 +805,12 @@
                               },
                               {
                                 "instance": {
-                                  "isLoop": "0",
                                   "label": "14 pt Scaled",
                                   "keyMoments": [
                                     {
                                       "label": "Key Moment 1",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
                                       "numericProperties": [
                                         [
@@ -848,7 +818,6 @@
                                           "185"
                                         ]
                                       ],
-                                      "autoOPSZ": "0",
                                       "axesLocations": [
                                         [
                                           "opsz",
@@ -863,14 +832,13 @@
                               },
                               {
                                 "instance": {
-                                  "isLoop": "0",
                                   "label": "opsz no scale",
                                   "keyMoments": [
                                     {
                                       "label": "Key Moment 1",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
-                                      "autoOPSZ": "0",
                                       "fontSize": "131",
                                       "textRun": "Optical Size",
                                       "positioningVertical": "bottom"
@@ -881,12 +849,12 @@
                               },
                               {
                                 "instance": {
-                                  "isLoop": "0",
                                   "label": "",
                                   "keyMoments": [
                                     {
                                       "label": "Key Moment 1",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
                                       "numericProperties": [
                                         [
@@ -917,6 +885,7 @@
                                     {
                                       "label": "Key Moment 2",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
                                       "numericProperties": [
                                         [
@@ -931,12 +900,12 @@
                               },
                               {
                                 "instance": {
-                                  "isLoop": "0",
                                   "label": "",
                                   "keyMoments": [
                                     {
                                       "label": "Key Moment 1",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
                                       "numericProperties": [
                                         [
@@ -978,8 +947,8 @@
                                     {
                                       "label": "Key Moment 2",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
-                                      "autoOPSZ": "0",
                                       "axesLocations": [
                                         [
                                           "wdth",
@@ -1015,13 +984,12 @@
                   {
                     "label": "Pause",
                     "duration": "5",
-                    "isActive": "0",
-                    "autoOPSZ": "0"
+                    "easing": "linear"
                   },
                   {
                     "label": "Start, Move In",
                     "duration": "9",
-                    "isActive": "0",
+                    "easing": "linear",
                     "numericProperties": [
                       [
                         "t",
@@ -1035,13 +1003,12 @@
                         "y",
                         "0"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   },
                   {
                     "label": "On Position",
                     "duration": "1",
-                    "isActive": "0",
+                    "easing": "linear",
                     "numericProperties": [
                       [
                         "x",
@@ -1051,13 +1018,12 @@
                         "y",
                         "0"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   },
                   {
                     "label": "Move Out",
                     "duration": "4",
-                    "isActive": "0",
+                    "easing": "linear",
                     "numericProperties": [
                       [
                         "x",
@@ -1067,12 +1033,12 @@
                         "y",
                         "0"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   },
                   {
                     "label": "End",
                     "duration": "1",
+                    "easing": "linear",
                     "isActive": "1",
                     "numericProperties": [
                       [
@@ -1087,12 +1053,12 @@
                         "y",
                         "-720"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   },
                   {
                     "label": "Reset",
                     "duration": "0",
+                    "easing": "linear",
                     "isActive": "1",
                     "numericProperties": [
                       [
@@ -1107,24 +1073,22 @@
                         "y",
                         "0"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   }
                 ],
                 "activeActors": [
                   {
                     "instance": {
-                      "isLoop": "0",
                       "label": "Slide 3",
                       "activeActors": [
                         {
                           "instance": {
-                            "isLoop": "0",
                             "label": "Background",
                             "keyMoments": [
                               {
                                 "label": "Key Moment 1",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
                                 "numericProperties": [
                                   [
@@ -1151,12 +1115,12 @@
                         },
                         {
                           "instance": {
-                            "isLoop": "0",
                             "label": "🏵",
                             "keyMoments": [
                               {
                                 "label": "Key Moment 1",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
                                 "numericProperties": [
                                   [
@@ -1176,7 +1140,6 @@
                                     "0"
                                   ]
                                 ],
-                                "autoOPSZ": "0",
                                 "axesLocations": [
                                   [
                                     "T1  ",
@@ -1208,8 +1171,8 @@
                               {
                                 "label": "Key Moment 2",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
-                                "autoOPSZ": "0",
                                 "axesLocations": [
                                   [
                                     "T1  ",
@@ -1235,8 +1198,8 @@
                               {
                                 "label": "Key Moment 3",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
-                                "autoOPSZ": "0",
                                 "axesLocations": [
                                   [
                                     "T1  ",
@@ -1255,8 +1218,8 @@
                               {
                                 "label": "Key Moment 4",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
-                                "autoOPSZ": "0",
                                 "axesLocations": [
                                   [
                                     "T3  ",
@@ -1291,6 +1254,7 @@
                               {
                                 "label": "Key Moment 1",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
                                 "numericProperties": [
                                   [
@@ -1298,7 +1262,6 @@
                                     "1"
                                   ]
                                 ],
-                                "autoOPSZ": "0",
                                 "axesLocations": [
                                   [
                                     "MORF",
@@ -1318,8 +1281,8 @@
                               {
                                 "label": "Key Moment 2",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
-                                "autoOPSZ": "0",
                                 "axesLocations": [
                                   [
                                     "MORF",
@@ -1336,8 +1299,8 @@
                               {
                                 "label": "Key Moment 3",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
-                                "autoOPSZ": "0",
                                 "axesLocations": [
                                   [
                                     "MORF",
@@ -1352,8 +1315,8 @@
                               {
                                 "label": "Key Moment 4",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
-                                "autoOPSZ": "0",
                                 "axesLocations": [
                                   [
                                     "MORF",
@@ -1365,12 +1328,12 @@
                             "activeActors": [
                               {
                                 "instance": {
-                                  "isLoop": "0",
                                   "label": "The",
                                   "keyMoments": [
                                     {
                                       "label": "Key Moment 1",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
                                       "numericProperties": [
                                         [
@@ -1382,7 +1345,6 @@
                                           "35"
                                         ]
                                       ],
-                                      "autoOPSZ": "0",
                                       "textColor": {
                                         "instance": {
                                           "L": "0.00000"
@@ -1397,12 +1359,12 @@
                               },
                               {
                                 "instance": {
-                                  "isLoop": "0",
                                   "label": "wizard",
                                   "keyMoments": [
                                     {
                                       "label": "Key Moment 1",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
                                       "numericProperties": [
                                         [
@@ -1414,7 +1376,6 @@
                                           "101"
                                         ]
                                       ],
-                                      "autoOPSZ": "0",
                                       "textColor": {
                                         "instance": {
                                           "L": "14.00000"
@@ -1429,12 +1390,12 @@
                               },
                               {
                                 "instance": {
-                                  "isLoop": "0",
                                   "label": "lizard",
                                   "keyMoments": [
                                     {
                                       "label": "Key Moment 1",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
                                       "numericProperties": [
                                         [
@@ -1446,7 +1407,6 @@
                                           "181"
                                         ]
                                       ],
-                                      "autoOPSZ": "0",
                                       "textColor": {
                                         "instance": {
                                           "L": "28.00000"
@@ -1461,12 +1421,12 @@
                               },
                               {
                                 "instance": {
-                                  "isLoop": "0",
                                   "label": "ate a",
                                   "keyMoments": [
                                     {
                                       "label": "Key Moment 1",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
                                       "numericProperties": [
                                         [
@@ -1478,7 +1438,6 @@
                                           "278"
                                         ]
                                       ],
-                                      "autoOPSZ": "0",
                                       "textColor": {
                                         "instance": {
                                           "L": "42.00000"
@@ -1493,12 +1452,12 @@
                               },
                               {
                                 "instance": {
-                                  "isLoop": "0",
                                   "label": "buzzard",
                                   "keyMoments": [
                                     {
                                       "label": "Key Moment 1",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
                                       "numericProperties": [
                                         [
@@ -1510,7 +1469,6 @@
                                           "238"
                                         ]
                                       ],
-                                      "autoOPSZ": "0",
                                       "textColor": {
                                         "instance": {
                                           "L": "56.00000"
@@ -1525,12 +1483,12 @@
                               },
                               {
                                 "instance": {
-                                  "isLoop": "0",
                                   "label": "with a",
                                   "keyMoments": [
                                     {
                                       "label": "Key Moment 1",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
                                       "numericProperties": [
                                         [
@@ -1542,7 +1500,6 @@
                                           "278"
                                         ]
                                       ],
-                                      "autoOPSZ": "0",
                                       "textColor": {
                                         "instance": {
                                           "L": "72.00000"
@@ -1557,12 +1514,12 @@
                               },
                               {
                                 "instance": {
-                                  "isLoop": "0",
                                   "label": "gizzard",
                                   "keyMoments": [
                                     {
                                       "label": "Key Moment 1",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
                                       "numericProperties": [
                                         [
@@ -1574,7 +1531,6 @@
                                           "198"
                                         ]
                                       ],
-                                      "autoOPSZ": "0",
                                       "textColor": {
                                         "instance": {
                                           "L": "92.00000"
@@ -1594,13 +1550,12 @@
                         },
                         {
                           "instance": {
-                            "isLoop": "0",
                             "label": "Lizard",
                             "keyMoments": [
                               {
                                 "label": "cyle 01 in",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "y",
@@ -1615,14 +1570,13 @@
                                     "2"
                                   ]
                                 ],
-                                "autoOPSZ": "0",
                                 "fontSize": "168",
                                 "positioningVertical": "bottom"
                               },
                               {
                                 "label": "cycle 01 out",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "y",
@@ -1632,13 +1586,12 @@
                                     "t",
                                     "1"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "cycle 02 in",
                                 "duration": "0",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "t",
@@ -1648,13 +1601,12 @@
                                     "y",
                                     "-112"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "cycle 02 out",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "t",
@@ -1664,13 +1616,12 @@
                                     "y",
                                     "0"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "cycle 03 in",
                                 "duration": "0",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "y",
@@ -1680,13 +1631,12 @@
                                     "t",
                                     "0"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "cycle 03 out",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "t",
@@ -1696,13 +1646,12 @@
                                     "y",
                                     "112"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "cycle 04 in",
                                 "duration": "0",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "y",
@@ -1712,13 +1661,12 @@
                                     "t",
                                     "0"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "cycle 04 out",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "y",
@@ -1728,13 +1676,12 @@
                                     "t",
                                     "1"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "cycle 05 in",
                                 "duration": "0",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "y",
@@ -1744,13 +1691,12 @@
                                     "t",
                                     "0"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "cycle 05 out",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "y",
@@ -1760,13 +1706,12 @@
                                     "t",
                                     "1"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "cycle 06 in",
                                 "duration": "0",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "y",
@@ -1776,13 +1721,12 @@
                                     "t",
                                     "0"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "cycle 06 out",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "y",
@@ -1792,13 +1736,12 @@
                                     "t",
                                     "1"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "cycle 07 in",
                                 "duration": "0",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "y",
@@ -1808,13 +1751,12 @@
                                     "t",
                                     "0"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "cycle 07 out",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "t",
@@ -1824,13 +1766,12 @@
                                     "y",
                                     "560"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "cycle 08 in",
                                 "duration": "0",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "y",
@@ -1840,13 +1781,12 @@
                                     "t",
                                     "0"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "cycle 08 out",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "y",
@@ -1856,13 +1796,12 @@
                                     "t",
                                     "1"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "cycle 09 in",
                                 "duration": "0",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "y",
@@ -1872,13 +1811,12 @@
                                     "t",
                                     "0"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               },
                               {
                                 "label": "cycle 09 out",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "y",
@@ -1888,8 +1826,7 @@
                                     "t",
                                     "1"
                                   ]
-                                ],
-                                "autoOPSZ": "0"
+                                ]
                               }
                             ],
                             "activeActors": [
@@ -1901,6 +1838,7 @@
                                     {
                                       "label": "Key Moment 1",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
                                       "numericProperties": [
                                         [
@@ -1908,7 +1846,6 @@
                                           "720"
                                         ]
                                       ],
-                                      "autoOPSZ": "0",
                                       "axesLocations": [
                                         [
                                           "M1  ",
@@ -1930,8 +1867,7 @@
                                     {
                                       "label": "Key Moment 2",
                                       "duration": "1",
-                                      "isActive": "0",
-                                      "autoOPSZ": "0",
+                                      "easing": "linear",
                                       "axesLocations": [
                                         [
                                           "M1  ",
@@ -1942,8 +1878,7 @@
                                     {
                                       "label": "Key Moment 3",
                                       "duration": "1",
-                                      "isActive": "0",
-                                      "autoOPSZ": "0",
+                                      "easing": "linear",
                                       "axesLocations": [
                                         [
                                           "M1  ",
@@ -1954,8 +1889,8 @@
                                     {
                                       "label": "Key Moment 4",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
-                                      "autoOPSZ": "0",
                                       "axesLocations": [
                                         [
                                           "M1  ",
@@ -1994,7 +1929,7 @@
                   {
                     "label": "Pause, Reset",
                     "duration": "0",
-                    "isActive": "0",
+                    "easing": "linear",
                     "numericProperties": [
                       [
                         "t",
@@ -2008,13 +1943,12 @@
                         "x",
                         "0"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   },
                   {
                     "label": "Start, Move in",
                     "duration": "14",
-                    "isActive": "0",
+                    "easing": "linear",
                     "numericProperties": [
                       [
                         "t",
@@ -2028,13 +1962,12 @@
                         "x",
                         "0"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   },
                   {
                     "label": "On Position",
                     "duration": "1",
-                    "isActive": "0",
+                    "easing": "linear",
                     "numericProperties": [
                       [
                         "x",
@@ -2044,13 +1977,12 @@
                         "y",
                         "0"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   },
                   {
                     "label": "Move Out",
                     "duration": "4",
-                    "isActive": "0",
+                    "easing": "linear",
                     "numericProperties": [
                       [
                         "x",
@@ -2060,12 +1992,12 @@
                         "y",
                         "0"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   },
                   {
                     "label": "End",
                     "duration": "1",
+                    "easing": "linear",
                     "isActive": "1",
                     "numericProperties": [
                       [
@@ -2080,25 +2012,22 @@
                         "x",
                         "-720"
                       ]
-                    ],
-                    "autoOPSZ": "0"
+                    ]
                   }
                 ],
                 "activeActors": [
                   {
                     "instance": {
-                      "isLoop": "0",
                       "label": "Slide 4",
                       "activeActors": [
                         {
                           "instance": {
-                            "isLoop": "0",
                             "label": "Background",
                             "keyMoments": [
                               {
                                 "label": "Key Moment 1",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "width",
@@ -2124,12 +2053,12 @@
                         },
                         {
                           "instance": {
-                            "isLoop": "0",
                             "label": "Sizing Header",
                             "keyMoments": [
                               {
                                 "label": "Key Moment 1",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
                                 "numericProperties": [
                                   [
@@ -2141,7 +2070,6 @@
                                     "65"
                                   ]
                                 ],
-                                "autoOPSZ": "0",
                                 "axesLocations": [
                                   [
                                     "opsz",
@@ -2161,8 +2089,8 @@
                               {
                                 "label": "Key Moment 2",
                                 "duration": "1",
+                                "easing": "linear",
                                 "isActive": "1",
-                                "autoOPSZ": "0",
                                 "axesLocations": [
                                   [
                                     "wdth",
@@ -2184,8 +2112,8 @@
                                     {
                                       "label": "Key Moment 1",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
-                                      "autoOPSZ": "0",
                                       "charGroup": {
                                         "options": "custom",
                                         "customText": "versatile",
@@ -2196,8 +2124,8 @@
                                     {
                                       "label": "Key Moment 2",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
-                                      "autoOPSZ": "0",
                                       "textColor": {
                                         "instance": {
                                           "L": "61.00000",
@@ -2214,8 +2142,8 @@
                                     {
                                       "label": "Key Moment 3",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
-                                      "autoOPSZ": "0",
                                       "charGroup": {
                                         "customText": "TypeRoof"
                                       },
@@ -2230,17 +2158,17 @@
                                       }
                                     }
                                   ],
+                                  "referenceSizeSource": "layer",
                                   "activeActors": [
                                     {
                                       "instance": {
-                                        "isLoop": "0",
                                         "label": "",
                                         "keyMoments": [
                                           {
                                             "label": "Key Moment 1",
                                             "duration": "1",
+                                            "easing": "linear",
                                             "isActive": "1",
-                                            "autoOPSZ": "0",
                                             "textColor": {
                                               "instance": {
                                                 "L": "61.00000",
@@ -2258,7 +2186,6 @@
                                     },
                                     {
                                       "instance": {
-                                        "isLoop": "0",
                                         "label": "",
                                         "localActiveFontKey": "from-url AmstelvarA2 Roman wght400 Version_0-001"
                                       },
@@ -2266,14 +2193,13 @@
                                     },
                                     {
                                       "instance": {
-                                        "isLoop": "0",
                                         "label": "",
                                         "keyMoments": [
                                           {
                                             "label": "Key Moment 1",
                                             "duration": "1",
+                                            "easing": "linear",
                                             "isActive": "1",
-                                            "autoOPSZ": "0",
                                             "textColor": {
                                               "instance": {
                                                 "L": "0.00000",
@@ -2297,13 +2223,12 @@
                         },
                         {
                           "instance": {
-                            "isLoop": "0",
                             "label": "Sizing Body",
                             "keyMoments": [
                               {
                                 "label": "Key Moment 1",
                                 "duration": "1",
-                                "isActive": "0",
+                                "easing": "linear",
                                 "numericProperties": [
                                   [
                                     "height",
@@ -2314,7 +2239,6 @@
                                     "0"
                                   ]
                                 ],
-                                "autoOPSZ": "0",
                                 "positioningVertical": "bottom"
                               }
                             ],
@@ -2327,8 +2251,8 @@
                                     {
                                       "label": "Key Moment 1",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
-                                      "autoOPSZ": "0",
                                       "axesLocations": [
                                         [
                                           "opsz",
@@ -2359,8 +2283,8 @@
                                     {
                                       "label": "Key Moment 2",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
-                                      "autoOPSZ": "0",
                                       "axesLocations": [
                                         [
                                           "wght",
@@ -2374,8 +2298,8 @@
                                     {
                                       "label": "Key Moment 3",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
-                                      "autoOPSZ": "0",
                                       "axesLocations": [
                                         [
                                           "slnt",
@@ -2389,8 +2313,8 @@
                                     {
                                       "label": "Key Moment 4",
                                       "duration": "1",
+                                      "easing": "linear",
                                       "isActive": "1",
-                                      "autoOPSZ": "0",
                                       "axesLocations": [
                                         [
                                           "opsz",
@@ -2415,17 +2339,17 @@
                                       }
                                     }
                                   ],
+                                  "referenceSizeSource": "layer",
                                   "activeActors": [
                                     {
                                       "instance": {
-                                        "isLoop": "0",
                                         "label": "",
                                         "keyMoments": [
                                           {
                                             "label": "Key Moment 1",
                                             "duration": "1",
+                                            "easing": "linear",
                                             "isActive": "1",
-                                            "autoOPSZ": "0",
                                             "backgroundColor": {
                                               "instance": {
                                                 "L": "100.00000",
@@ -2441,14 +2365,13 @@
                                     },
                                     {
                                       "instance": {
-                                        "isLoop": "0",
                                         "label": "",
                                         "keyMoments": [
                                           {
                                             "label": "Key Moment 1",
                                             "duration": "1",
+                                            "easing": "linear",
                                             "isActive": "1",
-                                            "autoOPSZ": "0",
                                             "textColor": {
                                               "instance": {
                                                 "H": "360.00000"
@@ -2483,7 +2406,12 @@
       }
     ],
     "width": "720",
-    "height": "720"
+    "height": "720",
+    "zoomLevel": {
+      "type": "app-default",
+      "scaling": "100.00000"
+    },
+    "editingActor": "./1/instance/activeActors/3/instance/activeActors/0/instance/activeActors/2"
   },
   "activeLayoutKey": "MotionStage",
   "activeFontKey": "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"

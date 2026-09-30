@@ -16,6 +16,7 @@ import {
     actorApplyCssProperties,
     setTypographicPropertiesToSample,
     getVerboseFontVariationSettings,
+    getPropertyValue,
 } from "../properties-util.mjs";
 
 import { setLanguageTagDirect } from "../../language-tags.typeroof.jsx";
@@ -278,18 +279,76 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
 
     // --- Phase 2: Layout ---
 
-    // The measurement comes from the 'environment@' protocol (the
-    // .typeroof-layout box, css-px, before css-transforms): a
-    // viewport-stable reference. Measuring wrapper.host (the layer)
-    // instead feeds back through content growth once the container
-    // can grow for the background scroll edge fix.
+    // The reference size for the font-size/layout calculation,
+    // resolved in precedence order:
+    //   1. the actor's own numericProperties width/height, when set
+    //      (px of the animated properties at globalT);
+    //   2. referenceSizeSource:
+    //      - "stage": environment@stage (the stage design box,
+    //        published by StageDOMNode) — the right reference in
+    //        zoomed-stage contexts (motion-stage), where the viewport
+    //        is the wrong scale. Falls back to environment@layout
+    //        (with a warning) when no stage is registered.
+    //      - "layer": the containing layer's own box (wrapper.host,
+    //        pre-transform design px) — right when the actor must fit
+    //        a design-sized layer. Reacting to host size changes is
+    //        intended: browser size or orientation changes have the
+    //        same implications and must relayout too.
+    //      - "layout" (default): environment@layout (the
+    //        .typeroof-layout box, css-px, before css-transforms): a
+    //        viewport-stable reference.
     _getAvailableDimensions(changedMap) {
-        const layoutBox = changedMap.has("environment@layout")
-            ? changedMap.get("environment@layout")
-            : this.getEntry("environment@layout");
+        const referenceSizeSource = this.getEntry("referenceSizeSource").value,
+            layoutBox = changedMap.has("environment@layout")
+                ? changedMap.get("environment@layout")
+                : this.getEntry("environment@layout"),
+            referenceBox = (() => {
+                if (referenceSizeSource === "layer") {
+                    // offsetWidth/Height are before css-transforms,
+                    // i.e. design px.
+                    const host = this.widgetBus.wrapper.host;
+                    return {
+                        width: host.offsetWidth,
+                        height: host.offsetHeight,
+                    };
+                }
+                if (referenceSizeSource !== "stage") return layoutBox;
+                // null when no stage is registered (e.g. a loaded
+                // state with "stage" outside motion-stage): fall back
+                // to layout.
+                const stageBox = this.getEntry("environment@stage");
+                if (stageBox !== null) return stageBox;
+                console.warn(
+                    `${this}: referenceSizeSource is "stage" but no ` +
+                        "environment@stage is registered; falling back to environment@layout.",
+                );
+                return layoutBox;
+            })(),
+            animationProperties = changedMap.has("animationProperties@")
+                ? changedMap.get("animationProperties@")
+                : this.getEntry("animationProperties@"),
+            globalT = (
+                changedMap.has("globalT")
+                    ? changedMap.get("globalT")
+                    : this.getEntry("globalT")
+            ).value,
+            propertyValuesMap =
+                animationProperties.animanion.getPropertiesFromGlobalT(globalT),
+            [, ownWidth] = getPropertyValue(
+                propertyValuesMap,
+                () => [false, ""],
+                "numericProperties/width",
+            ),
+            [, ownHeight] = getPropertyValue(
+                propertyValuesMap,
+                () => [false, ""],
+                "numericProperties/height",
+            );
         return {
-            widthPt: layoutBox.width * 0.75, // px to pt
-            heightPt: layoutBox.height * 0.75, // px to pt
+            // px to pt
+            widthPt: (ownWidth !== "" ? ownWidth : referenceBox.width) * 0.75,
+            heightPt:
+                (ownHeight !== "" ? ownHeight : referenceBox.height) * 0.75,
         };
     }
 
@@ -648,7 +707,11 @@ export class VideoproofContextualActorRenderer extends _BaseComponent {
         // Environment-only updates (e.g. window resize): relayout with
         // the new available dimensions and re-render. (When animation
         // properties change too, the block above already handles it.)
-        else if (changedMap.has("environment@layout")) {
+        else if (
+            changedMap.has("environment@layout") ||
+            changedMap.has("environment@stage") ||
+            changedMap.has("referenceSizeSource")
+        ) {
             if (this._relayout(changedMap)) this._renderVisiblePage();
         }
     }
