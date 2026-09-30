@@ -45,6 +45,13 @@ The shell provides infrastructure to enable all types of type centered
 tooling for proofing, specimen creation, type setting and it features
 animation capabilities build with variable fonts in mind.
 
+On the first visit a short tour introduces the user interface. It can be
+started again from the menu with **Help › Take the tour**, or by opening
+the shell with the `tour` flag: [`/shell#[tour]`](/shell#[tour]). The
+tour doesn't start automatically when the shell is embedded or opened by
+another app, or when the `autoplay` or `autopause` flags are used, not
+even with the `tour` flag.
+
 
 ### Stand Alone Player
 
