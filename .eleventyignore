@@ -4,3 +4,4 @@
 ./app/**
 ./legacy.html
 ./docs/experiments/**
+./coverage/**
