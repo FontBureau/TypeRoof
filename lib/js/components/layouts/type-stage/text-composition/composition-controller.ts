@@ -11,7 +11,11 @@
  *
  *   - Segmenter (pure pass): paragraph {text, styleSpans} -> segments
  *     + break opportunities; splits at style boundaries and UAX#14
- *     (https://www.unicode.org/reports/tr14/)  break points.
+ *     (https://www.unicode.org/reports/tr14/)  break points. Hard
+ *     breaks (e.g. <br>, newline) separate the paragraph into LOGICAL
+ *     paragraphs as far as line-breaking is concerned; the Controller
+ *     invokes the Algorithm once per logical paragraph — the
+ *     Algorithm never sees hard breaks.
  *   - Hyphenator (pure pass, pluggable per language): adds segments
  *     and break points inside words; a hyphenated segment includes the
  *     hyphen glyph in its measured width, so algorithms stay ignorant
@@ -44,6 +48,10 @@
  *     dirty-range tracking (on edit, recompose from the first changed
  *     paragraph until breaks re-synchronize, not the whole document),
  *     orchestration of the passes above, algorithm selection.
+ *     Logical paragraphs are independent composition units (pure
+ *     algorithm, no shared state), so the Controller may parallelize
+ *     them across workers, compose lazily (viewport) and recompose
+ *     per dirty paragraph.
  *
  * Roles within an Algorithm (compositional, both pure):
  *

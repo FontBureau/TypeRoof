@@ -99,16 +99,32 @@ export interface BreakOpportunity {
     /** Index of the segment AFTER which a break is legal. */
     afterSegment: number;
     /** 'space': zero-width break; 'hyphen': inserts a visible hyphen
-     *  when taken; 'explicit': mandatory break (e.g. newline).
+     *  when taken; 'explicit': mandatory break — the Algorithm MUST
+     *  end a line here, but the line is composed like any non-final
+     *  line (it may be narrowed or widened to fit). Distinct from a
+     *  hard break (<br>, newline), which the Host splits into logical
+     *  paragraphs beforehand (creating a never-widened last line) and
+     *  which the Algorithm never sees.
      *  The enum is expected to grow: script-specific break kinds and
      *  in-between cases like a "hardly-breaking-space" (an nobr that
      *  may break at high cost) are anticipated. */
     kind: "space" | "hyphen" | "explicit";
     /** Cost of breaking here; 0 for neutral. Allows UAX#14 /
-     *  language-specific tuning and later Knuth-Plass penalties. */
+     *  language-specific tuning and later Knuth-Plass penalties.
+     *  Irrelevant for kind 'explicit': that break is not negotiable. */
     penalty: number;
 }
 
+/** One LOGICAL paragraph. Hard breaks (e.g. <br>, newline) separate
+ *  a paragraph into logical paragraphs as far as line-breaking is
+ *  concerned; the Host splits them beforehand and invokes the
+ *  Algorithm once per logical paragraph.
+ *  NOTE: cross-paragraph consistency (e.g. avoiding a very loose
+ *  paragraph next to a very tight one on the same page) is out of
+ *  scope here by design. If we want it, it is a legitimate refactor:
+ *  an in-between layer that runs line-breaking multiple times and
+ *  shuffles state between runs — not something to bolt onto this
+ *  contract. */
 export interface CompositionInput {
     segments: readonly Segment[];
     breaks: readonly BreakOpportunity[];
@@ -187,9 +203,21 @@ export interface CompositionResult {
 
 /** The algorithm contract: pure, synchronous, no side effects.
  *  Simple algorithms (dummy, greedy ragged) only use segments, breaks
- *  and naturalLineWidthPt; justifying algorithms additionally use
- *  lineWidthAtStep/stepRange. Async/streaming variants can be added
- *  when pause/resume across paragraphs becomes real. */
+ *  and lineWidthAtStep at step 0; justifying algorithms use the full
+ *  step range. Async/streaming variants can be added when
+ *  pause/resume across paragraphs becomes real.
+ *
+ *  MANDATORY breaks: the Algorithm MUST end a line at every break
+ *  opportunity of kind 'explicit'; such lines are composed like any
+ *  non-final line (full fitting, widening allowed).
+ *
+ *  LAST LINE rule: the final line of the (logical) paragraph — the
+ *  one ending at the last segment, with breakAt === null — is never
+ *  widened (step <= 0): the ragged ending is correct, widening would
+ *  space it out to full measure for no fitting purpose (this is
+ *  TeX's \parfillskip behavior). Narrowing IS allowed when it
+ *  "makes the line" — i.e. when the last line is overfull at
+ *  natural width and narrowing brings it within measure. */
 export type CompositionAlgorithm = (
     input: CompositionInput,
 ) => CompositionResult;
