@@ -75,4 +75,32 @@
  *      with penalties (already in BreakOpportunity) and badness over
  *      the normalized adjustmentStep as the glue model (one
  *      continuous dimension, its physical meaning being Host policy).
+ *
+ * INTEGRATION (type-stage):
+ *
+ *   - Hook point: the DocumentNodesMeta tree (the always-active,
+ *     DOM-free meta layer mirroring our metamodel NodeModel — the
+ *     source of truth). The Composition Controller is a service
+ *     OBSERVING the meta tree, not a renderer: it produces no DOM.
+ *     It collects logical paragraphs from textblock nodes (text runs
+ *     + style spans via the nodeProperties@ scopes), successive to
+ *     the UIDocumentTypeSpecStyler — composition needs the final
+ *     computed font/size/axes per run.
+ *   - Line width comes from the node-properties (the layout model's
+ *     page/column geometry), NEVER from measuring the DOM: we
+ *     compose by prediction and then force our lines onto the DOM,
+ *     which we control completely.
+ *   - Results are published via a composition@<documentNodePath>
+ *     protocol (same pattern as nodeProperties@/environment@), so
+ *     any renderer can consume them: compose once, apply to multiple
+ *     targets (side-by-side view).
+ *   - The Applicator role lives in each renderer:
+ *       + Viewer (the CENTER PIECE, confirmed feasible by the
+ *         varla-varfo demo): the UIDocumentTextRun/UIDocumentElement
+ *         attachments wrap lines in spans + CSS custom properties.
+ *       + Editor (EXPERIMENTAL, later): a ProseMirror plugin
+ *         translating the same CompositionResult into decorations.
+ *         PM owns its DOM and does its own line wrapping, so it may
+ *         fight us; if it does, the viewer alone is good enough.
+ *         Invest only after the viewer is sealed.
  */
