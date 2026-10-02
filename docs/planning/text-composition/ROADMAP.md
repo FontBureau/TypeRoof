@@ -92,6 +92,14 @@ Smallest vertical slice, Controller first (live feedback early):
 4. **Viewer Applicator**: wrap lines in spans + CSS custom properties
    per the published result.
 
+## Optimization opportunities (deferred)
+
+- **Style-input dirty precision**: v1 marks ALL paragraphs dirty when
+  style inputs (typeSpec/stylePatches/nodeSpecToTypeSpec) change.
+  Refinement: compare per-paragraph resolved typeSpecProperties ids
+  (the meta's own identity guard) and mark only actually affected
+  paragraphs. Great optimization once documents grow.
+
 ## Key design decisions (log)
 
 - Working principle: ALWAYS approach model-first — especially once
