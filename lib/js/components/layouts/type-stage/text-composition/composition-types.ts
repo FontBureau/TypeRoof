@@ -41,8 +41,7 @@
  *     color-coding by adjustment intensity. Production differs
  *     fundamentally: we justify by prediction (pre-measured advances,
  *     analytic fitting), not by feedback loop. Kept from the demo:
- *     the per-line adjustment step applied uniformly, potentials
- *     applied in parallel (axes first, then spacing), treatment
+ *     the per-line adjustment step applied uniformly, treatment
  *     depending on the font's current location in its design space,
  *     and diagnostics worthy of a proofing tool.
  */
@@ -81,7 +80,10 @@ export interface Paragraph {
  *  boundaries + UAX#14 break rules, hyphenation adds more segments),
  *  shaped and measured (HarfBuzz) before the Algorithm is invoked. */
 export interface Segment {
-    /** Offsets into the paragraph text. */
+    /** Offsets into the paragraph text. The Algorithm only needs
+     *  widthPt to compose; start/end exist for the Host/Applicator
+     *  and so diagnostics and error messages can name the offending
+     *  text (e.g. "overfull line starting at 'Once upon…'"). */
     start: number;
     end: number;
     /** Measured advance of the whole segment in pt, at the segment's
@@ -97,7 +99,10 @@ export interface BreakOpportunity {
     /** Index of the segment AFTER which a break is legal. */
     afterSegment: number;
     /** 'space': zero-width break; 'hyphen': inserts a visible hyphen
-     *  when taken; 'explicit': mandatory break (e.g. newline). */
+     *  when taken; 'explicit': mandatory break (e.g. newline).
+     *  The enum is expected to grow: script-specific break kinds and
+     *  in-between cases like a "hardly-breaking-space" (an nobr that
+     *  may break at high cost) are anticipated. */
     kind: "space" | "hyphen" | "explicit";
     /** Cost of breaking here; 0 for neutral. Allows UAX#14 /
      *  language-specific tuning and later Knuth-Plass penalties. */
@@ -110,31 +115,43 @@ export interface CompositionInput {
     /** Available width per line index in pt. Initially constant;
      *  per-line enables shaped containers later. */
     lineWidthPt: (lineIndex: number) => number;
-    /** Line height multiplier (e.g. 1.2). */
-    lineHeightEm: number;
-
-    /** Natural (unadjusted) width of a line candidate in pt. */
-    naturalLineWidthPt: (fromSegment: number, toSegment: number) => number;
 
     /** Width of a line candidate at a given adjustment step, in pt.
      *  Injected by the Host; encodes how the configured potentials are
-     *  applied, in what order and proportion (axes first, then
-     *  spacing). The Algorithm treats it as a pure function; tests can
-     *  inject a fake. This is what lets algorithms narrow or widen
-     *  lines with variable font axes without knowing about shaping. */
+     *  applied — the contract deliberately does not specify what a
+     *  step IS (which mechanisms, in what order or proportion), that
+     *  is Host/Treatment Planner policy and may change between
+     *  iterations. The Algorithm treats it as a pure function; tests
+     *  can inject a fake. This is what lets algorithms narrow or
+     *  widen lines without knowing about axes, spacing or shaping.
+     *
+     *  Usage notes:
+     *   - step 0 yields the natural (unadjusted) width of the
+     *     candidate — this replaces a separate naturalLineWidthPt.
+     *   - If the break after the candidate's last segment is a
+     *     hyphenation point, the width includes the visible hyphen
+     *     glyph (the Hyphenator bakes it into the segment
+     *     measurement).
+     *   - Steps are normalized: 0 = natural, -1 = maximum narrowing,
+     *     +1 = maximum widening, per candidate, derived by the
+     *     Treatment Planner from the per-font-location treatment
+     *     configuration. The two directions are NOT symmetric:
+     *     -1 and +1 may adjust very different physical widths.
+     *     Steps beyond [-1, 1] are probes meaning "potential
+     *     exhausted": the returned width clamps to the extreme, so
+     *     the Algorithm can detect an impossible fit. A ComposedLine
+     *     with |adjustmentStep| > 1 signals an unsatisfiable line.
+     *   - Planned extension (Host-side, transparent to the
+     *     Algorithm): optical alignment / margin protrusion. The
+     *     effective width of a candidate may account for glyphs
+     *     hanging into the margin (e.g. a period or hyphen at line
+     *     end, an opening quote at line start); the Applicator
+     *     applies the actual optical offset when rendering. */
     lineWidthAtStep: (
         fromSegment: number,
         toSegment: number,
         step: number,
     ) => number;
-
-    /** Allowed adjustment step range for a line candidate
-     *  [min, max]; negative narrows, positive widens. Derived by the
-     *  Host from the per-font-location treatment configuration. */
-    stepRange: (
-        fromSegment: number,
-        toSegment: number,
-    ) => [min: number, max: number];
 }
 
 export interface ComposedLine {
@@ -144,11 +161,14 @@ export interface ComposedLine {
     /** Where the break after this line happened (null on last line). */
     breakAt: BreakOpportunity | null;
     naturalWidthPt: number;
-    /** One number applying all potentials in parallel (axes first,
-     *  then spacing); 0 = no adjustment, negative narrows, positive
-     *  widens. Its meaning is defined by the Host's injected width
-     *  functions; the Host translates it back into concrete axis and
-     *  spacing values when applying the result. */
+    /** One normalized number: 0 = no adjustment, -1 = maximum
+     *  narrowing, +1 = maximum widening for this candidate; the two
+     *  directions are not symmetric in physical width. |step| > 1
+     *  signals an unsatisfiable line (potential exhausted). What a
+     *  step applies physically (which mechanisms, in what order or
+     *  proportion) is Host policy, not contract; the Host translates
+     *  it back into concrete axis and spacing values when applying
+     *  the result. */
     adjustmentStep: number;
 }
 

@@ -11,7 +11,7 @@
  *
  *   - Segmenter (pure pass): paragraph {text, styleSpans} -> segments
  *     + break opportunities; splits at style boundaries and UAX#14
- *     break points.
+ *     (https://www.unicode.org/reports/tr14/)  break points.
  *   - Hyphenator (pure pass, pluggable per language): adds segments
  *     and break points inside words; a hyphenated segment includes the
  *     hyphen glyph in its measured width, so algorithms stay ignorant
@@ -23,11 +23,17 @@
  *     pt conversion at the contract boundary is a pure scaling by
  *     fontSizePt / unitsPerEm); backs all width numbers including the
  *     injected lineWidthAtStep.
- *   - Treatment Planner (pure logic over configuration): derives
- *     per-candidate stepRange and the step->width mapping from the
- *     per-font-location treatment tables, relative to the font's
- *     current axis location. The Measurer turns its output into the
- *     injected width functions.
+ *   - Treatment Planner (pure logic over configuration): derives the
+ *     per-candidate normalized step scale (0 = natural width, -1 =
+ *     maximum narrowing, +1 = maximum widening; the two directions
+ *     are not symmetric in physical width) and the step->width
+ *     mapping from the per-font-location treatment tables, relative
+ *     to the font's current axis location. The Measurer turns its
+ *     output into the injected width function. What a step applies
+ *     physically is policy defined HERE, not in the contract: the
+ *     first iteration applies all potentials in parallel, axes
+ *     first, then spacing; later iterations may change the order,
+ *     proportion or mechanism mix without touching any algorithm.
  *   - Applicator (impure): applies CompositionResult to the DOM —
  *     span-based CSS (the varla-varfo --line-adjust-step pattern):
  *     lines are wrapped in spans and adjustment is set via CSS custom
@@ -43,7 +49,7 @@
  *
  *   - Breaker: chooses break points (strategy varies per algorithm).
  *   - Fitter: given a line candidate, chooses adjustmentStep within
- *     stepRange using lineWidthAtStep. Shared between algorithms.
+ *     [-1, 1] using lineWidthAtStep. Shared between algorithms.
  *
  * Algorithm milestones (dynamic choice of algorithm is a goal):
  *
@@ -59,6 +65,6 @@
  *      milestone, not the goal.
  *   5. Knuth-Plass++ — the actual target: paragraph-wide optimization
  *      with penalties (already in BreakOpportunity) and badness over
- *      adjustmentStep relative to stepRange as the glue model (one
- *      continuous dimension sequencing axes first, then spacing).
+ *      the normalized adjustmentStep as the glue model (one
+ *      continuous dimension, its physical meaning being Host policy).
  */
