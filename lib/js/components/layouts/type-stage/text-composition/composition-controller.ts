@@ -103,4 +103,55 @@
  *         PM owns its DOM and does its own line wrapping, so it may
  *         fight us; if it does, the viewer alone is good enough.
  *         Invest only after the viewer is sealed.
+ *
+ * EXECUTION ORDER / SCHEDULING:
+ *
+ *   Current cascade (fact): the meta tree updates synchronously,
+ *   top-down; a node's nodeProperties scope settles before its
+ *   children cascade; the viewer's UIDocumentElement provisions its
+ *   TypeSpecStyler before its other widgets; text-run attachments
+ *   fill their DOM during their first update. So styles settle
+ *   before content DOM is applied, all within one synchronous
+ *   cycle. Changes to typeSpecProperties@/nodeProperties@ of an
+ *   already-rendered node fire its update — that is the trigger
+ *   set for recomposition; no separate dirty-tracking initially.
+ *
+ *   Hybrid scheduling:
+ *     - Initial load: compose before reveal. The viewer renders
+ *       the whole article in one controlled moment; keep it hidden
+ *       until the first composition@ result per paragraph is
+ *       published — no flash of unjustified content.
+ *     - Steady state: async, per dirty paragraph. Recomposition
+ *       does not block the cascade; the Controller schedules it
+ *       after the cycle settles (microtask/idle callback; workers
+ *       later, when algorithms get expensive — the Algorithm's
+ *       purity makes that move mechanical). A brief moment of
+ *       stale justification on edited paragraphs is acceptable
+ *       (InDesign does the same).
+ *
+ *   Wrapping timing: line spans are throwaway — undo is unwrapping,
+ *   so the Applicator can wrap/rewrap at any time. Requirement: the
+ *   text-run attachment's DOM must exist; an attachment update that
+ *   re-applies text invalidates the applied composition (the same
+ *   update marks the paragraph dirty, triggering recomposition).
+ *
+ *   OFF MODE (no compositor): it must always be possible to opt
+ *   out of composition entirely and keep today's behavior — the
+ *   browser does its own line breaking. Valuable for comparison
+ *   (speed, quality) and as a fallback when we fail, e.g. in
+ *   environments missing capabilities (no HarfBuzz, no required
+ *   APIs). Off mode is the absence of composition@ entries:
+ *   renderers consume nothing and apply nothing, so the fallback
+ *   costs zero in the applicators.
+ *
+ *   Staleness via immutable identity (no generation counters):
+ *   the Host captures the immutable source objects a
+ *   CompositionInput was built from (the narrowest that determine
+ *   the input: paragraph node value/payload, settled nodeProperties
+ *   — NOT the root state, which would invalidate everything on any
+ *   keystroke). The published composition@ entry carries that
+ *   source reference; consumers apply a result only if the current
+ *   payload is === the captured one. Metamodel immutables are
+ *   replaced wholesale on change, so === is a sound and complete
+ *   staleness test — race-free async application without locks.
  */
