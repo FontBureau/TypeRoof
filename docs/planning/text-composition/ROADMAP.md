@@ -92,6 +92,16 @@ Smallest vertical slice, Controller first (live feedback early):
 4. **Viewer Applicator**: wrap lines in spans + CSS custom properties
    per the published result.
 
+## Before real algorithms (after milestone 1)
+
+- **Performance baseline**: measure composition cost with the dummy
+  and OFF as baselines (dummy = infrastructure overhead of
+  segment/measure/publish/apply; OFF = browser line breaking).
+  Needed BEFORE implementing real algorithms (greedy, KP++), so
+  their cost is judged against numbers, not feelings. Off mode is
+  also the comparison mechanism (see OFF MODE in the controller
+  header).
+
 ## Optimization opportunities (deferred)
 
 - **Style-input dirty precision**: v1 marks ALL paragraphs dirty when
