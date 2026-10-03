@@ -97,15 +97,12 @@ Smallest vertical slice, Controller first (live feedback early):
 Dependency-ordered (agreed 2026-10-03). Details in the linked code
 comments.
 
-**Sprint A — "measurement truth"** (gates milestone 2: without true
-widths no breaking algorithm's output is judgeable):
-1. Per-typeSpec fonts (v0 measures with the app ROOT font object;
-   per-run font resolution typeSpec → installedFonts).
-2. Measurement at the current axes location (v0 shapes at the
-   font's DEFAULT location, no setVariations; comes with the
-   Treatment Planner later, but the current location belongs here).
-Ride-along: property-aware filtering (see optimizations) — cheap
-while touching the drive.
+**Sprint A — "measurement truth"** ✅ DONE (2026-10-03,
+0e663a9d..22d4f347): per-textblock fonts (specific/font from the
+properties stream), measurement at the true axes location +
+features/language/direction, LRU-bounded caches, nowrap on composed
+textblocks, and the ride-along input-equality filter (what we
+consume is what invalidates — no hand-maintained relevance list).
 
 **Sprint B — performance baseline + testing harness** (they build
 on each other: performance needs a rather complete harness anyway;
@@ -149,20 +146,10 @@ afterthoughts):
 
 ## Optimization opportunities (deferred)
 
-- **Style-triggered recomposition precision**. Post-pivot state: the
-  meta drives recomposition per node when its scope rebuilds, so
-  PER-NODE affectedness is largely structural (a typeSpec change
-  recomposes only nodes whose scope actually rebuilds via the
-  identity-guarded cascade — NOT the full document). Still open:
-  1. **Property-aware filtering**: non-compositional properties (e.g.
-     backgroundColor) currently still trigger recomposition of the
-     affected nodes (any typeSpec edit produces a new typeSpecnion
-     identity → scope rebuild → drive fires). The dirty decision
-     should depend on WHICH property changed — skip recomposition
-     when no composition-relevant property (widths, font, size,
-     axes, line height…) differs. The scope's generators or a
-     property-diff at the drive are the natural hook.
-  Great optimization once documents grow.
+(none currently open — the property-aware filtering was resolved in
+Sprint A by the input-equality filter: the drive compares consumed
+ingredients, so non-compositional edits recompose nothing; per-node
+affectedness is structural via the identity-guarded scope cascade.)
 
 ## Key design decisions (log)
 
