@@ -309,14 +309,13 @@ export class CompositionController extends _BaseComponent {
         newState: any,
     ) {
         const textblockPathString = textblockPath.toString(),
-            // OFF MODE gate: the root typeSpec's textComposition
-            // property (v0: global; per-paragraph resolution later)
-            enabled = (
-                getEntry(
-                    newState,
-                    this._layoutRootPath().append("typeSpec"),
-                ) as any
-            ).get("textComposition").value;
+            nodePropertiesEarly = nodePropertiesPayload.getProperties(),
+            // OFF MODE gate: the RESOLVED generic/textComposition
+            // (inheritable, per textblock — empty inherits; the
+            // registered property's default true applies at the
+            // root via the scope's defaults layer)
+            enabled =
+                nodePropertiesEarly.get(`${GENERIC}textComposition`) ?? true;
         if (!enabled) {
             // OFF MODE: unpublish (notifies consumers — null IS off
             // mode; the attachment re-renders uncomposed)
@@ -350,7 +349,7 @@ export class CompositionController extends _BaseComponent {
                 .value,
             // Line width + font size from the FRESH nodeProperties
             // scope — never from DOM measurement
-            nodeProperties = nodePropertiesPayload.getProperties(),
+            nodeProperties = nodePropertiesEarly,
             // the font OBJECT from the properties stream
             // (specific/font, inherited via the typeSpecnion cascade)
             font = nodeProperties.get(`${SPECIFIC}font`) ?? rootFont,
