@@ -51,7 +51,7 @@ baseline and capability fallback.
 | — | Contract + roles + integration plan | ✅ done (design) |
 | — | Dummy algorithm + tests (ingredient for 1) | ✅ done |
 | 1 | **Full Host executing the dummy end to end** (viewer, live feedback) | ✅ done (2026-10-03, …0794df35) |
-| 2 | Simple greedy alignment (ragged) | planned |
+| 2 | Simple greedy alignment (ragged) | ✅ done (2026-10-03, …5cf69417) |
 | 3 | Greedy ragged + hyphenation (Host control, not an algorithm) | planned |
 | 4 | Greedy-fit (varla-varfo strategy, predictively; validation milestone) | planned |
 | 5 | Knuth-Plass++ (the target) | planned |
@@ -151,6 +151,22 @@ afterthoughts):
 Sprint A by the input-equality filter: the drive compares consumed
 ingredients, so non-compositional edits recompose nothing; per-node
 affectedness is structural via the identity-guarded scope cascade.)
+
+## Milestone 2 extras (beyond the algorithm)
+
+- **Metamodel fix** (52defebd): hasWrapped guards in
+  dynamic-struct-model.ts — clearing a selected dynamic-struct
+  typeKey (empty = inherit) no longer crashes; regression tests at
+  components/dynamic-types-pattern.test.mjs.
+- **Per-typeSpec algorithm selection + configuration**: the
+  textCompositionAlgorithm dynamic struct (horizontalLayout
+  precedent), with its UI select control (Dummy config renders).
+- **Engagement IS the algorithm selection**: no boolean — "None
+  (Browser)" is the explicitly-off, inheritable type (config room
+  for browser-side CSS). The perf script toggles ON=greedy,
+  OFF=none.
+- **Perf re-baselined**: typing ~1.02 / recompose ~0.96 with
+  greedy-ragged — overhead is noise-level at wikipedia scale.
 
 ## Key design decisions (log)
 
