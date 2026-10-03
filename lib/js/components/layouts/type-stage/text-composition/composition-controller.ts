@@ -179,6 +179,10 @@ import { assembleLogicalParagraphs } from "./segmenter.ts";
 import type { InlineItem } from "./segmenter.ts";
 import { Measurer } from "./measurer.ts";
 import { dummyComposition } from "./dummy-composition.ts";
+// line-span styles (applied by the applicator, phase 6); imported
+// here so the styles land whenever the controller is active
+// (vite CSS import pattern, cf. tree-editor.typeroof.jsx)
+import "./line-spans.css";
 
 // The metamodel model instances (NodeModel, NodeSpecMapModel, states)
 // are JS-inferred via allowJs; deep-typing them is not worthwhile for

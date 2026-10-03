@@ -1,0 +1,44 @@
+/**
+ * Line-span CSS for text composition — ported from the varla-varfo
+ * justification demo (lib/css/general.css:781-867), renamed to our
+ * prefix and reduced to what PREDICTIVE composition needs.
+ *
+ * Ported:
+ *   - explicit line breaking: each line's first span gets a
+ *     ::before{display:block} — the mechanism that forces our
+ *     composed line breaks (and normalizes Chrome/Firefox hyphen
+ *     behavior); unset for paragraph-first lines to keep text-indent;
+ *   - the hyphen ::after for lines broken at a hyphenation point;
+ *   - a --line-color-code custom property hook for diagnostics
+ *     (the demo's adjustment color-coding).
+ *
+ * Deliberately NOT ported (they served the demo's render-measure-
+ * render feedback loop, which predictive composition does not have):
+ *   - .line-in-progress* (live-narrowing visualization),
+ *   - .new-style-current-last-line-elem (Chrome "missing textNode"
+ *     workaround),
+ *   - the @-moz-document Firefox block (feedback-loop quirks).
+ */
+
+/* Each composed line's first span forces the break before it.
+ * Must be unset for paragraph-first lines to keep text-indent. */
+.typeroof-composition-line-first::before {
+    content: "";
+    display: block;
+}
+
+.typeroof-composition-paragraph-first-line.typeroof-composition-line-first::before {
+    content: unset;
+    display: unset;
+}
+
+/* A line broken at a hyphenation point shows the hyphen. */
+.typeroof-composition-line-hyphen::after {
+    content: "-";
+}
+
+/* Diagnostics hook: the applicator sets --line-color-code per line
+ * (the demo's adjustment-intensity color-coding). */
+.typeroof-composition-line {
+    background-color: var(--line-color-code, transparent);
+}
