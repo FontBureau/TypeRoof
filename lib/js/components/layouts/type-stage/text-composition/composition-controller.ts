@@ -336,16 +336,22 @@ export class CompositionController extends _BaseComponent {
     // InlineItem shape). EXTENSION POINT (see segmenter.ts): the
     // classification rules are simple v0 — text / hard_break by
     // typeKey, inline nodes with content as containers, else atoms.
-    _buildInlineItems(mmNode: any): InlineItem[] {
+    _buildInlineItems(
+        mmNode: any,
+        path: Path,
+        leaves: { path: string | null }[],
+    ): InlineItem[] {
         const items: InlineItem[] = [];
-        for (const child of mmNode.get("content").value) {
-            const typeKey = child.get("typeKey").value;
+        for (const [index, child] of mmNode.get("content").value.entries()) {
+            const typeKey = child.get("typeKey").value,
+                childPath = path.append("content", index);
             if (typeKey === "text") {
                 const text = child.get("text");
                 items.push({
                     kind: "text",
                     text: text.isEmpty ? "" : text.value,
                 });
+                leaves.push({ path: childPath.toString() });
             } else if (typeKey === "hard_break")
                 items.push({ kind: "hardBreak" });
             else {
@@ -353,9 +359,12 @@ export class CompositionController extends _BaseComponent {
                 if (content !== undefined && content.value.length > 0)
                     items.push({
                         kind: "inlineContainer",
-                        items: this._buildInlineItems(child),
+                        items: this._buildInlineItems(child, childPath, leaves),
                     });
-                else items.push({ kind: "inlineAtom" });
+                else {
+                    items.push({ kind: "inlineAtom" });
+                    leaves.push({ path: childPath.toString() });
+                }
             }
         }
         return items;
@@ -408,7 +417,12 @@ export class CompositionController extends _BaseComponent {
             return;
         }
 
-        const items = this._buildInlineItems(textblockNode),
+        const leaves: { path: string | null }[] = [],
+            items = this._buildInlineItems(
+                textblockNode,
+                this.widgetBus.rootPath.fromString(textblockPath),
+                leaves,
+            ),
             leafTexts = this._leafTexts(items),
             logicalParagraphs = assembleLogicalParagraphs(items),
             font = getEntry(newState, this._fontPath()).value,
@@ -460,10 +474,14 @@ export class CompositionController extends _BaseComponent {
                         lineWidthAtStep: (from, to /*, step */) =>
                             widthOf(from, to),
                     });
-                return result;
+                return { segments, result };
             }),
             payload = {
                 textblockPath,
+                // leaf inline items (text runs and atoms) in
+                // sourceIndex order — applicators find their segments
+                // by their own document-node path
+                leaves,
                 paragraphs,
                 // immutable sources for apply-time staleness checks
                 sources: { textblockNode },
@@ -483,7 +501,7 @@ export class CompositionController extends _BaseComponent {
         console.log(
             `${this} published ${identifier}:`,
             paragraphs.map(
-                (result) =>
+                ({ result }) =>
                     `${result.lines.length} lines ` +
                     `(overfull: ${result.diagnostics.overfullLines.length})`,
             ),
@@ -553,11 +571,15 @@ export class CompositionController extends _BaseComponent {
         const dirty = stylesChanged
             ? [...this._textblockIndex.keys()]
             : [...dirtyPaths];
-        // unregister publications of vanished textblocks
+        // unregister publications of vanished textblocks (notify:
+        // setUpdated after unregister delivers [true, null])
         for (const registered of [...this._registrations.keys()])
             if (!this._textblockIndex.has(registered)) {
                 this._registrations.get(registered)!();
                 this._registrations.delete(registered);
+                this._compositionHandler().setUpdated(
+                    `composition@${registered}`,
+                );
             }
         // OFF MODE: the gate is checked per compose; when it turns
         // off (a style-input change), unpublish everything.
@@ -565,9 +587,16 @@ export class CompositionController extends _BaseComponent {
             !(getEntry(newState, this._typeSpecPath()) as any).get(
                 "textComposition",
             ).value
-        )
+        ) {
+            // notify consumers of the off transition: setUpdated after
+            // unregister delivers [true, null] — null IS off mode
+            const unregistered = [...this._registrations.keys()];
             this._unpublishAll();
-        else
+            for (const textblockPath of unregistered)
+                this._compositionHandler().setUpdated(
+                    `composition@${textblockPath}`,
+                );
+        } else
             for (const textblockPath of dirty)
                 if (this._textblockIndex.has(textblockPath))
                     this._composeAndPublish(textblockPath, newState);

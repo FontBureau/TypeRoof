@@ -523,8 +523,22 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
             parentRendererNode,
         );
         this._markWrappers = [];
+        // text-composition applicator state: the current text and the
+        // composition payload of the enclosing textblock (null = OFF
+        // MODE, today's single-text-node behavior)
+        this._text = "";
+        this._composition = null;
+        // a carrier span we created to hold line spans in the
+        // mark-less case (null when this.node is the bare text node)
+        this._carrierSpan = null;
         const widgets = [
             [{}, ["text"], GenericUpdater, this._updateNode.bind(this)],
+            [
+                {},
+                ["composition@"],
+                GenericUpdater,
+                this._updateComposition.bind(this),
+            ],
         ];
         this._initWidgets(widgets);
         this._initalWidgetsLength = this._widgets.length;
@@ -532,17 +546,136 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
 
     _updateNode(changedMap) {
         if (changedMap.has("text")) {
-            const { Node } = this._domTool.window,
-                text = changedMap.get("text").value;
-            if (this.node.nodeType === Node.TEXT_NODE) this.node.data = text;
-            else {
-                // drill down
-                let deepest = this.node;
-                while (deepest.firstElementChild)
-                    deepest = deepest.firstElementChild;
-                deepest.textContent = text;
-            }
+            const text = changedMap.get("text");
+            // StringOrEmptyModel: undefined when empty
+            this._text = text.isEmpty ? "" : (text.value ?? "");
+            this._renderContent();
         }
+    }
+
+    _updateComposition(changedMap) {
+        if (changedMap.has("composition@")) {
+            // payload or null (OFF MODE / vanished)
+            this._composition = changedMap.get("composition@");
+            this._renderContent();
+        }
+    }
+
+    // --- text-composition applicator ---
+    // Renders the run's content: OFF MODE = one text node (today's
+    // behavior); composed = per-line spans (the ported
+    // typeroof-composition-line structure), each with its own text
+    // node slice. Spans are throwaway: undo is re-rendering. The
+    // one-text-node invariant breaks BY DESIGN here (plan phase 6).
+    _renderContent() {
+        const { Node } = this._domTool.window;
+        if (this.node.nodeType === Node.TEXT_NODE) {
+            if (this._composition === null) {
+                this.node.data = this._text;
+                return;
+            }
+            // composed content needs an element carrier: swap the
+            // bare text node for a span (tracked for undo)
+            this._carrierSpan = this._domTool.createElement("span");
+            this._swapNode(this._carrierSpan);
+        }
+        // back to the bare text node when composition turns off and
+        // there are no mark wrappers
+        if (
+            this._composition === null &&
+            this._carrierSpan !== null &&
+            this.node === this._carrierSpan
+        ) {
+            const textNode = this._domTool.createTextNode(this._text);
+            this._swapNode(textNode);
+            this._carrierSpan = null;
+            return;
+        }
+        // drill down to the innermost element (mark wrappers, else
+        // the carrier span)
+        let carrier = this.node;
+        while (carrier.firstElementChild) carrier = carrier.firstElementChild;
+        if (this._composition === null) {
+            carrier.replaceChildren(this._domTool.createTextNode(this._text));
+            return;
+        }
+        carrier.replaceChildren(...this._buildLineSpans());
+    }
+
+    // varla-varfo _setLineColorCode, adapted to normalized steps:
+    // negative (narrowing) cyan, positive (widening) red, 0 none;
+    // overfull overrides. Intensity relative to the normalized
+    // range [-1, 1].
+    _lineColorCode(adjustmentStep, overfull) {
+        if (overfull) return "hsl(0, 80%, 85%)";
+        if (adjustmentStep < 0) {
+            const intensity = Math.min(1, Math.abs(adjustmentStep));
+            return `hsl(180, 80%, ${30 + 70 * (1 - intensity)}%)`;
+        }
+        if (adjustmentStep > 0) {
+            const intensity = Math.min(1, adjustmentStep);
+            return `hsl(0, 100%, ${30 + 70 * (1 - intensity)}%)`;
+        }
+        return "";
+    }
+
+    _buildLineSpans() {
+        const { leaves, paragraphs } = this._composition,
+            myPath = this._documentNodePath.toString(),
+            leafIndex = leaves.findIndex((leaf) => leaf.path === myPath);
+        if (leafIndex === -1)
+            // not part of the composition (e.g. structure changed
+            // mid-cycle): render uncomposed, the next update fixes it
+            return [this._domTool.createTextNode(this._text)];
+        const spans = [];
+        for (const { segments, result } of paragraphs) {
+            result.lines.forEach((line, lineIndex) => {
+                const mySegments = [];
+                for (let i = line.fromSegment; i < line.toSegment; i++)
+                    if (segments[i].sourceIndex === leafIndex)
+                        mySegments.push(segments[i]);
+                if (mySegments.length === 0) return;
+                const isLineStart =
+                        segments[line.fromSegment].sourceIndex === leafIndex,
+                    isLineEnd =
+                        segments[line.toSegment - 1].sourceIndex === leafIndex,
+                    span = this._domTool.createElement("span");
+                span.classList.add("typeroof-composition-line");
+                if (isLineStart) {
+                    span.classList.add("typeroof-composition-line-first");
+                    if (lineIndex === 0)
+                        span.classList.add(
+                            "typeroof-composition-paragraph-first-line",
+                        );
+                }
+                if (isLineEnd && line.breakAt?.kind === "hyphen")
+                    span.classList.add("typeroof-composition-line-hyphen");
+                // Diagnostics color-coding (the varla-varfo hook):
+                // EVERY line is coded by adjustment intensity —
+                // narrowing cyan, widening red, neutral none (the
+                // demo's _setLineColorCode); overfull overrides.
+                // With the dummy adjustmentStep is always 0, so this
+                // is all-neutral until real fitting lands.
+                span.style.setProperty(
+                    "--line-color-code",
+                    this._lineColorCode(
+                        line.adjustmentStep,
+                        result.diagnostics.overfullLines.includes(lineIndex),
+                    ),
+                );
+                span.append(
+                    this._domTool.createTextNode(
+                        mySegments
+                            .map((segment) =>
+                                this._text.slice(segment.start, segment.end),
+                            )
+                            .join(""),
+                    ),
+                );
+                spans.push(span);
+            });
+        }
+        return spans;
     }
 
     getTextNode() {
@@ -690,10 +823,15 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
             ),
             wrapResults = this._getWrapMarks(typeSpecPropertiesPath);
         if (!this._wrapResultsAreEqual(this._markWrappers, wrapResults)) {
-            const textNode = this.getTextNode(),
-                newWidgetWrappers = [];
-            if (wrapResults.length === 0) this._swapNode(textNode);
-            else {
+            const newWidgetWrappers = [];
+            if (wrapResults.length === 0) {
+                // content is re-rendered below from this._text (the
+                // composed structure has multiple text nodes, there
+                // is nothing to preserve)
+                this._carrierSpan = null;
+                this._swapNode(this._domTool.createTextNode(""));
+                this._markWrappers = [];
+            } else {
                 this._createWrapperDOM(wrapResults);
                 newWidgetWrappers.push(
                     ...this._createStylerWidgets(
@@ -701,12 +839,13 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
                         wrapResults,
                     ),
                 );
+                this._carrierSpan = null;
                 this._swapNode(
                     wrapResults.at(-1)[this.constructor._MARK_ELEMENT],
                 );
-                wrapResults[0][this.constructor._MARK_ELEMENT].append(textNode);
                 this._markWrappers = wrapResults;
             }
+            this._renderContent();
             const deleted = this._widgets.splice(
                 this._initalWidgetsLength,
                 Infinity,
@@ -808,7 +947,17 @@ export class UIDocumentViewer extends _BaseContainerComponent {
         return [
             {},
             metaInfo.typeKey === "text"
-                ? ["text", "marks"]
+                ? [
+                      "text",
+                      "marks",
+                      // text-composition: the composed lines of the
+                      // enclosing textblock (null = OFF MODE). The
+                      // run's path is <textblock>/content/<index>.
+                      [
+                          `composition@${metaInfo.rootPath.parent.parent.toString()}`,
+                          "composition@",
+                      ],
+                  ]
                 : [["./attrs", "attrs"]],
             Constructor,
             // Injected by the meta node that initializes this
