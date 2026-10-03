@@ -210,11 +210,11 @@ export function languageToHyphenationPatternKey(language) {
 
 function* hyphenationPatternKeyConstraint(targetContainer, currentKeyValue) {
     // the activeFontKey pattern (type-spec/models.mjs): set-but-not-
-    // installed yields the requirement that loads the asset
-    if (
-        this.allowNull &&
-        (!currentKeyValue || currentKeyValue === ForeignKey.NULL)
-    )
+    // installed yields the requirement that loads the asset. The key
+    // is NOT_NULL (the main-model activeFontKey precedent): in an
+    // empty dependency world this RAISES (deliberate) instead of
+    // silently nulling — routing to the async resolver.
+    if (!currentKeyValue || currentKeyValue === ForeignKey.NULL)
         return ForeignKey.NULL;
     const key = yield new ResourceRequirement(
         this,
@@ -247,7 +247,7 @@ const HyphenationPatternReferenceModel = _AbstractStructModel.createClass(
             "pattern",
             new ForeignKey(
                 "installedHyphenationPatterns",
-                ForeignKey.ALLOW_NULL,
+                ForeignKey.NOT_NULL,
                 ForeignKey.CUSTOM,
                 hyphenationPatternKeyConstraint,
             ),

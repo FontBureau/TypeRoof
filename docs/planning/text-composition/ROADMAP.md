@@ -166,6 +166,25 @@ afterthoughts):
   blocks).
 - Atom box measurement (inline atoms measure 0 in v0).
 
+- **Runtime asset loading (language SWITCH) hits a shell
+  dependency-lifecycle hazard.** Boot-time loading works (verified:
+  patterns load + install cleanly). A runtime language change fires
+  its ResourceRequirement in _updateState's SYNC probe; the probe's
+  failed metamorphose corrupts the state-deps map
+  (_collecStateDependencies clears it before the downstream
+  metamorphose succeeds), so the async retry and later syncs see an
+  empty/corrupted world — the "side-effects that cannot be cured"
+  hazard the original author documented in _updateState.
+  Diagnosed via puppeteer probes (2026-10-04): (a) the collect must
+  be transactional (consume only on successful metamorphose) — TRIED,
+  it fixed the corruption but regressed boot (AvailableFontsModel
+  draft-mode error), so it was reverted; (b) the pattern ForeignKey
+  is NOT_NULL now (honest failure over silent SET_NULL in an empty
+  world); (c) the fix likely belongs in the draft/dependency
+  lifecycle: collect-and-consume atomicity + the sync-probe's
+  world. Needs a dedicated cycle. Workaround until then: documents
+  load with their languages at boot.
+
 ## Optimization opportunities (deferred)
 
 (none currently open — the property-aware filtering was resolved in
