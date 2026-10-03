@@ -128,8 +128,11 @@ export const greedyRaggedComposition: CompositionAlgorithm = (input) => {
 
         const naturalWidthPt = lineWidthAtStep(fromSegment, toSegment, 0),
             // the fitting width excludes a trailing space segment
+            // the fit test excludes the trailing segment only when
+            // it COLLAPSES at the break (a space); a zero-width
+            // ideograph break keeps its last, visible character
             fittingWidthPt =
-                breakAt !== null && breakAt.kind === "space"
+                breakAt?.collapses === true
                     ? naturalWidthPt - segments[toSegment - 1]!.widthPt
                     : naturalWidthPt,
             overfull = fittingWidthPt > available,

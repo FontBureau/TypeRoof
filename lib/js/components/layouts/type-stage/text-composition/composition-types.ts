@@ -113,6 +113,12 @@ export interface BreakOpportunity {
      *  language-specific tuning and later Knuth-Plass penalties.
      *  Irrelevant for kind 'explicit': that break is not negotiable. */
     penalty: number;
+    /** Whether the line's LAST segment collapses at the break
+     *  (a space: zero width at line end) — the fit test excludes it.
+     *  False for zero-width breaks that keep their glyph (an
+     *  ideograph boundary is zero-width but the last character stays
+     *  visible and counts). Absent on the last line (breakAt null). */
+    collapses?: boolean;
 }
 
 /** One LOGICAL paragraph. Hard breaks (e.g. <br>, newline) separate

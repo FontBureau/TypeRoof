@@ -92,6 +92,27 @@ Smallest vertical slice, Controller first (live feedback early):
 4. **Viewer Applicator**: wrap lines in spans + CSS custom properties
    per the published result.
 
+## IMPORTANT — beyond this roadmap: font coverage & fallback
+
+Verified by measurement probe (2026-10-03): CJK text in Roboto Flex
+shapes entirely to glyph 0 (.notdef, 0.44em) — we MEASURE ~56pt
+where the browser RENDERS ~126pt via per-character font fallback.
+Consequences: overfull never flags for uncovered text; fitting is
+wrong for it. Now that we inspect the text this closely (HarfBuzz
+shaping per run), we have real handles:
+
+1. **Missing-glyph diagnostic** (first): detect glyph-id 0 in
+   shaping, flag segments/lines — "your font does not cover this
+   text" is exactly what a proofing tool should say.
+2. **Font fallback measurement** (the feature): browsers fall back
+   per character; our pipeline measures everything in the run's
+   font. The dynamic asset machinery (milestone 3: patterns) is the
+   same machinery that could load fallback fonts on demand.
+
+Deliberately NOT in the milestone-3 stretch: UAX#14 makes CJK BREAK
+correctly (break opportunities don't need accurate widths); widths
+stay approximated by .notdef advances until fallback lands.
+
 ## Follow-ups deferred during milestone 1 — execution order
 
 Dependency-ordered (agreed 2026-10-03). Details in the linked code

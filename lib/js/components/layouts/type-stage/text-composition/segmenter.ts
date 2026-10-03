@@ -40,6 +40,7 @@
  * to DOM text nodes.
  */
 import type { BreakOpportunity, Segment } from "./composition-types.ts";
+import LineBreak from "linebreak";
 
 /** A segment as the Host passes it around: the contract Segment plus
  *  its source mapping. */
@@ -62,33 +63,80 @@ export type InlineItem =
     | { kind: "inlineContainer"; items: InlineItem[] }
     | { kind: "inlineAtom" };
 
-// words (runs of non-space) and single spaces
-const _TOKENIZE = /([^ ]+)|( )/g;
-
 /** Segment ONE text run; offsets are local to its text. Appends to
  *  the given arrays (used by assembleLogicalParagraphs; exported for
- *  testing). */
+ *  testing).
+ *
+ * UAX#14 (milestone 3): the linebreak package provides the break
+ * opportunities — state of the art (punctuation rules, CJK breaks
+ * between ideographs, combining marks). Mapping:
+ *   - each single space is its own segment + a 'space' break
+ *     (collapses: true — zero width at line end);
+ *   - non-space runs split further at UAX#14 break positions:
+ *     required (BK) -> 'explicit'; allowed -> 'space'-KIND (a
+ *     zero-width break) but collapses: FALSE — an ideograph
+ *     boundary has no glyph to collapse, the last character stays
+ *     visible and counts toward the fit;
+ *   - a newline is its own segment + an 'explicit' break
+ *     (mandatory; defensive — ProseMirror text can't contain \n,
+ *     the hard_break NODE is the real mechanism).
+ */
 export function segmentTextRun(
     text: string,
     sourceIndex: number,
     segments: HostSegment[],
     breaks: BreakOpportunity[],
 ): void {
-    for (const match of text.matchAll(_TOKENIZE)) {
-        const token = match[0];
-        segments.push({
-            start: match.index,
-            end: match.index + token.length,
-            widthPt: 0,
-            sourceIndex,
-        });
-        if (token === " ")
+    const breakMap = new Map<number, boolean>(); // position -> required
+    for (
+        let breaker = new LineBreak(text), bk;
+        (bk = breaker.nextBreak()) !== null;
+
+    )
+        breakMap.set(bk.position, bk.required);
+
+    const pushSegment = (start: number, end: number) => {
+        segments.push({ start, end, widthPt: 0, sourceIndex });
+    };
+
+    let i = 0,
+        runStart = 0;
+    // flush a non-space run [start, end): split further at in-run
+    // UAX#14 break positions
+    const flushRun = (start: number, end: number) => {
+        let partStart = start;
+        for (let j = start; j < end; j++) {
+            const after = j + 1;
+            if (breakMap.has(after) && after < end) {
+                pushSegment(partStart, after);
+                breaks.push({
+                    afterSegment: segments.length - 1,
+                    kind: breakMap.get(after) ? "explicit" : "space",
+                    penalty: 0,
+                    collapses: false,
+                });
+                partStart = after;
+            }
+        }
+        if (partStart < end) pushSegment(partStart, end);
+    };
+
+    while (i < text.length) {
+        const char = text[i]!;
+        if (char === " " || char === "\n") {
+            flushRun(runStart, i);
+            pushSegment(i, i + 1);
             breaks.push({
                 afterSegment: segments.length - 1,
-                kind: "space",
+                kind: char === "\n" ? "explicit" : "space",
                 penalty: 0,
+                collapses: true,
             });
+            i++;
+            runStart = i;
+        } else i++;
     }
+    flushRun(runStart, text.length);
 }
 
 /** Assemble logical paragraphs from a textblock's classified inline

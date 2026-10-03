@@ -5,3 +5,6 @@
  * exports.
  */
 declare module "*.css";
+
+// No type definitions ship with the linebreak package (UAX#14).
+declare module "linebreak";
