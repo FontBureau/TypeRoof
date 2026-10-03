@@ -1,0 +1,17 @@
+{
+  "gitCommit": "4a3c01b7",
+  "date": "2026-10-03T18:11:15.832Z",
+  "cycles": 20,
+  "metrics": {
+    "typing": {
+      "offMs": 52.3,
+      "onMs": 57.6,
+      "ratio": 1.101
+    },
+    "recompose": {
+      "offMs": 156.3,
+      "onMs": 153.6,
+      "ratio": 0.983
+    }
+  }
+}

@@ -25,7 +25,8 @@
     "stylelint:check": "stylelint .",
     "typecheck": "tscw --noEmit --pretty false --project ./tsconfig.json",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "perf:composition": "scripts/perf-composition"
   },
   "keywords": [
     "typography",

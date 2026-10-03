@@ -1,0 +1,208 @@
+#!/usr/bin/env node
+/**
+ * perf:composition — text-composition performance baseline
+ * (Sprint B, docs/planning/text-composition/ROADMAP.md).
+ *
+ * Measures update-cycle cost with textComposition ON vs OFF against
+ * the wikipedia-scale fixture (a TypeStage state in
+ * docs/states-library/fixtures/), in two profiles:
+ *   - typing bursts (incremental recomposition: edit a text node)
+ *   - full recompose (style-change burst: touch a typeSpec property
+ *     that recomposes everything)
+ *
+ * Key metric: the overhead RATIO (t_on / t_off) — machine-stable,
+ * unlike absolute ms.
+ *
+ * Regression detection: a checked-in snapshot (perf-composition.baseline.json
+ * next to this script) updated DELIBERATELY (--write-baseline) so the
+ * commit documents legitimate cost changes; deviations beyond
+ * REGRESSION_FACTOR exit non-zero.
+ *
+ * Usage:
+ *   scripts/perf-composition [--player-url=URL] [--cycles=N]
+ *                            [--write-baseline]
+ * Requires the dev server (npm run dev, port 3000).
+ */
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { execSync } from "node:child_process";
+import puppeteer from "puppeteer";
+import { ArgumentParser } from "argparse";
+import { setTimeout } from "node:timers/promises";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url)),
+    BASELINE_PATH = path.join(__dirname, "perf-composition.baseline.json"),
+    FIXTURE_URL =
+        "/docs/states-library/fixtures/wikipedia-snapshot.json",
+    REGRESSION_FACTOR = 1.5,
+    DEFAULT_CYCLES = 30;
+
+const parser = new ArgumentParser();
+parser.add_argument("--player-url", {
+    // the wikipedia app hosts TypeStage states
+    default: "http://localhost:3000/TypeRoof/app/wikipedia",
+});
+parser.add_argument("--cycles", { type: "int", default: DEFAULT_CYCLES });
+parser.add_argument("--write-baseline", { action: "store_true" });
+const args = parser.parse_args();
+
+async function waitForShell(page) {
+    for (let count = 0; count * 500 <= 60000; count++) {
+        if (await page.evaluate(() => "shell" in window)) return;
+        await setTimeout(500);
+    }
+    throw new Error("TIMEOUT waiting for shell");
+}
+
+// One measured burst, driven inside the page. mode: "typing" | "recompose"
+async function measureBurst(page, compositionOn, mode, cycles) {
+    return page.evaluate(
+        async ({ compositionOn, mode, cycles }) => {
+            const rootPath = "/activeState",
+                setComposition = (value) =>
+                    shell.changeState(() => {
+                        shell.getEntry(`${rootPath}/typeSpec/textComposition`).value =
+                            value;
+                    });
+            await setComposition(compositionOn);
+
+            // find the first text node path (immutable walk)
+            const doc = shell.getEntry(`${rootPath}/document`),
+                findFirstTextPath = (node, path) => {
+                    for (const [index, child] of node
+                        .get("content")
+                        .value.entries()) {
+                        const childPath = `${path}/content/${index}`;
+                        if (child.get("typeKey").value === "text")
+                            return childPath;
+                        const found = findFirstTextPath(child, childPath);
+                        if (found !== null) return found;
+                    }
+                    return null;
+                },
+                textPath = findFirstTextPath(doc, `${rootPath}/document`);
+
+            const t0 = performance.now();
+            for (let i = 0; i < cycles; i++) {
+                await shell.changeState(() => {
+                    if (mode === "typing") {
+                        const text = shell.getEntry(`${textPath}/text`);
+                        text.value = `perf probe ${i} ${"x".repeat(i % 40)}`;
+                    } else {
+                        // full recompose: a composition-relevant style
+                        // change (relativeFontSize wiggle)
+                        const rel = shell.getEntry(
+                            `${rootPath}/typeSpec/relativeFontSize`,
+                        );
+                        rel.value = 1 + (i % 2) * 0.0001;
+                    }
+                });
+            }
+            const t1 = performance.now();
+            await setComposition(true);
+            return t1 - t0;
+        },
+        { compositionOn, mode, cycles },
+    );
+}
+
+async function main() {
+    const url = new URL(
+            `#[no-chrome]from-url:${FIXTURE_URL}`,
+            args.player_url,
+        ),
+        browser = await puppeteer.launch({
+            headless: true,
+            timeout: 100000,
+            executablePath: "/usr/bin/chromium-browser",
+        });
+    console.log(`Source: ${url}`);
+    const results = {};
+    try {
+        const page = await browser.newPage();
+        await page.setViewport({ width: 1920, height: 1080 });
+        await page.goto(url.toString(), {
+            waitUntil: ["load", "domcontentloaded"],
+        });
+        await waitForShell(page);
+        // settle
+        await setTimeout(1000);
+
+        for (const mode of ["typing", "recompose"]) {
+            const off = await measureBurst(page, false, mode, args.cycles),
+                on = await measureBurst(page, true, mode, args.cycles);
+            results[mode] = {
+                offMs: Math.round(off * 100) / 100,
+                onMs: Math.round(on * 100) / 100,
+                ratio: Math.round((on / off) * 1000) / 1000,
+            };
+            console.log(
+                `${mode}: OFF ${results[mode].offMs}ms, ON ${results[mode].onMs}ms, ` +
+                    `overhead ratio ${results[mode].ratio}`,
+            );
+        }
+    } finally {
+        await browser.close();
+    }
+
+    let gitCommit = "unknown";
+    try {
+        gitCommit = execSync("git rev-parse --short HEAD").toString().trim();
+    } catch {
+        /* not in a git repo */
+    }
+
+    if (args.write_baseline) {
+        const baseline = {
+                gitCommit,
+                date: new Date().toISOString(),
+                cycles: args.cycles,
+                metrics: results,
+            };
+        writeFileSync(BASELINE_PATH, JSON.stringify(baseline, null, 2) + "\n");
+        console.log(`Baseline written: ${BASELINE_PATH}`);
+        return;
+    }
+
+    if (!existsSync(BASELINE_PATH)) {
+        console.warn(
+            `No baseline at ${BASELINE_PATH} — run with --write-baseline to create one.`,
+        );
+        return;
+    }
+    const baseline = JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
+    console.log(
+        `Baseline: ${baseline.gitCommit} (${baseline.date}, ${baseline.cycles} cycles)`,
+    );
+    let regressions = 0;
+    for (const mode of Object.keys(results)) {
+        const current = results[mode],
+            base = baseline.metrics[mode];
+        if (!base) continue;
+        for (const key of ["onMs", "ratio"]) {
+            const deviation = current[key] / base[key];
+            if (deviation > REGRESSION_FACTOR) {
+                regressions++;
+                console.error(
+                    `REGRESSION ${mode}.${key}: ${current[key]} vs baseline ${base[key]} ` +
+                        `(${deviation.toFixed(2)}x > ${REGRESSION_FACTOR}x)`,
+                );
+            } else
+                console.log(
+                    `ok ${mode}.${key}: ${current[key]} vs baseline ${base[key]} ` +
+                        `(${deviation.toFixed(2)}x)`,
+                );
+        }
+    }
+    if (regressions > 0) {
+        console.error(`${regressions} regression(s) detected.`);
+        process.exit(1);
+    }
+    console.log("No regressions.");
+}
+
+main().catch((error) => {
+    console.error(error);
+    process.exit(2);
+});
