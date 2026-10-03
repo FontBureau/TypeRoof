@@ -52,7 +52,7 @@ baseline and capability fallback.
 | — | Dummy algorithm + tests (ingredient for 1) | ✅ done |
 | 1 | **Full Host executing the dummy end to end** (viewer, live feedback) | ✅ done (2026-10-03, …0794df35) |
 | 2 | Simple greedy alignment (ragged) | ✅ done (2026-10-03, …5cf69417) |
-| 3 | Greedy ragged + hyphenation (Host control, not an algorithm) | planned |
+| 3 | Greedy ragged + hyphenation (Host control, not an algorithm) | ✅ done (2026-10-04, ec5593e0..9cde3814) |
 | 4 | Greedy-fit (varla-varfo strategy, predictively; validation milestone) | planned |
 | 5 | Knuth-Plass++ (the target) | planned |
 
@@ -165,6 +165,19 @@ afterthoughts):
   freely configurable schemas bring cases like links as inline
   blocks).
 - Atom box measurement (inline atoms measure 0 in v0).
+- **Per-run style spans (marks) are not measured** (case observed
+  2026-10-04): the controller measures ALL segments at the
+  textblock's uniform font/axes (v1 simplification, see
+  composition-controller.ts "per-RUN values come with per-run style
+  spans"), but the viewer renders mark-styled runs with their real
+  style. A mark that widens glyphs (observed: a "bold" style
+  setting wdth to max) renders WIDER than measured — line breaks
+  don't move and the lines overflow. Fix direction: split segments
+  at style boundaries (the contract's StyleSpan concept) and
+  measure each run at its own font/axes/features from the
+  properties stream (Sprint A built the per-textblock path; per-run
+  needs the spans carried through segmentation and the ingredients
+  snapshot).
 
 - ~~Runtime asset loading (language switch)~~ RESOLVED
   (3731d2de, metamodel: invalidate stale child proxies after
