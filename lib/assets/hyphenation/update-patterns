@@ -1,0 +1,85 @@
+#!/usr/bin/env node
+/**
+ * update-hyphenation-patterns — vendor the TeX hyphenation patterns
+ * into lib/assets/hyphenation/<lang>.json.
+ *
+ * SOURCE: the hyphenation.<lang> npm packages (hypher pattern format;
+ * derived from the hyph-utf8 TeX hyphenation patterns). The packages
+ * are fetched at run time (npm pack) — the sources are documented
+ * here and per-asset in each file's _meta (package, version,
+ * license), so the tree is reproducible, not magic.
+ *
+ * Why vendored (not npm deps): in-tree extensibility — pattern
+ * fixes/extensions land without an upstream roundtrip. The assets
+ * load async on demand via the ResourceRequirement machinery.
+ *
+ * Usage: lib/assets/hyphenation/update-patterns
+ * (update scripts live next to their subjects; run from the repo root)
+ */
+import { execSync } from "node:child_process";
+import { mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+
+// The available hyphenation.* pattern packages (npm, by Bram Stein /
+// the hypher project). Keep sorted.
+const LANGUAGES = [
+    "ca",
+    "de",
+    "en-gb",
+    "en-us",
+    "es",
+    "fi",
+    "fr",
+    "it",
+    "nl",
+    "pl",
+    "pt",
+    "ru",
+    "sv",
+    "tr",
+];
+
+const TARGET = "lib/assets/hyphenation";
+
+function main() {
+    const tmp = mkdtempSync(path.join(tmpdir(), "hyph-patterns-"));
+    try {
+        for (const lang of LANGUAGES) {
+            const pkg = `hyphenation.${lang}`,
+                tarball = execSync(`npm pack ${pkg}`, {
+                    cwd: tmp,
+                    encoding: "utf8",
+                }).trim();
+            execSync(`tar xzf ${tarball}`, { cwd: tmp });
+            const pkgDir = path.join(tmp, "package"),
+                pkgJson = JSON.parse(
+                    readFileSync(path.join(pkgDir, "package.json"), "utf8"),
+                ),
+                patterns = require(path.join(pkgDir, "lib", `${lang}.js`)),
+                out = {
+                    _meta: {
+                        source: `${pkg} npm package v${pkgJson.version} (hypher pattern format; derived from the hyph-utf8 TeX hyphenation patterns)`,
+                        license: pkgJson.license ?? "MIT",
+                        generator: "lib/assets/hyphenation/update-patterns",
+                        note: "Vendored for in-tree extensibility (pattern fixes/extensions land without an upstream roundtrip). Loaded async on demand via the ResourceRequirement machinery.",
+                    },
+                    ...patterns,
+                },
+                target = path.join(TARGET, `${lang}.json`);
+            writeFileSync(target, JSON.stringify(out, null, 1) + "\n");
+            console.log(
+                `${lang}.json  v${pkgJson.version}  ${JSON.stringify(out).length} bytes`,
+            );
+            rmSync(pkgDir, { recursive: true, force: true });
+        }
+    } finally {
+        rmSync(tmp, { recursive: true, force: true });
+    }
+    console.log(`\n${LANGUAGES.length} patterns updated in ${TARGET}/`);
+}
+
+main();
