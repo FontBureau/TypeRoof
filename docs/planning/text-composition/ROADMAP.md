@@ -96,9 +96,16 @@ Smallest vertical slice, Controller first (live feedback early):
 
 - **Style-input dirty precision**: v1 marks ALL paragraphs dirty when
   style inputs (typeSpec/stylePatches/nodeSpecToTypeSpec) change.
-  Refinement: compare per-paragraph resolved typeSpecProperties ids
-  (the meta's own identity guard) and mark only actually affected
-  paragraphs. Great optimization once documents grow.
+  Refinements:
+  1. **Property-aware filtering**: non-compositional properties (e.g.
+     backgroundColor) should not trigger recomposition at all — the
+     dirty set depends on WHICH property changed, not just that a
+     style input did.
+  2. **Per-node affectedness**: a typeSpec change should recompose
+     only the document nodes whose resolved typeSpec is affected —
+     compare per-paragraph resolved typeSpecProperties ids (the
+     meta's own identity guard) and mark only those.
+  Great optimization once documents grow.
 
 ## Key design decisions (log)
 
