@@ -241,8 +241,15 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
             );
 
         // shortcut
+        // GUARD: hasWrapped before reading .wrapped — a primal
+        // OLD_STATE has no value element (the constructor guards
+        // this the same way); without the guard, metamorphosing an
+        // empty (inherit) dynamic struct crashes with a LIFECYCLE
+        // ERROR.
         if (
             dependenciesAreEqual && // includes that there's an old state
+            (this[OLD_STATE] as unknown as _AbstractDynamicStructModel)
+                .hasWrapped &&
             (this[OLD_STATE] as unknown as _AbstractDynamicStructModel)
                 .wrapped === this._value
         )
@@ -322,8 +329,11 @@ export class _AbstractDynamicStructModel extends _BaseContainerModel {
         }
         // Don't keep this
         delete (this as Record<symbol, unknown>)[_PRIMARY_SERIALIZED_VALUE];
+        // GUARD: hasWrapped before reading .wrapped (see above).
         if (
             dependenciesAreEqual &&
+            (this[OLD_STATE] as unknown as _AbstractDynamicStructModel)
+                .hasWrapped &&
             (this[OLD_STATE] as unknown as _AbstractDynamicStructModel)
                 .wrapped === this._value
         )
