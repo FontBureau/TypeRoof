@@ -326,6 +326,20 @@ class TypeStageController extends _BaseContainerComponent {
         widgetBus.wrapper.setProtocolHandlerImplementation(
             ...SimpleProtocolHandler.create("styleLinkProperties@"),
         );
+
+        // per textblock composition results (text-composition
+        // sub-module, milestone 1): published by the composition
+        // controller, consumed by renderer attachments (viewer).
+        widgetBus.wrapper.setProtocolHandlerImplementation(
+            // does not raise when not found, instead returns null:
+            // REQUIRED — OFF MODE is the absence of entries, so
+            // consumers must get null instead of a KEY ERROR (the
+            // fallback is the off-mode mechanism at the consumption
+            // site).
+            ...SimpleProtocolHandler.create("composition@", {
+                notFoundFallbackValue: null,
+            }),
+        );
         // widgetBus.insertElement(stageManagerContainer);
         super(widgetBus, zones);
 
@@ -741,6 +755,9 @@ class TypeStageController extends _BaseContainerComponent {
         this.widgetBus.wrapper
             .getProtocolHandlerImplementation("nodeProperties@")
             .resetUpdatedLog();
+        this.widgetBus.wrapper
+            .getProtocolHandlerImplementation("composition@")
+            .resetUpdatedLog();
         super.update(...args);
     }
     initialUpdate(...args) {
@@ -755,6 +772,9 @@ class TypeStageController extends _BaseContainerComponent {
             .resetUpdatedLog();
         this.widgetBus.wrapper
             .getProtocolHandlerImplementation("nodeProperties@")
+            .resetUpdatedLog();
+        this.widgetBus.wrapper
+            .getProtocolHandlerImplementation("composition@")
             .resetUpdatedLog();
         super.initialUpdate(...args);
     }
