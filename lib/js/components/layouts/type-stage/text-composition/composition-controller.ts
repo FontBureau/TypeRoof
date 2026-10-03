@@ -211,6 +211,7 @@ export class CompositionController extends _BaseComponent {
     declare _compositionHandlerImpl: any;
     declare _registrations: Map<string, () => void>;
     declare _ingredients: Map<string, unknown[]>;
+    declare _noHarfbuzzWarned: boolean;
 
     constructor(widgetBus: any) {
         super(widgetBus);
@@ -227,6 +228,7 @@ export class CompositionController extends _BaseComponent {
         // textblockPath -> consumed ingredients of the last
         // composition (the input-equality filter, Sprint A phase 2)
         this._ingredients = new Map();
+        this._noHarfbuzzWarned = false;
     }
 
     _compositionHandler(): any {
@@ -322,9 +324,14 @@ export class CompositionController extends _BaseComponent {
             return;
         }
         if (this._measurer === null) {
-            console.warn(
-                `${this} no harfbuzz module available — composition is OFF.`,
-            );
+            // warn once (not per textblock per cycle — this spams
+            // test output, where the capability fallback is the norm)
+            if (!this._noHarfbuzzWarned) {
+                this._noHarfbuzzWarned = true;
+                console.warn(
+                    `${this} no harfbuzz module available — composition is OFF.`,
+                );
+            }
             return;
         }
 
