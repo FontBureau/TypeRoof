@@ -57,6 +57,7 @@ import {
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 import { UIDocumentViewer } from "./viewer.typeroof.jsx";
 import { DocumentNodesMeta } from "./document-nodes-meta/index.mjs";
+import { CompositionController } from "./text-composition/composition-controller.ts";
 import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
 
 import {
@@ -576,6 +577,34 @@ class TypeStageController extends _BaseContainerComponent {
                 zones,
                 proseMirrorDefaultSchemaSpec,
                 originTypeSpecPath,
+            ],
+            [
+                // Always-active, DOM-free text-composition controller:
+                // observes the document model, detects dirty
+                // textblocks, (will) publish composition@ results.
+                // ORDERING: after DocumentNodesMeta (its
+                // nodeProperties@ scopes are an input), before the
+                // renderers. No zone: DOM-less widgets are
+                // first-class.
+                {
+                    id: "compositionController",
+                    relativeRootPath: Path.fromParts(".", "document"),
+                },
+                // Coarse dependency mappings: the controller's update
+                // receives the full compareResult regardless (COMPARE
+                // strategy), but the update-RELEVANCE filter skips
+                // widgets with no relevant deps — these make it
+                // relevant for content and style-input changes.
+                [
+                    ["../document", "document"],
+                    ["../typeSpec", "typeSpec"],
+                    ["../stylePatchesSource", "stylePatchesSource"],
+                    ["../nodeSpecToTypeSpec", "nodeSpecToTypeSpec"],
+                    ["../proseMirrorSchema/nodes", "nodeSpec"],
+                    ["../proseMirrorSchema/marks", "markSpec"],
+                ],
+                CompositionController,
+                proseMirrorDefaultSchemaSpec,
             ],
             [
                 {

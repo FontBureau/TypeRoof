@@ -17,8 +17,8 @@
 
     // Other Outputs
     "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
+    "declaration": false,
+    "declarationMap": false,
     "allowImportingTsExtensions": true,
 
     // Stricter Typechecking Options
@@ -45,6 +45,7 @@
     //    "prosemirror-model": ["./node_modules/prosemirror-model/index.d.ts"]
     //},
     "moduleResolution": "bundler",
+    "allowJs": true,
   },
   "include": [
     "lib/js",

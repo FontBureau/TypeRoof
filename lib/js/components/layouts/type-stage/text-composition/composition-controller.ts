@@ -155,3 +155,212 @@
  *   replaced wholesale on change, so === is a sound and complete
  *   staleness test — race-free async application without locks.
  */
+
+// --- Milestone 1, Phase 3: Controller skeleton ----------------------
+//
+// DOM-less widget observing the document model: maintains the
+// textblock index and detects dirty paragraphs from the compareResult
+// (StateComparison) paths — no re-walk/identity-diff duplication of
+// change detection. v0 logs what it would compose; measurement and
+// composition@ publication land in phase 4.
+
+import {
+    _BaseComponent,
+    UPDATE_STRATEGY,
+    UPDATE_STRATEGY_COMPARE,
+} from "../../../basics/component.mjs";
+import { getEntry, StateComparison } from "../../../../metamodel.mjs";
+import type { Path } from "../../../../metamodel.mjs";
+
+// The metamodel model instances (NodeModel, NodeSpecMapModel, states)
+// are JS-inferred via allowJs; deep-typing them is not worthwhile for
+// the skeleton — deliberately any (precedent: wikipedia/ingest.ts).
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+    getMMChildIsBlock,
+    specChildrenInInlineContext,
+} from "../document-nodes-meta/derivations.mjs";
+
+// A leaf service, not a container: COMPARE update strategy (receive
+// the full compareResult) on a plain _BaseComponent — the
+// per-cycle compareResult is the existing change detection we mine
+// for dirty paragraphs.
+export class CompositionController extends _BaseComponent {
+    [UPDATE_STRATEGY] = UPDATE_STRATEGY_COMPARE;
+    // The base classes are JS (component.mjs); TS can't infer their
+    // instance fields, so declare what we use.
+    declare widgetBus: any;
+    declare _defaultSchemaNodes: Record<string, any>;
+    declare _textblockIndex: Map<string, string[]>;
+
+    constructor(
+        widgetBus: any,
+        proseMirrorDefaultSchemaSpec: { nodes: Record<string, any> },
+    ) {
+        super(widgetBus);
+        this._defaultSchemaNodes = proseMirrorDefaultSchemaSpec.nodes;
+        // textblock path string -> array of text-run content paths
+        // (strings, content-index paths below the textblock)
+        this._textblockIndex = new Map();
+    }
+
+    // --- Textblock identification (research Q1) ---
+    // PM-parallel rule via the shared pure derivations: a block node
+    // whose children are in inline context. The composition boundary
+    // is the OUTERMOST such block (we don't descend into a textblock
+    // looking for nested ones).
+
+    _getSpecData(mmNodeSpecMap: any, typeKey: string) {
+        if (mmNodeSpecMap.has(typeKey)) {
+            const spec = mmNodeSpecMap.get(typeKey),
+                content = spec.get("content");
+            return {
+                inline: spec.get("inline").value,
+                content: content.isEmpty ? undefined : content.value,
+            };
+        }
+        return this._defaultSchemaNodes[typeKey] ?? null;
+    }
+
+    _isTextblock(mmNodeSpecMap: any, mmNode: any): boolean {
+        const typeKey = mmNode.get("typeKey").value;
+        if (typeKey === "text") return false;
+        if (!getMMChildIsBlock(this._defaultSchemaNodes, mmNodeSpecMap, mmNode))
+            return false;
+        const spec = this._getSpecData(mmNodeSpecMap, typeKey);
+        if (spec === null) return false;
+        return specChildrenInInlineContext(!!spec.inline, spec.content);
+    }
+
+    // Walk the document tree, collect textblocks and their direct
+    // text-run children paths. Boundary: don't descend into a
+    // textblock (nested inline islands belong to it).
+    *_iterTextblocks(
+        mmNodeSpecMap: any,
+        mmNode: any,
+        path: Path,
+    ): Generator<[string, any]> {
+        if (this._isTextblock(mmNodeSpecMap, mmNode)) {
+            yield [path.toString(), mmNode];
+            return;
+        }
+        const content = mmNode.get("content");
+        for (const [index, child] of content.value.entries())
+            yield* this._iterTextblocks(
+                mmNodeSpecMap,
+                child,
+                path.append("content", index),
+            );
+    }
+
+    _scanTextblocks(newState: any): Map<string, string[]> {
+        const documentNode = getEntry(newState, this.widgetBus.rootPath),
+            layoutRootPath = this.widgetBus.rootPath.parent,
+            mmNodeSpecMap = getEntry(
+                newState,
+                layoutRootPath.append("proseMirrorSchema", "nodes"),
+            ),
+            index = new Map();
+        for (const [pathString, mmNode] of this._iterTextblocks(
+            mmNodeSpecMap,
+            documentNode,
+            this.widgetBus.rootPath,
+        )) {
+            const textRunPaths = [];
+            for (const [index_, child] of mmNode.get("content").value.entries())
+                if (child.get("typeKey").value === "text")
+                    textRunPaths.push(`${pathString}/content/${index_}`);
+            index.set(pathString, textRunPaths);
+        }
+        return index;
+    }
+
+    // --- Dirty detection from the compareResult paths ---
+    // (the existing change detection; no re-walk). Content changes
+    // mark the enclosing textblock; style-input changes mark ALL
+    // textblocks (v1, ROADMAP-documented optimization deferred).
+
+    _enclosingTextblock(pathString: string): string | null {
+        // longest indexed textblock path that prefixes pathString
+        let result = null;
+        for (const textblockPath of this._textblockIndex.keys())
+            if (
+                pathString.startsWith(textblockPath + "/") ||
+                pathString === textblockPath
+            )
+                if (result === null || textblockPath.length > result.length)
+                    result = textblockPath;
+        return result;
+    }
+
+    _initialCompose(rootState: any) {
+        this._textblockIndex = this._scanTextblocks(rootState);
+        console.log(
+            `${this} initial scan: ${this._textblockIndex.size} textblocks`,
+            [...this._textblockIndex.entries()],
+        );
+    }
+
+    // _BaseComponent has no initialUpdate; the COMPARE strategy
+    // dispatch (component.mjs updateWidget) calls it on full-initial.
+    initialUpdate(rootState: any) {
+        this._initialCompose(rootState);
+    }
+
+    update(compareResult: StateComparison) {
+        const { newState } = compareResult,
+            documentPathString = this.widgetBus.rootPath.toString(),
+            // The style inputs live next to the document in the layout
+            // state; changes there can affect every paragraph (v1,
+            // ROADMAP-documented optimization deferred). Enumerate them
+            // EXPLICITLY: structs are "always changed" up the ancestor
+            // chain (compare.ts), so cursor movement (editingTypeSpec
+            // etc., also under the layout root) must NOT count.
+            layoutRootString = this.widgetBus.rootPath.parent.toString(),
+            styleInputPrefixes = [
+                "typeSpec",
+                "stylePatchesSource",
+                "nodeSpecToTypeSpec",
+                "proseMirrorSchema",
+            ].map((part) => `${layoutRootString}/${part}`);
+        let contentChanged = false,
+            stylesChanged = false;
+        const { EQUALS, DELETED } = StateComparison.COMPARE_STATUSES;
+        const dirtyPaths = new Set();
+        for (const [status, , pathInstance] of compareResult) {
+            // compareResult lists EQUALS entries too (they carry no
+            // change): only actual changes count.
+            if (status === EQUALS) continue;
+            const pathString = pathInstance.toString();
+            if (
+                pathString === documentPathString ||
+                pathString.startsWith(documentPathString + "/")
+            ) {
+                contentChanged = true;
+                if (status !== DELETED) {
+                    const textblockPath = this._enclosingTextblock(pathString);
+                    if (textblockPath !== null) dirtyPaths.add(textblockPath);
+                }
+            } else if (
+                styleInputPrefixes.some(
+                    (prefix) =>
+                        pathString === prefix ||
+                        pathString.startsWith(prefix + "/"),
+                )
+            )
+                stylesChanged = true;
+        }
+        if (contentChanged)
+            // structural changes (moves, new, deleted) invalidate the
+            // index; a full rescan is cheap at this scale
+            this._textblockIndex = this._scanTextblocks(newState);
+        const dirty = stylesChanged
+            ? [...this._textblockIndex.keys()]
+            : [...dirtyPaths];
+        if (dirty.length > 0)
+            console.log(
+                `${this} would compose ${dirty.length} dirty logical paragraphs:`,
+                dirty,
+            );
+    }
+}
