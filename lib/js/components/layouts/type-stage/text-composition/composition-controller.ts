@@ -171,6 +171,14 @@ import {
 } from "../../../basics/component.mjs";
 import { getEntry, StateComparison } from "../../../../metamodel.mjs";
 import type { Path } from "../../../../metamodel.mjs";
+import {
+    GENERIC,
+    LAYOUT,
+} from "../../../registered-properties-definitions.mjs";
+import { assembleLogicalParagraphs } from "./segmenter.ts";
+import type { InlineItem } from "./segmenter.ts";
+import { Measurer } from "./measurer.ts";
+import { dummyComposition } from "./dummy-composition.ts";
 
 // The metamodel model instances (NodeModel, NodeSpecMapModel, states)
 // are JS-inferred via allowJs; deep-typing them is not worthwhile for
@@ -192,6 +200,9 @@ export class CompositionController extends _BaseComponent {
     declare widgetBus: any;
     declare _defaultSchemaNodes: Record<string, any>;
     declare _textblockIndex: Map<string, string[]>;
+    declare _measurer: Measurer | null;
+    declare _compositionHandlerImpl: any;
+    declare _registrations: Map<string, () => void>;
 
     constructor(
         widgetBus: any,
@@ -199,6 +210,16 @@ export class CompositionController extends _BaseComponent {
     ) {
         super(widgetBus);
         this._defaultSchemaNodes = proseMirrorDefaultSchemaSpec.nodes;
+        // Capability fallback: without a harfbuzz module (e.g. test
+        // harnesses — the shell sets it on the root widgetBus) the
+        // controller degrades to OFF (no composition@ entries), it
+        // must not crash.
+        this._measurer = widgetBus.harfbuzz
+            ? new Measurer(widgetBus.harfbuzz)
+            : null;
+        this._compositionHandlerImpl = null;
+        // textblockPath -> unregister closure (SimpleProtocolHandler)
+        this._registrations = new Map();
         // textblock path string -> array of text-run content paths
         // (strings, content-index paths below the textblock)
         this._textblockIndex = new Map();
@@ -295,16 +316,187 @@ export class CompositionController extends _BaseComponent {
 
     _initialCompose(rootState: any) {
         this._textblockIndex = this._scanTextblocks(rootState);
-        console.log(
-            `${this} initial scan: ${this._textblockIndex.size} textblocks`,
-            [...this._textblockIndex.entries()],
-        );
+        for (const textblockPath of this._textblockIndex.keys())
+            this._composeAndPublish(textblockPath, rootState);
     }
 
     // _BaseComponent has no initialUpdate; the COMPARE strategy
     // dispatch (component.mjs updateWidget) calls it on full-initial.
     initialUpdate(rootState: any) {
         this._initialCompose(rootState);
+    }
+
+    // --- Phase 4: input assembly, composition, publication ---
+
+    // Classify a textblock's inline content (the segmenter's
+    // InlineItem shape). EXTENSION POINT (see segmenter.ts): the
+    // classification rules are simple v0 — text / hard_break by
+    // typeKey, inline nodes with content as containers, else atoms.
+    _buildInlineItems(mmNode: any): InlineItem[] {
+        const items: InlineItem[] = [];
+        for (const child of mmNode.get("content").value) {
+            const typeKey = child.get("typeKey").value;
+            if (typeKey === "text") {
+                const text = child.get("text");
+                items.push({
+                    kind: "text",
+                    text: text.isEmpty ? "" : text.value,
+                });
+            } else if (typeKey === "hard_break")
+                items.push({ kind: "hardBreak" });
+            else {
+                const content = child.get("content");
+                if (content !== undefined && content.value.length > 0)
+                    items.push({
+                        kind: "inlineContainer",
+                        items: this._buildInlineItems(child),
+                    });
+                else items.push({ kind: "inlineAtom" });
+            }
+        }
+        return items;
+    }
+
+    // Leaf texts in depth-first order (the segmenter's sourceIndex
+    // counting): text runs contribute their text, atoms nothing.
+    _leafTexts(items: readonly InlineItem[]): string[] {
+        const texts: string[] = [];
+        for (const item of items) {
+            if (item.kind === "text") texts.push(item.text);
+            else if (item.kind === "inlineAtom") texts.push("");
+            else if (item.kind === "inlineContainer")
+                texts.push(...this._leafTexts(item.items));
+        }
+        return texts;
+    }
+
+    _compositionHandler(): any {
+        if (this._compositionHandlerImpl === null)
+            this._compositionHandlerImpl =
+                this.widgetBus.wrapper.getProtocolHandlerImplementation(
+                    "composition@",
+                );
+        return this._compositionHandlerImpl;
+    }
+
+    _unpublishAll() {
+        for (const unregister of this._registrations.values()) unregister();
+        this._registrations.clear();
+    }
+
+    // Compose ONE textblock (all its logical paragraphs) and publish
+    // composition@<textblockPath> — replacing any previous entry.
+    _composeAndPublish(textblockPath: string, newState: any) {
+        const textblockNode = getEntry(
+                newState,
+                this.widgetBus.rootPath.fromString(textblockPath),
+            ),
+            // OFF MODE gate: the root typeSpec's textComposition
+            // property (v0: global; per-paragraph resolution later).
+            enabled = (getEntry(newState, this._typeSpecPath()) as any).get(
+                "textComposition",
+            ).value;
+        if (!enabled) return;
+        if (this._measurer === null) {
+            console.warn(
+                `${this} no harfbuzz module available — composition is OFF.`,
+            );
+            return;
+        }
+
+        const items = this._buildInlineItems(textblockNode),
+            leafTexts = this._leafTexts(items),
+            logicalParagraphs = assembleLogicalParagraphs(items),
+            font = getEntry(newState, this._fontPath()).value,
+            // Line width + font size from the textblock's
+            // nodeProperties@ scope (settled — we update after the
+            // meta); NEVER from DOM measurement.
+            // the registered value is the meta dispatcher widget;
+            // its nodeProperties getter answers the scope-like
+            // payload (document-nodes-meta/index.mjs:338-345)
+            nodeProperties = this.getEntry(
+                `nodeProperties@${textblockPath}`,
+            )?.nodeProperties?.getProperties(),
+            availableWidth = nodeProperties?.get(`${LAYOUT}availableWidth`),
+            fontSize = nodeProperties?.get(`${GENERIC}fontSize`),
+            lineWidthPt =
+                typeof availableWidth === "number" ? availableWidth : 480,
+            fontSizePt = typeof fontSize === "number" ? fontSize : 12;
+        if (typeof availableWidth !== "number" || typeof fontSize !== "number")
+            console.warn(
+                `${this} missing node properties for ${textblockPath} ` +
+                    `(availableWidth=${availableWidth}, fontSize=${fontSize}) ` +
+                    `— using fallbacks ${lineWidthPt}pt / ${fontSizePt}pt.`,
+            );
+
+        const paragraphs = logicalParagraphs.map(({ segments, breaks }) => {
+                // measure: fill widthPt in place (segments are fresh)
+                for (const segment of segments)
+                    segment.widthPt =
+                        this._measurer!.measureEm(
+                            font,
+                            leafTexts[segment.sourceIndex]?.slice(
+                                segment.start,
+                                segment.end,
+                            ) ?? "",
+                        ) * fontSizePt;
+                const widthOf = (from: number, to: number) => {
+                        let width = 0;
+                        for (let i = from; i < to; i++)
+                            width += segments[i]!.widthPt;
+                        return width;
+                    },
+                    result = dummyComposition({
+                        segments,
+                        breaks,
+                        lineWidthPt: () => lineWidthPt,
+                        // v0: adjustment potentials are not wired (no
+                        // Treatment Planner yet) — step does nothing;
+                        // the dummy only ever probes step 0.
+                        lineWidthAtStep: (from, to /*, step */) =>
+                            widthOf(from, to),
+                    });
+                return result;
+            }),
+            payload = {
+                textblockPath,
+                paragraphs,
+                // immutable sources for apply-time staleness checks
+                sources: { textblockNode },
+            },
+            identifier = `composition@${textblockPath}`,
+            handler = this._compositionHandler();
+        if (this._registrations.has(textblockPath)) {
+            this._registrations.get(textblockPath)!();
+            this._registrations.delete(textblockPath);
+        }
+        this._registrations.set(
+            textblockPath,
+            handler.register(identifier, payload),
+        );
+        handler.setUpdated(identifier);
+        // live feedback until the applicator (phase 6) makes it visible
+        console.log(
+            `${this} published ${identifier}:`,
+            paragraphs.map(
+                (result) =>
+                    `${result.lines.length} lines ` +
+                    `(overfull: ${result.diagnostics.overfullLines.length})`,
+            ),
+        );
+    }
+
+    _typeSpecPath(): Path {
+        return this.widgetBus.rootPath.parent.append("typeSpec");
+    }
+
+    _fontPath(): Path {
+        return this.widgetBus.rootPath.constructor.fromString("/font");
+    }
+
+    destroy() {
+        this._unpublishAll();
+        // _BaseComponent destroy default is a no-op.
     }
 
     update(compareResult: StateComparison) {
@@ -326,7 +518,7 @@ export class CompositionController extends _BaseComponent {
         let contentChanged = false,
             stylesChanged = false;
         const { EQUALS, DELETED } = StateComparison.COMPARE_STATUSES;
-        const dirtyPaths = new Set();
+        const dirtyPaths = new Set<string>();
         for (const [status, , pathInstance] of compareResult) {
             // compareResult lists EQUALS entries too (they carry no
             // change): only actual changes count.
@@ -357,10 +549,23 @@ export class CompositionController extends _BaseComponent {
         const dirty = stylesChanged
             ? [...this._textblockIndex.keys()]
             : [...dirtyPaths];
-        if (dirty.length > 0)
-            console.log(
-                `${this} would compose ${dirty.length} dirty logical paragraphs:`,
-                dirty,
-            );
+        // unregister publications of vanished textblocks
+        for (const registered of [...this._registrations.keys()])
+            if (!this._textblockIndex.has(registered)) {
+                this._registrations.get(registered)!();
+                this._registrations.delete(registered);
+            }
+        // OFF MODE: the gate is checked per compose; when it turns
+        // off (a style-input change), unpublish everything.
+        if (
+            !(getEntry(newState, this._typeSpecPath()) as any).get(
+                "textComposition",
+            ).value
+        )
+            this._unpublishAll();
+        else
+            for (const textblockPath of dirty)
+                if (this._textblockIndex.has(textblockPath))
+                    this._composeAndPublish(textblockPath, newState);
     }
 }
