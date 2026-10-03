@@ -210,6 +210,7 @@ export class CompositionController extends _BaseComponent {
     declare _measurer: Measurer | null;
     declare _compositionHandlerImpl: any;
     declare _registrations: Map<string, () => void>;
+    declare _ingredients: Map<string, unknown[]>;
 
     constructor(widgetBus: any) {
         super(widgetBus);
@@ -223,6 +224,9 @@ export class CompositionController extends _BaseComponent {
         this._compositionHandlerImpl = null;
         // textblockPath -> unregister closure (SimpleProtocolHandler)
         this._registrations = new Map();
+        // textblockPath -> consumed ingredients of the last
+        // composition (the input-equality filter, Sprint A phase 2)
+        this._ingredients = new Map();
     }
 
     _compositionHandler(): any {
@@ -368,6 +372,34 @@ export class CompositionController extends _BaseComponent {
                     `— using fallbacks ${lineWidthPt}pt / ${fontSizePt}pt.`,
             );
 
+        // Input-equality filter (the property-aware reframe: what we
+        // CONSUME is what invalidates — no hand-maintained relevance
+        // list). Purity guarantees same input => same output, so an
+        // unchanged ingredient set skips recompose+republish entirely
+        // (no setUpdated: consumers keep their applied state). E.g. a
+        // backgroundColor edit rebuilds the scope but changes nothing
+        // below.
+        const ingredients: unknown[] = [
+                font,
+                axesKey,
+                featuresKey,
+                language,
+                direction,
+                fontSizePt,
+                lineWidthPt,
+                // content: the assembled leaf texts (typing always
+                // invalidates; cheap string compare at this scale)
+                leafTexts.join("\u0001"),
+            ],
+            previous = this._ingredients.get(textblockPathString);
+        if (
+            previous !== undefined &&
+            previous.length === ingredients.length &&
+            previous.every((value, index) => value === ingredients[index])
+        )
+            return;
+        this._ingredients.set(textblockPathString, ingredients);
+
         const paragraphs = logicalParagraphs.map(({ segments, breaks }) => {
                 // measure: fill widthPt in place (segments are fresh)
                 for (const segment of segments)
@@ -442,6 +474,7 @@ export class CompositionController extends _BaseComponent {
         if (!this._registrations.has(textblockPathString)) return;
         this._registrations.get(textblockPathString)!();
         this._registrations.delete(textblockPathString);
+        this._ingredients.delete(textblockPathString);
         this._compositionHandler().setUpdated(
             `composition@${textblockPathString}`,
         );
