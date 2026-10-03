@@ -102,6 +102,18 @@ Smallest vertical slice, Controller first (live feedback early):
   also the comparison mechanism (see OFF MODE in the controller
   header).
 
+## Technical debt
+
+- **`typeroof-composition-run` carrier span**: a mark-less composed
+  text run wraps its line spans in a neutral carrier span because
+  the AttachmentRegistry tracks ONE outermost node per attachment
+  and a bare text node can't host spans. Removal path: marker-based
+  attachment boundaries in the registry (comment-node pairs, the
+  React/Vue fragment pattern) — a contained refactor of
+  AttachmentRegistry/insertRendererNode, deferred past milestone 1.
+  (The PM editor world never has this edge case: nodeViews always
+  wrap in elements.)
+
 ## Optimization opportunities (deferred)
 
 - **Style-input dirty precision**: v1 marks ALL paragraphs dirty when

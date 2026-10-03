@@ -156,21 +156,29 @@
  *   staleness test — race-free async application without locks.
  */
 
-// --- Milestone 1, Phase 3: Controller skeleton ----------------------
+// --- Milestone 1, phases 3-6: the composition SERVICE ----------------
 //
-// DOM-less widget observing the document model: maintains the
-// textblock index and detects dirty paragraphs from the compareResult
-// (StateComparison) paths — no re-walk/identity-diff duplication of
-// change detection. v0 logs what it would compose; measurement and
-// composition@ publication land in phase 4.
+// History: this was a COMPARE-strategy widget mining the compareResult
+// for dirty textblocks and publishing composition@ from its own update
+// (commits f0848155..dee5b9f9, kept in history). That timing was
+// structurally fragile: the composition@ updated-log resets at cycle
+// start, so marks only reach widgets updated later in the same
+// cascade — the viewer attachments update WITH the meta. Now
+// DocumentNodesMeta DRIVES composition inside its own cascade (the
+// amended plan, thoughts/plans/2026-10-03-0933): scopes settle ->
+// this service composes -> attachments render, one cycle, no lag.
+//
+// This class is a DOM-less SERVICE widget (UPDATE_STRATEGY_NO_UPDATE,
+// no update-cycle role): it owns the Measurer, the segmenter/algorithm
+// invocation and the composition@ publication. The meta looks it up
+// by id ("compositionController") and calls composeTextblock().
 
+import { _BaseComponent } from "../../../basics/component.mjs";
 import {
-    _BaseComponent,
     UPDATE_STRATEGY,
-    UPDATE_STRATEGY_COMPARE,
+    UPDATE_STRATEGY_NO_UPDATE,
 } from "../../../basics/component.mjs";
-import { getEntry, StateComparison } from "../../../../metamodel.mjs";
-import type { Path } from "../../../../metamodel.mjs";
+import { getEntry, Path } from "../../../../metamodel.mjs";
 import {
     GENERIC,
     LAYOUT,
@@ -179,163 +187,55 @@ import { assembleLogicalParagraphs } from "./segmenter.ts";
 import type { InlineItem } from "./segmenter.ts";
 import { Measurer } from "./measurer.ts";
 import { dummyComposition } from "./dummy-composition.ts";
-// line-span styles (applied by the applicator, phase 6); imported
-// here so the styles land whenever the controller is active
-// (vite CSS import pattern, cf. tree-editor.typeroof.jsx)
+// line-span styles (applied by the applicator); imported here so the
+// styles land whenever the controller is active (vite CSS import
+// pattern, cf. tree-editor.typeroof.jsx)
 import "./line-spans.css";
 
-// The metamodel model instances (NodeModel, NodeSpecMapModel, states)
-// are JS-inferred via allowJs; deep-typing them is not worthwhile for
-// the skeleton — deliberately any (precedent: wikipedia/ingest.ts).
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-    getMMChildIsBlock,
-    specChildrenInInlineContext,
-} from "../document-nodes-meta/derivations.mjs";
 
-// A leaf service, not a container: COMPARE update strategy (receive
-// the full compareResult) on a plain _BaseComponent — the
-// per-cycle compareResult is the existing change detection we mine
-// for dirty paragraphs.
 export class CompositionController extends _BaseComponent {
-    [UPDATE_STRATEGY] = UPDATE_STRATEGY_COMPARE;
+    [UPDATE_STRATEGY] = UPDATE_STRATEGY_NO_UPDATE;
+
     // The base classes are JS (component.mjs); TS can't infer their
     // instance fields, so declare what we use.
     declare widgetBus: any;
-    declare _defaultSchemaNodes: Record<string, any>;
-    declare _textblockIndex: Map<string, string[]>;
     declare _measurer: Measurer | null;
     declare _compositionHandlerImpl: any;
     declare _registrations: Map<string, () => void>;
 
-    constructor(
-        widgetBus: any,
-        proseMirrorDefaultSchemaSpec: { nodes: Record<string, any> },
-    ) {
+    constructor(widgetBus: any) {
         super(widgetBus);
-        this._defaultSchemaNodes = proseMirrorDefaultSchemaSpec.nodes;
         // Capability fallback: without a harfbuzz module (e.g. test
         // harnesses — the shell sets it on the root widgetBus) the
-        // controller degrades to OFF (no composition@ entries), it
-        // must not crash.
+        // service degrades to OFF (no composition@ entries), it must
+        // not crash.
         this._measurer = widgetBus.harfbuzz
             ? new Measurer(widgetBus.harfbuzz)
             : null;
         this._compositionHandlerImpl = null;
         // textblockPath -> unregister closure (SimpleProtocolHandler)
         this._registrations = new Map();
-        // textblock path string -> array of text-run content paths
-        // (strings, content-index paths below the textblock)
-        this._textblockIndex = new Map();
     }
 
-    // --- Textblock identification (research Q1) ---
-    // PM-parallel rule via the shared pure derivations: a block node
-    // whose children are in inline context. The composition boundary
-    // is the OUTERMOST such block (we don't descend into a textblock
-    // looking for nested ones).
-
-    _getSpecData(mmNodeSpecMap: any, typeKey: string) {
-        if (mmNodeSpecMap.has(typeKey)) {
-            const spec = mmNodeSpecMap.get(typeKey),
-                content = spec.get("content");
-            return {
-                inline: spec.get("inline").value,
-                content: content.isEmpty ? undefined : content.value,
-            };
-        }
-        return this._defaultSchemaNodes[typeKey] ?? null;
+    _compositionHandler(): any {
+        if (this._compositionHandlerImpl === null)
+            this._compositionHandlerImpl =
+                this.widgetBus.wrapper.getProtocolHandlerImplementation(
+                    "composition@",
+                );
+        return this._compositionHandlerImpl;
     }
 
-    _isTextblock(mmNodeSpecMap: any, mmNode: any): boolean {
-        const typeKey = mmNode.get("typeKey").value;
-        if (typeKey === "text") return false;
-        if (!getMMChildIsBlock(this._defaultSchemaNodes, mmNodeSpecMap, mmNode))
-            return false;
-        const spec = this._getSpecData(mmNodeSpecMap, typeKey);
-        if (spec === null) return false;
-        return specChildrenInInlineContext(!!spec.inline, spec.content);
+    _layoutRootPath(): Path {
+        // the service's relativeRootPath is ./document
+        return this.widgetBus.rootPath.parent;
     }
-
-    // Walk the document tree, collect textblocks and their direct
-    // text-run children paths. Boundary: don't descend into a
-    // textblock (nested inline islands belong to it).
-    *_iterTextblocks(
-        mmNodeSpecMap: any,
-        mmNode: any,
-        path: Path,
-    ): Generator<[string, any]> {
-        if (this._isTextblock(mmNodeSpecMap, mmNode)) {
-            yield [path.toString(), mmNode];
-            return;
-        }
-        const content = mmNode.get("content");
-        for (const [index, child] of content.value.entries())
-            yield* this._iterTextblocks(
-                mmNodeSpecMap,
-                child,
-                path.append("content", index),
-            );
-    }
-
-    _scanTextblocks(newState: any): Map<string, string[]> {
-        const documentNode = getEntry(newState, this.widgetBus.rootPath),
-            layoutRootPath = this.widgetBus.rootPath.parent,
-            mmNodeSpecMap = getEntry(
-                newState,
-                layoutRootPath.append("proseMirrorSchema", "nodes"),
-            ),
-            index = new Map();
-        for (const [pathString, mmNode] of this._iterTextblocks(
-            mmNodeSpecMap,
-            documentNode,
-            this.widgetBus.rootPath,
-        )) {
-            const textRunPaths = [];
-            for (const [index_, child] of mmNode.get("content").value.entries())
-                if (child.get("typeKey").value === "text")
-                    textRunPaths.push(`${pathString}/content/${index_}`);
-            index.set(pathString, textRunPaths);
-        }
-        return index;
-    }
-
-    // --- Dirty detection from the compareResult paths ---
-    // (the existing change detection; no re-walk). Content changes
-    // mark the enclosing textblock; style-input changes mark ALL
-    // textblocks (v1, ROADMAP-documented optimization deferred).
-
-    _enclosingTextblock(pathString: string): string | null {
-        // longest indexed textblock path that prefixes pathString
-        let result = null;
-        for (const textblockPath of this._textblockIndex.keys())
-            if (
-                pathString.startsWith(textblockPath + "/") ||
-                pathString === textblockPath
-            )
-                if (result === null || textblockPath.length > result.length)
-                    result = textblockPath;
-        return result;
-    }
-
-    _initialCompose(rootState: any) {
-        this._textblockIndex = this._scanTextblocks(rootState);
-        for (const textblockPath of this._textblockIndex.keys())
-            this._composeAndPublish(textblockPath, rootState);
-    }
-
-    // _BaseComponent has no initialUpdate; the COMPARE strategy
-    // dispatch (component.mjs updateWidget) calls it on full-initial.
-    initialUpdate(rootState: any) {
-        this._initialCompose(rootState);
-    }
-
-    // --- Phase 4: input assembly, composition, publication ---
 
     // Classify a textblock's inline content (the segmenter's
-    // InlineItem shape). EXTENSION POINT (see segmenter.ts): the
-    // classification rules are simple v0 — text / hard_break by
-    // typeKey, inline nodes with content as containers, else atoms.
+    // InlineItem shape) and collect the leaf paths (sourceIndex
+    // order). EXTENSION POINT (see segmenter.ts): the classification
+    // rules are simple v0.
     _buildInlineItems(
         mmNode: any,
         path: Path,
@@ -383,33 +283,33 @@ export class CompositionController extends _BaseComponent {
         return texts;
     }
 
-    _compositionHandler(): any {
-        if (this._compositionHandlerImpl === null)
-            this._compositionHandlerImpl =
-                this.widgetBus.wrapper.getProtocolHandlerImplementation(
-                    "composition@",
-                );
-        return this._compositionHandlerImpl;
-    }
-
-    _unpublishAll() {
-        for (const unregister of this._registrations.values()) unregister();
-        this._registrations.clear();
-    }
-
-    // Compose ONE textblock (all its logical paragraphs) and publish
-    // composition@<textblockPath> — replacing any previous entry.
-    _composeAndPublish(textblockPath: string, newState: any) {
-        const textblockNode = getEntry(
-                newState,
-                this.widgetBus.rootPath.fromString(textblockPath),
-            ),
+    /** Compose ONE textblock (all its logical paragraphs) and publish
+     *  composition@<textblockPath> — replacing any previous entry.
+     *  Called by the meta element after its scope settled.
+     *  nodePropertiesPayload: the element's FRESH scope component
+     *  (answers .getProperties()). newState: the cycle's state (for
+     *  the gate and the font). */
+    composeTextblock(
+        textblockPath: Path,
+        textblockNode: any,
+        nodePropertiesPayload: any,
+        newState: any,
+    ) {
+        const textblockPathString = textblockPath.toString(),
             // OFF MODE gate: the root typeSpec's textComposition
-            // property (v0: global; per-paragraph resolution later).
-            enabled = (getEntry(newState, this._typeSpecPath()) as any).get(
-                "textComposition",
-            ).value;
-        if (!enabled) return;
+            // property (v0: global; per-paragraph resolution later)
+            enabled = (
+                getEntry(
+                    newState,
+                    this._layoutRootPath().append("typeSpec"),
+                ) as any
+            ).get("textComposition").value;
+        if (!enabled) {
+            // OFF MODE: unpublish (notifies consumers — null IS off
+            // mode; the attachment re-renders uncomposed)
+            this.unpublishTextblock(textblockPathString);
+            return;
+        }
         if (this._measurer === null) {
             console.warn(
                 `${this} no harfbuzz module available — composition is OFF.`,
@@ -420,29 +320,24 @@ export class CompositionController extends _BaseComponent {
         const leaves: { path: string | null }[] = [],
             items = this._buildInlineItems(
                 textblockNode,
-                this.widgetBus.rootPath.fromString(textblockPath),
+                textblockPath,
                 leaves,
             ),
             leafTexts = this._leafTexts(items),
             logicalParagraphs = assembleLogicalParagraphs(items),
-            font = getEntry(newState, this._fontPath()).value,
-            // Line width + font size from the textblock's
-            // nodeProperties@ scope (settled — we update after the
-            // meta); NEVER from DOM measurement.
-            // the registered value is the meta dispatcher widget;
-            // its nodeProperties getter answers the scope-like
-            // payload (document-nodes-meta/index.mjs:338-345)
-            nodeProperties = this.getEntry(
-                `nodeProperties@${textblockPath}`,
-            )?.nodeProperties?.getProperties(),
-            availableWidth = nodeProperties?.get(`${LAYOUT}availableWidth`),
-            fontSize = nodeProperties?.get(`${GENERIC}fontSize`),
+            // v0: the app ROOT font object, not per-typeSpec fonts
+            font = (getEntry(newState, Path.fromString("/font")) as any).value,
+            // Line width + font size from the FRESH nodeProperties
+            // scope — never from DOM measurement
+            nodeProperties = nodePropertiesPayload.getProperties(),
+            availableWidth = nodeProperties.get(`${LAYOUT}availableWidth`),
+            fontSize = nodeProperties.get(`${GENERIC}fontSize`),
             lineWidthPt =
                 typeof availableWidth === "number" ? availableWidth : 480,
             fontSizePt = typeof fontSize === "number" ? fontSize : 12;
         if (typeof availableWidth !== "number" || typeof fontSize !== "number")
             console.warn(
-                `${this} missing node properties for ${textblockPath} ` +
+                `${this} missing node properties for ${textblockPathString} ` +
                     `(availableWidth=${availableWidth}, fontSize=${fontSize}) ` +
                     `— using fallbacks ${lineWidthPt}pt / ${fontSizePt}pt.`,
             );
@@ -477,7 +372,7 @@ export class CompositionController extends _BaseComponent {
                 return { segments, result };
             }),
             payload = {
-                textblockPath,
+                textblockPath: textblockPathString,
                 // leaf inline items (text runs and atoms) in
                 // sourceIndex order — applicators find their segments
                 // by their own document-node path
@@ -486,18 +381,18 @@ export class CompositionController extends _BaseComponent {
                 // immutable sources for apply-time staleness checks
                 sources: { textblockNode },
             },
-            identifier = `composition@${textblockPath}`,
+            identifier = `composition@${textblockPathString}`,
             handler = this._compositionHandler();
-        if (this._registrations.has(textblockPath)) {
-            this._registrations.get(textblockPath)!();
-            this._registrations.delete(textblockPath);
+        if (this._registrations.has(textblockPathString)) {
+            this._registrations.get(textblockPathString)!();
+            this._registrations.delete(textblockPathString);
         }
         this._registrations.set(
-            textblockPath,
+            textblockPathString,
             handler.register(identifier, payload),
         );
         handler.setUpdated(identifier);
-        // live feedback until the applicator (phase 6) makes it visible
+        // live feedback until the applicator makes it visible
         console.log(
             `${this} published ${identifier}:`,
             paragraphs.map(
@@ -508,97 +403,21 @@ export class CompositionController extends _BaseComponent {
         );
     }
 
-    _typeSpecPath(): Path {
-        return this.widgetBus.rootPath.parent.append("typeSpec");
-    }
-
-    _fontPath(): Path {
-        return this.widgetBus.rootPath.constructor.fromString("/font");
+    /** Unpublish a textblock (node deleted/re-typed) and notify
+     *  consumers: setUpdated after unregister delivers [true, null]
+     *  — null IS off mode. */
+    unpublishTextblock(textblockPathString: string) {
+        if (!this._registrations.has(textblockPathString)) return;
+        this._registrations.get(textblockPathString)!();
+        this._registrations.delete(textblockPathString);
+        this._compositionHandler().setUpdated(
+            `composition@${textblockPathString}`,
+        );
     }
 
     destroy() {
-        this._unpublishAll();
+        for (const unregister of this._registrations.values()) unregister();
+        this._registrations.clear();
         // _BaseComponent destroy default is a no-op.
-    }
-
-    update(compareResult: StateComparison) {
-        const { newState } = compareResult,
-            documentPathString = this.widgetBus.rootPath.toString(),
-            // The style inputs live next to the document in the layout
-            // state; changes there can affect every paragraph (v1,
-            // ROADMAP-documented optimization deferred). Enumerate them
-            // EXPLICITLY: structs are "always changed" up the ancestor
-            // chain (compare.ts), so cursor movement (editingTypeSpec
-            // etc., also under the layout root) must NOT count.
-            layoutRootString = this.widgetBus.rootPath.parent.toString(),
-            styleInputPrefixes = [
-                "typeSpec",
-                "stylePatchesSource",
-                "nodeSpecToTypeSpec",
-                "proseMirrorSchema",
-            ].map((part) => `${layoutRootString}/${part}`);
-        let contentChanged = false,
-            stylesChanged = false;
-        const { EQUALS, DELETED } = StateComparison.COMPARE_STATUSES;
-        const dirtyPaths = new Set<string>();
-        for (const [status, , pathInstance] of compareResult) {
-            // compareResult lists EQUALS entries too (they carry no
-            // change): only actual changes count.
-            if (status === EQUALS) continue;
-            const pathString = pathInstance.toString();
-            if (
-                pathString === documentPathString ||
-                pathString.startsWith(documentPathString + "/")
-            ) {
-                contentChanged = true;
-                if (status !== DELETED) {
-                    const textblockPath = this._enclosingTextblock(pathString);
-                    if (textblockPath !== null) dirtyPaths.add(textblockPath);
-                }
-            } else if (
-                styleInputPrefixes.some(
-                    (prefix) =>
-                        pathString === prefix ||
-                        pathString.startsWith(prefix + "/"),
-                )
-            )
-                stylesChanged = true;
-        }
-        if (contentChanged)
-            // structural changes (moves, new, deleted) invalidate the
-            // index; a full rescan is cheap at this scale
-            this._textblockIndex = this._scanTextblocks(newState);
-        const dirty = stylesChanged
-            ? [...this._textblockIndex.keys()]
-            : [...dirtyPaths];
-        // unregister publications of vanished textblocks (notify:
-        // setUpdated after unregister delivers [true, null])
-        for (const registered of [...this._registrations.keys()])
-            if (!this._textblockIndex.has(registered)) {
-                this._registrations.get(registered)!();
-                this._registrations.delete(registered);
-                this._compositionHandler().setUpdated(
-                    `composition@${registered}`,
-                );
-            }
-        // OFF MODE: the gate is checked per compose; when it turns
-        // off (a style-input change), unpublish everything.
-        if (
-            !(getEntry(newState, this._typeSpecPath()) as any).get(
-                "textComposition",
-            ).value
-        ) {
-            // notify consumers of the off transition: setUpdated after
-            // unregister delivers [true, null] — null IS off mode
-            const unregistered = [...this._registrations.keys()];
-            this._unpublishAll();
-            for (const textblockPath of unregistered)
-                this._compositionHandler().setUpdated(
-                    `composition@${textblockPath}`,
-                );
-        } else
-            for (const textblockPath of dirty)
-                if (this._textblockIndex.has(textblockPath))
-                    this._composeAndPublish(textblockPath, newState);
     }
 }

@@ -531,15 +531,22 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
         // a carrier span we created to hold line spans in the
         // mark-less case (null when this.node is the bare text node)
         this._carrierSpan = null;
-        const widgets = [
-            [{}, ["text"], GenericUpdater, this._updateNode.bind(this)],
-            [
-                {},
-                ["composition@"],
-                GenericUpdater,
-                this._updateComposition.bind(this),
-            ],
-        ];
+        // text-composition: the child widget maps the FULL external
+        // protocol id itself (a bare "composition@" shorthand would
+        // be intercepted as protocol syntax with an empty address,
+        // not forwarded as the attachment's local — the styler
+        // wrappers map external ids the same way). The run's path is
+        // <textblock>/content/<index>.
+        const compositionId = `composition@${metaInfo.rootPath.parent.parent.toString()}`,
+            widgets = [
+                [{}, ["text"], GenericUpdater, this._updateNode.bind(this)],
+                [
+                    {},
+                    [[compositionId, "composition@"]],
+                    GenericUpdater,
+                    this._updateComposition.bind(this),
+                ],
+            ];
         this._initWidgets(widgets);
         this._initalWidgetsLength = this._widgets.length;
     }
@@ -577,6 +584,11 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
             // composed content needs an element carrier: swap the
             // bare text node for a span (tracked for undo)
             this._carrierSpan = this._domTool.createElement("span");
+            // identifies the composition-owned wrapper of a
+            // mark-less run (the attachment's outermost node must
+            // stay ONE node for the registry; a bare text node
+            // can't host line spans)
+            this._carrierSpan.classList.add("typeroof-composition-run");
             this._swapNode(this._carrierSpan);
         }
         // back to the bare text node when composition turns off and
@@ -591,10 +603,15 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
             this._carrierSpan = null;
             return;
         }
-        // drill down to the innermost element (mark wrappers, else
-        // the carrier span)
-        let carrier = this.node;
-        while (carrier.firstElementChild) carrier = carrier.firstElementChild;
+        // The content carrier: the innermost MARK WRAPPER if marks
+        // exist, else the node itself (our carrier span). NO
+        // firstElementChild drill-down: once composed, the carrier's
+        // children ARE the line spans (elements) — drilling would
+        // descend into the first line span and re-render inside it,
+        // leaving the other (stale) line spans untouched.
+        const carrier = this._markWrappers.length
+            ? this._markWrappers[0][this.constructor._MARK_ELEMENT]
+            : this.node;
         if (this._composition === null) {
             carrier.replaceChildren(this._domTool.createTextNode(this._text));
             return;

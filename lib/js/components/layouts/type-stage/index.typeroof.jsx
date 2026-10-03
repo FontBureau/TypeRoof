@@ -556,39 +556,20 @@ class TypeStageController extends _BaseContainerComponent {
                 proseMirrorHostElement,
             ],
             [
-                // Always-active, DOM-free text-composition controller:
-                // observes the document model, detects dirty
-                // textblocks, publishes composition@ results.
-                // ORDERING: BEFORE DocumentNodesMeta. The composition@
-                // updated-log is reset at the start of every cycle
-                // (this controller's update/initialUpdate), so marks
-                // only reach widgets updated LATER in the same
-                // cascade — the viewer's attachments update with the
-                // meta. Known trade-off (v0): the nodeProperties@
-                // scopes the controller reads are settled one cycle
-                // later (the meta's own one-cycle-lag constraint, but
-                // inverse); width/fontSize of a style change apply
-                // from the next content change on. No zone: DOM-less
-                // widgets are first-class.
+                // Always-active, DOM-free text-composition SERVICE:
+                // owns the Measurer, segmenter/algorithm invocation
+                // and the composition@ publication. NO update-cycle
+                // role (UPDATE_STRATEGY_NO_UPDATE): DocumentNodesMeta
+                // drives composition inside its own cascade and looks
+                // this service up by id (getWidgetById, null fallback
+                // — composition is optional). relativeRootPath only
+                // for path derivation (layout root = parent).
                 {
                     id: "compositionController",
                     relativeRootPath: Path.fromParts(".", "document"),
                 },
-                // Coarse dependency mappings: the controller's update
-                // receives the full compareResult regardless (COMPARE
-                // strategy), but the update-RELEVANCE filter skips
-                // widgets with no relevant deps — these make it
-                // relevant for content and style-input changes.
-                [
-                    ["../document", "document"],
-                    ["../typeSpec", "typeSpec"],
-                    ["../stylePatchesSource", "stylePatchesSource"],
-                    ["../nodeSpecToTypeSpec", "nodeSpecToTypeSpec"],
-                    ["../proseMirrorSchema/nodes", "nodeSpec"],
-                    ["../proseMirrorSchema/marks", "markSpec"],
-                ],
+                [],
                 CompositionController,
-                proseMirrorDefaultSchemaSpec,
             ],
             [
                 // Always-active, DOM-free document-tree meta layer: the
