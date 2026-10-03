@@ -182,10 +182,17 @@ import { getEntry, Path } from "../../../../metamodel.mjs";
 import {
     GENERIC,
     LAYOUT,
+    SPECIFIC,
 } from "../../../registered-properties-definitions.mjs";
 import { assembleLogicalParagraphs } from "./segmenter.ts";
 import type { InlineItem } from "./segmenter.ts";
-import { Measurer } from "./measurer.ts";
+import {
+    Measurer,
+    axesEntriesOf,
+    axesKeyOf,
+    featuresEntriesOf,
+    featuresKeyOf,
+} from "./measurer.ts";
 import { dummyComposition } from "./dummy-composition.ts";
 // line-span styles (applied by the applicator); imported here so the
 // styles land whenever the controller is active (vite CSS import
@@ -325,16 +332,35 @@ export class CompositionController extends _BaseComponent {
             ),
             leafTexts = this._leafTexts(items),
             logicalParagraphs = assembleLogicalParagraphs(items),
-            // v0: the app ROOT font object, not per-typeSpec fonts
-            font = (getEntry(newState, Path.fromString("/font")) as any).value,
+            // the app root font object (fallback when the typeSpec
+            // cascade has no own font — the typeSpecGetFontMethod
+            // pattern, type-spec.typeroof.jsx:75-84)
+            rootFont = (getEntry(newState, Path.fromString("/font")) as any)
+                .value,
             // Line width + font size from the FRESH nodeProperties
             // scope — never from DOM measurement
             nodeProperties = nodePropertiesPayload.getProperties(),
+            // the font OBJECT from the properties stream
+            // (specific/font, inherited via the typeSpecnion cascade)
+            font = nodeProperties.get(`${SPECIFIC}font`) ?? rootFont,
             availableWidth = nodeProperties.get(`${LAYOUT}availableWidth`),
             fontSize = nodeProperties.get(`${GENERIC}fontSize`),
             lineWidthPt =
                 typeof availableWidth === "number" ? availableWidth : 480,
-            fontSizePt = typeof fontSize === "number" ? fontSize : 12;
+            fontSizePt = typeof fontSize === "number" ? fontSize : 12,
+            // measurement inputs at the TRUE location (Sprint A);
+            // v1 keeps them uniform per textblock — per-RUN values
+            // come with per-run style spans
+            axesEntries = axesEntriesOf(font, nodeProperties),
+            axesKey = axesKeyOf(font, nodeProperties),
+            featuresEntries = featuresEntriesOf(nodeProperties),
+            featuresKey = featuresKeyOf(nodeProperties),
+            language = nodeProperties.get("language/lang") ?? null,
+            directionRaw = nodeProperties.get(`${GENERIC}direction`),
+            direction =
+                directionRaw === "ltr" || directionRaw === "rtl"
+                    ? directionRaw
+                    : null;
         if (typeof availableWidth !== "number" || typeof fontSize !== "number")
             console.warn(
                 `${this} missing node properties for ${textblockPathString} ` +
@@ -348,6 +374,12 @@ export class CompositionController extends _BaseComponent {
                     segment.widthPt =
                         this._measurer!.measureEm(
                             font,
+                            axesEntries,
+                            axesKey,
+                            featuresEntries,
+                            featuresKey,
+                            language,
+                            direction,
                             leafTexts[segment.sourceIndex]?.slice(
                                 segment.start,
                                 segment.end,
