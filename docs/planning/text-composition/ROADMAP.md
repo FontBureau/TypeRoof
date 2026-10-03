@@ -104,16 +104,17 @@ features/language/direction, LRU-bounded caches, nowrap on composed
 textblocks, and the ride-along input-equality filter (what we
 consume is what invalidates — no hand-maintained relevance list).
 
-**Sprint B — performance baseline + testing harness** (they build
-on each other: performance needs a rather complete harness anyway;
-the baseline must measure the REAL pipeline, i.e. after Sprint A):
-- Testing harness: integration tests for the composition pipeline,
-  asserting composed line structure FROM DOCUMENT INPUTS (behavior,
-  not implementation).
-- Baselines: dummy (infrastructure overhead of
-  segment/measure/publish/apply) and OFF (browser line breaking);
-  needed BEFORE real algorithms so their cost is judged against
-  numbers, not feelings.
+**Sprint B — performance baseline + testing harness** ✅ DONE
+(2026-10-03, a53a139a..5a957cd8): buildWorld options (real font +
+harfbuzz); five structure tests asserting composed line structure
+FROM DOCUMENT INPUTS (payload + DOM, off mode, edits);
+`npm run perf:composition` (typing bursts + full recompose, ON vs
+OFF, machine-stable overhead ratio) with a checked-in snapshot and
+1.5x regression exit; first baseline: typing ~1.10, recompose ~1.0
+at wikipedia scale — the dummy infrastructure is cheap, ready to
+judge real algorithms. Fixtures: type-stage default state (small,
+lib/js/tests/fixtures/) + wikipedia snapshot (large,
+docs/states-library/fixtures/ — explicitly not a demo).
 
 **Milestone 2 — greedy ragged** (now judgeable, with baseline).
 
