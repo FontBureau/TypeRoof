@@ -92,67 +92,60 @@ Smallest vertical slice, Controller first (live feedback early):
 4. **Viewer Applicator**: wrap lines in spans + CSS custom properties
    per the published result.
 
-## Follow-ups deferred during milestone 1
+## Follow-ups deferred during milestone 1 — execution order
 
-Tracked here so they don't get lost (details in the linked code
-comments):
+Dependency-ordered (agreed 2026-10-03). Details in the linked code
+comments.
 
-- **Per-typeSpec fonts**: v0 measures with the app ROOT font object
-  (/font); per-run font resolution (typeSpec font reference →
-  installedFonts) is the real thing.
-- **Per-typeSpec/nodeProperties engagement**: v0 gates on the ROOT
-  typeSpec globally; composition should engage per textblock based
-  on the LOCAL/INHERITED value of the (inheriting) textComposition
-  property, resolved via the typeSpecProperties@/nodeProperties@
-  stream — i.e. parts of a document can opt out individually.
-- **Measurement at the current axes location**: v0 shapes at the
-  font's DEFAULT variation location (no setVariations); comes with
-  the Treatment Planner (stretch potentials need min/default/max
-  shaping anyway).
-- **Atom box measurement**: inline atoms measure 0 in v0.
-- **UAX#14 segmentation**: v0 splits at spaces only; Intl.Segmenter
-  is the obvious implementation source.
-- **Schema-driven inline classification**: the segmenter's extension
-  point — classify inline items from the schema (freely configurable
-  schemas bring cases like links as inline blocks).
-- **Optical alignment / margin protrusion**: planned extension
-  (Host-side, transparent to the Algorithm — see
-  composition-types.ts).
-- **Scheduling plan items not yet implemented**: compose-before-
-  reveal on initial load (no flash), async per-dirty-paragraph
-  steady state, workers when algorithms get expensive (the
-  scheduling section in composition-controller.ts stands; v0 is
-  synchronous in-cycle).
-- **ProseMirror editor applicator**: decorations spike, only after
-  the viewer is sealed (PM may fight us — viewer alone is good
-  enough).
-- **Testing harness**: integration tests for the composition
-  pipeline (currently: unit tests for the pure pieces — contract,
-  segmenter, dummy — plus manual verification of the wired Host).
-  Deferred until the behavior settles; then assert composed line
-  structure from document inputs, not implementation details.
+**Sprint A — "measurement truth"** (gates milestone 2: without true
+widths no breaking algorithm's output is judgeable):
+1. Per-typeSpec fonts (v0 measures with the app ROOT font object;
+   per-run font resolution typeSpec → installedFonts).
+2. Measurement at the current axes location (v0 shapes at the
+   font's DEFAULT location, no setVariations; comes with the
+   Treatment Planner later, but the current location belongs here).
+Ride-along: property-aware filtering (see optimizations) — cheap
+while touching the drive.
 
-## Before real algorithms (after milestone 1)
+**Sprint B — performance baseline + testing harness** (they build
+on each other: performance needs a rather complete harness anyway;
+the baseline must measure the REAL pipeline, i.e. after Sprint A):
+- Testing harness: integration tests for the composition pipeline,
+  asserting composed line structure FROM DOCUMENT INPUTS (behavior,
+  not implementation).
+- Baselines: dummy (infrastructure overhead of
+  segment/measure/publish/apply) and OFF (browser line breaking);
+  needed BEFORE real algorithms so their cost is judged against
+  numbers, not feelings.
 
-- **Performance baseline**: measure composition cost with the dummy
-  and OFF as baselines (dummy = infrastructure overhead of
-  segment/measure/publish/apply; OFF = browser line breaking).
-  Needed BEFORE implementing real algorithms (greedy, KP++), so
-  their cost is judged against numbers, not feelings. Off mode is
-  also the comparison mechanism (see OFF MODE in the controller
-  header).
+**Milestone 2 — greedy ragged** (now judgeable, with baseline).
 
-## Technical debt
+**Milestone 3 — hyphenation, paired with UAX#14 segmentation**
+(both are Segmenter/Hyphenator work; Intl.Segmenter is the obvious
+implementation source — doing them together avoids segmenting
+twice).
 
-- **`typeroof-composition-run` carrier span**: a mark-less composed
-  text run wraps its line spans in a neutral carrier span because
-  the AttachmentRegistry tracks ONE outermost node per attachment
-  and a bare text node can't host spans. Removal path: marker-based
-  attachment boundaries in the registry (comment-node pairs, the
-  React/Vue fragment pattern) — a contained refactor of
-  AttachmentRegistry/insertRendererNode, deferred past milestone 1.
-  (The PM editor world never has this edge case: nodeViews always
-  wrap in elements.)
+**Milestone 4 — greedy-fit**, requires the Treatment Planner (the
+potentials design — the biggest remaining design piece) and
+benefits from per-typeSpec/nodeProperties engagement (composition
+engages per textblock on the local/inherited textComposition
+value; parts of a document opt out individually while tuning).
+
+**After the hot phases** (the plan makes these feasible as
+afterthoughts):
+- Optical alignment / margin protrusion (hanging punctuation) —
+  Host-side, transparent to the Algorithm (composition-types.ts).
+- Scheduling items: compose-before-reveal on initial load, async
+  per-dirty-paragraph steady state, workers when algorithms get
+  expensive (the scheduling section in composition-controller.ts).
+- ProseMirror editor applicator (decorations spike, only after the
+  viewer is sealed; PM may fight us — viewer alone is good enough).
+
+**When cases arise (not scheduled):**
+- Schema-driven inline classification (segmenter extension point;
+  freely configurable schemas bring cases like links as inline
+  blocks).
+- Atom box measurement (inline atoms measure 0 in v0).
 
 ## Optimization opportunities (deferred)
 
