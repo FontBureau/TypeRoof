@@ -68,6 +68,7 @@ import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" wit
 import { UIDocumentViewer } from "./viewer.typeroof.jsx";
 import { DocumentNodesMeta } from "./document-nodes-meta/index.mjs";
 import { CompositionController } from "./text-composition/composition-controller.ts";
+import { languageToHyphenationPatternKey } from "./text-composition/hyphenator.ts";
 import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
 
 import {
@@ -182,31 +183,11 @@ export const ensureDimensionBoundnessCoherenceFn = CoherenceFunction.create(
 // required pattern keys from the languages used in the typeSpec
 // tree; the controller reads the installed pattern objects from the
 // state dependency by language.
-// BCP47 language -> vendored pattern key, with fallbacks
-// (de-at -> de; en-* -> en-us). Unknown languages yield no key
-// (no hyphenation for them).
-const _HYPHENATION_PATTERNS = new Map([
-    ["en-us", "en-us"],
-    ["en", "en-us"],
-    ["de", "de"],
-]);
-export function languageToHyphenationPatternKey(language) {
-    const lower = language.toLowerCase();
-    if (_HYPHENATION_PATTERNS.has(lower))
-        return _HYPHENATION_PATTERNS.get(lower);
-    // regional variant fallback: de-at -> de etc.
-    const primary = lower.split("-")[0];
-    if (primary === "en") {
-        // English DEFAULT is en-us (the de-facto software default;
-        // browsers hyphenate lang=en with US patterns).
-        // DECISION (noted): Commonwealth regional variants
-        // (en-gb/-au/-nz/-ie/-za...) hyphenate British-style —
-        // opinionated but defensible; everything else US.
-        const COMMONWEALTH = new Set(["gb", "au", "nz", "ie", "za"]);
-        return COMMONWEALTH.has(lower.split("-")[1] ?? "") ? "en-gb" : "en-us";
-    }
-    return _HYPHENATION_PATTERNS.get(primary) ?? null;
-}
+// BCP47 language -> vendored pattern key, with fallbacks:
+// languageToHyphenationPatternKey lives in text-composition/
+// hyphenator.ts (shared with the composition controller — importing
+// it from HERE would create an import cycle, this module imports
+// the controller). Imported at the top of this module.
 
 function* hyphenationPatternKeyConstraint(targetContainer, currentKeyValue) {
     // the activeFontKey pattern (type-spec/models.mjs): set-but-not-

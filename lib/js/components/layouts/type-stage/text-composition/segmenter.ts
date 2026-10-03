@@ -48,6 +48,12 @@ export interface HostSegment extends Segment {
     /** Index of the source leaf inline item (text run or atom,
      *  depth-first over the textblock's inline content). */
     sourceIndex: number;
+    /** Set by the Hyphenator (milestone 3): this segment is the part
+     *  of a split word directly BEFORE a hyphen break opportunity —
+     *  its measured width must include the hyphen glyph (the hyphen
+     *  is not in the source text; CSS ::after renders it). Absent on
+     *  segmenter output; only the Hyphenator sets it. */
+    hyphenAfter?: boolean;
 }
 
 export interface LogicalParagraphSegments {

@@ -195,6 +195,13 @@ import {
 } from "./measurer.ts";
 import { createDummyComposition } from "./dummy-composition.ts";
 import { greedyRaggedComposition } from "./greedy-ragged.ts";
+import Hypher from "hypher";
+import {
+    hyphenateSegments,
+    HYPHENATION_DEFAULTS,
+    languageToHyphenationPatternKey,
+} from "./hyphenator.ts";
+import type { HyphenationConfig } from "./hyphenator.ts";
 // line-span styles (applied by the applicator); imported here so the
 // styles land whenever the controller is active (vite CSS import
 // pattern, cf. tree-editor.typeroof.jsx)
@@ -212,6 +219,7 @@ export class CompositionController extends _BaseComponent {
     declare _compositionHandlerImpl: any;
     declare _registrations: Map<string, () => void>;
     declare _ingredients: Map<string, unknown[]>;
+    declare _hyphers: Map<unknown, any>;
     declare _noHarfbuzzWarned: boolean;
 
     constructor(widgetBus: any) {
@@ -229,6 +237,10 @@ export class CompositionController extends _BaseComponent {
         // textblockPath -> consumed ingredients of the last
         // composition (the input-equality filter, Sprint A phase 2)
         this._ingredients = new Map();
+        // Hypher instances per installed pattern OBJECT (immutable
+        // metamodel values — identity keyed; bounded by the session's
+        // installed pattern count)
+        this._hyphers = new Map();
         this._noHarfbuzzWarned = false;
     }
 
@@ -386,6 +398,55 @@ export class CompositionController extends _BaseComponent {
                 directionRaw === "ltr" || directionRaw === "rtl"
                     ? directionRaw
                     : null;
+
+        // Hyphenation (milestone 3, phase 4): a Host control PRIOR to
+        // measurement/line breaking — it changes the input, not the
+        // algorithm. The config is inheritable (empty = inherit;
+        // unresolved fields fall back to the defaults). The pattern
+        // object comes from the session-only state dependency (loaded
+        // async on demand via the ResourceRequirement machinery);
+        // BCP47 language -> pattern key with fallbacks (de-AT -> de,
+        // en -> en-us). No language or an unmapped language = no
+        // hyphenation.
+        const hyphenationEnabled =
+                nodeProperties.get("hyphenation/enabled") ?? true,
+            hyphenationConfig: HyphenationConfig = {
+                minWordLength:
+                    nodeProperties.get("hyphenation/minWordLength") ??
+                    HYPHENATION_DEFAULTS.minWordLength,
+                minBefore:
+                    nodeProperties.get("hyphenation/minBefore") ??
+                    HYPHENATION_DEFAULTS.minBefore,
+                minAfter:
+                    nodeProperties.get("hyphenation/minAfter") ??
+                    HYPHENATION_DEFAULTS.minAfter,
+            },
+            hyphenationPatternKey =
+                hyphenationEnabled && typeof language === "string"
+                    ? languageToHyphenationPatternKey(language)
+                    : null,
+            installedPatterns =
+                hyphenationPatternKey !== null
+                    ? (getEntry(
+                          newState,
+                          Path.fromString("/installedHyphenationPatterns"),
+                          null,
+                      ) as any)
+                    : null,
+            hyphenationPattern =
+                installedPatterns !== null &&
+                installedPatterns.has(hyphenationPatternKey)
+                    ? installedPatterns.get(hyphenationPatternKey).value
+                    : null;
+        let hypher: any = null;
+        if (hyphenationPattern !== null) {
+            hypher = this._hyphers.get(hyphenationPattern);
+            if (hypher === undefined) {
+                hypher = new Hypher(hyphenationPattern);
+                this._hyphers.set(hyphenationPattern, hypher);
+            }
+        }
+
         if (typeof availableWidth !== "number" || typeof fontSize !== "number")
             console.warn(
                 `${this} missing node properties for ${textblockPathString} ` +
@@ -410,6 +471,14 @@ export class CompositionController extends _BaseComponent {
                 direction,
                 fontSizePt,
                 lineWidthPt,
+                // hyphenation: the resolved config + the pattern
+                // OBJECT (identity covers key + content; a pattern
+                // arriving async invalidates by identity)
+                hyphenationEnabled,
+                hyphenationConfig.minWordLength,
+                hyphenationConfig.minBefore,
+                hyphenationConfig.minAfter,
+                hyphenationPattern,
                 // content: the assembled leaf texts (typing always
                 // invalidates; cheap string compare at this scale)
                 leafTexts.join("\u0001"),
@@ -423,7 +492,36 @@ export class CompositionController extends _BaseComponent {
             return;
         this._ingredients.set(textblockPathString, ingredients);
 
-        const paragraphs = logicalParagraphs.map(({ segments, breaks }) => {
+        const paragraphs = logicalParagraphs.map((logicalParagraph) => {
+                let { segments, breaks } = logicalParagraph;
+                if (hypher !== null)
+                    // the Hyphenator: splits word segments at
+                    // hyphenation points, adds 'hyphen' break
+                    // opportunities (the Algorithm can't tell a word
+                    // boundary from a hyphen point)
+                    ({ segments, breaks } = hyphenateSegments(
+                        segments,
+                        breaks,
+                        leafTexts,
+                        hypher,
+                        hyphenationConfig,
+                    ));
+                // the hyphen glyph's width, baked into the segments
+                // BEFORE hyphen breaks below (the hyphen is not in
+                // the source text; CSS ::after renders it)
+                const hyphenWidthPt =
+                    hypher !== null
+                        ? this._measurer!.measureEm(
+                              font,
+                              axesEntries,
+                              axesKey,
+                              featuresEntries,
+                              featuresKey,
+                              language,
+                              direction,
+                              "-",
+                          ) * fontSizePt
+                        : 0;
                 // measure: fill widthPt in place (segments are fresh)
                 for (const segment of segments)
                     segment.widthPt =
@@ -439,7 +537,9 @@ export class CompositionController extends _BaseComponent {
                                 segment.start,
                                 segment.end,
                             ) ?? "",
-                        ) * fontSizePt;
+                        ) *
+                            fontSizePt +
+                        (segment.hyphenAfter === true ? hyphenWidthPt : 0);
                 const widthOf = (from: number, to: number) => {
                         let width = 0;
                         for (let i = from; i < to; i++)
