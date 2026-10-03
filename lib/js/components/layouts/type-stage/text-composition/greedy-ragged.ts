@@ -23,8 +23,10 @@
  *     eventually produce ragged text with real badness.
  *
  * The fitting width of a line candidate [from, to) is the sum of
- * segment widths from..to-1 EXCLUDING a trailing space segment
- * (lineWidthAtStep at step 0 gives the natural width including it).
+ * segment widths from..to-1 EXCLUDING a trailing segment whose break
+ * COLLAPSES (a space; lineWidthAtStep at step 0 gives the natural
+ * width including it). Non-collapsing breaks (hyphen, zero-width
+ * ideograph boundaries) keep their last, visible segment in the fit.
  */
 import type {
     BreakOpportunity,
@@ -81,11 +83,17 @@ export const greedyRaggedComposition: CompositionAlgorithm = (input) => {
                         explicit = candidate;
                         break;
                     }
-                    // fit test EXCLUDING the trailing space segment
-                    // (the candidate break follows a space segment)
+                    // fit test EXCLUDING the trailing segment only
+                    // when it COLLAPSES at the break (a space); a
+                    // hyphen or zero-width (e.g. ideograph) break
+                    // keeps its last, visible segment — hyphen
+                    // glyph included, the Hyphenator baked it into
+                    // the segment's width
                     const width =
                         lineWidthAtStep(fromSegment, candidate + 1, 0) -
-                        segments[candidate]!.widthPt;
+                        (breakOpportunity.collapses === true
+                            ? segments[candidate]!.widthPt
+                            : 0);
                     if (width <= available) fitted = candidate;
                     else break; // widths only grow: no later break fits
                 }
