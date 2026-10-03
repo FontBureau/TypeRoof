@@ -18,7 +18,18 @@ import type {
 
 export const DUMMY_SEGMENTS_PER_LINE = 4;
 
-export const dummyComposition: CompositionAlgorithm = (input) => {
+/** Factory: the dummy's configuration (the dynamic struct's
+ *  TextCompositionAlgorithmDummyModel.segmentsPerLine). */
+export function createDummyComposition(
+    segmentsPerLine: number = DUMMY_SEGMENTS_PER_LINE,
+): CompositionAlgorithm {
+    return (input) => dummyCompositionImpl(input, segmentsPerLine);
+}
+
+const dummyCompositionImpl = (
+    input: Parameters<CompositionAlgorithm>[0],
+    segmentsPerLine: number,
+) => {
     const { segments, breaks, lineWidthPt, lineWidthAtStep } = input,
         breakAfter = new Map<number, BreakOpportunity>(
             breaks.map((b) => [b.afterSegment, b]),
@@ -50,7 +61,7 @@ export const dummyComposition: CompositionAlgorithm = (input) => {
         }
         if (breakAt === null) {
             for (
-                let i = fromSegment + DUMMY_SEGMENTS_PER_LINE - 1;
+                let i = fromSegment + segmentsPerLine - 1;
                 i < segments.length - 1;
                 i++
             ) {
@@ -85,3 +96,7 @@ export const dummyComposition: CompositionAlgorithm = (input) => {
         },
     };
 };
+
+/** The default dummy (DUMMY_SEGMENTS_PER_LINE), kept for the
+ *  milestone-1 role and its tests. */
+export const dummyComposition: CompositionAlgorithm = createDummyComposition();

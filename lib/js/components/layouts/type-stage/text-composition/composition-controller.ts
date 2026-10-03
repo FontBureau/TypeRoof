@@ -193,7 +193,8 @@ import {
     featuresEntriesOf,
     featuresKeyOf,
 } from "./measurer.ts";
-import { dummyComposition } from "./dummy-composition.ts";
+import { createDummyComposition } from "./dummy-composition.ts";
+import { greedyRaggedComposition } from "./greedy-ragged.ts";
 // line-span styles (applied by the applicator); imported here so the
 // styles land whenever the controller is active (vite CSS import
 // pattern, cf. tree-editor.typeroof.jsx)
@@ -367,6 +368,18 @@ export class CompositionController extends _BaseComponent {
             featuresKey = featuresKeyOf(nodeProperties),
             language = nodeProperties.get("language/lang") ?? null,
             directionRaw = nodeProperties.get(`${GENERIC}direction`),
+            // algorithm selection + configuration, resolved per
+            // textblock (the dynamic struct, yielded by
+            // textCompositionGen; absent = the default algorithm)
+            algorithmKey =
+                nodeProperties.get("textCompositionAlgorithm/algorithm") ??
+                "TextCompositionAlgorithmGreedyRaggedModel",
+            algorithmConfig =
+                algorithmKey === "TextCompositionAlgorithmDummyModel"
+                    ? (nodeProperties.get(
+                          "textCompositionAlgorithm/segmentsPerLine",
+                      ) ?? 4)
+                    : null,
             direction =
                 directionRaw === "ltr" || directionRaw === "rtl"
                     ? directionRaw
@@ -387,6 +400,8 @@ export class CompositionController extends _BaseComponent {
         // below.
         const ingredients: unknown[] = [
                 font,
+                algorithmKey,
+                algorithmConfig,
                 axesKey,
                 featuresKey,
                 language,
@@ -429,7 +444,11 @@ export class CompositionController extends _BaseComponent {
                             width += segments[i]!.widthPt;
                         return width;
                     },
-                    result = dummyComposition({
+                    algorithm =
+                        algorithmKey === "TextCompositionAlgorithmDummyModel"
+                            ? createDummyComposition(algorithmConfig as number)
+                            : greedyRaggedComposition,
+                    result = algorithm({
                         segments,
                         breaks,
                         lineWidthPt: () => lineWidthPt,
