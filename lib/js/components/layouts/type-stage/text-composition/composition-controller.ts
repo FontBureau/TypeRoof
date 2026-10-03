@@ -311,12 +311,14 @@ export class CompositionController extends _BaseComponent {
     ) {
         const textblockPathString = textblockPath.toString(),
             nodePropertiesEarly = nodePropertiesPayload.getProperties(),
-            // OFF MODE gate: the RESOLVED generic/textComposition
-            // (inheritable, per textblock — empty inherits; the
-            // registered property's default true applies at the
-            // root via the scope's defaults layer)
+            // OFF MODE gate: engagement IS the algorithm selection —
+            // the resolved "None (Browser)" type means explicitly off
+            // (inheritable, per textblock; empty = inherit, the root
+            // default algorithm applies via the registered property)
             enabled =
-                nodePropertiesEarly.get(`${GENERIC}textComposition`) ?? true;
+                nodePropertiesEarly.get(
+                    "textCompositionAlgorithm/algorithm",
+                ) !== "TextCompositionAlgorithmNoneModel";
         if (!enabled) {
             // OFF MODE: unpublish (notifies consumers — null IS off
             // mode; the attachment re-renders uncomposed)

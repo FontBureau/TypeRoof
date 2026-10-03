@@ -10,6 +10,7 @@ import { GENERIC } from "../registered-properties-definitions.mjs";
 import { ProcessedPropertiesSystemMap } from "../registered-properties-definitions.mjs";
 import { UIDynamicStructContainer } from "./ui-horizontal-layout.typeroof.jsx";
 import {
+    TextCompositionAlgorithmNoneModel,
     TextCompositionAlgorithmDummyModel,
     TextCompositionAlgorithmGreedyRaggedModel,
 } from "./text-composition-models.mjs";
@@ -29,6 +30,7 @@ export class UITextCompositionAlgorithm extends UIDynamicStructContainer {
 
     _getPPSMapForModel(ppsRecord, FieldType) {
         if (
+            FieldType === TextCompositionAlgorithmNoneModel ||
             FieldType === TextCompositionAlgorithmDummyModel ||
             FieldType === TextCompositionAlgorithmGreedyRaggedModel
         )

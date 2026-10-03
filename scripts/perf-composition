@@ -60,10 +60,16 @@ async function measureBurst(page, compositionOn, mode, cycles) {
     return page.evaluate(
         async ({ compositionOn, mode, cycles }) => {
             const rootPath = "/activeState",
-                setComposition = (value) =>
+                // engagement IS the algorithm selection: ON = the
+                // greedy algorithm, OFF = "None (Browser)" (the
+                // opt-out type)
+                setComposition = (on) =>
                     shell.changeState(() => {
-                        shell.getEntry(`${rootPath}/typeSpec/textComposition`).value =
-                            value;
+                        shell.getEntry(
+                            `${rootPath}/typeSpec/textCompositionAlgorithm/textCompositionAlgorithmTypeKey`,
+                        ).value = on
+                            ? "TextCompositionAlgorithmGreedyRaggedModel"
+                            : "TextCompositionAlgorithmNoneModel";
                     });
             await setComposition(compositionOn);
 
