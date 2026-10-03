@@ -50,7 +50,7 @@ baseline and capability fallback.
 |---|-----------|--------|
 | — | Contract + roles + integration plan | ✅ done (design) |
 | — | Dummy algorithm + tests (ingredient for 1) | ✅ done |
-| 1 | **Full Host executing the dummy end to end** (viewer, live feedback) | 🔜 next |
+| 1 | **Full Host executing the dummy end to end** (viewer, live feedback) | ✅ done (2026-10-03, …0794df35) |
 | 2 | Simple greedy alignment (ragged) | planned |
 | 3 | Greedy ragged + hyphenation (Host control, not an algorithm) | planned |
 | 4 | Greedy-fit (varla-varfo strategy, predictively; validation milestone) | planned |
@@ -92,6 +92,46 @@ Smallest vertical slice, Controller first (live feedback early):
 4. **Viewer Applicator**: wrap lines in spans + CSS custom properties
    per the published result.
 
+## Follow-ups deferred during milestone 1
+
+Tracked here so they don't get lost (details in the linked code
+comments):
+
+- **Per-typeSpec fonts**: v0 measures with the app ROOT font object
+  (/font); per-run font resolution (typeSpec font reference →
+  installedFonts) is the real thing.
+- **Per-typeSpec/nodeProperties engagement**: v0 gates on the ROOT
+  typeSpec globally; composition should engage per textblock based
+  on the LOCAL/INHERITED value of the (inheriting) textComposition
+  property, resolved via the typeSpecProperties@/nodeProperties@
+  stream — i.e. parts of a document can opt out individually.
+- **Measurement at the current axes location**: v0 shapes at the
+  font's DEFAULT variation location (no setVariations); comes with
+  the Treatment Planner (stretch potentials need min/default/max
+  shaping anyway).
+- **Atom box measurement**: inline atoms measure 0 in v0.
+- **UAX#14 segmentation**: v0 splits at spaces only; Intl.Segmenter
+  is the obvious implementation source.
+- **Schema-driven inline classification**: the segmenter's extension
+  point — classify inline items from the schema (freely configurable
+  schemas bring cases like links as inline blocks).
+- **Optical alignment / margin protrusion**: planned extension
+  (Host-side, transparent to the Algorithm — see
+  composition-types.ts).
+- **Scheduling plan items not yet implemented**: compose-before-
+  reveal on initial load (no flash), async per-dirty-paragraph
+  steady state, workers when algorithms get expensive (the
+  scheduling section in composition-controller.ts stands; v0 is
+  synchronous in-cycle).
+- **ProseMirror editor applicator**: decorations spike, only after
+  the viewer is sealed (PM may fight us — viewer alone is good
+  enough).
+- **Testing harness**: integration tests for the composition
+  pipeline (currently: unit tests for the pure pieces — contract,
+  segmenter, dummy — plus manual verification of the wired Host).
+  Deferred until the behavior settles; then assert composed line
+  structure from document inputs, not implementation details.
+
 ## Before real algorithms (after milestone 1)
 
 - **Performance baseline**: measure composition cost with the dummy
@@ -116,17 +156,19 @@ Smallest vertical slice, Controller first (live feedback early):
 
 ## Optimization opportunities (deferred)
 
-- **Style-input dirty precision**: v1 marks ALL paragraphs dirty when
-  style inputs (typeSpec/stylePatches/nodeSpecToTypeSpec) change.
-  Refinements:
+- **Style-triggered recomposition precision**. Post-pivot state: the
+  meta drives recomposition per node when its scope rebuilds, so
+  PER-NODE affectedness is largely structural (a typeSpec change
+  recomposes only nodes whose scope actually rebuilds via the
+  identity-guarded cascade — NOT the full document). Still open:
   1. **Property-aware filtering**: non-compositional properties (e.g.
-     backgroundColor) should not trigger recomposition at all — the
-     dirty set depends on WHICH property changed, not just that a
-     style input did.
-  2. **Per-node affectedness**: a typeSpec change should recompose
-     only the document nodes whose resolved typeSpec is affected —
-     compare per-paragraph resolved typeSpecProperties ids (the
-     meta's own identity guard) and mark only those.
+     backgroundColor) currently still trigger recomposition of the
+     affected nodes (any typeSpec edit produces a new typeSpecnion
+     identity → scope rebuild → drive fires). The dirty decision
+     should depend on WHICH property changed — skip recomposition
+     when no composition-relevant property (widths, font, size,
+     axes, line height…) differs. The scope's generators or a
+     property-diff at the drive are the natural hook.
   Great optimization once documents grow.
 
 ## Key design decisions (log)
