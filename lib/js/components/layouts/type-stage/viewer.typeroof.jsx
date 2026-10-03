@@ -295,6 +295,27 @@ export class UIDocumentElement extends _UIDocumentAttachment {
             this.node,
             parentRendererNode,
         );
+        // text-composition: toggle the nowrap class on composed
+        // textblocks. The child maps the FULL external protocol id
+        // itself (the styler-wrapper pattern).
+        const compositionId = `composition@${metaInfo.rootPath.toString()}`,
+            widgets = [
+                [
+                    {},
+                    [[compositionId, "composition@"]],
+                    GenericUpdater,
+                    this._updateComposedClass.bind(this),
+                ],
+            ];
+        this._initWidgets(widgets);
+    }
+
+    _updateComposedClass(changedMap) {
+        if (changedMap.has("composition@"))
+            this.node.classList.toggle(
+                "typeroof-composed",
+                changedMap.get("composition@") !== null,
+            );
     }
 
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
@@ -975,7 +996,17 @@ export class UIDocumentViewer extends _BaseContainerComponent {
                           "composition@",
                       ],
                   ]
-                : [["./attrs", "attrs"]],
+                : [
+                      ["./attrs", "attrs"],
+                      // text-composition: textblocks toggle the
+                      // typeroof-composed class (nowrap) on their own
+                      // composition@ entry (null = OFF MODE);
+                      // non-textblock elements get null forever.
+                      [
+                          `composition@${metaInfo.rootPath.toString()}`,
+                          "composition@",
+                      ],
+                  ],
             Constructor,
             // Injected by the meta node that initializes this
             // description: its own zones.

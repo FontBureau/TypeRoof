@@ -42,3 +42,13 @@
 .typeroof-composition-line {
     background-color: var(--line-color-code, transparent);
 }
+
+/* A composed textblock: the browser must not soft-wrap on its own —
+ * our line spans' ::before{display:block} are the only breaks. This
+ * is the go-forward model (justification will set explicit line
+ * widths; browser wrapping would double-break). The "does the
+ * browser agree with our measurements" comparison remains available
+ * via OFF MODE. */
+.typeroof-composed {
+    white-space: nowrap;
+}
