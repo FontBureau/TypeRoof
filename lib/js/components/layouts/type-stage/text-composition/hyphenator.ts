@@ -19,6 +19,10 @@
 import type HypherType from "hypher";
 import type { BreakOpportunity } from "./composition-types.ts";
 import type { HostSegment } from "./segmenter.ts";
+import {
+    HYPHENATION_PATTERN_KEYS,
+    HYPHENATION_PATTERN_ALIASES,
+} from "./hyphenation-pattern-catalog.mjs";
 
 export const HYPHENATION_PENALTY = 10;
 
@@ -40,10 +44,9 @@ export const HYPHENATION_DEFAULTS: HyphenationConfig = {
  *  hyphenation for them). Host policy shared by the layout (derives
  *  the pattern keys to load, index.typeroof.jsx) and the controller
  *  (resolves the installed pattern per textblock). */
-const _HYPHENATION_PATTERNS = new Map([
-    ["en-us", "en-us"],
-    ["en", "en-us"],
-    ["de", "de"],
+const _HYPHENATION_PATTERNS = new Map<string, string>([
+    ...HYPHENATION_PATTERN_KEYS.map((key): [string, string] => [key, key]),
+    ...Object.entries(HYPHENATION_PATTERN_ALIASES),
 ]);
 
 export function languageToHyphenationPatternKey(

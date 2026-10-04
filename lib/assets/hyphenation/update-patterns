@@ -1,85 +1,103 @@
 #!/usr/bin/env node
 /**
- * update-hyphenation-patterns — vendor the TeX hyphenation patterns
- * into lib/assets/hyphenation/<lang>.json.
+ * update-hyphenation-patterns — vendor EVERY pattern from
+ * bramstein/hyphenation-patterns/patterns into
+ * lib/assets/hyphenation/<pattern-key>.json.
  *
- * SOURCE: the hyphenation.<lang> npm packages (hypher pattern format;
- * derived from the hyph-utf8 TeX hyphenation patterns). The packages
- * are fetched at run time (npm pack) — the sources are documented
- * here and per-asset in each file's _meta (package, version,
- * license), so the tree is reproducible, not magic.
+ * SOURCE OF TRUTH:
+ * https://github.com/bramstein/hyphenation-patterns/tree/master/patterns
+ * pinned below to an immutable commit for reproducibility. The npm
+ * hyphenation.* packages are NOT complete (e.g. hyphenation.is is
+ * unpublished), so fetching packages cannot satisfy the complete-
+ * catalog contract.
  *
- * Why vendored (not npm deps): in-tree extensibility — pattern
- * fixes/extensions land without an upstream roundtrip. The assets
- * load async on demand via the ResourceRequirement machinery.
+ * The complete catalog itself lives in
+ * text-composition/hyphenation-pattern-catalog.mjs and is shared by
+ * this generator + runtime language lookup: no vendored asset can be
+ * unreachable by accident.
+ *
+ * Licensing: upstream README states "LGPL (unless otherwise noted)"
+ * and individual pattern source files may contain more specific
+ * provenance/license comments. The pinned source URL is recorded in
+ * every generated asset; consult it for the pattern's exact terms.
+ *
+ * Why vendored: deterministic/offline runtime loading and in-tree
+ * extensibility. The JSON assets load asynchronously on demand via
+ * the ResourceRequirement machinery.
  *
  * Usage: lib/assets/hyphenation/update-patterns
- * (update scripts live next to their subjects; run from the repo root)
+ * (update scripts live next to their subjects; run from repo root)
  */
-import { execSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import {
+    mkdtempSync,
+    readFileSync,
+    writeFileSync,
+    rmSync,
+    readdirSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { HYPHENATION_PATTERN_KEYS } from "../../js/components/layouts/type-stage/text-composition/hyphenation-pattern-catalog.mjs";
 
-const require = createRequire(import.meta.url);
+const require = createRequire(import.meta.url),
+    UPSTREAM_COMMIT = "dc01d58a667eece8d082ec3c3a1e88ed332bf802",
+    UPSTREAM_REPOSITORY = "https://github.com/bramstein/hyphenation-patterns",
+    RAW_BASE = `https://raw.githubusercontent.com/bramstein/hyphenation-patterns/${UPSTREAM_COMMIT}/patterns`,
+    TARGET = "lib/assets/hyphenation";
 
-// The available hyphenation.* pattern packages (npm, by Bram Stein /
-// the hypher project). Keep sorted.
-const LANGUAGES = [
-    "ca",
-    "de",
-    "en-gb",
-    "en-us",
-    "es",
-    "fi",
-    "fr",
-    "it",
-    "nl",
-    "pl",
-    "pt",
-    "ru",
-    "sv",
-    "tr",
-];
-
-const TARGET = "lib/assets/hyphenation";
-
-function main() {
+async function main() {
     const tmp = mkdtempSync(path.join(tmpdir(), "hyph-patterns-"));
     try {
-        for (const lang of LANGUAGES) {
-            const pkg = `hyphenation.${lang}`,
-                tarball = execSync(`npm pack ${pkg}`, {
-                    cwd: tmp,
-                    encoding: "utf8",
-                }).trim();
-            execSync(`tar xzf ${tarball}`, { cwd: tmp });
-            const pkgDir = path.join(tmp, "package"),
-                pkgJson = JSON.parse(
-                    readFileSync(path.join(pkgDir, "package.json"), "utf8"),
-                ),
-                patterns = require(path.join(pkgDir, "lib", `${lang}.js`)),
+        for (const lang of HYPHENATION_PATTERN_KEYS) {
+            const sourceURL = `${RAW_BASE}/${lang}.js`,
+                response = await fetch(sourceURL);
+            if (!response.ok)
+                throw new Error(
+                    `RESOURCE ERROR failed to fetch ${sourceURL}: ` +
+                        `${response.status} ${response.statusText}`,
+                );
+            const source = await response.text(),
+                // .cjs makes the upstream module.exports source
+                // unambiguous inside this ESM project.
+                sourcePath = path.join(tmp, `${lang}.cjs`);
+            writeFileSync(sourcePath, source);
+            const patterns = require(sourcePath),
                 out = {
                     _meta: {
-                        source: `${pkg} npm package v${pkgJson.version} (hypher pattern format; derived from the hyph-utf8 TeX hyphenation patterns)`,
-                        license: pkgJson.license ?? "MIT",
-                        generator: "lib/assets/hyphenation/update-patterns",
-                        note: "Vendored for in-tree extensibility (pattern fixes/extensions land without an upstream roundtrip). Loaded async on demand via the ResourceRequirement machinery.",
+                        source: `${UPSTREAM_REPOSITORY}/blob/${UPSTREAM_COMMIT}/patterns/${lang}.js`,
+                        upstreamCommit: UPSTREAM_COMMIT,
+                        license:
+                            "LGPL unless otherwise noted in the linked upstream pattern source",
+                        generator:
+                            "lib/assets/hyphenation/update-patterns",
+                        note: "Complete pinned bramstein/hyphenation-patterns catalog; vendored for deterministic async runtime loading and in-tree extensibility.",
                     },
                     ...patterns,
                 },
                 target = path.join(TARGET, `${lang}.json`);
             writeFileSync(target, JSON.stringify(out, null, 1) + "\n");
             console.log(
-                `${lang}.json  v${pkgJson.version}  ${JSON.stringify(out).length} bytes`,
+                `${lang}.json  ${JSON.stringify(out).length} bytes  ${sourceURL}`,
             );
-            rmSync(pkgDir, { recursive: true, force: true });
         }
+
+        // Remove generated pattern assets no longer in the catalog;
+        // keep the generator itself. This makes repeated runs exact.
+        const expected = new Set(
+            HYPHENATION_PATTERN_KEYS.map((key) => `${key}.json`),
+        );
+        for (const filename of readdirSync(TARGET))
+            if (filename.endsWith(".json") && !expected.has(filename)) {
+                rmSync(path.join(TARGET, filename));
+                console.log(`removed stale ${filename}`);
+            }
     } finally {
         rmSync(tmp, { recursive: true, force: true });
     }
-    console.log(`\n${LANGUAGES.length} patterns updated in ${TARGET}/`);
+    console.log(
+        `\n${HYPHENATION_PATTERN_KEYS.length} patterns updated in ${TARGET}/`,
+    );
 }
 
-main();
+await main();

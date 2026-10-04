@@ -1,0 +1,15 @@
+{
+ "_meta": {
+  "source": "https://github.com/bramstein/hyphenation-patterns/blob/dc01d58a667eece8d082ec3c3a1e88ed332bf802/patterns/pa.js",
+  "upstreamCommit": "dc01d58a667eece8d082ec3c3a1e88ed332bf802",
+  "license": "LGPL unless otherwise noted in the linked upstream pattern source",
+  "generator": "lib/assets/hyphenation/update-patterns",
+  "note": "Complete pinned bramstein/hyphenation-patterns catalog; vendored for deterministic async runtime loading and in-tree extensibility."
+ },
+ "id": "pa",
+ "leftmin": 2,
+ "rightmin": 2,
+ "patterns": {
+  "2": "ਅ1ਆ1ਇ1ਈ1ਉ1ਊ1ਏ1ਐ1ਔ1ਿ1ਾ1ੀ1ੁ1ੂ1ੇ1ੋ1ੌ1੍2ਃ1ਂ11ਕ1ਗ1ਖ1ਘ1ਙ1ਚ1ਛ1ਜ1ਝ1ਞ1ਟ1ਠ1ਡ1ਢ1ਣ1ਤ1ਥ1ਦ1ਧ1ਨ1ਪ1ਫ1ਬ1ਭ1ਮ1ਯ1ਰ1ਲ1ਵ1ਸ਼1ਸ1ਹ1ਲ਼"
+ }
+}

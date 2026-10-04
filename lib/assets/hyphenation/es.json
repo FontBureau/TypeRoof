@@ -1,9 +1,10 @@
 {
  "_meta": {
-  "source": "hyphenation.es npm package v0.2.1 (hypher pattern format; derived from the hyph-utf8 TeX hyphenation patterns)",
-  "license": "MIT",
+  "source": "https://github.com/bramstein/hyphenation-patterns/blob/dc01d58a667eece8d082ec3c3a1e88ed332bf802/patterns/es.js",
+  "upstreamCommit": "dc01d58a667eece8d082ec3c3a1e88ed332bf802",
+  "license": "LGPL unless otherwise noted in the linked upstream pattern source",
   "generator": "lib/assets/hyphenation/update-patterns",
-  "note": "Vendored for in-tree extensibility (pattern fixes/extensions land without an upstream roundtrip). Loaded async on demand via the ResourceRequirement machinery."
+  "note": "Complete pinned bramstein/hyphenation-patterns catalog; vendored for deterministic async runtime loading and in-tree extensibility."
  },
  "id": "es",
  "leftmin": 2,
