@@ -165,19 +165,6 @@ afterthoughts):
   freely configurable schemas bring cases like links as inline
   blocks).
 - Atom box measurement (inline atoms measure 0 in v0).
-- **Per-run style spans (marks) are not measured** (case observed
-  2026-10-04): the controller measures ALL segments at the
-  textblock's uniform font/axes (v1 simplification, see
-  composition-controller.ts "per-RUN values come with per-run style
-  spans"), but the viewer renders mark-styled runs with their real
-  style. A mark that widens glyphs (observed: a "bold" style
-  setting wdth to max) renders WIDER than measured — line breaks
-  don't move and the lines overflow. Fix direction: split segments
-  at style boundaries (the contract's StyleSpan concept) and
-  measure each run at its own font/axes/features from the
-  properties stream (Sprint A built the per-textblock path; per-run
-  needs the spans carried through segmentation and the ingredients
-  snapshot).
 
 - ~~Runtime asset loading (language switch)~~ RESOLVED
   (3731d2de, metamodel: invalidate stale child proxies after
@@ -193,6 +180,23 @@ afterthoughts):
 Sprint A by the input-equality filter: the drive compares consumed
 ingredients, so non-compositional edits recompose nothing; per-node
 affectedness is structural via the identity-guarded scope cascade.)
+
+## Per-run style spans ✅ DONE (2026-10-04, 332ae5b5 + 54e63c88)
+
+Runs (leaves) are measured at their resolved style: each text leaf
+resolves its EXCLUSIVE style link (marks are style-exclusive by
+contract — `styleLinkProperties@` is the full story; a >1 violation
+fires a console.error guard, innermost wins) and the controller
+reads the registered StyleLinkLiveProperties (the same resolved
+typeSpec cascade + patch merge the viewer's styler consumes).
+Segments and hyphen widths are measured per leaf; per-leaf style
+keys are input-equality ingredients, so patch-content edits
+recompose consumers through the normal (unpruned) meta cascade —
+no subscription machinery needed (phase-2 erratum in the plan).
+Regression tests: measurement tracks link/unlink and patch edits
+(native + intent links); e2e: wdth-max bold re-measures and the
+wrapper's font-variation-settings carries the same value
+(measured == rendered). Perf: ratios 1.00/1.03 (noise level).
 
 ## Milestone 2 extras (beyond the algorithm)
 
