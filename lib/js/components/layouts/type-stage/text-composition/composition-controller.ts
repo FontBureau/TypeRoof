@@ -195,6 +195,11 @@ import {
 } from "./measurer.ts";
 import { createDummyComposition } from "./dummy-composition.ts";
 import { greedyRaggedComposition } from "./greedy-ragged.ts";
+import {
+    getStyleLinkPropertiesId,
+    getWrapMarks,
+} from "../document-nodes-meta/derivations.mjs";
+import { schemaSpec as defaultSchemaSpec } from "../../../prosemirror/default-schema.ts";
 import Hypher from "hypher";
 import {
     hyphenateSegments,
@@ -209,6 +214,39 @@ import "./line-spans.css";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+/** A leaf inline item (text run or atom) in sourceIndex order —
+ *  applicators find their segments by the document-node path;
+ *  styleLinkPropertiesId is the run's EXCLUSIVE resolved style link
+ *  (per-run style spans; null = unstyled, measured at the
+ *  textblock's style). */
+export interface CompositionLeaf {
+    path: string | null;
+    styleLinkPropertiesId: string | null;
+}
+
+/** What the meta element hands to composeTextblock for per-run
+ *  style resolution: the effective typeSpecProperties@ path of the
+ *  textblock (from its own context, the memoized
+ *  getTypeSpecPropertiesIdMethod) and whether typeSpec styling
+ *  applies at all. */
+export interface StyleResolutionContext {
+    hasTypeSpecStyling: boolean;
+    typeSpecPropertiesPath: Path | null;
+}
+
+/** The per-run measurement tuple (the textblock's values are the
+ *  fallback; see composeTextblock). */
+interface LeafStyle {
+    font: any;
+    axesEntries: [string, number][];
+    axesKey: string;
+    featuresEntries: [string, boolean][];
+    featuresKey: string;
+    language: string | null;
+    direction: string | null;
+    fontSizePt: number;
+}
+
 export class CompositionController extends _BaseComponent {
     [UPDATE_STRATEGY] = UPDATE_STRATEGY_NO_UPDATE;
 
@@ -217,6 +255,7 @@ export class CompositionController extends _BaseComponent {
     declare widgetBus: any;
     declare _measurer: Measurer | null;
     declare _compositionHandlerImpl: any;
+    declare _styleLinkPropertiesHandlerImpl: any;
     declare _registrations: Map<string, () => void>;
     declare _ingredients: Map<string, unknown[]>;
     declare _hyphers: Map<unknown, any>;
@@ -232,6 +271,7 @@ export class CompositionController extends _BaseComponent {
             ? new Measurer(widgetBus.harfbuzz)
             : null;
         this._compositionHandlerImpl = null;
+        this._styleLinkPropertiesHandlerImpl = null;
         // textblockPath -> unregister closure (SimpleProtocolHandler)
         this._registrations = new Map();
         // textblockPath -> consumed ingredients of the last
@@ -259,13 +299,17 @@ export class CompositionController extends _BaseComponent {
     }
 
     // Classify a textblock's inline content (the segmenter's
-    // InlineItem shape) and collect the leaf paths (sourceIndex
-    // order). EXTENSION POINT (see segmenter.ts): the classification
-    // rules are simple v0.
+    // InlineItem shape) and collect the leaves (sourceIndex order).
+    // EXTENSION POINT (see segmenter.ts): the classification
+    // rules are simple v0. markSpec/styleResolution drive the per-run
+    // style-link resolution (per-run style spans); when markSpec is
+    // null every leaf resolves unstyled.
     _buildInlineItems(
         mmNode: any,
         path: Path,
-        leaves: { path: string | null }[],
+        leaves: CompositionLeaf[],
+        styleResolution: StyleResolutionContext | null,
+        markSpec: any,
     ): InlineItem[] {
         const items: InlineItem[] = [];
         for (const [index, child] of mmNode.get("content").value.entries()) {
@@ -277,7 +321,18 @@ export class CompositionController extends _BaseComponent {
                     kind: "text",
                     text: text.isEmpty ? "" : text.value,
                 });
-                leaves.push({ path: childPath.toString() });
+                leaves.push({
+                    path: childPath.toString(),
+                    styleLinkPropertiesId:
+                        markSpec === null
+                            ? null
+                            : this._resolveLeafStyleLink(
+                                  child,
+                                  childPath,
+                                  styleResolution,
+                                  markSpec,
+                              ),
+                });
             } else if (typeKey === "hard_break")
                 items.push({ kind: "hardBreak" });
             else {
@@ -285,15 +340,92 @@ export class CompositionController extends _BaseComponent {
                 if (content !== undefined && content.value.length > 0)
                     items.push({
                         kind: "inlineContainer",
-                        items: this._buildInlineItems(child, childPath, leaves),
+                        items: this._buildInlineItems(
+                            child,
+                            childPath,
+                            leaves,
+                            styleResolution,
+                            markSpec,
+                        ),
                     });
                 else {
                     items.push({ kind: "inlineAtom" });
-                    leaves.push({ path: childPath.toString() });
+                    leaves.push({
+                        path: childPath.toString(),
+                        styleLinkPropertiesId: null,
+                    });
                 }
             }
         }
         return items;
+    }
+
+    /** Per-run style spans: resolve a text leaf's EXCLUSIVE style
+     *  link to its registered styleLinkProperties@ id (null =
+     *  unstyled: no effective edge or no registration — the unknown-
+     *  style case renders the bare tag, i.e. the textblock style).
+     *  Marks are style-exclusive by contract (styleLinkProperties@
+     *  is the full story; the links attach to the id). The guard is
+     *  deliberately simple: >1 resolved link is a contract violation
+     *  (console.error — a big contract issue), the innermost wins.
+     *  If this ever fires we may make it smarter or rework the
+     *  contract (e.g. a style adding only color/text-decoration/href
+     *  could become allowable) — not now. */
+    _resolveLeafStyleLink(
+        textNode: any,
+        childPath: Path,
+        styleResolution: StyleResolutionContext | null,
+        markSpec: any,
+    ): string | null {
+        if (
+            styleResolution === null ||
+            !styleResolution.hasTypeSpecStyling ||
+            styleResolution.typeSpecPropertiesPath === null
+        )
+            return null;
+        // getWrapMarks builds inside out: the innermost wrapper first
+        const ids: string[] = [];
+        for (const descriptor of getWrapMarks(
+            textNode,
+            markSpec,
+            defaultSchemaSpec,
+            { hasTypeSpecStyling: true },
+            this.widgetBus,
+            styleResolution.typeSpecPropertiesPath,
+        )) {
+            // no style link (styleLinkName) or no effective edge
+            // (styleName) — renders unstyled for our purposes
+            if (
+                descriptor.styleLinkName == null ||
+                descriptor.styleName == null
+            )
+                continue;
+            const id = getStyleLinkPropertiesId(
+                this.widgetBus,
+                styleResolution.typeSpecPropertiesPath,
+                descriptor.styleLinkType,
+                descriptor.styleLinkName,
+            );
+            if (id !== null) ids.push(id);
+        }
+        if (ids.length > 1)
+            console.error(
+                `CONTRACT VIOLATION ${this} the text run at ${childPath.toString()} ` +
+                    `resolves to more than one style link, but style links are ` +
+                    `EXCLUSIVE (styleLinkProperties@ is the full story): ` +
+                    `${ids.join(", ")} — using the innermost.`,
+            );
+        return ids[0] ?? null;
+    }
+
+    _styleLinkPropertiesHandler(): any {
+        if (this._styleLinkPropertiesHandlerImpl === null)
+            this._styleLinkPropertiesHandlerImpl =
+                this.widgetBus.wrapper.getProtocolHandlerImplementation(
+                    "styleLinkProperties@",
+                    null,
+                );
+        return this._styleLinkPropertiesHandlerImpl;
     }
 
     // Leaf texts in depth-first order (the segmenter's sourceIndex
@@ -314,12 +446,15 @@ export class CompositionController extends _BaseComponent {
      *  Called by the meta element after its scope settled.
      *  nodePropertiesPayload: the element's FRESH scope component
      *  (answers .getProperties()). newState: the cycle's state (for
-     *  the gate and the font). */
+     *  the gate and the font). styleResolution: the meta element's
+     *  per-run style context (per-run style spans); null = every leaf
+     *  resolves unstyled. */
     composeTextblock(
         textblockPath: Path,
         textblockNode: any,
         nodePropertiesPayload: any,
         newState: any,
+        styleResolution: StyleResolutionContext | null = null,
     ) {
         const textblockPathString = textblockPath.toString(),
             nodePropertiesEarly = nodePropertiesPayload.getProperties(),
@@ -349,11 +484,24 @@ export class CompositionController extends _BaseComponent {
             return;
         }
 
-        const leaves: { path: string | null }[] = [],
+        const markSpec =
+            styleResolution !== null && styleResolution.hasTypeSpecStyling
+                ? getEntry(
+                      newState,
+                      this._layoutRootPath().append(
+                          "proseMirrorSchema",
+                          "marks",
+                      ),
+                      null,
+                  )
+                : null;
+        const leaves: CompositionLeaf[] = [],
             items = this._buildInlineItems(
                 textblockNode,
                 textblockPath,
                 leaves,
+                styleResolution,
+                markSpec,
             ),
             leafTexts = this._leafTexts(items),
             logicalParagraphs = assembleLogicalParagraphs(items),
@@ -454,6 +602,58 @@ export class CompositionController extends _BaseComponent {
                     `— using fallbacks ${lineWidthPt}pt / ${fontSizePt}pt.`,
             );
 
+        // Per-run style spans: the measurement tuple per leaf. The
+        // textblock's values (above) are the fallback for unstyled
+        // leaves; a styled leaf's resolved values come from its
+        // exclusive styleLinkProperties@ entry — the registered
+        // StyleLinkLiveProperties, read the same way
+        // UIDocumentStyleStyler reads it (typeSpec cascade + patch
+        // merged, font-dependent synthetics pre-resolved).
+        const textblockStyle: LeafStyle = {
+                font,
+                axesEntries,
+                axesKey,
+                featuresEntries,
+                featuresKey,
+                language,
+                direction,
+                fontSizePt,
+            },
+            styleLinkHandler = this._styleLinkPropertiesHandler(),
+            leafStyles: (LeafStyle | null)[] = leaves.map((leaf) => {
+                if (
+                    leaf.styleLinkPropertiesId === null ||
+                    styleLinkHandler === null ||
+                    !styleLinkHandler.hasRegistered(leaf.styleLinkPropertiesId)
+                )
+                    return null;
+                const payload = styleLinkHandler.getRegistered(
+                        leaf.styleLinkPropertiesId,
+                    ),
+                    properties = payload.typeSpecnion.getProperties(),
+                    leafFont = properties.get(`${SPECIFIC}font`) ?? font,
+                    leafFontSize = properties.get(`${GENERIC}fontSize`),
+                    leafDirectionRaw = properties.get(`${GENERIC}direction`);
+                return {
+                    font: leafFont,
+                    axesEntries: axesEntriesOf(leafFont, properties),
+                    axesKey: axesKeyOf(leafFont, properties),
+                    featuresEntries: featuresEntriesOf(properties),
+                    featuresKey: featuresKeyOf(properties),
+                    language: properties.get("language/lang") ?? language,
+                    direction:
+                        leafDirectionRaw === "ltr" || leafDirectionRaw === "rtl"
+                            ? leafDirectionRaw
+                            : direction,
+                    fontSizePt:
+                        typeof leafFontSize === "number"
+                            ? leafFontSize
+                            : fontSizePt,
+                };
+            }),
+            styleOf = (sourceIndex: number): LeafStyle =>
+                leafStyles[sourceIndex] ?? textblockStyle;
+
         // Input-equality filter (the property-aware reframe: what we
         // CONSUME is what invalidates — no hand-maintained relevance
         // list). Purity guarantees same input => same output, so an
@@ -479,6 +679,24 @@ export class CompositionController extends _BaseComponent {
                 hyphenationConfig.minBefore,
                 hyphenationConfig.minAfter,
                 hyphenationPattern,
+                // per-run styles: the resolved link id + the CONSUMED
+                // values per leaf (flat — nulls for unstyled leaves;
+                // a patch edit that changes any consumed value
+                // invalidates, one that changes nothing doesn't)
+                ...leaves.flatMap((leaf, index): unknown[] => {
+                    const style = leafStyles[index];
+                    return style === null || style === undefined
+                        ? [leaf.styleLinkPropertiesId]
+                        : [
+                              leaf.styleLinkPropertiesId,
+                              style.font,
+                              style.axesKey,
+                              style.featuresKey,
+                              style.language,
+                              style.direction,
+                              style.fontSizePt,
+                          ];
+                }),
                 // content: the assembled leaf texts (typing always
                 // invalidates; cheap string compare at this scale)
                 leafTexts.join("\u0001"),
@@ -506,40 +724,55 @@ export class CompositionController extends _BaseComponent {
                         hypher,
                         hyphenationConfig,
                     ));
-                // the hyphen glyph's width, baked into the segments
-                // BEFORE hyphen breaks below (the hyphen is not in
-                // the source text; CSS ::after renders it)
-                const hyphenWidthPt =
-                    hypher !== null
-                        ? this._measurer!.measureEm(
-                              font,
-                              axesEntries,
-                              axesKey,
-                              featuresEntries,
-                              featuresKey,
-                              language,
-                              direction,
-                              "-",
-                          ) * fontSizePt
-                        : 0;
-                // measure: fill widthPt in place (segments are fresh)
-                for (const segment of segments)
+                // the hyphen glyph's width per leaf style (the hyphen
+                // renders in the run's font/style), baked into the
+                // segments BEFORE hyphen breaks below (the hyphen is
+                // not in the source text; CSS ::after renders it)
+                const hyphenWidthOf = (() => {
+                    const widths = new Map<LeafStyle, number>();
+                    return (style: LeafStyle): number => {
+                        let width = widths.get(style);
+                        if (width === undefined) {
+                            width =
+                                this._measurer!.measureEm(
+                                    style.font,
+                                    style.axesEntries,
+                                    style.axesKey,
+                                    style.featuresEntries,
+                                    style.featuresKey,
+                                    style.language,
+                                    style.direction,
+                                    "-",
+                                ) * style.fontSizePt;
+                            widths.set(style, width);
+                        }
+                        return width;
+                    };
+                })();
+                // measure: fill widthPt in place (segments are
+                // fresh), each at ITS leaf's style (per-run style
+                // spans; unstyled leaves use the textblock style)
+                for (const segment of segments) {
+                    const style = styleOf(segment.sourceIndex);
                     segment.widthPt =
                         this._measurer!.measureEm(
-                            font,
-                            axesEntries,
-                            axesKey,
-                            featuresEntries,
-                            featuresKey,
-                            language,
-                            direction,
+                            style.font,
+                            style.axesEntries,
+                            style.axesKey,
+                            style.featuresEntries,
+                            style.featuresKey,
+                            style.language,
+                            style.direction,
                             leafTexts[segment.sourceIndex]?.slice(
                                 segment.start,
                                 segment.end,
                             ) ?? "",
                         ) *
-                            fontSizePt +
-                        (segment.hyphenAfter === true ? hyphenWidthPt : 0);
+                            style.fontSizePt +
+                        (segment.hyphenAfter === true && hypher !== null
+                            ? hyphenWidthOf(style)
+                            : 0);
+                }
                 const widthOf = (from: number, to: number) => {
                         let width = 0;
                         for (let i = from; i < to; i++)
