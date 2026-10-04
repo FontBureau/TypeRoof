@@ -165,6 +165,17 @@ afterthoughts):
   freely configurable schemas bring cases like links as inline
   blocks).
 - Atom box measurement (inline atoms measure 0 in v0).
+- ALL-CAPS hyphenation: hypher hyphenates all-caps words
+  (observed 2026-10-04: "EDITEDCOMPOSITIONPROBE" -> EDIT-ED-…) —
+  typographically debatable (TeX \uchyph=0 territory); a candidate
+  gate for the hyphenator when a real case complains.
+- Test-infrastructure limitation (observed 2026-10-04): the
+  text-composition harness's fixed tiny measure packs ~one word
+  per line regardless of font size (lineLength is en-relative, the
+  zone width is jsdom-fixed) — line-break MOVEMENT and overfull
+  correctness are not assertable there. Milestone 5 (KP++) will
+  need a controllable harness measure (a layout-geometry fixture
+  or a working manual horizontal layout in jsdom).
 
 - ~~Runtime asset loading (language switch)~~ RESOLVED
   (3731d2de, metamodel: invalidate stale child proxies after
@@ -176,10 +187,17 @@ afterthoughts):
 
 ## Optimization opportunities (deferred)
 
-(none currently open — the property-aware filtering was resolved in
-Sprint A by the input-equality filter: the drive compares consumed
-ingredients, so non-compositional edits recompose nothing; per-node
-affectedness is structural via the identity-guarded scope cascade.)
+- perf:composition's absolute-ms (onMs) regression gate can't
+  survive environment drift (observed 2026-10-04: 50x false
+  positives on an idle machine, reproduced on an unchanged commit;
+  the RATIO — the documented machine-stable metric — stayed within
+  1.02x of baseline). Candidate: gate on ratio only, or record a
+  machine fingerprint in the baseline snapshot.
+
+(The property-aware filtering was resolved in Sprint A by the
+input-equality filter: the drive compares consumed ingredients, so
+non-compositional edits recompose nothing; per-node affectedness is
+structural via the identity-guarded scope cascade.)
 
 ## Per-run style spans ✅ DONE (2026-10-04, 332ae5b5 + 54e63c88)
 
@@ -197,6 +215,59 @@ Regression tests: measurement tracks link/unlink and patch edits
 (native + intent links); e2e: wdth-max bold re-measures and the
 wrapper's font-variation-settings carries the same value
 (measured == rendered). Perf: ratios 1.00/1.03 (noise level).
+
+## Milestone 4 design notes (potentials / Treatment Planner)
+
+Terminology: "justification spec" (varla-varfo) is renamed to
+**justification potentials**, short "potentials" ("we ran out of
+narrowing potential, hence we try widening now"). Research:
+`docs/planning/agentic-artefacts/thoughts/research/2026-10-04-1644-justification-potentials.md`.
+
+Core model: potentials map a **design-space location** to
+treatments. Levels navigate by AXIS VALUES ONLY — the third level
+of the stubs is the run's **opsz value**, not its font size (an
+explicit opsz is the author declaring optical intent; potentials
+follow it). A leaf holds the treatments:
+`{XTRA: [min,dflt,max], tracking: [min,0,max], wordspace: [min,0,max]}`
+— axis treatments as [min,dflt,max] axis values; tracking =
+ABSOLUTE pt letter-spacing per glyph (keyed by the opsz-declared
+optical size); wordspace = FACTOR of the natural space advance
+(0 = natural). Step semantics: one normalized per-line step drives
+all enabled treatments in parallel, per-side linear maps, clamp at
+±1 (|step| > 1 = unsatisfiable, per the contract).
+
+Deferred: **potentials storage + metamodel** (the open question).
+The design constraints discovered (for when it lands):
+
+- Tables declare their own ORDERED dimension tags ([wght, wdth,
+  opsz] for the stubs; authors may use other axes or deeper/
+  shallower nesting — the structure must be flexible). Each level
+  may bottom out as a leaf.
+- Entries within a level must be numerically MONOTONIC (validated
+  — a coherence function is the natural place; ascending or
+  descending both legal; [8, 144, 14] is invalid). Keep
+  declaration order: insertion-ordered structures only — an
+  alpha-key-ordered map would corrupt a descending declaration
+  ("144" < "24" < "8").
+- Font entries CANNOT carry potentials: deferred-font
+  serialization keeps only name+version+origin; extra fields
+  silently drop (shell.mjs). The document-scoped landing spot is a
+  root ordered-map field next to stylePatchesSource in
+  createTypeStageModelVariantWithDefaults (serializes free).
+- Discovery is BEST-FIT, most-specific-wins: a table's description
+  is family-name match + the navigation axes it needs (all present
+  in the font's axisRanges); Roboto Flex and Roboto Delta are
+  sufficiently compatible (Delta resolves to the Flex table).
+  fullName is a brittle key (origin prefix + massaged version).
+- Future: font authors define potentials for their fonts using our
+  software; distribution may eventually travel with the font
+  (e.g. a new font table). Until then: demo territory — stubs in
+  code, ad-hoc document-scoped definitions when editing lands.
+
+Also deferred from milestone 4 scope: inter-line harmonization
+factor (headlines), folding the demo's wdth headline stub into the
+unified structure, per-treatment impact weights (the demo's own
+TODO), Amstelvar avar1/avar2 table variants.
 
 ## Milestone 2 extras (beyond the algorithm)
 
