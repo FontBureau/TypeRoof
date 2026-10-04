@@ -6,6 +6,7 @@ import {
     _BaseLayoutModel,
     CommentsModel,
     InstalledHyphenationPatternsModel,
+    HyphenationPatternRequirement,
 } from "../../main-model.mjs";
 import {
     PathModelOrEmpty,
@@ -16,11 +17,6 @@ import {
     SERIALIZE_OPTIONS,
     SERIALIZE_FORMAT_OBJECT,
     InternalizedDependency,
-    ForeignKey,
-    ResourceRequirement,
-    keyConstraintError,
-    _AbstractOrderedMapModel,
-    _AbstractStructModel,
 } from "../../../metamodel.mjs";
 import {
     TypeSpecModel,
@@ -44,6 +40,7 @@ import { UINodeSpecToTypeSpecLinksMap } from "../../type-spec/fundamentals.mjs";
 import { getTypeSpecDefaultsMap } from "./defaults.mjs";
 
 import { LengthModel } from "../../length-models.mjs";
+import { createLanguageTag } from "../../language-tags.typeroof.jsx";
 
 import { TypeStagePaneStyler } from "./pane-styler.typeroof.jsx";
 import {
@@ -173,105 +170,104 @@ export const ensureDimensionBoundnessCoherenceFn = CoherenceFunction.create(
     },
 );
 
-// --- Hyphenation pattern loading (milestone 3, phase 3) ---------
-// The generalization of the font ResourceRequirement machinery's
-// second instance (after fonts): a map of pattern ForeignKeys whose
-// CUSTOM constraint yields a ResourceRequirement when the pattern is
-// not installed; the shell's _asyncResolveHyphenationPattern fetches
-// the vendored asset (lib/assets/hyphenation/<key>.json) and
-// installs it — session-only. The coherence below derives the
-// required pattern keys from the languages used in the typeSpec
-// tree; the controller reads the installed pattern objects from the
-// state dependency by language.
-// BCP47 language -> vendored pattern key, with fallbacks:
-// languageToHyphenationPatternKey lives in text-composition/
-// hyphenator.ts (shared with the composition controller — importing
-// it from HERE would create an import cycle, this module imports
-// the controller). Imported at the top of this module.
+// --- Hyphenation pattern loading (milestone 3, simplified) -------
+// Resource requirements are yielded DIRECTLY from derived language
+// usage. There is deliberately no serializable reference map: the
+// actual pattern objects live only in the session dependency
+// installedHyphenationPatterns and are reproducible vendored assets.
 
-function* hyphenationPatternKeyConstraint(targetContainer, currentKeyValue) {
-    // the activeFontKey pattern (type-spec/models.mjs): set-but-not-
-    // installed yields the requirement that loads the asset. The key
-    // is NOT_NULL (the main-model activeFontKey precedent): in an
-    // empty dependency world this RAISES (deliberate) instead of
-    // silently nulling — routing to the async resolver.
-    if (!currentKeyValue || currentKeyValue === ForeignKey.NULL)
-        return ForeignKey.NULL;
-    const key = yield new ResourceRequirement(
-        this,
-        targetContainer,
-        currentKeyValue,
-        this.allowNull ? ForeignKey.SET_NULL : ForeignKey.NO_ACTION,
+function languageTagParts(languageTag) {
+    return Object.fromEntries(
+        ["language", "script", "region"].map((key) => {
+            const value = languageTag.get(key);
+            return [key, value.isEmpty ? null : value.value];
+        }),
     );
-    if (!targetContainer.has(key)) {
-        if (this.allowNull) return ForeignKey.NULL;
-        throw keyConstraintError(
-            new Error(
-                `CONSTRAINT ERROR ${this} Can't set key from requested ` +
-                    `ResourceRequirement ${key.toString()} is not in targetContainer "${this.targetName}" or NULL.`,
-            ),
-        );
-    }
-    return key;
 }
 
-const HyphenationPatternReferenceModel = _AbstractStructModel.createClass(
-        "HyphenationPatternReferenceModel",
-        [
-            "installedHyphenationPatterns",
-            new InternalizedDependency(
-                "installedHyphenationPatterns",
-                InstalledHyphenationPatternsModel,
-            ),
-        ],
-        [
-            "pattern",
-            new ForeignKey(
-                "installedHyphenationPatterns",
-                ForeignKey.NOT_NULL,
-                ForeignKey.CUSTOM,
-                hyphenationPatternKeyConstraint,
-            ),
-        ],
-    ),
-    HyphenationPatternsModel = _AbstractOrderedMapModel.createClass(
-        "HyphenationPatternsModel",
-        HyphenationPatternReferenceModel,
-    );
+function partsToLanguageTag({ language, script, region }) {
+    return createLanguageTag(language, script, region);
+}
 
-// Collect the pattern keys required by the typeSpec tree's
-// languages (languageToHyphenationPatternKey applies the fallbacks)
-// and sync the hyphenationPatterns map: add missing, remove stale.
-function* walkTypeSpecLanguages(typeSpec) {
-    const language = typeSpec.get("languageTag").get("language");
-    if (!language.isEmpty) yield language.value;
+// Effective TypeSpec languages: local subtags override inherited
+// subtags independently (a child may set only region/script).
+function* walkEffectiveTypeSpecLanguageParts(typeSpec, inherited = {}) {
+    const local = languageTagParts(typeSpec.get("languageTag")),
+        effective = {
+            language: local.language ?? inherited.language ?? null,
+            script: local.script ?? inherited.script ?? null,
+            region: local.region ?? inherited.region ?? null,
+        };
+    if (effective.language !== null) yield effective;
     for (const [, child] of typeSpec.get("children"))
-        yield* walkTypeSpecLanguages(child);
+        yield* walkEffectiveTypeSpecLanguageParts(child, effective);
 }
 
-const deriveHyphenationPatternsCoherenceFn = CoherenceFunction.create(
-    // "initTypeSpec" is the NAME of the initTypeSpecCoherenceFn's
-    // inner function: depending on a coherence function's name
-    // controls execution ORDER (struct-model.ts: "using coherence
-    // function names as dependencies ... is a great way to ensure an
-    // execution order") — the derivation reads the SEEDED typeSpec
-    // tree (without it, primal creation sees no languages).
-    ["initTypeSpec", "typeSpec", "hyphenationPatterns"],
-    function deriveHyphenationPatterns({ typeSpec, hyphenationPatterns }) {
-        const required = new Set();
-        for (const language of walkTypeSpecLanguages(typeSpec)) {
-            const key = languageToHyphenationPatternKey(language);
-            if (key !== null) required.add(key);
+// Simple style patches can override language on an inline run.
+// Composite patches only reference source patches already in this map,
+// so walking every simple source covers them too. A partial patch tag
+// (e.g. region-only) is combined with every effective TypeSpec tag it
+// could patch; a language override is context-independent.
+function* walkStylePatchLanguages(stylePatchesSource, typeSpecLanguageParts) {
+    for (const [, stylePatch] of stylePatchesSource) {
+        if (stylePatch.get("stylePatchTypeKey").value !== "SimpleStylePatch")
+            continue;
+        const instance = stylePatch.get("instance");
+        if (!instance.hasWrapped) continue;
+        const local = languageTagParts(instance.wrapped.get("languageTag"));
+        if (local.language !== null) {
+            const tag = partsToLanguageTag(local);
+            if (tag !== null) yield tag;
+            continue;
         }
-        for (const key of [...hyphenationPatterns.keys()])
-            if (!required.has(key)) hyphenationPatterns.delete(key);
-        for (const key of required) {
-            if (hyphenationPatterns.has(key)) continue;
-            const entry = HyphenationPatternReferenceModel.createPrimalDraft(
-                hyphenationPatterns.dependencies,
+        if (local.script === null && local.region === null) continue;
+        for (const base of typeSpecLanguageParts) {
+            const tag = createLanguageTag(
+                base.language,
+                local.script ?? base.script,
+                local.region ?? base.region,
             );
-            entry.get("pattern").value = key;
-            hyphenationPatterns.set(key, entry);
+            if (tag !== null) yield tag;
+        }
+    }
+}
+
+const requireHyphenationPatternsCoherenceFn = CoherenceFunction.create(
+    [
+        "initTypeSpec",
+        "typeSpec",
+        "stylePatchesSource",
+        "installedHyphenationPatterns",
+    ],
+    function* requireHyphenationPatterns({
+        typeSpec,
+        stylePatchesSource,
+        installedHyphenationPatterns,
+    }) {
+        const typeSpecLanguageParts = [
+                ...walkEffectiveTypeSpecLanguageParts(typeSpec),
+            ],
+            typeSpecLanguages = typeSpecLanguageParts
+                .map(partsToLanguageTag)
+                .filter((tag) => tag !== null),
+            languages = new Set([
+                ...typeSpecLanguages,
+                ...walkStylePatchLanguages(
+                    stylePatchesSource,
+                    typeSpecLanguageParts,
+                ),
+            ]),
+            requiredKeys = new Set();
+        for (const language of languages) {
+            const key = languageToHyphenationPatternKey(language);
+            if (key !== null) requiredKeys.add(key);
+        }
+        for (const key of requiredKeys) {
+            if (installedHyphenationPatterns.has(key)) continue;
+            yield new HyphenationPatternRequirement(
+                installedHyphenationPatterns,
+                key,
+            );
         }
     },
 );
@@ -328,12 +324,9 @@ export function createTypeStageModelVariantWithDefaults(
         ),
         ["width", LengthModel],
         ["height", LengthModel],
-        // Hyphenation pattern loading (milestone 3): the coherence
-        // derives the required pattern keys from the languages used
-        // in the typeSpec tree; each entry's ForeignKey yields a
-        // ResourceRequirement when the pattern is not installed, so
-        // the shell loads the vendored asset on demand (the font
-        // machinery generalized — session-only).
+        // Session-only pattern objects. The coherence below derives
+        // requirements directly from TypeSpec + style-patch languages;
+        // no reference/cache field is serialized with the document.
         [
             "installedHyphenationPatterns",
             new InternalizedDependency(
@@ -341,12 +334,11 @@ export function createTypeStageModelVariantWithDefaults(
                 InstalledHyphenationPatternsModel,
             ),
         ],
-        ["hyphenationPatterns", HyphenationPatternsModel],
         ensureDimensionBoundnessCoherenceFn,
         initTypeSpecCoherenceFn(DEFAULT_STATE),
         // order is enforced by the "initTypeSpec" name DEPENDENCY
         // (see the coherence), not by this position
-        deriveHyphenationPatternsCoherenceFn,
+        requireHyphenationPatternsCoherenceFn,
         // fixme: add a coherence function to ensure the link paths in nodeSpecToTypeSpec
         // are explicitly relative, i.e. start with a "./" not "/". could eventually also
         // start with "../"
