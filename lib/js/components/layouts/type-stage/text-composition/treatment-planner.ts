@@ -85,11 +85,13 @@ export function createTreatmentStepper(
     potentials: PotentialsLeaf,
     config: TreatmentPlannerConfig = TREATMENT_PLANNER_DEFAULTS,
 ): TreatmentStepper {
-    // direction gating: the disallowed side collapses to 0
+    // direction gating (the disallowed side collapses to 0) and
+    // clamping to [-1, 1]: |step| > 1 signals "potential exhausted"
+    // (contract) — the applied values clamp at the extremes
     const gated = (step: number): number => {
             if (config.direction === "narrowing" && step > 0) return 0;
             if (config.direction === "widening" && step < 0) return 0;
-            return step;
+            return Math.max(-1, Math.min(1, step));
         },
         axisTreatments = Object.keys(potentials).filter(
             (treatment) =>

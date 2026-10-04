@@ -197,11 +197,14 @@ import {
 import {
     discoverPotentials,
     calculatePotentials,
+    anchorPotentialsToLocation,
 } from "./justification-potentials.ts";
 import {
     createTreatmentStepper,
     TREATMENT_PLANNER_DEFAULTS,
 } from "./treatment-planner.ts";
+import type { TreatmentPlannerConfig } from "./treatment-planner.ts";
+import { greedyFitComposition } from "./greedy-fit.ts";
 import { createDummyComposition } from "./dummy-composition.ts";
 import { greedyRaggedComposition } from "./greedy-ragged.ts";
 import {
@@ -670,18 +673,68 @@ export class CompositionController extends _BaseComponent {
         // the discovered table, the resolved potentials leaf, the
         // stepper and the natural space advance (the wordspace factor
         // multiplies it; the applicator applies the same product).
-        // phase 3: the planner config comes from the algorithm struct.
-        const plannerConfig = TREATMENT_PLANNER_DEFAULTS,
+        // The planner config (treatment toggles, direction) resolves
+        // from the greedy-fit algorithm struct; colorCoding is the
+        // switch for the color-coded lines (published for the
+        // applicator).
+        const greedyFitConfig:
+                | (TreatmentPlannerConfig & { colorCoding: boolean })
+                | null =
+                algorithmKey === "TextCompositionAlgorithmGreedyFitModel"
+                    ? {
+                          treatments: new Set<string>(
+                              (
+                                  [
+                                      ["treatmentXTRA", "XTRA"],
+                                      ["treatmentTracking", "tracking"],
+                                      ["treatmentWordspace", "wordspace"],
+                                  ] as [string, string][]
+                              )
+                                  .filter(
+                                      ([field]) =>
+                                          (nodeProperties.get(
+                                              `textCompositionAlgorithm/${field}`,
+                                          ) ?? true) === true,
+                                  )
+                                  .map(([, treatment]) => treatment),
+                          ),
+                          direction: (
+                              ["both", "narrowing", "widening"] as const
+                          ).includes(
+                              nodeProperties.get(
+                                  "textCompositionAlgorithm/direction",
+                              ),
+                          )
+                              ? (nodeProperties.get(
+                                    "textCompositionAlgorithm/direction",
+                                ) as "both" | "narrowing" | "widening")
+                              : "both",
+                          colorCoding:
+                              (nodeProperties.get(
+                                  "textCompositionAlgorithm/colorCoding",
+                              ) ?? true) === true,
+                      }
+                    : null,
+            plannerConfig =
+                greedyFitConfig === null
+                    ? TREATMENT_PLANNER_DEFAULTS
+                    : greedyFitConfig,
             plannerCache = new Map<LeafStyle, any>(),
             plannerOf = (style: LeafStyle): any => {
                 if (!plannerCache.has(style)) {
                     const table = discoverPotentials(style.font);
                     let entry = null;
                     if (table !== null) {
-                        const potentials = calculatePotentials(
-                            table,
-                            new Map(style.axesEntries),
-                        );
+                        const location = new Map(style.axesEntries),
+                            // re-anchored to the run's location (the
+                            // tables are avar1-authored; avar2 fonts
+                            // sit elsewhere — the potentials express
+                            // deltas from the natural state)
+                            potentials = anchorPotentialsToLocation(
+                                calculatePotentials(table, location),
+                                location,
+                                style.font.axisRanges,
+                            );
                         entry = {
                             table,
                             potentials,
@@ -732,6 +785,16 @@ export class CompositionController extends _BaseComponent {
                 hyphenationConfig.minBefore,
                 hyphenationConfig.minAfter,
                 hyphenationPattern,
+                // the Treatment Planner config (greedy-fit):
+                // treatment toggles + direction gate the step values;
+                // colorCoding flows into the payload
+                ...(greedyFitConfig === null
+                    ? []
+                    : [
+                          [...plannerConfig.treatments].sort().join(","),
+                          plannerConfig.direction,
+                          greedyFitConfig.colorCoding,
+                      ]),
                 // per-run styles: the resolved link id + the CONSUMED
                 // values per leaf (flat — nulls for unstyled leaves;
                 // a patch edit that changes any consumed value
@@ -839,7 +902,10 @@ export class CompositionController extends _BaseComponent {
                     algorithm =
                         algorithmKey === "TextCompositionAlgorithmDummyModel"
                             ? createDummyComposition(algorithmConfig as number)
-                            : greedyRaggedComposition,
+                            : algorithmKey ===
+                                "TextCompositionAlgorithmGreedyFitModel"
+                              ? greedyFitComposition
+                              : greedyRaggedComposition,
                     result = algorithm({
                         segments,
                         breaks,
@@ -968,6 +1034,9 @@ export class CompositionController extends _BaseComponent {
                     treatments: [...plannerConfig.treatments],
                     direction: plannerConfig.direction,
                 },
+                // the switch for the color-coded lines (adjustment
+                // intensity; the greedy-fit struct, default ON)
+                colorCoding: greedyFitConfig?.colorCoding ?? false,
                 // immutable sources for apply-time staleness checks
                 sources: { textblockNode },
             },

@@ -738,14 +738,19 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
                 // EVERY line is coded by adjustment intensity —
                 // narrowing cyan, widening red, neutral none (the
                 // demo's _setLineColorCode); overfull overrides.
-                // With the dummy adjustmentStep is always 0, so this
-                // is all-neutral until real fitting lands.
+                // The colorCoding switch (the greedy-fit algorithm
+                // struct) gates it; with the dummy/greedy-ragged
+                // adjustmentStep is always 0 (all-neutral).
                 span.style.setProperty(
                     "--line-color-code",
-                    this._lineColorCode(
-                        line.adjustmentStep,
-                        result.diagnostics.overfullLines.includes(lineIndex),
-                    ),
+                    this._composition.colorCoding === true
+                        ? this._lineColorCode(
+                              line.adjustmentStep,
+                              result.diagnostics.overfullLines.includes(
+                                  lineIndex,
+                              ),
+                          )
+                        : "",
                 );
                 span.append(
                     this._domTool.createTextNode(

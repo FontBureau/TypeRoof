@@ -231,6 +231,50 @@ export function calculatePotentials(
     return leaf;
 }
 
+/** Anchor a resolved leaf to the run's location (Host policy): the
+ *  tables are authored around THEIR dflt (avar1 Amstelvar's XTRA
+ *  562; Roboto Flex's 468), but avar2 fonts sit elsewhere
+ *  (AmstelvarA2 XTRA default 400, Roboto Delta 463) — and a style
+ *  may move the run anywhere. The potentials express DELTAS from
+ *  the natural state, so the axis treatments are re-anchored:
+ *  dflt := the run's current value, min/max shifted by the same
+ *  delta and clamped to the axis range. Restores the
+ *  step-0-identity invariant by construction — without it the
+ *  narrowing side can actually WIDEN (observed: AmstelvarA2 at
+ *  XTRA 400, table dflt 562 -> "narrowing" to 515 widens, the
+ *  potential reads as exhausted, nothing fits). Non-axes
+ *  treatments are unchanged. */
+export function anchorPotentialsToLocation(
+    leaf: PotentialsLeaf,
+    location: ReadonlyMap<string, number>,
+    axisRanges: { [tag: string]: { min: number; max: number } },
+): PotentialsLeaf {
+    const anchored: PotentialsLeaf = {};
+    for (const [treatment, triple] of Object.entries(leaf)) {
+        if (!_isAxisTreatment(treatment)) {
+            anchored[treatment] = triple;
+            continue;
+        }
+        const current = location.get(treatment);
+        if (current === undefined || current === triple[1]) {
+            anchored[treatment] = triple;
+            continue;
+        }
+        const delta = current - triple[1],
+            range = axisRanges[treatment],
+            clamp = (value: number): number =>
+                range === undefined
+                    ? value
+                    : Math.max(range.min, Math.min(range.max, value));
+        anchored[treatment] = [
+            clamp(triple[0] + delta),
+            current,
+            clamp(triple[2] + delta),
+        ];
+    }
+    return anchored;
+}
+
 // --- The tables (verbatim port, renamed) ------------------------------
 
 export const JUSTIFICATION_POTENTIALS_AMSTELVAR: PotentialsTable = {
