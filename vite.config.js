@@ -72,7 +72,8 @@ export default defineConfig({
                     const url = (req.url ?? "").startsWith(basePath)
                         ? `/${(req.url ?? "").slice(basePath.length)}`
                         : (req.url ?? "");
-                    if (!/^\/(app|lib)(\/|$)/.test(url)) return next();
+                    if (!/^\/(app|lib|downloads)(\/|$)/.test(url))
+                        return next();
                     const [pathname, search] = url.split("?");
                     const normalized =
                         pathname.endsWith("/") || extname(pathname)
@@ -123,7 +124,7 @@ export default defineConfig({
             // and hence without the Vite client, i.e. without live updates.
             // The ([?#]|$) boundary keeps query strings and hashes excluded
             // while not swallowing unrelated paths like /TypeRoof/shell-docs.
-            [`^${basePath}(?!@|node_modules/|app/|lib/|(shell|legacy)(\\.html)?([?#]|$))`]:
+            [`^${basePath}(?!@|node_modules/|app/|lib/|downloads/|(shell|legacy)(\\.html)?([?#]|$))`]:
                 {
                     target: "http://localhost:8080",
                     changeOrigin: true,

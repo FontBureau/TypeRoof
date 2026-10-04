@@ -1000,13 +1000,30 @@ export class UIDocumentViewer extends _BaseContainerComponent {
         ];
         this._initWidgets(widgets);
         this.__attachHandler = this._attachHandler.bind(this);
-        // No null fallback: without the meta widget the viewer renders
-        // nothing — indefinitely and silently. Widget ordering
-        // currently guarantees the meta exists; fail loud if that ever
-        // changes. (The reverse race — handler before tree — is
-        // handled by DocumentNodesMeta.initialUpdate.)
-        const meta = this.widgetBus.getWidgetById(documentNodesMetaId);
-        meta.attachRenderer(this.__attachHandler);
+        this._rendererAttached = false;
+    }
+
+    initialUpdate(rootState) {
+        // Attach HERE, not in the constructor. Parent containers run
+        // ALL activation provisioning before updating their children:
+        // when a state change both changes the document shape and
+        // activates the viewer, constructor-time attachment sees the
+        // meta tree from the PREVIOUS state (its update comes first in
+        // the parent's _update loop, but after provisioning). A
+        // shrinking replace then inserts stale /content/N attachments
+        // against the NEW shorter collection and keyToIndex throws.
+        // At initialUpdate time, widget ordering guarantees the
+        // always-active DocumentNodesMeta has already updated/pruned.
+        // No null fallback: without the meta the viewer renders
+        // nothing indefinitely — fail loud.
+        if (!this._rendererAttached) {
+            const meta = this.widgetBus.getWidgetById(
+                this._documentNodesMetaId,
+            );
+            meta.attachRenderer(this.__attachHandler);
+            this._rendererAttached = true;
+        }
+        return super.initialUpdate(rootState);
     }
 
     // The renderer handler, called per document node by the meta tree.
@@ -1089,7 +1106,8 @@ export class UIDocumentViewer extends _BaseContainerComponent {
             this._documentNodesMetaId,
             null,
         );
-        meta?.detachRenderer(this.__attachHandler);
+        if (this._rendererAttached) meta?.detachRenderer(this.__attachHandler);
+        this._rendererAttached = false;
         this.__attachHandler = null;
         super.destroy();
     }
