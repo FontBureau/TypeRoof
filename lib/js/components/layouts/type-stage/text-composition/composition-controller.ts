@@ -844,10 +844,12 @@ export class CompositionController extends _BaseComponent {
                         hypher,
                         hyphenationConfig,
                     ));
-                // the hyphen glyph's width per leaf style (the hyphen
-                // renders in the run's font/style), baked into the
-                // segments BEFORE hyphen breaks below (the hyphen is
-                // not in the source text; CSS ::after renders it)
+                // The hyphen glyph's natural width per leaf style.
+                // IMPORTANT: it is NOT part of a segment's natural
+                // width. A split word may contain several INTERNAL
+                // hyphen opportunities, but the browser renders only
+                // the hyphen at the break actually TAKEN at the line
+                // end. lineWidthAtStep adds it candidate-wise below.
                 const hyphenWidthOf = (() => {
                     const widths = new Map<LeafStyle, number>();
                     return (style: LeafStyle): number => {
@@ -887,17 +889,64 @@ export class CompositionController extends _BaseComponent {
                                 segment.start,
                                 segment.end,
                             ) ?? "",
-                        ) *
-                            style.fontSizePt +
-                        (segment.hyphenAfter === true && hypher !== null
-                            ? hyphenWidthOf(style)
-                            : 0);
+                        ) * style.fontSizePt;
                 }
-                const widthOf = (from: number, to: number) => {
+                const breakAfter = new Map(
+                        breaks.map((breakOpportunity) => [
+                            breakOpportunity.afterSegment,
+                            breakOpportunity,
+                        ]),
+                    ),
+                    widthOf = (from: number, to: number) => {
                         let width = 0;
                         for (let i = from; i < to; i++)
                             width += segments[i]!.widthPt;
                         return width;
+                    },
+                    axesAtStep = (style: LeafStyle, step: number) => {
+                        const entry = plannerOf(style),
+                            axes = entry?.stepper.axesAt(step) ?? new Map(),
+                            axesEntries: [string, number][] =
+                                axes.size === 0
+                                    ? style.axesEntries
+                                    : style.axesEntries.map(([tag, value]) =>
+                                          axes.has(tag)
+                                              ? [tag, axes.get(tag)!]
+                                              : [tag, value],
+                                      ),
+                            axesKey =
+                                axes.size === 0
+                                    ? style.axesKey
+                                    : axesKeyOfEntries(style.font, axesEntries);
+                        return { entry, axesEntries, axesKey };
+                    },
+                    candidateHyphenWidth = (
+                        to: number,
+                        step: number,
+                    ): number => {
+                        if (
+                            hypher === null ||
+                            breakAfter.get(to - 1)?.kind !== "hyphen"
+                        )
+                            return 0;
+                        const style = styleOf(segments[to - 1]!.sourceIndex);
+                        if (step === 0) return hyphenWidthOf(style);
+                        const { axesEntries, axesKey } = axesAtStep(
+                            style,
+                            step,
+                        );
+                        return (
+                            this._measurer!.measureEm(
+                                style.font,
+                                axesEntries,
+                                axesKey,
+                                style.featuresEntries,
+                                style.featuresKey,
+                                style.language,
+                                style.direction,
+                                "-",
+                            ) * style.fontSizePt
+                        );
                     },
                     algorithm =
                         algorithmKey === "TextCompositionAlgorithmDummyModel"
@@ -917,7 +966,11 @@ export class CompositionController extends _BaseComponent {
                         // (arithmetically). Algorithms that only probe
                         // step 0 see no difference.
                         lineWidthAtStep: (from, to, step) => {
-                            if (step === 0) return widthOf(from, to);
+                            if (step === 0)
+                                return (
+                                    widthOf(from, to) +
+                                    candidateHyphenWidth(to, step)
+                                );
                             let width = 0;
                             for (let i = from; i < to; i++) {
                                 const segment = segments[i]!,
@@ -932,26 +985,10 @@ export class CompositionController extends _BaseComponent {
                                     width += segment.widthPt;
                                     continue;
                                 }
-                                const axes = entry.stepper.axesAt(step),
-                                    stepAxesEntries: [string, number][] =
-                                        axes.size === 0
-                                            ? style.axesEntries
-                                            : style.axesEntries.map(
-                                                  ([tag, value]) =>
-                                                      axes.has(tag)
-                                                          ? [
-                                                                tag,
-                                                                axes.get(tag)!,
-                                                            ]
-                                                          : [tag, value],
-                                              ),
-                                    stepAxesKey =
-                                        axes.size === 0
-                                            ? style.axesKey
-                                            : axesKeyOfEntries(
-                                                  style.font,
-                                                  stepAxesEntries,
-                                              ),
+                                const {
+                                        axesEntries: stepAxesEntries,
+                                        axesKey: stepAxesKey,
+                                    } = axesAtStep(style, step),
                                     measuredPt =
                                         this._measurer!.measureEm(
                                             style.font,
@@ -967,22 +1004,6 @@ export class CompositionController extends _BaseComponent {
                                     measuredPt +
                                     entry.stepper.letterSpacingPtAt(step) *
                                         (segment.end - segment.start);
-                                // the hyphen glyph at the shifted coords
-                                if (
-                                    segment.hyphenAfter === true &&
-                                    hypher !== null
-                                )
-                                    segmentWidth +=
-                                        this._measurer!.measureEm(
-                                            style.font,
-                                            stepAxesEntries,
-                                            stepAxesKey,
-                                            style.featuresEntries,
-                                            style.featuresKey,
-                                            style.language,
-                                            style.direction,
-                                            "-",
-                                        ) * style.fontSizePt;
                                 // wordspace: the factor multiplies the
                                 // NATURAL space advance (space-only
                                 // segments) — the applicator applies
@@ -998,7 +1019,10 @@ export class CompositionController extends _BaseComponent {
                                         entry.spaceAdvancePt * factor;
                                 width += segmentWidth;
                             }
-                            return width;
+                            // A hyphen is conditional on THIS candidate
+                            // ending at a hyphen break. Internal
+                            // opportunities contribute no glyph/width.
+                            return width + candidateHyphenWidth(to, step);
                         },
                     });
                 return { segments, result };

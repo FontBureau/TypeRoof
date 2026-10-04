@@ -152,8 +152,9 @@ export interface CompositionInput {
      *     candidate — this replaces a separate naturalLineWidthPt.
      *   - If the break after the candidate's last segment is a
      *     hyphenation point, the width includes the visible hyphen
-     *     glyph (the Hyphenator bakes it into the segment
-     *     measurement).
+     *     glyph. Internal optional hyphens contribute no width — the
+     *     Host adds the glyph candidate-wise, never to every split
+     *     segment.
      *   - Steps are normalized: 0 = natural, -1 = maximum narrowing,
      *     +1 = maximum widening, per candidate, derived by the
      *     Treatment Planner from the per-font-location treatment

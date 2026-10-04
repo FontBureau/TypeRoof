@@ -86,9 +86,9 @@ export const greedyRaggedComposition: CompositionAlgorithm = (input) => {
                     // fit test EXCLUDING the trailing segment only
                     // when it COLLAPSES at the break (a space); a
                     // hyphen or zero-width (e.g. ideograph) break
-                    // keeps its last, visible segment — hyphen
-                    // glyph included, the Hyphenator baked it into
-                    // the segment's width
+                    // keeps its last, visible segment — for a hyphen
+                    // candidate lineWidthAtStep includes exactly the
+                    // TAKEN end hyphen (internal opportunities don't)
                     const width =
                         lineWidthAtStep(fromSegment, candidate + 1, 0) -
                         (breakOpportunity.collapses === true

@@ -49,10 +49,11 @@ export interface HostSegment extends Segment {
      *  depth-first over the textblock's inline content). */
     sourceIndex: number;
     /** Set by the Hyphenator (milestone 3): this segment is the part
-     *  of a split word directly BEFORE a hyphen break opportunity —
-     *  its measured width must include the hyphen glyph (the hyphen
-     *  is not in the source text; CSS ::after renders it). Absent on
-     *  segmenter output; only the Hyphenator sets it. */
+     *  of a split word directly BEFORE a hyphen break opportunity.
+     *  It is only a marker — the segment's width remains source-text
+     *  only. The Host adds the hyphen glyph width candidate-wise when
+     *  a line actually ENDS at this break (CSS ::after renders it).
+     *  Absent on segmenter output; only the Hyphenator sets it. */
     hyphenAfter?: boolean;
 }
 

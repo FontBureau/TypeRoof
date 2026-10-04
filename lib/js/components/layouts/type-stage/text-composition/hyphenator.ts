@@ -9,9 +9,10 @@
  *     break opportunity (penalty HYPHENATION_PENALTY, collapses
  *     false);
  *   - the segment BEFORE a hyphen break is flagged `hyphenAfter`:
- *     the controller adds the hyphen glyph's width when measuring
- *     it (the hyphen is not in the source text; CSS ::after renders
- *     it — selection/copy stay clean);
+ *     the controller uses the marker/break map to add the hyphen
+ *     glyph ONLY when a line candidate actually ENDS at that break
+ *     (internal optional hyphens have no glyph/width; CSS ::after
+ *     renders the taken end hyphen — selection/copy stay clean);
  *   - gates: word length >= minWordLength, points keep >= minBefore
  *     before and >= minAfter after.
  */
