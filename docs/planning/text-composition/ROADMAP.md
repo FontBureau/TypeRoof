@@ -53,7 +53,7 @@ baseline and capability fallback.
 | 1 | **Full Host executing the dummy end to end** (viewer, live feedback) | ✅ done (2026-10-03, …0794df35) |
 | 2 | Simple greedy alignment (ragged) | ✅ done (2026-10-03, …5cf69417) |
 | 3 | Greedy ragged + hyphenation (Host control, not an algorithm) | ✅ done (2026-10-04, ec5593e0..9cde3814) |
-| 4 | Greedy-fit (varla-varfo strategy, predictively; validation milestone) | planned |
+| 4 | Greedy-fit (varla-varfo strategy, predictively; validation milestone) | ✅ done (2026-10-05, 8e50f2da..521db920) |
 | 5 | Knuth-Plass++ (the target) | planned |
 
 ## Model integration (model-first)
@@ -187,12 +187,12 @@ afterthoughts):
 
 ## Optimization opportunities (deferred)
 
-- perf:composition's absolute-ms (onMs) regression gate can't
-  survive environment drift (observed 2026-10-04: 50x false
-  positives on an idle machine, reproduced on an unchanged commit;
-  the RATIO — the documented machine-stable metric — stayed within
-  1.02x of baseline). Candidate: gate on ratio only, or record a
-  machine fingerprint in the baseline snapshot.
+- ~~perf:composition false absolute-ms regressions~~ RESOLVED in
+  milestone 4: the old fixture URL required Eleventy and silently
+  loaded fallback HTML; the harness now stages the checked-in state
+  under Vite, verifies 1087 text nodes + expected layout, and
+  selects the algorithm it claims to benchmark. The greedy-fit
+  baseline's absolute and ratio gates reproduce.
 
 (The property-aware filtering was resolved in Sprint A by the
 input-equality filter: the drive compares consumed ingredients, so
@@ -215,6 +215,54 @@ Regression tests: measurement tracks link/unlink and patch edits
 (native + intent links); e2e: wdth-max bold re-measures and the
 wrapper's font-variation-settings carries the same value
 (measured == rendered). Perf: ratios 1.00/1.03 (noise level).
+
+## Milestone 4 outcome ✅ DONE (2026-10-05)
+
+Greedy-fit now executes the varla-varfo strategy predictively:
+natural greedy break → narrow just enough to pull the next segment
+(or break) up → otherwise widen toward the measure; last lines stay
+ragged; exhausted potentials are visible in the diagnostics/color
+coding. The model-first `TextCompositionAlgorithmGreedyFitModel`
+selects treatment toggles, direction and the color-coding switch.
+The Host's Treatment Planner resolves per-run, per-font potentials;
+axis treatments are reshaped through HarfBuzz, tracking/wordspace
+are added analytically, and the viewer applies the same concrete
+values to line fragments (measured == rendered).
+
+Implementation exposed and resolved several load-bearing issues:
+
+- **avar1/avar2 anchoring** (`6183abd7`, design article next to this
+  ROADMAP): tables express deltas around an authored default; axis
+  triples are re-anchored to the run's actual location so step 0 is
+  identity (AmstelvarA2 treatment was otherwise absent).
+- **Taken-hyphen width only** (`a21865d2`): optional internal
+  hyphens contribute no width; exactly one glyph is measured when
+  the candidate actually ends at a hyphen break. This restored the
+  invariant that narrowed lines justify (reported 280pt document:
+  narrowed lines within 0.00–0.81px; taken-hyphen line 1.58px).
+- **Viewer activation/state-load ordering** (`3a3fd8b5`): attach the
+  viewer after the always-active meta tree has updated/pruned,
+  fixing shape-shrinking state-file loads.
+- **Complete hyphenation assets + direct loading** (`3da72196`,
+  `521db920`): all 39 pinned upstream bramstein patterns are
+  reachable; effective TypeSpec AND simple style-patch languages
+  yield direct session-only requirements. No pattern bookkeeping
+  is serialized.
+
+Performance harness correction + baseline: the old command selected
+greedy-ragged and its docs URL could silently load fallback HTML.
+It now selects greedy-fit, stages/verifies the real wikipedia-scale
+fixture (1087 text nodes) under Vite, and fails loud on a small
+fallback. Stable 30-cycle ratios: typing 1.01–1.03; full recompose
+1.23–1.27 (candidate reshaping), below the 1.5 regression gate.
+Baseline re-written at `521db920`; a post-write run passed all
+absolute + ratio gates.
+
+Known fidelity item for future treatment-planner work: tracking
+width arithmetic currently counts source code units while CSS
+letter-spacing follows its own text/glyph spacing semantics; add a
+focused Unicode/ligature parity probe before relying on tracking
+for KP++ quality scoring.
 
 ## Milestone 4 design notes (potentials / Treatment Planner)
 

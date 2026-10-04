@@ -21,11 +21,20 @@
  * Usage:
  *   scripts/perf-composition [--player-url=URL] [--cycles=N]
  *                            [--write-baseline]
- * Requires the dev server (npm run dev, port 3000).
+ * Requires the Vite dev server (port 3000). The script stages the
+ * checked-in wikipedia fixture under downloads/ for Vite serving and
+ * removes it on exit.
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import {
+    readFileSync,
+    writeFileSync,
+    existsSync,
+    copyFileSync,
+    mkdirSync,
+    rmSync,
+} from "node:fs";
 import { execSync } from "node:child_process";
 import puppeteer from "puppeteer";
 import { ArgumentParser } from "argparse";
@@ -33,15 +42,26 @@ import { setTimeout } from "node:timers/promises";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url)),
     BASELINE_PATH = path.join(__dirname, "perf-composition.baseline.json"),
-    FIXTURE_URL =
-        "/docs/states-library/fixtures/wikipedia-snapshot.json",
+    SOURCE_FIXTURE_PATH = path.join(
+        __dirname,
+        "../docs/states-library/fixtures/wikipedia-snapshot.json",
+    ),
+    STAGED_FIXTURE_PATH = path.join(
+        __dirname,
+        "../downloads/perf-wikipedia-snapshot.tmp.json",
+    ),
+    // Vite serves /downloads directly; the docs path requires the
+    // separate Eleventy server and silently falls back to HTML when
+    // unavailable. scripts/perf-composition stages the checked-in
+    // wikipedia fixture here before launch (see main()).
+    FIXTURE_URL = "/TypeRoof/downloads/perf-wikipedia-snapshot.tmp.json",
     REGRESSION_FACTOR = 1.5,
     DEFAULT_CYCLES = 30;
 
 const parser = new ArgumentParser();
 parser.add_argument("--player-url", {
-    // the wikipedia app hosts TypeStage states
-    default: "http://localhost:3000/TypeRoof/app/wikipedia",
+    // The generic player accepts the complete ApplicationModel state.
+    default: "http://localhost:3000/TypeRoof/app/player",
 });
 parser.add_argument("--cycles", { type: "int", default: DEFAULT_CYCLES });
 parser.add_argument("--write-baseline", { action: "store_true" });
@@ -61,14 +81,14 @@ async function measureBurst(page, compositionOn, mode, cycles) {
         async ({ compositionOn, mode, cycles }) => {
             const rootPath = "/activeState",
                 // engagement IS the algorithm selection: ON = the
-                // greedy algorithm, OFF = "None (Browser)" (the
-                // opt-out type)
+                // milestone-4 Greedy Fit algorithm (Treatment Planner
+                // active), OFF = "None (Browser)" (the opt-out type)
                 setComposition = (on) =>
                     shell.changeState(() => {
                         shell.getEntry(
                             `${rootPath}/typeSpec/textCompositionAlgorithm/textCompositionAlgorithmTypeKey`,
                         ).value = on
-                            ? "TextCompositionAlgorithmGreedyRaggedModel"
+                            ? "TextCompositionAlgorithmGreedyFitModel"
                             : "TextCompositionAlgorithmNoneModel";
                     });
             await setComposition(compositionOn);
@@ -114,6 +134,8 @@ async function measureBurst(page, compositionOn, mode, cycles) {
 }
 
 async function main() {
+    mkdirSync(path.dirname(STAGED_FIXTURE_PATH), { recursive: true });
+    copyFileSync(SOURCE_FIXTURE_PATH, STAGED_FIXTURE_PATH);
     const url = new URL(
             `#[no-chrome]from-url:${FIXTURE_URL}`,
             args.player_url,
@@ -134,6 +156,36 @@ async function main() {
         await waitForShell(page);
         // settle
         await setTimeout(1000);
+        // Fail loud instead of benchmarking an HTML fallback / tiny
+        // default document (the historical docs URL could 404 while
+        // page.goto still succeeded).
+        const fixtureInfo = await page.evaluate(() => {
+            const countText = (node) => {
+                    let count = 0;
+                    if (node.get("typeKey").value === "text") count++;
+                    const content = node.get("content", null);
+                    if (content !== null)
+                        for (const child of content.value)
+                            count += countText(child);
+                    return count;
+                },
+                rootPath = "/activeState",
+                doc = shell.getEntry(`${rootPath}/document`);
+            return {
+                textNodes: countText(doc),
+                activeLayoutKey: shell.getEntry("/activeLayoutKey").value,
+            };
+        });
+        if (fixtureInfo.textNodes < 100)
+            throw new Error(
+                `FIXTURE ERROR expected wikipedia-scale state, got ` +
+                    `${fixtureInfo.textNodes} text nodes ` +
+                    `(layout ${fixtureInfo.activeLayoutKey}).`,
+            );
+        console.log(
+            `Fixture verified: ${fixtureInfo.textNodes} text nodes, ` +
+                `layout ${fixtureInfo.activeLayoutKey}`,
+        );
 
         for (const mode of ["typing", "recompose"]) {
             const off = await measureBurst(page, false, mode, args.cycles),
@@ -203,12 +255,17 @@ async function main() {
     }
     if (regressions > 0) {
         console.error(`${regressions} regression(s) detected.`);
-        process.exit(1);
+        process.exitCode = 1;
+        return;
     }
     console.log("No regressions.");
 }
 
-main().catch((error) => {
-    console.error(error);
-    process.exit(2);
-});
+main()
+    .catch((error) => {
+        console.error(error);
+        process.exitCode = 2;
+    })
+    .finally(() => {
+        rmSync(STAGED_FIXTURE_PATH, { force: true });
+    });
