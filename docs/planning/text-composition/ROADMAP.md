@@ -264,6 +264,77 @@ letter-spacing follows its own text/glyph spacing semantics; add a
 focused Unicode/ligature parity probe before relying on tracking
 for KP++ quality scoring.
 
+## Next execution cycles (post-milestone 4)
+
+Dependency-ordered (agreed 2026-10-05). Each numbered item is its
+own RPI cycle (`/research_codebase` → `/create_plan` →
+`/implement_plan`), kept small/reviewable rather than folded into
+one oversized milestone-5 plan.
+
+### Cycle 1 — KP++ prerequisites: controllable measure + tracking truth
+
+Do this FIRST; both are needed to judge paragraph-wide quality.
+
+1. **Controllable composition test measure.** The current jsdom
+   harness has degenerate geometry and often packs roughly one word
+   per line. Build a deterministic layout-geometry fixture (or make
+   manual horizontal layout work in the harness) so Host integration
+   tests can assert break movement, overfull behavior and
+   paragraph-quality comparisons at a known measure. Pure algorithm
+   tests still inject widths, but are not enough to prove wiring.
+2. **Tracking/CSS measurement parity.** Current predictive tracking
+   math counts source UTF-16 code units; CSS `letter-spacing` may
+   differ for ligatures, combining sequences, surrogate pairs and
+   complex shaping/clusters. Probe HarfBuzz vs browser, define the
+   correct gap/cluster-count model, implement it, and lock it with
+   real-font behavior tests. Do not base KP++ badness on tracking
+   until this is measurement-truthful.
+
+### Cycle 2 — Milestone 5 research/design: Knuth–Plass++
+
+Research and specify before implementation:
+
+- candidate graph / dynamic programming (break opportunities as
+  nodes; candidate lines as edges; mandatory explicit breaks;
+  infeasible/exhausted candidates);
+- badness/demerits over normalized, ASYMMETRIC adjustmentStep;
+- break penalties (hyphenation included), consecutive-hyphen policy,
+  fitness classes / adjacent-line step discontinuities, last-line
+  behavior and unsatisfiable-line costs;
+- candidate step solving via `lineWidthAtStep`;
+- diagnostics (chosen demerits/badness, rejected candidates,
+  exhausted potential, useful color coding);
+- performance: candidate-width/step memoization and graph pruning;
+  workers remain later unless measured cost requires them.
+
+### Cycle 3 — Milestone 5 implementation: Knuth–Plass++
+
+Implement the pure algorithm in reviewable phases, then wire it
+model-first into the existing textCompositionAlgorithm dynamic
+struct. The Host/contract should need no redesign: UAX#14 breaks,
+hyphenation penalties, per-run measurement, conditional taken-
+hyphen width, Treatment Planner and predictive `lineWidthAtStep`
+are all ready. Validate with pure algorithm tests, the Cycle-1 Host
+harness and the wikipedia perf fixture.
+
+### After KP++ — choose the next productization track
+
+Two independent tracks; choose priority from real use:
+
+1. **Editable justification potentials.** Document-scoped flexible
+   metamodel/storage + UI, multi-font best-fit matching, arbitrary
+   ordered design-space dimensions/depth, monotonic stops,
+   font-author tooling; eventual font-table distribution. Includes
+   later potential-policy work: per-treatment impact/order,
+   inter-line harmonization, unified headline wdth treatment and
+   dedicated tables when shared/re-anchored deltas are insufficient.
+2. **Font coverage/fallback.** Missing-glyph/coverage diagnostics
+   first, then browser-equivalent per-run font-fallback measurement
+   and dynamic fallback-font loading. Chinese may wait for an
+   intended font; Greek/Russian can be investigated sooner when
+   they expose general measurement issues, without blocking Latin
+   KP++ by default.
+
 ## Milestone 4 design notes (potentials / Treatment Planner)
 
 Terminology: "justification spec" (varla-varfo) is renamed to
