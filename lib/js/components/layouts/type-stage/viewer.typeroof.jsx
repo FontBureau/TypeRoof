@@ -24,6 +24,7 @@ import {
     UIDocumentUnknownStyleStyler,
 } from "../../prosemirror/type-spec.typeroof.jsx";
 import { getTypeSpecPropertiesIdMethod } from "../../prosemirror/integration.typeroof.jsx";
+import { treatmentValuesAtStep } from "./text-composition/treatment-planner.ts";
 import { TypeStagePaneStyler } from "./pane-styler.typeroof.jsx";
 import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
 
@@ -688,6 +689,51 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
                 }
                 if (isLineEnd && line.breakAt?.kind === "hyphen")
                     span.classList.add("typeroof-composition-line-hyphen");
+                // Justification-potentials treatments (milestone 4):
+                // values derived deterministically from the line's
+                // adjustmentStep + THIS leaf's published potentials —
+                // every fragment of a line applies identical values
+                // for its own style. The controller measured with the
+                // same products (measured == rendered).
+                const treatment = leaves[leafIndex].treatment;
+                if (treatment != null && line.adjustmentStep !== 0) {
+                    const { axes, letterSpacingPt, wordSpaceFactor } =
+                        treatmentValuesAtStep(
+                            treatment.potentials,
+                            {
+                                treatments: new Set(
+                                    this._composition.treatmentConfig.treatments,
+                                ),
+                                direction:
+                                    this._composition.treatmentConfig.direction,
+                            },
+                            line.adjustmentStep,
+                        );
+                    if (letterSpacingPt !== 0)
+                        span.style.setProperty(
+                            "--line-letter-spacing",
+                            `${letterSpacingPt}pt`,
+                        );
+                    if (wordSpaceFactor !== 0)
+                        span.style.setProperty(
+                            "--line-word-spacing",
+                            `${wordSpaceFactor * treatment.spaceAdvancePt}pt`,
+                        );
+                    if (axes.size > 0)
+                        // the run's own axes location with the treated
+                        // axes at their step values (overrides the
+                        // inherited font-variation-settings on this
+                        // span only)
+                        span.style.setProperty(
+                            "font-variation-settings",
+                            treatment.axesEntries
+                                .map(
+                                    ([tag, value]) =>
+                                        `"${tag}" ${axes.has(tag) ? axes.get(tag) : value}`,
+                                )
+                                .join(","),
+                        );
+                }
                 // Diagnostics color-coding (the varla-varfo hook):
                 // EVERY line is coded by adjustment intensity —
                 // narrowing cyan, widening red, neutral none (the

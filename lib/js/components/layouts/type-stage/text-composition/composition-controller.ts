@@ -190,9 +190,18 @@ import {
     Measurer,
     axesEntriesOf,
     axesKeyOf,
+    axesKeyOfEntries,
     featuresEntriesOf,
     featuresKeyOf,
 } from "./measurer.ts";
+import {
+    discoverPotentials,
+    calculatePotentials,
+} from "./justification-potentials.ts";
+import {
+    createTreatmentStepper,
+    TREATMENT_PLANNER_DEFAULTS,
+} from "./treatment-planner.ts";
 import { createDummyComposition } from "./dummy-composition.ts";
 import { greedyRaggedComposition } from "./greedy-ragged.ts";
 import {
@@ -654,6 +663,50 @@ export class CompositionController extends _BaseComponent {
             styleOf = (sourceIndex: number): LeafStyle =>
                 leafStyles[sourceIndex] ?? textblockStyle;
 
+        // Justification potentials + the Treatment Planner (milestone
+        // 4): Host policy, engaged whenever a font has potentials —
+        // algorithms that only probe step 0 (dummy, greedy-ragged)
+        // see no difference (step 0 = natural width). Per leaf style:
+        // the discovered table, the resolved potentials leaf, the
+        // stepper and the natural space advance (the wordspace factor
+        // multiplies it; the applicator applies the same product).
+        // phase 3: the planner config comes from the algorithm struct.
+        const plannerConfig = TREATMENT_PLANNER_DEFAULTS,
+            plannerCache = new Map<LeafStyle, any>(),
+            plannerOf = (style: LeafStyle): any => {
+                if (!plannerCache.has(style)) {
+                    const table = discoverPotentials(style.font);
+                    let entry = null;
+                    if (table !== null) {
+                        const potentials = calculatePotentials(
+                            table,
+                            new Map(style.axesEntries),
+                        );
+                        entry = {
+                            table,
+                            potentials,
+                            stepper: createTreatmentStepper(
+                                potentials,
+                                plannerConfig,
+                            ),
+                            spaceAdvancePt:
+                                this._measurer!.measureEm(
+                                    style.font,
+                                    style.axesEntries,
+                                    style.axesKey,
+                                    style.featuresEntries,
+                                    style.featuresKey,
+                                    style.language,
+                                    style.direction,
+                                    " ",
+                                ) * style.fontSizePt,
+                        };
+                    }
+                    plannerCache.set(style, entry);
+                }
+                return plannerCache.get(style);
+            };
+
         // Input-equality filter (the property-aware reframe: what we
         // CONSUME is what invalidates — no hand-maintained relevance
         // list). Purity guarantees same input => same output, so an
@@ -695,6 +748,10 @@ export class CompositionController extends _BaseComponent {
                               style.language,
                               style.direction,
                               style.fontSizePt,
+                              // justification potentials: the
+                              // discovered table (identity; null =
+                              // no potentials for this font)
+                              plannerOf(styleOf(index))?.table ?? null,
                           ];
                 }),
                 // content: the assembled leaf texts (typing always
@@ -787,11 +844,96 @@ export class CompositionController extends _BaseComponent {
                         segments,
                         breaks,
                         lineWidthPt: () => lineWidthPt,
-                        // v0: adjustment potentials are not wired (no
-                        // Treatment Planner yet) — step does nothing;
-                        // the dummy only ever probes step 0.
-                        lineWidthAtStep: (from, to /*, step */) =>
-                            widthOf(from, to),
+                        // The Treatment Planner (milestone 4): step 0
+                        // is the natural width; step != 0 re-measures
+                        // axes treatments at the shifted coords and
+                        // adds the tracking/wordspace deltas
+                        // (arithmetically). Algorithms that only probe
+                        // step 0 see no difference.
+                        lineWidthAtStep: (from, to, step) => {
+                            if (step === 0) return widthOf(from, to);
+                            let width = 0;
+                            for (let i = from; i < to; i++) {
+                                const segment = segments[i]!,
+                                    style = styleOf(segment.sourceIndex),
+                                    entry = plannerOf(style),
+                                    text =
+                                        leafTexts[segment.sourceIndex]?.slice(
+                                            segment.start,
+                                            segment.end,
+                                        ) ?? "";
+                                if (entry === null || entry === undefined) {
+                                    width += segment.widthPt;
+                                    continue;
+                                }
+                                const axes = entry.stepper.axesAt(step),
+                                    stepAxesEntries: [string, number][] =
+                                        axes.size === 0
+                                            ? style.axesEntries
+                                            : style.axesEntries.map(
+                                                  ([tag, value]) =>
+                                                      axes.has(tag)
+                                                          ? [
+                                                                tag,
+                                                                axes.get(tag)!,
+                                                            ]
+                                                          : [tag, value],
+                                              ),
+                                    stepAxesKey =
+                                        axes.size === 0
+                                            ? style.axesKey
+                                            : axesKeyOfEntries(
+                                                  style.font,
+                                                  stepAxesEntries,
+                                              ),
+                                    measuredPt =
+                                        this._measurer!.measureEm(
+                                            style.font,
+                                            stepAxesEntries,
+                                            stepAxesKey,
+                                            style.featuresEntries,
+                                            style.featuresKey,
+                                            style.language,
+                                            style.direction,
+                                            text,
+                                        ) * style.fontSizePt;
+                                let segmentWidth =
+                                    measuredPt +
+                                    entry.stepper.letterSpacingPtAt(step) *
+                                        (segment.end - segment.start);
+                                // the hyphen glyph at the shifted coords
+                                if (
+                                    segment.hyphenAfter === true &&
+                                    hypher !== null
+                                )
+                                    segmentWidth +=
+                                        this._measurer!.measureEm(
+                                            style.font,
+                                            stepAxesEntries,
+                                            stepAxesKey,
+                                            style.featuresEntries,
+                                            style.featuresKey,
+                                            style.language,
+                                            style.direction,
+                                            "-",
+                                        ) * style.fontSizePt;
+                                // wordspace: the factor multiplies the
+                                // NATURAL space advance (space-only
+                                // segments) — the applicator applies
+                                // the same product as CSS word-spacing
+                                const factor =
+                                    entry.stepper.wordSpaceFactorAt(step);
+                                if (
+                                    factor !== 0 &&
+                                    text.length > 0 &&
+                                    text.trim() === ""
+                                )
+                                    segmentWidth +=
+                                        entry.spaceAdvancePt * factor;
+                                width += segmentWidth;
+                            }
+                            return width;
+                        },
                     });
                 return { segments, result };
             }),
@@ -799,9 +941,33 @@ export class CompositionController extends _BaseComponent {
                 textblockPath: textblockPathString,
                 // leaf inline items (text runs and atoms) in
                 // sourceIndex order — applicators find their segments
-                // by their own document-node path
-                leaves,
+                // by their own document-node path. Each leaf carries
+                // its justification-potentials data (null = none):
+                // the applicator derives per-line treatment values
+                // deterministically from the line's adjustmentStep +
+                // this data, so every fragment of a line applies
+                // identical values for its own style.
+                leaves: leaves.map((leaf, index) => {
+                    const entry = plannerOf(styleOf(index));
+                    return {
+                        ...leaf,
+                        treatment:
+                            entry === null || entry === undefined
+                                ? null
+                                : {
+                                      axesEntries: styleOf(index).axesEntries,
+                                      potentials: entry.potentials,
+                                      spaceAdvancePt: entry.spaceAdvancePt,
+                                  },
+                    };
+                }),
                 paragraphs,
+                // the Treatment Planner configuration (the applicator
+                // applies the same enabled-treatments/direction)
+                treatmentConfig: {
+                    treatments: [...plannerConfig.treatments],
+                    direction: plannerConfig.direction,
+                },
                 // immutable sources for apply-time staleness checks
                 sources: { textblockNode },
             },

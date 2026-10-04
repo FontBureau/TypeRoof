@@ -45,14 +45,23 @@ export function axesEntriesOf(
     return entries;
 }
 
-/** Sparse normalized axes key: only axes differing from default. */
-export function axesKeyOf(font: any, properties: Map<string, any>): string {
-    return axesEntriesOf(font, properties)
+/** Sparse normalized axes key from entries: only axes differing
+ *  from default. */
+export function axesKeyOfEntries(
+    font: any,
+    entries: [string, number][],
+): string {
+    return entries
         .filter(
             ([tag, value]) => value !== (font.axisRanges as any)[tag].default,
         )
         .map(([tag, value]) => `${tag}=${value}`)
         .join(",");
+}
+
+/** Sparse normalized axes key: only axes differing from default. */
+export function axesKeyOf(font: any, properties: Map<string, any>): string {
+    return axesKeyOfEntries(font, axesEntriesOf(font, properties));
 }
 
 /** [tag, enabled] pairs of the OpenType feature settings present in

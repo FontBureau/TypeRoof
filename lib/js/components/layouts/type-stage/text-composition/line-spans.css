@@ -38,9 +38,16 @@
 }
 
 /* Diagnostics hook: the applicator sets --line-color-code per line
- * (the demo's adjustment-intensity color-coding). */
+ * (the demo's adjustment-intensity color-coding). Justification-
+ * potentials treatments (milestone 4): the applicator sets
+ * --line-letter-spacing / --line-word-spacing per line from the
+ * line's adjustmentStep; the axes treatments are applied as
+ * font-variation-settings directly on the spans. The controller
+ * measured with the same products (measured == rendered). */
 .typeroof-composition-line {
     background-color: var(--line-color-code, transparent);
+    letter-spacing: var(--line-letter-spacing, 0);
+    word-spacing: var(--line-word-spacing, 0);
 }
 
 /* A composed textblock: the browser must not soft-wrap on its own —
