@@ -271,18 +271,53 @@ own RPI cycle (`/research_codebase` → `/create_plan` →
 `/implement_plan`), kept small/reviewable rather than folded into
 one oversized milestone-5 plan.
 
-### Cycle 1 — KP++ prerequisites: controllable measure + tracking truth
+### Cycle 1 — KP++ prerequisites: performance truth, demand, controllable measure + tracking truth
 
-Do this FIRST; both are needed to judge paragraph-wide quality.
+Do this FIRST. We need to know the real costs, stop work nobody
+consumes, and make measurement/Host tests trustworthy before adding
+a paragraph-wide search algorithm. Sub-phases are dependency-ordered:
+profile before optimizing; establish demand semantics before the
+final perf baseline; then complete the quality harness.
 
-1. **Controllable composition test measure.** The current jsdom
+1. **Performance ground truth + bottleneck profiling.** The existing
+   ON/OFF whole-cycle ratio is only a regression smoke test, not an
+   explanation. Investigate initial load, warm/cold typing,
+   composition-relevant style edits and full recomposition on both
+   the small deterministic fixture and verified wikipedia state.
+   Cover editor-only, viewer-only/compare, algorithm None and
+   Greedy Fit. Instrument composition-specific work (textblocks
+   driven/skipped/published; segmentation/hyphenation; algorithm
+   and `lineWidthAtStep` probes; Measurer calls, cache hits/misses,
+   HarfBuzz font creation/shape calls; applicator span work) and
+   capture browser CPU/trace profiles through Puppeteer/DevTools.
+   Report absolute costs, ratios and dominant call stacks; optimize
+   measured bottlenecks, not assumptions. Keep perf fixture identity
+   validation so HTML/tiny fallbacks fail loud.
+2. **Demand-driven composition lifecycle.** Composition must run
+   only while at least one renderer/applicator consumes
+   `composition@` results. Editor-only mode currently has no
+   consumer and must do zero segmentation, shaping or algorithm
+   work; the future editor applicator opts in explicitly. Use an
+   explicit consumer registration/ref-count/token lifecycle (not a
+   guess from protocol internals): first consumer activates and
+   triggers current textblocks; last consumer stops work and removes
+   stale publications as required. Likewise, an active viewer with
+   algorithm `None (Browser)` must pay no recurring composition
+   work after the one transition that unapplies an existing result;
+   locally-off textblocks get the same fast path. Lazy-initialize
+   expensive Host state where useful. Add structural counters/tests
+   proving no-consumer/None modes invoke zero expensive roles and
+   that activation/deactivation still composes/unapplies correctly.
+   Re-profile all modes after this phase and make the validated
+   demand-aware results the Cycle-1 performance baseline.
+3. **Controllable composition test measure.** The current jsdom
    harness has degenerate geometry and often packs roughly one word
    per line. Build a deterministic layout-geometry fixture (or make
    manual horizontal layout work in the harness) so Host integration
    tests can assert break movement, overfull behavior and
    paragraph-quality comparisons at a known measure. Pure algorithm
    tests still inject widths, but are not enough to prove wiring.
-2. **Tracking/CSS measurement parity.** Current predictive tracking
+4. **Tracking/CSS measurement parity.** Current predictive tracking
    math counts source UTF-16 code units; CSS `letter-spacing` may
    differ for ligatures, combining sequences, surrogate pairs and
    complex shaping/clusters. Probe HarfBuzz vs browser, define the
