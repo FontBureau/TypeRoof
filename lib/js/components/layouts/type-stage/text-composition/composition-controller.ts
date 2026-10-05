@@ -750,10 +750,12 @@ export class CompositionController extends _BaseComponent {
             // the font OBJECT from the properties stream
             // (specific/font, inherited via the typeSpecnion cascade)
             font = nodeProperties.get(`${SPECIFIC}font`) ?? rootFont,
-            availableWidth = nodeProperties.get(`${LAYOUT}availableWidth`),
+            // Authoritative local line box: the same fact consumed by
+            // AutoLinearLeading. availableWidth is only the incoming parent
+            // budget and may differ on this textblock.
+            columnWidth = nodeProperties.get(`${LAYOUT}columnWidth`),
             fontSize = nodeProperties.get(`${GENERIC}fontSize`),
-            lineWidthPt =
-                typeof availableWidth === "number" ? availableWidth : 480,
+            lineWidthPt = typeof columnWidth === "number" ? columnWidth : 480,
             fontSizePt = typeof fontSize === "number" ? fontSize : 12,
             // measurement inputs at the TRUE location (Sprint A);
             // v1 keeps them uniform per textblock — per-RUN values
@@ -829,10 +831,10 @@ export class CompositionController extends _BaseComponent {
             }
         }
 
-        if (typeof availableWidth !== "number" || typeof fontSize !== "number")
+        if (typeof columnWidth !== "number" || typeof fontSize !== "number")
             console.warn(
                 `${this} missing node properties for ${textblockPathString} ` +
-                    `(availableWidth=${availableWidth}, fontSize=${fontSize}) ` +
+                    `(columnWidth=${columnWidth}, fontSize=${fontSize}) ` +
                     `— using fallbacks ${lineWidthPt}pt / ${fontSizePt}pt.`,
             );
 
@@ -1283,6 +1285,9 @@ export class CompositionController extends _BaseComponent {
                     textblockNode,
                     leafTexts: [...leafTexts],
                 },
+                // Diagnostic contract: the authoritative local measure
+                // consumed by this complete snapshot.
+                lineWidthPt,
             },
             identifier = `composition@${textblockPathString}`,
             handler = this._compositionHandler();

@@ -449,13 +449,13 @@ nondegenerate integration fixture.
 
 #### Automated
 
-- [ ] Composition and AutoLinearLeading consume identical line box fact.
-- [ ] Deterministic break assertions pass at nonzero measure.
-- [ ] Full suite/lint/typecheck green.
+- [x] Composition and AutoLinearLeading consume identical line box fact.
+- [x] Deterministic break assertions pass at nonzero measure.
+- [x] Full suite/lint/typecheck green.
 
 #### Manual
 
-- [ ] Wikipedia debug case no longer composes against parent width.
+- [x] Wikipedia debug case no longer composes against parent width.
 
 ---
 

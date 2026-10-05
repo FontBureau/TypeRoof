@@ -1,0 +1,22 @@
+{
+    "description": "Controlled composition geometry minimized from downloads/typeroof-20261005-115730.TypeStage.json",
+    "viewportPx": {
+        "width": 1920,
+        "height": 1080
+    },
+    "layoutPx": {
+        "width": 1600,
+        "height": 900
+    },
+    "parentWidthPt": 1200,
+    "paragraphHorizontalLayout": {
+        "horizontalLayoutAlgorithmTypeKey": "ManualHorizontalLayoutModel",
+        "instance": {
+            "lineLength": {
+                "value": "280",
+                "unit": "pt"
+            }
+        }
+    },
+    "narrowLineLengthPt": 220
+}
