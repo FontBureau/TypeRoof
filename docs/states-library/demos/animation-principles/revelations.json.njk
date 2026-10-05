@@ -1,0 +1,157 @@
+---json
+{
+"permalink": "{{ page.filePathStem }}",
+"layout": null
+}
+---
+{#-
+  TypeRoof project file for follow-through-action/ ("Revelations").
+
+  Times are in hundredths of a second: key moment durations are relative,
+  and are worked out here from the CSS animation timings.
+
+  Each letter runs two animations, so move-y is on a layer wrapping the text:
+    move-y (top) > reveal (translate, font size, axes)
+-#}
+{%- set s = 100 %}
+{%- set stage = { width: 720, height: 720 } %}
+{%- set fontSize = 120 %}{# CSS px #}
+{%- set pt = 0.75 %}{# TypeRoof font size is in pt #}
+
+{#- --duration, --duration-reveal, --delay-single -#}
+{%- set duration = 1.2 * s %}
+{%- set durationReveal = duration * 2.5 %}
+{%- set delaySingle = 0.03 * s %}
+
+{#- --x1 per letter; --i is the letter index -#}
+{%- set letters = [
+  ["R", 35], ["e", 100], ["v", 161], ["e", 221], ["l", 267], ["a", 314],
+  ["t", 368], ["i", 404], ["o", 452], ["n", 518], ["s", 581]
+] %}
+{#- the last letter's reveal ends last -#}
+{%- set total = delaySingle * (letters | length - 1) * 2 + durationReveal %}
+
+{%- set black = { instance: { R: "0", G: "0", B: "0" }, colorTypeKey: "RGB" } %}
+{%- set green = { instance: { R: "13", G: "242", B: "51" }, colorTypeKey: "RGB" } %}{# hsl(130, 90%, 50%) #}
+{%- set blue = { instance: { R: "0", G: "50", B: "73" }, colorTypeKey: "RGB" } %}{# hsl(200, 90%, 15%) #}
+
+{#- move-y: top 720px → 289px, ease-in-out-back -#}
+{%- set top = { from: "720", to: "281" } %}
+
+{#- reveal: 0% from the base style, 30% revealed, 80% and 100% final -#}
+{%- set reveal = {
+  start: {
+    axesLocations: [["opsz", "8"], ["wdth", "155"], ["wght", "100"]],
+    fontSize: (0 * pt) | string,
+    numericProperties: [["y", "110"]]
+  },
+  revealed: {
+    axesLocations: [["opsz", fontSize | string], ["wdth", "25"], ["wght", "100"]],
+    fontSize: (fontSize * pt) | string,
+    numericProperties: [["y", "0"]]
+  },
+  final: {
+    axesLocations: [["opsz", fontSize | string], ["wdth", "100"], ["wght", "700"]],
+    fontSize: (fontSize * pt) | string,
+    numericProperties: [["y", "0"]]
+  }
+} %}
+
+{#-
+  Appends a key moment at time t to a track. Properties missing from p are
+  undefined, so they are left out of the JSON.
+-#}
+{%- macro at(track, t, label, easing, p) %}
+{%- set _ = track.moments.push({
+    label: label,
+    duration: (t - (track.times | last | default(0))) | string,
+    easing: easing,
+    isActive: ("1" if not track.moments.length else undefined),
+    textRun: p.textRun,
+    textAlign: p.textAlign,
+    positioningVertical: p.positioningVertical,
+    textColor: p.textColor,
+    axesLocations: p.axesLocations,
+    fontSize: p.fontSize,
+    numericProperties: p.numericProperties
+  }) %}
+{%- set _ = track.times.push(t) %}
+{%- endmacro %}
+
+{%- set actors = [{
+  instance: {
+    label: "ground",
+    keyMoments: [{
+      label: "Key Moment 1",
+      duration: "1",
+      easing: "linear",
+      isActive: "1",
+      numericProperties: [["x", "0"], ["y", "400"], ["width", stage.width | string], ["height", "320"]],
+      fillColor: blue
+    }]
+  },
+  actorTypeKey: "RectangleActorModel"
+}] %}
+
+{%- for letter in letters %}
+{%- set char = letter[0] %}
+{%- set delayMove = delaySingle * loop.index0 %}
+{%- set delayReveal = delayMove * 2 %}
+
+{#- text: reveal -#}
+{%- set text = { times: [], moments: [] } %}
+{{- at(text, 0, "Start", "linear", {
+    textRun: char,
+    textAlign: "center",
+    positioningVertical: "top",
+    textColor: green,
+    axesLocations: reveal.start.axesLocations,
+    fontSize: reveal.start.fontSize,
+    numericProperties: [["x", letter[1] | string], ["width", "100"], ["y", "110"]]
+  }) }}
+{{- at(text, delayReveal, "Delay", "linear", reveal.start) }}
+{#- CSS default `ease` -#}
+{{- at(text, delayReveal + durationReveal * 0.3, "Reveal 30%", "easeInOutSine", reveal.revealed) }}
+{{- at(text, delayReveal + durationReveal * 0.8, "Reveal 80%", "easeOutQuad", reveal.final) }}
+{{- at(text, total, "Hold", "linear", reveal.final) }}
+
+{#- layer: move-y -#}
+{%- set move = { times: [], moments: [] } %}
+{{- at(move, 0, "Start", "linear", { numericProperties: [["y", top.from]] }) }}
+{{- at(move, delayMove, "Delay", "linear", { numericProperties: [["y", top.from]] }) }}
+{{- at(move, delayMove + duration, "Landed", "easeInOutBack", { numericProperties: [["y", top.to]] }) }}
+{{- at(move, total, "Hold", "linear", { numericProperties: [["y", top.to]] }) }}
+
+{%- set _ = actors.push({
+    instance: {
+      label: char + " move-y",
+      keyMoments: move.moments,
+      activeActors: [{
+        instance: { label: char, keyMoments: text.moments },
+        actorTypeKey: "LineOfTextActorModel"
+      }]
+    },
+    actorTypeKey: "LayerActorModel"
+  }) %}
+{%- endfor %}
+
+{%- set data = {
+  activeState: {
+    t: "0",
+    duration: (total / s) | string,
+    keyMoments: [{
+      label: "Key Moment 1",
+      duration: "1",
+      easing: "linear",
+      isActive: "1",
+      stageBackgroundColor: black
+    }],
+    activeActors: actors,
+    width: stage.width | string,
+    height: stage.height | string,
+    zoomLevel: { type: "app-default", scaling: "100.00000" }
+  },
+  activeLayoutKey: "MotionStage",
+  activeFontKey: "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"
+} %}
+{{- data | dump(2) | safe }}
