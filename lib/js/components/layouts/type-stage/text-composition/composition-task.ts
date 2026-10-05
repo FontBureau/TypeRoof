@@ -42,9 +42,12 @@ export function cancelTask(token: CancellationToken): void {
 }
 
 export function defaultTaskScheduler(resume: () => void): void {
-    if (typeof globalThis.requestIdleCallback === "function")
-        globalThis.requestIdleCallback(() => resume());
-    else globalThis.setTimeout(resume, 0);
+    // requestIdleCallback without a deadline can starve indefinitely while
+    // the browser considers the page busy; in practice algorithm changes
+    // then appeared to land only after unrelated pointer input. A macrotask
+    // still yields rendering/input between checkpoints but guarantees
+    // forward progress without user interaction.
+    globalThis.setTimeout(resume, 0);
 }
 
 export function drainTaskSync<Result>(
