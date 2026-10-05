@@ -1,271 +1,327 @@
 #!/usr/bin/env node
 /**
- * perf:composition — text-composition performance baseline
- * (Sprint B, docs/planning/text-composition/ROADMAP.md).
+ * Text-composition performance investigation harness.
  *
- * Measures update-cycle cost with textComposition ON vs OFF against
- * the wikipedia-scale fixture (a TypeStage state in
- * docs/states-library/fixtures/), in two profiles:
- *   - typing bursts (incremental recomposition: edit a text node)
- *   - full recompose (style-change burst: touch a typeSpec property
- *     that recomposes everything)
+ * quick: semantic smoke run over representative arms; intended for routine use.
+ * full: exhaustive steady matrix (5 warmups + 30 edits), with cold and
+ * transition operations sampled five times separately. Explicitly heavy.
+ * profile: representative cold load and warm edit CDP CPU profiles.
  *
- * Key metric: the overhead RATIO (t_on / t_off) — machine-stable,
- * unlike absolute ms.
- *
- * Regression detection: a checked-in snapshot (perf-composition.baseline.json
- * next to this script) updated DELIBERATELY (--write-baseline) so the
- * commit documents legitimate cost changes; deviations beyond
- * REGRESSION_FACTOR exit non-zero.
- *
- * Usage:
- *   scripts/perf-composition [--player-url=URL] [--cycles=N]
- *                            [--write-baseline]
- * Requires the Vite dev server (port 3000). The script stages the
- * checked-in wikipedia fixture under downloads/ for Vite serving and
- * removes it on exit.
+ * Generated JSON and *.cpuprofile files live under
+ * artifacts/perf-composition/ and are intentionally ignored.
  */
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import {
-    readFileSync,
-    writeFileSync,
-    existsSync,
-    copyFileSync,
-    mkdirSync,
-    rmSync,
-} from "node:fs";
-import { execSync } from "node:child_process";
-import puppeteer from "puppeteer";
 import { ArgumentParser } from "argparse";
-import { setTimeout } from "node:timers/promises";
+import {
+    ALGORITHMS,
+    DEFAULT_PLAYER_URL,
+    RENDERER_MODES,
+    SOURCE_FIXTURE_PATH,
+    VIEWPORT,
+    closeAllBrowsers,
+    fixtureURL,
+    installPublicationObserver,
+    launchBrowser,
+    openFixturePage,
+    prepareInteractionPaths,
+    removeStagedFixtures,
+    runOperation,
+    stageFixtures,
+    verifyFixture,
+    waitForShell,
+} from "./perf-composition-page.mjs";
+import {
+    aggregateRatios,
+    coldMatrix,
+    gitCommit,
+    scenarioKey,
+    scenarioMatrix,
+    summarize,
+    transitionMatrix,
+    summarizeCold,
+    summarizeCPUProfile,
+    validateResult,
+    writeJSON,
+} from "./perf-composition-lib.mjs";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url)),
-    BASELINE_PATH = path.join(__dirname, "perf-composition.baseline.json"),
-    SOURCE_FIXTURE_PATH = path.join(
-        __dirname,
-        "../docs/states-library/fixtures/wikipedia-snapshot.json",
-    ),
-    STAGED_FIXTURE_PATH = path.join(
-        __dirname,
-        "../downloads/perf-wikipedia-snapshot.tmp.json",
-    ),
-    // Vite serves /downloads directly; the docs path requires the
-    // separate Eleventy server and silently falls back to HTML when
-    // unavailable. scripts/perf-composition stages the checked-in
-    // wikipedia fixture here before launch (see main()).
-    FIXTURE_URL = "/TypeRoof/downloads/perf-wikipedia-snapshot.tmp.json",
-    REGRESSION_FACTOR = 1.5,
-    DEFAULT_CYCLES = 30;
+const parser = new ArgumentParser({ description: "Profile TypeRoof text composition" });
+parser.add_argument("--suite", { choices: ["quick", "full", "profile"], default: "quick" });
+parser.add_argument("--player-url", { default: DEFAULT_PLAYER_URL });
+parser.add_argument("--output", { default: null });
+parser.add_argument("--cold-samples", { type: "int", default: null });
+parser.add_argument("--warmups", { type: "int", default: null });
+parser.add_argument("--samples", { type: "int", default: null });
+const args = parser.parse_args(),
+    defaults =
+        args.suite === "full"
+            ? {
+                  coldSamples: 5,
+                  warmups: 5,
+                  steadySamples: 30,
+                  transitionSamples: 5,
+              }
+            : {
+                  coldSamples: 1,
+                  warmups: 1,
+                  steadySamples: 3,
+                  transitionSamples: 1,
+              },
+    sampling = {
+        coldSamples: args.cold_samples ?? defaults.coldSamples,
+        warmups: args.warmups ?? defaults.warmups,
+        steadySamples: args.samples ?? defaults.steadySamples,
+        transitionSamples: defaults.transitionSamples,
+    },
+    timestamp = new Date().toISOString().replaceAll(":", "-").replace(".", "-"),
+    artifactDirectory = path.resolve("artifacts/perf-composition", timestamp),
+    outputPath = path.resolve(args.output ?? path.join(artifactDirectory, "result.json"));
 
-const parser = new ArgumentParser();
-parser.add_argument("--player-url", {
-    // The generic player accepts the complete ApplicationModel state.
-    default: "http://localhost:3000/TypeRoof/app/player",
-});
-parser.add_argument("--cycles", { type: "int", default: DEFAULT_CYCLES });
-parser.add_argument("--write-baseline", { action: "store_true" });
-const args = parser.parse_args();
+const round = (value) => Math.round(value * 1000) / 1000,
+    resultBase = (browserVersion) => ({
+        schemaVersion: 1,
+        suite: args.suite,
+        generatedAt: new Date().toISOString(),
+        gitCommit: gitCommit(),
+        browser: browserVersion,
+        sourceFixture: path.relative(process.cwd(), SOURCE_FIXTURE_PATH),
+        viewport: VIEWPORT,
+        sampling,
+    });
 
-async function waitForShell(page) {
-    for (let count = 0; count * 500 <= 60000; count++) {
-        if (await page.evaluate(() => "shell" in window)) return;
-        await setTimeout(500);
-    }
-    throw new Error("TIMEOUT waiting for shell");
-}
-
-// One measured burst, driven inside the page. mode: "typing" | "recompose"
-async function measureBurst(page, compositionOn, mode, cycles) {
-    return page.evaluate(
-        async ({ compositionOn, mode, cycles }) => {
-            const rootPath = "/activeState",
-                // engagement IS the algorithm selection: ON = the
-                // milestone-4 Greedy Fit algorithm (Treatment Planner
-                // active), OFF = "None (Browser)" (the opt-out type)
-                setComposition = (on) =>
-                    shell.changeState(() => {
-                        shell.getEntry(
-                            `${rootPath}/typeSpec/textCompositionAlgorithm/textCompositionAlgorithmTypeKey`,
-                        ).value = on
-                            ? "TextCompositionAlgorithmGreedyFitModel"
-                            : "TextCompositionAlgorithmNoneModel";
-                    });
-            await setComposition(compositionOn);
-
-            // find the first text node path (immutable walk)
-            const doc = shell.getEntry(`${rootPath}/document`),
-                findFirstTextPath = (node, path) => {
-                    for (const [index, child] of node
-                        .get("content")
-                        .value.entries()) {
-                        const childPath = `${path}/content/${index}`;
-                        if (child.get("typeKey").value === "text")
-                            return childPath;
-                        const found = findFirstTextPath(child, childPath);
-                        if (found !== null) return found;
-                    }
-                    return null;
-                },
-                textPath = findFirstTextPath(doc, `${rootPath}/document`);
-
-            const t0 = performance.now();
-            for (let i = 0; i < cycles; i++) {
-                await shell.changeState(() => {
-                    if (mode === "typing") {
-                        const text = shell.getEntry(`${textPath}/text`);
-                        text.value = `perf probe ${i} ${"x".repeat(i % 40)}`;
-                    } else {
-                        // full recompose: a composition-relevant style
-                        // change (relativeFontSize wiggle)
-                        const rel = shell.getEntry(
-                            `${rootPath}/typeSpec/relativeFontSize`,
-                        );
-                        rel.value = 1 + (i % 2) * 0.0001;
-                    }
+async function measureCold(browser) {
+    const results = [];
+    for (let repetition = 0; repetition < sampling.coldSamples; repetition++) {
+        const matrix = coldMatrix(args.suite),
+            arms = repetition % 2 === 0 ? matrix : [...matrix].reverse();
+        for (const arm of arms) {
+            const opened = await openFixturePage(
+                browser,
+                args.player_url,
+                arm.rendererMode,
+                arm.algorithm,
+            );
+            try {
+                results.push({
+                    kind: "cold",
+                    ...arm,
+                    repetition,
+                    shellReadyMs: round(opened.shellReadyMs),
+                    publications: opened.publications,
+                    fixture: opened.fixture,
                 });
+            } finally {
+                await opened.page.close();
             }
-            const t1 = performance.now();
-            await setComposition(true);
-            return t1 - t0;
-        },
-        { compositionOn, mode, cycles },
-    );
+        }
+    }
+    return results;
 }
+
+async function measureSteady() {
+    const results = [], scenarios = scenarioMatrix(args.suite);
+    for (const scenario of scenarios) {
+        const browser = await launchBrowser(),
+            opened = await openFixturePage(
+                browser,
+                args.player_url,
+                scenario.rendererMode,
+                scenario.algorithm,
+            );
+        try {
+            const paths = await prepareInteractionPaths(opened.page), samples = [];
+            for (let index = 0; index < sampling.warmups; index++)
+                await runOperation(opened.page, scenario, index, paths);
+            for (let index = 0; index < sampling.steadySamples; index++)
+                samples.push(
+                    await runOperation(
+                        opened.page,
+                        scenario,
+                        sampling.warmups + index,
+                        paths,
+                    ),
+                );
+            const durations = samples.map(({ durationMs }) => round(durationMs));
+            results.push({
+                kind: "steady",
+                ...scenario,
+                warmups: sampling.warmups,
+                samples: samples.map((sample, index) => ({
+                    durationMs: durations[index],
+                    publications: sample.publications,
+                })),
+                summary: summarize(durations),
+                fixture: opened.fixture,
+            });
+            console.log(scenarioKey(scenario), round(results.at(-1).summary.medianMs), "ms median");
+        } finally {
+            await opened.page.close().catch(() => {});
+            await browser.close().catch(() => {});
+        }
+    }
+    return results;
+}
+
+async function measureTransitions() {
+    const results = [];
+    for (const scenario of transitionMatrix(args.suite)) {
+        const browser = await launchBrowser(),
+            opened = await openFixturePage(
+                browser,
+                args.player_url,
+                scenario.rendererMode,
+                scenario.algorithm,
+            );
+        const samples = [];
+        try {
+            const paths = await prepareInteractionPaths(opened.page);
+            for (let index = 0; index < sampling.transitionSamples; index++)
+                samples.push(
+                    await runOperation(opened.page, scenario, index, paths),
+                );
+        } finally {
+            await opened.page.close().catch(() => {});
+            await browser.close().catch(() => {});
+        }
+        const durations = samples.map(({ durationMs }) => round(durationMs));
+        results.push({
+            kind: "transition",
+            ...scenario,
+            samples: samples.map((sample, index) => ({
+                durationMs: durations[index],
+                publications: sample.publications,
+            })),
+            summary: summarize(durations),
+        });
+        console.log(
+            scenarioKey(scenario),
+            round(results.at(-1).summary.medianMs),
+            "ms transition median",
+        );
+    }
+    return results;
+}
+
+async function captureProfile(browser, kind, scenario, outputName) {
+    const page = await browser.newPage();
+    await page.setViewport(VIEWPORT);
+    const session = await page.createCDPSession();
+    await session.send("Profiler.enable");
+    let fixture;
+    try {
+        if (kind === "cold") {
+            await installPublicationObserver(page);
+            await session.send("Profiler.start");
+            await page.goto(
+                fixtureURL(
+                    args.player_url,
+                    scenario.rendererMode,
+                    scenario.algorithm,
+                ).toString(),
+                {
+                    waitUntil: ["load", "domcontentloaded"],
+                    timeout: 180000,
+                },
+            );
+            await waitForShell(page);
+            fixture = await verifyFixture(
+                page,
+                scenario.rendererMode,
+                scenario.algorithm,
+            );
+        } else {
+            const opened = await openFixturePage(
+                browser,
+                args.player_url,
+                scenario.rendererMode,
+                scenario.algorithm,
+            );
+            fixture = opened.fixture;
+            const paths = await prepareInteractionPaths(opened.page),
+                operationSession = await opened.page.createCDPSession();
+            await operationSession.send("Profiler.enable");
+            await operationSession.send("Profiler.start");
+            await runOperation(opened.page, scenario, 1000, paths);
+            const { profile } = await operationSession.send("Profiler.stop");
+            await operationSession.send("Profiler.disable");
+            const profilePath = path.join(artifactDirectory, outputName);
+            writeJSON(profilePath, profile);
+            await opened.page.close();
+            return { kind, ...scenario, fixture, outputPath: profilePath, dominantStacks: summarizeCPUProfile(profile) };
+        }
+        const { profile } = await session.send("Profiler.stop");
+        const profilePath = path.join(artifactDirectory, outputName);
+        writeJSON(profilePath, profile);
+        return { kind, ...scenario, fixture, outputPath: profilePath, dominantStacks: summarizeCPUProfile(profile) };
+    } finally {
+        await session.send("Profiler.disable").catch(() => {});
+        await page.close();
+    }
+}
+
+let stopping = false;
+const stop = async (signal) => {
+    if (stopping) return;
+    stopping = true;
+    console.error(`Received ${signal}; closing benchmark browsers.`);
+    await closeAllBrowsers();
+    removeStagedFixtures();
+    process.exit(signal === "SIGINT" ? 130 : 143);
+};
+process.once("SIGINT", () => void stop("SIGINT"));
+process.once("SIGTERM", () => void stop("SIGTERM"));
 
 async function main() {
-    mkdirSync(path.dirname(STAGED_FIXTURE_PATH), { recursive: true });
-    copyFileSync(SOURCE_FIXTURE_PATH, STAGED_FIXTURE_PATH);
-    const url = new URL(
-            `#[no-chrome]from-url:${FIXTURE_URL}`,
-            args.player_url,
-        ),
-        browser = await puppeteer.launch({
-            headless: true,
-            timeout: 100000,
-            executablePath: "/usr/bin/chromium-browser",
-        });
-    console.log(`Source: ${url}`);
-    const results = {};
+    stageFixtures();
+    let browser = await launchBrowser();
     try {
-        const page = await browser.newPage();
-        await page.setViewport({ width: 1920, height: 1080 });
-        await page.goto(url.toString(), {
-            waitUntil: ["load", "domcontentloaded"],
-        });
-        await waitForShell(page);
-        // settle
-        await setTimeout(1000);
-        // Fail loud instead of benchmarking an HTML fallback / tiny
-        // default document (the historical docs URL could 404 while
-        // page.goto still succeeded).
-        const fixtureInfo = await page.evaluate(() => {
-            const countText = (node) => {
-                    let count = 0;
-                    if (node.get("typeKey").value === "text") count++;
-                    const content = node.get("content", null);
-                    if (content !== null)
-                        for (const child of content.value)
-                            count += countText(child);
-                    return count;
-                },
-                rootPath = "/activeState",
-                doc = shell.getEntry(`${rootPath}/document`);
-            return {
-                textNodes: countText(doc),
-                activeLayoutKey: shell.getEntry("/activeLayoutKey").value,
+        const browserVersion = await browser.version();
+        let result;
+        if (args.suite === "profile") {
+            const profiles = [
+                await captureProfile(
+                    browser,
+                    "cold",
+                    { rendererMode: "editor", algorithm: "fit", workload: "initial-load" },
+                    "cold-editor-fit.cpuprofile",
+                ),
+                await captureProfile(
+                    browser,
+                    "warm",
+                    {
+                        rendererMode: "viewer",
+                        algorithm: "fit",
+                        workload: "inherited-style-partial-recompose",
+                    },
+                    "warm-viewer-fit-recompose.cpuprofile",
+                ),
+            ];
+            result = { ...resultBase(browserVersion), profiles };
+        } else {
+            const cold = await measureCold(browser);
+            await browser.close();
+            browser = null;
+            const steady = await measureSteady(),
+                transitions = await measureTransitions();
+            result = {
+                ...resultBase(browserVersion),
+                cold,
+                coldSummary: summarizeCold(cold),
+                steady,
+                transitions,
+                aggregateRatios: aggregateRatios(steady),
             };
-        });
-        if (fixtureInfo.textNodes < 100)
-            throw new Error(
-                `FIXTURE ERROR expected wikipedia-scale state, got ` +
-                    `${fixtureInfo.textNodes} text nodes ` +
-                    `(layout ${fixtureInfo.activeLayoutKey}).`,
-            );
-        console.log(
-            `Fixture verified: ${fixtureInfo.textNodes} text nodes, ` +
-                `layout ${fixtureInfo.activeLayoutKey}`,
-        );
-
-        for (const mode of ["typing", "recompose"]) {
-            const off = await measureBurst(page, false, mode, args.cycles),
-                on = await measureBurst(page, true, mode, args.cycles);
-            results[mode] = {
-                offMs: Math.round(off * 100) / 100,
-                onMs: Math.round(on * 100) / 100,
-                ratio: Math.round((on / off) * 1000) / 1000,
-            };
-            console.log(
-                `${mode}: OFF ${results[mode].offMs}ms, ON ${results[mode].onMs}ms, ` +
-                    `overhead ratio ${results[mode].ratio}`,
-            );
         }
+        validateResult(result);
+        writeJSON(outputPath, result);
+        console.log(`Validated ${args.suite} result: ${outputPath}`);
     } finally {
-        await browser.close();
+        if (browser !== null) await browser.close();
+        removeStagedFixtures();
     }
-
-    let gitCommit = "unknown";
-    try {
-        gitCommit = execSync("git rev-parse --short HEAD").toString().trim();
-    } catch {
-        /* not in a git repo */
-    }
-
-    if (args.write_baseline) {
-        const baseline = {
-                gitCommit,
-                date: new Date().toISOString(),
-                cycles: args.cycles,
-                metrics: results,
-            };
-        writeFileSync(BASELINE_PATH, JSON.stringify(baseline, null, 2) + "\n");
-        console.log(`Baseline written: ${BASELINE_PATH}`);
-        return;
-    }
-
-    if (!existsSync(BASELINE_PATH)) {
-        console.warn(
-            `No baseline at ${BASELINE_PATH} — run with --write-baseline to create one.`,
-        );
-        return;
-    }
-    const baseline = JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
-    console.log(
-        `Baseline: ${baseline.gitCommit} (${baseline.date}, ${baseline.cycles} cycles)`,
-    );
-    let regressions = 0;
-    for (const mode of Object.keys(results)) {
-        const current = results[mode],
-            base = baseline.metrics[mode];
-        if (!base) continue;
-        for (const key of ["onMs", "ratio"]) {
-            const deviation = current[key] / base[key];
-            if (deviation > REGRESSION_FACTOR) {
-                regressions++;
-                console.error(
-                    `REGRESSION ${mode}.${key}: ${current[key]} vs baseline ${base[key]} ` +
-                        `(${deviation.toFixed(2)}x > ${REGRESSION_FACTOR}x)`,
-                );
-            } else
-                console.log(
-                    `ok ${mode}.${key}: ${current[key]} vs baseline ${base[key]} ` +
-                        `(${deviation.toFixed(2)}x)`,
-                );
-        }
-    }
-    if (regressions > 0) {
-        console.error(`${regressions} regression(s) detected.`);
-        process.exitCode = 1;
-        return;
-    }
-    console.log("No regressions.");
 }
 
-main()
-    .catch((error) => {
-        console.error(error);
-        process.exitCode = 2;
-    })
-    .finally(() => {
-        rmSync(STAGED_FIXTURE_PATH, { force: true });
-    });
+main().catch((error) => {
+    console.error(error);
+    removeStagedFixtures();
+    process.exitCode = 2;
+});
