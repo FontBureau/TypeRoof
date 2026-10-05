@@ -345,6 +345,18 @@ optimizing; do not infer that composition still runs merely from the
 remaining latency. Publications in viewer and compare are expected
 because their viewer applicator holds demand.
 
+Manual reproduction also found an existing ProseMirror cursor-jump defect
+when typing rapidly inside an intent-style mark: the cursor can move to the
+mark end or before the mark. It occurs in editor-only mode and on main as
+well, but becomes much easier to trigger when editor updates are slow. Treat
+this as a latency-amplified pre-existing editor correctness regression, not
+as evidence that viewer composition mutates the editor DOM. The likely race
+is between queued shell/metamodel synchronization and ProseMirror's own
+selection/mark-view lifecycle (including asynchronous intent-mark tag
+correction). Preserve selection and the active intent mark across rapid
+transactions, and include this exact typing case in the focused editor-only
+profile/follow-up.
+
 ### Cycle 2 — Milestone 5 research/design: Knuth–Plass++
 
 Research and specify before implementation:

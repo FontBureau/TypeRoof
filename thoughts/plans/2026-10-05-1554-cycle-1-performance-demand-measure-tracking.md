@@ -392,14 +392,14 @@ be direct and measured for overhead.
 
 #### Automated
 
-- [ ] Sync/async produce behavior-identical payloads.
-- [ ] Lifecycle/cancellation/staleness tests green.
-- [ ] Full suite/lint/typecheck green.
+- [x] Sync/async produce behavior-identical payloads.
+- [x] Lifecycle/cancellation/staleness tests green.
+- [x] Full suite/lint/typecheck green.
 
 #### Manual
 
-- [ ] Lazy viewer remains responsive; textblocks compose independently.
-- [ ] Sync configured viewer has no first-result reflow.
+- [x] Lazy viewer remains responsive; textblocks compose independently.
+- [x] Sync configured viewer has no first-result reflow (automated flushSync coverage; policy is not UI-exposed).
 
 ---
 

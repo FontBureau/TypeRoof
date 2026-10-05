@@ -255,6 +255,7 @@ export class UIDocumentElement extends _UIDocumentAttachment {
         defaultSchemaSpec,
         originTypeSpecPath,
         layoutRootPath,
+        compositionReveal = "lazy",
     ) {
         super(widgetBus, zones, metaInfo, attachmentRegistry);
         const plan = metaInfo.renderingPlan;
@@ -266,7 +267,13 @@ export class UIDocumentElement extends _UIDocumentAttachment {
         this._layoutRootPath = layoutRootPath;
         this._typeSpecStylerWrapper = null;
         this._compositionUnsubscribe = null;
+        this._compositionUnobserve = null;
         this._compositionDemandToken = {};
+
+        // Keep the meta-derived resolution current for nodes whose
+        // immutable identity survives a structural edit at a new path
+        // (e.g. Enter splits a paragraph and shifts following siblings).
+        this._syncMetaInfo(metaInfo, compositionReveal);
 
         // The attr-driven DOM state as applied below (the htmlAttrs bag
         // and the verbatim html of reproducing atoms);
@@ -316,11 +323,22 @@ export class UIDocumentElement extends _UIDocumentAttachment {
                 "compositionController",
                 null,
             );
-            if (service !== null)
+            if (service !== null) {
+                this._compositionUnobserve = service.observe(
+                    this._documentNodePath,
+                    (payload) =>
+                        this.node.classList.toggle(
+                            "typeroof-composed",
+                            payload !== null,
+                        ),
+                );
                 this._compositionUnsubscribe = service.subscribe(
                     this._documentNodePath,
                     this._compositionDemandToken,
                 );
+            }
+            if (service !== null && compositionReveal === "sync")
+                service.flushSync(this._documentNodePath);
         }
     }
 
@@ -330,6 +348,34 @@ export class UIDocumentElement extends _UIDocumentAttachment {
             !plan.context.inInlineContext &&
             !!plan.childrenInInlineContext
         );
+    }
+
+    _syncMetaInfo(metaInfo, compositionReveal = "lazy", scopeSettled = false) {
+        const plan = metaInfo.renderingPlan,
+            pathChanged =
+                this._pathOfTypes?.join("\u0001") !==
+                plan.pathOfTypes.join("\u0001");
+        this._context = plan.context;
+        this._hasTypeSpecStyling = plan.hasTypeSpecStyling;
+        this._pathOfTypes = plan.pathOfTypes;
+        this._compositionReveal = compositionReveal;
+        if (
+            (pathChanged || scopeSettled) &&
+            this._typeSpecStylerWrapper !== null
+        ) {
+            const index = this._widgets.indexOf(this._typeSpecStylerWrapper);
+            if (index !== -1) this._widgets.splice(index, 1);
+            this._destroyWidget(this._typeSpecStylerWrapper);
+            this._typeSpecStylerWrapper = null;
+            const wrapper = this._provisionTypeSpecStyler();
+            if (wrapper !== null) {
+                this._createWidget(wrapper);
+                const changedMap = new Map();
+                for (const local of wrapper.dependencyReverseMapping.keys())
+                    changedMap.set(local, wrapper.widget.getEntry(local));
+                wrapper.widget.update(changedMap);
+            }
+        }
     }
 
     _updateComposedClass(changedMap) {
@@ -456,7 +502,9 @@ export class UIDocumentElement extends _UIDocumentAttachment {
     destroy() {
         if (this._compositionUnsubscribe !== null)
             this._compositionUnsubscribe();
+        if (this._compositionUnobserve !== null) this._compositionUnobserve();
         this._compositionUnsubscribe = null;
+        this._compositionUnobserve = null;
         super.destroy();
     }
 
@@ -560,8 +608,10 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
         defaultSchemaSpec,
         originTypeSpecPath,
         layoutRootPath,
+        compositionReveal = "lazy",
     ) {
         super(widgetBus, zones, metaInfo, attachmentRegistry);
+        void compositionReveal;
         this._layoutRootPath = layoutRootPath;
         this._defaultSchemaSpec = defaultSchemaSpec;
         this._context = metaInfo.context;
@@ -578,6 +628,7 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
         // MODE, today's single-text-node behavior)
         this._text = "";
         this._composition = null;
+        this._compositionUnobserve = null;
         // a carrier span we created to hold line spans in the
         // mark-less case (null when this.node is the bare text node)
         this._carrierSpan = null;
@@ -598,6 +649,18 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
                 ],
             ];
         this._initWidgets(widgets);
+        const service = this.widgetBus.getWidgetById(
+            "compositionController",
+            null,
+        );
+        if (service !== null)
+            this._compositionUnobserve = service.observe(
+                metaInfo.rootPath.parent.parent,
+                (payload) => {
+                    this._composition = payload;
+                    this._renderContent();
+                },
+            );
         this._initalWidgetsLength = this._widgets.length;
     }
 
@@ -693,7 +756,12 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
         if (leafIndex === -1)
             // not part of the composition (e.g. structure changed
             // mid-cycle): render uncomposed, the next update fixes it
-            return [this._domTool.createTextNode(this._text)];
+            return [
+                this._domTool.createTextNode(
+                    this._composition.sources.leafTexts?.[leafIndex] ??
+                        this._text,
+                ),
+            ];
         const spans = [];
         for (const { segments, result } of paragraphs) {
             result.lines.forEach((line, lineIndex) => {
@@ -783,9 +851,16 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
                 span.append(
                     this._domTool.createTextNode(
                         mySegments
-                            .map((segment) =>
-                                this._text.slice(segment.start, segment.end),
-                            )
+                            .map((segment) => {
+                                const sourceText =
+                                    this._composition.sources.leafTexts?.[
+                                        leafIndex
+                                    ] ?? this._text;
+                                return sourceText.slice(
+                                    segment.start,
+                                    segment.end,
+                                );
+                            })
                             .join(""),
                     ),
                 );
@@ -793,6 +868,12 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
             });
         }
         return spans;
+    }
+
+    destroy() {
+        if (this._compositionUnobserve !== null) this._compositionUnobserve();
+        this._compositionUnobserve = null;
+        super.destroy();
     }
 
     getTextNode() {
@@ -992,6 +1073,7 @@ export class UIDocumentViewer extends _BaseContainerComponent {
         originTypeSpecPath,
         documentNodesMetaId,
         baseClass = "typeroof-document",
+        { compositionReveal = "lazy" } = {},
     ) {
         const documentContainer = widgetBus.domTool.createElement("article", {
             class: baseClass,
@@ -1001,6 +1083,11 @@ export class UIDocumentViewer extends _BaseContainerComponent {
         this.nodesElement = documentContainer;
         this._originTypeSpecPath = originTypeSpecPath;
         this._documentNodesMetaId = documentNodesMetaId;
+        if (!new Set(["lazy", "sync"]).has(compositionReveal))
+            throw new Error(
+                `unknown composition reveal policy ${compositionReveal}`,
+            );
+        this._compositionReveal = compositionReveal;
         // The viewer's rootPath is "<layoutRoot>/document" (see its
         // relativeRootPath in the layout), hence its parent is the
         // layout root where layout level settings live (e.g.
@@ -1113,6 +1200,7 @@ export class UIDocumentViewer extends _BaseContainerComponent {
             proseMirrorDefaultSchemaSpec,
             this._originTypeSpecPath,
             this._layoutRootPath,
+            this._compositionReveal,
         ];
     }
 

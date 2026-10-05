@@ -754,6 +754,8 @@ class TypeStageController extends _BaseContainerComponent {
                 originTypeSpecPath,
                 documentNodesMetaId,
                 // baseClass = "typeroof-document",
+                undefined,
+                { compositionReveal: "lazy" },
             ],
             [
                 { zone: "editor-manager" },

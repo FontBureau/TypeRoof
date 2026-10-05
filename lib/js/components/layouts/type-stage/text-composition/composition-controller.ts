@@ -222,6 +222,17 @@ import type { HyphenationConfig } from "./hyphenator.ts";
 // line-span styles (applied by the applicator); imported here so the
 // styles land whenever the controller is active (vite CSS import
 // pattern, cf. tree-editor.typeroof.jsx)
+import {
+    cancelTask,
+    createCancellationToken,
+    drainTaskSync,
+    resumeTaskAsync,
+} from "./composition-task.ts";
+import type {
+    CancellationToken,
+    CompositionTask,
+    TaskScheduler,
+} from "./composition-task.ts";
 import "./line-spans.css";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -258,6 +269,12 @@ export interface CompositionSource {
 
 export type CompositionSourceDriver = () => CompositionSource | null;
 
+interface ControllerTask {
+    token: CancellationToken;
+    source: CompositionSource;
+    task: CompositionTask<void>;
+}
+
 /** The per-run measurement tuple (the textblock's values are the
  *  fallback; see composeTextblock). */
 interface LeafStyle {
@@ -284,7 +301,9 @@ export class CompositionController extends _BaseComponent {
     declare _ingredients: Map<string, unknown[]>;
     declare _sources: Map<string, CompositionSourceDriver>;
     declare _subscribers: Map<string, Set<unknown>>;
-    declare _tasks: Map<string, unknown>;
+    declare _observers: Map<string, Set<(payload: any | null) => void>>;
+    declare _tasks: Map<string, ControllerTask>;
+    declare _scheduler: TaskScheduler | undefined;
     declare _hyphers: Map<unknown, any>;
     declare _noHarfbuzzWarned: boolean;
 
@@ -310,7 +329,9 @@ export class CompositionController extends _BaseComponent {
         // 3 cooperative runner slot.
         this._sources = new Map();
         this._subscribers = new Map();
+        this._observers = new Map();
         this._tasks = new Map();
+        this._scheduler = widgetBus.compositionTaskScheduler;
         // Hypher instances per installed pattern OBJECT (immutable
         // metamodel values — identity keyed; bounded by the session's
         // installed pattern count)
@@ -326,17 +347,60 @@ export class CompositionController extends _BaseComponent {
         return (this._subscribers.get(path)?.size ?? 0) > 0;
     }
 
-    _composeCurrent(path: string): void {
+    _cancelCurrentTask(path: string): void {
+        const current = this._tasks.get(path);
+        if (current === undefined) return;
+        cancelTask(current.token);
+        this._tasks.delete(path);
+    }
+
+    *_compositionTask(
+        path: string,
+        source: CompositionSource,
+    ): CompositionTask<void> {
+        if (!this._sourceIsCurrent(path, source)) return;
+        yield* this._composeTextblockTask(source);
+    }
+
+    _sourceIsCurrent(path: string, source: CompositionSource): boolean {
+        if (!this._hasDemand(path)) return false;
+        const current = this._sources.get(path)?.();
+        return (
+            current !== undefined &&
+            current !== null &&
+            current.textblockNode === source.textblockNode &&
+            current.nodePropertiesPayload === source.nodePropertiesPayload &&
+            current.newState === source.newState
+        );
+    }
+
+    _composeCurrent(path: string, synchronous = false): void {
         if (!this._hasDemand(path)) return;
         const source = this._sources.get(path)?.();
         if (source === undefined || source === null) return;
-        this.composeTextblock(
-            source.textblockPath,
-            source.textblockNode,
-            source.nodePropertiesPayload,
-            source.newState,
-            source.styleResolution,
-        );
+        this._cancelCurrentTask(path);
+        const token = createCancellationToken(),
+            task = this._compositionTask(path, source),
+            current = { token, source, task };
+        this._tasks.set(path, current);
+        if (synchronous) {
+            drainTaskSync(task, token);
+            if (this._tasks.get(path) === current) this._tasks.delete(path);
+            return;
+        }
+        resumeTaskAsync(task, {
+            token,
+            ...(this._scheduler === undefined
+                ? {}
+                : { scheduler: this._scheduler }),
+            onComplete: () => {
+                if (this._tasks.get(path) === current) this._tasks.delete(path);
+            },
+            onError: (error) => {
+                if (this._tasks.get(path) === current) this._tasks.delete(path);
+                console.error(`Composition task failed for ${path}:`, error);
+            },
+        });
     }
 
     /** Register the one meta-owned source for a textblock. Source and
@@ -358,8 +422,8 @@ export class CompositionController extends _BaseComponent {
             active = false;
             if (this._sources.get(key) !== sourceDriver) return;
             this._sources.delete(key);
+            this._cancelCurrentTask(key);
             this.unpublishTextblock(key);
-            this._tasks.delete(key);
             if (!this._hasDemand(key)) this._subscribers.delete(key);
         };
     }
@@ -391,16 +455,48 @@ export class CompositionController extends _BaseComponent {
             if (current === undefined || !current.delete(token)) return;
             if (current.size !== 0) return;
             this._subscribers.delete(key);
+            this._cancelCurrentTask(key);
             this.unpublishTextblock(key);
-            this._tasks.delete(key);
             this._ingredients.delete(key);
         };
+    }
+
+    /** Observe completed atomic payloads without adding demand. Async
+     * completion happens outside the framework update cycle, so the
+     * controller delivers the snapshot directly to applicator
+     * attachments as well as retaining the composition@ publication. */
+    observe(
+        path: Path | string,
+        callback: (payload: any | null) => void,
+    ): () => void {
+        const key = this._pathString(path),
+            observers = this._observers.get(key) ?? new Set();
+        observers.add(callback);
+        this._observers.set(key, observers);
+        if (this._registrations.has(key))
+            callback(
+                this._compositionHandler().getRegistered(`composition@${key}`),
+            );
+        let active = true;
+        return () => {
+            if (!active) return;
+            active = false;
+            const current = this._observers.get(key);
+            if (current === undefined) return;
+            current.delete(callback);
+            if (current.size === 0) this._observers.delete(key);
+        };
+    }
+
+    _notifyObservers(path: string, payload: any | null): void {
+        for (const observer of this._observers.get(path) ?? [])
+            observer(payload);
     }
 
     /** Phase 2 is synchronous: flush is the explicit direct drive.
      * Phase 3 will also drain a pending cooperative task here. */
     flushSync(path: Path | string): void {
-        this._composeCurrent(this._pathString(path));
+        this._composeCurrent(this._pathString(path), true);
     }
 
     _compositionHandler(): any {
@@ -560,22 +656,40 @@ export class CompositionController extends _BaseComponent {
         return texts;
     }
 
-    /** Compose ONE textblock (all its logical paragraphs) and publish
-     *  composition@<textblockPath> — replacing any previous entry.
-     *  Called by the meta element after its scope settled.
-     *  nodePropertiesPayload: the element's FRESH scope component
-     *  (answers .getProperties()). newState: the cycle's state (for
-     *  the gate and the font). styleResolution: the meta element's
-     *  per-run style context (per-run style spans); null = every leaf
-     *  resolves unstyled. */
+    /** Direct synchronous Host entry point retained for controlled use.
+     * Normal demanded work reaches the same generator through the task
+     * runner, so sync/async cannot diverge in behavior. */
     composeTextblock(
         textblockPath: Path,
         textblockNode: any,
         nodePropertiesPayload: any,
         newState: any,
         styleResolution: StyleResolutionContext | null = null,
-    ) {
-        const textblockPathString = textblockPath.toString();
+    ): void {
+        drainTaskSync(
+            this._composeTextblockTask({
+                textblockPath,
+                textblockNode,
+                nodePropertiesPayload,
+                newState,
+                styleResolution,
+            }),
+        );
+    }
+
+    /** Compose ONE textblock and publish only after every logical
+     * paragraph completed. The source identity is checked at every
+     * resume boundary and immediately before atomic publication. */
+    *_composeTextblockTask(source: CompositionSource): CompositionTask<void> {
+        const {
+                textblockPath,
+                textblockNode,
+                nodePropertiesPayload,
+                newState,
+                styleResolution,
+            } = source,
+            textblockPathString = textblockPath.toString();
+        yield { reason: "collect/resolve" };
         if (!this._hasDemand(textblockPathString)) return;
         const nodePropertiesEarly = nodePropertiesPayload.getProperties(),
             // OFF MODE gate: engagement IS the algorithm selection —
@@ -936,206 +1050,201 @@ export class CompositionController extends _BaseComponent {
             previous.every((value, index) => value === ingredients[index])
         )
             return;
-        this._ingredients.set(textblockPathString, ingredients);
-
-        const paragraphs = logicalParagraphs.map((logicalParagraph) => {
-                let { segments, breaks } = logicalParagraph;
-                if (hypher !== null)
-                    // the Hyphenator: splits word segments at
-                    // hyphenation points, adds 'hyphen' break
-                    // opportunities (the Algorithm can't tell a word
-                    // boundary from a hyphen point)
-                    ({ segments, breaks } = hyphenateSegments(
-                        segments,
-                        breaks,
-                        leafTexts,
-                        hypher,
-                        hyphenationConfig,
-                    ));
-                // The hyphen glyph's natural width per leaf style.
-                // IMPORTANT: it is NOT part of a segment's natural
-                // width. A split word may contain several INTERNAL
-                // hyphen opportunities, but the browser renders only
-                // the hyphen at the break actually TAKEN at the line
-                // end. lineWidthAtStep adds it candidate-wise below.
-                const hyphenWidthOf = (() => {
-                    const widths = new Map<LeafStyle, number>();
-                    return (style: LeafStyle): number => {
-                        let width = widths.get(style);
-                        if (width === undefined) {
-                            width =
-                                this._measurer!.measureEm(
-                                    style.font,
-                                    style.axesEntries,
-                                    style.axesKey,
-                                    style.featuresEntries,
-                                    style.featuresKey,
-                                    style.language,
-                                    style.direction,
-                                    "-",
-                                ) * style.fontSizePt;
-                            widths.set(style, width);
-                        }
-                        return width;
-                    };
-                })();
-                // measure: fill widthPt in place (segments are
-                // fresh), each at ITS leaf's style (per-run style
-                // spans; unstyled leaves use the textblock style)
-                for (const segment of segments) {
-                    const style = styleOf(segment.sourceIndex);
-                    segment.widthPt =
-                        this._measurer!.measureEm(
-                            style.font,
-                            style.axesEntries,
-                            style.axesKey,
-                            style.featuresEntries,
-                            style.featuresKey,
-                            style.language,
-                            style.direction,
-                            leafTexts[segment.sourceIndex]?.slice(
-                                segment.start,
-                                segment.end,
-                            ) ?? "",
-                        ) * style.fontSizePt;
-                }
-                const breakAfter = new Map(
-                        breaks.map((breakOpportunity) => [
-                            breakOpportunity.afterSegment,
-                            breakOpportunity,
-                        ]),
-                    ),
-                    widthOf = (from: number, to: number) => {
-                        let width = 0;
-                        for (let i = from; i < to; i++)
-                            width += segments[i]!.widthPt;
-                        return width;
-                    },
-                    axesAtStep = (style: LeafStyle, step: number) => {
-                        const entry = plannerOf(style),
-                            axes = entry?.stepper.axesAt(step) ?? new Map(),
-                            axesEntries: [string, number][] =
-                                axes.size === 0
-                                    ? style.axesEntries
-                                    : style.axesEntries.map(([tag, value]) =>
-                                          axes.has(tag)
-                                              ? [tag, axes.get(tag)!]
-                                              : [tag, value],
-                                      ),
-                            axesKey =
-                                axes.size === 0
-                                    ? style.axesKey
-                                    : axesKeyOfEntries(style.font, axesEntries);
-                        return { entry, axesEntries, axesKey };
-                    },
-                    candidateHyphenWidth = (
-                        to: number,
-                        step: number,
-                    ): number => {
-                        if (
-                            hypher === null ||
-                            breakAfter.get(to - 1)?.kind !== "hyphen"
-                        )
-                            return 0;
-                        const style = styleOf(segments[to - 1]!.sourceIndex);
-                        if (step === 0) return hyphenWidthOf(style);
-                        const { axesEntries, axesKey } = axesAtStep(
-                            style,
-                            step,
-                        );
-                        return (
+        const paragraphs = [];
+        for (const logicalParagraph of logicalParagraphs) {
+            if (!this._sourceIsCurrent(textblockPathString, source)) return;
+            let { segments, breaks } = logicalParagraph;
+            if (hypher !== null)
+                // the Hyphenator: splits word segments at
+                // hyphenation points, adds 'hyphen' break
+                // opportunities (the Algorithm can't tell a word
+                // boundary from a hyphen point)
+                ({ segments, breaks } = hyphenateSegments(
+                    segments,
+                    breaks,
+                    leafTexts,
+                    hypher,
+                    hyphenationConfig,
+                ));
+            // The hyphen glyph's natural width per leaf style.
+            // IMPORTANT: it is NOT part of a segment's natural
+            // width. A split word may contain several INTERNAL
+            // hyphen opportunities, but the browser renders only
+            // the hyphen at the break actually TAKEN at the line
+            // end. lineWidthAtStep adds it candidate-wise below.
+            const hyphenWidthOf = (() => {
+                const widths = new Map<LeafStyle, number>();
+                return (style: LeafStyle): number => {
+                    let width = widths.get(style);
+                    if (width === undefined) {
+                        width =
                             this._measurer!.measureEm(
                                 style.font,
-                                axesEntries,
-                                axesKey,
+                                style.axesEntries,
+                                style.axesKey,
                                 style.featuresEntries,
                                 style.featuresKey,
                                 style.language,
                                 style.direction,
                                 "-",
-                            ) * style.fontSizePt
-                        );
-                    },
-                    algorithm =
-                        algorithmKey === "TextCompositionAlgorithmDummyModel"
-                            ? createDummyComposition(algorithmConfig as number)
-                            : algorithmKey ===
-                                "TextCompositionAlgorithmGreedyFitModel"
-                              ? greedyFitComposition
-                              : greedyRaggedComposition,
-                    result = algorithm({
-                        segments,
-                        breaks,
-                        lineWidthPt: () => lineWidthPt,
-                        // The Treatment Planner (milestone 4): step 0
-                        // is the natural width; step != 0 re-measures
-                        // axes treatments at the shifted coords and
-                        // adds the tracking/wordspace deltas
-                        // (arithmetically). Algorithms that only probe
-                        // step 0 see no difference.
-                        lineWidthAtStep: (from, to, step) => {
-                            if (step === 0)
-                                return (
-                                    widthOf(from, to) +
-                                    candidateHyphenWidth(to, step)
-                                );
-                            let width = 0;
-                            for (let i = from; i < to; i++) {
-                                const segment = segments[i]!,
-                                    style = styleOf(segment.sourceIndex),
-                                    entry = plannerOf(style),
-                                    text =
-                                        leafTexts[segment.sourceIndex]?.slice(
-                                            segment.start,
-                                            segment.end,
-                                        ) ?? "";
-                                if (entry === null || entry === undefined) {
-                                    width += segment.widthPt;
-                                    continue;
-                                }
-                                const {
-                                        axesEntries: stepAxesEntries,
-                                        axesKey: stepAxesKey,
-                                    } = axesAtStep(style, step),
-                                    measuredPt =
-                                        this._measurer!.measureEm(
-                                            style.font,
-                                            stepAxesEntries,
-                                            stepAxesKey,
-                                            style.featuresEntries,
-                                            style.featuresKey,
-                                            style.language,
-                                            style.direction,
-                                            text,
-                                        ) * style.fontSizePt;
-                                let segmentWidth =
-                                    measuredPt +
-                                    entry.stepper.letterSpacingPtAt(step) *
-                                        (segment.end - segment.start);
-                                // wordspace: the factor multiplies the
-                                // NATURAL space advance (space-only
-                                // segments) — the applicator applies
-                                // the same product as CSS word-spacing
-                                const factor =
-                                    entry.stepper.wordSpaceFactorAt(step);
-                                if (
-                                    factor !== 0 &&
-                                    text.length > 0 &&
-                                    text.trim() === ""
-                                )
-                                    segmentWidth +=
-                                        entry.spaceAdvancePt * factor;
-                                width += segmentWidth;
+                            ) * style.fontSizePt;
+                        widths.set(style, width);
+                    }
+                    return width;
+                };
+            })();
+            // measure: fill widthPt in place (segments are
+            // fresh), each at ITS leaf's style (per-run style
+            // spans; unstyled leaves use the textblock style)
+            for (const segment of segments) {
+                const style = styleOf(segment.sourceIndex);
+                segment.widthPt =
+                    this._measurer!.measureEm(
+                        style.font,
+                        style.axesEntries,
+                        style.axesKey,
+                        style.featuresEntries,
+                        style.featuresKey,
+                        style.language,
+                        style.direction,
+                        leafTexts[segment.sourceIndex]?.slice(
+                            segment.start,
+                            segment.end,
+                        ) ?? "",
+                    ) * style.fontSizePt;
+            }
+            const breakAfter = new Map(
+                    breaks.map((breakOpportunity) => [
+                        breakOpportunity.afterSegment,
+                        breakOpportunity,
+                    ]),
+                ),
+                widthOf = (from: number, to: number) => {
+                    let width = 0;
+                    for (let i = from; i < to; i++)
+                        width += segments[i]!.widthPt;
+                    return width;
+                },
+                axesAtStep = (style: LeafStyle, step: number) => {
+                    const entry = plannerOf(style),
+                        axes = entry?.stepper.axesAt(step) ?? new Map(),
+                        axesEntries: [string, number][] =
+                            axes.size === 0
+                                ? style.axesEntries
+                                : style.axesEntries.map(([tag, value]) =>
+                                      axes.has(tag)
+                                          ? [tag, axes.get(tag)!]
+                                          : [tag, value],
+                                  ),
+                        axesKey =
+                            axes.size === 0
+                                ? style.axesKey
+                                : axesKeyOfEntries(style.font, axesEntries);
+                    return { entry, axesEntries, axesKey };
+                },
+                candidateHyphenWidth = (to: number, step: number): number => {
+                    if (
+                        hypher === null ||
+                        breakAfter.get(to - 1)?.kind !== "hyphen"
+                    )
+                        return 0;
+                    const style = styleOf(segments[to - 1]!.sourceIndex);
+                    if (step === 0) return hyphenWidthOf(style);
+                    const { axesEntries, axesKey } = axesAtStep(style, step);
+                    return (
+                        this._measurer!.measureEm(
+                            style.font,
+                            axesEntries,
+                            axesKey,
+                            style.featuresEntries,
+                            style.featuresKey,
+                            style.language,
+                            style.direction,
+                            "-",
+                        ) * style.fontSizePt
+                    );
+                },
+                algorithm =
+                    algorithmKey === "TextCompositionAlgorithmDummyModel"
+                        ? createDummyComposition(algorithmConfig as number)
+                        : algorithmKey ===
+                            "TextCompositionAlgorithmGreedyFitModel"
+                          ? greedyFitComposition
+                          : greedyRaggedComposition,
+                result = algorithm({
+                    segments,
+                    breaks,
+                    lineWidthPt: () => lineWidthPt,
+                    // The Treatment Planner (milestone 4): step 0
+                    // is the natural width; step != 0 re-measures
+                    // axes treatments at the shifted coords and
+                    // adds the tracking/wordspace deltas
+                    // (arithmetically). Algorithms that only probe
+                    // step 0 see no difference.
+                    lineWidthAtStep: (from, to, step) => {
+                        if (step === 0)
+                            return (
+                                widthOf(from, to) +
+                                candidateHyphenWidth(to, step)
+                            );
+                        let width = 0;
+                        for (let i = from; i < to; i++) {
+                            const segment = segments[i]!,
+                                style = styleOf(segment.sourceIndex),
+                                entry = plannerOf(style),
+                                text =
+                                    leafTexts[segment.sourceIndex]?.slice(
+                                        segment.start,
+                                        segment.end,
+                                    ) ?? "";
+                            if (entry === null || entry === undefined) {
+                                width += segment.widthPt;
+                                continue;
                             }
-                            // A hyphen is conditional on THIS candidate
-                            // ending at a hyphen break. Internal
-                            // opportunities contribute no glyph/width.
-                            return width + candidateHyphenWidth(to, step);
-                        },
-                    });
-                return { segments, result };
-            }),
-            payload = {
+                            const {
+                                    axesEntries: stepAxesEntries,
+                                    axesKey: stepAxesKey,
+                                } = axesAtStep(style, step),
+                                measuredPt =
+                                    this._measurer!.measureEm(
+                                        style.font,
+                                        stepAxesEntries,
+                                        stepAxesKey,
+                                        style.featuresEntries,
+                                        style.featuresKey,
+                                        style.language,
+                                        style.direction,
+                                        text,
+                                    ) * style.fontSizePt;
+                            let segmentWidth =
+                                measuredPt +
+                                entry.stepper.letterSpacingPtAt(step) *
+                                    (segment.end - segment.start);
+                            // wordspace: the factor multiplies the
+                            // NATURAL space advance (space-only
+                            // segments) — the applicator applies
+                            // the same product as CSS word-spacing
+                            const factor =
+                                entry.stepper.wordSpaceFactorAt(step);
+                            if (
+                                factor !== 0 &&
+                                text.length > 0 &&
+                                text.trim() === ""
+                            )
+                                segmentWidth += entry.spaceAdvancePt * factor;
+                            width += segmentWidth;
+                        }
+                        // A hyphen is conditional on THIS candidate
+                        // ending at a hyphen break. Internal
+                        // opportunities contribute no glyph/width.
+                        return width + candidateHyphenWidth(to, step);
+                    },
+                });
+            paragraphs.push({ segments, result });
+            yield { reason: "logical-paragraph" };
+        }
+        if (!this._sourceIsCurrent(textblockPathString, source)) return;
+        const payload = {
                 textblockPath: textblockPathString,
                 // leaf inline items (text runs and atoms) in
                 // sourceIndex order — applicators find their segments
@@ -1170,10 +1279,18 @@ export class CompositionController extends _BaseComponent {
                 // intensity; the greedy-fit struct, default ON)
                 colorCoding: greedyFitConfig?.colorCoding ?? false,
                 // immutable sources for apply-time staleness checks
-                sources: { textblockNode },
+                sources: {
+                    textblockNode,
+                    leafTexts: [...leafTexts],
+                },
             },
             identifier = `composition@${textblockPathString}`,
             handler = this._compositionHandler();
+        yield { reason: "finalize/publish" };
+        if (!this._sourceIsCurrent(textblockPathString, source)) return;
+        // Ingredients describe the last COMPLETE published snapshot,
+        // never a cancelled partial task.
+        this._ingredients.set(textblockPathString, ingredients);
         if (this._registrations.has(textblockPathString)) {
             this._registrations.get(textblockPathString)!();
             this._registrations.delete(textblockPathString);
@@ -1183,6 +1300,7 @@ export class CompositionController extends _BaseComponent {
             handler.register(identifier, payload),
         );
         handler.setUpdated(identifier);
+        this._notifyObservers(textblockPathString, payload);
         // live feedback until the applicator makes it visible
         console.log(
             `${this} published ${identifier}:`,
@@ -1207,14 +1325,17 @@ export class CompositionController extends _BaseComponent {
         this._compositionHandler().setUpdated(
             `composition@${textblockPathString}`,
         );
+        this._notifyObservers(textblockPathString, null);
     }
 
     destroy() {
+        for (const task of this._tasks.values()) cancelTask(task.token);
         for (const unregister of this._registrations.values()) unregister();
         this._registrations.clear();
         this._ingredients.clear();
         this._sources.clear();
         this._subscribers.clear();
+        this._observers.clear();
         this._tasks.clear();
         // _BaseComponent destroy default is a no-op.
     }
