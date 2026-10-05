@@ -325,6 +325,26 @@ final perf baseline; then complete the quality harness.
    real-font behavior tests. Do not base KP++ badness on tracking
    until this is measurement-truthful.
 
+#### Open performance regression: editor typing remains slow
+
+Cycle 1 demand gating removes all composition publications and deep
+composition work in editor-only mode, but the current branch's editor
+typing regression remains visibly slow. The Phase-1 wikipedia numbers
+show why demand gating alone is not expected to fix the interaction:
+editor typing medians were 247.1ms for None, 256.6ms for Ragged and
+266.5ms for Fit, so eliminating composition accounts for only roughly
+10–20ms of that scenario. After the demand change, editor-only manual
+verification confirmed zero composition publication logs while the
+slow interaction remained.
+
+Treat this as an explicit unresolved regression. The likely remaining
+cost surfaces are the always-active DocumentNodesMeta traversal, scope
+resolution/cascade, ProseMirror updates and the general shell state
+transaction. Attribute it with a focused editor-only CPU profile before
+optimizing; do not infer that composition still runs merely from the
+remaining latency. Publications in viewer and compare are expected
+because their viewer applicator holds demand.
+
 ### Cycle 2 — Milestone 5 research/design: Knuth–Plass++
 
 Research and specify before implementation:

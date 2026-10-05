@@ -310,13 +310,13 @@ Lifecycle:
 
 #### Automated
 
-- [ ] No-consumer/steady-None tests prove zero expensive composition roles.
-- [ ] Demand/source lifecycle balanced across existing mode suites.
-- [ ] Full suite/lint/typecheck green.
+- [x] No-consumer/steady-None tests prove zero expensive composition roles.
+- [x] Demand/source lifecycle balanced across existing mode suites.
+- [x] Full suite/lint/typecheck green.
 
 #### Manual
 
-- [ ] Editor-only interaction no longer emits composition publications/logs.
+- [x] Editor-only interaction no longer emits composition publications/logs.
 
 ---
 

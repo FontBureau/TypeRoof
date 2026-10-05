@@ -246,6 +246,18 @@ export interface StyleResolutionContext {
     typeSpecPropertiesPath: Path | null;
 }
 
+/** Immutable-at-read source handed to the controller by one meta
+ * textblock. The driver is invoked only while that path has demand. */
+export interface CompositionSource {
+    textblockPath: Path;
+    textblockNode: any;
+    nodePropertiesPayload: any;
+    newState: any;
+    styleResolution: StyleResolutionContext | null;
+}
+
+export type CompositionSourceDriver = () => CompositionSource | null;
+
 /** The per-run measurement tuple (the textblock's values are the
  *  fallback; see composeTextblock). */
 interface LeafStyle {
@@ -270,6 +282,9 @@ export class CompositionController extends _BaseComponent {
     declare _styleLinkPropertiesHandlerImpl: any;
     declare _registrations: Map<string, () => void>;
     declare _ingredients: Map<string, unknown[]>;
+    declare _sources: Map<string, CompositionSourceDriver>;
+    declare _subscribers: Map<string, Set<unknown>>;
+    declare _tasks: Map<string, unknown>;
     declare _hyphers: Map<unknown, any>;
     declare _noHarfbuzzWarned: boolean;
 
@@ -289,11 +304,103 @@ export class CompositionController extends _BaseComponent {
         // textblockPath -> consumed ingredients of the last
         // composition (the input-equality filter, Sprint A phase 2)
         this._ingredients = new Map();
+        // Explicit source + demand lifecycle. Sources are retained
+        // without results; ingredients/publications exist only while
+        // at least one consumer subscribes. _tasks reserves the Phase
+        // 3 cooperative runner slot.
+        this._sources = new Map();
+        this._subscribers = new Map();
+        this._tasks = new Map();
         // Hypher instances per installed pattern OBJECT (immutable
         // metamodel values — identity keyed; bounded by the session's
         // installed pattern count)
         this._hyphers = new Map();
         this._noHarfbuzzWarned = false;
+    }
+
+    _pathString(path: Path | string): string {
+        return typeof path === "string" ? path : path.toString();
+    }
+
+    _hasDemand(path: string): boolean {
+        return (this._subscribers.get(path)?.size ?? 0) > 0;
+    }
+
+    _composeCurrent(path: string): void {
+        if (!this._hasDemand(path)) return;
+        const source = this._sources.get(path)?.();
+        if (source === undefined || source === null) return;
+        this.composeTextblock(
+            source.textblockPath,
+            source.textblockNode,
+            source.nodePropertiesPayload,
+            source.newState,
+            source.styleResolution,
+        );
+    }
+
+    /** Register the one meta-owned source for a textblock. Source and
+     * demand may arrive in either order. Cleanup is idempotent. */
+    registerSource(
+        path: Path | string,
+        sourceDriver: CompositionSourceDriver,
+    ): () => void {
+        const key = this._pathString(path);
+        if (this._sources.has(key))
+            throw new Error(
+                "LIFECYCLE ERROR duplicate composition source " + key + ".",
+            );
+        this._sources.set(key, sourceDriver);
+        this._composeCurrent(key);
+        let active = true;
+        return () => {
+            if (!active) return;
+            active = false;
+            if (this._sources.get(key) !== sourceDriver) return;
+            this._sources.delete(key);
+            this.unpublishTextblock(key);
+            this._tasks.delete(key);
+            if (!this._hasDemand(key)) this._subscribers.delete(key);
+        };
+    }
+
+    /** Notify that the registered driver's current immutable source
+     * changed. Undemanded paths stop at this gate. */
+    sourceChanged(path: Path | string): void {
+        this._composeCurrent(this._pathString(path));
+    }
+
+    /** Subscribe one applicator token. Only first demand drives the
+     * current source; last cleanup drops all result-owned values. */
+    subscribe(path: Path | string, token: unknown = Symbol()): () => void {
+        const key = this._pathString(path),
+            subscribers = this._subscribers.get(key) ?? new Set();
+        if (subscribers.has(token))
+            throw new Error(
+                "LIFECYCLE ERROR duplicate composition demand " + key + ".",
+            );
+        const wasEmpty = subscribers.size === 0;
+        subscribers.add(token);
+        this._subscribers.set(key, subscribers);
+        if (wasEmpty) this._composeCurrent(key);
+        let active = true;
+        return () => {
+            if (!active) return;
+            active = false;
+            const current = this._subscribers.get(key);
+            if (current === undefined || !current.delete(token)) return;
+            if (current.size !== 0) return;
+            this._subscribers.delete(key);
+            this.unpublishTextblock(key);
+            this._tasks.delete(key);
+            this._ingredients.delete(key);
+        };
+    }
+
+    /** Phase 2 is synchronous: flush is the explicit direct drive.
+     * Phase 3 will also drain a pending cooperative task here. */
+    flushSync(path: Path | string): void {
+        this._composeCurrent(this._pathString(path));
     }
 
     _compositionHandler(): any {
@@ -468,8 +575,9 @@ export class CompositionController extends _BaseComponent {
         newState: any,
         styleResolution: StyleResolutionContext | null = null,
     ) {
-        const textblockPathString = textblockPath.toString(),
-            nodePropertiesEarly = nodePropertiesPayload.getProperties(),
+        const textblockPathString = textblockPath.toString();
+        if (!this._hasDemand(textblockPathString)) return;
+        const nodePropertiesEarly = nodePropertiesPayload.getProperties(),
             // OFF MODE gate: engagement IS the algorithm selection —
             // the resolved "None (Browser)" type means explicitly off
             // (inheritable, per textblock; empty = inherit, the root
@@ -1090,10 +1198,12 @@ export class CompositionController extends _BaseComponent {
      *  consumers: setUpdated after unregister delivers [true, null]
      *  — null IS off mode. */
     unpublishTextblock(textblockPathString: string) {
-        if (!this._registrations.has(textblockPathString)) return;
-        this._registrations.get(textblockPathString)!();
-        this._registrations.delete(textblockPathString);
+        const unregister = this._registrations.get(textblockPathString);
         this._ingredients.delete(textblockPathString);
+        this._tasks.delete(textblockPathString);
+        if (unregister === undefined) return;
+        unregister();
+        this._registrations.delete(textblockPathString);
         this._compositionHandler().setUpdated(
             `composition@${textblockPathString}`,
         );
@@ -1102,6 +1212,10 @@ export class CompositionController extends _BaseComponent {
     destroy() {
         for (const unregister of this._registrations.values()) unregister();
         this._registrations.clear();
+        this._ingredients.clear();
+        this._sources.clear();
+        this._subscribers.clear();
+        this._tasks.clear();
         // _BaseComponent destroy default is a no-op.
     }
 }

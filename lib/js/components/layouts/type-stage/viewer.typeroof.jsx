@@ -265,6 +265,8 @@ export class UIDocumentElement extends _UIDocumentAttachment {
         this._originTypeSpecPath = originTypeSpecPath;
         this._layoutRootPath = layoutRootPath;
         this._typeSpecStylerWrapper = null;
+        this._compositionUnsubscribe = null;
+        this._compositionDemandToken = {};
 
         // The attr-driven DOM state as applied below (the htmlAttrs bag
         // and the verbatim html of reproducing atoms);
@@ -309,6 +311,25 @@ export class UIDocumentElement extends _UIDocumentAttachment {
                 ],
             ];
         this._initWidgets(widgets);
+        if (this._isTextblockPlan(plan)) {
+            const service = this.widgetBus.getWidgetById(
+                "compositionController",
+                null,
+            );
+            if (service !== null)
+                this._compositionUnsubscribe = service.subscribe(
+                    this._documentNodePath,
+                    this._compositionDemandToken,
+                );
+        }
+    }
+
+    _isTextblockPlan(plan) {
+        return (
+            plan.innerHtml === null &&
+            !plan.context.inInlineContext &&
+            !!plan.childrenInInlineContext
+        );
     }
 
     _updateComposedClass(changedMap) {
@@ -430,6 +451,13 @@ export class UIDocumentElement extends _UIDocumentAttachment {
         for (const wrapper of super._provisionWidgets())
             requiresFullInitialUpdate.add(wrapper);
         return requiresFullInitialUpdate;
+    }
+
+    destroy() {
+        if (this._compositionUnsubscribe !== null)
+            this._compositionUnsubscribe();
+        this._compositionUnsubscribe = null;
+        super.destroy();
     }
 
     // A resolved spec with "noStyler" renders inherit-only via the
