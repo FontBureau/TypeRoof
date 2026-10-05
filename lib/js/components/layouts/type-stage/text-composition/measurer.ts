@@ -14,9 +14,10 @@
  *     direction are shape-time parameters and NOT in this key).
  *     Plain Maps, no WeakMap (font object lifecycle is not
  *     guaranteed).
- *   - widths: flat Map (fullName, axesKey, featuresKey, language,
- *     direction, text) -> em. All axes matter (any axis can affect
- *     advances; parametric fonts have many — hence SPARSE keys).
+ *   - shapes: flat Map (fullName, axesKey, featuresKey, language,
+ *     direction, text) -> {advanceEm, glyphCount}. Width and tracking
+ *     opportunities share one HarfBuzz shape/cache miss. All axes matter
+ *     (any axis can affect advances; parametric fonts have many).
  *   - Sparse normalized keys: "tag=value" pairs in tag order,
  *     omitting entries whose value equals the default (unset ==
  *     default): same effective location => same key, regardless of
@@ -88,13 +89,21 @@ export function featuresKeyOf(properties: Map<string, any>): string {
 
 // LRU bounds: width entries per session (typing creates many);
 // locations per font (a design-space animation creates one per frame)
-const WIDTH_CACHE_CAP = 50000,
+const SHAPE_CACHE_CAP = 50000,
     HBFONT_LOCATIONS_CAP = 32;
+
+/** Reusable HarfBuzz output needed by composition: advance in em and
+ * the number of output glyphs. Tracking opportunities are between these
+ * shaped glyphs, never source UTF-16 units. */
+export interface ShapeMetrics {
+    advanceEm: number;
+    glyphCount: number;
+}
 
 export class Measurer {
     private _hb: any; // harfbuzzjs module namespace
     private _hbFonts = new Map<string, Map<string, any>>(); // fullName -> axesKey -> harfbuzz.Font
-    private _widthCache = new Map<string, number>(); // full key -> em
+    private _shapeCache = new Map<string, ShapeMetrics>();
 
     constructor(harfbuzz: any) {
         this._hb = harfbuzz;
@@ -151,7 +160,58 @@ export class Measurer {
         return hbFont;
     }
 
-    /** Width of text in em at the given location/settings. */
+    /** Shape metrics in em at the given location/settings. */
+    shapeMetricsEm(
+        font: any,
+        axesEntries: [string, number][],
+        axesKey: string,
+        featuresEntries: [string, boolean][],
+        featuresKey: string,
+        language: string | null,
+        direction: string | null,
+        text: string,
+    ): ShapeMetrics {
+        if (text === "") return { advanceEm: 0, glyphCount: 0 };
+        const cacheKey = [
+            font.fullName,
+            axesKey,
+            featuresKey,
+            language ?? "",
+            direction ?? "",
+            text,
+        ].join("|");
+        let metrics = this._cacheGet(this._shapeCache, cacheKey);
+        if (metrics === undefined) {
+            const hbFont = this._hbFontFor(font, axesKey, axesEntries),
+                features = featuresEntries.map(([tag, enabled]) =>
+                    this._hb.Feature.fromString(`${enabled ? "+" : "-"}${tag}`),
+                ),
+                buffer = new this._hb.Buffer();
+            buffer.addText(text);
+            // set BEFORE guessSegmentProperties: it only fills unset
+            // segment properties (script gets guessed from the text)
+            if (language !== null) buffer.setLanguage(language);
+            if (direction !== null) buffer.setDirection(direction);
+            buffer.guessSegmentProperties();
+            this._hb.shape(hbFont, buffer, features);
+            const glyphs = buffer.getGlyphInfosAndPositions();
+            let advanceX = 0;
+            for (const glyph of glyphs) advanceX += glyph.xAdvance;
+            metrics = {
+                advanceEm: advanceX / font.hbFace.upem,
+                glyphCount: glyphs.length,
+            };
+            this._cacheSet(
+                this._shapeCache,
+                cacheKey,
+                metrics,
+                SHAPE_CACHE_CAP,
+            );
+        }
+        return metrics;
+    }
+
+    /** Compatibility width API; shares the shape-metrics cache. */
     measureEm(
         font: any,
         axesEntries: [string, number][],
@@ -162,40 +222,15 @@ export class Measurer {
         direction: string | null,
         text: string,
     ): number {
-        if (text === "") return 0;
-        const cacheKey = [
-            font.fullName,
+        return this.shapeMetricsEm(
+            font,
+            axesEntries,
             axesKey,
+            featuresEntries,
             featuresKey,
-            language ?? "",
-            direction ?? "",
+            language,
+            direction,
             text,
-        ].join("|");
-        let width = this._cacheGet(this._widthCache, cacheKey);
-        if (width === undefined) {
-            const hbFont = this._hbFontFor(font, axesKey, axesEntries),
-                features = featuresEntries.map(([tag, enabled]) =>
-                    this._hb.Feature.fromString(`${enabled ? "+" : "-"}${tag}`),
-                ),
-                buffer = new this._hb.Buffer();
-            buffer.addText(text);
-            // set BEFORE guessSegmentProperties: it only fills unset
-            // segment properties (script gets guessed from the text)
-            // language/lang is the COMPLETE resolved BCP47 tag
-            // (script included unless suppressed, region included):
-            // HarfBuzz derives the script from the language when the
-            // text gives no strong signal — no separate setScript
-            // needed (it would be redundant in every reachable case)
-            if (language !== null) buffer.setLanguage(language);
-            if (direction !== null) buffer.setDirection(direction);
-            buffer.guessSegmentProperties();
-            this._hb.shape(hbFont, buffer, features);
-            let advanceX = 0;
-            for (const item of buffer.getGlyphInfosAndPositions())
-                advanceX += item.xAdvance;
-            width = advanceX / font.hbFace.upem;
-            this._cacheSet(this._widthCache, cacheKey, width, WIDTH_CACHE_CAP);
-        }
-        return width;
+        ).advanceEm;
     }
 }

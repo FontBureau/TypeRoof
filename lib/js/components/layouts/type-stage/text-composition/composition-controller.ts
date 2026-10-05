@@ -219,6 +219,7 @@ import {
     languageToHyphenationPatternKey,
 } from "./hyphenator.ts";
 import type { HyphenationConfig } from "./hyphenator.ts";
+import { allocateTracking } from "./tracking.ts";
 // line-span styles (applied by the applicator); imported here so the
 // styles land whenever the controller is active (vite CSS import
 // pattern, cf. tree-editor.typeroof.jsx)
@@ -1095,13 +1096,12 @@ export class CompositionController extends _BaseComponent {
                     return width;
                 };
             })();
-            // measure: fill widthPt in place (segments are
-            // fresh), each at ITS leaf's style (per-run style
-            // spans; unstyled leaves use the textblock style)
+            // Shape once per segment: width and visible output-glyph
+            // count share the Measurer cache. Tracking is allocated over
+            // complete candidate lines from these shaped counts.
             for (const segment of segments) {
-                const style = styleOf(segment.sourceIndex);
-                segment.widthPt =
-                    this._measurer!.measureEm(
+                const style = styleOf(segment.sourceIndex),
+                    metrics = this._measurer!.shapeMetricsEm(
                         style.font,
                         style.axesEntries,
                         style.axesKey,
@@ -1113,7 +1113,9 @@ export class CompositionController extends _BaseComponent {
                             segment.start,
                             segment.end,
                         ) ?? "",
-                    ) * style.fontSizePt;
+                    );
+                segment.widthPt = metrics.advanceEm * style.fontSizePt;
+                segment.glyphCount = metrics.glyphCount;
             }
             const breakAfter = new Map(
                     breaks.map((breakOpportunity) => [
@@ -1190,6 +1192,7 @@ export class CompositionController extends _BaseComponent {
                                 candidateHyphenWidth(to, step)
                             );
                         let width = 0;
+                        const trackingRuns = [];
                         for (let i = from; i < to; i++) {
                             const segment = segments[i]!,
                                 style = styleOf(segment.sourceIndex),
@@ -1201,31 +1204,37 @@ export class CompositionController extends _BaseComponent {
                                     ) ?? "";
                             if (entry === null || entry === undefined) {
                                 width += segment.widthPt;
+                                trackingRuns.push({
+                                    sourceIndex: segment.sourceIndex,
+                                    glyphCount: segment.glyphCount ?? 0,
+                                    trackingPt: 0,
+                                });
                                 continue;
                             }
                             const {
                                     axesEntries: stepAxesEntries,
                                     axesKey: stepAxesKey,
                                 } = axesAtStep(style, step),
-                                measuredPt =
-                                    this._measurer!.measureEm(
-                                        style.font,
-                                        stepAxesEntries,
-                                        stepAxesKey,
-                                        style.featuresEntries,
-                                        style.featuresKey,
-                                        style.language,
-                                        style.direction,
-                                        text,
-                                    ) * style.fontSizePt;
+                                metrics = this._measurer!.shapeMetricsEm(
+                                    style.font,
+                                    stepAxesEntries,
+                                    stepAxesKey,
+                                    style.featuresEntries,
+                                    style.featuresKey,
+                                    style.language,
+                                    style.direction,
+                                    text,
+                                );
                             let segmentWidth =
-                                measuredPt +
-                                entry.stepper.letterSpacingPtAt(step) *
-                                    (segment.end - segment.start);
+                                metrics.advanceEm * style.fontSizePt;
+                            trackingRuns.push({
+                                sourceIndex: segment.sourceIndex,
+                                glyphCount: metrics.glyphCount,
+                                trackingPt:
+                                    entry.stepper.letterSpacingPtAt(step),
+                            });
                             // wordspace: the factor multiplies the
-                            // NATURAL space advance (space-only
-                            // segments) — the applicator applies
-                            // the same product as CSS word-spacing
+                            // NATURAL space advance (space-only segments).
                             const factor =
                                 entry.stepper.wordSpaceFactorAt(step);
                             if (
@@ -1236,12 +1245,68 @@ export class CompositionController extends _BaseComponent {
                                 segmentWidth += entry.spaceAdvancePt * factor;
                             width += segmentWidth;
                         }
-                        // A hyphen is conditional on THIS candidate
-                        // ending at a hyphen break. Internal
-                        // opportunities contribute no glyph/width.
-                        return width + candidateHyphenWidth(to, step);
+                        const takenHyphen =
+                                hypher !== null &&
+                                breakAfter.get(to - 1)?.kind === "hyphen",
+                            tracking = allocateTracking(
+                                trackingRuns,
+                                takenHyphen,
+                            );
+                        // The hyphen is final: one gap before it is already
+                        // included above, no gap follows it.
+                        return (
+                            width +
+                            tracking.widthPt +
+                            candidateHyphenWidth(to, step)
+                        );
                     },
                 });
+            // Retain the final complete-line tracking allocation for the
+            // applicator/diagnostics. Boundary gaps belong to the preceding
+            // source run; a taken hyphen is the final glyph.
+            for (const line of result.lines) {
+                const trackingRuns = [];
+                for (let i = line.fromSegment; i < line.toSegment; i++) {
+                    const segment = segments[i]!,
+                        style = styleOf(segment.sourceIndex),
+                        entry = plannerOf(style),
+                        text =
+                            leafTexts[segment.sourceIndex]?.slice(
+                                segment.start,
+                                segment.end,
+                            ) ?? "",
+                        { axesEntries: lineAxes, axesKey: lineAxesKey } =
+                            axesAtStep(style, line.adjustmentStep),
+                        metrics = this._measurer!.shapeMetricsEm(
+                            style.font,
+                            lineAxes,
+                            lineAxesKey,
+                            style.featuresEntries,
+                            style.featuresKey,
+                            style.language,
+                            style.direction,
+                            text,
+                        );
+                    trackingRuns.push({
+                        sourceIndex: segment.sourceIndex,
+                        glyphCount: metrics.glyphCount,
+                        trackingPt:
+                            entry?.stepper.letterSpacingPtAt(
+                                line.adjustmentStep,
+                            ) ?? 0,
+                    });
+                }
+                const tracking = allocateTracking(
+                    trackingRuns,
+                    line.breakAt?.kind === "hyphen",
+                );
+                Object.assign(line, {
+                    trackingWidthPt: tracking.widthPt,
+                    trackingGapsBySourceIndex: Object.fromEntries(
+                        tracking.gapsBySourceIndex,
+                    ),
+                });
+            }
             paragraphs.push({ segments, result });
             yield { reason: "logical-paragraph" };
         }

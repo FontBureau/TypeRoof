@@ -805,11 +805,16 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
                             },
                             line.adjustmentStep,
                         );
-                    if (letterSpacingPt !== 0)
+                    const trackingGaps = Number(
+                        line.trackingGapsBySourceIndex?.[leafIndex] ?? 0,
+                    );
+                    if (letterSpacingPt !== 0 && trackingGaps > 0) {
                         span.style.setProperty(
                             "--line-letter-spacing",
                             `${letterSpacingPt}pt`,
                         );
+                        span.dataset.trackingGaps = String(trackingGaps);
+                    }
                     if (wordSpaceFactor !== 0)
                         span.style.setProperty(
                             "--line-word-spacing",

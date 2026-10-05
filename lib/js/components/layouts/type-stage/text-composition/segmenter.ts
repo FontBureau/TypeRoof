@@ -45,6 +45,9 @@ import LineBreak from "linebreak";
 /** A segment as the Host passes it around: the contract Segment plus
  *  its source mapping. */
 export interface HostSegment extends Segment {
+    /** Number of visible HarfBuzz output glyphs in this source segment.
+     * Filled by the Measurer; tracking uses complete-line N−1 gaps. */
+    glyphCount?: number;
     /** Index of the source leaf inline item (text run or atom,
      *  depth-first over the textblock's inline content). */
     sourceIndex: number;

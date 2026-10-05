@@ -517,13 +517,13 @@ tracking contract.
 
 #### Automated
 
-- [ ] Tracking tests pin every agreed rule.
-- [ ] No duplicate shaping for width + glyph metrics on cache hits.
-- [ ] Full suite/lint/typecheck green.
+- [x] Tracking tests pin every agreed rule.
+- [x] No duplicate shaping for width + glyph metrics on cache hits.
+- [x] Full suite/lint/typecheck green.
 
 #### Manual
 
-- [ ] Diagnostic browser probe documented; visible discrepancies are
+- [x] Diagnostic browser probe documented; visible discrepancies are
       understood as renderer variation, not test failure.
 
 ---
