@@ -37,10 +37,19 @@
     content: "-";
 }
 
-/* Diagnostics hook: the applicator sets --line-color-code per line
- * (the demo's adjustment-intensity color-coding). Justification-
- * potentials treatments (milestone 4): the applicator sets
- * --line-letter-spacing / --line-word-spacing per line from the
+/* Diagnostics hook: the applicator sets --line-color-code per line.
+ * Two palettes, selected by the payload's resolved colorCoding mode
+ * (milestone 5, Phase 4) — deliberately different visual
+ * vocabularies so they are never confused:
+ *   - "potentials": the demo's adjustment-intensity coding (what the
+ *     line did physically) — narrowing cyan, widening red, overfull
+ *     light red; serves the type designer / potentials configurator;
+ *   - "kp": the Knuth-Plass DP diagnostics (why the DP chose the
+ *     line) — hue per fitness class (tight violet, decent green,
+ *     loose amber, veryLoose magenta), lightness by per-line
+ *     badness, overfull/exhausted deep magenta; serves proofing.
+ * Justification-potentials treatments (milestone 4): the applicator
+ * sets --line-letter-spacing / --line-word-spacing per line from the
  * line's adjustmentStep; the axes treatments are applied as
  * font-variation-settings directly on the spans. The controller
  * measured with the same products (measured == rendered). */

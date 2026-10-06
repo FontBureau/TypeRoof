@@ -133,9 +133,17 @@
  * PURITY: imports ONLY from composition-types.ts (contract rule for
  * algorithms). Runs in plain node (vitest) with injected fakes.
  *
- * Phase 4 note: rejected-candidate records (runner-up edges,
- * pruned/infeasible counts) are retained/published only behind a
- * non-UI dev flag — not implemented in Phase 2.
+ * DEV DIAGNOSTICS (Phase 4): set
+ * `globalThis.__typeroofKPDevDiagnostics = true` (browser console;
+ * NOT a model field, never serialized) to retain rejected-candidate
+ * records in the result diagnostics: per chosen line the best
+ * REJECTED alternative edge from the same source position with its
+ * demerits margin to the chosen edge (diagnostics.rejectedCandidates),
+ * plus target-scan counters (diagnostics.scanStats: evaluated /
+ * infeasible edges, targets skipped by the scan pruning). Off by
+ * default — the retention costs memory per evaluated edge and
+ * serves diagnostics development only; the costs are the DP's
+ * lattice values (polish does not re-run the DP).
  */
 import type {
     BreakOpportunity,
@@ -145,6 +153,7 @@ import type {
     CompositionResult,
     CompositionTask,
     FitnessClass,
+    RejectedCandidate,
 } from "./composition-types.ts";
 
 export interface KnuthPlassConfig {
@@ -210,6 +219,14 @@ const FITNESS_CLASSES: readonly FitnessClass[] = [
  *  |step| > 1. */
 const classIndexOf = (step: number): number =>
     step < -1 || step > 1 ? 3 : step <= -0.5 ? 0 : step <= 0.5 ? 1 : 2;
+
+/** The dev-diagnostics switch (see header, DEV DIAGNOSTICS): a
+ *  non-UI global, NOT serialized — set
+ *  `globalThis.__typeroofKPDevDiagnostics = true` in the console. */
+export const kpDevDiagnosticsEnabled = (): boolean =>
+    (globalThis as unknown as Record<string, unknown>)[
+        "__typeroofKPDevDiagnostics"
+    ] === true;
 
 /** The contract's canonical badness when the Host injects none. */
 const defaultBadnessAtStep = (step: number): number =>
@@ -282,6 +299,19 @@ function* knuthPlassImpl(
                 fitnessClasses: [],
                 totalDemerits: 0,
                 exhaustedLines: [],
+                // dev diagnostics (header): present-but-empty, so
+                // consumers can rely on the keys while the switch is
+                // on
+                ...(kpDevDiagnosticsEnabled()
+                    ? {
+                          rejectedCandidates: [],
+                          scanStats: {
+                              evaluatedEdges: 0,
+                              infeasibleEdges: 0,
+                              prunedTargets: 0,
+                          },
+                      }
+                    : {}),
             },
         };
     // constant-measure assumption (see header)
@@ -395,6 +425,22 @@ function* knuthPlassImpl(
     };
     let edgesProcessed = 0,
         firstBreakIndex = 0;
+    // Dev diagnostics (header): candidate retention + scan counters,
+    // only while the dev switch is on.
+    const devOn = kpDevDiagnosticsEnabled(),
+        devCandidates = new Map<
+            number,
+            {
+                to: number;
+                breakAt: BreakOpportunity | null;
+                cost: number;
+            }[]
+        >(),
+        devScanStats = {
+            evaluatedEdges: 0,
+            infeasibleEdges: 0,
+            prunedTargets: 0,
+        };
     for (let from = 0; from < segments.length; from++) {
         const state = states[from];
         if (state === undefined) continue;
@@ -466,12 +512,14 @@ function* knuthPlassImpl(
                 }
             }
         };
+        let devEmitted = 0;
         for (const { breakAt, evaluation } of evaluateTargets()) {
             const to =
                     breakAt === null
                         ? segments.length
                         : breakAt.afterSegment + 1,
                 edgeClass = classIndexOf(evaluation.step);
+            let devMinCost = Infinity;
             for (let si = 0; si < state.slots.length; si++) {
                 const slot = state.slots[si];
                 if (slot === undefined) continue;
@@ -523,8 +571,23 @@ function* knuthPlassImpl(
                             naturalWidthPt: evaluation.naturalWidthPt,
                         },
                     };
+                if (devOn && cost < devMinCost) devMinCost = cost;
+            }
+            if (devOn) {
+                devEmitted++;
+                devScanStats.evaluatedEdges++;
+                if (!evaluation.feasible) devScanStats.infeasibleEdges++;
+                // a reachable state always has a slot; guard anyway
+                if (devMinCost < Infinity) {
+                    let list = devCandidates.get(from);
+                    if (list === undefined)
+                        devCandidates.set(from, (list = []));
+                    list.push({ to, breakAt, cost: devMinCost });
+                }
             }
         }
+        // targets the monotonicity-guarded scan never evaluated
+        if (devOn) devScanStats.prunedTargets += targets.length - devEmitted;
         yield { reason: "relaxation-round", work: edgesProcessed };
     }
 
@@ -606,6 +669,36 @@ function* knuthPlassImpl(
         fitnessClasses.push(FITNESS_CLASSES[classIndexOf(step)]!);
     }
 
+    // Dev diagnostics (header): per chosen line the best REJECTED
+    // candidate edge from the same source position + its demerits
+    // margin to the chosen edge (the DP's lattice costs; polish does
+    // not re-run the DP).
+    let rejectedCandidates: RejectedCandidate[] | undefined;
+    if (devOn) {
+        rejectedCandidates = [];
+        for (let lineIndex = 0; lineIndex < chosen.length; lineIndex++) {
+            const { from, to } = chosen[lineIndex]!,
+                candidates = devCandidates.get(from) ?? [],
+                chosenCost = candidates.find(
+                    (candidate) => candidate.to === to,
+                )?.cost;
+            let runnerUp: (typeof candidates)[number] | null = null;
+            for (const candidate of candidates) {
+                if (candidate.to === to) continue;
+                if (runnerUp === null || candidate.cost < runnerUp.cost)
+                    runnerUp = candidate;
+            }
+            if (runnerUp === null || chosenCost === undefined) continue;
+            rejectedCandidates.push({
+                lineIndex,
+                to: runnerUp.to,
+                breakAt: runnerUp.breakAt,
+                cost: runnerUp.cost,
+                margin: runnerUp.cost - chosenCost,
+            });
+        }
+    }
+
     return {
         lines,
         diagnostics: {
@@ -614,6 +707,10 @@ function* knuthPlassImpl(
             fitnessClasses,
             totalDemerits,
             exhaustedLines,
+            // keys absent unless the dev switch is on (see header)
+            ...(devOn && rejectedCandidates !== undefined
+                ? { rejectedCandidates, scanStats: devScanStats }
+                : {}),
         },
     };
 }

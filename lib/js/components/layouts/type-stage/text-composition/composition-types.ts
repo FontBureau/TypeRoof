@@ -238,6 +238,28 @@ export interface ComposedLine {
     adjustmentStep: number;
 }
 
+/** A rejected line candidate of the paragraph-optimizing DP
+ *  (knuth-plass dev diagnostics, see the module header): the best
+ *  alternative edge from a chosen line's source position, with the
+ *  demerits margin to the chosen edge. */
+export interface RejectedCandidate {
+    /** The chosen line this candidate competed with. */
+    lineIndex: number;
+    /** Candidate end position (segment index, exclusive). */
+    to: number;
+    /** The candidate's break (null: the final edge). */
+    breakAt: BreakOpportunity | null;
+    /** The candidate's demerits (best over the source position's
+     *  fitness-class slots; the DP's lattice value, prefix up to and
+     *  including this line — continuations not included). */
+    cost: number;
+    /** cost minus the chosen edge's cost. Can be NEGATIVE: a locally
+     *  cheaper candidate can lose on its (more expensive)
+     *  continuation — that is exactly what a paragraph optimizer
+     *  trades off. */
+    margin: number;
+}
+
 export interface CompositionResult {
     lines: readonly ComposedLine[];
     /** Diagnostics — a proofing tool lives off these (cf. the demo's
@@ -257,6 +279,19 @@ export interface CompositionResult {
         /** Indexes of lines with |adjustmentStep| > 1 (potential
          *  exhausted, unsatisfiable). */
         exhaustedLines?: readonly number[];
+        /** Dev diagnostics (knuth-plass.ts header; retained only
+         *  while the module's dev switch is on, never serialized):
+         *  per chosen line the best REJECTED candidate edge and its
+         *  demerits margin. */
+        rejectedCandidates?: readonly RejectedCandidate[];
+        /** Dev diagnostics: target-scan counters — edges evaluated,
+         *  infeasible among them, and targets skipped by the
+         *  monotonicity-guarded scan pruning. */
+        scanStats?: {
+            evaluatedEdges: number;
+            infeasibleEdges: number;
+            prunedTargets: number;
+        };
     };
 }
 

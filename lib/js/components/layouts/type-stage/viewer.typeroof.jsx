@@ -749,6 +749,36 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
         return "";
     }
 
+    // KP diagnostics palette (Phase 4) — "why did the DP choose this
+    // line", where the potentials palette answers "what did the line
+    // do physically". Deliberately a DIFFERENT visual vocabulary
+    // than the potentials cyan/red so the two are never confused:
+    // hue marks the fitness class (tight: violet 265, decent: green
+    // 145, loose: amber 40, veryLoose: magenta 320), lightness
+    // encodes the per-line badness (0 -> 88%, >=100 -> 55%);
+    // overfull/exhausted lines get the alarming deep-magenta
+    // treatment.
+    static KP_FITNESS_HUES = Object.freeze({
+        tight: 265,
+        decent: 145,
+        loose: 40,
+        veryLoose: 320,
+    });
+    static KP_EXHAUSTED_CODE = "hsl(300, 100%, 35%)";
+    _kpLineColorCode(lineIndex, diagnostics) {
+        if (
+            diagnostics.exhaustedLines?.includes(lineIndex) ||
+            diagnostics.overfullLines.includes(lineIndex)
+        )
+            return this.constructor.KP_EXHAUSTED_CODE;
+        const hue =
+                this.constructor.KP_FITNESS_HUES[
+                    diagnostics.fitnessClasses?.[lineIndex] ?? "decent"
+                ],
+            badness = Math.min(1, (diagnostics.badness[lineIndex] ?? 0) / 100);
+        return `hsl(${hue}, 70%, ${Math.round(88 - 33 * badness)}%)`;
+    }
+
     _buildLineSpans() {
         const { leaves, paragraphs } = this._composition,
             myPath = this._documentNodePath.toString(),
@@ -835,23 +865,28 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
                                 .join(","),
                         );
                 }
-                // Diagnostics color-coding (the varla-varfo hook):
-                // EVERY line is coded by adjustment intensity —
-                // narrowing cyan, widening red, neutral none (the
-                // demo's _setLineColorCode); overfull overrides.
-                // The colorCoding switch (the greedy-fit algorithm
-                // struct) gates it; with the dummy/greedy-ragged
-                // adjustmentStep is always 0 (all-neutral).
+                // Diagnostics color-coding (the varla-varfo hook),
+                // two palettes selected by the published mode
+                // (Phase 4): "potentials" codes EVERY line by
+                // adjustment intensity — narrowing cyan, widening
+                // red, neutral none (the demo's _setLineColorCode),
+                // overfull overrides; "kp" codes by the DP
+                // diagnostics (_kpLineColorCode). With the
+                // dummy/greedy-ragged algorithms adjustmentStep is
+                // always 0 (all-neutral potentials codes) and the
+                // mode is "off" anyway.
                 span.style.setProperty(
                     "--line-color-code",
-                    this._composition.colorCoding === true
+                    this._composition.colorCoding === "potentials"
                         ? this._lineColorCode(
                               line.adjustmentStep,
                               result.diagnostics.overfullLines.includes(
                                   lineIndex,
                               ),
                           )
-                        : "",
+                        : this._composition.colorCoding === "kp"
+                          ? this._kpLineColorCode(lineIndex, result.diagnostics)
+                          : "",
                 );
                 span.append(
                     this._domTool.createTextNode(

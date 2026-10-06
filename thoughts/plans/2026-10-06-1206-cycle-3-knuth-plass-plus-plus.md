@@ -475,11 +475,56 @@ unifying the two structs' field types is out of scope.)
 ### Success Criteria
 
 #### Automated
-- [ ] Payload/flag tests green; full suite/lint/typecheck green.
+- [x] Payload/flag tests green; full suite/lint/typecheck green.
+      (2026-10-06: suite 453/453 — 2 new pure dev-flag tests plus
+      the extended Host integration test; typecheck/eslint/prettier/
+      stylelint all clean)
 
 #### Manual
 - [ ] Operator reviews color-coded KP rendering on the Wikipedia
       state; greedy-fit rendering unchanged.
+
+### Phase 4 implementation notes (2026-10-06)
+
+- **Payload switch representation**: the plan asked that "greedy
+  payloads [stay] unchanged" and that KP publish "the resolved
+  color-coding mode". Implemented as ONE payload field
+  `colorCoding: "potentials" | "kp" | "off"` for all algorithms
+  (greedy-fit's boolean maps true→"potentials", false→"off";
+  dummy/ragged publish "off"). Greedy RENDERING is unchanged —
+  "potentials" is exactly the legacy palette — but the on-the-wire
+  representation changed from boolean to the resolved mode enum
+  (the alternative, a second field, would have duplicated state).
+- **KP palette** (viewer.typeroof.jsx `_kpLineColorCode`, beside —
+  not replacing — `_lineColorCode`): hue per fitness class
+  (tight violet 265, decent green 145, loose amber 40, veryLoose
+  magenta 320), lightness by per-line badness (0 → 88%, ≥100 →
+  55%), overfull/exhausted deep magenta hsl(300,100%,35%).
+  Deliberately disjoint from the potentials cyan/red; documented
+  in the viewer and in line-spans.css.
+- **Dev flag**: `globalThis.__typeroofKPDevDiagnostics = true`
+  (exported reader `kpDevDiagnosticsEnabled()` in knuth-plass.ts,
+  documented in the module header; NOT serialized, NOT a model
+  field). Retains per-chosen-line runner-up records
+  (diagnostics.rejectedCandidates: best rejected alternative edge +
+  demerits margin) and target-scan counters
+  (diagnostics.scanStats: evaluated/infeasible/pruned).
+- **Margin semantics** (deviation from a naive "runner-up" reading):
+  `margin` can be NEGATIVE — the costs are the DP's per-edge prefix
+  demerits (continuations excluded), so a locally cheaper candidate
+  legitimately loses on its continuation. Documented on
+  RejectedCandidate in composition-types.ts; tests assert
+  consistency, not non-negativity.
+- **Empty paragraphs** return present-but-empty dev keys while the
+  switch is on, so consumers can rely on key presence.
+- **Test-trigger detail**: the Host dev-flag test triggers the
+  recompose with a KP struct ingredient (the polish toggle), NOT a
+  lineLength change — blocks whose measure resolves from an
+  untouched path (the fixture heading) do not recompose on a
+  lineLength mutation and would keep stale, flag-off payloads.
+- The extended KP integration test needed an explicit 60s timeout
+  (the mode/dev-flag switching adds several full recomposition
+  rounds to the ~3s test).
 
 ---
 

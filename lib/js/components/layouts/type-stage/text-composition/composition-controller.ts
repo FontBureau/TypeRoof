@@ -983,8 +983,8 @@ export class CompositionController extends _BaseComponent {
             // KNUTH_PLASS_DEFAULTS for the algorithm knobs; the
             // Host-side knobs here: hyphenPenalty 50 stamps the
             // hyphen break opportunities, latticeQuantum 1pt is the
-            // adaptive-lattice quantum, colorCoding "kp" renders
-            // with the potentials palette until Phase 4).
+            // adaptive-lattice quantum, colorCoding is the Phase 4
+            // palette enum).
             knuthPlassConfig =
                 algorithmKey === "TextCompositionAlgorithmKnuthPlassModel"
                     ? {
@@ -1562,16 +1562,21 @@ export class CompositionController extends _BaseComponent {
                     treatments: [...plannerConfig.treatments],
                     direction: plannerConfig.direction,
                 },
-                // the switch for the color-coded lines (adjustment
-                // intensity; the greedy-fit struct, default ON).
-                // Knuth-Plass: the enum resolves to the potentials
-                // palette for "potentials" AND "kp" (the kp palette
-                // lands in Phase 4), "off" switches off.
+                // The resolved diagnostics color-coding MODE for the
+                // applicator (Phase 4): "potentials" — the legacy
+                // adjustment-intensity codes (what the line did
+                // physically); "kp" — the KP diagnostics palette
+                // (why the DP chose the line); "off" — no codes.
+                // Greedy-fit's boolean struct switch maps to
+                // "potentials"/"off" (its only palette); other
+                // algorithms publish "off" (their adjustmentStep is
+                // always 0 — all-neutral codes).
                 colorCoding:
-                    greedyFitConfig?.colorCoding ??
-                    (knuthPlassConfig === null
-                        ? false
-                        : knuthPlassConfig.colorCoding !== "off"),
+                    greedyFitConfig !== null
+                        ? greedyFitConfig.colorCoding
+                            ? "potentials"
+                            : "off"
+                        : (knuthPlassConfig?.colorCoding ?? "off"),
                 // immutable sources for apply-time staleness checks
                 sources: {
                     textblockNode,
