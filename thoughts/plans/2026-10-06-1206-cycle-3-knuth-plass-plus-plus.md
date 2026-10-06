@@ -639,3 +639,13 @@ Tests: pure pin updated (3 × 1000 × (42.25/10)³, explicit enPt;
 default-match assertion now pins knob 1000 / enPt 6); Host
 integration passes with pinned 8-line spans unchanged.
 
+Phase 4.6 follow-up (same day): operator live-tested the EN-cubic
+default — "strong effect, behaves similar to greedy fit plus light
+balancing" — and requested the EN unit as a UI knob: new struct
+field `exhaustedGapEnPercent` (% of EN per gap unit, min 1, no
+max, > 100 allowed, default 100). Pure module untouched (enPt is
+already data); the controller scales
+enPt = fontSizePt/2 × percent/100. Integration: a giant unit
+(10000%) prices gaps at ~0 and deterministically restores the
+pre-4.5 stub (pins resolution + direction); clearing restores the
+pinned spans.

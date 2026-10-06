@@ -1012,6 +1012,10 @@ export class CompositionController extends _BaseComponent {
                               nodeProperties.get(
                                   "textCompositionAlgorithm/exhaustedGapDemerits",
                               ) ?? KNUTH_PLASS_DEFAULTS.exhaustedGapDemerits,
+                          exhaustedGapEnPercent:
+                              nodeProperties.get(
+                                  "textCompositionAlgorithm/exhaustedGapEnPercent",
+                              ) ?? 100,
                           balanceGray:
                               (nodeProperties.get(
                                   "textCompositionAlgorithm/balanceGray",
@@ -1129,6 +1133,7 @@ export class CompositionController extends _BaseComponent {
                           knuthPlassConfig.finalHyphenDemerits,
                           knuthPlassConfig.adjDemerits,
                           knuthPlassConfig.exhaustedGapDemerits,
+                          knuthPlassConfig.exhaustedGapEnPercent,
                           knuthPlassConfig.balanceGray,
                           knuthPlassConfig.polish,
                           knuthPlassConfig.latticeQuantum,
@@ -1425,10 +1430,17 @@ export class CompositionController extends _BaseComponent {
                               // exhaustedGapDemerits: half the
                               // COMPUTED font size (fontSizePt is
                               // the fontSizeGen synthetic base ×
-                              // relative) — derived, not a user
-                              // knob; keeps the gap price
-                              // typographic and measure-independent
-                              enPt: fontSizePt / 2,
+                              // relative), scaled by the
+                              // exhaustedGapEnPercent UI knob (%
+                              // of EN per gap unit, default 100,
+                              // > 100 allowed — a larger unit
+                              // prices gaps more tolerantly);
+                              // keeps the gap price typographic
+                              // and measure-independent
+                              enPt:
+                                  (fontSizePt / 2) *
+                                  (knuthPlassConfig.exhaustedGapEnPercent /
+                                      100),
                               balanceGray: knuthPlassConfig.balanceGray,
                               polish: knuthPlassConfig.polish,
                               latticeStepsPerSide: (() => {

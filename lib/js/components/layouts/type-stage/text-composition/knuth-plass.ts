@@ -198,9 +198,12 @@ export interface KnuthPlassConfig {
     exhaustedGapDemerits: number;
     /** EN width in pt — the gap unit for exhaustedGapDemerits.
      *  The Host resolves it from the paragraph's COMPUTED font
-     *  size (base × relative) as fontSizePt/2; the pure module
-     *  takes it as data (like latticeStepsPerSide). Default 6
-     *  (a 12pt font, the Host's own fallback size). */
+     *  size (base × relative) as fontSizePt/2, scaled by its
+     *  exhaustedGapEnPercent UI knob (% of EN per gap unit,
+     *  default 100, > 100 allowed — a larger unit prices gaps
+     *  more tolerantly); the pure module takes it as data (like
+     *  latticeStepsPerSide). Default 6 (a 12pt font, the Host's
+     *  own fallback size). */
     enPt: number;
 }
 
