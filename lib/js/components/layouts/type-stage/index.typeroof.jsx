@@ -17,6 +17,7 @@ import {
     SERIALIZE_OPTIONS,
     SERIALIZE_FORMAT_OBJECT,
     InternalizedDependency,
+    unwrapPotentialWriteProxy,
 } from "../../../metamodel.mjs";
 import {
     TypeSpecModel,
@@ -239,13 +240,18 @@ const requireHyphenationPatternsCoherenceFn = CoherenceFunction.create(
         "stylePatchesSource",
         "installedHyphenationPatterns",
     ],
-    function* requireHyphenationPatterns({
-        typeSpec,
-        stylePatchesSource,
-        installedHyphenationPatterns,
-    }) {
+    function* requireHyphenationPatterns(
+        { typeSpec, stylePatchesSource, installedHyphenationPatterns },
+        { isNew },
+    ) {
+        const typeSpecRaw = unwrapPotentialWriteProxy(typeSpec),
+            stylePatchesSourceRaw =
+                unwrapPotentialWriteProxy(stylePatchesSource);
+        if (!isNew && !typeSpecRaw.isDraft && !stylePatchesSourceRaw.isDraft)
+            return; // languages unchanged — requirements can't have changed
+
         const typeSpecLanguageParts = [
-                ...walkEffectiveTypeSpecLanguageParts(typeSpec),
+                ...walkEffectiveTypeSpecLanguageParts(typeSpecRaw),
             ],
             typeSpecLanguages = typeSpecLanguageParts
                 .map(partsToLanguageTag)
@@ -253,7 +259,7 @@ const requireHyphenationPatternsCoherenceFn = CoherenceFunction.create(
             languages = new Set([
                 ...typeSpecLanguages,
                 ...walkStylePatchLanguages(
-                    stylePatchesSource,
+                    stylePatchesSourceRaw,
                     typeSpecLanguageParts,
                 ),
             ]),
