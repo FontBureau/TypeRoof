@@ -50,6 +50,22 @@ export function defaultTaskScheduler(resume: () => void): void {
     globalThis.setTimeout(resume, 0);
 }
 
+/** Duck-typed delegation for algorithm outputs (the contract's union
+ * return): a plain result passes through; a CompositionTask generator
+ * is delegated into the surrounding task, so its checkpoints join the
+ * owner's stream and its return value becomes the result. Sync drain
+ * and async resume share this delegation — both paths behave
+ * identically, and cancellation closes the delegated generator before
+ * its next step. Deliberately generic: this module must not import
+ * the composition contract (the contract imports this module). */
+export function* delegateTaskOrResult<Result>(
+    output: Result | CompositionTask<Result>,
+): CompositionTask<Result> {
+    if (typeof (output as CompositionTask<Result>).next === "function")
+        return yield* output as CompositionTask<Result>;
+    return output as Result;
+}
+
 export function drainTaskSync<Result>(
     task: CompositionTask<Result>,
     token: CancellationToken = createCancellationToken(),

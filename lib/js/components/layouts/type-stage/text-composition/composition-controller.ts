@@ -226,6 +226,7 @@ import { allocateTracking } from "./tracking.ts";
 import {
     cancelTask,
     createCancellationToken,
+    delegateTaskOrResult,
     drainTaskSync,
     resumeTaskAsync,
 } from "./composition-task.ts";
@@ -1174,8 +1175,14 @@ export class CompositionController extends _BaseComponent {
                         : algorithmKey ===
                             "TextCompositionAlgorithmGreedyFitModel"
                           ? greedyFitComposition
-                          : greedyRaggedComposition,
-                result = algorithm({
+                          : greedyRaggedComposition;
+            // The contract's union return: coarse algorithms return a
+            // plain result; optimizing algorithms return a
+            // CompositionTask generator whose checkpoints join this
+            // task stream (sync drain and async resume behave
+            // identically — publication stays the Host's final step).
+            const result = yield* delegateTaskOrResult(
+                algorithm({
                     segments,
                     breaks,
                     lineWidthPt: () => lineWidthPt,
@@ -1260,7 +1267,8 @@ export class CompositionController extends _BaseComponent {
                             candidateHyphenWidth(to, step)
                         );
                     },
-                });
+                }),
+            );
             // Retain the final complete-line tracking allocation for the
             // applicator/diagnostics. Boundary gaps belong to the preceding
             // source run; a taken hyphen is the final glyph.

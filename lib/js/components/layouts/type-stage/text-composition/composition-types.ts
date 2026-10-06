@@ -46,6 +46,26 @@
  *     and diagnostics worthy of a proofing tool.
  */
 
+import type {
+    CompositionCheckpoint,
+    CompositionTask,
+} from "./composition-task.ts";
+
+/* Re-exported so algorithms keep importing ONLY from this module
+ * (type-only: composition-task.ts deliberately does not import this
+ * module, so there is no cycle). */
+export type { CompositionCheckpoint, CompositionTask };
+
+/** TeX-style fitness class of a composed line, derived from the
+ *  SIGNED adjustmentStep: "tight" (step <= -0.5, heavy narrowing),
+ *  "decent" (-0.5 < step <= 0.5), "loose" (0.5 < step <= 1, heavy
+ *  widening), "veryLoose" (|step| > 1 — emergency/unsatisfiable
+ *  only). Direction-aware on purpose: a narrowed and a widened line
+ *  are different classes even at equal |step|, matching the visual
+ *  reality. Consumed by diagnostics and by paragraph-optimizing
+ *  algorithms for adjacency costs (TeX's \adjdemerits). */
+export type FitnessClass = "tight" | "decent" | "loose" | "veryLoose";
+
 /** Where the font already sits in its design space influences how much
  *  it may be narrowed or widened; the Host derives adjustment
  *  potentials relative to the current axis location, not as absolute
@@ -109,9 +129,16 @@ export interface BreakOpportunity {
      *  in-between cases like a "hardly-breaking-space" (an nobr that
      *  may break at high cost) are anticipated. */
     kind: "space" | "hyphen" | "explicit";
-    /** Cost of breaking here; 0 for neutral. Allows UAX#14 /
-     *  language-specific tuning and later Knuth-Plass penalties.
-     *  Irrelevant for kind 'explicit': that break is not negotiable. */
+    /** Cost of breaking here; 0 for neutral. Non-negative finite
+     *  domain: a large finite value means "hardly break here" (an
+     *  nobr that may break at high cost); penalty >= 1_000_000 means
+     *  PROHIBITED — paragraph-optimizing algorithms treat the break
+     *  as infeasible. Negative/infinite sentinels are deliberately
+     *  unrepresented: a FORCED break is kind 'explicit', and "never
+     *  break here" is the ABSENCE of an opportunity (the Host
+     *  suppresses it at enumeration, e.g. for no-break content
+     *  controls like U+2060 or &nbsp;). Irrelevant for kind
+     *  'explicit': that break is not negotiable. */
     penalty: number;
     /** Whether the line's LAST segment collapses at the break
      *  (a space: zero width at line end) — the fit test excludes it.
@@ -175,6 +202,22 @@ export interface CompositionInput {
         toSegment: number,
         step: number,
     ) => number;
+
+    /** TeX badness of a line at a normalized adjustment step — the
+     *  cost currency of paragraph-optimizing (Knuth-Plass-style)
+     *  algorithms. Injected by the Host, like lineWidthAtStep; the
+     *  canonical shape is 100·|step|³ for |step| <= 1 and INFINITE
+     *  beyond (an unsatisfiable line, potential exhausted). The
+     *  per-side step normalization already absorbs the physical
+     *  narrowing/widening asymmetry, so the badness itself is
+     *  symmetric in |step|. Optional: greedy algorithms never read
+     *  it; optimizing algorithms fall back to the analytic default
+     *  when absent (tests can inject fakes either way). What a step
+     *  IS physically remains Host/Treatment-Planner policy — and so
+     *  does how costly it is: future potentials policy (e.g.
+     *  stretching to completeness with wordspace beyond exhausted
+     *  potential) is reflected here. */
+    badnessAtStep?: (step: number) => number;
 }
 
 export interface ComposedLine {
@@ -205,14 +248,32 @@ export interface CompositionResult {
         /** Algorithm-specific badness per line, for comparison,
          *  tuning and visualization. */
         badness: readonly number[];
+        /** TeX-style fitness class per line (paragraph-optimizing
+         *  algorithms; derived from the signed adjustmentStep). */
+        fitnessClasses?: readonly FitnessClass[];
+        /** Total demerits of the chosen breaking (paragraph-
+         *  optimizing algorithms). */
+        totalDemerits?: number;
+        /** Indexes of lines with |adjustmentStep| > 1 (potential
+         *  exhausted, unsatisfiable). */
+        exhaustedLines?: readonly number[];
     };
 }
 
-/** The algorithm contract: pure, synchronous, no side effects.
- *  Simple algorithms (dummy, greedy ragged) only use segments, breaks
- *  and lineWidthAtStep at step 0; justifying algorithms use the full
- *  step range. Async/streaming variants can be added when
- *  pause/resume across paragraphs becomes real.
+/** The algorithm contract: pure, no side effects. Simple algorithms
+ *  (dummy, greedy ragged) only use segments, breaks and
+ *  lineWidthAtStep at step 0; justifying algorithms use the full
+ *  step range.
+ *
+ *  RETURN: either the CompositionResult directly (coarse algorithms)
+ *  or a CompositionTask generator yielding it — paragraph-optimizing
+ *  algorithms return a generator to yield cooperative checkpoints
+ *  between candidate batches (CompositionCheckpoint.work counts
+ *  processed edges so the runner's workBudget becomes meaningful).
+ *  The controller delegates both forms into the composition task, so
+ *  sync drain and async resume behave identically and cancellation
+ *  closes the generator mid-flight. The generator never publishes
+ *  anything itself — publication is the Host's final step.
  *
  *  MANDATORY breaks: the Algorithm MUST end a line at every break
  *  opportunity of kind 'explicit'; such lines are composed like any
@@ -227,4 +288,4 @@ export interface CompositionResult {
  *  natural width and narrowing brings it within measure. */
 export type CompositionAlgorithm = (
     input: CompositionInput,
-) => CompositionResult;
+) => CompositionResult | CompositionTask<CompositionResult>;
