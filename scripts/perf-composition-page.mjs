@@ -19,6 +19,7 @@ export const SOURCE_FIXTURE_PATH = path.join(directory, "../docs/states-library/
         none: "TextCompositionAlgorithmNoneModel",
         ragged: "TextCompositionAlgorithmGreedyRaggedModel",
         fit: "TextCompositionAlgorithmGreedyFitModel",
+        kp: "TextCompositionAlgorithmKnuthPlassModel",
     }),
     RENDERER_MODES = Object.freeze(["editor", "viewer", "compare"]),
     ALGORITHMS = Object.freeze(Object.keys(ALGORITHM_KEYS)),
@@ -84,7 +85,16 @@ export async function closeAllBrowsers() {
 
 export async function waitForShell(page) {
     for (let count = 0; count * 250 <= 90000; count++) {
-        if (await page.evaluate(() => "shell" in window)) return;
+        try {
+            if (await page.evaluate(() => "shell" in window)) return;
+        } catch (error) {
+            // transient: the dev server can trigger a full reload
+            // mid-poll (dependency re-optimization) — the execution
+            // context is destroyed while the new navigation settles;
+            // keep polling
+            if (!String(error).includes("Execution context was destroyed"))
+                throw error;
+        }
         await setTimeout(250);
     }
     throw new Error("TIMEOUT waiting for shell");
@@ -121,8 +131,32 @@ export async function resetPublicationObserver(page) {
 }
 
 export async function publicationSnapshot(page) {
-    return await page.evaluate(() => {
-        const times = window.__compositionPerf?.publicationTimes ?? [];
+    // Composition publishes ASYNCHRONOUSLY (cooperative tasks resume
+    // on setTimeout macrotasks): snapshotting right after the
+    // operation races the publications — slow arms (KP) read 0 and
+    // fast arms can catch a previous operation's late arrivals. Wait
+    // for quiescence before reading: count stable across three 150ms
+    // polls (a quiet window longer than a single block's compose —
+    // short windows false-trigger mid-stream under KP), capped at
+    // 120s so a pathological stream can't hang the suite.
+    return await page.evaluate(async () => {
+        const perf = window.__compositionPerf ?? { publicationTimes: [] };
+        let last = -1,
+            stable = 0;
+        for (
+            let iteration = 0;
+            iteration < 800 && stable < 3;
+            iteration++
+        ) {
+            await new Promise((resolve) => setTimeout(resolve, 150));
+            const count = perf.publicationTimes.length;
+            if (count === last) stable++;
+            else {
+                stable = 0;
+                last = count;
+            }
+        }
+        const times = perf.publicationTimes;
         return {
             count: times.length,
             firstMs: times.length === 0 ? null : times[0],
@@ -174,26 +208,62 @@ export async function verifyFixture(page, expectedMode, expectedAlgorithm) {
 }
 
 export async function openFixturePage(browser, playerURL, rendererMode, algorithm) {
-    const page = await browser.newPage();
-    try {
-        await page.setViewport(VIEWPORT);
-        await installPublicationObserver(page);
-        const navigationStart = performance.now();
-        await page.goto(fixtureURL(playerURL, rendererMode, algorithm).toString(), {
-            waitUntil: ["load", "domcontentloaded"],
-            timeout: 180000,
-        });
-        await waitForShell(page);
-        return {
-            page,
-            fixture: await verifyFixture(page, rendererMode, algorithm),
-            shellReadyMs: performance.now() - navigationStart,
-            publications: await publicationSnapshot(page),
-        };
-    } catch (error) {
-        await page.close().catch(() => {});
-        throw error;
+    // Retry transient dev-server reloads: vite can trigger a full
+    // reload mid-open (dependency re-optimization), destroying the
+    // execution context between the navigation and the first
+    // evaluates. The observer is re-installed per attempt; a fresh
+    // page per attempt keeps state clean.
+    for (let attempt = 0; attempt < 4; attempt++) {
+        const page = await browser.newPage();
+        try {
+            await page.setViewport(VIEWPORT);
+            await installPublicationObserver(page);
+            const navigationStart = performance.now();
+            await page.goto(fixtureURL(playerURL, rendererMode, algorithm).toString(), {
+                waitUntil: ["load", "domcontentloaded"],
+                timeout: 180000,
+            });
+            await waitForShell(page);
+            return {
+                page,
+                fixture: await verifyFixture(page, rendererMode, algorithm),
+                shellReadyMs: performance.now() - navigationStart,
+                publications: await publicationSnapshot(page),
+            };
+        } catch (error) {
+            await page.close().catch(() => {});
+            if (
+                attempt >= 3 ||
+                !String(error).includes("Execution context was destroyed")
+            )
+                throw error;
+        }
     }
+    throw new Error("unreachable");
+}
+
+export async function drainInitialCompose(page, algorithm) {
+    // KP's initial full compose streams for tens of seconds with
+    // multi-hundred-ms gaps between block publications — a quiet
+    // window alone false-detects quiescence mid-stream (observed:
+    // drained at 181/209, 28 stragglers landing in the first
+    // samples). Wait for the FULL expected count instead (0 for
+    // "none": no composition at all), capped at 180s.
+    const expected = algorithm === "none" ? 0 : EXPECTED_COMPOSITION_BLOCKS;
+    if (expected === 0) return { count: 0, firstMs: null, allMs: null };
+    return await page.evaluate(async (expectedCount) => {
+        const perf = window.__compositionPerf ?? { publicationTimes: [] };
+        for (let iteration = 0; iteration < 720; iteration++) {
+            if (perf.publicationTimes.length >= expectedCount) break;
+            await new Promise((resolve) => setTimeout(resolve, 250));
+        }
+        const times = perf.publicationTimes;
+        return {
+            count: times.length,
+            firstMs: times.length === 0 ? null : times[0],
+            allMs: times.length === 0 ? null : times.at(-1),
+        };
+    }, expected);
 }
 
 export async function prepareInteractionPaths(page) {

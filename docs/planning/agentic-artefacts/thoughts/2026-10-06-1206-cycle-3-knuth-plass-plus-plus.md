@@ -649,3 +649,40 @@ enPt = fontSizePt/2 × percent/100. Integration: a giant unit
 (10000%) prices gaps at ~0 and deterministically restores the
 pre-4.5 stub (pins resolution + direction); clearing restores the
 pinned spans.
+
+## Phase 5 implementation notes (2026-10-06)
+
+- **Perf sanity**: quick-suite KP arms added (`kp` algorithm key;
+  editor→viewer typing arms + fit/kp recompose arms; ratio
+  aggregation generalized). Clean drained medians: typing kp/fit
+  1.03×, recompose 1.05× — below tripwire. Initial full compose
+  37.3s vs fit 11.8s (3.2×) — the discussion item, recorded in
+  ROADMAP + research doc.
+- **Harness repairs** (stale since f7c3c374 demand lifecycle and
+  the cooperative scheduler, discovered because ragged/fit arms
+  failed too): publication expectations mode-aware; typing arms
+  moved to viewer (editor-only composes nothing by design);
+  publicationSnapshot waits for quiescence; measureSteady/
+  measureTransitions drain the initial compose to the full 209
+  count before sampling (quiet-window detection false-triggered
+  mid-stream under KP — 181/209 drained, 28 stragglers polluting
+  samples; probe proved KP reaches 209); openFixturePage retries
+  transient vite-reload context destruction; recompose expectation
+  10 → 9 (uniform across algorithms). Suite validates.
+- **Adaptive-K validation**: temporary probe (deleted after use) —
+  218 distinct treated locations vs hbFont LRU cap 32, 6 684
+  creations per full compose. Kmax cannot fix (polish probes are
+  off-lattice); recorded as follow-up (raise HBFONT_LOCATIONS_CAP
+  or quantize polish-probe axesKeys).
+- **Sync/async e2e**: new permanent test in index.test.mjs —
+  production macrotask scheduler (no injected sync drain), editor
+  demand gate → KP select → lazy viewer reveal → two rapid edits
+  → settle: final edit applied, intermediate never remains (no
+  stale publications).
+- **ROADMAP**: milestone 5 → ✅ (a488398e..7b641d08 + validation),
+  outcome section with saturation/LRU/perf findings and follow-ups
+  (worker backend, maxConsecutiveHyphens, hyphen escalation,
+  diagnostics UI, LRU).
+- **Archive**: this plan + the Cycle-2 research move to
+  docs/planning/agentic-artefacts/thoughts/ with the conclusion
+  commit.

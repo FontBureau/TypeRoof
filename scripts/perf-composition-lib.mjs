@@ -31,9 +31,19 @@ const matrixOf = (workloads) => {
 export function scenarioMatrix(suite = "full") {
     if (suite === "quick")
         return [
-            { rendererMode: "editor", algorithm: "none", workload: "typing" },
-            { rendererMode: "editor", algorithm: "ragged", workload: "typing" },
-            { rendererMode: "editor", algorithm: "fit", workload: "typing" },
+            // typing arms run in VIEWER mode: since the per-textblock
+            // demand lifecycle (f7c3c374) editor-only mode performs
+            // zero composition by design, so an editor typing arm
+            // would measure no algorithm work; the workload edits
+            // the model directly (shell.changeState), no ProseMirror
+            // needed
+            { rendererMode: "viewer", algorithm: "none", workload: "typing" },
+            { rendererMode: "viewer", algorithm: "ragged", workload: "typing" },
+            { rendererMode: "viewer", algorithm: "fit", workload: "typing" },
+            // milestone 5 validation: KP on the two representative
+            // workloads, against the fit baseline (>3x is the
+            // tripwire for discussion, not a gate)
+            { rendererMode: "viewer", algorithm: "kp", workload: "typing" },
             {
                 rendererMode: "viewer",
                 algorithm: "ragged",
@@ -49,6 +59,16 @@ export function scenarioMatrix(suite = "full") {
                 algorithm: "ragged",
                 workload: "inherited-style-partial-recompose",
             },
+            {
+                rendererMode: "viewer",
+                algorithm: "fit",
+                workload: "inherited-style-partial-recompose",
+            },
+            {
+                rendererMode: "viewer",
+                algorithm: "kp",
+                workload: "inherited-style-partial-recompose",
+            },
         ];
     return matrixOf(WORKLOADS);
 }
@@ -62,7 +82,9 @@ export function transitionMatrix(suite = "full") {
                 workload: "mode-transition",
             },
             {
-                rendererMode: "editor",
+                // viewer: the algorithm switch recomposes all blocks
+                // only under composition demand (f7c3c374)
+                rendererMode: "viewer",
                 algorithm: "ragged",
                 workload: "algorithm-transition",
             },
@@ -73,8 +95,11 @@ export function transitionMatrix(suite = "full") {
 export function coldMatrix(suite = "full") {
     if (suite === "quick")
         return [
-            { rendererMode: "editor", algorithm: "none" },
-            { rendererMode: "editor", algorithm: "ragged" },
+            // viewer mode: cold full-compose (209 blocks) is the
+            // structural signal; editor-only composes nothing since
+            // the demand lifecycle (f7c3c374)
+            { rendererMode: "viewer", algorithm: "none" },
+            { rendererMode: "viewer", algorithm: "ragged" },
         ];
     return RENDERER_MODES.flatMap((rendererMode, modeIndex) => {
         const algorithms = modeIndex % 2 === 0 ? ALGORITHMS : [...ALGORITHMS].reverse();
@@ -134,7 +159,7 @@ export function aggregateRatios(steadyScenarios) {
     return [...groups].flatMap(([key, totals]) => {
         const noneTotal = totals.get("none");
         if (noneTotal === undefined) return [];
-        return ["ragged", "fit"].flatMap((algorithm) => {
+        return ALGORITHMS.filter((algorithm) => algorithm !== "none").flatMap((algorithm) => {
             const numeratorTotalMs = totals.get(algorithm);
             return numeratorTotalMs === undefined
                 ? []
@@ -174,13 +199,21 @@ export function summarizeCPUProfile(profile, limit = 20) {
         .slice(0, limit);
 }
 
-const expectedPublicationCount = ({ workload, algorithm }) => {
+const expectedPublicationCount = ({ workload, algorithm, rendererMode }) => {
     if (algorithm === "none" || workload === "irrelevant-style") return 0;
     if (workload === "typing") return 1;
     if (workload === "relevant-style") return null;
-    if (workload === "inherited-style-partial-recompose") return 10;
-    if (workload === "mode-transition") return 0;
-    if (workload === "algorithm-transition") return EXPECTED_COMPOSITION_BLOCKS;
+    // steady count on the Wikipedia fixture since the demand
+    // lifecycle (f7c3c374) — 10 before it; 9 observed uniformly
+    // across ragged/fit/kp (2026-10-06)
+    if (workload === "inherited-style-partial-recompose") return 9;
+    // the workload's rendererMode is the TARGET mode: attaching a
+    // viewer (or compare) composes all blocks; editor-only composes
+    // nothing (demand lifecycle, f7c3c374)
+    if (workload === "mode-transition")
+        return rendererMode === "editor" ? 0 : EXPECTED_COMPOSITION_BLOCKS;
+    if (workload === "algorithm-transition")
+        return rendererMode === "editor" ? 0 : EXPECTED_COMPOSITION_BLOCKS;
     throw new Error(`unknown publication expectation for ${workload}`);
 };
 
@@ -210,7 +243,13 @@ export function validateResult(result) {
             if (matches.length !== result.sampling.coldSamples)
                 errors.push(`cold ${arm.rendererMode}/${arm.algorithm}: ${matches.length}`);
             for (const sample of matches) {
-                const expected = sample.algorithm === "none" ? 0 : EXPECTED_COMPOSITION_BLOCKS;
+                // editor-only composes nothing (demand lifecycle,
+                // f7c3c374); viewer/compare compose all blocks
+                const expected =
+                    sample.algorithm === "none" ||
+                    sample.rendererMode === "editor"
+                        ? 0
+                        : EXPECTED_COMPOSITION_BLOCKS;
                 if (sample.publications.count !== expected)
                     errors.push(
                         `cold publications ${arm.rendererMode}/${arm.algorithm}: ${sample.publications.count}, expected ${expected}`,

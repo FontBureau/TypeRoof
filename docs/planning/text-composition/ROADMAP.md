@@ -54,7 +54,7 @@ baseline and capability fallback.
 | 2 | Simple greedy alignment (ragged) | ✅ done (2026-10-03, …5cf69417) |
 | 3 | Greedy ragged + hyphenation (Host control, not an algorithm) | ✅ done (2026-10-04, ec5593e0..9cde3814) |
 | 4 | Greedy-fit (varla-varfo strategy, predictively; validation milestone) | ✅ done (2026-10-05, 8e50f2da..521db920) |
-| 5 | Knuth-Plass++ (the target) | planned |
+| 5 | Knuth-Plass++ (the target) | ✅ done (2026-10-06, a488398e..7b641d08 + validation) |
 
 ## Model integration (model-first)
 
@@ -263,6 +263,62 @@ width arithmetic currently counts source code units while CSS
 letter-spacing follows its own text/glyph spacing semantics; add a
 focused Unicode/ligature parity probe before relying on tracking
 for KP++ quality scoring.
+
+## Milestone 5 outcome ✅ DONE (2026-10-06)
+
+Knuth–Plass++ ships as the paragraph-wide least-demerits DP the
+contract was shaped for: UAX#14 break graph with hyphen penalties,
+canonical badness `100·|step|³` injected by the Host, fitness-class
+`adjDemerits` balancing, adaptive step lattice (K per side from the
+potentials' pt range), exact-step polish, cooperative checkpoints
+(sync drain == async resume), model-first
+`TextCompositionAlgorithmKnuthPlassModel` with per-field
+inheritance, and diagnostics: per-line badness/demerits/fitness,
+exhausted potentials, a "kp" color palette, and a dev flag
+(`globalThis.__typeroofKPDevDiagnostics`) retaining rejected
+candidates + scan stats.
+
+Implementation findings worth keeping:
+
+- **Badness saturation** (`46991ea7`, `d3155c3e`): canonical badness
+  caps at 100 at |step| = 1 and the lattice ends at ±1, so the DP
+  was blind to the SIZE of a widening-exhausted line's gap and
+  parked paragraph looseness in grossly underfull lines (176pt gap
+  on a 280pt measure observed). The fix prices the gap in EN of the
+  paragraph's computed font size, cubic growth
+  (`exhaustedGapDemerits·(gapPt/enPt)³`): 1 EN bearable, 2 EN ×8,
+  3 EN luxury, ~5 EN near-prohibited — never hard-banned, a fluid
+  layout always needs a feasible path. `exhaustedGapEnPercent`
+  (`7b641d08`) makes the EN unit itself a UI knob (% of EN, default
+  100, no max).
+- **hbFont LRU thrash** (Phase-5 probe, Wikipedia fixture):
+  `axesAtStep` yields a distinct treated location per (style ×
+  lattice step × polish refinement) — 218 distinct locations vs the
+  32-entry per-font LRU (6 684 creations on one full compose).
+  Kmax cannot fix this (polish probes are off-lattice); consider
+  raising `HBFONT_LOCATIONS_CAP` or quantizing polish-probe axis
+  keys. Measured perf is fine regardless (below).
+- **Performance** (quick suite, Wikipedia fixture, drained):
+  KP is at parity with GreedyFit on the measured arms — typing
+  266.9 vs 260.3 ms (1.03×) and inherited-style partial recompose
+  664.5 vs 633.3 ms (1.05×), far below the 3× tripwire. The
+  INITIAL full compose is the discussion item: 37.3s vs fit's
+  11.7s (3.2×) — per-block task streaming, adaptive-K probes and
+  the hbFont LRU thrash (above) compound there; the LRU item and
+  the worker backend are the levers. Medians recorded in the
+  Cycle-2 research doc.
+- **Perf harness modernization** (same validation): publication
+  expectations were stale since the demand lifecycle (f7c3c374) —
+  editor-only arms measure zero composition by design; typing arms
+  moved to viewer mode, publication snapshots wait for quiescence,
+  the initial compose is drained to the full 209-block count
+  before sampling, and dev-server reloads are retried.
+
+Follow-ups into the after-KP++ tracks: worker backend (off-main-thread
+composition), maxConsecutiveHyphens policy, quadratic hyphen
+escalation (the linear `hyphenPenalty` plus the EN-cubic gap pricing
+covers the worst cases), diagnostics UI (beyond the dev flag), the
+hbFont LRU item above.
 
 ## Next execution cycles (post-milestone 4)
 

@@ -22,6 +22,7 @@ import {
     fixtureURL,
     installPublicationObserver,
     launchBrowser,
+    drainInitialCompose,
     openFixturePage,
     prepareInteractionPaths,
     removeStagedFixtures,
@@ -129,6 +130,19 @@ async function measureSteady() {
             );
         try {
             const paths = await prepareInteractionPaths(opened.page), samples = [];
+            // drain the INITIAL full compose before measuring: KP is
+            // slow enough that its 209-block initial stream is still
+            // publishing when the first operation would run (the
+            // stragglers land after the observer reset and pollute
+            // the sample counts)
+            const drained = await drainInitialCompose(
+                opened.page,
+                scenario.algorithm,
+            );
+            console.log(
+                scenarioKey(scenario),
+                `initial compose drained (${drained.count} publications, last at ${Math.round(drained.allMs ?? 0)} ms)`,
+            );
             for (let index = 0; index < sampling.warmups; index++)
                 await runOperation(opened.page, scenario, index, paths);
             for (let index = 0; index < sampling.steadySamples; index++)
@@ -174,6 +188,8 @@ async function measureTransitions() {
         const samples = [];
         try {
             const paths = await prepareInteractionPaths(opened.page);
+            // drain the initial full compose (see measureSteady)
+            await drainInitialCompose(opened.page, scenario.algorithm);
             for (let index = 0; index < sampling.transitionSamples; index++)
                 samples.push(
                     await runOperation(opened.page, scenario, index, paths),
