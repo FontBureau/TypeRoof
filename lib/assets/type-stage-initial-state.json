@@ -139,6 +139,26 @@
               {
                 "relativeFontSize": "1",
                 "autoOPSZ": "1",
+                "children": [
+                  [
+                    "t2greek",
+                    {
+                      "languageTag": {
+                        "language": "el"
+                      },
+                      "label": "Text 2 Greek"
+                    }
+                  ],
+                  [
+                    "t2russian",
+                    {
+                      "languageTag": {
+                        "language": "ru"
+                      },
+                      "label": "Text 2 Russian"
+                    }
+                  ]
+                ],
                 "label": "Text 2"
               }
             ]
@@ -273,6 +293,20 @@
       {
         "link": "../paragraphs/t2",
         "label": "T2"
+      }
+    ],
+    [
+      "p2russian",
+      {
+        "link": "/paragraphs/t2/t2russian",
+        "label": "T2ru"
+      }
+    ],
+    [
+      "p2greek",
+      {
+        "link": "/paragraphs/t2/t2greek",
+        "label": "T2el"
       }
     ]
   ],
@@ -456,7 +490,7 @@
             ]
           },
           {
-            "typeKey": "paragraph-2",
+            "typeKey": "p2greek",
             "content": [
               {
                 "typeKey": "text",
@@ -531,7 +565,7 @@
             ]
           },
           {
-            "typeKey": "paragraph-2",
+            "typeKey": "p2russian",
             "content": [
               {
                 "typeKey": "text",
@@ -677,6 +711,22 @@
       ],
       [
         "paragraph",
+        {
+          "content": "inline*",
+          "group": "block",
+          "tag": "p"
+        }
+      ],
+      [
+        "p2russian",
+        {
+          "content": "inline*",
+          "group": "block",
+          "tag": "p"
+        }
+      ],
+      [
+        "p2greek",
         {
           "content": "inline*",
           "group": "block",
