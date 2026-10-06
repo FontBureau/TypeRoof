@@ -616,3 +616,26 @@ factory config). Tests: pure demerits-math pin (3 stubs ×
 integration asserts no step-+1 line keeps a gap > 50% of the
 measure (the fixture's 176pt stub line is gone; pinned 8-line
 spans unchanged). Suite 454/454, typecheck/eslint/prettier clean.
+
+### Phase 4.6 — EN-priced cubic gap demerits (2026-10-06, operator hand-tuning follow-up)
+
+Operator hand-tuning on the live document (272.64pt measure, 18pt
+Roboto Flex) needed exhaustedGapDemerits ≈ 1850000 to fix a stub
+first line — the measure-relative quadratic is typographically
+meaningless (1 EN ≈ 3.3% of that measure → ~11 demerits at the old
+default). Reformulation per operator design: the gap is priced in
+EN of the paragraph's font size — `extra = knob·(gapPt/enPt)³`,
+cubic growth mirroring the badness curve (1 EN bearable but not
+free, 2 EN ×2³, 3 EN luxury, ~5 EN near-prohibited but never
+hard-banned — a fluid layout always needs a feasible path, no
+TeX-style markup interventions). Calibration from the operator's
+1850000 back-calculates to an EN-cubic knob of ~400–1000; default
+is now 1000 (was 10000). New config field `enPt` (pure data, like
+latticeStepsPerSide; default 6) resolved by the controller as
+`fontSizePt / 2` — fontSizePt is the fontSizeGen synthetic
+base × relative, so per-scope relative sizes are honored
+(operator's caution). Not a user-facing model field: derived.
+Tests: pure pin updated (3 × 1000 × (42.25/10)³, explicit enPt;
+default-match assertion now pins knob 1000 / enPt 6); Host
+integration passes with pinned 8-line spans unchanged.
+

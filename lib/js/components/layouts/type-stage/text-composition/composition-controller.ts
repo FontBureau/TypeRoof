@@ -1421,6 +1421,14 @@ export class CompositionController extends _BaseComponent {
                               adjDemerits: knuthPlassConfig.adjDemerits,
                               exhaustedGapDemerits:
                                   knuthPlassConfig.exhaustedGapDemerits,
+                              // the EN gap unit for
+                              // exhaustedGapDemerits: half the
+                              // COMPUTED font size (fontSizePt is
+                              // the fontSizeGen synthetic base ×
+                              // relative) — derived, not a user
+                              // knob; keeps the gap price
+                              // typographic and measure-independent
+                              enPt: fontSizePt / 2,
                               balanceGray: knuthPlassConfig.balanceGray,
                               polish: knuthPlassConfig.polish,
                               latticeStepsPerSide: (() => {

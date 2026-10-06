@@ -187,9 +187,21 @@ export interface KnuthPlassConfig {
      *  saturates at 100 there (TeX's cap), so without this the DP
      *  is blind to the SIZE of the remaining gap and may park all
      *  of a paragraph's looseness in one grossly underfull line.
-     *  extra = exhaustedGapDemerits · (gapPt/measure)². Default
-     *  10000. */
+     *  The gap is measured in EN of the paragraph's font size
+     *  (enPt) — typographically meaningful, independent of the
+     *  measure — and grows cubically, mirroring the badness curve
+     *  100·|step|³: 1 EN bearable but not free, 2 EN costs 2³,
+     *  3 EN is pure luxury, ~5 EN approaches prohibited territory
+     *  (but never hard-bans — a fluid layout always needs a
+     *  feasible path). extra = exhaustedGapDemerits · (gapPt/enPt)³.
+     *  Default 1000. */
     exhaustedGapDemerits: number;
+    /** EN width in pt — the gap unit for exhaustedGapDemerits.
+     *  The Host resolves it from the paragraph's COMPUTED font
+     *  size (base × relative) as fontSizePt/2; the pure module
+     *  takes it as data (like latticeStepsPerSide). Default 6
+     *  (a 12pt font, the Host's own fallback size). */
+    enPt: number;
 }
 
 export const KNUTH_PLASS_DEFAULTS: KnuthPlassConfig = {
@@ -201,7 +213,8 @@ export const KNUTH_PLASS_DEFAULTS: KnuthPlassConfig = {
     latticeStepsPerSide: 10,
     polish: true,
     prohibitedPenalty: 1_000_000,
-    exhaustedGapDemerits: 10000,
+    exhaustedGapDemerits: 1000,
+    enPt: 6,
 };
 
 /** Beyond any feasible paragraph's total demerits (see header). */
@@ -416,20 +429,21 @@ function* knuthPlassImpl(
         // Widening exhausted (step +1 and STILL underfull): badness
         // saturates at badnessAtStep(1) — charge gap-proportional
         // extra demerits so the DP prefers alternatives over a
-        // grossly underfull line (see the config doc).
+        // grossly underfull line (see the config doc). The gap is
+        // priced in EN of the paragraph's font size, cubic growth.
         return {
             step,
             badness: badnessAtStep(step),
             feasible: true,
             naturalWidthPt,
             fittingWidthPt: w0,
-            ...(step === 1
+            ...(step === 1 && cfg.enPt > 0
                 ? {
                       extraDemerits:
                           cfg.exhaustedGapDemerits *
                           ((available - fittingWidth(from, to, 1, collapses)) /
-                              available) **
-                              2,
+                              cfg.enPt) **
+                              3,
                   }
                 : {}),
         };
