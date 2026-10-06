@@ -433,6 +433,23 @@ correction). Preserve selection and the active intent mark across rapid
 transactions, and include this exact typing case in the focused editor-only
 profile/follow-up.
 
+Update 2026-10-06 (`55bf4954`): a large share of the "general shell
+state transaction" cost surface turned out to be the
+`requireHyphenationPatterns` coherence function re-walking effective
+typeSpec + style-patch languages on EVERY state change; the fix
+early-returns when neither typeSpec nor stylePatchesSource is a
+draft. A light perf-suite run (quick, 1-sample, same fixture/arms as
+the Phase-5 validation) shows the effect exactly where the mechanism
+predicts it: typing arms (document-only edits, no typeSpec draft)
+dropped 2–4× — none 256→67ms, ragged 248→143ms, fit 260→67ms, kp
+267→100ms; mode-transition 944→739ms — while style arms (deliberate
+typeSpec drafts, the walk still runs) and the initial full compose
+(`isNew`, full walk by design) are unchanged within noise. Editor
+typing should benefit proportionally (each keystroke is a
+document-only transaction): re-verify manually before closing this
+regression; the cursor-jump defect above is independent and stays
+open.
+
 ### Cycle 2 — Milestone 5 research/design: Knuth–Plass++
 
 Research and specify before implementation:
