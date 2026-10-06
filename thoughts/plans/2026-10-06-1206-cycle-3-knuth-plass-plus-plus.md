@@ -598,3 +598,21 @@ change, or the DP state space blows up on real content), stop and
 create a sub-RPI handoff: this plan, the Cycle-2 research doc, the
 knuth-plass.ts design header, and exact observed costs. The operator
 drives the sub-cycle separately; this plan resumes afterwards.
+
+### Phase 4.5 — exhaustedGapDemerits (2026-10-06, operator-reported)
+
+Manual Phase-4 review surfaced grossly underfull lines (gaps > 3/4
+of the measure at step +1). Cross-commit probe proved Phase 4
+byte-identical to Phase 3 — the behavior is inherent: badness
+saturates at 100 at the widening limit, so the DP was blind to gap
+SIZE. Fix (the deferred "escalation curve", pulled forward): new
+knob `exhaustedGapDemerits` (struct OrEmpty number, default 10000)
+charging `knob·(gapPt/measure)²` on feasible edges at the widening
+limit, evaluated in knuth-plass.ts where the gap is measurable.
+Wired model → generators → controller (resolution, ingredients,
+factory config). Tests: pure demerits-math pin (3 stubs ×
+10000×(42.25/100)²); the tie-breaking test opts out
+(exhaustedGapDemerits 0 — its premise IS the saturation); Host
+integration asserts no step-+1 line keeps a gap > 50% of the
+measure (the fixture's 176pt stub line is gone; pinned 8-line
+spans unchanged). Suite 454/454, typecheck/eslint/prettier clean.

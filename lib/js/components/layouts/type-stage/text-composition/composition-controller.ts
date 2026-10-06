@@ -1008,6 +1008,10 @@ export class CompositionController extends _BaseComponent {
                               nodeProperties.get(
                                   "textCompositionAlgorithm/adjDemerits",
                               ) ?? KNUTH_PLASS_DEFAULTS.adjDemerits,
+                          exhaustedGapDemerits:
+                              nodeProperties.get(
+                                  "textCompositionAlgorithm/exhaustedGapDemerits",
+                              ) ?? KNUTH_PLASS_DEFAULTS.exhaustedGapDemerits,
                           balanceGray:
                               (nodeProperties.get(
                                   "textCompositionAlgorithm/balanceGray",
@@ -1124,6 +1128,7 @@ export class CompositionController extends _BaseComponent {
                           knuthPlassConfig.doubleHyphenDemerits,
                           knuthPlassConfig.finalHyphenDemerits,
                           knuthPlassConfig.adjDemerits,
+                          knuthPlassConfig.exhaustedGapDemerits,
                           knuthPlassConfig.balanceGray,
                           knuthPlassConfig.polish,
                           knuthPlassConfig.latticeQuantum,
@@ -1414,6 +1419,8 @@ export class CompositionController extends _BaseComponent {
                               finalHyphenDemerits:
                                   knuthPlassConfig.finalHyphenDemerits,
                               adjDemerits: knuthPlassConfig.adjDemerits,
+                              exhaustedGapDemerits:
+                                  knuthPlassConfig.exhaustedGapDemerits,
                               balanceGray: knuthPlassConfig.balanceGray,
                               polish: knuthPlassConfig.polish,
                               latticeStepsPerSide: (() => {

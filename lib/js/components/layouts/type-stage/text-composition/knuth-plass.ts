@@ -182,6 +182,14 @@ export interface KnuthPlassConfig {
     /** penalty ≥ this = prohibited break (contract). Default
      *  1_000_000. */
     prohibitedPenalty: number;
+    /** Gap-proportional extra demerits for a feasible line set at
+     *  the WIDENING limit (step +1, potential exhausted): badness
+     *  saturates at 100 there (TeX's cap), so without this the DP
+     *  is blind to the SIZE of the remaining gap and may park all
+     *  of a paragraph's looseness in one grossly underfull line.
+     *  extra = exhaustedGapDemerits · (gapPt/measure)². Default
+     *  10000. */
+    exhaustedGapDemerits: number;
 }
 
 export const KNUTH_PLASS_DEFAULTS: KnuthPlassConfig = {
@@ -193,6 +201,7 @@ export const KNUTH_PLASS_DEFAULTS: KnuthPlassConfig = {
     latticeStepsPerSide: 10,
     polish: true,
     prohibitedPenalty: 1_000_000,
+    exhaustedGapDemerits: 10000,
 };
 
 /** Beyond any feasible paragraph's total demerits (see header). */
@@ -257,6 +266,9 @@ interface EdgeEvaluation {
     naturalWidthPt: number;
     // step-0 fitting width — the pruning monotonicity guard
     fittingWidthPt: number;
+    // gap-proportional extra demerits (widening-exhausted lines
+    // only, see KnuthPlassConfig.exhaustedGapDemerits)
+    extraDemerits?: number;
 }
 
 interface ChosenEdge {
@@ -401,12 +413,25 @@ function* knuthPlassImpl(
             else hi = mid - 1;
         }
         const step = lo / wideningK;
+        // Widening exhausted (step +1 and STILL underfull): badness
+        // saturates at badnessAtStep(1) — charge gap-proportional
+        // extra demerits so the DP prefers alternatives over a
+        // grossly underfull line (see the config doc).
         return {
             step,
             badness: badnessAtStep(step),
             feasible: true,
             naturalWidthPt,
             fittingWidthPt: w0,
+            ...(step === 1
+                ? {
+                      extraDemerits:
+                          cfg.exhaustedGapDemerits *
+                          ((available - fittingWidth(from, to, 1, collapses)) /
+                              available) **
+                              2,
+                  }
+                : {}),
         };
     };
 
@@ -535,7 +560,8 @@ function* knuthPlassImpl(
                     cost =
                         slot.demerits +
                         (cfg.linePenalty + evaluation.badness) ** 2 +
-                        penalty ** 2;
+                        penalty ** 2 +
+                        (evaluation.extraDemerits ?? 0);
                     if (
                         cfg.balanceGray &&
                         slot.incomingKind !== null &&
