@@ -1,56 +1,35 @@
 /**
- * Theme the intro.js tooltip of the in-app tour (app-tour.mjs) with the
- * shell tokens from lib/css/shell/variables.css.
+ * Theme the driver.js popover of the in-app tour (app-tour.mjs) with the
+ * shell tokens from lib/css/shell/variables.css. The .app-tour-popover
+ * class (driver.js popoverClass) makes these rules more specific than
+ * driver.css, which may be loaded after this file.
  */
 
-/* The helper layer's background obscures the highlighted element, dim
- * everything around it with a shadow instead of the overlay.
- * Same fix as lib/css/videoproof/user-guide.css of the legacy app,
- * https://github.com/usablica/intro.js/issues/109#issuecomment-512441508
- */
-.introjs-helperLayer {
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    box-shadow: 0 0 0 1000em rgb(0 0 0 / 70%);
-}
-
-.introjs-overlay {
-    opacity: 0 !important;
-}
-
-.introjs-tooltip {
+.driver-popover.app-tour-popover {
     font-family: RobotoFlex, sans-serif;
     background: var(--background-color);
     color: var(--text-color);
-    width: 20rem;
+    width: 25rem;
+    max-width: calc(100vw - 2rem);
 
-    .app-tour-title {
-        margin: 0 0 0.75em;
-        font-size: 1.5em;
-        font-weight: 700;
+    .driver-popover-title {
+        font-size: 1.4em;
     }
 
-    .introjs-arrow:is(.top, .top-right, .top-middle) {
-        border-bottom-color: var(--background-color);
+    .driver-popover-description {
+        font-size: 1em;
     }
 
-    .introjs-arrow:is(.bottom, .bottom-right, .bottom-middle) {
-        border-top-color: var(--background-color);
+    .driver-popover-close-btn {
+        color: #999;
+        font-size: 2em;
+        font-weight: 100;
+        height: auto;
     }
 
-    .introjs-arrow:is(.left, .left-bottom) {
-        border-right-color: var(--background-color);
-    }
-
-    .introjs-arrow:is(.right, .right-bottom) {
-        border-left-color: var(--background-color);
-    }
-
-    .introjs-button {
+    .driver-popover-footer-btn {
         font: inherit;
         font-size: 0.9em;
-        text-shadow: none;
         color: var(--text-color);
         background: var(--button-bg-color);
         border: 1px solid var(--button-border-color);
@@ -59,18 +38,6 @@
         &:focus {
             border-color: var(--button-border-color-hover);
             background: var(--menu-button-bg-color-hover);
-            box-shadow: none;
         }
     }
-}
-
-.introjs-progress {
-    border-radius: 5px;
-    height: 5px;
-    margin: 1.5em 0 0.5em;
-}
-
-.introjs-progressbar {
-    background-color: #999;
-    border-radius: 5px;
 }

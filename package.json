@@ -42,6 +42,7 @@
     "@11ty/eleventy-plugin-syntaxhighlight": "^5.0.0",
     "css.escape": "^1.5.1",
     "dompurify": "^3.4.14",
+    "driver.js": "^1.9.0",
     "eleventy-plugin-embed-everything": "^1.19.0",
     "globals": "^15.12.0",
     "markdown-it-github-headings": "^2.0.1",
