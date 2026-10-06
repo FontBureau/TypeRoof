@@ -7,7 +7,9 @@
  *     boundary from a hyphen point);
  *   - each split produces sub-segments; between them a 'hyphen'
  *     break opportunity (penalty HYPHENATION_PENALTY, collapses
- *     false);
+ *     false) — the penalty is a parameter (milestone 5: the
+ *     Knuth-Plass struct's hyphenPenalty resolves controller-side,
+ *     default 50; other algorithms keep HYPHENATION_PENALTY);
  *   - the segment BEFORE a hyphen break is flagged `hyphenAfter`:
  *     the controller uses the marker/break map to add the hyphen
  *     glyph ONLY when a line candidate actually ENDS at that break
@@ -75,6 +77,9 @@ export function hyphenateSegments(
     leafTexts: string[],
     hypher: HypherType,
     config: HyphenationConfig,
+    // the penalty stamped on the generated 'hyphen' break
+    // opportunities (a Host knob — the algorithm reads break.penalty)
+    penalty: number = HYPHENATION_PENALTY,
 ): { segments: HostSegment[]; breaks: BreakOpportunity[] } {
     const outSegments: HostSegment[] = [],
         outBreaks: BreakOpportunity[] = [],
@@ -124,7 +129,7 @@ export function hyphenateSegments(
             outBreaks.push({
                 afterSegment: outSegments.length - 1,
                 kind: "hyphen",
-                penalty: HYPHENATION_PENALTY,
+                penalty,
                 collapses: false,
             });
             partStart = segment.start + point;

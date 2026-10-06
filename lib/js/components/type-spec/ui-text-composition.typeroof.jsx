@@ -14,6 +14,7 @@ import {
     TextCompositionAlgorithmDummyModel,
     TextCompositionAlgorithmGreedyRaggedModel,
     TextCompositionAlgorithmGreedyFitModel,
+    TextCompositionAlgorithmKnuthPlassModel,
 } from "./text-composition-models.mjs";
 
 function getGenericPPSMap(parentPPSRecord, FieldType) {
@@ -34,7 +35,8 @@ export class UITextCompositionAlgorithm extends UIDynamicStructContainer {
             FieldType === TextCompositionAlgorithmNoneModel ||
             FieldType === TextCompositionAlgorithmDummyModel ||
             FieldType === TextCompositionAlgorithmGreedyRaggedModel ||
-            FieldType === TextCompositionAlgorithmGreedyFitModel
+            FieldType === TextCompositionAlgorithmGreedyFitModel ||
+            FieldType === TextCompositionAlgorithmKnuthPlassModel
         )
             return getGenericPPSMap(ppsRecord, FieldType);
         // may just throw the KEY ERROR

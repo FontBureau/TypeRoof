@@ -208,6 +208,10 @@ import { greedyFitComposition } from "./greedy-fit.ts";
 import { createDummyComposition } from "./dummy-composition.ts";
 import { greedyRaggedComposition } from "./greedy-ragged.ts";
 import {
+    createKnuthPlassComposition,
+    KNUTH_PLASS_DEFAULTS,
+} from "./knuth-plass.ts";
+import {
     getStyleLinkPropertiesId,
     getWrapMarks,
 } from "../document-nodes-meta/derivations.mjs";
@@ -289,6 +293,39 @@ interface LeafStyle {
     direction: string | null;
     fontSizePt: number;
 }
+
+/** Per-paragraph memo for the Host lineWidthAtStep (milestone 5):
+ *  the Knuth-Plass DP evaluates each edge once per source fitness
+ *  slot (up to 4x) at identical lattice steps, plus the adaptive-
+ *  lattice probes (step 0, +/-1) and the collapse subtractions —
+ *  identical probes hit the cache instead of re-shaping. The key
+ *  quantizes the step to a fine grid (1e-6): exact for the
+ *  deterministic lattice probes (k/K computed identically every
+ *  time), fine enough that off-lattice polish probes never alias.
+ *  (A coarse lattice-cell key would corrupt the polish binary
+ *  search: every probe within a cell would return one width.)
+ *  Behavior-neutral for all algorithms: same arguments => same
+ *  width (the Measurer caches underneath anyway). */
+export const memoizeWidthAtStep = (
+    widthAtStep: (from: number, to: number, step: number) => number,
+): ((from: number, to: number, step: number) => number) => {
+    const cache = new Map<string, number>();
+    return (from, to, step) => {
+        const key = `${from}:${to}:${Math.round(step * 1e6)}`;
+        let width = cache.get(key);
+        if (width === undefined) {
+            width = widthAtStep(from, to, step);
+            cache.set(key, width);
+        }
+        return width;
+    };
+};
+
+/** The Host's canonical badness function (the contract's default,
+ *  composition-types.ts): injected for every algorithm — cheap and
+ *  behavior-neutral for algorithms that don't read it. */
+const hostBadnessAtStep = (step: number): number =>
+    Math.abs(step) > 1 ? Infinity : 100 * Math.abs(step) ** 3;
 
 export class CompositionController extends _BaseComponent {
     [UPDATE_STRATEGY] = UPDATE_STRATEGY_NO_UPDATE;
@@ -941,6 +978,61 @@ export class CompositionController extends _BaseComponent {
                               ) ?? true) === true,
                       }
                     : null,
+            // Knuth-Plass++ (milestone 5): the resolved struct
+            // config (OrEmpty fields fall back to the defaults —
+            // KNUTH_PLASS_DEFAULTS for the algorithm knobs; the
+            // Host-side knobs here: hyphenPenalty 50 stamps the
+            // hyphen break opportunities, latticeQuantum 1pt is the
+            // adaptive-lattice quantum, colorCoding "kp" renders
+            // with the potentials palette until Phase 4).
+            knuthPlassConfig =
+                algorithmKey === "TextCompositionAlgorithmKnuthPlassModel"
+                    ? {
+                          linePenalty:
+                              nodeProperties.get(
+                                  "textCompositionAlgorithm/linePenalty",
+                              ) ?? KNUTH_PLASS_DEFAULTS.linePenalty,
+                          hyphenPenalty:
+                              nodeProperties.get(
+                                  "textCompositionAlgorithm/hyphenPenalty",
+                              ) ?? 50,
+                          doubleHyphenDemerits:
+                              nodeProperties.get(
+                                  "textCompositionAlgorithm/doubleHyphenDemerits",
+                              ) ?? KNUTH_PLASS_DEFAULTS.doubleHyphenDemerits,
+                          finalHyphenDemerits:
+                              nodeProperties.get(
+                                  "textCompositionAlgorithm/finalHyphenDemerits",
+                              ) ?? KNUTH_PLASS_DEFAULTS.finalHyphenDemerits,
+                          adjDemerits:
+                              nodeProperties.get(
+                                  "textCompositionAlgorithm/adjDemerits",
+                              ) ?? KNUTH_PLASS_DEFAULTS.adjDemerits,
+                          balanceGray:
+                              (nodeProperties.get(
+                                  "textCompositionAlgorithm/balanceGray",
+                              ) ?? true) === true,
+                          polish:
+                              (nodeProperties.get(
+                                  "textCompositionAlgorithm/polish",
+                              ) ?? true) === true,
+                          latticeQuantum:
+                              nodeProperties.get(
+                                  "textCompositionAlgorithm/latticeQuantum",
+                              ) ?? 1,
+                          colorCoding: (
+                              ["potentials", "kp", "off"] as const
+                          ).includes(
+                              nodeProperties.get(
+                                  "textCompositionAlgorithm/colorCoding",
+                              ),
+                          )
+                              ? (nodeProperties.get(
+                                    "textCompositionAlgorithm/colorCoding",
+                                ) as "potentials" | "kp" | "off")
+                              : "kp",
+                      }
+                    : null,
             plannerConfig =
                 greedyFitConfig === null
                     ? TREATMENT_PLANNER_DEFAULTS
@@ -1021,6 +1113,22 @@ export class CompositionController extends _BaseComponent {
                           plannerConfig.direction,
                           greedyFitConfig.colorCoding,
                       ]),
+                // the resolved Knuth-Plass config (every knob feeds
+                // the DP or the input — hyphenPenalty stamps the
+                // break opportunities)
+                ...(knuthPlassConfig === null
+                    ? []
+                    : [
+                          knuthPlassConfig.linePenalty,
+                          knuthPlassConfig.hyphenPenalty,
+                          knuthPlassConfig.doubleHyphenDemerits,
+                          knuthPlassConfig.finalHyphenDemerits,
+                          knuthPlassConfig.adjDemerits,
+                          knuthPlassConfig.balanceGray,
+                          knuthPlassConfig.polish,
+                          knuthPlassConfig.latticeQuantum,
+                          knuthPlassConfig.colorCoding,
+                      ]),
                 // per-run styles: the resolved link id + the CONSUMED
                 // values per leaf (flat — nulls for unstyled leaves;
                 // a patch edit that changes any consumed value
@@ -1069,6 +1177,10 @@ export class CompositionController extends _BaseComponent {
                     leafTexts,
                     hypher,
                     hyphenationConfig,
+                    // Knuth-Plass stamps its hyphenPenalty on the
+                    // break opportunities (default 50); other
+                    // algorithms keep HYPHENATION_PENALTY (10)
+                    knuthPlassConfig?.hyphenPenalty,
                 ));
             // The hyphen glyph's natural width per leaf style.
             // IMPORTANT: it is NOT part of a segment's natural
@@ -1169,13 +1281,189 @@ export class CompositionController extends _BaseComponent {
                         ) * style.fontSizePt
                     );
                 },
+                // The Host width function. The Treatment Planner
+                // (milestone 4): step 0 is the natural width; step
+                // != 0 re-measures axes treatments at the shifted
+                // coords and adds the tracking/wordspace deltas
+                // (arithmetically). Algorithms that only probe
+                // step 0 see no difference. Memoized per paragraph
+                // below (milestone 5).
+                // Per-(segment, step) contribution memo (milestone
+                // 5): the Knuth-Plass DP probes O(edges x lattice
+                // steps) widths per paragraph, each an O(span) loop
+                // — memoizing the per-segment shaped contribution
+                // (advance + wordspace delta, glyph count, tracking
+                // rate) turns repeat probes into Map lookups.
+                // Distinct entries are bounded by segments x probed
+                // lattice steps (the adaptive K bounds those); the
+                // cached run objects are shared, allocateTracking
+                // treats them as readonly.
+                segmentContributions = new Map<
+                    string,
+                    {
+                        widthPt: number;
+                        run: {
+                            sourceIndex: number;
+                            glyphCount: number;
+                            trackingPt: number;
+                        };
+                    }
+                >(),
+                segmentContributionAtStep = (index: number, step: number) => {
+                    const key = `${index}:${Math.round(step * 1e6)}`;
+                    let contribution = segmentContributions.get(key);
+                    if (contribution !== undefined) return contribution;
+                    const segment = segments[index]!,
+                        style = styleOf(segment.sourceIndex),
+                        entry = plannerOf(style);
+                    if (entry === null || entry === undefined)
+                        contribution = {
+                            widthPt: segment.widthPt,
+                            run: {
+                                sourceIndex: segment.sourceIndex,
+                                glyphCount: segment.glyphCount ?? 0,
+                                trackingPt: 0,
+                            },
+                        };
+                    else {
+                        const text =
+                                leafTexts[segment.sourceIndex]?.slice(
+                                    segment.start,
+                                    segment.end,
+                                ) ?? "",
+                            {
+                                axesEntries: stepAxesEntries,
+                                axesKey: stepAxesKey,
+                            } = axesAtStep(style, step),
+                            metrics = this._measurer!.shapeMetricsEm(
+                                style.font,
+                                stepAxesEntries,
+                                stepAxesKey,
+                                style.featuresEntries,
+                                style.featuresKey,
+                                style.language,
+                                style.direction,
+                                text,
+                            );
+                        let widthPt = metrics.advanceEm * style.fontSizePt;
+                        // wordspace: the factor multiplies the
+                        // NATURAL space advance (space-only segments).
+                        const factor = entry.stepper.wordSpaceFactorAt(step);
+                        if (
+                            factor !== 0 &&
+                            text.length > 0 &&
+                            text.trim() === ""
+                        )
+                            widthPt += entry.spaceAdvancePt * factor;
+                        contribution = {
+                            widthPt,
+                            run: {
+                                sourceIndex: segment.sourceIndex,
+                                glyphCount: metrics.glyphCount,
+                                trackingPt:
+                                    entry.stepper.letterSpacingPtAt(step),
+                            },
+                        };
+                    }
+                    segmentContributions.set(key, contribution);
+                    return contribution;
+                },
+                hostWidthAtStep = (
+                    from: number,
+                    to: number,
+                    step: number,
+                ): number => {
+                    if (step === 0)
+                        return (
+                            widthOf(from, to) + candidateHyphenWidth(to, step)
+                        );
+                    let width = 0;
+                    const trackingRuns = [];
+                    for (let i = from; i < to; i++) {
+                        const contribution = segmentContributionAtStep(i, step);
+                        width += contribution.widthPt;
+                        trackingRuns.push(contribution.run);
+                    }
+                    const takenHyphen =
+                            hypher !== null &&
+                            breakAfter.get(to - 1)?.kind === "hyphen",
+                        tracking = allocateTracking(trackingRuns, takenHyphen);
+                    // The hyphen is final: one gap before it is already
+                    // included above, no gap follows it.
+                    return (
+                        width +
+                        tracking.widthPt +
+                        candidateHyphenWidth(to, step)
+                    );
+                },
+                memoizedWidthAtStep = memoizeWidthAtStep(hostWidthAtStep),
+                // Adaptive step lattice (Knuth-Plass, milestone 5):
+                // probe the full paragraph at step +/-1 -> the
+                // potentials' pt range per side -> K per side =
+                // clamp(ceil(deltaPt / latticeQuantum), 4, 16). K
+                // bounds the Host shaping cost (lattice probes x
+                // edges); the probes hit the memo. Without
+                // potentials the deltas are 0 -> the minimum K.
+                knuthPlassAlgorithm =
+                    knuthPlassConfig === null
+                        ? null
+                        : createKnuthPlassComposition({
+                              linePenalty: knuthPlassConfig.linePenalty,
+                              doubleHyphenDemerits:
+                                  knuthPlassConfig.doubleHyphenDemerits,
+                              finalHyphenDemerits:
+                                  knuthPlassConfig.finalHyphenDemerits,
+                              adjDemerits: knuthPlassConfig.adjDemerits,
+                              balanceGray: knuthPlassConfig.balanceGray,
+                              polish: knuthPlassConfig.polish,
+                              latticeStepsPerSide: (() => {
+                                  if (segments.length === 0)
+                                      return { narrowing: 4, widening: 4 };
+                                  const natural = memoizedWidthAtStep(
+                                          0,
+                                          segments.length,
+                                          0,
+                                      ),
+                                      kOf = (deltaPt: number): number =>
+                                          Math.min(
+                                              16,
+                                              Math.max(
+                                                  4,
+                                                  Math.ceil(
+                                                      deltaPt /
+                                                          knuthPlassConfig.latticeQuantum,
+                                                  ),
+                                              ),
+                                          );
+                                  return {
+                                      narrowing: kOf(
+                                          natural -
+                                              memoizedWidthAtStep(
+                                                  0,
+                                                  segments.length,
+                                                  -1,
+                                              ),
+                                      ),
+                                      widening: kOf(
+                                          memoizedWidthAtStep(
+                                              0,
+                                              segments.length,
+                                              1,
+                                          ) - natural,
+                                      ),
+                                  };
+                              })(),
+                          }),
                 algorithm =
                     algorithmKey === "TextCompositionAlgorithmDummyModel"
                         ? createDummyComposition(algorithmConfig as number)
                         : algorithmKey ===
                             "TextCompositionAlgorithmGreedyFitModel"
                           ? greedyFitComposition
-                          : greedyRaggedComposition;
+                          : algorithmKey ===
+                              "TextCompositionAlgorithmKnuthPlassModel"
+                            ? knuthPlassAlgorithm!
+                            : greedyRaggedComposition;
             // The contract's union return: coarse algorithms return a
             // plain result; optimizing algorithms return a
             // CompositionTask generator whose checkpoints join this
@@ -1186,87 +1474,11 @@ export class CompositionController extends _BaseComponent {
                     segments,
                     breaks,
                     lineWidthPt: () => lineWidthPt,
-                    // The Treatment Planner (milestone 4): step 0
-                    // is the natural width; step != 0 re-measures
-                    // axes treatments at the shifted coords and
-                    // adds the tracking/wordspace deltas
-                    // (arithmetically). Algorithms that only probe
-                    // step 0 see no difference.
-                    lineWidthAtStep: (from, to, step) => {
-                        if (step === 0)
-                            return (
-                                widthOf(from, to) +
-                                candidateHyphenWidth(to, step)
-                            );
-                        let width = 0;
-                        const trackingRuns = [];
-                        for (let i = from; i < to; i++) {
-                            const segment = segments[i]!,
-                                style = styleOf(segment.sourceIndex),
-                                entry = plannerOf(style),
-                                text =
-                                    leafTexts[segment.sourceIndex]?.slice(
-                                        segment.start,
-                                        segment.end,
-                                    ) ?? "";
-                            if (entry === null || entry === undefined) {
-                                width += segment.widthPt;
-                                trackingRuns.push({
-                                    sourceIndex: segment.sourceIndex,
-                                    glyphCount: segment.glyphCount ?? 0,
-                                    trackingPt: 0,
-                                });
-                                continue;
-                            }
-                            const {
-                                    axesEntries: stepAxesEntries,
-                                    axesKey: stepAxesKey,
-                                } = axesAtStep(style, step),
-                                metrics = this._measurer!.shapeMetricsEm(
-                                    style.font,
-                                    stepAxesEntries,
-                                    stepAxesKey,
-                                    style.featuresEntries,
-                                    style.featuresKey,
-                                    style.language,
-                                    style.direction,
-                                    text,
-                                );
-                            let segmentWidth =
-                                metrics.advanceEm * style.fontSizePt;
-                            trackingRuns.push({
-                                sourceIndex: segment.sourceIndex,
-                                glyphCount: metrics.glyphCount,
-                                trackingPt:
-                                    entry.stepper.letterSpacingPtAt(step),
-                            });
-                            // wordspace: the factor multiplies the
-                            // NATURAL space advance (space-only segments).
-                            const factor =
-                                entry.stepper.wordSpaceFactorAt(step);
-                            if (
-                                factor !== 0 &&
-                                text.length > 0 &&
-                                text.trim() === ""
-                            )
-                                segmentWidth += entry.spaceAdvancePt * factor;
-                            width += segmentWidth;
-                        }
-                        const takenHyphen =
-                                hypher !== null &&
-                                breakAfter.get(to - 1)?.kind === "hyphen",
-                            tracking = allocateTracking(
-                                trackingRuns,
-                                takenHyphen,
-                            );
-                        // The hyphen is final: one gap before it is already
-                        // included above, no gap follows it.
-                        return (
-                            width +
-                            tracking.widthPt +
-                            candidateHyphenWidth(to, step)
-                        );
-                    },
+                    // The canonical badness (the contract's
+                    // default): cheap and behavior-neutral for
+                    // algorithms that don't read it.
+                    badnessAtStep: hostBadnessAtStep,
+                    lineWidthAtStep: memoizedWidthAtStep,
                 }),
             );
             // Retain the final complete-line tracking allocation for the
@@ -1351,8 +1563,15 @@ export class CompositionController extends _BaseComponent {
                     direction: plannerConfig.direction,
                 },
                 // the switch for the color-coded lines (adjustment
-                // intensity; the greedy-fit struct, default ON)
-                colorCoding: greedyFitConfig?.colorCoding ?? false,
+                // intensity; the greedy-fit struct, default ON).
+                // Knuth-Plass: the enum resolves to the potentials
+                // palette for "potentials" AND "kp" (the kp palette
+                // lands in Phase 4), "off" switches off.
+                colorCoding:
+                    greedyFitConfig?.colorCoding ??
+                    (knuthPlassConfig === null
+                        ? false
+                        : knuthPlassConfig.colorCoding !== "off"),
                 // immutable sources for apply-time staleness checks
                 sources: {
                     textblockNode,

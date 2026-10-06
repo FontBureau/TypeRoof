@@ -73,6 +73,23 @@
  * there, the explicit break itself included); the penalty of an
  * explicit break is ignored.
  *
+ * TARGET-SCAN PRUNING (performance): Host width probes are O(span)
+ * — evaluating every (source, target) edge would cost O(N^3)
+ * segment measurements per paragraph. Within one source's scan the
+ * fitting width is non-decreasing in the target position (segment
+ * contributions are non-negative at a fixed step — TeX makes the
+ * same assumption; a negative contribution would need tracking
+ * exceeding the advance, pathological), so once an edge is
+ * INFEASIBLE every later target is infeasible too. The scan then
+ * emits only the first infeasible edge (the guaranteed-path escape)
+ * plus the LAST target — the final edge / the mandatory explicit
+ * break: a single exhausted line over the rest (1e18) strictly
+ * beats any multi-edge exhausted route (>= 1e18 + one edge's
+ * demerits), so no minimum path needs a pruned edge. The guard:
+ * pruning engages only while the OBSERVED step-0 fitting widths
+ * are monotonic non-decreasing (a dip disables it for the rest of
+ * the scan).
+ *
  * POLISH (config.polish, default on): after the DP, each chosen
  * line's lattice step is refined by a binary search (greedy-fit's
  * _SEARCH_ITERATIONS pattern) within its lattice cell
@@ -221,6 +238,8 @@ interface EdgeEvaluation {
     badness: number;
     feasible: boolean;
     naturalWidthPt: number;
+    // step-0 fitting width — the pruning monotonicity guard
+    fittingWidthPt: number;
 }
 
 interface ChosenEdge {
@@ -308,6 +327,7 @@ function* knuthPlassImpl(
                 badness: badnessAtStep(0),
                 feasible: true,
                 naturalWidthPt,
+                fittingWidthPt: w0,
             };
         if (w0 > available) {
             // smallest-|step| narrowing lattice step that fits
@@ -318,6 +338,7 @@ function* knuthPlassImpl(
                     badness: Infinity,
                     feasible: false,
                     naturalWidthPt,
+                    fittingWidthPt: w0,
                 };
             let lo = 1,
                 hi = narrowingK;
@@ -336,6 +357,7 @@ function* knuthPlassImpl(
                 badness: badnessAtStep(step),
                 feasible: true,
                 naturalWidthPt,
+                fittingWidthPt: w0,
             };
         }
         // fits at natural: largest widening lattice step that still
@@ -354,6 +376,7 @@ function* knuthPlassImpl(
             badness: badnessAtStep(step),
             feasible: true,
             naturalWidthPt,
+            fittingWidthPt: w0,
         };
     };
 
@@ -399,12 +422,55 @@ function* knuthPlassImpl(
             }
         }
         if (!explicitSeen) targets.push(null); // the final edge
-        for (const breakAt of targets) {
+        // Edge evaluations on demand, with target-scan pruning (see
+        // header): once an edge is infeasible and the observed
+        // fitting widths are monotonic non-decreasing, every later
+        // target is infeasible too — yield the first infeasible edge
+        // plus the LAST target (the final edge, or the mandatory
+        // explicit break) and stop: Host width probes are O(span),
+        // so scanning the full quadratic target range would cost
+        // O(N^3) segment measurements per paragraph.
+        const evaluateTargets = function* (): Generator<{
+            breakAt: BreakOpportunity | null;
+            evaluation: EdgeEvaluation;
+        }> {
+            let previousFittingWidth = -Infinity,
+                monotonic = true;
+            for (const breakAt of targets) {
+                const to =
+                        breakAt === null
+                            ? segments.length
+                            : breakAt.afterSegment + 1,
+                    evaluation = evaluateEdge(from, to, breakAt === null);
+                yield { breakAt, evaluation };
+                if (evaluation.fittingWidthPt < previousFittingWidth)
+                    monotonic = false;
+                previousFittingWidth = evaluation.fittingWidthPt;
+                if (!evaluation.feasible && monotonic) {
+                    const last = targets[targets.length - 1]!;
+                    if (last !== breakAt) {
+                        const lastTo =
+                            last === null
+                                ? segments.length
+                                : last.afterSegment + 1;
+                        yield {
+                            breakAt: last,
+                            evaluation: evaluateEdge(
+                                from,
+                                lastTo,
+                                last === null,
+                            ),
+                        };
+                    }
+                    return;
+                }
+            }
+        };
+        for (const { breakAt, evaluation } of evaluateTargets()) {
             const to =
                     breakAt === null
                         ? segments.length
                         : breakAt.afterSegment + 1,
-                evaluation = evaluateEdge(from, to, breakAt === null),
                 edgeClass = classIndexOf(evaluation.step);
             for (let si = 0; si < state.slots.length; si++) {
                 const slot = state.slots[si];

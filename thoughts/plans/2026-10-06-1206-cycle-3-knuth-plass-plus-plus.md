@@ -358,14 +358,57 @@ dynamic-types pattern tests)
 ### Success Criteria
 
 #### Automated
-- [ ] KP selectable model-first; round-trip serialization green.
-- [ ] Host integration tests green at the deterministic fixture.
-- [ ] Memo hit-rate structural test green (no wall-clock assertions).
-- [ ] Full suite/lint/typecheck green.
+- [x] KP selectable model-first; round-trip serialization green.
+      (2026-10-06: model.test.mjs — set fields round-trip,
+      untouched fields stay empty/inherit.)
+- [x] Host integration tests green at the deterministic fixture.
+      (2026-10-06: KP composes all blocks; first real paragraph
+      pinned at 8 widened lines @280pt (greedy-ragged sets 9);
+      280→220 moves breaks; hyphen breaks carry the resolved
+      hyphenPenalty 50 and vanish with the Host control; polish
+      off keeps the breaks, changes the steps — the observable
+      config switch, see the deviation note below.)
+- [x] Memo hit-rate structural test green (no wall-clock assertions).
+- [x] Full suite/lint/typecheck green. (2026-10-06: 451/451;
+      typecheck/eslint/prettier/stylelint clean.)
 
 #### Manual
 - [ ] Operator toggles KP in the UI on a real document; lines
       compose; color coding unchanged in behavior (GreedyFit).
+
+### Phase 3 implementation notes (2026-10-06)
+
+- **Performance fixes were required** beyond the letter of the
+  plan: the first wiring ran the fixture test in ~370s. (1)
+  Target-scan pruning in knuth-plass.ts: once an edge is infeasible
+  and the observed fitting widths are monotonic non-decreasing, all
+  later targets are infeasible — the scan emits the first
+  infeasible edge (guaranteed path) plus the LAST target (the final
+  / explicit edge: one exhausted line over the rest strictly beats
+  any multi-edge exhausted route) and stops. O(N^3) -> ~O(N·C)
+  Host probes. (2) Per-(segment, step) contribution memo in the
+  controller (shaped advance + wordspace delta, glyph count,
+  tracking rate) — repeat span probes become Map lookups;
+  allocateTracking treats the shared run objects as readonly.
+  Fixture test now runs in seconds.
+- **Memo key deviation**: the plan said "quantize the key to the
+  lattice" — a coarse lattice-cell key would corrupt the polish
+  binary search (every probe in a cell would return one width). The
+  memo key quantizes to a fine 1e-6 grid instead: exact for the
+  deterministic lattice probes, never aliasing realistic polish
+  probes (documented in memoizeWidthAtStep).
+- **balanceGray-off is not observable on the fixture** (the DP's
+  optimum is class-balanced there either way); the "config changes
+  results observably" criterion is pinned with the polish switch
+  instead — guaranteed: polish never moves breaks but refines every
+  widened non-last line's step.
+- The UI registration (ui-text-composition.typeroof.jsx
+  _getPPSMapForModel list) was required beyond the plan's file
+  list — selecting the model in a live typeSpec UI throws
+  otherwise.
+- Until Phase 4 the resolved colorCoding "kp" renders with the
+  potentials palette (payload switch ON for "potentials" and "kp",
+  OFF for "off") — pinned in the integration test.
 
 ---
 
