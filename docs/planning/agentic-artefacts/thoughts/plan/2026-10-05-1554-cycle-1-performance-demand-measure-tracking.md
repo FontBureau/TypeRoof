@@ -9,7 +9,7 @@ UTF-16 tracking arithmetic with a deterministic HarfBuzz shaped-glyph
 model.
 
 Research:
-`thoughts/research/2026-10-05-1205-cycle-1-performance-demand-measure-tracking.md`
+`docs/planning/agentic-artefacts/thoughts/research/2026-10-05-1205-cycle-1-performance-demand-measure-tracking.md`
 (all operator-level design questions resolved).
 
 ## Current State Analysis
@@ -529,6 +529,17 @@ tracking contract.
 ---
 
 ## Phase 6 — Demand-aware reprofile, optimize, baseline + ROADMAP
+
+> **Status (2026-10-06): descoped and closed after operator review.**
+> The demand-aware full-matrix reprofile and new baseline were judged
+> low-value: the structural zero-work guarantees are enforced by the
+> Phase-2 behavior tests, no optimization decision is pending, and the
+> exhaustive matrix is too slow/fragile for routine use. The first
+> attempt also failed operationally (overnight session lost to a
+> tool-failure retry loop and a multi-hour hang — no benchmark ever
+> ran). Closed with typecheck/lint/suite green (428 tests) and ROADMAP
+> Cycle 1 marked done. Postmortem + retry rules:
+> `docs/planning/agentic-artefacts/thoughts/notes/2026-10-06-phase-6-session-failure-log.md`.
 
 ### Overview
 

@@ -273,6 +273,26 @@ one oversized milestone-5 plan.
 
 ### Cycle 1 — KP++ prerequisites: performance truth, demand, controllable measure + tracking truth
 
+**Status: ✅ done (2026-10-06, a25ca18f..21a57d0b).** Items 2–4 are
+delivered and locked by behavior tests: the per-textblock demand
+lifecycle (`composition@<textblockPath>`; editor-only performs zero
+segmentation/shaping/algorithm work — enforced structurally by tests,
+not by benchmark), a cooperative task runner with atomic viewer
+snapshots (lazy reveal default, `flushSync` for sync reveal),
+composition consuming local `layout/columnWidth` (the same resolved
+fact AutoLinearLeading uses; deterministic 280/220pt Host fixture),
+and tracking from HarfBuzz shaped-glyph gaps (N−1 per line, continuous
+across runs, taken hyphen final). Item 1 was delivered as tooling
+only: the perf harness (`scripts/perf-composition`, quick/full suites)
+plus the Phase-1 numbers below. The planned demand-aware full-matrix
+reprofile and new baseline were descoped: the zero-work guarantees are
+already enforced by tests, no optimization decision is pending, and
+the exhaustive matrix proved too slow and fragile for routine use (see
+`agentic-artefacts/thoughts/notes/2026-10-06-phase-6-session-failure-log.md`).
+The harness remains an on-demand diagnostic; establish a fresh
+baseline when KP++ creates an actual comparison. The "Open performance
+regression" section below remains unresolved and carries into Cycle 2.
+
 Do this FIRST. We need to know the real costs, stop work nobody
 consumes, and make measurement/Host tests trustworthy before adding
 a paragraph-wide search algorithm. Sub-phases are dependency-ordered:
