@@ -33,6 +33,7 @@ import { createServer } from "vite";
 const directory = path.dirname(fileURLToPath(import.meta.url)),
     projectRoot = path.join(directory, ".."),
     PORT = Number(process.env.PUPETEER_PORT ?? 3100),
+    BROWSER = process.env.PUPPETEER_BROWSER ?? "chrome",
     DEFAULT_APP_URL = `http://localhost:${PORT}/TypeRoof/shell.html`,
     VIEWPORT = { width: 1920, height: 1080 };
 
@@ -105,14 +106,22 @@ async function main() {
             headless: true,
             timeout: 100000,
             protocolTimeout: 300000,
-            executablePath: "/usr/bin/chromium-browser",
+            ...(BROWSER === "firefox"
+                ? { browser: "firefox" }
+                : { executablePath: "/usr/bin/chromium-browser" }),
         });
+    log(`browser: ${BROWSER}`);
     let exitCode = 0;
     try {
         const page = await browser.newPage(),
             consoleLines = [];
         await page.setViewport(VIEWPORT);
-        page.on("console", (msg) => consoleLines.push(msg.text()));
+        page.on("console", (msg) => {
+            const text = msg.text();
+            consoleLines.push(text);
+            if (process.env.PUPPETEER_CONSOLE === "1")
+                console.log("[console]", text.slice(0, 300));
+        });
         page.on("pageerror", (error) =>
             consoleLines.push(`[PAGEERROR] ${String(error)}`),
         );

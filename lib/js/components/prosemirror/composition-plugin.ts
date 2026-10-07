@@ -69,6 +69,20 @@ export interface CompositionControllerInterface {
         callback: (payload: CompositionPayload | null) => void,
     ): () => void;
     subscribe(path: string, token: unknown): () => void;
+    /** Re-drive composition for a path (async task, publishes on
+     *  completion). Called when a replayed registration fails the
+     *  staleness check — published payloads are never stale at notify
+     *  time (the controller checks _sourceIsCurrent synchronously
+     *  before notify), so a stale payload is always the pre-existing
+     *  registration replayed by observe(); without an explicit drive
+     *  nothing recomposes it (subscribe only composes on 0→1 demand
+     *  and another applicator may hold demand, e.g. the viewer in
+     *  compare mode — found via the flag OFF→ON toggle in the Phase-4
+     *  QA probe). Async, not flushSync: a SYNCHRONOUS compose mutates
+     *  the source tuple mid-drain (scope provisioning on
+     *  getProperties), so the finalize _sourceIsCurrent gate rejects
+     *  the publish; the async task runs after the cascade settles. */
+    sourceChanged(path: string): void;
 }
 
 export interface CompositionPluginContext {
@@ -235,7 +249,20 @@ export function createEditorCompositionPlugin(
                 } catch {
                     return;
                 }
-                if (payload.sources.textblockNode !== current) return;
+                if (payload.sources.textblockNode !== current) {
+                    // Stale replay (see sourceChanged on the
+                    // interface): drive a recomposition of the current
+                    // source; the resulting fresh publication replaces
+                    // this one. The path may be gone mid-cycle — the
+                    // next settle covers it.
+                    try {
+                        this._controller?.sourceChanged(path);
+                    } catch {
+                        // path vanished concurrently; the next
+                        // publication cycle settles the textblock
+                    }
+                    return;
+                }
             }
             this._payloads.set(path, payload);
             this._dirtyTextblocks.add(path);

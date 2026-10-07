@@ -10,6 +10,15 @@
 
 /* global shell */
 
+import {
+    snapshotEditor,
+    placeCaretAtEnd,
+    installMutationObserver,
+    installProbeHelpers,
+    quiet,
+    hasGaps,
+} from "./lib/editor-dom.mjs";
+
 // section content/0 children (type-stage-initial-state.json), located
 // in the editor DOM by type + distinctive text snippet:
 // t1 = paragraph "Intro text…", t2 = paragraph-2 Gutenberg, …
@@ -19,109 +28,6 @@ const TEXTBLOCKS = [
     { label: "t2greek", type: "p2greek", snippet: "Επειδη" },
     { label: "t2russian", type: "p2russian", snippet: "глубоких" },
 ];
-
-/** In-page: find a textblock's editor element by type + snippet. */
-function findTextblock({ type, snippet }) {
-    const candidates = [
-        ...document.querySelectorAll(`.ProseMirror [data-node-type="${type}"]`),
-    ];
-    return (
-        candidates.find((el) => el.textContent.includes(snippet)) ?? null
-    );
-}
-
-/** In-page: for each watched textblock, find its editor paragraph and
- *  report decoration coverage (uncovered text-node chunks). */
-function snapshotEditor() {
-    const result = {};
-    for (const probe of window.__probeTextblocks) {
-        const el = window.__findTextblock(probe);
-        if (!el) {
-            result[probe.label] = { error: "textblock not found" };
-            continue;
-        }
-        const uncovered = [],
-            walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-        let node,
-            total = "";
-        while ((node = walker.nextNode())) {
-            total += node.nodeValue;
-            let p = node.parentElement,
-                covered = false;
-            while (p && p !== el) {
-                if (p.classList.contains("typeroof-composition-line")) {
-                    covered = true;
-                    break;
-                }
-                p = p.parentElement;
-            }
-            if (!covered && node.nodeValue.trim().length)
-                uncovered.push(node.nodeValue);
-        }
-        result[probe.label] = {
-            type: el.getAttribute("data-node-type"),
-            composedClass: el.classList.contains("typeroof-composed"),
-            lineSpans: el.querySelectorAll(".typeroof-composition-line")
-                .length,
-            totalLen: total.length,
-            uncovered,
-        };
-    }
-    return result;
-}
-
-/** In-page: place the caret at the end of the watched textblock. */
-function placeCaretAtEnd(probe) {
-    const el = window.__findTextblock(probe),
-        content = el.querySelector("[data-node-content]") ?? el,
-        walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
-    let last = null,
-        node;
-    while ((node = walker.nextNode())) last = node;
-    const range = document.createRange();
-    range.setStart(last, last.nodeValue.length);
-    range.collapse(true);
-    const selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-    document.dispatchEvent(new Event("selectionchange"));
-    return last.nodeValue.slice(-20);
-}
-
-/** In-page: record childList mutations inside the editor for ~5s. */
-function installMutationObserver() {
-    const root = document.querySelector(".ProseMirror");
-    window.__mutations = [];
-    const describe = (node) =>
-        node.nodeType === 3
-            ? `#text "${node.nodeValue.slice(0, 30)}"`
-            : node.nodeType === 8
-              ? `<!--${node.nodeValue.slice(0, 60)}-->`
-              : `<${node.tagName?.toLowerCase()} class="${node.getAttribute?.("class") ?? ""}" data-node-type="${node.getAttribute?.("data-node-type") ?? ""}">`;
-    const observer = new MutationObserver((records) => {
-        for (const record of records) {
-            if (record.type !== "childList") continue;
-            window.__mutations.push(
-                `${record.target.tagName}.${record.target.getAttribute("data-node-type") ?? record.target.getAttribute("class") ?? ""} ` +
-                    `+[${[...record.addedNodes].map(describe).join(", ")}] ` +
-                    `-[${[...record.removedNodes].map(describe).join(", ")}]`,
-            );
-        }
-    });
-    observer.observe(root, { childList: true, subtree: true });
-    setTimeout(() => observer.disconnect(), 5000);
-}
-
-function hasGaps(snapshot) {
-    return Object.entries(snapshot)
-        .filter(
-            ([, state]) =>
-                state.error ||
-                state.composedClass === false ||
-                state.uncovered.length > 0,
-        )
-        .map(([label]) => label);
-}
 
 export async function run({ page, consoleLines, setTimeout, log }) {
     // cursor into consoleLines for "what happened since" reporting
@@ -134,20 +40,8 @@ export async function run({ page, consoleLines, setTimeout, log }) {
             return lines;
         },
         // quiescence: no new interesting console lines for ~1s
-        quiet = async (timeoutMs) => {
-            let lastCount = -1,
-                stable = 0,
-                start = Date.now();
-            while (Date.now() - start < timeoutMs) {
-                await setTimeout(500);
-                const count = consoleLines.filter(interesting).length;
-                if (count === lastCount) {
-                    if (++stable >= 2) return;
-                } else stable = 0;
-                lastCount = count;
-            }
-            log("WARNING quiet() timed out — continuing anyway");
-        },
+        settle = (timeoutMs) =>
+            quiet(consoleLines, setTimeout, log, interesting, timeoutMs),
         snapshot = () => page.evaluate(snapshotEditor),
         reportSnapshot = async (label) => {
             const state = await snapshot();
@@ -155,14 +49,7 @@ export async function run({ page, consoleLines, setTimeout, log }) {
             return state;
         };
 
-    await page.evaluate(
-        (textblocks, findFn) => {
-            window.__probeTextblocks = textblocks;
-            window.__findTextblock = eval(`(${findFn})`);
-        },
-        TEXTBLOCKS,
-        findTextblock.toString(),
-    );
+    await installProbeHelpers(page, TEXTBLOCKS);
 
     // operator steps: compare mode, composeInEditor on, greedy-fit
     await page.evaluate(() =>
@@ -179,7 +66,7 @@ export async function run({ page, consoleLines, setTimeout, log }) {
     // enable temporary in-app debug logging, when present
     await page.evaluate(() => (window.__debugComposition = true));
 
-    await quiet(90000);
+    await settle(90000);
     newInterestingLines();
     const failures = [],
         before = await reportSnapshot("BEFORE typing");
@@ -193,7 +80,7 @@ export async function run({ page, consoleLines, setTimeout, log }) {
         const tail = await page.evaluate(placeCaretAtEnd, typeInto);
         log(`caret at end of ${typeInto.label} (…${JSON.stringify(tail)})`);
         await page.keyboard.type(char, { delay: 60 });
-        await quiet(30000);
+        await settle(30000);
         const lines = newInterestingLines();
         log(`console after typing in ${typeInto.label} (${lines.length}):`);
         for (const line of lines) log("   ", line.slice(0, 400));
