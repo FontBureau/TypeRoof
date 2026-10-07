@@ -24,7 +24,12 @@ import {
     UIDocumentUnknownStyleStyler,
 } from "../../prosemirror/type-spec.typeroof.jsx";
 import { getTypeSpecPropertiesIdMethod } from "../../prosemirror/integration.typeroof.jsx";
-import { treatmentValuesAtStep } from "./text-composition/treatment-planner.ts";
+import {
+    lineSpanClasses,
+    lineSpanStyles,
+    potentialsLineColorCode,
+    kpLineColorCode,
+} from "./text-composition/line-attrs.ts";
 import { TypeStagePaneStyler } from "./pane-styler.typeroof.jsx";
 import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
 
@@ -732,53 +737,10 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
         carrier.replaceChildren(...this._buildLineSpans());
     }
 
-    // varla-varfo _setLineColorCode, adapted to normalized steps:
-    // negative (narrowing) cyan, positive (widening) red, 0 none;
-    // overfull overrides. Intensity relative to the normalized
-    // range [-1, 1].
-    _lineColorCode(adjustmentStep, overfull) {
-        if (overfull) return "hsl(0, 80%, 85%)";
-        if (adjustmentStep < 0) {
-            const intensity = Math.min(1, Math.abs(adjustmentStep));
-            return `hsl(180, 80%, ${30 + 70 * (1 - intensity)}%)`;
-        }
-        if (adjustmentStep > 0) {
-            const intensity = Math.min(1, adjustmentStep);
-            return `hsl(0, 100%, ${30 + 70 * (1 - intensity)}%)`;
-        }
-        return "";
-    }
-
-    // KP diagnostics palette (Phase 4) — "why did the DP choose this
-    // line", where the potentials palette answers "what did the line
-    // do physically". Deliberately a DIFFERENT visual vocabulary
-    // than the potentials cyan/red so the two are never confused:
-    // hue marks the fitness class (tight: violet 265, decent: green
-    // 145, loose: amber 40, veryLoose: magenta 320), lightness
-    // encodes the per-line badness (0 -> 88%, >=100 -> 55%);
-    // overfull/exhausted lines get the alarming deep-magenta
-    // treatment.
-    static KP_FITNESS_HUES = Object.freeze({
-        tight: 265,
-        decent: 145,
-        loose: 40,
-        veryLoose: 320,
-    });
-    static KP_EXHAUSTED_CODE = "hsl(300, 100%, 35%)";
-    _kpLineColorCode(lineIndex, diagnostics) {
-        if (
-            diagnostics.exhaustedLines?.includes(lineIndex) ||
-            diagnostics.overfullLines.includes(lineIndex)
-        )
-            return this.constructor.KP_EXHAUSTED_CODE;
-        const hue =
-                this.constructor.KP_FITNESS_HUES[
-                    diagnostics.fitnessClasses?.[lineIndex] ?? "decent"
-                ],
-            badness = Math.min(1, (diagnostics.badness[lineIndex] ?? 0) / 100);
-        return `hsl(${hue}, 70%, ${Math.round(88 - 33 * badness)}%)`;
-    }
-
+    // The line-fragment presentation math (classes, treatment style
+    // props, both color-code palettes) lives in
+    // text-composition/line-attrs.ts — shared with the ProseMirror
+    // decoration applicator (extracted from here, behavior-preserving).
     _buildLineSpans() {
         const { leaves, paragraphs } = this._composition,
             myPath = this._documentNodePath.toString(),
@@ -805,89 +767,51 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
                     isLineEnd =
                         segments[line.toSegment - 1].sourceIndex === leafIndex,
                     span = this._domTool.createElement("span");
-                span.classList.add("typeroof-composition-line");
-                if (isLineStart) {
-                    span.classList.add("typeroof-composition-line-first");
-                    if (lineIndex === 0)
-                        span.classList.add(
-                            "typeroof-composition-paragraph-first-line",
-                        );
-                }
-                if (isLineEnd && line.breakAt?.kind === "hyphen")
-                    span.classList.add("typeroof-composition-line-hyphen");
-                // Justification-potentials treatments (milestone 4):
-                // values derived deterministically from the line's
-                // adjustmentStep + THIS leaf's published potentials —
-                // every fragment of a line applies identical values
-                // for its own style. The controller measured with the
-                // same products (measured == rendered).
-                const treatment = leaves[leafIndex].treatment;
-                if (treatment != null && line.adjustmentStep !== 0) {
-                    const { axes, letterSpacingPt, wordSpaceFactor } =
-                        treatmentValuesAtStep(
-                            treatment.potentials,
-                            {
-                                treatments: new Set(
-                                    this._composition.treatmentConfig.treatments,
-                                ),
-                                direction:
-                                    this._composition.treatmentConfig.direction,
-                            },
-                            line.adjustmentStep,
-                        );
-                    const trackingGaps = Number(
-                        line.trackingGapsBySourceIndex?.[leafIndex] ?? 0,
-                    );
-                    if (letterSpacingPt !== 0 && trackingGaps > 0) {
-                        span.style.setProperty(
-                            "--line-letter-spacing",
-                            `${letterSpacingPt}pt`,
-                        );
-                        span.dataset.trackingGaps = String(trackingGaps);
-                    }
-                    if (wordSpaceFactor !== 0)
-                        span.style.setProperty(
-                            "--line-word-spacing",
-                            `${wordSpaceFactor * treatment.spaceAdvancePt}pt`,
-                        );
-                    if (axes.size > 0)
-                        // the run's own axes location with the treated
-                        // axes at their step values (overrides the
-                        // inherited font-variation-settings on this
-                        // span only)
-                        span.style.setProperty(
-                            "font-variation-settings",
-                            treatment.axesEntries
-                                .map(
-                                    ([tag, value]) =>
-                                        `"${tag}" ${axes.has(tag) ? axes.get(tag) : value}`,
-                                )
-                                .join(","),
-                        );
-                }
-                // Diagnostics color-coding (the varla-varfo hook),
-                // two palettes selected by the published mode
-                // (Phase 4): "potentials" codes EVERY line by
-                // adjustment intensity — narrowing cyan, widening
-                // red, neutral none (the demo's _setLineColorCode),
-                // overfull overrides; "kp" codes by the DP
-                // diagnostics (_kpLineColorCode). With the
-                // dummy/greedy-ragged algorithms adjustmentStep is
-                // always 0 (all-neutral potentials codes) and the
-                // mode is "off" anyway.
-                span.style.setProperty(
-                    "--line-color-code",
-                    this._composition.colorCoding === "potentials"
-                        ? this._lineColorCode(
-                              line.adjustmentStep,
-                              result.diagnostics.overfullLines.includes(
-                                  lineIndex,
-                              ),
-                          )
-                        : this._composition.colorCoding === "kp"
-                          ? this._kpLineColorCode(lineIndex, result.diagnostics)
-                          : "",
-                );
+                for (const cls of lineSpanClasses({
+                    isLineStart,
+                    isParagraphFirstLine: lineIndex === 0,
+                    isHyphenBreak: isLineEnd && line.breakAt?.kind === "hyphen",
+                }))
+                    span.classList.add(cls);
+                // Treatment values + diagnostics color-coding: shared
+                // math in text-composition/line-attrs.ts (justification-
+                // potentials treatments, milestone 4: every fragment of
+                // a line applies identical values for its own style;
+                // measured == rendered. Palettes: "potentials" codes by
+                // adjustment intensity, "kp" by the DP diagnostics;
+                // dummy/greedy-ragged algorithms always have
+                // adjustmentStep 0 and mode "off" anyway).
+                const colorCoding = this._composition.colorCoding,
+                    colorCode =
+                        colorCoding === "potentials"
+                            ? potentialsLineColorCode(
+                                  line.adjustmentStep,
+                                  result.diagnostics.overfullLines.includes(
+                                      lineIndex,
+                                  ),
+                              )
+                            : colorCoding === "kp"
+                              ? kpLineColorCode(lineIndex, result.diagnostics)
+                              : "",
+                    { styles, dataTrackingGaps } = lineSpanStyles({
+                        treatment: leaves[leafIndex].treatment,
+                        treatmentConfig: {
+                            treatments: new Set(
+                                this._composition.treatmentConfig.treatments,
+                            ),
+                            direction:
+                                this._composition.treatmentConfig.direction,
+                        },
+                        adjustmentStep: line.adjustmentStep,
+                        trackingGaps: Number(
+                            line.trackingGapsBySourceIndex?.[leafIndex] ?? 0,
+                        ),
+                        colorCode,
+                    });
+                for (const [prop, value] of styles)
+                    span.style.setProperty(prop, value);
+                if (dataTrackingGaps !== null)
+                    span.dataset.trackingGaps = String(dataTrackingGaps);
                 span.append(
                     this._domTool.createTextNode(
                         mySegments
