@@ -1170,8 +1170,23 @@ export class CompositionController extends _BaseComponent {
             previous !== undefined &&
             previous.length === ingredients.length &&
             previous.every((value, index) => value === ingredients[index])
-        )
+        ) {
+            // Ingredients dedup: the composition result would be
+            // identical to the last published snapshot, so no publish.
+            // But the REGISTRATION keeps the captured sources of its
+            // compose run — the metamodel textblock node may since
+            // have been REPLACED by an edit that left the composition
+            // inputs identical (split/merge, structural rebuilds), and
+            // this dedup then pins the stale identity forever: the
+            // editor applicator's identity-based staleness check
+            // (composition-plugin) drops the replayed registration
+            // and the dedup guarantees no fresh one ever arrives
+            // (Phase-4 QA probe, flag OFF→ON). Refreshing the identity
+            // is sound: the composition result is provably unchanged.
+            if (this._sourceIsCurrent(textblockPathString, source))
+                this._refreshRegistrationSources(textblockPathString, source);
             return;
+        }
         const paragraphs = [];
         for (const logicalParagraph of logicalParagraphs) {
             if (!this._sourceIsCurrent(textblockPathString, source)) return;
@@ -1638,6 +1653,34 @@ export class CompositionController extends _BaseComponent {
                     `${result.lines.length} lines ` +
                     `(overfull: ${result.diagnostics.overfullLines.length})`,
             ),
+        );
+    }
+
+    /** Ingredients-dedup companion: re-register the last published
+     *  payload with its captured sources refreshed to the CURRENT
+     *  source's textblockNode (see the dedup site). Silent by design:
+     *  no setUpdated, no observer notification — the composition is
+     *  unchanged, only future observe() replays need the fresh
+     *  identity for their staleness checks. */
+    _refreshRegistrationSources(path: string, source: CompositionSource) {
+        const identifier = `composition@${path}`,
+            handler = this._compositionHandler();
+        if (!handler.hasRegistered(identifier)) return;
+        const payload = handler.getRegistered(identifier);
+        if (payload === undefined || payload === null) return;
+        if (payload.sources.textblockNode === source.textblockNode) return;
+        const unregister = this._registrations.get(path);
+        if (unregister === undefined) return;
+        unregister();
+        this._registrations.set(
+            path,
+            handler.register(identifier, {
+                ...payload,
+                sources: {
+                    ...payload.sources,
+                    textblockNode: source.textblockNode,
+                },
+            }),
         );
     }
 
