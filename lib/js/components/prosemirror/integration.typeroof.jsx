@@ -714,6 +714,7 @@ import {
     applyHtmlAttrsBag as _applyHtmlAttrsBag,
     collectHtmlAttrsToBag as _collectHtmlAttrsToBag,
     htmlAttrsBagToSpec as _htmlAttrsBagToSpec,
+    isStylerOwnedAttr as _isStylerOwnedAttr,
 } from "./html-attrs.ts";
 
 // Editable attr replay (inferred by a declared htmlAttrs attr):
@@ -728,8 +729,13 @@ function _createEditableGetAttrs(attributeSpecMap) {
         );
     return (dom) =>
         Object.assign(declaredGetAttrs(dom), {
-            htmlAttrs: _collectHtmlAttrsToBag(dom, (name) =>
-                declaredNamesLower.has(name),
+            // foreign attributes collect into the bag (guarded, minus
+            // declared names and styler-owned attributes — see
+            // isStylerOwnedAttr)
+            htmlAttrs: _collectHtmlAttrsToBag(
+                dom,
+                (name) =>
+                    declaredNamesLower.has(name) || _isStylerOwnedAttr(name),
             ),
         });
 }

@@ -7,6 +7,19 @@
 export const HTML_ATTRS_GUARD =
     /^(?:data-node-type|data-mark-type|data-style-name|on)|^style$/;
 
+// Attributes OWNED BY THE TYPE-SPEC STYLER on styled elements
+// (UIDocumentTypeSpecStyler writes `lang` from the languageTag
+// cascade; `style` is already covered by the guard above). Collecting
+// these into the bag at parse time makes every DOM readback diverge
+// from the document (bag "" in the model vs. styler-written lang in
+// the DOM), so PM dispatches spurious replace transactions — document
+// churn and, via DecorationSet.map, lost editor-composition
+// decorations (plan 2026-10-07-1223, issue C). Parse-time collection
+// for EDITABLE elements (marks and editable nodes) must skip them;
+// reproducing atoms keep collecting verbatim (their attributes are
+// reproduced source content, and their styler story is separate).
+export const isStylerOwnedAttr = (name: string): boolean => name === "lang";
+
 // Collect an element's attributes into the htmlAttrs bag form (a JSON
 // string of [name, value] pairs, guarded), "" when empty.
 export function collectHtmlAttrsToBag(

@@ -189,7 +189,11 @@ export const nodes = {
     } as NodeSpec,
 };
 
-import { collectHtmlAttrsToBag, htmlAttrsBagToSpec } from "./html-attrs.ts";
+import {
+    collectHtmlAttrsToBag,
+    htmlAttrsBagToSpec,
+    isStylerOwnedAttr,
+} from "./html-attrs.ts";
 
 export const marks = {
     "generic-style": {
@@ -213,7 +217,13 @@ export const marks = {
                         "data-style-name": dom.getAttribute("data-style-name"),
                         // collect foreign attributes into the bag (the
                         // guard excludes data-style-name itself)
-                        htmlAttrs: collectHtmlAttrsToBag(dom),
+                        // collect foreign attributes into the bag
+                        // (guarded, minus styler-owned attributes —
+                        //  see isStylerOwnedAttr)
+                        htmlAttrs: collectHtmlAttrsToBag(
+                            dom,
+                            isStylerOwnedAttr,
+                        ),
                     };
                 },
             },
