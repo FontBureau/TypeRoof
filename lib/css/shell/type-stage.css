@@ -229,8 +229,13 @@ prosemirror
      * with prosemirror, one with this, it wouldn't matter much. prosemirror
      * uses display grid on the inner elements, and they contain
      * instrumentation that we can't change easily.
-     */
+
     display: table;
+
+    In FireFox, however, this prevents the paragraphs inside a column layout
+    to break and distribute to many columns, i.e. the paragraph is only always
+    within on column, that is worse than the chrome issue.
+     */
 }
 
 .ui_prosemirror_host-anchor_targets_container {
