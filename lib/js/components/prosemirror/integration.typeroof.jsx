@@ -34,6 +34,8 @@ import DOMPurify from "dompurify";
 // TEMPORARY SPIKE (Phase 0, plan 2026-10-07-1223): remove after GO/NO-GO.
 import { spikeCompositionPluginsIfEnabled } from "./spike-composition-decorations.ts";
 
+import { createEditorCompositionPlugin } from "./composition-plugin.ts";
+
 export function getPathOfTypes(
     path /* { path } = resolved */,
     currentType = null,
@@ -922,10 +924,16 @@ export class ProseMirror extends _BaseComponent {
         // element as well, but not the `ui_prosemirror_host` class of
         // the template, you should set that yourself if required.
         element = null,
+        // Optional: the local name of a boolean model setting (a declared
+        // dependency of this component) that enables the text-composition
+        // applicator plugin (composition-plugin.ts). Null = feature
+        // unavailable (ramp/grid contexts). Plan 2026-10-07-1223, Phase 3.
+        composeInEditorSettingName = null,
     ) {
         super(widgetBus);
         this._idMap = idMap;
         this._originTypeSpecPath = originTypeSpecPath;
+        this._composeInEditorSettingName = composeInEditorSettingName;
         this._proseMirrorDefaultSchema = proseMirrorDefaultSchema;
         // The cache is bi-directional, meaning that both mappings will be
         // set: proseMirrorNode -> metamodelNode and metamodelNode ->
@@ -985,29 +993,35 @@ export class ProseMirror extends _BaseComponent {
         this.anchorTargetsContainer.remove();
     }
 
-    _initProseMirrorView(element) {
-        const initialSchema = {
-                nodes: { ...this._proseMirrorDefaultSchema.nodes },
-                marks: { ...this._proseMirrorDefaultSchema.marks },
-            },
-            schema = new Schema(initialSchema),
-            // FIXME: splitBlockAs without a function as argument is the
-            // same as the default splitBlock. However, I leave this in here
-            // because this is the door to a feature where we could define
-            // which block is inserted after another block, when we press
-            // "Enter" at the end of a block. Currently, the first block
-            // that is appliable in the NodeSpec-Map is used, e.g. if
-            // "heading-1" is at the top, that will be created.
-            // It would be cool, to optionally, and dynamically via the UI,
-            // define e.g. the follow-up block of 'heading-1' is 'paragraph-1'
-            // and the follow-up block of 'paragraph-1' is 'paragraph-2',
-            // making the writing and editing experience more fluid.
-            // Ideally, an author of a document would be able to do this,
-            // but having it as the author of the nodeSpec is not too
-            // bad either, and in the beginning, these roles won't be
-            // separated by the tool. Later maybe there's a writing
-            // tool which doesn't allow changing the nodeSpec.
-            mySplitBlock = splitBlockAs(),
+    // The composeInEditor feature flag (plan 2026-10-07-1223, Phase 3):
+    // the setting must be declared as a dependency by the context AND
+    // the setting name passed as constructor arg; both absent (ramp,
+    // grid) means the feature is unavailable.
+    _isComposeInEditorOn() {
+        return (
+            this._composeInEditorSettingName !== null &&
+            this.getEntry(this._composeInEditorSettingName).value
+        );
+    }
+
+    _buildPlugins() {
+        // FIXME: splitBlockAs without a function as argument is the
+        // same as the default splitBlock. However, I leave this in here
+        // because this is the door to a feature where we could define
+        // which block is inserted after another block, when we press
+        // "Enter" at the end of a block. Currently, the first block
+        // that is appliable in the NodeSpec-Map is used, e.g. if
+        // "heading-1" is at the top, that will be created.
+        // It would be cool, to optionally, and dynamically via the UI,
+        // define e.g. the follow-up block of 'heading-1' is 'paragraph-1'
+        // and the follow-up block of 'paragraph-1' is 'paragraph-2',
+        // making the writing and editing experience more fluid.
+        // Ideally, an author of a document would be able to do this,
+        // but having it as the author of the nodeSpec is not too
+        // bad either, and in the beginning, these roles won't be
+        // separated by the tool. Later maybe there's a writing
+        // tool which doesn't allow changing the nodeSpec.
+        const mySplitBlock = splitBlockAs(),
             // Leaving this a s a quick way back into the topic...
             //node => {
             //  console.log('splitBlock node:', node);
@@ -1063,23 +1077,47 @@ export class ProseMirror extends _BaseComponent {
                     mySplitBlock,
                 ),
                 ...configureBr(),
+            });
+        return [
+            history(),
+            keymap({
+                "Mod-z": undo,
+                "Mod-y": redo,
+                //    , "Mod-b": toggleMark(proseMirrorTestingSchema.marks.strong)
+                //    , "Mod-B": toggleMark(proseMirrorTestingSchema.marks.strong)
             }),
+            keymap(typeRoofKeymap),
+            ...("menu" in this._idMap ? [this._menuPlugin()] : []),
+            // TEMPORARY SPIKE (Phase 0, plan 2026-10-07-1223):
+            // remove after GO/NO-GO.
+            ...spikeCompositionPluginsIfEnabled(),
+            ...(this._isComposeInEditorOn()
+                ? [
+                      createEditorCompositionPlugin({
+                          getWidgetById: (id, defaultValue) =>
+                              this._childrenWidgetBus.getWidgetById(
+                                  id,
+                                  defaultValue,
+                              ),
+                          getEntry: (path) => this.getEntry(path),
+                          documentPath: Path.fromString(
+                              this.widgetBus.getExternalName("document"),
+                          ).toString(),
+                      }),
+                  ]
+                : []),
+        ];
+    }
+
+    _initProseMirrorView(element) {
+        const initialSchema = {
+                nodes: { ...this._proseMirrorDefaultSchema.nodes },
+                marks: { ...this._proseMirrorDefaultSchema.marks },
+            },
+            schema = new Schema(initialSchema),
             state = EditorState.create({
                 schema: schema,
-                plugins: [
-                    history(),
-                    keymap({
-                        "Mod-z": undo,
-                        "Mod-y": redo,
-                        //    , "Mod-b": toggleMark(proseMirrorTestingSchema.marks.strong)
-                        //    , "Mod-B": toggleMark(proseMirrorTestingSchema.marks.strong)
-                    }),
-                    keymap(typeRoofKeymap),
-                    ...("menu" in this._idMap ? [this._menuPlugin()] : []),
-                    // TEMPORARY SPIKE (Phase 0, plan 2026-10-07-1223):
-                    // remove after GO/NO-GO.
-                    ...spikeCompositionPluginsIfEnabled(),
-                ],
+                plugins: this._buildPlugins(),
                 doc: schema.topNodeType.createAndFill(),
             }),
             view = new EditorView(element, {
@@ -1489,6 +1527,16 @@ export class ProseMirror extends _BaseComponent {
             this._nodesCache = new WeakMap();
             mapSetBiDirectional(this._nodesCache, schema, proseMirrorSchema);
         }
+        // The composeInEditor flag changed: rebuild the plugins array
+        // (with/without the composition plugin). PM destroys/re-creates
+        // plugin views on plugin-set change, so the plugin's
+        // subscription lifecycle (constructor/destroy) drives
+        // engagement; the state re-creation below applies the change.
+        if (
+            this._composeInEditorSettingName !== null &&
+            changedMap.has(this._composeInEditorSettingName)
+        )
+            newConfigItems.push(["plugins", this._buildPlugins()]);
         // it looks like document has to change...
         const document = changedMap.has("document")
             ? changedMap.get("document")

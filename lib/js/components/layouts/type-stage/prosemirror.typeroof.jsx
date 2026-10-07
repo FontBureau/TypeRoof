@@ -120,6 +120,7 @@ export class TypeStageProseMirrorContext extends BaseProseMirrorContext {
                     "document",
                     "nodeSpecToTypeSpec",
                     "editingTypeSpec",
+                    "composeInEditor",
                 ],
                 ProseMirror,
                 proseMirrorDefaultSchema,
@@ -127,6 +128,9 @@ export class TypeStageProseMirrorContext extends BaseProseMirrorContext {
                 originTypeSpecPath,
                 ["editor-advanced"],
                 proseMirrorHostElement,
+                // composeInEditorSettingName (plan 2026-10-07-1223):
+                // only the type-stage context wires the flag.
+                "composeInEditor",
             ],
             [{}, ["showNodeTypeSpecLabels"], UpdateLabelListener],
             [

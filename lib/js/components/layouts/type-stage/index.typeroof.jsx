@@ -323,6 +323,9 @@ export function createTypeStageModelVariantWithDefaults(
         // The equivalent of the legacy tools "applyDefaultsExplicitly" flag.
         ["verboseFontVariationSettings", BooleanModel],
         ["showNodeTypeSpecLabels", BooleanModel],
+        // Opt-in (plan 2026-10-07-1223, Phase 3): render text-composition
+        // in the ProseMirror editor as decorations. Default off.
+        ["composeInEditor", BooleanModel],
         _getType(
             "documentRendererMode",
             DocumentRendererModeModel,
@@ -785,6 +788,13 @@ class TypeStageController extends _BaseContainerComponent {
                 UICheckboxInput,
                 "show-node-type-spec-labels", // classToken
                 "Show Element Labels", //label
+            ],
+            [
+                { zone: "editor-manager" },
+                [["composeInEditor", "value"]],
+                UICheckboxInput,
+                "compose-in-editor", // classToken
+                "Compose Text in Editor", //label
             ],
             [
                 { zone: "main" },

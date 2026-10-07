@@ -68,3 +68,16 @@
 .typeroof-composed {
     white-space: nowrap;
 }
+
+/* Editor applicator (composition-plugin.ts, plan 2026-10-07-1223):
+ * PM puts the composed node decoration on the NodeView's OUTER
+ * element ([data-node-type]); the text lives one level deeper in
+ * [data-node-content]. white-space inherits, but make it explicit
+ * there: PM's vendor CSS sets .ProseMirror{white-space:break-spaces}
+ * and the editor's `[data-node-type]{width:fit-content}` shrink-wrap
+ * must not pick up a wrap mode from anywhere else. Scoped to the
+ * advanced editor; the class exists only while a textblock has a
+ * composition payload (the condition). */
+.editor-advanced .typeroof-composed > [data-node-content] {
+    white-space: nowrap;
+}

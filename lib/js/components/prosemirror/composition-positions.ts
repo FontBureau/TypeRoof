@@ -21,9 +21,9 @@
  *                          (map-backed) or incremental resolution.
  *
  * POSITION CONVENTIONS (prosemirror-model): `pos` of a node is the
- * position BEFORE it; a text node's first char sits at pos+1. The doc
- * node's content starts at 0 (no open token); every other node's
- * content starts at pos+1. Path segments are the child INDEXES in
+ * position BEFORE it; a LEAF node's content (text chars) starts AT
+ * its pos (leaves have no open token); every non-leaf node's content
+ * starts at pos+1. The doc node's content starts at 0. Path segments are the child INDEXES in
  * their parent's content — the same keys the metamodel list model and
  * `getPathOfContentIndexes` (integration.typeroof.jsx:103) use.
  */
@@ -201,8 +201,12 @@ export function* payloadFragmentRanges(
                             ? resolve(leaf.path)
                             : undefined;
                 if (leaf !== undefined && entry != null) {
-                    // Text nodes: first char at pos+1.
-                    const textStart = entry.pos + 1,
+                    // Leaf nodes (text runs): character i sits between
+                    // pos+i and pos+i+1 — the first char is AT pos (the
+                    // +1 open-token rule is for non-leaf nodes only).
+                    const textStart = entry.node.isLeaf
+                            ? entry.pos
+                            : entry.pos + 1,
                         from = textStart + firstOfRun.start,
                         to = textStart + lastOfRun.end;
                     if (to > from)
