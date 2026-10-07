@@ -31,9 +31,6 @@ import "prosemirror-view/style/prosemirror.css";
 
 import DOMPurify from "dompurify";
 
-// TEMPORARY SPIKE (Phase 0, plan 2026-10-07-1223): remove after GO/NO-GO.
-import { spikeCompositionPluginsIfEnabled } from "./spike-composition-decorations.ts";
-
 import { createEditorCompositionPlugin } from "./composition-plugin.ts";
 
 export function getPathOfTypes(
@@ -1108,9 +1105,6 @@ export class ProseMirror extends _BaseComponent {
             }),
             keymap(typeRoofKeymap),
             ...("menu" in this._idMap ? [this._menuPlugin()] : []),
-            // TEMPORARY SPIKE (Phase 0, plan 2026-10-07-1223):
-            // remove after GO/NO-GO.
-            ...spikeCompositionPluginsIfEnabled(),
             ...(this._isComposeInEditorOn()
                 ? [
                       createEditorCompositionPlugin({
