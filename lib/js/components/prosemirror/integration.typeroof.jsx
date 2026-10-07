@@ -455,10 +455,24 @@ export class ProsemirrorNodeView {
     // element. For reproducing atoms those must not trigger a
     // readDOMChange (template: ProsemirrorMarkView.ignoreMutation).
     ignoreMutation(mutation) {
-        return (
+        if (
             this._isReproducing &&
             mutation.type === "attributes" &&
             mutation.target === this.dom
+        )
+            return true;
+        // The outfitter widgets (UIDocumentNodeOutfitter placeholder
+        // comments, parameters UI) live inside this.dom but OUTSIDE
+        // contentDOM. Their childList churn on cascade updates is not
+        // document content; letting it reach readDOMChange makes PM
+        // re-parse (and spuriously replace) the affected range
+        // (downloads/issue.txt).
+        return (
+            !this._isReproducing &&
+            mutation.type === "childList" &&
+            this.contentDOM !== undefined &&
+            mutation.target !== this.contentDOM &&
+            !this.contentDOM.contains(mutation.target)
         );
     }
 

@@ -117,20 +117,32 @@ function _textblockEntries(
     return entries;
 }
 
+/** Spec tag on every decoration we create: the incremental replacement
+ *  in _flush removes ONLY ours (DecorationSet.find's predicate), never
+ *  foreign decorations (widgets etc.) inside the textblock. The
+ *  textblockPath lets the StateField's map-through (apply) attribute
+ *  mapping-DROPPED decorations to their textblock, so the plugin view
+ *  can repaint exactly those from its payload cache (readDOMChange
+ *  resilience, downloads/issue.txt). */
+interface EditorCompositionDecorationSpec {
+    editorComposition: true;
+    textblockPath: string;
+}
+
+function _decorationSpec(path: string): EditorCompositionDecorationSpec {
+    return { editorComposition: true, textblockPath: path };
+}
+
 /** The decorations for ONE payload (node decoration + all fragments),
  *  or [] when the textblock can't be resolved (structure changed
  *  mid-cycle; the next publication fixes it). */
-// Spec tag on every decoration we create: the incremental replacement
-// in _flush removes ONLY ours (DecorationSet.find's predicate), never
-// foreign decorations (widgets etc.) inside the textblock.
-const DECORATION_SPEC = { editorComposition: true };
-
 function _payloadDecorations(
     payload: CompositionPayload,
     resolve: PathResolver,
 ): Decoration[] {
     const textblock = resolve(payload.textblockPath);
     if (textblock == null) return [];
+    const spec = _decorationSpec(payload.textblockPath);
     const decorations = [
             Decoration.node(
                 textblock.pos,
@@ -138,7 +150,7 @@ function _payloadDecorations(
                 {
                     class: "typeroof-composed",
                 },
-                DECORATION_SPEC,
+                spec,
             ),
         ],
         treatmentConfig = {
@@ -181,9 +193,7 @@ function _payloadDecorations(
         if (style) attrs.style = style;
         if (dataTrackingGaps !== null)
             attrs["data-tracking-gaps"] = String(dataTrackingGaps);
-        decorations.push(
-            Decoration.inline(frag.from, frag.to, attrs, DECORATION_SPEC),
-        );
+        decorations.push(Decoration.inline(frag.from, frag.to, attrs, spec));
     }
     return decorations;
 }
@@ -192,6 +202,11 @@ export function createEditorCompositionPlugin(
     ctx: CompositionPluginContext,
 ): Plugin {
     const { documentPath } = ctx;
+    // The StateField's apply (map-through) and the plugin view are
+    // created apart by PM; the view registers itself here so apply can
+    // report mapping-dropped decorations (one plugin instance per
+    // EditorView, like the menu-plugin precedent).
+    let pluginViewInstance: CompositionPluginView | null = null;
 
     class CompositionPluginView {
         private _controller: CompositionControllerInterface | null = null;
@@ -339,7 +354,23 @@ export function createEditorCompositionPlugin(
             }
         }
 
+        /** Called by the StateField's apply when mapping DROPPED our
+         *  decorations (a doc-changing transaction replaced their
+         *  content, e.g. a readDOMChange re-parse replace). The
+         *  affected textblocks are repainted from the payload cache —
+         *  the same drift-tolerant semantics as map-through: if the
+         *  cached payload is stale, the controller's republication
+         *  replaces it shortly after. */
+        _onDecorationsDropped(paths: Set<string>) {
+            if (this._controller === null) return;
+            for (const path of paths)
+                if (this._payloads.get(path) != null)
+                    this._dirtyTextblocks.add(path);
+            if (this._dirtyTextblocks.size) this._scheduleFlush();
+        }
+
         destroy() {
+            if (pluginViewInstance === this) pluginViewInstance = null;
             for (const unsubscribe of this._unsubscribes.values())
                 unsubscribe();
             this._unsubscribes.clear();
@@ -355,7 +386,30 @@ export function createEditorCompositionPlugin(
             apply: (tr, set) => {
                 const replacement = tr.getMeta(editorCompositionPluginKey);
                 if (replacement !== undefined) return replacement;
-                return tr.docChanged ? set.map(tr.mapping, tr.doc) : set;
+                if (!tr.docChanged) return set;
+                // Map-through with drop detection: a transaction that
+                // REPLACES content (e.g. a readDOMChange re-parse
+                // dispatching a textually identical replace over a
+                // styled range) drops the decorations covering it —
+                // without this, non-republished textblocks keep their
+                // holes (downloads/issue.txt). The plugin view
+                // repaints the affected textblocks from its cache.
+                const droppedPaths = new Set<string>(),
+                    mapped = set.map(tr.mapping, tr.doc, {
+                        onRemove: (spec: unknown) => {
+                            const s = spec as
+                                | Partial<EditorCompositionDecorationSpec>
+                                | undefined;
+                            if (
+                                s?.editorComposition === true &&
+                                s.textblockPath !== undefined
+                            )
+                                droppedPaths.add(s.textblockPath);
+                        },
+                    });
+                if (droppedPaths.size)
+                    pluginViewInstance?._onDecorationsDropped(droppedPaths);
+                return mapped;
             },
         },
         props: {
@@ -363,6 +417,9 @@ export function createEditorCompositionPlugin(
                 return editorCompositionPluginKey.getState(state);
             },
         },
-        view: (view) => new CompositionPluginView(view),
+        view: (view) => {
+            pluginViewInstance = new CompositionPluginView(view);
+            return pluginViewInstance;
+        },
     });
 }
