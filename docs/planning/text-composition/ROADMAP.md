@@ -401,7 +401,7 @@ final perf baseline; then complete the quality harness.
    real-font behavior tests. Do not base KP++ badness on tracking
    until this is measurement-truthful.
 
-#### Open performance regression: editor typing remains slow
+#### Performance regression: editor typing — ✅ RESOLVED 2026-10-06 (`55bf4954`)
 
 Cycle 1 demand gating removes all composition publications and deep
 composition work in editor-only mode, but the current branch's editor
@@ -445,10 +445,11 @@ dropped 2–4× — none 256→67ms, ragged 248→143ms, fit 260→67ms, kp
 267→100ms; mode-transition 944→739ms — while style arms (deliberate
 typeSpec drafts, the walk still runs) and the initial full compose
 (`isNew`, full walk by design) are unchanged within noise. Editor
-typing should benefit proportionally (each keystroke is a
-document-only transaction): re-verify manually before closing this
-regression; the cursor-jump defect above is independent and stays
-open.
+typing benefits proportionally (each keystroke is a document-only
+transaction): manually re-verified 2026-10-07 — typing is
+responsive again, regression closed. The cursor-jump defect above
+is independent and stays open (its own follow-up: preserve
+selection and the active intent mark across rapid transactions).
 
 ### Cycle 2 — Milestone 5 research/design: Knuth–Plass++
 
