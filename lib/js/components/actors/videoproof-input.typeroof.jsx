@@ -10,16 +10,22 @@
  * property-setting keyMoment with the user settings in the videoproof
  * layout, the subsequent keyMoments are generated from axesMath.
  */
-import { _AbstractStructModel } from "../../metamodel.mjs";
+import {
+    _AbstractStructModel,
+    _AbstractEnumModel,
+    CoherenceFunction,
+} from "../../metamodel.mjs";
 
-import { _BaseComponent } from "../basics/component.mjs";
+import {
+    _BaseComponent,
+    _BaseContainerComponent,
+} from "../basics/component.mjs";
 
 import { _BaseActorModel, genericActorMixin } from "./actors-base.mjs";
 
 import {
     typographyKeyMomentModelMixin,
     typographyActorMixin,
-    StringOrEmptyModel,
 } from "./models.mjs";
 
 import { ColorModel } from "../color.mjs";
@@ -37,20 +43,55 @@ import { setLanguageTagDirect } from "../language-tags.typeroof.jsx";
 
 import { getRegisteredPropertySetup } from "../registered-properties.mjs";
 
-import { Schema, Fragment } from "prosemirror-model";
-import { EditorState } from "prosemirror-state";
-import { EditorView } from "prosemirror-view";
-import { undo, redo, history } from "prosemirror-history";
-import { keymap } from "prosemirror-keymap";
-import { baseKeymap } from "prosemirror-commands";
-import "prosemirror-view/style/prosemirror.css";
+import { CUSTOM_PRESET_KEY, applyPresets } from "../presets.mjs";
+
+import { NodeModel } from "../prosemirror/models.typeroof.jsx";
+
+import { ProseMirror } from "../prosemirror/integration.typeroof.jsx";
+
+import { schemaSpec as proseMirrorDefaultSchema } from "../prosemirror/very-simple-schema";
 
 export const DEFAULT_TEXT = "Type your own";
+
+const VIDEOPROOF_INPUT_CONTENT_OPTIONS = new Map(
+        [
+            ["your own", "Type Your Own."],
+            ["A-Z", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"],
+            ["a-z", "abcdefghijklmnopqrstuvwxyz"],
+            ["0-9", "0123456789"],
+            [CUSTOM_PRESET_KEY, null],
+            // I'd like to load a custom value for this from the registered-properties
+            // type: 'custom' with a customText: 'H'
+        ].map(([key, textContent]) => {
+            const documentData = {
+                typeKey: "doc",
+                content: [
+                    {
+                        typeKey: "paragraph",
+                        content: [
+                            {
+                                typeKey: "text",
+                                text: textContent,
+                            },
+                        ],
+                    },
+                ],
+            };
+            return [key, { document: documentData }];
+        }),
+    ),
+    _videoproof_input_content_options_keys = Array.from(
+        VIDEOPROOF_INPUT_CONTENT_OPTIONS.keys(),
+    ),
+    VideoproofInputContentTypeModel = _AbstractEnumModel.createClass(
+        "VideoproofInputContentTypeModel",
+        _videoproof_input_content_options_keys,
+        _videoproof_input_content_options_keys.at(0),
+    );
 
 export const VideoproofInputKeyMomentModel = _AbstractStructModel.createClass(
         "VideoproofInputKeyMomentModel",
         ...typographyKeyMomentModelMixin,
-        ["textRun", StringOrEmptyModel],
         ["stageBackgroundColor", ColorModel],
     ),
     VideoproofInputKeyMomentsModel = _createKeyMomentsListModel(
@@ -62,124 +103,31 @@ export const VideoproofInputKeyMomentModel = _AbstractStructModel.createClass(
         ...genericActorMixin,
         ["keyMoments", VideoproofInputKeyMomentsModel],
         ...typographyActorMixin,
+        ["presets", VideoproofInputContentTypeModel],
+        ["document", NodeModel],
+        CoherenceFunction.create(
+            ["presets", "document"],
+            applyPresets.bind(
+                null,
+                "presets",
+                VIDEOPROOF_INPUT_CONTENT_OPTIONS,
+                CUSTOM_PRESET_KEY,
+            ),
+        ),
     );
-
-// A single line of plain text: the doc itself is the textblock.
-const schema = new Schema({
-    nodes: {
-        doc: { content: "text*" },
-        text: {},
-    },
-    marks: {},
-});
-
-// Marks transactions that sync the editor to the model, these must not
-// be written back into the model and not be undoable.
-const FROM_MODEL = "videoproofInputFromModel";
 
 const LINE_HEIGHT_EM = 1.2;
 // The fixed font-size at which the text width is measured.
 const MEASURE_FONT_SIZE_PX = 16;
 
-// As in the legacy fitToSpace, the font-size is the largest where the
-// line fits into the width and into the height of the available space.
-// The width is measured at the current axes locations, hence, while
-// animating, the font-size shrinks when the text gets wider and grows
-// when it gets narrower.
-function fitFontSizePt(
-    widthEm,
-    lineHeightEm,
-    availableWidthPt,
-    availableHeightPt,
-) {
-    const fontSizeHeightPt = availableHeightPt / lineHeightEm,
-        fontSizeWidthPt =
-            widthEm > 0 ? availableWidthPt / widthEm : fontSizeHeightPt;
-    return Math.max(0, Math.min(fontSizeHeightPt, fontSizeWidthPt));
-}
-
-export class VideoproofInputActorRenderer extends _BaseComponent {
-    static getTemplate(h) {
-        return (
-            <div class="actor_renderer-videoproof_input">
-                <div class="actor_renderer-videoproof_input-content"></div>
-            </div>
-        );
-    }
-
-    constructor(widgetBus) {
+class VideoproofInputActorStyler extends _BaseComponent {
+    constructor(widgetBus, elements) {
         super(widgetBus);
-        [this.element, this._content] = this._initTemplate();
-        // The text is written into the first keyMoment, if there's none,
-        // e.g. in a motion-stage without keyMoments, it can't be edited.
-        this._editable = false;
-        this._view = new EditorView(this._content, {
-            state: this._createEditorState(""),
-            dispatchTransaction: this._dispatchTransaction.bind(this),
-            editable: () => this._editable,
-            attributes: {
-                class: "actor_renderer-videoproof_input-editor",
-                spellcheck: "false",
-            },
-        });
+        this.element = elements.element;
+        this._content = elements.content;
     }
 
-    _initTemplate() {
-        const element = this.constructor.getTemplate(this._domTool.h),
-            content = element.querySelector(
-                ".actor_renderer-videoproof_input-content",
-            );
-        this._insertElement(element);
-        return [element, content];
-    }
-
-    _createEditorState(text) {
-        const preventDefault = () => true;
-        return EditorState.create({
-            doc: schema.node("doc", null, text ? schema.text(text) : null),
-            plugins: [
-                history(),
-                keymap({
-                    "Mod-z": undo,
-                    "Shift-Mod-z": redo,
-                    "Mod-y": redo,
-                    // Single line of text.
-                    Enter: preventDefault,
-                    "Shift-Enter": preventDefault,
-                    "Mod-Enter": preventDefault,
-                }),
-                keymap(baseKeymap),
-            ],
-        });
-    }
-
-    _dispatchTransaction(transaction) {
-        const view = this._view;
-        view.updateState(view.state.apply(transaction));
-        if (!transaction.docChanged || transaction.getMeta(FROM_MODEL)) return;
-        const text = view.state.doc.textContent;
-        this._changeState(() => {
-            const keyMoments = this.getEntry("keyMoments");
-            if (keyMoments.size === 0) return;
-            keyMoments.get(0).get("textRun").value = text;
-        });
-    }
-
-    _setEditorText(text) {
-        const { state } = this._view;
-        // Don't interfere while the user is typing, e.g. with an IME.
-        if (state.doc.textContent === text || this._view.composing) return;
-        const tr = state.tr.replaceWith(
-            0,
-            state.doc.content.size,
-            text ? schema.text(text) : Fragment.empty,
-        );
-        tr.setMeta(FROM_MODEL, true);
-        tr.setMeta("addToHistory", false);
-        this._view.dispatch(tr);
-    }
-
-    // The measurement comes from the 'environment@' protocol, see
+    // The measurement comes from the 'environment@' protocol,see
     // VideoproofContextualActorRenderer._getAvailableDimensions.
     _getAvailableDimensions(changedMap) {
         const layoutBox = changedMap.has("environment@layout")
@@ -192,37 +140,36 @@ export class VideoproofInputActorRenderer extends _BaseComponent {
                 ).fontSize,
             ),
             // Account for the paddings.
-            widthPx = Math.max(0, layoutBox.width - 4 * emPx);
-        return {
-            widthPt: widthPx * 0.75, // px to pt
-            heightPt: layoutBox.height * 0.75, // px to pt
-        };
+            // left has 2em, to nicely fit add 2 for the right
+            // TODO: should not have to be hard coded.
+            widthPx = Math.max(0, layoutBox.width) - 4 * emPx;
+        return [widthPx, layoutBox.height];
     }
 
     _relayout(changedMap) {
-        const { widthPt, heightPt } = this._getAvailableDimensions(changedMap),
-            fontSizePx = MEASURE_FONT_SIZE_PX;
+        const [availableWidthPx, availableHeightPx] =
+            this._getAvailableDimensions(changedMap);
         // As in the legacy fitToSpace, the text is measured in the DOM, at
         // a fixed font-size, with the current font-variation-settings and
         // font-feature-settings applied. A Range measures the extent of
         // the text itself, not of the (block) editor element.
-        this._content.style.setProperty("font-size", `${fontSizePx}px`);
-        const range = this._content.ownerDocument.createRange();
-        range.selectNodeContents(this._view.dom);
-        const widthEm = range.getBoundingClientRect().width / fontSizePx,
-            fontSizePt = fitFontSizePt(
-                widthEm,
-                LINE_HEIGHT_EM,
-                widthPt,
-                heightPt,
-            );
-        this._content.style.setProperty("font-size", `${fontSizePt}pt`);
+        this._content.style.setProperty(
+            "font-size",
+            `${MEASURE_FONT_SIZE_PX}px`,
+        );
         this._content.style.setProperty("line-height", `${LINE_HEIGHT_EM}`);
-    }
+        this._content.style.setProperty("display", "inline-block");
 
-    destroy() {
-        this._view.destroy();
-        super.destroy();
+        const range = this._content.ownerDocument.createRange();
+
+        range.selectNodeContents(this._content);
+        const { width, height } = range.getBoundingClientRect(),
+            heightCorrected = height / LINE_HEIGHT_EM,
+            ratioWidth = availableWidthPx / width,
+            ratioHeight = availableHeightPx / height, //Corrected,
+            fontSizePx =
+                Math.min(ratioHeight, ratioWidth) * MEASURE_FONT_SIZE_PX;
+        this._content.style.setProperty("font-size", `${fontSizePx}px`);
     }
 
     update(changedMap) {
@@ -241,15 +188,6 @@ export class VideoproofInputActorRenderer extends _BaseComponent {
                 "font-family",
                 `"${font.fullName}"`,
             );
-
-        if (changedMap.has("keyMoments")) {
-            const editable = changedMap.get("keyMoments").size > 0;
-            if (editable !== this._editable) {
-                this._editable = editable;
-                // Re-evaluates the editable prop.
-                this._view.setProps({});
-            }
-        }
 
         if (
             changedMap.has("animationProperties@") ||
@@ -275,13 +213,7 @@ export class VideoproofInputActorRenderer extends _BaseComponent {
                     ["colors/stageBackgroundColor", "--background-color"],
                     ["colors/backgroundColor", "--cell-background-color"],
                     ["colors/textColor", "color"],
-                ],
-                text = propertyValuesMap.has("generic/textRun")
-                    ? propertyValuesMap.get("generic/textRun")
-                    : "";
-
-            this._setEditorText(text);
-
+                ];
             actorApplyCSSColors(
                 this.element,
                 propertyValuesMap,
@@ -313,5 +245,64 @@ export class VideoproofInputActorRenderer extends _BaseComponent {
             changedMap.has("font")
         )
             this._relayout(changedMap);
+    }
+}
+
+export class VideoproofInputActorRenderer extends _BaseContainerComponent {
+    static getTemplate(h) {
+        return (
+            <div class="actor_renderer-videoproof_input">
+                <div
+                    class="actor_renderer-videoproof_input-content"
+                    spellcheck="false"
+                ></div>
+            </div>
+        );
+    }
+
+    constructor(widgetBus) {
+        const zones = new Map();
+        super(widgetBus, zones);
+        [this.element, this._content] = this._initTemplate();
+        zones.set("content", this._content);
+
+        this._initWidgets([
+            [
+                { zone: "content" },
+                ["document"],
+                ProseMirror,
+                proseMirrorDefaultSchema,
+                {} /* idMap */,
+                null /* originTypeSpecPath */,
+                ["editor-simple"],
+                this._content,
+            ],
+            [
+                {},
+                [
+                    "font",
+                    "animationProperties@",
+                    [widgetBus.getExternalName("globalT"), "globalT"],
+                    [
+                        widgetBus.getExternalName(
+                            "verboseFontVariationSettings",
+                        ),
+                        "verboseFontVariationSettings",
+                    ],
+                    "environment@layout",
+                ],
+                VideoproofInputActorStyler,
+                { element: this.element, content: this._content },
+            ],
+        ]);
+    }
+
+    _initTemplate() {
+        const element = this.constructor.getTemplate(this._domTool.h),
+            content = element.querySelector(
+                ".actor_renderer-videoproof_input-content",
+            );
+        this._insertElement(element);
+        return [element, content];
     }
 }
