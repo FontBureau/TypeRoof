@@ -386,6 +386,13 @@ export class CompositionController extends _BaseComponent {
         return (this._subscribers.get(path)?.size ?? 0) > 0;
     }
 
+    /** Public demand query for drivers (e.g. DocumentNodesMeta) so
+     * they can skip building a source nobody would consume. The
+     * controller's own gates stay authoritative. */
+    hasDemand(path: Path | string): boolean {
+        return this._hasDemand(this._pathString(path));
+    }
+
     _cancelCurrentTask(path: string): void {
         const current = this._tasks.get(path);
         if (current === undefined) return;
