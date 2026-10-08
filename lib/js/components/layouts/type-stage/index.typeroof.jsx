@@ -42,7 +42,7 @@ import { UINodeSpecToTypeSpecLinksMap } from "../../type-spec/fundamentals.mjs";
 import { getTypeSpecDefaultsMap } from "./defaults.mjs";
 
 import { LengthModel } from "../../length-models.mjs";
-import { createLanguageTag } from "../../language-tags.typeroof.jsx";
+import { createHyphenationPatternDeriver } from "./hyphenation-pattern-languages.mjs";
 
 import { TypeStagePaneStyler } from "./pane-styler.typeroof.jsx";
 import {
@@ -67,7 +67,6 @@ import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" wit
 import { UIDocumentViewer } from "./viewer.typeroof.jsx";
 import { DocumentNodesMeta } from "./document-nodes-meta/index.mjs";
 import { CompositionController } from "./text-composition/composition-controller.ts";
-import { languageToHyphenationPatternKey } from "./text-composition/hyphenator.ts";
 import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
 
 import {
@@ -177,62 +176,12 @@ export const ensureDimensionBoundnessCoherenceFn = CoherenceFunction.create(
 // usage. There is deliberately no serializable reference map: the
 // actual pattern objects live only in the session dependency
 // installedHyphenationPatterns and are reproducible vendored assets.
+// The language derivation lives in ./hyphenation-pattern-languages.mjs
+// and is memoized: this coherence runs on every root metamorphose
+// where typeSpec/stylePatchesSource is a draft — including pure
+// axis-value edits — while languages change rarely.
 
-function languageTagParts(languageTag) {
-    return Object.fromEntries(
-        ["language", "script", "region"].map((key) => {
-            const value = languageTag.get(key);
-            return [key, value.isEmpty ? null : value.value];
-        }),
-    );
-}
-
-function partsToLanguageTag({ language, script, region }) {
-    return createLanguageTag(language, script, region);
-}
-
-// Effective TypeSpec languages: local subtags override inherited
-// subtags independently (a child may set only region/script).
-function* walkEffectiveTypeSpecLanguageParts(typeSpec, inherited = {}) {
-    const local = languageTagParts(typeSpec.get("languageTag")),
-        effective = {
-            language: local.language ?? inherited.language ?? null,
-            script: local.script ?? inherited.script ?? null,
-            region: local.region ?? inherited.region ?? null,
-        };
-    if (effective.language !== null) yield effective;
-    for (const [, child] of typeSpec.get("children"))
-        yield* walkEffectiveTypeSpecLanguageParts(child, effective);
-}
-
-// Simple style patches can override language on an inline run.
-// Composite patches only reference source patches already in this map,
-// so walking every simple source covers them too. A partial patch tag
-// (e.g. region-only) is combined with every effective TypeSpec tag it
-// could patch; a language override is context-independent.
-function* walkStylePatchLanguages(stylePatchesSource, typeSpecLanguageParts) {
-    for (const [, stylePatch] of stylePatchesSource) {
-        if (stylePatch.get("stylePatchTypeKey").value !== "SimpleStylePatch")
-            continue;
-        const instance = stylePatch.get("instance");
-        if (!instance.hasWrapped) continue;
-        const local = languageTagParts(instance.wrapped.get("languageTag"));
-        if (local.language !== null) {
-            const tag = partsToLanguageTag(local);
-            if (tag !== null) yield tag;
-            continue;
-        }
-        if (local.script === null && local.region === null) continue;
-        for (const base of typeSpecLanguageParts) {
-            const tag = createLanguageTag(
-                base.language,
-                local.script ?? base.script,
-                local.region ?? base.region,
-            );
-            if (tag !== null) yield tag;
-        }
-    }
-}
+const hyphenationPatternDeriver = createHyphenationPatternDeriver();
 
 export const requireHyphenationPatternsCoherenceFn = CoherenceFunction.create(
     [
@@ -250,27 +199,17 @@ export const requireHyphenationPatternsCoherenceFn = CoherenceFunction.create(
                 unwrapPotentialWriteProxy(stylePatchesSource);
         if (!isNew && !typeSpecRaw.isDraft && !stylePatchesSourceRaw.isDraft)
             return; // languages unchanged — requirements can't have changed
-
-        const typeSpecLanguageParts = [
-                ...walkEffectiveTypeSpecLanguageParts(typeSpecRaw),
-            ],
-            typeSpecLanguages = typeSpecLanguageParts
-                .map(partsToLanguageTag)
-                .filter((tag) => tag !== null),
-            languages = new Set([
-                ...typeSpecLanguages,
-                ...walkStylePatchLanguages(
-                    stylePatchesSourceRaw,
-                    typeSpecLanguageParts,
-                ),
-            ]),
-            requiredKeys = new Set();
-        for (const language of languages) {
-            const key = languageToHyphenationPatternKey(language);
-            if (key !== null) requiredKeys.add(key);
-        }
+        // Memoized (hyphenation-pattern-languages.mjs): when nothing
+        // language-relevant changed — e.g. pure axis-value edits — this
+        // collapses to one O(1) walk hit plus two identity compares.
+        const requiredKeys =
+            hyphenationPatternDeriver.deriveRequiredPatternKeys(
+                typeSpecRaw,
+                stylePatchesSourceRaw,
+            );
         for (const key of requiredKeys) {
             if (installedHyphenationPatterns.has(key)) continue;
+            console.log('key', key, 'has:', installedHyphenationPatterns.has(key), 'got:', ...installedHyphenationPatterns.keys());
             yield new HyphenationPatternRequirement(
                 installedHyphenationPatterns,
                 key,
