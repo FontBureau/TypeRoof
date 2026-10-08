@@ -451,6 +451,62 @@ responsive again, regression closed. The cursor-jump defect above
 is independent and stays open (its own follow-up: preserve
 selection and the active intent mark across rapid transactions).
 
+#### Performance regression: typeSpec edits (axis drag) — ✅ RESOLVED 2026-10-08 (`81d2d3bd`, `7caf1726`, `3ea097d9`)
+
+The follow-up to the typing regression, same class but a different
+trigger: enabling and dragging a variable-font axis (wght) on the
+origin typeSpec lagged badly vs main, even in editor-only mode with
+"Compose Text in Editor" off — i.e. with **zero composition demand**
+(verified: the pipeline is structurally cold there; the earlier
+"viewer demand" suspicion was wrong for this repro). Per-tick costs
+that ran regardless of demand were the cause; fixed in three small
+commits:
+
+- `81d2d3bd`: the hyphenation language derivation
+  (`requireHyphenationPatternsCoherenceFn`) ran a full recursive
+  TypeSpec-tree + style-patch walk on every typeSpec draft — every
+  axis tick. Now memoized two levels deep (walker keyed on
+  languageTag/children-map immutability with proxy unwrapping;
+  deriver on parts/source identity): an axis tick is one O(1) hit
+  plus two identity compares. Full-set requirement semantics
+  preserved (async-window priming).
+- `7caf1726`: `DocumentNodesMeta._driveComposition` drove twice per
+  style-change cycle (scope settle + trailing update) — deduped via
+  `_scopeDroveComposition`; content-edit cycles still drive via
+  `update`.
+- `3ea097d9`: with zero subscribers the drive built and discarded a
+  `_compositionSource()` (root-depth getEntry walk + path building)
+  per textblock per cycle. Now gated on cheap null conditions + the
+  controller's new public `hasDemand`; registration stays
+  unconditional, undemanded notifications are skipped (behavior-
+  identical), demanded drives build the source once, not twice.
+
+Measured with the new probe `scripts/puppeteer-probes/
+perf-axis-drag.mjs` (debug harness, NOT the perf suite; wght drag,
+editor mode, compose-in-editor off): **pre-fix 935.9ms/tick (p95
+1157), post-fix 42.0ms (p95 58), fontbureau/main 70.1ms (p95 156)**
+— ~22× vs pre-fix, ~1.7× better than main on the median. Operator
+feel-check: "a lot better, even with compose in editor on".
+
+Ride-along repair: the `text-composition` vitest suite had been
+crashing (worker exit 7) since `67f3ce9f` (compose-in-editor
+default-on) — the plugin's DOM churn woke PM's `checkCSS`, which
+reads the bare global `getComputedStyle` in the NODE-env suite.
+Fixed in `0e4bb89f` (pin `composeInEditor: "0"` in the suite's state
+preparations + shim `getComputedStyle`); bisect confirmed green
+through `137945fe`, broken at `67f3ce9f`. Suite is 17/17 again.
+
+Plan + research:
+`agentic-artefacts/thoughts/plan/2026-10-08-1710-typespec-edit-perf-hyphenation-drive.md`,
+`agentic-artefacts/thoughts/research/2026-10-08-1550-wght-axis-drag-perf-regression.md`.
+Deferred from that plan: viewer/compare-mode pipeline costs on axis
+drags (axesKey invalidation → full re-measure per tick, hbFont LRU
+thrash — only when a consumer demands), the ON+None residual costs
+(per-change `getProperties()` before the None gate; the editor
+plugin's O(doc) `_syncSubscriptions` walk), and demand-driven
+hyphenation loading ("Option B", UI-side lazy loading) as the
+eventual replacement for the model-side requirement walk.
+
 ### Cycle 2 — Milestone 5 research/design: Knuth–Plass++
 
 Research and specify before implementation:
