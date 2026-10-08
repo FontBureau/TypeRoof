@@ -306,6 +306,7 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                     //    "inlineMargins",
                     "textAlign",
                 ],
+                composition: ["textCompositionAlgorithm", "hyphenation"],
                 vertical: ["leading", "blockMargins"],
                 // we don't use sections.color activeley, instead we
                 // use UIColorChooserTwoColorsWithSwap to control these
@@ -422,6 +423,21 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 this._getCollapsibleState(
                     "typespec_horizontal_layout_collapsible",
                     true,
+                ), // open
+                false, // scroll
+            ],
+            [
+                { zone: "main", id: "typespec_text_composition_collapsible" },
+                [],
+                CollapsibleContainer,
+                this._zones,
+                "Text Composition",
+                "minimal",
+                "typespec_text_composition", //classNameParticle
+                [filteredTypeDriven(sections.composition)] /* widgets */,
+                this._getCollapsibleState(
+                    "typespec_text_composition_collapsible",
+                    false,
                 ), // open
                 false, // scroll
             ],
