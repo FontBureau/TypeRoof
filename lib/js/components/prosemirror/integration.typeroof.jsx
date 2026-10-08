@@ -1425,7 +1425,14 @@ export class ProseMirror extends _BaseComponent {
             });
         }
 
-        if (this._originTypeSpecPath !== null) {
+        // Only transactions that (re)place the selection — genuine user
+        // cursor actions like click, arrow keys, typing, paste, undo —
+        // may move the editing target. System transactions (e.g. the
+        // composition plugin's decoration flush) carry the current,
+        // possibly stale selection and would otherwise re-assert it,
+        // e.g. jumping editingTypeSpec back to the node the cursor
+        // happened to be in when "compose in editor" is switched on.
+        if (this._originTypeSpecPath !== null && transaction.selectionSet) {
             const typeSpecs = this._getTypeSpecs(this.view.state);
             // With silent nodes (noStyler), getTypeSpecs can be empty
             // when the selection is not inside any node the resolver
