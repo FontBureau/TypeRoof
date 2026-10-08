@@ -2,13 +2,18 @@ import {
     _BaseContainerComponent,
     SimpleProtocolHandler,
 } from "../../basics/component.mjs";
-import { _BaseLayoutModel, CommentsModel } from "../../main-model.mjs";
+import {
+    _BaseLayoutModel,
+    CommentsModel,
+    InstalledHyphenationPatternsModel,
+} from "../../main-model.mjs";
 import {
     PathModelOrEmpty,
     Path,
     BooleanModel,
     BooleanDefaultTrueModel,
     CoherenceFunction,
+    InternalizedDependency,
 } from "../../../metamodel.mjs";
 import {
     TypeSpecModel,
@@ -49,6 +54,7 @@ import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/de
 import {
     initTypeSpecCoherenceFn,
     ensureDimensionBoundnessCoherenceFn,
+    requireHyphenationPatternsCoherenceFn,
 } from "../type-stage/index.typeroof.jsx";
 
 import { LengthModel } from "../../length-models.mjs";
@@ -57,6 +63,8 @@ import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" wit
 
 import { createCommentsWidgets } from "../../ui-comments.mjs";
 import { ENVIRONMENT_PROVIDER_ENTRIES } from "../../environment-provider.mjs";
+
+import { CompositionController } from "../type-stage/text-composition/composition-controller.ts";
 
 //  We can't create the self-reference directly
 //, TypeSpecModelMap: TypeSpec.get('children') === _AbstractOrderedMapModel.createClass('TypeSpecModelMap', TypeSpec)
@@ -86,8 +94,21 @@ const RampModel = _BaseLayoutModel.createClass(
     ["showNodeTypeSpecLabels", BooleanDefaultTrueModel],
     ["width", LengthModel],
     ["height", LengthModel],
+    // Session-only pattern objects. The coherence below derives
+    // requirements directly from TypeSpec + style-patch languages;
+    // no reference/cache field is serialized with the document.
+    [
+        "installedHyphenationPatterns",
+        new InternalizedDependency(
+            "installedHyphenationPatterns",
+            InstalledHyphenationPatternsModel,
+        ),
+    ],
     ensureDimensionBoundnessCoherenceFn,
     initTypeSpecCoherenceFn(DEFAULT_STATE),
+    // order is enforced by the "initTypeSpec" name DEPENDENCY
+    // (see the coherence), not by this position
+    requireHyphenationPatternsCoherenceFn,
 );
 
 class TypeSpecSelect extends GenericSelect {
@@ -281,6 +302,21 @@ class RampController extends _BaseContainerComponent {
         widgetBus.wrapper.setProtocolHandlerImplementation(
             ...SimpleProtocolHandler.create("styleLinkProperties@"),
         );
+
+        // per textblock composition results (text-composition
+        // sub-module, milestone 1): published by the composition
+        // controller, consumed by renderer attachments (viewer).
+        widgetBus.wrapper.setProtocolHandlerImplementation(
+            // does not raise when not found, instead returns null:
+            // REQUIRED — OFF MODE is the absence of entries, so
+            // consumers must get null instead of a KEY ERROR (the
+            // fallback is the off-mode mechanism at the consumption
+            // site).
+            ...SimpleProtocolHandler.create("composition@", {
+                notFoundFallbackValue: null,
+            }),
+        );
+
         // widgetBus.insertElement(stageManagerContainer);
         super(widgetBus, zones);
 
@@ -367,6 +403,22 @@ class RampController extends _BaseContainerComponent {
                 TypeSpecPropertiesManager,
                 new Map([...zones, ["main", propertiesManagerContainer]]),
                 { showMarkStyleLinks: false },
+            ],
+            [
+                // Always-active, DOM-free text-composition SERVICE:
+                // owns the Measurer, segmenter/algorithm invocation
+                // and the composition@ publication. NO update-cycle
+                // role (UPDATE_STRATEGY_NO_UPDATE): DocumentNodesMeta
+                // drives composition inside its own cascade and looks
+                // this service up by id (getWidgetById, null fallback
+                // — composition is optional). relativeRootPath only
+                // for path derivation (layout root = parent).
+                {
+                    id: "compositionController",
+                    relativeRootPath: Path.fromParts(".", "document"),
+                },
+                [],
+                CompositionController,
             ],
             [
                 // Always-active, DOM-free document-tree meta layer. Ramp
@@ -490,6 +542,9 @@ class RampController extends _BaseContainerComponent {
         this.widgetBus.wrapper
             .getProtocolHandlerImplementation("nodeProperties@")
             .resetUpdatedLog();
+        this.widgetBus.wrapper
+            .getProtocolHandlerImplementation("composition@")
+            .resetUpdatedLog();
         super.update(...args);
     }
     initialUpdate(...args) {
@@ -504,6 +559,9 @@ class RampController extends _BaseContainerComponent {
             .resetUpdatedLog();
         this.widgetBus.wrapper
             .getProtocolHandlerImplementation("nodeProperties@")
+            .resetUpdatedLog();
+        this.widgetBus.wrapper
+            .getProtocolHandlerImplementation("composition@")
             .resetUpdatedLog();
         super.initialUpdate(...args);
     }

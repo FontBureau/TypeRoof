@@ -12,6 +12,7 @@ import {
     PathModelOrEmpty,
     Path,
     BooleanModel,
+    BooleanDefaultTrueModel,
     CoherenceFunction,
     deserializeSync,
     SERIALIZE_OPTIONS,
@@ -233,7 +234,7 @@ function* walkStylePatchLanguages(stylePatchesSource, typeSpecLanguageParts) {
     }
 }
 
-const requireHyphenationPatternsCoherenceFn = CoherenceFunction.create(
+export const requireHyphenationPatternsCoherenceFn = CoherenceFunction.create(
     [
         "initTypeSpec",
         "typeSpec",
@@ -323,9 +324,11 @@ export function createTypeStageModelVariantWithDefaults(
         // The equivalent of the legacy tools "applyDefaultsExplicitly" flag.
         ["verboseFontVariationSettings", BooleanModel],
         ["showNodeTypeSpecLabels", BooleanModel],
-        // Opt-in (plan 2026-10-07-1223, Phase 3): render text-composition
-        // in the ProseMirror editor as decorations. Default off.
-        ["composeInEditor", BooleanModel],
+        // Render text-composition in the ProseMirror editor as decorations.
+        // Default on.
+        // Originally this was opt-in, default off (plan 2026-10-07-1223, Phase 3),
+        // but, so far it's working very well, so trying to have it on.
+        ["composeInEditor", BooleanDefaultTrueModel],
         _getType(
             "documentRendererMode",
             DocumentRendererModeModel,
