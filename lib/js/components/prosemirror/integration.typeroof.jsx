@@ -941,16 +941,15 @@ export class ProseMirror extends _BaseComponent {
         // element as well, but not the `ui_prosemirror_host` class of
         // the template, you should set that yourself if required.
         element = null,
-        // Optional: the local name of a boolean model setting (a declared
-        // dependency of this component) that enables the text-composition
-        // applicator plugin (composition-plugin.ts). Null = feature
-        // unavailable (ramp/grid contexts). Plan 2026-10-07-1223, Phase 3.
-        composeInEditorSettingName = null,
+        // Enables the text-composition applicator plugin (composition-plugin.ts).
+        // false: off, true: on and if a dependency "composeInEditor" is also
+        // defined: user selectable. (Plan 2026-10-07-1223, Phase 3)
+        composeInEditor = false,
     ) {
         super(widgetBus);
         this._idMap = idMap;
         this._originTypeSpecPath = originTypeSpecPath;
-        this._composeInEditorSettingName = composeInEditorSettingName;
+        this._composeInEditorFlag = composeInEditor;
         this._proseMirrorDefaultSchema = proseMirrorDefaultSchema;
         // The cache is bi-directional, meaning that both mappings will be
         // set: proseMirrorNode -> metamodelNode and metamodelNode ->
@@ -1010,14 +1009,16 @@ export class ProseMirror extends _BaseComponent {
         this.anchorTargetsContainer.remove();
     }
 
-    // The composeInEditor feature flag (plan 2026-10-07-1223, Phase 3):
-    // the setting must be declared as a dependency by the context AND
-    // the setting name passed as constructor arg; both absent (ramp,
-    // grid) means the feature is unavailable.
     _isComposeInEditorOn() {
         return (
-            this._composeInEditorSettingName !== null &&
-            this.getEntry(this._composeInEditorSettingName).value
+            this._composeInEditorFlag === true &&
+            // If it doesn't have the 'composeInEditor' dependency
+            // it's always on, otherwise it is controllable by the
+            // user via that dependency.
+            (!this.widgetBus.wrapper.dependencyReverseMapping.has(
+                "composeInEditor",
+            ) ||
+                this.getEntry("composeInEditor").value)
         );
     }
 
@@ -1548,14 +1549,16 @@ export class ProseMirror extends _BaseComponent {
             this._nodesCache = new WeakMap();
             mapSetBiDirectional(this._nodesCache, schema, proseMirrorSchema);
         }
+        // Rebuild the plugins, they are initially created,
+        // so far only composeInEditor changes the set of plugins.
         // The composeInEditor flag changed: rebuild the plugins array
         // (with/without the composition plugin). PM destroys/re-creates
         // plugin views on plugin-set change, so the plugin's
         // subscription lifecycle (constructor/destroy) drives
         // engagement; the state re-creation below applies the change.
         if (
-            this._composeInEditorSettingName !== null &&
-            changedMap.has(this._composeInEditorSettingName)
+            this._composeInEditorFlag === true &&
+            changedMap.has("composeInEditor")
         )
             newConfigItems.push(["plugins", this._buildPlugins()]);
         // it looks like document has to change...
