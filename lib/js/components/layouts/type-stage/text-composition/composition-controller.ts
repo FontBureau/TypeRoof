@@ -1652,15 +1652,6 @@ export class CompositionController extends _BaseComponent {
         );
         handler.setUpdated(identifier);
         this._notifyObservers(textblockPathString, payload);
-        // live feedback until the applicator makes it visible
-        console.log(
-            `${this} published ${identifier}:`,
-            paragraphs.map(
-                ({ result }) =>
-                    `${result.lines.length} lines ` +
-                    `(overfull: ${result.diagnostics.overfullLines.length})`,
-            ),
-        );
     }
 
     /** Ingredients-dedup companion: re-register the last published

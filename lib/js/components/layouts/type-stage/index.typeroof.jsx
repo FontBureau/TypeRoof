@@ -209,7 +209,6 @@ export const requireHyphenationPatternsCoherenceFn = CoherenceFunction.create(
             );
         for (const key of requiredKeys) {
             if (installedHyphenationPatterns.has(key)) continue;
-            console.log('key', key, 'has:', installedHyphenationPatterns.has(key), 'got:', ...installedHyphenationPatterns.keys());
             yield new HyphenationPatternRequirement(
                 installedHyphenationPatterns,
                 key,
