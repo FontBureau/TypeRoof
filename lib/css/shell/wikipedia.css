@@ -17,7 +17,15 @@ wrapper
     z-index: 2;
 }
 
-.typeroof-layout {
+/* ui-comments.css makes .typeroof-layout a containing block
+ * (position: relative) for comment balloons — it out-specifies a
+ * plain .typeroof-layout rule (and loads later, via the JS module
+ * import) and drops the layout element back into normal flow,
+ * exposing the (hidden) sidebar's reserved grid column. Here the
+ * layout must cover the full viewport (the sidebar floats above
+ * it); absolute is a containing block too, so the comments overlay
+ * keeps working. (Same fix as player.css.) */
+body > .wrapper > .typeroof-main > .typeroof-layout {
     position: absolute;
     z-index: 1;
     top: 0;
