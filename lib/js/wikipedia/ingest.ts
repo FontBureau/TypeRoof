@@ -42,6 +42,11 @@ export interface IngestionReport {
     // collapsed composite intent mark (nested combinable elements,
     // see combineAs on mark/generic rules)
     compositeMarks: Record<string, number>;
+    // mark/style name -> count of mark/generic elements demoted to a
+    // bare generic-inline node because no markable text descends from
+    // them (the mark would evaporate silently — marks land on text
+    // only; tag and attrs survive as structure)
+    demotedMarks: Record<string, number>;
     // mark name -> count of `mark` rules that fell back to intent
     // because the schema does not define the named mark
     unresolvedMarkRules: Record<string, number>;
@@ -631,6 +636,62 @@ function hasCombinableDescendant(ctx: Ctx, el: Element): boolean {
     return false;
 }
 
+// Lookahead for the mark demotion: does any descendant TEXT node
+// carry non-whitespace content? Only text reachable through inline
+// descent counts — it is the only text marks can land on. Atom, raw
+// and skip rules keep their text out of mark reach (verbatim or
+// dropped), void/block/split-item are boundaries, catch-all atoms
+// likewise.
+function hasMarkableTextDescendant(ctx: Ctx, el: Element): boolean {
+    for (const child of Array.from(el.childNodes)) {
+        if (child.nodeType === Node.TEXT_NODE) {
+            if ((child.textContent ?? "").trim()) return true;
+            continue;
+        }
+        if (child.nodeType !== Node.ELEMENT_NODE) continue;
+        const childEl = child as Element,
+            childRule = findMatchingRule(ctx, childEl, true);
+        if (childRule === null) continue;
+        switch (childRule.kind) {
+            case "mark":
+            case "generic":
+            case "inline-node":
+            case "transparent":
+                if (hasMarkableTextDescendant(ctx, childEl)) return true;
+                break;
+            default:
+                // no markable text below (see above)
+                break;
+        }
+    }
+    return false;
+}
+
+// Shared demotion emission of the mark/generic case: a bare
+// generic-inline node (source tag via htmlTag, attrs via the
+// htmlAttrs bag — e.g. the link's href survives as structure);
+// children are ingested inline with the current marks and composite
+// stack.
+function emitDemotedGenericInline(
+    el: Element,
+    marks: MarkDesc[],
+    out: any[],
+    ctx: Ctx,
+    composite: readonly string[],
+): void {
+    count(ctx.report.inlineNodes, el.tagName);
+    const draft = newNodeDraft("generic-inline");
+    setHtmlAttrsBag(draft, el, ctx);
+    setHtmlTag(
+        { kind: "inline-node", typeKey: "generic-inline" },
+        draft,
+        el,
+        ctx,
+    );
+    fillContent(draft, el, marks, ctx, true, composite);
+    out.push(draft.metamorphose());
+}
+
 // Whether a child joins an inline run in block context (scoped
 // run-lifting, operator decision 2026-08-03): text nodes always;
 // elements iff they resolve EXCLUSIVELY in inline context — a
@@ -883,20 +944,23 @@ function ingestNode(
                 combineAs !== undefined &&
                 (composite.length > 0 || hasCombinableDescendant(ctx, el))
             ) {
-                count(report.inlineNodes, el.tagName);
-                const draft = newNodeDraft("generic-inline");
-                setHtmlAttrsBag(draft, el, ctx);
-                setHtmlTag(
-                    { kind: "inline-node", typeKey: "generic-inline" },
-                    draft,
-                    el,
-                    ctx,
-                );
-                fillContent(draft, el, marks, ctx, true, [
+                emitDemotedGenericInline(el, marks, out, ctx, [
                     ...composite,
                     combineAs,
                 ]);
-                out.push(draft.metamorphose());
+                return;
+            }
+            // No markable text below (e.g. a link wrapping only
+            // reproducing atoms): the mark would evaporate silently —
+            // marks land on text nodes only. Demote to a bare
+            // generic-inline node instead: tag and attrs (the href)
+            // survive as structure.
+            if (!hasMarkableTextDescendant(ctx, el)) {
+                count(
+                    report.demotedMarks,
+                    rule.kind === "mark" ? rule.name : rule.styleName,
+                );
+                emitDemotedGenericInline(el, marks, out, ctx, composite);
                 return;
             }
             // No node: push a MarkDesc and descend. Schema-declared
@@ -970,6 +1034,7 @@ function logReport(logger: IngestLogger, report: IngestionReport): void {
     logger.log("[ingest] skipped html attrs:", report.skippedHtmlAttrs);
     logger.log("[ingest] unresolved mark rules:", report.unresolvedMarkRules);
     logger.log("[ingest] composite marks:", report.compositeMarks);
+    logger.log("[ingest] demoted marks:", report.demotedMarks);
     logger.log("[ingest] skipped empty texts:", report.skippedEmptyTexts);
     logger.log("[ingest] lifted runs:", report.liftedRuns);
 }
@@ -989,6 +1054,7 @@ export function ingestDOM(
             skippedNodes: {},
             skippedHtmlAttrs: {},
             compositeMarks: {},
+            demotedMarks: {},
             unresolvedMarkRules: {},
             reproNodes: {},
             skippedEmptyTexts: 0,
@@ -1103,12 +1169,9 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
         rule: { kind: "atom", typeKey: "reproduce-as-inline" },
         context: "inline",
     },
-    // <bdi> is used for ISBN numbers in references of books
-    {
-        selector: "bdi",
-        rule: { kind: "atom", typeKey: "reproduce-as-inline" },
-        context: "inline",
-    },
+    // NOTE: <bdi> was atomized here before (evaporated the enclosing
+    // BookSources <a> mark — marks land on text only); it is an inline
+    // node now (see WIKIPEDIA_BLOCK_RULES).
     {
         selector: '[typeof="mw:Entity"]',
         rule: { kind: "atom", typeKey: "reproduce-as-inline" },
@@ -1222,6 +1285,15 @@ export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
     {
         selector: "cite",
         rule: { kind: "inline-node", typeKey: "generic-inline" },
+    },
+    // <bdi> (ISBN numbers in book citations): a bare inline node —
+    // bidi isolation comes from the browser's UA style; enclosing
+    // marks (the BookSources <a>) land on its text. Deliberately NOT
+    // an atom (verbatim reproduction evaporated the enclosing mark).
+    {
+        selector: "bdi",
+        rule: { kind: "inline-node", typeKey: "generic-inline" },
+        context: "inline",
     },
     {
         selector: ".mw-reference-text",
