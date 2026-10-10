@@ -38,6 +38,10 @@ export interface IngestionReport {
     // "tag.attr" -> count of policy-excluded (not collected) element
     // attrs — fed by blocks, marks, inline nodes and list items alike
     skippedHtmlAttrs: Record<string, number>;
+    // composite style name -> count of text runs that received a
+    // collapsed composite intent mark (nested combinable elements,
+    // see combineAs on mark/generic rules)
+    compositeMarks: Record<string, number>;
     // mark name -> count of `mark` rules that fell back to intent
     // because the schema does not define the named mark
     unresolvedMarkRules: Record<string, number>;
@@ -88,10 +92,20 @@ export type EmissionContext = "block" | "inline";
 // - split-item: inlineTypeKey without block-level children, else
 //   blockTypeKey with inline runs lifted into liftedRunWrapper
 //   nodes (e.g. li -> li-inline/li-block).
+// combineAs (mark/generic, optional): the element joins the nested-mark
+// collapse — when it is part of a chain of combinable elements (it has
+// a combinable descendant or sits inside one) it demotes to a bare
+// generic-inline node (source tag/attrs preserved, no mark) and its
+// combineAs style-name joins a per-descent composite stack; the text
+// at the bottom carries ONE composite generic-style mark (the sorted,
+// joined names, e.g. "italic link"), so runs stay style-link-exclusive
+// (one styleLinkProperties@ id per run) while the full element
+// structure is preserved and the composite style is composed in
+// (Composite)StylePatches.
 export type EmissionRule =
     | { kind: "block"; typeKey: string; inlineContent?: boolean }
-    | { kind: "mark"; name: string }
-    | { kind: "generic"; styleName: string }
+    | { kind: "mark"; name: string; combineAs?: string }
+    | { kind: "generic"; styleName: string; combineAs?: string }
     | { kind: "inline-node"; typeKey?: string }
     | { kind: "atom"; typeKey: string }
     | { kind: "raw" }
@@ -568,9 +582,10 @@ function ingestChildrenInto(
     out: any[],
     ctx: Ctx,
     inInline: boolean,
+    composite: readonly string[] = [],
 ): void {
     for (const child of Array.from(el.childNodes))
-        ingestNode(child, marks, out, ctx, inInline);
+        ingestNode(child, marks, out, ctx, inInline, composite);
 }
 
 // Ingest children of `el` as the content of a new container draft.
@@ -580,11 +595,40 @@ function fillContent(
     marks: MarkDesc[],
     ctx: Ctx,
     inInline: boolean,
+    composite: readonly string[] = [],
 ): void {
     const out: any[] = [];
-    ingestChildrenInto(el, marks, out, ctx, inInline);
+    ingestChildrenInto(el, marks, out, ctx, inInline, composite);
     const content = draft.get("content");
     for (const item of out) content.push(item);
+}
+
+// Lookahead for the nested-mark collapse (combineAs): does any
+// descendant element match a combinable mark/generic rule? Bounded
+// to inline descent — block, atom, raw, void, split-item and skip
+// rules are hard boundaries (their content is out of inline reach or
+// not descended into), catch-all atoms likewise.
+function hasCombinableDescendant(ctx: Ctx, el: Element): boolean {
+    for (const child of Array.from(el.children)) {
+        const childRule = findMatchingRule(ctx, child, true);
+        if (childRule === null) continue;
+        switch (childRule.kind) {
+            case "mark":
+            case "generic":
+                if (childRule.combineAs !== undefined) return true;
+                // a non-combinable mark still descends for its children
+                if (hasCombinableDescendant(ctx, child)) return true;
+                break;
+            case "inline-node":
+            case "transparent":
+                if (hasCombinableDescendant(ctx, child)) return true;
+                break;
+            default:
+                // hard boundary (see above)
+                break;
+        }
+    }
+    return false;
 }
 
 // Whether a child joins an inline run in block context (scoped
@@ -680,6 +724,7 @@ function ingestNode(
     out: any[],
     ctx: Ctx,
     inInline: boolean,
+    composite: readonly string[] = [],
 ): void {
     const { report } = ctx;
 
@@ -690,11 +735,27 @@ function ingestNode(
             report.skippedEmptyTexts++;
             return;
         }
-        count(report.markSets, markSetKey(marks));
+        // The composite stack of demoted combinable elements (see the
+        // mark/generic case): >=2 contributions collapse into ONE
+        // composite intent mark (canonical sorted-joined name), so the
+        // run stays style-link-exclusive by construction; a single
+        // contribution is the plain intent.
+        const emittedMarks = [...marks];
+        if (composite.length > 0) {
+            const styleName = [...new Set(composite)].sort().join(" ");
+            if (styleName.includes(" "))
+                count(report.compositeMarks, styleName);
+            emittedMarks.push({
+                kind: "style",
+                styleName,
+                htmlAttrs: "",
+            });
+        }
+        count(report.markSets, markSetKey(emittedMarks));
         const textDraft = newNodeDraft("text");
         textDraft.get("text").value = text;
         const marksList = textDraft.get("marks");
-        for (const m of marks)
+        for (const m of emittedMarks)
             marksList.push(
                 m.kind === "style"
                     ? newMarkDraft(
@@ -778,7 +839,8 @@ function ingestNode(
             // in block context the children need run-lifting too —
             // text directly in a transparent container must not leak
             // into block content unwrapped
-            if (inInline) ingestChildrenInto(el, marks, out, ctx, true);
+            if (inInline)
+                ingestChildrenInto(el, marks, out, ctx, true, composite);
             else fillBlockContent(out, el, ctx);
             return;
         case "skip":
@@ -806,6 +868,37 @@ function ingestNode(
         }
         case "mark":
         case "generic": {
+            // Nested-mark collapse (combineAs): an element that is part
+            // of a combinable chain — it has a combinable descendant or
+            // sits inside one (composite stack non-empty) — demotes to
+            // a bare generic-inline node: the source tag (htmlTag) and
+            // attrs (htmlAttrs bag, e.g. the link's href) are preserved,
+            // but no mark is pushed; its style-name contribution joins
+            // the composite stack instead. The text at the bottom
+            // receives ONE composite intent mark (see the TEXT_NODE
+            // branch), keeping runs style-link-exclusive while the full
+            // element structure survives.
+            const combineAs = rule.combineAs;
+            if (
+                combineAs !== undefined &&
+                (composite.length > 0 || hasCombinableDescendant(ctx, el))
+            ) {
+                count(report.inlineNodes, el.tagName);
+                const draft = newNodeDraft("generic-inline");
+                setHtmlAttrsBag(draft, el, ctx);
+                setHtmlTag(
+                    { kind: "inline-node", typeKey: "generic-inline" },
+                    draft,
+                    el,
+                    ctx,
+                );
+                fillContent(draft, el, marks, ctx, true, [
+                    ...composite,
+                    combineAs,
+                ]);
+                out.push(draft.metamorphose());
+                return;
+            }
             // No node: push a MarkDesc and descend. Schema-declared
             // attrs are harvested for "mark" emissions; a "mark" rule
             // naming a mark the schema does not define falls back to
@@ -839,7 +932,14 @@ function ingestNode(
                     htmlAttrs,
                 };
             countSkippedHtmlAttrs(ctx, el);
-            ingestChildrenInto(el, [...marks, markDesc], out, ctx, inInline);
+            ingestChildrenInto(
+                el,
+                [...marks, markDesc],
+                out,
+                ctx,
+                inInline,
+                composite,
+            );
             return;
         }
         case "void":
@@ -852,7 +952,7 @@ function ingestNode(
             );
             setHtmlAttrsBag(draft, el, ctx);
             setHtmlTag(rule, draft, el, ctx);
-            fillContent(draft, el, marks, ctx, true);
+            fillContent(draft, el, marks, ctx, true, composite);
             out.push(draft.metamorphose());
             return;
         }
@@ -869,6 +969,7 @@ function logReport(logger: IngestLogger, report: IngestionReport): void {
     logger.log("[ingest] skipped nodes:", report.skippedNodes);
     logger.log("[ingest] skipped html attrs:", report.skippedHtmlAttrs);
     logger.log("[ingest] unresolved mark rules:", report.unresolvedMarkRules);
+    logger.log("[ingest] composite marks:", report.compositeMarks);
     logger.log("[ingest] skipped empty texts:", report.skippedEmptyTexts);
     logger.log("[ingest] lifted runs:", report.liftedRuns);
 }
@@ -887,6 +988,7 @@ export function ingestDOM(
             rawAtoms: {},
             skippedNodes: {},
             skippedHtmlAttrs: {},
+            compositeMarks: {},
             unresolvedMarkRules: {},
             reproNodes: {},
             skippedEmptyTexts: 0,
@@ -1125,17 +1227,34 @@ export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
 
 // Mark emission. First fitting match wins, so these precede the
 // generic styles in HTML_PHRASING_RULES for the same tags.
+// combineAs: these are the combinable elements — nested combinations
+// (e.g. <em><a>, <strong><em>) collapse into ONE composite intent
+// mark on the text (the sorted-joined style names: "bold italic",
+// "italic link", "bold italic link") while the elements demote to
+// bare generic-inline nodes (full structure preserved, tags/attrs
+// intact). Standalone elements keep their mark emission. The
+// composite styles are composed in (Composite)StylePatches; runs
+// stay style-link-exclusive (the composition contract).
 export const WIKIPEDIA_MARK_RULES: readonly EmissionRuleEntry[] = [
     // <b> and <strong> become the schema-defined "strong" mark (the
     // document "carries around" strong already; note <b> is NOT the
     // schema tag, so schema derivation alone would not cover it).
-    { selector: "b, strong", rule: { kind: "mark", name: "strong" } },
+    {
+        selector: "b, strong",
+        rule: { kind: "mark", name: "strong", combineAs: "bold" },
+    },
     // There is no schema mark for <i>/<em>: they become
     // generic-style intent with the style name "italic".
-    { selector: "i, em", rule: { kind: "generic", styleName: "italic" } },
+    {
+        selector: "i, em",
+        rule: { kind: "generic", styleName: "italic", combineAs: "italic" },
+    },
     // <a> becomes the schema-defined "link" mark (equivalent to what
     // markRulesFromSchema would derive; explicit for completeness).
-    { selector: "a", rule: { kind: "mark", name: "link" } },
+    {
+        selector: "a",
+        rule: { kind: "mark", name: "link", combineAs: "link" },
+    },
 ];
 
 // Generic HTML phrasing content — not Wikipedia-specific. Inline
