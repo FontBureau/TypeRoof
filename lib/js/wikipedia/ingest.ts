@@ -1114,6 +1114,14 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
         rule: { kind: "atom", typeKey: "reproduce-as-inline" },
         context: "inline",
     },
+    // COinS metadata span (Z39.88 ContextObject) inside citations:
+    // empty element, its bibliographic data lives in the title attr;
+    // kept verbatim.
+    {
+        selector: ".Z3988",
+        rule: { kind: "atom", typeKey: "reproduce-as-inline" },
+        context: "inline",
+    },
     {
         selector: ".side-box-image",
         rule: { kind: "atom", typeKey: "reproduce-as-block" },
