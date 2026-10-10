@@ -147,6 +147,13 @@
                     "stylePatch": "bold",
                     "mode": "link"
                 }
+            ],
+            [
+                "link",
+                {
+                    "stylePatch": "link",
+                    "mode": "link"
+                }
             ]
         ]
     },
@@ -201,7 +208,7 @@
                         "instance": {
                             "L": "60.00000",
                             "C": "46.00000",
-                            "H": "0.6200000",
+                            "H": "183.00000",
                             "alpha": "100.00000"
                         },
                         "colorTypeKey": "OKLCH"
