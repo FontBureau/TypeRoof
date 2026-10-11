@@ -111,6 +111,46 @@
                     },
                     "label": "Generic"
                 }
+            ],
+            [
+                "section",
+                {
+                    "horizontalLayout": {
+                        "instance": {
+                            "minLineLength": "40",
+                            "minPadding": "5",
+                            "columnGutter": {
+                                "instance": {
+                                    "a": {
+                                        "columnWidth": "65",
+                                        "gutter": "3"
+                                    },
+                                    "b": {
+                                        "columnWidth": "45",
+                                        "gutter": "2"
+                                    },
+                                    "minGutter": "1.5",
+                                    "maxGutter": "3.5"
+                                },
+                                "columnGutterAlgorithmTypeKey": "linear"
+                            },
+                            "paddingRatioStart": "60.00000",
+                            "growColumns": {
+                                "mode": "false"
+                            },
+                            "columns": ["65"]
+                        },
+                        "horizontalLayoutAlgorithmTypeKey": "HorizontalLayoutRunionModel"
+                    },
+                    "label": "Section"
+                }
+            ],
+            [
+                "sub-section",
+                {
+                    "noStyler": "1",
+                    "label": "Sub-Section"
+                }
             ]
         ],
         "label": "",
@@ -223,6 +263,27 @@
         "nodes": [
             [
                 "section",
+                {
+                    "content": "block*",
+                    "group": "block",
+                    "tag": "section",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "sub-section",
                 {
                     "content": "block*",
                     "group": "block",
@@ -890,6 +951,20 @@
             "generic-block",
             {
                 "link": "/generic",
+                "label": ""
+            }
+        ],
+        [
+            "section",
+            {
+                "link": "/section",
+                "label": ""
+            }
+        ],
+        [
+            "sub-section",
+            {
+                "link": "/sub-section",
                 "label": ""
             }
         ]
