@@ -356,6 +356,24 @@
             }
         ],
         [
+            "serif",
+            {
+                "instance": {
+                    "activeFontKey": "from-url AmstelvarA2 Roman wght400 Version_0-001"
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "serif italic",
+            {
+                "instance": {
+                    "activeFontKey": "from-url AmstelvarA2 Italic wght400 Version_0-001"
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
             "lang-la",
             {
                 "instance": {
