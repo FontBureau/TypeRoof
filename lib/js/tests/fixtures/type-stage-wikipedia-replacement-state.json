@@ -172,20 +172,51 @@
                     "mode": "link",
                     "tag": "strong"
                 }
-            ]
-        ],
-        "markStyleLinks": [
-            [
-                "strong",
-                {
-                    "stylePatch": "bold",
-                    "mode": "link"
-                }
             ],
             [
                 "link",
                 {
                     "stylePatch": "link",
+                    "mode": "link",
+                    "tag": "a"
+                }
+            ],
+            [
+                "italic link",
+                {
+                    "stylePatch": "italic link",
+                    "mode": "link",
+                    "tag": ""
+                }
+            ],
+            [
+                "bold italic link",
+                {
+                    "stylePatch": "bold italic link",
+                    "mode": "link",
+                    "tag": ""
+                }
+            ]
+        ],
+        "markStyleLinks": [
+            [
+                "tag-em",
+                {
+                    "stylePatch": "",
+                    "mode": "link"
+                }
+            ],
+            [
+                "tag-strong",
+                {
+                    "stylePatch": "",
+                    "mode": "link"
+                }
+            ],
+            [
+                "tag-a",
+                {
+                    "stylePatch": "",
                     "mode": "link"
                 }
             ]
@@ -249,6 +280,24 @@
                     }
                 },
                 "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "italic link",
+            {
+                "instance": {
+                    "styles": ["italic", "link"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "bold italic link",
+            {
+                "instance": {
+                    "styles": ["bold", "italic", "link"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
             }
         ]
     ],
@@ -851,13 +900,19 @@
         ],
         "marks": [
             [
-                "strong",
+                "tag-strong",
                 {
                     "tag": "strong"
                 }
             ],
             [
-                "link",
+                "tag-em",
+                {
+                    "tag": "em"
+                }
+            ],
+            [
+                "tag-a",
                 {
                     "attrs": [
                         [
@@ -949,6 +1004,13 @@
             }
         ],
         [
+            "section",
+            {
+                "link": "/section",
+                "label": ""
+            }
+        ],
+        [
             "sub-section",
             {
                 "link": "/sub-section",
@@ -964,15 +1026,6 @@
                 "content": [
                     {
                         "typeKey": "heading-2",
-                        "attrs": [
-                            [
-                                "htmlAttrs",
-                                {
-                                    "type": "string",
-                                    "string": "[[\"id\",\"Replacement\"]]"
-                                }
-                            ]
-                        ],
                         "content": [
                             {
                                 "typeKey": "text",
@@ -991,20 +1044,27 @@
                                 "typeKey": "text",
                                 "marks": [
                                     {
-                                        "typeKey": "link",
+                                        "typeKey": "generic-style",
                                         "attrs": [
                                             [
-                                                "href",
+                                                "data-style-name",
                                                 {
                                                     "type": "string",
-                                                    "string": "./X"
+                                                    "string": "link"
+                                                }
+                                            ],
+                                            [
+                                                "htmlTag",
+                                                {
+                                                    "type": "string",
+                                                    "string": "a"
                                                 }
                                             ],
                                             [
                                                 "htmlAttrs",
                                                 {
                                                     "type": "string",
-                                                    "string": "[[\"rel\",\"mw:WikiLink\"],[\"href\",\"./X\"]]"
+                                                    "string": "[[\"href\",\"./X\"]]"
                                                 }
                                             ]
                                         ]
