@@ -178,6 +178,30 @@
                     "mode": "link",
                     "tag": "strong"
                 }
+            ],
+            [
+                "link",
+                {
+                    "stylePatch": "link",
+                    "mode": "link",
+                    "tag": "a"
+                }
+            ],
+            [
+                "italic link",
+                {
+                    "stylePatch": "italic link",
+                    "mode": "link",
+                    "tag": ""
+                }
+            ],
+            [
+                "bold italic link",
+                {
+                    "stylePatch": "bold italic link",
+                    "mode": "link",
+                    "tag": ""
+                }
             ]
         ],
         "markStyleLinks": [
@@ -255,6 +279,24 @@
                     }
                 },
                 "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "italic link",
+            {
+                "instance": {
+                    "styles": ["italic", "link"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "bold italic link",
+            {
+                "instance": {
+                    "styles": ["bold", "italic", "link"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
             }
         ]
     ],
@@ -864,6 +906,44 @@
             ],
             [
                 "link",
+                {
+                    "attrs": [
+                        [
+                            "href",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ],
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "tag": "a"
+                }
+            ],
+            [
+                "tag-strong",
+                {
+                    "tag": "strong"
+                }
+            ],
+            [
+                "tag-em",
+                {
+                    "tag": "em"
+                }
+            ],
+            [
+                "tag-a",
                 {
                     "attrs": [
                         [
