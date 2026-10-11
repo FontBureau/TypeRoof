@@ -281,6 +281,14 @@ export interface IngestionOptions {
     // raw_html_inline). Empty/omitted: everything is caught (the
     // empty-engine contract).
     emissionRules?: EmissionRuleEntry[];
+    // Rule table for mark/generic DEMOTIONS (a combinable element of a
+    // nested chain, or a mark element with no markable text below):
+    // the first matching inline-node rule decides the emitted node —
+    // selector-matched by the element, like emissionRules, so the
+    // demotion outcome is configuration, not engine policy. Default
+    // (no table/no match): a bare inline node with the tag-derived
+    // typeKey (-> reserved unknown_inline via sync).
+    demotionRules?: readonly EmissionRuleEntry[];
     // typeKey wrapping inline runs where blocks are required: stray
     // text in block context and the inline runs inside a split-item's
     // block variant. Default "paragraph".
@@ -514,6 +522,8 @@ interface Ctx {
     report: IngestionReport;
     // the one ordered emission table (options.emissionRules verbatim)
     rules: readonly EmissionRuleEntry[];
+    // demotion table for mark/generic elements (options.demotionRules)
+    demotionRules: readonly EmissionRuleEntry[];
     schemaMarkAttrs: Readonly<Record<string, string[]>>;
     schemaNodeAttrs: Readonly<Record<string, ReadonlySet<string>>>;
     // null without a schema (block rules use their inlineContent flag)
@@ -667,27 +677,40 @@ function hasMarkableTextDescendant(ctx: Ctx, el: Element): boolean {
     return false;
 }
 
-// Shared demotion emission of the mark/generic case: a bare
-// generic-inline node (source tag via htmlTag, attrs via the
+// Pick the demotion rule for el: the first matching inline-node rule
+// of the demotion table wins (selector-matched, inline context);
+// inline-node is the only fitting demotion outcome. The neutral
+// default reproduces the source tag as the typeKey (-> reserved
+// unknown_inline via sync).
+function findDemotionRule(
+    ctx: Ctx,
+    el: Element,
+): Extract<EmissionRule, { kind: "inline-node" }> {
+    for (const entry of ctx.demotionRules) {
+        if (!ruleFitsContext(entry, true)) continue;
+        if (entry.rule.kind !== "inline-node") continue;
+        if (el.matches(entry.selector)) return entry.rule;
+    }
+    return { kind: "inline-node" };
+}
+
+// Shared demotion emission of the mark/generic case: a bare inline
+// node per the demotion table (source tag via htmlTag, attrs via the
 // htmlAttrs bag — e.g. the link's href survives as structure);
 // children are ingested inline with the current marks and composite
 // stack.
-function emitDemotedGenericInline(
+function emitDemotedInline(
     el: Element,
     marks: MarkDesc[],
     out: any[],
     ctx: Ctx,
     composite: readonly string[],
 ): void {
+    const rule = findDemotionRule(ctx, el);
     count(ctx.report.inlineNodes, el.tagName);
-    const draft = newNodeDraft("generic-inline");
+    const draft = newNodeDraft(rule.typeKey ?? el.tagName.toLowerCase());
     setHtmlAttrsBag(draft, el, ctx);
-    setHtmlTag(
-        { kind: "inline-node", typeKey: "generic-inline" },
-        draft,
-        el,
-        ctx,
-    );
+    setHtmlTag(rule, draft, el, ctx);
     fillContent(draft, el, marks, ctx, true, composite);
     out.push(draft.metamorphose());
 }
@@ -944,7 +967,7 @@ function ingestNode(
                 combineAs !== undefined &&
                 (composite.length > 0 || hasCombinableDescendant(ctx, el))
             ) {
-                emitDemotedGenericInline(el, marks, out, ctx, [
+                emitDemotedInline(el, marks, out, ctx, [
                     ...composite,
                     combineAs,
                 ]);
@@ -960,7 +983,7 @@ function ingestNode(
                     report.demotedMarks,
                     rule.kind === "mark" ? rule.name : rule.styleName,
                 );
-                emitDemotedGenericInline(el, marks, out, ctx, composite);
+                emitDemotedInline(el, marks, out, ctx, composite);
                 return;
             }
             // No node: push a MarkDesc and descend. Schema-declared
@@ -1061,6 +1084,7 @@ export function ingestDOM(
             liftedRuns: 0,
         },
         rules: options.emissionRules ?? [],
+        demotionRules: options.demotionRules ?? [],
         schemaMarkAttrs: facts.schemaMarkAttrs,
         schemaNodeAttrs: facts.schemaNodeAttrs,
         inlineContentNodes: facts.inlineContentNodes,
@@ -1309,6 +1333,17 @@ export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
     },
 ];
 
+// Demotion outcomes for mark/generic elements that must not emit a
+// mark (combinable elements of a nested chain — combineAs — or mark
+// elements with no markable text below): the first matching
+// inline-node rule decides the emitted node, the source tag and attrs
+// are preserved (htmlTag/htmlAttrs bag). Declared next to the other
+// Wikipedia tables and propagated via options.demotionRules — the
+// engine stays agnostic (its default is a tag-derived inline node).
+export const WIKIPEDIA_DEMOTE_RULES: readonly EmissionRuleEntry[] = [
+    { selector: "*", rule: { kind: "inline-node", typeKey: "generic-inline" } },
+];
+
 // Mark emission. First fitting match wins, so these precede the
 // generic styles in HTML_PHRASING_RULES for the same tags.
 // combineAs: these are the combinable elements — nested combinations
@@ -1433,6 +1468,10 @@ export function ingestWikipediaDocument(
         ],
 
         attrPolicy: WIKIPEDIA_ATTR_POLICY,
+
+        // Demotion outcomes for mark/generic elements (combinable
+        // chains, textless marks) — see WIKIPEDIA_DEMOTE_RULES.
+        demotionRules: WIKIPEDIA_DEMOTE_RULES,
 
         // Inline runs that need a block wrapper (stray text, li-block
         // runs) become paragraphs.
