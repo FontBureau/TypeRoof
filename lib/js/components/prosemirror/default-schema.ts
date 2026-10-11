@@ -197,9 +197,23 @@ import {
 
 export const marks = {
     "generic-style": {
-        excludes: "_",
+        // Style-resolving marks are mutually exclusive on a text run
+        // (the composition contract: one styleLinkProperties@ id per
+        // run). "style" groups them: any mark in the group excludes
+        // every other member. Non-style (structure) marks join no
+        // group and coexist freely with exactly one style mark.
+        // Replaces the former `excludes: "_"` (excludes ALL marks),
+        // which would evict structure marks in PM edits.
+        group: "style",
+        excludes: "style",
         attrs: {
             "data-style-name": { default: "", validate: "string" },
+            // the source element's tag (the ingest funnel: the
+            // innermost combinable element's tag rides here), so the
+            // intent can reproduce real-world HTML semantics. Empty
+            // for PM/menu-created intents — then the intentStyleLinks
+            // edge tag answers (the fallback), else "span".
+            htmlTag: { default: "", validate: "string" },
             // editable-element attr replay: the collected
             // attributes bag (guarded JSON string)
             htmlAttrs: { default: "", validate: "string" },
@@ -215,6 +229,8 @@ export const marks = {
                 getAttrs(dom: HTMLElement) {
                     return {
                         "data-style-name": dom.getAttribute("data-style-name"),
+                        // reproduce the source tag: the element itself
+                        htmlTag: dom.tagName.toLowerCase(),
                         // collect foreign attributes into the bag (the
                         // guard excludes data-style-name itself)
                         // collect foreign attributes into the bag
@@ -230,7 +246,10 @@ export const marks = {
         ],
         toDOM(node) {
             return [
-                "span",
+                // the funneled source tag (empty: PM/menu-created
+                // intent — the edge tag answered at render time;
+                // without one, neutral "span")
+                node.attrs.htmlTag || "span",
                 // replay the collected attributes bag (guarded)
                 Object.assign(
                     { "data-style-name": node.attrs["data-style-name"] },
