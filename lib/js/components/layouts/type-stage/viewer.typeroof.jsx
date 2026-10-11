@@ -936,7 +936,11 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
                 markElement = this._domTool.createElement(tag);
             if (htmlAttributesBag)
                 applyHtmlAttrsBag(markElement, htmlAttributesBag);
-            if (styleLinkName)
+            // data-style-name IS the intent identity (the generic-style
+            // round-trip key, parse priority 60). Structure marks carry
+            // no style link — their wrapper stays bare (data-style-name
+            // on it would re-parse as a bogus intent).
+            if (styleLinkName && markType === "generic-style")
                 markElement.setAttribute("data-style-name", styleLinkName);
             if (markType) markElement.setAttribute("data-mark-type", markType);
             if (current) markElement.append(current);

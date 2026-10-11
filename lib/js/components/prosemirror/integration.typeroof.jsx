@@ -566,6 +566,10 @@ export class ProsemirrorMarkView {
 
     _getTag(mark) {
         const fallback = "span";
+        // generic-style: the funneled source tag (ingest) is more
+        // specific than any spec — it reproduces the parsed source.
+        if (mark.type.name === "generic-style" && mark.attrs.htmlTag)
+            return mark.attrs.htmlTag;
         const mmSchema = this.widgetBus.getLinked(mark.type.schema);
         if (!mmSchema) return fallback;
         const mmMarks = mmSchema.get("marks");
