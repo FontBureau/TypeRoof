@@ -206,16 +206,23 @@
         ],
         "markStyleLinks": [
             [
-                "strong",
+                "tag-em",
                 {
-                    "stylePatch": "bold",
+                    "stylePatch": "",
                     "mode": "link"
                 }
             ],
             [
-                "link",
+                "tag-strong",
                 {
-                    "stylePatch": "link",
+                    "stylePatch": "",
+                    "mode": "link"
+                }
+            ],
+            [
+                "tag-a",
+                {
+                    "stylePatch": "",
                     "mode": "link"
                 }
             ]
@@ -898,38 +905,6 @@
             ]
         ],
         "marks": [
-            [
-                "strong",
-                {
-                    "tag": "strong"
-                }
-            ],
-            [
-                "link",
-                {
-                    "attrs": [
-                        [
-                            "href",
-                            {
-                                "default": "",
-                                "validate": {
-                                    "type": "string"
-                                }
-                            }
-                        ],
-                        [
-                            "htmlAttrs",
-                            {
-                                "default": "",
-                                "validate": {
-                                    "type": "string"
-                                }
-                            }
-                        ]
-                    ],
-                    "tag": "a"
-                }
-            ],
             [
                 "tag-strong",
                 {
