@@ -1179,23 +1179,23 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
     // Intents resolve from intentStyleLinks (by data-style-name), schema
     // marks from markStyleLinks (by mark type name); the field name is
     // required to build the styleLinkProperties@ id path.
+    // An edge with an EMPTY stylePatch is a declaration, not a style
+    // (symmetric with getWrapMarks): null — the unknown-style fallback
+    // applies, no styler writes properties onto the mark wrapper
+    // (the UA default styling of semantic tags survives).
     _getStylePatchLinkForMark(typeSpecProperties, mark) {
-        const styleName = mark.attrs["data-style-name"];
-        if (styleName !== undefined) {
-            const key = getStylePatchLinkForIntent(
-                this._getEffectiveStyleLinks(
-                    typeSpecProperties,
-                    INTENT_STYLE_LINKS,
-                ),
-                styleName,
-            );
-            return key === null ? null : ["intentStyleLinks", key];
-        }
-        const key = getStylePatchLinkForMark(
-            this._getEffectiveStyleLinks(typeSpecProperties, MARK_STYLE_LINKS),
-            mark,
-        );
-        return key === null ? null : ["markStyleLinks", key];
+        const styleName = mark.attrs["data-style-name"],
+            isIntent = styleName !== undefined,
+            links = this._getEffectiveStyleLinks(
+                typeSpecProperties,
+                isIntent ? INTENT_STYLE_LINKS : MARK_STYLE_LINKS,
+            ),
+            key = isIntent
+                ? getStylePatchLinkForIntent(links, styleName)
+                : getStylePatchLinkForMark(links, mark);
+        if (key === null) return null;
+        if (links.get(key).get("stylePatch").value === "") return null;
+        return [isIntent ? "intentStyleLinks" : "markStyleLinks", key];
     }
 
     // The tag an intent mark is bound to via the applicable
@@ -1282,16 +1282,59 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         parentSubscription.styles.delete(domElement);
     }
 
-    _finalizeMarkSubscription(domElement, mark) {
-        const parentSubscription = this._subscribers.get(
-                domElement.parentElement,
+    // The nearest subscribed ancestor's subscription, or null. Marks
+    // render as NESTED elements (chain elements stack marks since the
+    // structure-marks design): an inner mark's parent element is
+    // another MARK element, not a subscribed node element — walk up
+    // to the nearest node subscription for the styling context.
+    _getParentSubscription(domElement) {
+        let parent = domElement.parentElement;
+        while (parent !== null) {
+            const subscription = this._subscribers.get(parent);
+            if (subscription !== undefined) return subscription;
+            parent = parent.parentElement;
+        }
+        return null;
+    }
+
+    // true when the mark's style link is a DECLARATION: an edge with
+    // an EMPTY stylePatch (management-surface entry, see the state's
+    // markStyleLinks on the tag-* marks). Declarations are not
+    // styles: no styler at all — the viewer skips them too (the
+    // unknown-style marker is reserved for marks with NO edge).
+    _hasStyleLinkDeclaration(typeSpecProperties, mark) {
+        const styleName = mark.attrs["data-style-name"],
+            isIntent = styleName !== undefined,
+            links = this._getEffectiveStyleLinks(
+                typeSpecProperties,
+                isIntent ? INTENT_STYLE_LINKS : MARK_STYLE_LINKS,
             ),
-            styleLinkPropertiesId = this._getStyleLinkPropertiesId(
-                parentSubscription.typeSpecProperties,
-                this._getStylePatchLinkForMark(
-                    parentSubscription.typeSpecProperties,
-                    mark,
-                ),
+            key = isIntent ? styleName : mark.type.name;
+        return links.has(key) && links.get(key).get("stylePatch").value === "";
+    }
+
+    // true when the subscription was finalized; false: the element is
+    // not attached to a subscribed ancestor yet — keep it pending,
+    // the sweeps finalize on attach.
+    _finalizeMarkSubscription(domElement, mark) {
+        const parentSubscription = this._getParentSubscription(domElement);
+        if (parentSubscription === null) return false;
+        const typeSpecProperties = parentSubscription.typeSpecProperties,
+            styleLinkEntry = this._getStylePatchLinkForMark(
+                typeSpecProperties,
+                mark,
+            );
+        if (
+            styleLinkEntry === null &&
+            this._hasStyleLinkDeclaration(typeSpecProperties, mark)
+        )
+            // a declaration is finalized with nothing to do: no
+            // styler, no unknown-style class (symmetric with the
+            // viewer's styleLinkName-null skip)
+            return true;
+        const styleLinkPropertiesId = this._getStyleLinkPropertiesId(
+                typeSpecProperties,
+                styleLinkEntry,
             ),
             styleSubscription = this._createStyleSubscription(
                 domElement,
@@ -1307,6 +1350,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         this._updateDOM(() =>
             this._activateWidget(styleSubscription.widgetWrapper),
         );
+        return true;
     }
 
     // ProseMirror creates mark views context-free: the tag binding
@@ -1453,19 +1497,14 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             for (const node of mutationRecord.addedNodes) {
                 if (this._newlySubscribedMarks.has(node)) {
                     const mark = this._newlySubscribedMarks.get(node);
-                    this._newlySubscribedMarks.delete(node);
-                    this._finalizeMarkSubscription(node, mark);
+                    if (this._finalizeMarkSubscription(node, mark))
+                        this._newlySubscribedMarks.delete(node);
                 }
             }
         }
-        for (const [node, mark] of this._newlySubscribedMarks) {
-            if (
-                node.parentElement &&
-                this._subscribers.has(node.parentElement)
-            ) {
+        for (const [node, mark] of Array.from(this._newlySubscribedMarks)) {
+            if (this._finalizeMarkSubscription(node, mark))
                 this._newlySubscribedMarks.delete(node);
-                this._finalizeMarkSubscription(node, mark);
-            }
         }
         if (this._newlySubscribedMarks.size === 0)
             this._marksDomObserver.disconnect();
