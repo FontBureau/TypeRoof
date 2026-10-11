@@ -202,6 +202,55 @@
                     "mode": "link",
                     "tag": ""
                 }
+            ],
+            [
+                "link span",
+                {
+                    "stylePatch": "link",
+                    "mode": "link"
+                }
+            ],
+            [
+                "span",
+                {
+                    "stylePatch": "",
+                    "mode": "link"
+                }
+            ],
+            [
+                "italic link span",
+                {
+                    "stylePatch": "italic link",
+                    "mode": "link"
+                }
+            ],
+            [
+                "serif",
+                {
+                    "stylePatch": "serif",
+                    "mode": "link"
+                }
+            ],
+            [
+                "italic link serif",
+                {
+                    "stylePatch": "serif italic",
+                    "mode": "link"
+                }
+            ],
+            [
+                "italic-lang-el-latn span",
+                {
+                    "stylePatch": "italic lang el-Latn",
+                    "mode": "link"
+                }
+            ],
+            [
+                "italic-lang-la span",
+                {
+                    "stylePatch": "italic lang-la",
+                    "mode": "link"
+                }
             ]
         ],
         "markStyleLinks": [
@@ -302,6 +351,48 @@
             {
                 "instance": {
                     "styles": ["bold", "italic", "link"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "lang-la",
+            {
+                "instance": {
+                    "languageTag": {
+                        "language": "la",
+                        "script": "Latn"
+                    }
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "italic lang-la",
+            {
+                "instance": {
+                    "styles": ["italic", "lang-la"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "lang-el-Latn",
+            {
+                "instance": {
+                    "languageTag": {
+                        "language": "el",
+                        "script": "Latn"
+                    }
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "italic lang el-Latn",
+            {
+                "instance": {
+                    "styles": ["italic", "lang-el-Latn"]
                 },
                 "stylePatchTypeKey": "CompositeStylePatch"
             }

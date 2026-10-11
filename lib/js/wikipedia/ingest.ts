@@ -1409,12 +1409,32 @@ export const WIKIPEDIA_MARK_RULES: readonly EmissionRuleEntry[] = [
         rule: { kind: "mark", name: "tag-strong", combineAs: "bold" },
     },
     {
+        selector: "i[lang='la']",
+        rule: { kind: "mark", name: "tag-em", combineAs: "italic-lang-la" },
+    },
+    {
+        selector: "i[lang='el-Latn']",
+        rule: {
+            kind: "mark",
+            name: "tag-em",
+            combineAs: "italic-lang-el-latn",
+        },
+    },
+    {
         selector: "i, em",
         rule: { kind: "mark", name: "tag-em", combineAs: "italic" },
     },
     {
         selector: "a",
         rule: { kind: "mark", name: "tag-a", combineAs: "link" },
+    },
+    {
+        selector: "span[style*='font-family:serif']",
+        rule: { kind: "mark", name: "tag-serif", combineAs: "serif" },
+    },
+    {
+        selector: "span",
+        rule: { kind: "mark", name: "tag-span", combineAs: "span" },
     },
 ];
 
