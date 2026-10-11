@@ -536,6 +536,10 @@ export class ProsemirrorMarkView {
         if (attrNames === null)
             attrNames = Object.keys(mark.type.spec.attrs ?? {});
         for (const attrName of attrNames) {
+            // htmlAttrs is the BAG: replayed as individual attributes
+            // (see _applyHtmlAttrsBag in constructor/update), never a
+            // literal attribute on the element
+            if (attrName === "htmlAttrs") continue;
             const value = mark.attrs[attrName];
             if (value === undefined || value === null)
                 this.dom.removeAttribute(attrName);
