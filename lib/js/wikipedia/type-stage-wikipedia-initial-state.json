@@ -234,7 +234,7 @@
             [
                 "italic link serif",
                 {
-                    "stylePatch": "serif italic",
+                    "stylePatch": "serif italic link",
                     "mode": "link"
                 }
             ],
@@ -411,6 +411,15 @@
             {
                 "instance": {
                     "styles": ["italic", "lang-el-Latn"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "serif italic link",
+            {
+                "instance": {
+                    "styles": ["link", "serif italic"]
                 },
                 "stylePatchTypeKey": "CompositeStylePatch"
             }
