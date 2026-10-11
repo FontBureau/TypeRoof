@@ -14,7 +14,7 @@ import {
     BooleanModel,
     BooleanDefaultTrueModel,
     CoherenceFunction,
-    deserializeSync,
+    deserializeGen,
     SERIALIZE_OPTIONS,
     SERIALIZE_FORMAT_OBJECT,
     InternalizedDependency,
@@ -92,7 +92,7 @@ export function initTypeSpecCoherenceFn(DEFAULT_STATE) {
             "proseMirrorSchema",
             "nodeSpecToTypeSpec",
         ],
-        function initTypeSpec({
+        function* initTypeSpec({
             typeSpec,
             document,
             stylePatchesSource,
@@ -131,7 +131,16 @@ export function initTypeSpecCoherenceFn(DEFAULT_STATE) {
                                 format: SERIALIZE_FORMAT_OBJECT,
                             },
                         ),
-                        newItem = deserializeSync(
+                        // Generator, NOT deserializeSync: the seeded
+                        // state may reference resources (e.g. a style
+                        // patch's activeFontKey -> installedFonts). As a
+                        // coherence generator the requirements forward
+                        // to the outer metamorphose drive: the async
+                        // resolver installs fonts on demand (the
+                        // __asyncMetamorphoseState boot contract), the
+                        // sync driver keeps failing deliberately (a
+                        // sync context cannot resolve resources).
+                        newItem = yield* deserializeGen(
                             Model,
                             target.dependencies,
                             data,
