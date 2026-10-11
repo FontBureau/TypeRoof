@@ -1213,6 +1213,10 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
 // inlineContent flags are the no-schema fallback; the state schema's
 // content expressions win for the typeKeys they declare.
 export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
+    {
+        selector: "section section",
+        rule: { kind: "block", typeKey: "sub-section" },
+    },
     { selector: "section", rule: { kind: "block", typeKey: "section" } },
     { selector: "blockquote", rule: { kind: "block", typeKey: "blockquote" } },
     {
