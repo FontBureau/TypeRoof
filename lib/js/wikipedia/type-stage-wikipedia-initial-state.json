@@ -251,6 +251,27 @@
                     "stylePatch": "italic lang-la",
                     "mode": "link"
                 }
+            ],
+            [
+                "link span sup",
+                {
+                    "stylePatch": "sup link",
+                    "mode": "link"
+                }
+            ],
+            [
+                "italic link span sup",
+                {
+                    "stylePatch": "italic sup link",
+                    "mode": "link"
+                }
+            ],
+            [
+                "span sup",
+                {
+                    "stylePatch": "sup",
+                    "mode": "link"
+                }
             ]
         ],
         "markStyleLinks": [
@@ -270,6 +291,13 @@
             ],
             [
                 "tag-a",
+                {
+                    "stylePatch": "",
+                    "mode": "link"
+                }
+            ],
+            [
+                "tag-sup",
                 {
                     "stylePatch": "",
                     "mode": "link"
@@ -420,6 +448,33 @@
             {
                 "instance": {
                     "styles": ["link", "serif italic"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "sup",
+            {
+                "instance": {
+                    "relativeFontSize": "0.7"
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "italic sup link",
+            {
+                "instance": {
+                    "styles": ["italic", "sup link"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "sup link",
+            {
+                "instance": {
+                    "styles": ["link", "sup"]
                 },
                 "stylePatchTypeKey": "CompositeStylePatch"
             }
@@ -1060,6 +1115,12 @@
                     ],
                     "tag": "a"
                 }
+            ],
+            [
+                "tag-sup",
+                {
+                    "tag": "sup"
+                }
             ]
         ]
     },
@@ -1139,6 +1200,27 @@
             {
                 "link": "/sub-section",
                 "label": ""
+            }
+        ],
+        [
+            "link span sup",
+            {
+                "stylePatch": "sup link",
+                "mode": "link"
+            }
+        ],
+        [
+            "italic link span sup",
+            {
+                "stylePatch": "italic sup link",
+                "mode": "link"
+            }
+        ],
+        [
+            "span sup",
+            {
+                "stylePatch": "sup",
+                "mode": "link"
             }
         ]
     ],

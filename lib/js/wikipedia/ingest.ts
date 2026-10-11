@@ -1206,16 +1206,17 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
     // rules (-> inline node). Inline-only: a citation stray in block
     // context degrades to the raw_html_block catch-all instead of
     // crashing PM's block* content.
-    {
-        selector: "sup.reference",
-        rule: { kind: "atom", typeKey: "cite-link" },
-        context: "inline",
-    },
-    {
-        selector: "sup:not(.reference)",
-        rule: { kind: "atom", typeKey: "reproduce-as-inline" },
-        context: "inline",
-    },
+    // {
+    //     selector: "sup.reference",
+    //     rule: { kind: "atom", typeKey: "cite-link" },
+    //     context: "inline",
+    // },
+    // {
+    //     selector: "sup:not(.reference)",
+    //     rule: { kind: "atom", typeKey: "reproduce-as-inline" },
+    //     context: "inline",
+    // },
+
     // figure content (thumb <a><img></a>, bare <img>, <pre>, ...):
     // reproduced verbatim; the spec declares htmlTag, so the source
     // tag survives round-trips.
@@ -1435,6 +1436,10 @@ export const WIKIPEDIA_MARK_RULES: readonly EmissionRuleEntry[] = [
     {
         selector: "span",
         rule: { kind: "mark", name: "tag-span", combineAs: "span" },
+    },
+    {
+        selector: "sup",
+        rule: { kind: "mark", name: "tag-sup", combineAs: "sup" },
     },
 ];
 
