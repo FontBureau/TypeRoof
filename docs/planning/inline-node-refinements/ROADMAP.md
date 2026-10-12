@@ -12,7 +12,7 @@ agent-created: true
 
 > **Status:** Open — design conversation concluded 2026-10-12, captured here
 > as the base for a formal RPI cycle. Approach (b) is IMPLEMENTED
-> (`6dbbf38e`); approach (a) is the cycle's remaining scope. File
+> (`6dbbf38e`); approach (a) is the cycle's remaining scope — research round COMPLETE 2026-10-12 (see RPI kick-off step 2). File
 > references are as of `499be3bd` (pre-implementation) unless noted.
 > Preceded by the structure-marks cycle
 > (`docs/planning/agentic-artefacts/thoughts/{research,plan}/2026-10-11-*`,
@@ -156,6 +156,13 @@ Operator comment: This, to me, suggests to branch within `update` in
 `UIDocumentTypeSpecStyler`. If feasible: this could be a chance to restructure
 that implementation for readability.
 
+**Decided 2026-10-12 (operator): the skip is UNCONDITIONAL for pure
+inline nodes** — TypeRoof has no "inline-block" concept; an atom's
+width comes from the measurement/composition channel, not a CSS `width`
+write (inert on `display: inline` anyway). A future intrinsically-sized
+atom would be a new spec flag (a new concept), not a reason to keep
+dead writes. Font-size stays as scoped above.
+
 ### Layer a2 — design: unit-selector font sizes + node-scope basis
 
 **Precedent (existing, verified):** the leading dimension's values
@@ -184,6 +191,23 @@ parent's effective size as basis); block containers write theirs in
 the units express the intent per value, exactly as the margins do.
 
 Operator question: do we need to rename "relativeFontSize" to a better fitting name?
+
+**Decided 2026-10-12 (operator):** pair form `{value, unit}` per the
+`InlineLengthValueModel` precedent (`ManualHorizontalLayoutModel` /
+`inlineMargins`, `type-spec/horizontal-layout-models.mjs`) — re-use
+or copy that model; plain numbers/strings parse as `baseEm`
+(non-breaking migration default). Sub-question from the same exchange —
+**Decided (operator): KEEP `baseFontSize`** as a first-class feature:
+mid-tree values + `baseEm` `relativeFontSize` enable entire
+sub-document descriptions (re-anchoring a subtree) within the same
+typeSpec. No dissolution, no root-only restriction.
+
+**Rename — Decided 2026-10-12 (operator): KEEP the key
+`relativeFontSize`** (pair form under the same key; zero migration
+cost, all states + downloads keep parsing via the `baseEm` default).
+`fontSizeSpec` rejected as annoying; `fontSize` would be the best
+name but is taken by the processed/synthetic property (research §1:
+purely synthetic, no model field). UI label polish may follow post-cycle.
 
 **Basis threading — the nodeProperties channel (the `emAfter`
 precedent):**
@@ -231,7 +255,7 @@ node scopes ("fontSize via its typeSpec layer").
 3. **The typeSpec channel unchanged**: per-block typographic contexts;
    its `fontSize` synthesis feeds the node scopes.
 
-### Known downstream (to map in the research cycle)
+### Known downstream (mapped in the research cycle 2026-10-12 — research doc §4)
 
 - The `LeadingRunion`'s en-compensation
   (`type-spec/models.mjs:269-272`:
@@ -239,8 +263,10 @@ node scopes ("fontSize via its typeSpec layer").
   assumes a plain factor; needs re-derivation per unit.
 - All `em`/`baseEm`/`en` consumers (line-length, gutters, paddings,
   margins) must be inventoried for which basis they assumed.
-- Whether `baseFontSize` withers to a root-only anchor (pt) once
-  mid-tree scopes are `em`-based.
+- ~~Whether `baseFontSize` withers to a root-only anchor (pt) once
+  mid-tree scopes are `em`-based.~~ **Decided 2026-10-12: NO — kept
+  as a feature (sub-document re-anchoring); see the operator decision
+  under layer a2 above.**
 - The patch/style-link scope basis today (mark style links resolve at
   the textblock's typeSpec — `derivations.mjs`
   `getStyleLinkPropertiesId`; whether their `em` values resolve
@@ -267,8 +293,26 @@ Recommended sequence (operator's call):
    (v) the unit vocabulary decision: plain number → `baseEm`
    migration, `em` semantics, node-em lookup design against the
    containing node's scope.
-   Output: decision doc in `docs/planning/inline-node-refinements/`
-   (research), then `/create_plan` for the implementation phases
+   **DONE 2026-10-12** — research doc:
+   `thoughts/research/2026-10-12-1723-font-size-resolution-and-rebasing.md`
+   (RPI convention: cycle docs live in `thoughts/` at project root during
+   the cycle and archive to
+   `docs/planning/agentic-artefacts/thoughts/` when the plan concludes —
+   the earlier sketch of an output location inside this directory was an
+   oversight, per operator 2026-10-12).
+   Key resolutions for the plan: (a) `fontSize` is a pure synthetic
+   (base × relative) and every consumer receives pre-flattened plain
+   numbers — no unit stripping exists anywhere; (b) the nodeProperties
+   parent layer demonstrably carries the containing node's
+   `generic/fontSize` (the `emAfter` sibling lookup reads it), so
+   node-em is addressable today; (c) patch scopes have no parent
+   (`baseFontSize` falls to the model default) — the patch `em` basis
+   must be pinned to the merged style-link scope that measurement
+   reads; (d) no em-intent values exist in states/fixtures — the
+   plain-number → `baseEm` migration is non-breaking at document
+   scope; (e) inline nodes have no dedicated font-size machinery —
+   the empty nodeSpecToTypeSpec link is origin-anchored and walks up
+   to the root. Next: `/create_plan` for the implementation phases
    (likely: generator skip a1; units + migration; node-em threading;
    inline-node scope re-resolution away from root fallback; states
    re-tuning).
@@ -292,12 +336,15 @@ Recommended sequence (operator's call):
 
 ## Open questions (for the cycle)
 
-1. Does `width` ever legitimately apply to inline nodes (e.g.
+1. ~~Does `width` ever legitimately apply to inline nodes (e.g.
    `reproduce-as-inline` atoms), or is the a1 skip unconditional for
-   inline specs?
+   inline specs?~~ **Answered 2026-10-12: unconditional — no
+   inline-block concept exists; see layer a1 decision note.**
 2. Which existing `relativeFontSize` values re-interpret under `em`
    (the states' headings chain: h1 4.5714 → multiplicative)?
    Breaking-change review, level by level.
+   — **Answered (research 2026-10-12, §5)**: none; all stored values
+   are plain-number baseEm-equivalents.
 3. Node-em basis for runs *directly* under the textblock: the
    textblock's own scope (same as today) — confirm no
    double-application of the textblock's own relative factor.
@@ -308,3 +355,7 @@ Recommended sequence (operator's call):
 5. Fixture/test blast radius: states, fixtures, the
    `text-composition` suite vehicles (`setPatchRelativeFontSize`
    asserts doubling), probe expectations.
+   — **Mapped (research 2026-10-12, §5)**: all fixtures plain-number
+   strings; probes carry no numeric font-size expectations; concrete
+   test surface: the text-composition doubling/clear-restore contracts
+   and four hyphenation-suite `baseFontSize` overrides.
