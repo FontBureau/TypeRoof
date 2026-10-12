@@ -32,6 +32,10 @@ import type {
     ComposedLine,
     CompositionResult,
 } from "../layouts/type-stage/text-composition/composition-types.ts";
+import {
+    lineStartSourceIndex,
+    lineEndSourceIndex,
+} from "../layouts/type-stage/text-composition/line-attrs.ts";
 import type { CompositionLeafTreatment } from "../layouts/type-stage/text-composition/line-attrs.ts";
 
 /* Minimal structural view of the published composition@ payload (built
@@ -179,9 +183,13 @@ export function* payloadFragmentRanges(
         const lines = result.lines as readonly CompositionPayloadLine[];
         for (const [lineIndex, line] of lines.entries()) {
             // Bounds: fromSegment/toSegment index into segments
-            // (composition contract).
-            const firstSourceIndex = segments[line.fromSegment]!.sourceIndex,
-                lastSourceIndex = segments[line.toSegment - 1]!.sourceIndex;
+            // (composition contract). Zero-width segments (inline
+            // atoms) render no fragment — the line-start/-end markers
+            // must land on the first/last leaf that RENDERS
+            // (line-attrs.ts), or the forced break / hyphen glyph is
+            // lost.
+            const firstSourceIndex = lineStartSourceIndex(segments, line),
+                lastSourceIndex = lineEndSourceIndex(segments, line);
             for (let i = line.fromSegment; i < line.toSegment; ) {
                 // Bounds: fromSegment/toSegment index into segments
                 // (composition contract), so the indexed reads below
