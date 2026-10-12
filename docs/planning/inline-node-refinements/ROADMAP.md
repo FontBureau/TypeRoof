@@ -209,6 +209,28 @@ cost, all states + downloads keep parsing via the `baseEm` default).
 name but is taken by the processed/synthetic property (research §1:
 purely synthetic, no model field). UI label polish may follow post-cycle.
 
+**Pivot — Decided 2026-10-12 (operator, design conversation):** treat
+inline nodes like MARKS via a third style-link family
+`inlineNodesStyleLinks` (next to intent/markStyleLinks): a third
+StyleLinksMeta provisioning + map/prefix, and inline nodes route to
+`UIDocumentStyleStyler` (the mark styler) in both renderers — its
+write surface (font-family, font-size, features/variations, colors,
+direction, lang) IS the a1 property surface, so the "branch within
+update" shrinks to routing. α (typeSpec-channel parent-basis
+synthetics) is REJECTED: `generic/fontSize` per-scope effective is
+already the true em value; a parallel parent synthetic would fork the
+basis (paradigm shift in the wrong direction). β (merge-channel basis)
+is right for style patches — and thus for inline nodes:
+`createPatched` resolves against the origin typeSpec's outbound
+effective size (`scope-resolution.mjs` :462-483). Inline-node
+handling moves LAST in the phase plan (marks/patches verified first).
+One-element inline-node DOM assessed FEASIBLE: PM natively supports
+`contentDOM === dom` (doc desc + all marks are that case;
+prosemirror-view dist :1519/:1234), the viewer already runs
+single-element, outfitter widgets already gate on `outer !== inner`
+(parameters display / labels stay inactive for inline — operator:
+inline nodes need neither), two CSS selectors to consolidate.
+
 **Basis threading — the nodeProperties channel (the `emAfter`
 precedent):**
 
@@ -319,6 +341,12 @@ Recommended sequence (operator's call):
 3. Live-verify per the established pattern (puppeteer DEBUG probes —
    NOT `npm run perf:composition`, which stays OFF LIMITS per the
    operator rule 2026-10-06).
+4. **`/create_plan` cycle** — **DONE 2026-10-12** — plan doc:
+   `thoughts/plans/2026-10-12-2127-inline-node-refinements-approach-a.md`
+   (six phases: pair form → merge-channel `em` → one-element inline
+   DOM → `inlineNodesStyleLinks` + routing → "Node Style Links" UI
+   wiring → composition basis threading + QA/re-tuning). Next:
+   `/implement_plan`.
 
 ## Related
 
@@ -348,10 +376,16 @@ Recommended sequence (operator's call):
 3. Node-em basis for runs *directly* under the textblock: the
    textblock's own scope (same as today) — confirm no
    double-application of the textblock's own relative factor.
+   — **Answered 2026-10-12**: no double-application risk — α rejected;
+   `em` resolves in the merge channel against the origin outbound
+   effective size (see the pivot note under layer a2).
 4. Patch scopes: `em` against the containing node's scope (the li's
    18pt) or the typeSpec layer's effective size — pin the resolved
    basis the composition already measures against
    (`composition-controller.ts:917`).
+   — **Answered 2026-10-12**: merge channel (`createPatched`, origin
+   outbound effective size) — the same merged scope measurement reads;
+   see the pivot note under layer a2.
 5. Fixture/test blast radius: states, fixtures, the
    `text-composition` suite vehicles (`setPatchRelativeFontSize`
    asserts doubling), probe expectations.
