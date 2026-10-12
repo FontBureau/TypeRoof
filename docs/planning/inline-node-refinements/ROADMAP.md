@@ -152,6 +152,10 @@ The nodeProperties generator skips the block-layout writes (`width`,
 (an inline node may deliberately set one) — this only removes the
 inert-but-wrong block baggage.
 
+Operator comment: This, to me, suggests to branch within `update` in
+`UIDocumentTypeSpecStyler`. If feasible: this could be a chance to restructure
+that implementation for readability.
+
 ### Layer a2 — design: unit-selector font sizes + node-scope basis
 
 **Precedent (existing, verified):** the leading dimension's values
@@ -178,6 +182,8 @@ parent's effective size as basis); block containers write theirs in
 `baseEm`/`pt` (the subtree scales from the base as today). No
 "inline vs block children" special-casing in the resolution engine;
 the units express the intent per value, exactly as the margins do.
+
+Operator question: do we need to rename "relativeFontSize" to a better fitting name?
 
 **Basis threading — the nodeProperties channel (the `emAfter`
 precedent):**
