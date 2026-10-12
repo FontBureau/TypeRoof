@@ -230,9 +230,10 @@ export class StylePatchSourceLiveProperties extends _BaseComponent {
         this.propertyValuesMap = null;
 
         // keys in a SimpleStylePatch are so far:
-        //      baseFontSize, relativeFontSize, textColor,
+        //      relativeFontSize, textColor,
         //      backgroundColor, axesLocations, autoOPSZ, activeFontKey,
         //      font, installedFonts
+        // (no baseFontSize — patches are leafs, operator 2026-10-12)
 
         this._propertiesGenerators = STYLE_PATCH_PROPERTIES_GENERATORS;
     }
