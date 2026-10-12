@@ -280,8 +280,13 @@ node scopes ("fontSize via its typeSpec layer").
 **Three layers, one architecture:**
 
 1. **Units as basis-selectors** (the margins precedent): plain numbers
-   migrate to `baseEm` (non-breaking); textblocks and patches opt into
-   `em`.
+   migrate to `baseEm` (non-breaking); ~~textblocks and patches opt into
+   `em`~~ **CORRECTED (channel split, operator 2026-10-12): only
+   style patches offer `em`** — implemented 2026-10-12 (approach (a)
+   phase 1+2: pair form + merge-channel em basis via the
+   `CONTAINING_FONT_SIZE` alias in `PatchedScopeProperties`; plan
+   `thoughts/plans/2026-10-12-2127-…`, commits `abcf36f0` + phase-2
+   commit).
 2. **The nodeProperties channel as the threading vehicle** (the
    `emAfter` precedent): inline-node and mark/patch scopes resolve
    their font basis against the containing node's scope.

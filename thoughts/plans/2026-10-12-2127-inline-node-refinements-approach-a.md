@@ -195,7 +195,9 @@ note updated.
   baseEm → identical `generic/fontSize`); `qa-structure-marks.mjs`
   unchanged-green (PROBE PASSED, exit 0 — 152/153 nested composed,
   18.6667px/24px, identical to the pre-migration baseline)
-- [ ] Manual smoke: unit selector renders beside the value
+- [x] Manual smoke: unit selector renders beside the value (operator
+  confirmed 2026-10-12: `em` offered ONLY in the patch variant's unit
+  dropdown, not in the typeSpec one)
 ## Phase 2 — `em` semantics in the merge channel
 
 ### Overview
@@ -225,16 +227,30 @@ scope measurement reads. Rendered and measured bases agree.
    leaf fontSize needs the em-aware path, extend there.
 
 ### Success Criteria
-- [ ] `npm run typecheck` + `npm run lint` + vitest green
-- [ ] NEW unit test: patch `{value: 2, unit: 'em'}` on an 18pt li
-  context → 36pt (origin outbound basis); `baseEm` still × base;
-  absolute pinned; bare-string states unchanged
-- [ ] text-composition suite green (doubling/clear-restore semantics
-  now against the em basis where the test vehicle opts in)
+- [x] `npm run typecheck` + `npm run lint` + vitest green (2026-10-12,
+  55 files / 538 tests)
+- [x] NEW unit test: patch `{value: 2, unit: 'em'}` on an 18pt context
+  → 36pt (origin outbound basis — the t1 chain: base 14 × 1.285714286);
+  `baseEm` still × base (28pt); bare-string states unchanged
+  (text-composition/index.test.mjs "per-run styles: patch unit 'em'
+  composes against the containing context (merge channel)")
+- [x] text-composition suite green (doubling/clear-restore semantics
+  unchanged — the baseEm default keeps them byte-identical)
+- [x] Automated probes: `qa-editor-mark-styling.mjs` (PROBE PASSED,
+  exit 0) and `qa-structure-marks.mjs` (PROBE PASSED, exit 0 —
+  baseline-identical)
 - [ ] **LIVE CHECKPOINT (operator)**: marks/patches render + measure
-  consistently — `./scripts/debug-with-puppeteer.mjs
-  scripts/puppeteer-probes/qa-editor-mark-styling.mjs` (editor) and
-  `qa-structure-marks.mjs` (viewer)
+  consistently
+
+Implementation note: the basis-plumbing decision point resolved to the
+alias mechanism — `PatchedScopeProperties` publishes the origin's
+outbound effective `generic/fontSize` under `CONTAINING_FONT_SIZE`
+(`registered-properties-definitions.mjs`) as the synthetic-dep source
+for `fontSizePatchGen` (`properties-generators.mjs`, patch channel
+only); the local channel never yields that name, so it cannot shadow
+the patch's own `generic/fontSize` synthetic (the rejected dep-name
+would cycle). The typeSpec channel's `fontSizeGen` lost the dead em
+case (channel split); shared resolution in `resolveFontSizePairOnBase`.
 ## Phase 3 — One-element inline-node DOM
 
 ### Overview
