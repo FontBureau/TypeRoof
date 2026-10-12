@@ -179,16 +179,27 @@ instead of inventing new machinery.
 | unit | semantics | migration/impact |
 |---|---|---|
 | `baseEm` | × root `baseFontSize` — **today's behavior** | migration default for plain numbers: every tuned state keeps its exact meaning (non-breaking) |
-| `em` | × the **parent scope's effective font-size** | textblocks and patches opt in — the truly-relative basis the operator asks for |
+| `em` | × the **containing context's effective font-size** | **style patches ONLY** — channel split, operator 2026-10-12: NOT a typeSpec unit (see the note under the table) |
 | `pt` | absolute effective size | captions/anchors pinned regardless of context |
 
-Convention over machinery: **the node-kind distinction becomes a
+~~Convention over machinery: **the node-kind distinction becomes a
 state-level convention** — textblock typeSpecs (nodes with inline
 content) write their fonts in `em` (their inline content inherits the
 parent's effective size as basis); block containers write theirs in
-`baseEm`/`pt` (the subtree scales from the base as today). No
+`baseEm`/`pt` (the subtree scales from the base as today).~~ No
 "inline vs block children" special-casing in the resolution engine;
 the units express the intent per value, exactly as the margins do.
+
+**Channel split — Decided 2026-10-12 (operator):** `em` is NOT a
+typeSpec unit — the typeSpec vocabulary is `baseEm` (anchored basis)
++ absolute only; `em` exists ONLY in the style-patch variant
+(`RelativeFontSizePatchUnitModel`), where it resolves against the
+containing context in the MERGE channel (phase 2). In the typeSpec
+channel `baseEm` was already the only basis — so `em` there would
+have been an alias, not a capability. The mid-tree "compose onto the
+parent's effective size" that the struck-through sentence wanted for
+textblock scopes is covered by the KEPT mid-tree `baseFontSize`
+re-anchoring (sub-document descriptions) instead.
 
 Operator question: do we need to rename "relativeFontSize" to a better fitting name?
 
