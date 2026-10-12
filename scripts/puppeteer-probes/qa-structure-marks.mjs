@@ -141,6 +141,35 @@ export async function run({ page, consoleLines, setTimeout, log }) {
             standaloneLinkHrefs: q('[data-style-name="link"]').filter((el) =>
                 el.hasAttribute("href"),
             ).length,
+            // composition threading: runs NESTED inside inline nodes
+            // (the references list: li-inline > generic-inline chains)
+            // must take part in the textblock's composition — the
+            // composition-line spans must reach them (regression:
+            // the applicator used to assume direct runs only)
+            nestedComposed: (() => {
+                const lis = q(
+                    '.typeroof-composed[data-node-type="li-inline"]',
+                );
+                let nestedInline = 0,
+                    nestedComposed = 0;
+                for (const li of lis) {
+                    const inlines = [
+                        ...li.querySelectorAll(
+                            '[data-node-type="generic-inline"]',
+                        ),
+                    ];
+                    for (const inline of inlines) {
+                        nestedInline++;
+                        if (
+                            inline.querySelector(
+                                ".typeroof-composition-line",
+                            ) !== null
+                        )
+                            nestedComposed++;
+                    }
+                }
+                return { nestedInline, nestedComposed };
+            })(),
             // parent-context observation (no styled runs in this
             // article's headings — figcaption (t2) vs paragraph (t1)
             // as the best-effort context contrast)
@@ -207,6 +236,31 @@ export async function run({ page, consoleLines, setTimeout, log }) {
         problems.push(
             `standalone link intents: tags=${JSON.stringify(report.standaloneLinkTags)} with-href=${report.standaloneLinkHrefs} — expected A with href`,
         );
+    // composition threading: runs NESTED inside inline nodes (the
+    // references list: li-inline > generic-inline chains) must take
+    // part in the textblock's composition. Strict equality is NOT
+    // asserted: an atom-only inline node (no markable text) carries
+    // no line spans legitimately — the delta is observed.
+    if (report.nestedComposed.nestedInline === 0)
+        log(
+            "NOTE: no li-inline > generic-inline chains found in this " +
+                "article version — nested-composition regression unprobed",
+        );
+    else if (report.nestedComposed.nestedComposed === 0)
+        problems.push(
+            "no nested generic-inline carries composition-line spans — " +
+                "runs inside inline nodes must take part in the textblock composition",
+        );
+    else if (
+        report.nestedComposed.nestedComposed !==
+        report.nestedComposed.nestedInline
+    )
+        log(
+            `NOTE: ${report.nestedComposed.nestedComposed} of ` +
+                `${report.nestedComposed.nestedInline} nested inline nodes carry ` +
+                "composition-line spans (the delta is typically an atom-only node)",
+        );
+
     if (problems.length !== 0) {
         for (const problem of problems) log("PROBLEM:", problem);
         throw new Error(`PROBE FAIL: ${problems.length} problem(s)`);

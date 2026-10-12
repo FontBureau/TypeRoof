@@ -641,9 +641,16 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
         // protocol id itself (a bare "composition@" shorthand would
         // be intercepted as protocol syntax with an empty address,
         // not forwarded as the attachment's local — the styler
-        // wrappers map external ids the same way). The run's path is
-        // <textblock>/content/<index>.
-        const compositionId = `composition@${metaInfo.rootPath.parent.parent.toString()}`,
+        // wrappers map external ids the same way). Direct runs sit at
+        // <textblock>/content/<index>; runs NESTED inside inline
+        // nodes (<textblock>/content/<i>/content/<j>) use the
+        // textblockRootPath threaded through the context by the
+        // textblock's element provisioning — the textblock is the
+        // composition boundary (only _isTextblock nodes compose).
+        const compositionSourcePath =
+                metaInfo.context.textblockRootPath ??
+                metaInfo.rootPath.parent.parent,
+            compositionId = `composition@${compositionSourcePath.toString()}`,
             widgets = [
                 [{}, ["text"], GenericUpdater, this._updateNode.bind(this)],
                 [
@@ -660,7 +667,7 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
         );
         if (service !== null)
             this._compositionUnobserve = service.observe(
-                metaInfo.rootPath.parent.parent,
+                compositionSourcePath,
                 (payload) => {
                     this._composition = payload;
                     this._renderContent();
@@ -1140,10 +1147,16 @@ export class UIDocumentViewer extends _BaseContainerComponent {
                       "text",
                       "marks",
                       // text-composition: the composed lines of the
-                      // enclosing textblock (null = OFF MODE). The
-                      // run's path is <textblock>/content/<index>.
+                      // enclosing textblock (null = OFF MODE). Direct
+                      // runs sit at <textblock>/content/<index>; runs
+                      // nested inside inline nodes use the threaded
+                      // textblockRootPath (the textblock is the
+                      // composition boundary).
                       [
-                          `composition@${metaInfo.rootPath.parent.parent.toString()}`,
+                          `composition@${(
+                              metaInfo.context.textblockRootPath ??
+                              metaInfo.rootPath.parent.parent
+                          ).toString()}`,
                           "composition@",
                       ],
                   ]
