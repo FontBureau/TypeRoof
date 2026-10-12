@@ -170,14 +170,31 @@ behavior (inputs → observable outcomes), not implementations.
    deserialization (precedent :199-215); field name unchanged, so
    `pps-maps.mjs` untouched.
 
+### Phase 1 amendment (operator, 2026-10-12 — channel split)
+
+`em` is NOT a typeSpec unit: `RelativeFontSizeUnitModel` (typeSpec
+channel) = absolute + `baseEm` ONLY; the style-patch variant
+(`RelativeFontSizePatchValueModel` / `RelativeFontSizePatchUnitModel`,
+parameterized `typographyInlineMixinFor` — `TypeSpecModel` keeps the
+typeSpec variant, `SimpleStylePatchModel` carries the patch variant)
+adds `em`, resolved in the merge channel (phase 2). `calculate()`'s
+`em` case (patch-channel input) remains the phase-2 placeholder.
+Tests: the typeSpec variant REJECTS `em`; the patch variant
+round-trips it (55 files / 537 tests). ROADMAP a2 table + decision
+note updated.
+
 ### Success Criteria
-- [ ] `npm run typecheck` + `npm run lint` pass
-- [ ] vitest: models round-trip (pair / bare string / empty); text-
-  composition suite green (doubling :929-941, clear-restore :984-1001);
-  `fundamentals.test.mjs` green
-- [ ] All state files parse with zero value diff (pair default =
+- [x] `npm run typecheck` + `npm run lint` pass (2026-10-12)
+- [x] vitest: models round-trip (pair / bare string / empty — 4 new
+  RelativeFontSizeValueModel tests in models.test.mjs); text-
+  composition suite green (doubling :929-941, clear-restore :984-1001 —
+  setPatchRelativeFontSize/clear helpers adapted to the pair paths
+  /instance/relativeFontSize/{value,unit}); `fundamentals.test.mjs` green
+  (55 files / 534 tests)
+- [x] All state files parse with zero value diff (pair default =
   baseEm → identical `generic/fontSize`); `qa-structure-marks.mjs`
-  unchanged-green
+  unchanged-green (PROBE PASSED, exit 0 — 152/153 nested composed,
+  18.6667px/24px, identical to the pre-migration baseline)
 - [ ] Manual smoke: unit selector renders beside the value
 ## Phase 2 — `em` semantics in the merge channel
 
