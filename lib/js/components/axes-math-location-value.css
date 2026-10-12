@@ -41,3 +41,7 @@
 .ui-axes_math-location_value > * {
     vertical-align: middle;
 }
+
+select.ui_base_list_item-logical_value {
+    appearance: auto;
+}
