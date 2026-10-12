@@ -220,6 +220,13 @@ cost, all states + downloads keep parsing via the `baseEm` default).
 name but is taken by the processed/synthetic property (research §1:
 purely synthetic, no model field). UI label polish may follow post-cycle.
 
+**Slot-in Decided + implemented 2026-10-12 (operator): NO
+`baseFontSize` field on style patches** — patches are leafs (no
+inheritance, no re-anchoring; absolute sizes go via the pair's absolute
+units; em/baseEm compose against the containing context). The pair
+transport moved to `relativeFontSizePairGen` (shared); the merged scope
+sources the base from the ORIGIN typeSpec. Plan phase 2b.
+
 **Pivot — Decided 2026-10-12 (operator, design conversation):** treat
 inline nodes like MARKS via a third style-link family
 `inlineNodesStyleLinks` (next to intent/markStyleLinks): a third

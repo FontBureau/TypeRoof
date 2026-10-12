@@ -163,7 +163,11 @@ export class UIStylePatch extends _BaseTypeDrivenContainerComponentMixin(
             sections = {
                 language: ["languageTag", "direction"],
                 typeface: [
-                    "baseFontSize",
+                    // no "baseFontSize" (operator 2026-10-12):
+                    // patches are leafs — no anchored base; absolute
+                    // sizes go via relativeFontSize's absolute units,
+                    // em/baseEm compose against the containing
+                    // context.
                     "relativeFontSize",
                     "openTypeFeatures",
                     "axesLocations",
@@ -295,7 +299,9 @@ export class UIStylePatch extends _BaseTypeDrivenContainerComponentMixin(
                     );
                 },
                 removeItems = new Set([
-                    // 'baseFontSize' // Maybe only use in paragraph context
+                    // patches have no baseFontSize field (leafs — see
+                    // sections.typeface); keep it out of sections.rest
+                    "baseFontSize",
                 ]),
                 PPS_MAP = new ProcessedPropertiesSystemMap(
                     Array.from(TYPESPEC_PPS_MAP.entries()).filter(

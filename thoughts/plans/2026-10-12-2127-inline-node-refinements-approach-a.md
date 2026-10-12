@@ -251,6 +251,42 @@ only); the local channel never yields that name, so it cannot shadow
 the patch's own `generic/fontSize` synthetic (the rejected dep-name
 would cycle). The typeSpec channel's `fontSizeGen` lost the dead em
 case (channel split); shared resolution in `resolveFontSizePairOnBase`.
+## Phase 2b — Slot-in (operator, 2026-10-12): NO baseFontSize on style patches
+
+### Overview
+Patches are leafs — they neither inherit an anchored base nor re-anchor
+one (the mid-tree sub-document feature is typeSpec territory); absolute
+sizes are stated directly via the pair's absolute units; em/baseEm
+compose against the containing context. The `baseFontSize` FIELD leaves
+`SimpleStylePatchModel` (operator: "it doesn't make much sense").
+
+### Changes Required (implemented 2026-10-12)
+1. `models.mjs`: `typographyStylePatchPureModelMixin` (no
+   baseFontSize) + shared `_typographyColorModelMixin`;
+   `typographyInlineMixinFor(pureModelMixin)` takes the spread fields.
+2. `properties-generators.mjs`: `baseFontSizeGen` split — the pair
+   transport is now `relativeFontSizePairGen` (shared; the patch list
+   uses it WITHOUT baseFontSizeGen); `fontSizePatchGen` reads no base
+   field; the merged scope sources `generic/baseFontSize` from the
+   ORIGIN typeSpec (as it already did for patches that never set one —
+   no state carries a patch-level baseFontSize: fixtures verified).
+3. UI: style-patches typeface section drops "baseFontSize";
+   `removeItems` gains it (out of sections.rest); live-properties
+   comment updated.
+4. Legacy: operator downloads with a patch-level baseFontSize drop the
+   field silently (lenient struct deserialization, non-strict).
+
+### Success Criteria
+- [x] typecheck/lint/vitest green (55 files / 538 tests; the em gate
+  test holds: baseEm 2 → 28pt with the ORIGIN-sourced base, em 2 →
+  36pt)
+- [x] Probes: qa-structure-marks + qa-editor-mark-styling PASSED
+  (exit 0)
+- [ ] **LIVE CHECKPOINT (operator)**: style-patch UI shows no
+  baseFontSize; absolute/em/baseEm patch sizes behave as before
+
+---
+
 ## Phase 3 — One-element inline-node DOM
 
 ### Overview
