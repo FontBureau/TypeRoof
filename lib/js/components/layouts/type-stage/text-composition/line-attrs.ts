@@ -45,6 +45,53 @@ export interface CompositionLeafTreatment {
 /** CSS classes for one line-fragment span. `isParagraphFirstLine` is
  *  only honored when `isLineStart` (viewer semantics: paragraph-first
  *  unsets the forced break to keep text-indent). */
+/**
+ * The sourceIndex of the line's first RENDERED leaf. A line can START
+ * at zero-width segments — inline atoms push one segment each
+ * (`segmenter.ts`, start === end === 0) — whose leaves render no
+ * fragment. The line-start marker (`line-first`, the forced break)
+ * must land on the first leaf that actually renders, or the visual
+ * line start is lost entirely (the fragment glues onto the previous
+ * rendered line). Caller bounds: `line.fromSegment <= i <
+ * line.toSegment` (the composition contract).
+ */
+export function lineStartSourceIndex(
+    segments: readonly {
+        sourceIndex: number;
+        start: number;
+        end: number;
+    }[],
+    line: { fromSegment: number; toSegment: number },
+): number {
+    let i = line.fromSegment;
+    while (
+        i < line.toSegment - 1 &&
+        segments[i]!.end - segments[i]!.start === 0
+    )
+        i++;
+    return segments[i]!.sourceIndex;
+}
+
+/**
+ * The sourceIndex of the line's last RENDERED leaf — symmetric to
+ * lineStartSourceIndex: trailing zero-width atom segments would steal
+ * the `line-hyphen` marker (the hyphen ::after) for a leaf that
+ * renders no fragment, losing the rendered hyphen glyph.
+ */
+export function lineEndSourceIndex(
+    segments: readonly {
+        sourceIndex: number;
+        start: number;
+        end: number;
+    }[],
+    line: { fromSegment: number; toSegment: number },
+): number {
+    let i = line.toSegment - 1;
+    while (i > line.fromSegment && segments[i]!.end - segments[i]!.start === 0)
+        i--;
+    return segments[i]!.sourceIndex;
+}
+
 export function lineSpanClasses(opts: {
     isLineStart: boolean;
     isParagraphFirstLine: boolean;

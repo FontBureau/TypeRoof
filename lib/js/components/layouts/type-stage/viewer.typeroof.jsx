@@ -25,10 +25,12 @@ import {
 } from "../../prosemirror/type-spec.typeroof.jsx";
 import { getTypeSpecPropertiesIdMethod } from "../../prosemirror/integration.typeroof.jsx";
 import {
+    kpLineColorCode,
+    lineEndSourceIndex,
     lineSpanClasses,
     lineSpanStyles,
+    lineStartSourceIndex,
     potentialsLineColorCode,
-    kpLineColorCode,
 } from "./text-composition/line-attrs.ts";
 import { TypeStagePaneStyler } from "./pane-styler.typeroof.jsx";
 import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
@@ -770,9 +772,9 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
                         mySegments.push(segments[i]);
                 if (mySegments.length === 0) return;
                 const isLineStart =
-                        segments[line.fromSegment].sourceIndex === leafIndex,
+                        lineStartSourceIndex(segments, line) === leafIndex,
                     isLineEnd =
-                        segments[line.toSegment - 1].sourceIndex === leafIndex,
+                        lineEndSourceIndex(segments, line) === leafIndex,
                     span = this._domTool.createElement("span");
                 for (const cls of lineSpanClasses({
                     isLineStart,
