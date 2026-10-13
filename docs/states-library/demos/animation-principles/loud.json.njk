@@ -1,0 +1,192 @@
+---json
+{
+"permalink": "{{ page.filePathStem }}",
+"layout": null
+}
+---
+{#-
+  TypeRoof project file for exaggeration/ ("Quiet" → "Loud" → "Quiet").
+
+  Times are in hundredths of a second: key moment durations are relative,
+  and are worked out here from the CSS animation timings.
+
+  Animations that change the same property one after another share a track,
+  so the nested layers are split by property:
+    position (jump, fall) > rotate (exaggeration) > color (pulse, exaggeration, fall) > text
+-#}
+{%- set s = 100 %}
+{%- set stage = { width: 720, height: 360 } %}
+{%- set fontSize = 210 %}{# CSS px #}
+{%- set pt = 0.75 %}{# TypeRoof font size is in pt #}
+
+{#- pulse 2s 0.5s 3 -#}
+{%- set pulse = { duration: 2 * s, peak: 0.4, count: 3 } %}
+{%- set pulse1 = 0.5 * s %}
+{#- jump 0.6s 6.5s -#}
+{%- set jump = { start: 6.5 * s, duration: 0.6 * s } %}
+{#- exaggeration 1s 7s 2 -#}
+{%- set exaggeration = { start: 7 * s, duration: 1 * s, count: 2 } %}
+{#- fall 1s 9.5s -#}
+{%- set fall = { start: 9.5 * s, duration: 1 * s } %}
+{#- ::after content: loud 2s 7s, quiet 1s 10s -#}
+{%- set loud = 7 * s %}
+{%- set quiet = 10 * s %}
+{%- set total = fall.start + fall.duration %}
+
+{#- animation-timing-function: cubic-bezier(1, 0, 0, 1) -#}
+{%- set expo = "easeInOutExpo" %}
+
+{%- set white = { instance: { R: "255", G: "255", B: "255" }, colorTypeKey: "RGB" } %}
+{%- set gray = { instance: { R: "128", G: "128", B: "128" }, colorTypeKey: "RGB" } %}{# hsl(0, 0%, 50%) #}
+{%- set light = { instance: { R: "204", G: "204", B: "204" }, colorTypeKey: "RGB" } %}{# hsl(0, 0%, 80%) #}
+{%- set red = { instance: { R: "230", G: "26", B: "26" }, colorTypeKey: "RGB" } %}{# hsl(0, 80%, 50%) #}
+
+{#- top: 30% / 20% -#}
+{%- set top = { ground: stage.height * 0.3, jump: stage.height * 0.2 } %}
+
+{#- text states -#}
+{%- set axes = {
+  base: [["opsz", "24"], ["wdth", "100"], ["wght", "400"]],
+  shout: [["opsz", "16"], ["wdth", "25"], ["wght", "1000"]],
+  squeeze: [["opsz", "72"], ["wdth", "120"], ["wght", "700"]]
+} %}
+{%- set text = {
+  base: { numericProperties: [["scale", "0.3"]], axesLocations: axes.base },
+  peak: { numericProperties: [["scale", "0.29"]] },
+  shout: { numericProperties: [["scale", "1.6"]], axesLocations: axes.shout },
+  squeeze: { numericProperties: [["scale", "1.2"]], axesLocations: axes.squeeze }
+} %}
+
+{#-
+  Appends a key moment at time t to a track. Properties missing from p are
+  undefined, so they are left out of the JSON.
+-#}
+{%- macro at(track, t, label, easing, p) %}
+{%- set _ = track.moments.push({
+    label: label,
+    duration: (t - (track.times | last | default(0))) | string,
+    easing: easing,
+    isActive: ("1" if not track.moments.length else undefined),
+    textRun: p.textRun,
+    textAlign: p.textAlign,
+    fontSize: p.fontSize,
+    numericProperties: p.numericProperties,
+    axesLocations: p.axesLocations,
+    textColor: p.textColor
+  }) %}
+{%- set _ = track.times.push(t) %}
+{%- endmacro %}
+
+{#- pulse: 0% base, 40% peak, 100% base, ease-out-quad -#}
+{%- macro pulses(track, start, first, peak, base) %}
+{%- for n in range(pulse.count) %}
+{%- set t = start + pulse.duration * n %}
+{{- at(track, t + pulse.duration * pulse.peak, "Pulse " + (first + n) + " peak", "easeOutQuad", peak) }}
+{{- at(track, t + pulse.duration, "Pulse " + (first + n) + " end", "easeOutQuad", base) }}
+{%- endfor %}
+{%- endmacro %}
+
+{#- exaggeration: 0%, 50%, 100% base, 25% shout, 75% squeeze -#}
+{%- macro exaggerate(track, states) %}
+{%- for n in range(exaggeration.count) %}
+{%- set t = exaggeration.start + exaggeration.duration * n %}
+{{- at(track, t + exaggeration.duration * 0.25, "Shout", expo, states.shout) }}
+{{- at(track, t + exaggeration.duration * 0.5, "Base", expo, states.base) }}
+{{- at(track, t + exaggeration.duration * 0.75, "Squeeze", expo, states.squeeze) }}
+{{- at(track, t + exaggeration.duration, "Base", expo, states.base) }}
+{%- endfor %}
+{%- endmacro %}
+
+{#- text: pulse, exaggeration (scale, axes), loud/quiet (textRun) -#}
+{%- set line = { times: [], moments: [] } %}
+{{- at(line, 0, "Start", "linear", {
+  textRun: "Quiet",
+  textAlign: "center",
+  fontSize: (fontSize * pt) | string,
+  numericProperties: [["x", "0"], ["width", stage.width | string], ["scale", "0.3"]],
+  axesLocations: axes.base
+}) }}
+{{- at(line, pulse1, "Pulse 1 start", "linear", text.base) }}
+{{- pulses(line, pulse1, 1, text.peak, text.base) }}
+{{- at(line, loud, "Quiet", "linear", text.base) }}
+{{- at(line, loud, "Loud", "linear", { textRun: "Loud", numericProperties: text.base.numericProperties, axesLocations: axes.base }) }}
+{{- exaggerate(line, text) }}
+{{- at(line, quiet, "Loud", "linear", text.base) }}
+{{- at(line, quiet, "Quiet", "linear", { textRun: "Quiet", numericProperties: text.base.numericProperties, axesLocations: axes.base }) }}
+{{- at(line, total, "End", "linear", text.base) }}
+
+{#- color layer: pulse, exaggeration, fall (textColor) -#}
+{%- set color = { times: [], moments: [] } %}
+{{- at(color, 0, "Start", "linear", { textColor: gray }) }}
+{{- at(color, pulse1, "Pulse 1 start", "linear", { textColor: gray }) }}
+{{- pulses(color, pulse1, 1, { textColor: light }, { textColor: gray }) }}
+{{- at(color, exaggeration.start, "Quiet", "linear", { textColor: gray }) }}
+{{- at(color, exaggeration.start, "Loud", "linear", { textColor: red }) }}
+{{- at(color, fall.start, "Fall start", "linear", { textColor: red }) }}
+{{- at(color, total, "Landed", "easeInOutBack", { textColor: gray }) }}
+
+{#- rotate layer: exaggeration (rotate) -#}
+{%- set rotate = { times: [], moments: [] } %}
+{%- set rotation = {
+  base: { numericProperties: [["rotation", "0"]] },
+  shout: { numericProperties: [["rotation", "-3"]] },
+  squeeze: { numericProperties: [["rotation", "3"]] }
+} %}
+{{- at(rotate, 0, "Start", "linear", rotation.base) }}
+{{- at(rotate, exaggeration.start, "Exaggeration start", "linear", rotation.base) }}
+{{- exaggerate(rotate, rotation) }}
+{{- at(rotate, total, "End", "linear", rotation.base) }}
+
+{#- position layer: jump, fall (top) -#}
+{%- set position = { times: [], moments: [] } %}
+{{- at(position, 0, "Start", "linear", { numericProperties: [["y", top.ground | string]] }) }}
+{{- at(position, jump.start, "Jump start", "linear", { numericProperties: [["y", top.ground | string]] }) }}
+{{- at(position, jump.start + jump.duration, "Airborne", "easeInBack", { numericProperties: [["y", top.jump | string]] }) }}
+{{- at(position, fall.start, "Fall start", "linear", { numericProperties: [["y", top.jump | string]] }) }}
+{{- at(position, total, "Landed", "easeInOutBack", { numericProperties: [["y", top.ground | string]] }) }}
+
+{%- set data = {
+  activeState: {
+    t: "0",
+    duration: (total / s) | string,
+    perpetual: "1",
+    keyMoments: [{
+      label: "Key Moment 1",
+      duration: "1",
+      easing: "linear",
+      isActive: "1",
+      stageBackgroundColor: white
+    }],
+    activeActors: [{
+      instance: {
+        label: "position: jump, fall",
+        keyMoments: position.moments,
+        activeActors: [{
+          instance: {
+            label: "rotate: exaggeration",
+            keyMoments: rotate.moments,
+            activeActors: [{
+              instance: {
+                label: "color: pulse, exaggeration, fall",
+                keyMoments: color.moments,
+                activeActors: [{
+                  instance: { label: "line1", keyMoments: line.moments },
+                  actorTypeKey: "LineOfTextActorModel"
+                }]
+              },
+              actorTypeKey: "LayerActorModel"
+            }]
+          },
+          actorTypeKey: "LayerActorModel"
+        }]
+      },
+      actorTypeKey: "LayerActorModel"
+    }],
+    width: stage.width | string,
+    height: stage.height | string,
+    zoomLevel: { type: "app-default", scaling: "100.00000" }
+  },
+  activeLayoutKey: "MotionStage",
+  activeFontKey: "from-url AmstelvarA2 Roman wght400 Version_0-001"
+} %}
+{{- data | dump(2) | safe }}
