@@ -8,6 +8,7 @@ import {
     getStyleLinks,
     INTENT_STYLE_LINKS,
     MARK_STYLE_LINKS,
+    INLINE_NODES_STYLE_LINKS,
 } from "../../registered-properties-definitions.mjs";
 import {
     TypeSpecLiveProperties,
@@ -316,6 +317,27 @@ export class TypeSpecMeta extends _BaseContainerComponent {
                 zones,
                 "markStyleLinks",
                 MARK_STYLE_LINKS,
+            ],
+            // The third family (approach (a) phase 4): inline node
+            // type keys — payloads resolve identically (the same
+            // StyleLinkLiveProperties merge), the keys just name
+            // NODE types instead of mark/intent names.
+            [
+                {},
+                [
+                    [
+                        widgetBus.getExternalName("stylePatchesSource"),
+                        "stylePatchesSource",
+                    ],
+                    [
+                        `typeSpecProperties@${widgetBus.rootPath.toString()}`,
+                        "typeSpecProperties@",
+                    ],
+                ],
+                StyleLinksMeta,
+                zones,
+                "inlineNodesStyleLinks",
+                INLINE_NODES_STYLE_LINKS,
             ],
             [
                 {},

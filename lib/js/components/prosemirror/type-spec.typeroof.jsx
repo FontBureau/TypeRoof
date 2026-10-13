@@ -19,6 +19,7 @@ import {
     getStyleLinks,
     INTENT_STYLE_LINKS,
     MARK_STYLE_LINKS,
+    INLINE_NODES_STYLE_LINKS,
 } from "../registered-properties-definitions.mjs";
 
 import {
@@ -684,6 +685,11 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         this._nextProperties = null;
         this._nextNodeProperties = null; // cached next-sibling nodeProperties@ id
         this._nodeProperties = null; // cached nodeProperties@ id (rebuild probe)
+        // approach (a) phase 4: inline nodes route their styling to
+        // the mark channel — the cached styleLinkProperties@ id of
+        // the inlineNodesStyleLinks edge (rebuild probe, like
+        // _nodeProperties above)
+        this._inlineStyleLinkPropertiesId = null;
         this._lastSilent = null;
         {
             const initialWidgets = this._staticWidgets;
@@ -795,6 +801,92 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         ];
     }
 
+    // approach (a) phase 4 — the channel split: INLINE nodes
+    // (pmNode.isInline — metamodel inline specs, reproducing atoms
+    // and default-schema inline types alike) style like MARKS via
+    // the styleLinkProperties@ merge channel; blocks keep the
+    // per-node typeSpec styler (UIDocumentTypeSpecStyler below).
+    _isInlineNode() {
+        return this._pmNode !== null && this._pmNode.isInline === true;
+    }
+
+    // The inline node's styleLinkProperties@ id: the
+    // inlineNodesStyleLinks edge of the CONTAINING typeSpec (the
+    // same resolution mark subscriptions use — pathOfTypes without
+    // the own typeKey), keyed by the node type name. Absence or a
+    // declaration edge (empty stylePatch) resolves null: NO styler —
+    // the element renders inherit-only (the containing context's
+    // cascade). Recomputed per call; cached + compared by
+    // _checkInlineStyleLink to detect changes (edge edits).
+    _inlineStyleLinkPropertiesIdFor() {
+        const view = this.widgetBus.getWidgetById("proseMirror").view,
+            resolved = view.state.doc.resolve(this._getPos()),
+            ownPathOfTypes = getPathOfTypes(
+                resolved.path,
+                this._pmNode.type.name,
+            ),
+            containingPathOfTypes = ownPathOfTypes.slice(0, -1),
+            containingTypeSpecPath = this._getTypeSpecPropertiesId(
+                containingPathOfTypes,
+                true /* asPath */,
+            ),
+            containingTypeSpecProperties = this._getTypeSpecPropertiesId(
+                containingPathOfTypes,
+            ),
+            links = getEffectiveStyleLinks(
+                this.widgetBus,
+                containingTypeSpecProperties,
+                INLINE_NODES_STYLE_LINKS,
+            ),
+            edge = links.get(this._pmNode.type.name);
+        if (edge === undefined || edge.get("stylePatch").value === "")
+            return null;
+        return getStyleLinkPropertiesId(
+            this.widgetBus,
+            containingTypeSpecPath,
+            "inlineNodesStyleLinks",
+            this._pmNode.type.name,
+        );
+    }
+
+    // Mirrors _checkNodeProperties: recompute the
+    // styleLinkProperties@ id and report whether it changed since
+    // the last provision (the id is the inline styler wrapper's
+    // identity — an edge edit rebuilds it).
+    _checkInlineStyleLink(/*compareResult*/) {
+        if (!this._isInlineNode()) return false;
+        const inlineStyleLinkPropertiesId =
+                this._inlineStyleLinkPropertiesIdFor(),
+            hasChanged =
+                this._inlineStyleLinkPropertiesId !==
+                inlineStyleLinkPropertiesId;
+        if (hasChanged)
+            this._inlineStyleLinkPropertiesId = inlineStyleLinkPropertiesId;
+        return hasChanged;
+    }
+
+    _createInlineStyleStylerWidgetDefinition() {
+        const styleLinkPropertiesId = this._inlineStyleLinkPropertiesId,
+            // initial provision before any _checkInlineStyleLink:
+            // derive now (the definition may be built first on the
+            // initial pass)
+            idToUse =
+                styleLinkPropertiesId ?? this._inlineStyleLinkPropertiesIdFor();
+        if (idToUse === null)
+            // no edge / a declaration: NO styler (inherit-only)
+            return null;
+        return [
+            {},
+            [
+                [idToUse, "properties@"],
+                ["/font", "rootFont"],
+                ["verboseFontVariationSettings"],
+            ],
+            UIDocumentStyleStyler,
+            this._structuralElements.inner,
+        ];
+    }
+
     _createLableWidgetDefinition() {
         return [
             {
@@ -849,6 +941,15 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
     }
 
     _createWidgetDefinitions() {
+        // inline nodes (approach (a) phase 4): the style-link styler
+        // ONLY — no labels/parameters (the operator: inline nodes
+        // need neither; the single-element DOM keeps the outer-zone
+        // widgets inactive anyway, and nothing may be appended to
+        // the element).
+        if (this._isInlineNode()) {
+            const definition = this._createInlineStyleStylerWidgetDefinition();
+            return definition === null ? [] : [definition];
+        }
         return [
             this._createStylerWidgetDefinition(),
             this._createLableWidgetDefinition(),
@@ -960,6 +1061,9 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         const requireUpdateDynamicWidget =
             this._checkNextProperties(compareResult) ||
             this._checkNodeProperties(compareResult) ||
+            // inline nodes: the styleLinkProperties@ id is the styler
+            // wrapper's identity — an edge edit rebuilds it
+            this._checkInlineStyleLink(compareResult) ||
             silentChanged ||
             removedDynamicWidgets.length === 0; // is initial
         // do we need to replace/renew the dynamic widget

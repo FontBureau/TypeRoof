@@ -370,6 +370,13 @@ Recommended sequence (operator's call):
    DOM → `inlineNodesStyleLinks` + routing → "Node Style Links" UI
    wiring → composition basis threading + QA/re-tuning). Next:
    `/implement_plan`.
+5. **Implementation status 2026-10-13**: phases 1 (`abcf36f0`), 2
+   (`0524e3d6`), 2b (`c2b42282`), 3 (`0d012dd4`) committed; phase 4 in
+   the working tree (family + routing, reconstructed clean; 541 vitest
+   green; probe steps 1–5 pass). **One open failure** — fresh viewer
+   attach after a mode switch leaves inline elements unstyled →
+   handed over to a sub-RPI cycle; handover doc:
+   `docs/planning/inline-node-refinements/2026-10-13-phase4-viewer-channel-HANDOVER.md`.
 
 ## Related
 

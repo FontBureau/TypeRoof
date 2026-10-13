@@ -316,7 +316,15 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 // Style links are rendered as a compound UI (both link
                 // maps in one collapsible, below); listing them here
                 // keeps them out of sections.rest (color precedent).
-                styleLinks: ["intentStyleLinks", "markStyleLinks"],
+                // styleLinks: kept out of sections.rest — rendered as
+                // a compound UI below; inlineNodesStyleLinks (approach
+                // (a) phase 4) gets its own container in phase 5, for
+                // now it is only kept OUT of the type-driven fallback.
+                styleLinks: [
+                    "intentStyleLinks",
+                    "markStyleLinks",
+                    "inlineNodesStyleLinks",
+                ],
             },
             h = this._domTool.h;
         {
