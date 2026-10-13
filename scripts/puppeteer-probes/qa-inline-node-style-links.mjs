@@ -133,6 +133,63 @@ export async function run({ page, consoleLines, setTimeout, log }) {
         JSON.stringify(sample),
     );
 
+    // 1b. NESTED MARK BASIS (phase 6): the italic patch set to {1, em}
+    // — the em marks nested inside inline nodes (cite = generic-inline
+    // inside li-inline) must anchor at the CONTAINING typeSpec
+    // (/paragraphs/t1, effective 18pt), NOT the root fallback (14pt).
+    // Renders 18pt = 24px computed; the root defect shows 18.6667px.
+    // Editor parity: the same value in the editor DOM (E2 anchoring).
+    await page.evaluate(() =>
+        shell.changeState(() => {
+            const pair = shell.getEntry(
+                "/activeState/stylePatchesSource/italic/instance/relativeFontSize",
+            );
+            pair.get("value").value = 1;
+            pair.get("unit").value = "em";
+        }),
+    );
+    await settle(2500);
+    const sampleNestedItalic = () =>
+        page.evaluate(() => {
+            const els = [
+                ...document.querySelectorAll(
+                    '[data-node-type="generic-inline"] [data-style-name="italic"]',
+                ),
+            ];
+            if (els.length === 0) return null;
+            const el = els[0],
+                computed = getComputedStyle(el).fontSize,
+                inline = el.style.fontSize,
+                parentInline = el.parentElement.style.fontSize;
+            return {
+                computed,
+                inline,
+                parentInline,
+                total: els.length,
+                allComputed: new Set(els.map((e) => getComputedStyle(e).fontSize)),
+            };
+        });
+    let nested = await sampleNestedItalic();
+    check(
+        "nested italic {1, em} (viewer): anchors at the li context (18pt → 24px), not the root (14pt)",
+        nested !== null &&
+            nested.computed === "24px" &&
+            nested.inline === "18pt",
+        JSON.stringify(nested),
+    );
+    // editor parity: E2 must anchor the same way
+    await setMode("editor");
+    await settle(2500);
+    nested = await sampleNestedItalic();
+    check(
+        "nested italic {1, em} (editor): same containing-spec anchor",
+        nested !== null && nested.computed === "24px",
+        JSON.stringify(nested),
+    );
+    await setMode("viewer");
+    await settle(2500);
+
+
     // 2. LIVE edge add in the viewer: the patch knob + the root edge
     await page.evaluate(() =>
         shell.changeState(() => {

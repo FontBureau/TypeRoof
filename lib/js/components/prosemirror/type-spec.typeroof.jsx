@@ -55,8 +55,10 @@ import {
     getTypeSpecsMethod,
 } from "./integration.typeroof.jsx";
 
-import { getStyleLinkPropertiesId } from "../layouts/type-stage/document-nodes-meta/derivations.mjs";
-
+import {
+    getStyleLinkPropertiesId,
+    getResolvablePathOfTypes,
+} from "../layouts/type-stage/document-nodes-meta/derivations.mjs";
 import {
     getStylePatchLinkForIntent,
     getStylePatchLinkForMark,
@@ -825,7 +827,14 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
                 resolved.path,
                 this._pmNode.type.name,
             ),
-            containingPathOfTypes = ownPathOfTypes.slice(0, -1),
+            // approach (a) phase 6: the containing chain runs through
+            // getResolvablePathOfTypes — nested inline chains (cite
+            // inside generic-inline) would otherwise still end at an
+            // entry-less key and fall to the ROOT spec.
+            containingPathOfTypes = getResolvablePathOfTypes(
+                this.getEntry("nodeSpecToTypeSpec"),
+                ownPathOfTypes.slice(0, -1),
+            ),
             containingTypeSpecPath = this._getTypeSpecPropertiesId(
                 containingPathOfTypes,
                 true /* asPath */,
@@ -1678,7 +1687,16 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         const view = this.widgetBus.getWidgetById("proseMirror").view,
             { getPos, node } = subscription,
             resolved = view.state.doc.resolve(getPos()),
-            pathOfTypes = getPathOfTypes(resolved.path, node.type.name),
+            // approach (a) phase 6: marks anchor at the CONTAINING
+            // typeSpec — entry-less trailing inline keys (the
+            // subscription's own path ends at the node: an inline
+            // node for nested marks) are dropped to the nearest
+            // resolvable ancestor, instead of falling to the root
+            // spec. Block nodes carry their own entry → unchanged.
+            pathOfTypes = getResolvablePathOfTypes(
+                this.getEntry("nodeSpecToTypeSpec"),
+                getPathOfTypes(resolved.path, node.type.name),
+            ),
             typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes),
             typeSpecPath = this._getTypeSpecPropertiesId(
                 pathOfTypes,
