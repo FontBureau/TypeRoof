@@ -46,6 +46,7 @@ import {
     getStyleLinkPropertiesId,
     getWrapMarks,
     wrapResultsAreEqual,
+    getResolvablePathOfTypes,
 } from "./document-nodes-meta/derivations.mjs";
 
 import { getEffectiveStyleLinks } from "../../prosemirror/type-spec.typeroof.jsx";
@@ -586,7 +587,14 @@ export class UIDocumentElement extends _UIDocumentAttachment {
     // loop create the wrappers and _update deliver their full initial
     // changedMap.
     _provisionInlineStyleStyler() {
-        const containingPathOfTypes = this._pathOfTypes.slice(0, -1),
+        // approach (a) phase 6: the containing chain runs through
+        // getResolvablePathOfTypes — nested inline chains (cite
+        // inside generic-inline) would otherwise still end at an
+        // entry-less key and fall to the ROOT spec.
+        const containingPathOfTypes = getResolvablePathOfTypes(
+                this.getEntry("nodeSpecToTypeSpec"),
+                this._pathOfTypes.slice(0, -1),
+            ),
             typeSpecPropertiesPath = this._getTypeSpecPropertiesId(
                 containingPathOfTypes,
                 true /* asPath */,
@@ -1177,7 +1185,14 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
             // context.pathOfTypes contains the typeKeys from the document
             // root down to and including the parent element, i.e. without
             // the own "text" type (equivalent to the old .slice(0, -1)).
-            pathOfTypes = this._context.pathOfTypes ?? [],
+            // approach (a) phase 6: the run's marks anchor at the
+            // CONTAINING typeSpec — entry-less trailing inline keys
+            // (generic-inline, cite …) are dropped to the nearest
+            // resolvable ancestor, instead of falling to the root spec.
+            pathOfTypes = getResolvablePathOfTypes(
+                this.getEntry("nodeSpecToTypeSpec"),
+                this._context.pathOfTypes ?? [],
+            ),
             typeSpecPropertiesPath = this._getTypeSpecPropertiesId(
                 pathOfTypes,
                 true /*asPath*/,
