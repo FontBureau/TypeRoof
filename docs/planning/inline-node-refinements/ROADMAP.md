@@ -378,6 +378,21 @@ Recommended sequence (operator's call):
    handed over to a sub-RPI cycle; handover doc:
    `docs/planning/inline-node-refinements/2026-10-13-phase4-viewer-channel-HANDOVER.md`.
 
+## Follow-ups (out of current scope)
+
+- **Manual-wake refactor** (2026-10-13, sub-cycle decision): the inline
+  styler fresh-attach fix establishes `_widgets` membership for the
+  inline wrappers (plan
+  `thoughts/plans/2026-10-13-1616-inline-styler-fresh-attach-membership.md`,
+  research `thoughts/research/2026-10-13-1503-viewer-fresh-attach-inline-styler.md`).
+  The hand-rolled `_createWidget` + changedMap + `widget.update` wake
+  sites (`viewer.typeroof.jsx` `_syncMetaInfo` dispatcher — which also
+  serves the block channel — and `_inlineStyleTriggerUpdate`) are
+  deliberately NOT refactored yet. A follow-up cycle may evaluate full
+  framework reliance (drop the manual blocks; requires verifying that a
+  cascade always follows a `_syncMetaInfo` re-provision) with a shared
+  helper as fallback. See the plan's "Follow-up Note".
+
 ## Related
 
 - Archived cycle docs:
