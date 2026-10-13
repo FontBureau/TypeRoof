@@ -9,10 +9,11 @@
 //     like the phase-4 channel probe): the generic-inline key item
 //     shows in the map, with the key-change select offering the
 //     unlink mode and the create select offering the style patches;
-//   * the inherited list hides while all edges are locally defined
-//     (root) and shows the inherited edge on a CHILD typeSpec
-//     (whole-edge inheritance down the tree).
-// Interaction feel (drag/drop, create/unlink via clicks) stays with
+//   * the inherited list shows the SHIPPED root demo edge (quote ->
+//     serif italic, phase 6.3) on the edited typeSpec while the
+//     UI-created LOCAL edge stays out of it, and shows inherited
+//     edges on a CHILD typeSpec (whole-edge inheritance down the
+//     tree).// Interaction feel (drag/drop, create/unlink via clicks) stays with
 // human QA.
 
 /* global shell */
@@ -235,23 +236,36 @@ export async function run({ page, consoleLines, setTimeout, log }) {
         JSON.stringify(edgeModelInfo),
     );
 
-    // inherited list: hidden on the EDITED typeSpec while all its
-    // edges are locally defined (the UI-created edge is local)
-    const inheritedHidden = await page.evaluate(() => {
+    // inherited list: with the shipped root demo edge (quote → serif
+    // italic), the edited typeSpec INHERITS it — and the UI-created
+    // LOCAL edge must stay out of the inherited list (locally defined
+    // edges are managed in the map below)
+    const inheritedInfo = await page.evaluate(() => {
         const contents = document.querySelector(
             ".ui_collapsible-typespec_style_links-contents",
         );
-        const inherited = [...contents.querySelectorAll(".ui_links_map-inherited")];
-        return inherited.some(
-            (el) =>
-                el.textContent.includes("Inherited Node Style Links") &&
-                el.style.display === "none",
+        const inherited = [
+            ...contents.querySelectorAll(".ui_links_map-inherited"),
+        ];
+        const el = inherited.find((item) =>
+            item.textContent.includes("Inherited Node Style Links"),
         );
+        if (el === null)
+            return { found: false, visible: false, text: "" };
+        return {
+            found: true,
+            visible: el.style.display !== "none",
+            text: el.textContent,
+        };
     });
     check(
-        "inherited list hidden while all edges are local",
-        inheritedHidden === true,
-        `inherited-hidden=${inheritedHidden}`,
+        "inherited list shows the shipped root edge; the UI-created local edge stays out",
+        inheritedInfo.found === true &&
+            inheritedInfo.visible === true &&
+            inheritedInfo.text.includes("quote") &&
+            inheritedInfo.text.includes("serif italic") &&
+            !inheritedInfo.text.includes("generic-inline"),
+        JSON.stringify(inheritedInfo),
     );
 
     // switch to ANOTHER child typeSpec (tree item #1): the local edge

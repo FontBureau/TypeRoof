@@ -5,6 +5,15 @@
         },
         "lineLength": "53.0",
         "baseFontSize": "14",
+        "inlineNodesStyleLinks": [
+            [
+                "quote",
+                {
+                    "stylePatch": "serif italic",
+                    "mode": "link"
+                }
+            ]
+        ],
         "textColor": {
             "instance": {
                 "L": "0.00000",

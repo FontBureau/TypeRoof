@@ -290,12 +290,22 @@ fixtures — the probes own their baselines.
 
 ### Success Criteria
 
-- [ ] Full battery green on the shipped state
-- [ ] All five probes green
+- [x] Full battery green on the shipped state — 2026-10-13: typecheck,
+      lint, vitest 55 files / 548 tests
+- [x] All five probes green (qa-structure-marks, qa-editor-mark-styling,
+      qa-inline-node-dom, qa-inline-node-style-links — incl. the nested
+      basis + overflow gate steps on the shipped state —,
+      qa-node-style-links-ui — the shipped root edge UPDATES the
+      inherited checks: the local UI-created edge stays out of the
+      inherited list while the shipped quote edge shows; the child
+      check now lists both inherited edges)
+- [x] Channel engagement verified live (harness): the quotes render
+      AmstelvarA2 Italic at 18pt + opsz 18 — the serif-italic patch at
+      the LI CONTEXT basis (the phase-6 anchoring, visible by default)
 - [ ] **LIVE CHECKPOINT (operator)** — the cycle's visible goal: en
-      Typography load shows styled cites at the li context (18pt basis),
-      references list composed without overflow, nested italic `{1, em}`
-      at 18pt (24px), editor/viewer parity
+      Typography load shows styled quotes (serif italic at the li
+      context), references list composed without overflow, nested
+      italic `{1, em}` at 18pt, editor/viewer parity
 
 ## Testing Strategy
 
