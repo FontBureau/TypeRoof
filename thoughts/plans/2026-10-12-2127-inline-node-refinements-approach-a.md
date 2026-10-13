@@ -387,14 +387,21 @@ styler stops serving inline elements entirely.
 8. **Editor style menu** — unchanged: intent-only (:2401-2427).
 
 ### Success Criteria
-- [ ] `npm run typecheck` + `npm run lint` + vitest green; parametric
+- [x] `npm run typecheck` + `npm run lint` + vitest green; parametric
   style-link tests extended to the third prefix (type-specnion.test.mjs,
-  text-composition/index.test.mjs :729/:825/:880 patterns)
-- [ ] Probe: inline node WITH edge styles via `UIDocumentStyleStyler`
+  text-composition/index.test.mjs :729/:825/:880 patterns) — committed
+  `6394787b` (2026-10-13)
+- [x] Probe: inline node WITH edge styles via `UIDocumentStyleStyler`
   (font-size/colors/features on the single element); WITHOUT edge →
   no explicit font-size → inherits containing context (observation 3);
-  block styling byte-identical
-- [ ] **LIVE CHECKPOINT (operator)**
+  block styling byte-identical — `qa-inline-node-style-links.mjs`
+  (2026-10-13: 6 of 6 after the sub-cycle fix `4532ae22`: inline
+  styler/trigger wrappers gain `_widgets` membership — fresh attach
+  after mode switch styles; see the sub-cycle research/plan docs)
+- [x] **LIVE CHECKPOINT (operator)** — 2026-10-13 via DOM readout (the
+  designed UI checkpoint became possible with phase 5); readout
+  recorded as a phase-6 input (nested marks resolve at the root
+  fallback)
 ## Phase 5 — "Node Style Links" UI wiring
 
 ### Overview
@@ -415,9 +422,21 @@ Editing surface for the third family, next to "Soft Style Links" and
    exclusion as the two existing containers).
 
 ### Success Criteria
-- [ ] `npm run typecheck` + `npm run lint` + vitest green
-- [ ] Manual/probe smoke: "Node Style Links" section renders, lists
-  node type keys, link/unlink modes work, inherited display correct
+- [x] `npm run typecheck` + `npm run lint` + vitest green (2026-10-13:
+  55 files / 541 tests)
+- [x] Probe smoke: NEW `scripts/puppeteer-probes/qa-node-style-links-ui.mjs`
+  (PROBE PASSED, exit 0) — tree item click opens a typeSpec in the
+  properties manager; "Node Style Links" renders next to Soft/Hard
+  Style Links; the create select offers the style patches; a REAL UI
+  create flow (select patch → key input → create button) yields mode
+  `link` + `stylePatch: "bold"` on the created edge; the map lists the
+  node type key with the key-change select offering the unlink mode;
+  the inherited list hides while all edges are local and shows the
+  inherited whole edge on a child typeSpec
+- [x] Manual smoke (operator): interactive feel — drag/drop ordering,
+  per-item delete, create/unlink via clicks, live styling via the UI
+  on en/Typography (now possible: the editing surface exists) —
+  confirmed 2026-10-13
 ## Phase 6 — Composition basis threading + QA + re-tuning
 
 ### Overview

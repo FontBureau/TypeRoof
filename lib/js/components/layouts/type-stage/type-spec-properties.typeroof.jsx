@@ -61,6 +61,7 @@ import { UIColorChooserTwoColorsWithSwap } from "../../ui-color-chooser.mjs";
 import {
     UIStylePatchesLinksContainer,
     UIMarkStyleLinksContainer,
+    UIInlineNodesStyleLinksContainer,
 } from "../../type-spec/fundamentals.mjs";
 
 class UIFontLabel extends DynamicTag {
@@ -527,6 +528,16 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                               ],
                           ]
                         : []),
+                    [
+                        { rootPath: typeSpecPath, zone: "main" },
+                        [
+                            [".", "typeSpecPath"],
+                            ["./inlineNodesStyleLinks", "localStyleLinks"],
+                            ["./stylePatchesSource", "stylesSourceMap"],
+                        ],
+                        UIInlineNodesStyleLinksContainer,
+                        require("raw:zones"),
+                    ],
                 ],
                 this._getCollapsibleState(
                     "typespec_style_links_collapsible",
