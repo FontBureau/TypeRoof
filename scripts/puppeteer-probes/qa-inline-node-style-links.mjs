@@ -177,6 +177,32 @@ export async function run({ page, consoleLines, setTimeout, log }) {
             nested.inline === "18pt",
         JSON.stringify(nested),
     );
+    // phase 6.2 (measured side): the nested runs must stay COMPOSED
+    // while the mark payload anchors at the li context — measured
+    // basis == rendered basis is the overflow regression gate
+    const composedCoverage = await page.evaluate(() => {
+        const gis = [
+            ...document.querySelectorAll(
+                '[data-node-type="generic-inline"]',
+            ),
+        ];
+        let withSpans = 0,
+            total = 0;
+        for (const gi of gis) {
+            const runs = [...gi.querySelectorAll(".typeroof-composition-run")];
+            if (runs.length === 0) continue;
+            total++;
+            if (runs.every((run) => run.querySelector(".typeroof-composition-line") !== null))
+                withSpans++;
+        }
+        return { withSpans, total };
+    });
+    check(
+        "nested runs stay composed at the li-context basis (overflow gate)",
+        composedCoverage.total > 0 &&
+            composedCoverage.withSpans === composedCoverage.total,
+        JSON.stringify(composedCoverage),
+    );
     // editor parity: E2 must anchor the same way
     await setMode("editor");
     await settle(2500);
