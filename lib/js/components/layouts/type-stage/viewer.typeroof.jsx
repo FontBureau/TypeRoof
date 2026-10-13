@@ -577,6 +577,14 @@ export class UIDocumentElement extends _UIDocumentAttachment {
     // freshly provisioned viewer element that ran before the
     // typeSpec tree settled (e.g. a mode switch racing an edge edit)
     // would keep its initial (null) resolution forever.
+    // Both wrappers are _widgets MEMBERS (the block channel's
+    // splice(0, 0, …) convention, _provisionTypeSpecStyler): a fresh
+    // attachment after a mode switch has NO scope-settle or path-change
+    // event (the always-active meta tree's scopes settle before the
+    // attachment exists and attach does not replay settled state), so
+    // membership is what lets the framework's base _provisionWidgets
+    // loop create the wrappers and _update deliver their full initial
+    // changedMap.
     _provisionInlineStyleStyler() {
         const containingPathOfTypes = this._pathOfTypes.slice(0, -1),
             typeSpecPropertiesPath = this._getTypeSpecPropertiesId(
@@ -624,6 +632,7 @@ export class UIDocumentElement extends _UIDocumentAttachment {
                 GenericUpdater,
                 this._inlineStyleTriggerUpdate.bind(this),
             );
+            this._widgets.splice(0, 0, this._inlineStyleTriggerWrapper);
             newWrappers.push(this._inlineStyleTriggerWrapper);
         }
         // rebuild comparison: the resolved id is the styler wrapper's
@@ -659,6 +668,7 @@ export class UIDocumentElement extends _UIDocumentAttachment {
             ...args,
         );
         this._inlineStyleStylerWrapper = wrapper;
+        this._widgets.splice(0, 0, wrapper);
         newWrappers.push(wrapper);
         return newWrappers;
     }
