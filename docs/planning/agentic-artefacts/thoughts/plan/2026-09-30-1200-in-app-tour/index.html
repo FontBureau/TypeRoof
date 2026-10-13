@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="in-app-tour-for-the-shell-app-issue-134" class="heading_anchor" href="#in-app-tour-for-the-shell-app-issue-134" aria-hidden="true">#</a>In-app tour for the Shell app (issue #134)</h1>
+<h2><a id="context" class="heading_anchor" href="#context" aria-hidden="true">#</a>Context</h2>
+<p>The legacy Video Proof app had a first-visit tour (<a href="lib/js/legacy/user-guide.js">lib/js/legacy/user-guide.js</a>) built on a vendored intro.js 2.9.3, pointing at Video Proof-only element IDs (<code>#select-font-container</code>, <code>#keyframes-display-container</code>, …). The new <code>shell.html</code> app hosts many layouts (Motion Stage, Video Proof, Grid, Ramp, Type Stage, …) and has no onboarding. Goal: a ≤6-step tour that anchors only on shell chrome that exists for <strong>every</strong> layout, auto-shown once, re-openable from the Help menu.</p>
+<h2><a id="library-decision-driverjs" class="heading_anchor" href="#library-decision-driverjs" aria-hidden="true">#</a>Library decision: driver.js</h2>
+<p>intro.js was dropped mainly because of its license: it is licensed <strong>AGPL-3.0</strong> (including the vendored 2.9.3, see its <code>package.json</code>/<code>license.md</code>), which is incompatible with TypeRoof’s <strong>Apache-2.0</strong> license. Shipping it in the shell app’s bundle would put the whole distributed app under AGPL terms, and Apache-2.0 code can’t be relicensed that way. driver.js is MIT, which is compatible with Apache-2.0.</p>
+<ul>
+<li>The tour uses <strong>driver.js</strong> (MIT, npm dependency <code>driver.js</code>). An intermediate implementation reused the intro.js 2.9.3 vendored as the <code>lib/js/vendor/intro.js</code> git submodule (used by the legacy app), but it was replaced by driver.js: it’s maintained, ships an ES module and a stylesheet that the build accepts as is, has step titles, a progress text and positions the popover on its own, so the workarounds intro.js needed are gone (UMD/CommonJS interop, <code>?raw</code> CSS injection because Lightning CSS rejects the IE hacks in <code>introjs.css</code>, the helper-layer fix, titles in the intro HTML). intro.js stays vendored for the legacy app only.</li>
+<li>driver.js, <code>driver.css</code> and <code>app-tour.css</code> are <strong>lazy loaded</strong> (dynamic <code>import()</code>), once, the first time the tour is shown, so they’re not fetched for returning visitors. A failed load resets the cached promise so that a later attempt can retry.</li>
+<li>The load order of the two stylesheets isn’t guaranteed, hence <code>app-tour.css</code> overrides <code>driver.css</code> by specificity: the popover gets <code>popoverClass: 'app-tour-popover'</code> and the rules use <code>.driver-popover.app-tour-popover</code>.</li>
+</ul>
+<h2><a id="tour-steps-6-layout-agnostic" class="heading_anchor" href="#tour-steps-6-layout-agnostic" aria-hidden="true">#</a>Tour steps (6, layout-agnostic)</h2>
+<p>Anchors come from <a href="lib/js/zones.typeroof.jsx">zones.typeroof.jsx</a>, <a href="lib/js/components/main-ui.mjs">main-ui.mjs</a>, <a href="lib/js/components/app-menu.typeroof.jsx">app-menu.typeroof.jsx</a>, <a href="lib/js/components/font-loading.mjs">font-loading.mjs</a>:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Anchor</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>none (modal)</td>
+<td>Welcome to TypeRoof: proofing/animating variable fonts.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>.ui_layout_select</code></td>
+<td>Pick a layout; each one is a different proofing tool. The sidebar and stage adapt to it.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>.ui_font-select</code></td>
+<td>Pick a font. Add your own via <strong>File › Manage fonts…</strong> (TTF/OTF/WOFF/WOFF2).</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>.typeroof-ui_sidebar</code> (side: right)</td>
+<td>The settings for the active layout live here, below the layout/font selectors, including the playback controls of animated layouts. Comments sit at the bottom.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>.typeroof-main</code> (side: left)</td>
+<td>The stage where the proof renders. (A dynamic hint about controls in <code>.typeroof-layout-before</code> was dropped during implementation: that zone holds different things per layout, e.g. Video Proof shows axis parameters there, and playback controls live in the sidebar.)</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>.typeroof-app-menu</code> (side: bottom)</td>
+<td>File: save/load state, copy share link, reset. Help: docs, and <strong>Take the tour</strong> to see this again.</td>
+</tr>
+</tbody>
+</table>
+<p>Rules: steps are not filtered. Each selector is resolved with <code>document.querySelector</code> when the tour starts (after driver.js has loaded, as the UI may have changed meanwhile); a missing element resolves to <code>null</code>, which driver.js shows as a centered dialog, like step 1. Keep the text in one <code>TOUR_STEPS</code> array so it’s easy to edit.</p>
+<h2><a id="implementation" class="heading_anchor" href="#implementation" aria-hidden="true">#</a>Implementation</h2>
+<ol>
+<li><strong>Dependency:</strong> <code>driver.js</code> (see above).</li>
+<li><strong>New module</strong> <code>lib/js/components/app-tour.mjs</code>:
+<ul>
+<li><code>loadDriver()</code>: lazy loads <code>import('driver.js')</code>, <code>import('driver.js/dist/driver.css')</code> and <code>import('./app-tour.css')</code> once (see above), resolves to the <code>driver</code> function.</li>
+<li><code>TOUR_STEPS</code> (<code>selector</code>, <code>side</code>, <code>title</code>, <code>description</code>, the latter two HTML), <code>getTourSteps(document)</code> (maps them to driver.js steps <code>{element, popover: {title, description, side}}</code>), <code>hasViewedTour(window)</code>, <code>setTourViewed(window)</code>: localStorage key <code>typeroof-tour</code> = <code>viewed</code>, wrapped in try/catch with a cookie fallback (same approach as the legacy <code>viewedAlready</code>/<code>setViewed</code>).</li>
+<li><code>async startTour(domTool, {force=false}={})</code>: resolves to <code>null</code> if already viewed and not forced. Otherwise it loads driver.js, resolves the steps, then calls <code>driver({steps, popoverClass: 'app-tour-popover', showProgress: true, progressText: ' / ', closeBtnLabel: 'Close', onDestroyStarted}).drive()</code> and resolves to the driver.js instance. Mark the tour as viewed when it is <strong>closed</strong> (not when it starts), so a reload mid-tour shows it again: <code>onDestroyStarted</code> is called for Close, Done, Escape and overlay click, it calls <code>setTourViewed</code> and then <code>tour.destroy()</code> itself (driver.js leaves destroying to that hook). <code>onDestroyed</code> isn’t used, as driver.js skips it when the tour is closed before the first highlight animation has finished. driver.js has no option to disable scrolling to the highlighted element, but it only scrolls elements that aren’t fully in the viewport, and the sidebar (<code>overflow-y: auto</code> grid area) isn’t taller than the viewport itself.</li>
+</ul>
+</li>
+<li><strong>Help menu entry</strong> in <a href="lib/js/components/app-menu.typeroof.jsx#L149">app-menu.typeroof.jsx</a>: add a <strong>Take the tour</strong> <code>&lt;li&gt;&lt;button&gt;</code> (followed by an <code>&lt;hr /&gt;</code>) at the top of the Help <code>&lt;menu&gt;</code>. Its handler <code>_onClickTakeTheTour()</code> first closes all open menus, so they don’t cover <code>.typeroof-app-menu</code>, then calls <code>startTour(this._domTool, {force: true})</code>.</li>
+<li><strong>Auto-start</strong>: <code>ShellController</code> is also used by the player and wikipedia apps, so <a href="lib/js/shell.mjs">shell.mjs</a> only calls an optional <code>APP.onAppReady({domTool, uiFlags, isEmbedded})</code> hook at the end of <code>_allInitialResourcesLoaded</code>. <a href="lib/js/main-shell.mjs">main-shell.mjs</a> passes <code>autoStartTour</code> from <code>app-tour.mjs</code>, which:
+<ul>
+<li>skips when embedded (<code>adapterWindow !== null</code>, i.e. opener/iframe) or when the <code>autoplay</code>/<code>autopause</code> flags are set (presentation use).</li>
+<li>adds a <code>tour</code> hash flag (<code>#[tour]</code>) that forces it, the replacement for legacy <code>#view-intro</code>. It doesn’t override the embedded/playback-flag skip.</li>
+<li>defers with <code>requestAnimationFrame</code>, so the layout’s widgets are in the DOM before measuring.</li>
+</ul>
+</li>
+<li><strong>Styling</strong> <code>lib/js/components/app-tour.css</code>: theme <code>.driver-popover.app-tour-popover</code> (title, close button, progress text, footer buttons, arrow colors) with the shell tokens from <a href="lib/css/shell/variables.css">variables.css</a> (font, colors, button style). driver.js draws its own SVG overlay with a cut-out, no fix like the legacy intro.js helper-layer one is needed. Keep it minimal.</li>
+<li><strong>Docs:</strong> a short note in <a href="docs/index.md">docs/index.md</a> (Shell section) about the tour, <code>#[tour]</code>, Help › Take the tour, and when it doesn’t auto-start.</li>
+</ol>
+<h2><a id="critical-files" class="heading_anchor" href="#critical-files" aria-hidden="true">#</a>Critical files</h2>
+<ul>
+<li>new: <code>lib/js/components/app-tour.mjs</code>, <code>lib/js/components/app-tour.css</code>, <code>lib/js/components/app-tour.test.mjs</code></li>
+<li>edit: <a href="lib/js/components/app-menu.typeroof.jsx">lib/js/components/app-menu.typeroof.jsx</a>, <a href="lib/js/shell.mjs">lib/js/shell.mjs</a>, <a href="lib/js/main-shell.mjs">lib/js/main-shell.mjs</a>, <a href="docs/index.md">docs/index.md</a></li>
+<li><code>package.json</code>/<code>package-lock.json</code>: add <code>driver.js</code></li>
+</ul>
+<h2><a id="verification" class="heading_anchor" href="#verification" aria-hidden="true">#</a>Verification</h2>
+<ul>
+<li><code>npm run lint</code>, <code>npm run typecheck</code>, <code>npm test</code>.</li>
+<li>Unit test (<code>app-tour.test.mjs</code>, jsdom/vitest): there are always ≤6 steps and they all resolve against the shell chrome; the viewed flag round-trips and falls back to a cookie when localStorage throws; <code>startTour</code> doesn’t start when viewed unless forced, and marks the tour viewed when closed (via the popover’s close button); <code>autoStartTour</code> schedules the tour by default, skips when embedded or with <code>autoplay</code>/<code>autopause</code>, is forced by <code>tour</code>, and <code>tour</code> doesn’t override the skip.</li>
+<li>Manual, <code>npm run dev:app</code> → <code>shell.html</code>: clear localStorage and check that the tour auto-starts; step through it in <strong>each</strong> layout (switch the layout, then Help › Take the tour) and check that every popover anchors correctly; check that it doesn’t auto-start on reload, that <code>#[tour]</code> forces it, and that it doesn’t auto-start with <code>#[autoplay]</code>.</li>
+<li><code>npm run build:serve</code>: check that the tour works in the production bundle (CSS included).</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

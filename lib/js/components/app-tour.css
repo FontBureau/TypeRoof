@@ -1,0 +1,43 @@
+/**
+ * Theme the driver.js popover of the in-app tour (app-tour.mjs) with the
+ * shell tokens from lib/css/shell/variables.css. The .app-tour-popover
+ * class (driver.js popoverClass) makes these rules more specific than
+ * driver.css, which may be loaded after this file.
+ */
+
+.driver-popover.app-tour-popover {
+    font-family: RobotoFlex, sans-serif;
+    background: var(--background-color);
+    color: var(--text-color);
+    width: 25rem;
+    max-width: calc(100vw - 2rem);
+
+    .driver-popover-title {
+        font-size: 1.4em;
+    }
+
+    .driver-popover-description {
+        font-size: 1em;
+    }
+
+    .driver-popover-close-btn {
+        color: #999;
+        font-size: 2em;
+        font-weight: 100;
+        height: auto;
+    }
+
+    .driver-popover-footer-btn {
+        font: inherit;
+        font-size: 0.9em;
+        color: var(--text-color);
+        background: var(--button-bg-color);
+        border: 1px solid var(--button-border-color);
+
+        &:hover,
+        &:focus {
+            border-color: var(--button-border-color-hover);
+            background: var(--menu-button-bg-color-hover);
+        }
+    }
+}

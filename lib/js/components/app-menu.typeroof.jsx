@@ -11,6 +11,7 @@ import {
     downloadFile,
 } from "../utils/state-file.mjs";
 import { getRemovableFonts, UIDialogManageFonts } from "./font-loading.mjs";
+import { startTour } from "./app-tour.mjs";
 
 /**
  * A menu button ("toggler") together with the menu it opens and closes,
@@ -151,6 +152,12 @@ export class AppMenu extends _BaseContainerComponent {
                 AppMenuItem,
                 "Help",
                 <menu>
+                    <li>
+                        <button onClick={() => this._onClickTakeTheTour()}>
+                            Take the tour
+                        </button>
+                    </li>
+                    <hr />
                     <li>
                         <a
                             href="/TypeRoof/docs"
@@ -335,6 +342,17 @@ export class AppMenu extends _BaseContainerComponent {
             this._manageFontsDialog = null;
             dialog.destroy();
         }
+    }
+
+    /**
+     * The tour points at the menu as well, hence close the (still open)
+     * menus first.
+     */
+    _onClickTakeTheTour() {
+        for (const id of this._menuItemIds) {
+            this.getWidgetById(id, null)?.close();
+        }
+        startTour(this._domTool, { force: true });
     }
 
     /**
