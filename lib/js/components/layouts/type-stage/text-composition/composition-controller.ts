@@ -271,6 +271,24 @@ export interface CompositionSource {
     nodePropertiesPayload: any;
     newState: any;
     styleResolution: StyleResolutionContext | null;
+    /** Per-inline-node style resolution (approach (a) phase 6):
+     *  resolves the styleLinkProperties@ id of the applicable
+     *  inlineNodesStyleLinks edge payload for an inline node
+     *  identified by its type keys RELATIVE to the textblock
+     *  (textblock-exclusive, node-inclusive; [] is invalid) — the
+     *  SAME resolution the rendered inline stylers perform (a
+     *  meta-side closure; containing-typeSpec anchoring incl.
+     *  getResolvablePathOfTypes). The controller threads the
+     *  INNERMOST applicable id down the inline recursion (a deeper
+     *  level's own edge replaces an outer one) as the leaf style
+     *  link fallback BENEATH the mark resolution (explicit-
+     *  everything: a payload-styled element writes its full set,
+     *  so the innermost payload predicts the rendered style). Null
+     *  when the textblock has no typeSpec styling (ProseMirror
+     *  parity). */
+    resolveInlineStyleLink:
+        | ((relativeTypeKeys: string[]) => string | null)
+        | null;
 }
 
 export type CompositionSourceDriver = () => CompositionSource | null;
@@ -571,11 +589,25 @@ export class CompositionController extends _BaseComponent {
         leaves: CompositionLeaf[],
         styleResolution: StyleResolutionContext | null,
         markSpec: any,
+        resolveInlineStyleLink:
+            | ((relativeTypeKeys: string[]) => string | null)
+            | null = null,
+        inlineTypeKeys: string[] = [],
+        inlineEdgeId: string | null = null,
     ): InlineItem[] {
         const items: InlineItem[] = [];
         for (const [index, child] of mmNode.get("content").value.entries()) {
             const typeKey = child.get("typeKey").value,
-                childPath = path.append("content", index);
+                childPath = path.append("content", index),
+                // approach (a) phase 6: THIS child's own inline-edge
+                // resolution — the innermost applicable id (replacing
+                // an outer level's) threaded down the recursion as the
+                // leaf style-link fallback beneath the mark resolution.
+                ownEdgeId =
+                    resolveInlineStyleLink === null ||
+                    resolveInlineStyleLink === undefined
+                        ? null
+                        : resolveInlineStyleLink([...inlineTypeKeys, typeKey]);
             if (typeKey === "text") {
                 const text = child.get("text");
                 items.push({
@@ -586,13 +618,13 @@ export class CompositionController extends _BaseComponent {
                     path: childPath.toString(),
                     styleLinkPropertiesId:
                         markSpec === null
-                            ? null
-                            : this._resolveLeafStyleLink(
+                            ? inlineEdgeId
+                            : (this._resolveLeafStyleLink(
                                   child,
                                   childPath,
                                   styleResolution,
                                   markSpec,
-                              ),
+                              ) ?? inlineEdgeId),
                 });
             } else if (typeKey === "hard_break")
                 items.push({ kind: "hardBreak" });
@@ -607,13 +639,18 @@ export class CompositionController extends _BaseComponent {
                             leaves,
                             styleResolution,
                             markSpec,
+                            resolveInlineStyleLink,
+                            [...inlineTypeKeys, typeKey],
+                            ownEdgeId ?? inlineEdgeId,
                         ),
                     });
                 else {
+                    // an inline atom IS an inline node: its own edge
+                    // applies first, else the threaded fallback
                     items.push({ kind: "inlineAtom" });
                     leaves.push({
                         path: childPath.toString(),
-                        styleLinkPropertiesId: null,
+                        styleLinkPropertiesId: ownEdgeId ?? inlineEdgeId,
                     });
                 }
             }
@@ -719,6 +756,7 @@ export class CompositionController extends _BaseComponent {
                 nodePropertiesPayload,
                 newState,
                 styleResolution,
+                resolveInlineStyleLink: null,
             }),
         );
     }
@@ -782,6 +820,7 @@ export class CompositionController extends _BaseComponent {
                 leaves,
                 styleResolution,
                 markSpec,
+                source.resolveInlineStyleLink,
             ),
             leafTexts = this._leafTexts(items),
             logicalParagraphs = assembleLogicalParagraphs(items),

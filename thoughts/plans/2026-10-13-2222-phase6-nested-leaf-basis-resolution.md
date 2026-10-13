@@ -237,12 +237,27 @@ function (Q4). Measured == rendered per the explicit-everything contract.
 
 ### Success Criteria
 
-- [ ] `npm run typecheck` + `npm run lint` + vitest green (incl. the new
+- [x] `npm run typecheck` + `npm run lint` + vitest green (incl. the new
       measured-basis tests; the doubling/clear-restore vehicles unchanged)
-- [ ] Probe: `qa-structure-marks.mjs` extended — a nested run under a
-      size-setting node edge composes with matching geometry (measured
-      line width vs rendered — the overflow regression gate)
-- [ ] All other probes unchanged-green
+      — 2026-10-13: 55 files / 548 tests
+- [x] Probe: the overflow regression gate — extended
+      `qa-inline-node-style-links.mjs` (INSTEAD of qa-structure-marks, the
+      in-phase adaptation: the nested-basis checks + the edge-add step live
+      there): NEW "nested runs stay composed at the li-context basis" —
+      125/125 generic-inline with runs carry composition-line spans at the
+      18pt-context anchor (the overflow signal), on top of the nested-basis
+      (18pt/24px, both renderers) and edge-add (30pt) steps
+- [x] NEW measured-basis unit test (text-composition suite, own
+      htmlOverride world — a nested-chain fixture): the edge payload is the
+      fallback basis (nested unmarked run scales 30/18 with the root
+      generic-inline → italic-patch edge; the direct run unaffected), and
+      the MARK link wins over the edge fallback (explicit-everything:
+      unchanged id + unchanged measured width); tombstone clears. NOTE the
+      fixture discovery: `<span>`/`<i>`/`<b>` ingest as SCHEMA MARKS
+      (tag-span/tag-em/tag-strong) — `<cite>`/`<bdi>` are the phrasing
+      content that becomes generic-inline NODES
+- [x] All other probes unchanged-green (qa-structure-marks,
+      qa-editor-mark-styling, qa-inline-node-dom, qa-node-style-links-ui)
 - [ ] **LIVE CHECKPOINT (operator)**: references list renders composed
       with styled cites; no overflow
 
