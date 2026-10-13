@@ -323,14 +323,23 @@ parameters display, labels).
    inline nodes become eligible for `htmlTag` swaps (probe it).
 
 ### Success Criteria
-- [ ] `npm run typecheck` + `npm run lint` + vitest green
-- [ ] `integration.test.mjs`: inline node renders single-element
-  (the :441 `childElementCount === 1` pattern; no
-  `[data-node-content]` child); block split unchanged
-- [ ] Probe: caret placement (editor-dom.mjs helpers :65/:90 —
-  already tolerant), typing/selection inside cite/bdi content,
-  copy/paste round-trip
-- [ ] **LIVE CHECKPOINT (operator)**: editor DOM parity
+- [x] `npm run typecheck` + `npm run lint` + vitest green (2026-10-13:
+  55 files / 539 tests)
+- [x] `integration.test.mjs`: NEW "renders editable inline nodes as
+  a single element (contentDOM === dom)" — spec-tag element, no
+  `[data-node-content]`, direct text, childElementCount 0, typing
+  inserts inside (re-query after dispatch — PM rebuilds when
+  update() rejects); the cite-link reproducing case + block split
+  unchanged
+- [x] Probe: NEW `scripts/puppeteer-probes/qa-inline-node-dom.mjs`
+  (PROBE PASSED, exit 0): 153 generic-inline single-element, 253
+  block content children kept, box-sizing: border-box via the new
+  `:has()` rule, caret typing inside inline content lands + element
+  stays single-element, typing/undo/copy-paste dispatch without
+  PAGEERROR (text-revert coverage delegated to qa-compose-in-editor
+  — its undo/redo PASS on this DOM)
+- [x] **LIVE CHECKPOINT (operator)**: editor DOM parity (confirmed
+  2026-10-13: "live looking good")
 ## Phase 4 — `inlineNodesStyleLinks` family + routing
 
 ### Overview

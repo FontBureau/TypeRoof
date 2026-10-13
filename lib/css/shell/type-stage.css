@@ -154,6 +154,13 @@ prosemirror
 .editor-advanced *[data-node-type] {
     width: fit-content;
 
+    /* One-element inline DOM (approach (a) phase 3): without a
+     * [data-node-content] child the node element itself receives
+     * the padding and width. */
+    &:not(:has(> [data-node-content])) {
+        box-sizing: border-box;
+    }
+
     & > [data-node-content] {
         /* this element receives the padding and width */
         box-sizing: border-box;

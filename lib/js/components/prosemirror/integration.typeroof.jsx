@@ -370,20 +370,40 @@ export class ProsemirrorNodeView {
             // outer element (guarded; the content element is untouched)
             if (node.attrs.htmlAttrs)
                 _applyHtmlAttrsBag(this.dom, node.attrs.htmlAttrs);
-            // FIXME: depending on the type of the outer node, this might
-            // better be a span.
-            const contentElement = widgetBus.domTool.createElement("div", {
-                "data-node-content": "",
-            });
-            element.append(contentElement);
-            // For the subscription it is important that this element is
-            // the same as the contentDOM, the element that will be the parent
-            // of the marks.
-            this._stylerDOM = contentElement;
-            // The DOM node that should hold the node's content
-            // this is probably only required when this._stylerDOM != this.dom
-            // this is also part of the ProseMiror API
-            this.contentDOM = contentElement;
+            if (node.isInline) {
+                // One-element inline DOM (approach (a) phase 3,
+                // operator 2026-10-12): an editable INLINE node renders
+                // as a single element — contentDOM === dom, exactly
+                // like a mark view (ProseMirror supports the equality
+                // natively: the top doc desc and all marks are that
+                // case). Its renderDescs wholesale-removes any
+                // non-descendant child of contentDOM, so NOTHING may
+                // be appended to this element — the outfitter's
+                // outer-zone widgets (parameters display, element
+                // labels) stay inactive for outer === inner (operator:
+                // inline nodes need neither). The spec tag IS the
+                // content container (generic-inline: span — resolving
+                // the old FIXME about the inner div).
+                this._stylerDOM = this.dom;
+                this.contentDOM = this.dom;
+            } else {
+                // Block nodes keep the two-element DOM: the outer
+                // element hosts the outfitter's widgets (parameters
+                // display, element labels) OUTSIDE contentDOM, where
+                // PM's renderDescs can't touch them.
+                const contentElement = widgetBus.domTool.createElement("div", {
+                    "data-node-content": "",
+                });
+                element.append(contentElement);
+                // For the subscription it is important that this element is
+                // the same as the contentDOM, the element that will be the parent
+                // of the marks.
+                this._stylerDOM = contentElement;
+                // The DOM node that should hold the node's content
+                // this is probably only required when this._stylerDOM != this.dom
+                // this is also part of the ProseMiror API
+                this.contentDOM = contentElement;
+            }
         }
         const subscriptionsWidget = widgetBus.getWidgetById(
             this._subscriptionsId,
@@ -394,8 +414,10 @@ export class ProsemirrorNodeView {
         const structuralElements = {
             // required to style e.g. the margins between paragraphs
             outer: this.dom,
-            // for reproducing atoms outer === inner (an anticipated
-            // case in UIDocumentNodeOutfitter)
+            // for reproducing atoms AND one-element inline nodes
+            // outer === inner (an anticipated case in
+            // UIDocumentNodeOutfitter — its outer-zone widgets stay
+            // inactive, nothing is appended to the element)
             inner: this._stylerDOM,
         };
 
@@ -428,7 +450,17 @@ export class ProsemirrorNodeView {
             // see the constructor: void elements have no content
             if (node.attrs.html)
                 this.dom.innerHTML = DOMPurify.sanitize(node.attrs.html);
-        }
+        } else if (
+            // one-element inline DOM: a changed tag can't be patched
+            // in place — the element IS PM's content container. Like
+            // the reproducing case, reject so PM rebuilds the view
+            // with the new tag.
+            this.contentDOM === this.dom &&
+            "htmlTag" in (node.type.spec.attrs ?? {}) &&
+            _reproducingTag(node, this._specTag) !==
+                this.dom.tagName.toLowerCase()
+        )
+            return false;
         const subscriptionsWidget = this.widgetBus.getWidgetById(
             this._subscriptionsId,
             null,
@@ -463,7 +495,10 @@ export class ProsemirrorNodeView {
         // contentDOM. Their childList churn on cascade updates is not
         // document content; letting it reach readDOMChange makes PM
         // re-parse (and spuriously replace) the affected range
-        // (downloads/issue.txt).
+        // (downloads/issue.txt). For the one-element inline DOM
+        // (contentDOM === dom) nothing is ever appended and every
+        // childList churn inside is document content — the guard
+        // returns false there, exactly like for a mark view.
         return (
             !this._isReproducing &&
             mutation.type === "childList" &&
