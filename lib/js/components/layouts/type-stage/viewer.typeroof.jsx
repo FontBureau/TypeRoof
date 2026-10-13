@@ -48,6 +48,9 @@ import {
     wrapResultsAreEqual,
 } from "./document-nodes-meta/derivations.mjs";
 
+import { getEffectiveStyleLinks } from "../../prosemirror/type-spec.typeroof.jsx";
+import { INLINE_NODES_STYLE_LINKS } from "../../registered-properties-definitions.mjs";
+
 class GenericUpdater extends _BaseComponent {
     constructor(widgetBus, updateHandlerFn) {
         super(widgetBus);
@@ -268,11 +271,22 @@ export class UIDocumentElement extends _UIDocumentAttachment {
         const plan = metaInfo.renderingPlan;
         this._defaultSchemaSpec = defaultSchemaSpec;
         this._context = metaInfo.context;
+        this._typeKey = plan.typeKey;
+        this._isInlineNode = plan.isInlineNode === true;
         this._hasTypeSpecStyling = plan.hasTypeSpecStyling;
         this._pathOfTypes = plan.pathOfTypes;
         this._originTypeSpecPath = originTypeSpecPath;
         this._layoutRootPath = layoutRootPath;
         this._typeSpecStylerWrapper = null;
+        // approach (a) phase 4: the inline node's mark-style styler
+        // (UIDocumentStyleStyler via inlineNodesStyleLinks) + the
+        // resolved styleLinkProperties@ id (rebuild comparison) +
+        // the containing-typeSpec wake trigger (the composition@
+        // GenericUpdater pattern — see _provisionInlineStyleStyler)
+        this._inlineStyleStylerWrapper = null;
+        this._inlineStyleLinkPropertiesId = null;
+        this._inlineStyleTriggerWrapper = null;
+        this._inlineStyleTriggerTypeId = null;
         this._compositionUnsubscribe = null;
         this._compositionUnobserve = null;
         this._compositionDemandToken = {};
@@ -366,16 +380,47 @@ export class UIDocumentElement extends _UIDocumentAttachment {
         this._hasTypeSpecStyling = plan.hasTypeSpecStyling;
         this._pathOfTypes = plan.pathOfTypes;
         this._compositionReveal = compositionReveal;
-        if (
-            (pathChanged || scopeSettled) &&
-            this._typeSpecStylerWrapper !== null
-        ) {
-            const index = this._widgets.indexOf(this._typeSpecStylerWrapper);
-            if (index !== -1) this._widgets.splice(index, 1);
-            this._destroyWidget(this._typeSpecStylerWrapper);
-            this._typeSpecStylerWrapper = null;
-            const wrapper = this._provisionTypeSpecStyler();
-            if (wrapper !== null) {
+        if (pathChanged || scopeSettled) {
+            // the current styler wrapper (either channel) is destroyed
+            // and re-provisioned through the channel dispatcher
+            // (inline nodes: the style-link styler; blocks: the
+            // per-node typeSpec styler)
+            const oldWrapper = this._isInlineNode
+                ? this._inlineStyleStylerWrapper
+                : this._typeSpecStylerWrapper;
+            if (oldWrapper !== null) {
+                const index = this._widgets.indexOf(oldWrapper);
+                if (index !== -1) this._widgets.splice(index, 1);
+                this._destroyWidget(oldWrapper);
+                this._typeSpecStylerWrapper = null;
+                this._inlineStyleStylerWrapper = null;
+                this._inlineStyleLinkPropertiesId = null;
+                if (this._inlineStyleTriggerWrapper !== null) {
+                    const triggerIndex = this._widgets.indexOf(
+                        this._inlineStyleTriggerWrapper,
+                    );
+                    if (triggerIndex !== -1)
+                        this._widgets.splice(triggerIndex, 1);
+                    this._destroyWidget(this._inlineStyleTriggerWrapper);
+                    this._inlineStyleTriggerWrapper = null;
+                    this._inlineStyleTriggerTypeId = null;
+                }
+            }
+            // (re)provision through the channel dispatcher. For the
+            // block channel this stays gated on an existing wrapper
+            // (unchanged behavior); for the inline channel it is
+            // UNCONDITIONAL: a scope settle after a live typeSpec
+            // edit (an inlineNodesStyleLinks edge added/removed/
+            // re-linked after this element initialized) must resolve
+            // the edge NOW — the element had no styler wrapper yet,
+            // and nothing else re-provisions it.
+            const wrappers = this._isInlineNode
+                ? this._provisionInlineStyleStyler()
+                : oldWrapper !== null
+                  ? [this._provisionTypeSpecStyler()]
+                  : [];
+            for (const wrapper of wrappers) {
+                if (wrapper === null) continue;
                 this._createWidget(wrapper);
                 const changedMap = new Map();
                 for (const local of wrapper.dependencyReverseMapping.keys())
@@ -497,13 +542,144 @@ export class UIDocumentElement extends _UIDocumentAttachment {
         // constructor-baked, attr-driven DOM before provisioning.
         this._applyAttrDrivenDOMUpdates();
         const requiresFullInitialUpdate = new Set();
-        if (this._hasTypeSpecStyling) {
+        // approach (a) phase 4 — the channel split: INLINE nodes
+        // style like MARKS (the styleLinkProperties@ merge channel,
+        // UIDocumentStyleStyler) and never reach the per-node block
+        // styler; blocks keep it. a1 is realized by this routing.
+        if (this._isInlineNode) {
+            const wrappers = this._provisionInlineStyleStyler();
+            for (const wrapper of wrappers)
+                if (wrapper !== null) requiresFullInitialUpdate.add(wrapper);
+        } else if (this._hasTypeSpecStyling) {
             const wrapper = this._provisionTypeSpecStyler();
             if (wrapper) requiresFullInitialUpdate.add(wrapper);
         }
         for (const wrapper of super._provisionWidgets())
             requiresFullInitialUpdate.add(wrapper);
         return requiresFullInitialUpdate;
+    }
+
+    // The inline node's mark-style styling: resolves the
+    // inlineNodesStyleLinks edge of the CONTAINING typeSpec (the
+    // same resolution mark st ylers use — pathOfTypes without the
+    // own typeKey) and provisions a UIDocumentStyleStyler on the
+    // single element. No edge or a declaration edge (empty
+    // stylePatch): NO styler — the element renders inherit-only
+    // (the containing context's cascade; roadmap observation 3's
+    // root-fallback font-size write disappears).
+    //
+    // Because the edge lives on the CONTAINING typeSpec, its state
+    // (added/removed/re-linked) changes that typeSpecnion's stream —
+    // the element itself has no such dependency. A GenericUpdater
+    // trigger on the containing typeSpecProperties@ (the
+    // composition@ pattern) wakes the element to re-resolve the edge
+    // and rebuild the styler when its id changes. Without it, a
+    // freshly provisioned viewer element that ran before the
+    // typeSpec tree settled (e.g. a mode switch racing an edge edit)
+    // would keep its initial (null) resolution forever.
+    _provisionInlineStyleStyler() {
+        const containingPathOfTypes = this._pathOfTypes.slice(0, -1),
+            typeSpecPropertiesPath = this._getTypeSpecPropertiesId(
+                containingPathOfTypes,
+                true /* asPath */,
+            ),
+            typeSpecProperties = this._getTypeSpecPropertiesId(
+                containingPathOfTypes,
+            ),
+            links = getEffectiveStyleLinks(
+                this.widgetBus,
+                typeSpecProperties,
+                INLINE_NODES_STYLE_LINKS,
+            ),
+            edge = links.get(this._typeKey),
+            styleLinkPropertiesId =
+                edge !== undefined && edge.get("stylePatch").value !== ""
+                    ? getStyleLinkPropertiesId(
+                          this.widgetBus,
+                          typeSpecPropertiesPath,
+                          "inlineNodesStyleLinks",
+                          this._typeKey,
+                      )
+                    : null,
+            newWrappers = [];
+        // the containing typeSpecProperties@ changed: (re)build the
+        // trigger (its dependency id is the containing typeSpec)
+        if (
+            this._inlineStyleTriggerWrapper === null ||
+            this._inlineStyleTriggerTypeId !== typeSpecProperties
+        ) {
+            if (this._inlineStyleTriggerWrapper !== null) {
+                const index = this._widgets.indexOf(
+                    this._inlineStyleTriggerWrapper,
+                );
+                if (index !== -1) this._widgets.splice(index, 1);
+                this._destroyWidget(this._inlineStyleTriggerWrapper);
+                this._inlineStyleTriggerWrapper = null;
+            }
+            this._inlineStyleTriggerTypeId = typeSpecProperties;
+            this._inlineStyleTriggerWrapper = this._initWrapper(
+                this._childrenWidgetBus,
+                {},
+                [[typeSpecProperties, "containingTypeSpecProperties@"]],
+                GenericUpdater,
+                this._inlineStyleTriggerUpdate.bind(this),
+            );
+            newWrappers.push(this._inlineStyleTriggerWrapper);
+        }
+        // rebuild comparison: the resolved id is the styler wrapper's
+        // identity (an edge edit changes it)
+        if (this._inlineStyleStylerWrapper !== null) {
+            if (this._inlineStyleLinkPropertiesId === styleLinkPropertiesId)
+                return newWrappers;
+            const index = this._widgets.indexOf(this._inlineStyleStylerWrapper);
+            if (index !== -1) this._widgets.splice(index, 1);
+            this._destroyWidget(this._inlineStyleStylerWrapper);
+            this._inlineStyleStylerWrapper = null;
+        }
+        this._inlineStyleLinkPropertiesId = styleLinkPropertiesId;
+        if (styleLinkPropertiesId === null) return newWrappers;
+        const settings = {},
+            dependencyMappings = [
+                [styleLinkPropertiesId, "properties@"],
+                ["/font", "rootFont"],
+                [
+                    this._layoutRootPath
+                        .append("verboseFontVariationSettings")
+                        .toString(),
+                    "verboseFontVariationSettings",
+                ],
+            ],
+            Constructor = UIDocumentStyleStyler,
+            args = [this.node];
+        const wrapper = this._initWrapper(
+            this._childrenWidgetBus,
+            settings,
+            dependencyMappings,
+            Constructor,
+            ...args,
+        );
+        this._inlineStyleStylerWrapper = wrapper;
+        newWrappers.push(wrapper);
+        return newWrappers;
+    }
+
+    // GenericUpdater handler: the containing typeSpecnion's stream
+    // changed (an inlineNodesStyleLinks edge was added/removed/
+    // re-linked there, or a parent re-anchored) — re-resolve the edge
+    // and rebuild the styler when its id changed. The styler's own
+    // properties@ dependency covers payload-content updates; this
+    // trigger covers identity changes.
+    _inlineStyleTriggerUpdate() {
+        if (!this._isInlineNode) return;
+        const wrappers = this._provisionInlineStyleStyler(),
+            stylerWrapper = this._inlineStyleStylerWrapper;
+        if (wrappers.includes(stylerWrapper) && stylerWrapper !== null) {
+            this._createWidget(stylerWrapper);
+            const changedMap = new Map();
+            for (const local of stylerWrapper.dependencyReverseMapping.keys())
+                changedMap.set(local, stylerWrapper.widget.getEntry(local));
+            stylerWrapper.widget.update(changedMap);
+        }
     }
 
     destroy() {
