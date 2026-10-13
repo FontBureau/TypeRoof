@@ -377,6 +377,19 @@ Recommended sequence (operator's call):
    attach after a mode switch leaves inline elements unstyled →
    handed over to a sub-RPI cycle; handover doc:
    `docs/planning/inline-node-refinements/2026-10-13-phase4-viewer-channel-HANDOVER.md`.
+6. **Cycle CONCLUDED 2026-10-13 (late)**: approach (a) phases 1–6 all
+   complete and committed — phase 4 `6394787b` + fresh-attach fix
+   `4532ae22` (sub-cycle docs archived); phase 5 "Node Style Links" UI
+   `31107d2a`; phase 6 `9ad62e29` (nested marks anchor at the
+   containing typeSpec — `getResolvablePathOfTypes` at all four
+   rendered channels) + `a014ceaf` (the measured-side fallback:
+   `CompositionSource.resolveInlineStyleLink`, innermost-wins
+   threading, explicit-everything contract) + `d5b98d0b` (the quote →
+   serif italic demo edge in the wikipedia state). The cycle's visible
+   goal verified live: nested italic `{1, em}` at the li context
+   (18pt/24px) in both renderers; quotes at AmstelvarA2 Italic 18pt;
+   references list composed without overflow. Open follow-up: the
+   manual-wake refactor (below).
 
 ## Follow-ups (out of current scope)
 
