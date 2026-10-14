@@ -1564,6 +1564,15 @@ select and drag
     }
 }
 
+/* the potentials location overrides map (milestone 6): same reveal
+ * as the axes-math map tools — the generic .ui_base_map-tools > *
+ * rule hides them otherwise. */
+.ui_potentials-location_overrides-tools {
+    & > * {
+        display: initial;
+    }
+}
+
 /* needs more specificity than the rule above */
 .ui_links_map-tools.ui_links_map-tools:focus-within > * {
     display: block;
