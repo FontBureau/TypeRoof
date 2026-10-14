@@ -27,7 +27,12 @@
  *
  * STUBS: hardcoded tables for Roboto Flex + Amstelvar flavors only,
  * discovered best-fit (most specific description wins; Roboto Flex
- * and Roboto Delta are sufficiently compatible). Document-editable
+ * and Roboto Delta are sufficiently compatible). Also selectable
+ * BY NAME (POTENTIALS_CONFIGURATIONS): a named table applies
+ * regardless of the run's font — maximally graceful, treated axes
+ * the font lacks are no-ops. Tables declare defaultLocations
+ * (parallel to dimensions, the modeling font's fvar defaults) used
+ * when the run's font lacks a dimension's axis. Document-editable
  * potentials (metamodel + storage) are a deliberately deferred
  * design question — see docs/planning/text-composition/ROADMAP.md
  * "Milestone 4 design notes".
@@ -42,6 +47,11 @@ export type PotentialsLevel =
 export interface PotentialsTable {
     /** Ordered axis tags, one per level (e.g. ["wght","wdth","opsz"]). */
     dimensions: string[];
+    /** The modeling font's default location, parallel to dimensions
+     *  (verified against the shipped fvar): used when the run's font
+     *  lacks a dimension's axis (named selections navigate fonts
+     *  outside the modeling family). */
+    defaultLocations: number[];
     tree: PotentialsLevel;
 }
 
@@ -64,6 +74,17 @@ const _isLeaf = (level: PotentialsLevel): level is PotentialsLeaf => {
  *  data reads ascending here) — the monotonic check guards decimal
  *  (non-integer) stops; the resolver sorts defensively anyway. */
 export function validatePotentialsTable(table: PotentialsTable): void {
+    if (table.defaultLocations.length !== table.dimensions.length)
+        throw new Error(
+            `POTENTIALS ERROR defaultLocations ` +
+                `[${table.defaultLocations}] must be parallel to ` +
+                `dimensions [${table.dimensions}].`,
+        );
+    if (table.defaultLocations.some((value) => !isFinite(value)))
+        throw new Error(
+            `POTENTIALS ERROR defaultLocations ` +
+                `[${table.defaultLocations}] must be finite.`,
+        );
     // the first leaf's key set is the reference for all others
     const reference: { keys: string[] | null } = { keys: null };
     const walk = (level: PotentialsLevel, path: string): void => {
@@ -178,11 +199,12 @@ export function calculatePotentials(
                 `POTENTIALS ERROR the table is deeper than its ` +
                     `dimensions [${table.dimensions}] at ${path}.`,
             );
-        const mark = location.get(dimension);
+        const mark = location.get(dimension) ?? table.defaultLocations[depth];
         if (mark === undefined)
             throw new Error(
                 `POTENTIALS ERROR the location has no value for ` +
-                    `dimension "${dimension}" (path ${path}).`,
+                    `dimension "${dimension}" and the table declares ` +
+                    `no defaultLocation at depth ${depth} (path ${path}).`,
             );
         const keyedLevel = level as { [key: string]: PotentialsLevel },
             entries = Object.keys(keyedLevel)
@@ -279,6 +301,8 @@ export function anchorPotentialsToLocation(
 
 export const JUSTIFICATION_POTENTIALS_AMSTELVAR: PotentialsTable = {
     dimensions: ["wght", "wdth", "opsz"],
+    // verified against the shipped Amstelvar avar1 fvar
+    defaultLocations: [400, 100, 14],
     tree: {
         // weight
         // width
@@ -411,6 +435,8 @@ export const JUSTIFICATION_POTENTIALS_AMSTELVAR: PotentialsTable = {
 
 export const JUSTIFICATION_POTENTIALS_ROBOTO_FLEX: PotentialsTable = {
     dimensions: ["wght", "wdth", "opsz"],
+    // verified against the shipped Roboto Flex fvar
+    defaultLocations: [400, 100, 14],
     tree: {
         // weight
         // width
@@ -534,9 +560,41 @@ export const JUSTIFICATION_POTENTIALS_ROBOTO_FLEX: PotentialsTable = {
     },
 };
 
+// --- The headline tables (the varla-varfo ---------------------------
+// WDTH_JUSTIFICATION_SPECS stub, folded into the unified structure
+// with a real dflt slot). The h1/"main" use sits at the WIDE end
+// and ONLY narrows — the natural state IS the wide end (dflt =
+// max), so the widening potential is zero BY CONSTRUCTION (the
+// stub's FIXME "widening not confirmed" expressed structurally).
+// Flat leaves, dimensions [] — the stub deliberately ignores
+// font-size; the stub's own caveat is that it was only ever used
+// for main headlines. Provenance comments carried verbatim.
+export const JUSTIFICATION_POTENTIALS_ROBOTO_FLEX_HEADLINE: PotentialsTable = {
+    dimensions: [],
+    defaultLocations: [],
+    tree: {
+        // RobotFlex: axis goes down to 25 and up to 151
+        // (fvar-verified: [25, 151])
+        // We don't use wdth widening so far.
+        wdth: [35, 151, 151],
+    },
+};
+export const JUSTIFICATION_POTENTIALS_AMSTELVAR_HEADLINE: PotentialsTable = {
+    dimensions: [],
+    defaultLocations: [],
+    tree: {
+        // AmstelVar: axis goes down to 50 and up to 125
+        // (fvar-verified: [50, 125])
+        // We don't use wdth widening so far.
+        wdth: [50, 125, 125],
+    },
+};
+
 // The tables are code — validate at module load.
 validatePotentialsTable(JUSTIFICATION_POTENTIALS_AMSTELVAR);
 validatePotentialsTable(JUSTIFICATION_POTENTIALS_ROBOTO_FLEX);
+validatePotentialsTable(JUSTIFICATION_POTENTIALS_ROBOTO_FLEX_HEADLINE);
+validatePotentialsTable(JUSTIFICATION_POTENTIALS_AMSTELVAR_HEADLINE);
 
 // --- Best-fit discovery -------------------------------------------------
 
@@ -598,4 +656,72 @@ export function discoverPotentials(font: any): PotentialsTable | null {
     }
     candidates.sort((a, b) => b[0] - a[0] || b[1] - a[1]);
     return candidates[0]?.[2] ?? null;
+}
+
+// --- Named configurations (selection by key) -------------------------
+
+/** The selectable potentials configurations: "auto" (best-fit
+ *  discovery over the Text pair — today's behavior) or a named
+ *  table applied REGARDLESS of the run's font (maximally
+ *  graceful: no family matching, no axis-existence gate — treated
+ *  axes the font lacks are applied anyway and no-op in
+ *  measurement and rendering). */
+export const POTENTIALS_CONFIGURATIONS: { [key: string]: PotentialsTable } = {
+    robotoFlexText: JUSTIFICATION_POTENTIALS_ROBOTO_FLEX,
+    amstelvarText: JUSTIFICATION_POTENTIALS_AMSTELVAR,
+    robotoFlexHeadline: JUSTIFICATION_POTENTIALS_ROBOTO_FLEX_HEADLINE,
+    amstelvarHeadline: JUSTIFICATION_POTENTIALS_AMSTELVAR_HEADLINE,
+};
+
+/** Resolve a potentials selection for a font: "auto" -> best-fit
+ *  discovery; a named key -> that table, no gates. An unknown key
+ *  warns and falls back to auto (the metamodel enum can't produce
+ *  it; defensive only). */
+export function resolvePotentialsSelection(
+    selection: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    font: any,
+): PotentialsTable | null {
+    if (selection !== "auto" && selection in POTENTIALS_CONFIGURATIONS)
+        return POTENTIALS_CONFIGURATIONS[selection]!;
+    if (selection !== "auto")
+        console.warn(
+            `POTENTIALS WARNING unknown selection "${selection}" ` +
+                `— falling back to auto discovery.`,
+        );
+    return discoverPotentials(font);
+}
+
+/** The font's default location (all axes at their fvar defaults) —
+ *  the anchoring-mode "font" location: one stable anchor per font,
+ *  shared by all runs regardless of where styles push them. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function fontDefaultLocation(font: any): Map<string, number> {
+    const location = new Map<string, number>(),
+        axisRanges = (font?.axisRanges ?? {}) as {
+            [tag: string]: { default?: unknown };
+        };
+    for (const [tag, range] of Object.entries(axisRanges))
+        if (typeof range?.default === "number")
+            location.set(tag, range.default);
+    return location;
+}
+
+/** The generated selection doc string (table dimension order,
+ *  effective values: the run location or the table's declared
+ *  defaults) — published with the composition payload so the UI
+ *  can surface WHAT the potential was selected by. */
+export function potentialsSelectionString(
+    table: PotentialsTable,
+    location: ReadonlyMap<string, number>,
+): string {
+    const parts = table.dimensions.map(
+        (dimension, depth) =>
+            `${dimension}(${
+                location.get(dimension) ?? table.defaultLocations[depth]
+            })`,
+    );
+    return `the potential is selected by: ${
+        parts.length === 0 ? "(no dimensions)" : parts.join(", ")
+    }`;
 }
