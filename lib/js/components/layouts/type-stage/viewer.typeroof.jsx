@@ -31,6 +31,7 @@ import {
     lineSpanStyles,
     lineStartSourceIndex,
     potentialsLineColorCode,
+    treatmentConfigFromPayload,
 } from "./text-composition/line-attrs.ts";
 import { TypeStagePaneStyler } from "./pane-styler.typeroof.jsx";
 import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
@@ -998,13 +999,9 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
                               : "",
                     { styles, dataTrackingGaps } = lineSpanStyles({
                         treatment: leaves[leafIndex].treatment,
-                        treatmentConfig: {
-                            treatments: new Set(
-                                this._composition.treatmentConfig.treatments,
-                            ),
-                            direction:
-                                this._composition.treatmentConfig.direction,
-                        },
+                        treatmentConfig: treatmentConfigFromPayload(
+                            this._composition.treatmentConfig,
+                        ),
                         adjustmentStep: line.adjustmentStep,
                         trackingGaps: Number(
                             line.trackingGapsBySourceIndex?.[leafIndex] ?? 0,

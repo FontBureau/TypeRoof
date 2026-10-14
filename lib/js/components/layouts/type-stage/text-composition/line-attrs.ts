@@ -178,6 +178,24 @@ export interface LineSpanStyles {
     dataTrackingGaps: number | null;
 }
 
+/** The payload's serialized treatment config: treatments is "all" or
+ *  the enabled tag array (the controller sorts). Re-hydrate to the
+ *  planner config shape — shared by the viewer and editor
+ *  applicators (the editor bug: `new Set("all")` is the CHARACTER
+ *  set {"a","l"}, silently disabling every treatment). */
+export function treatmentConfigFromPayload(payloadConfig: {
+    treatments: "all" | string[];
+    direction: TreatmentPlannerConfig["direction"];
+}): TreatmentPlannerConfig {
+    return {
+        treatments:
+            payloadConfig.treatments === "all"
+                ? "all"
+                : new Set(payloadConfig.treatments),
+        direction: payloadConfig.direction,
+    };
+}
+
 /** Style properties for one line-fragment span. Encapsulates the
  *  skip rules: nothing but the color code when `treatment` is null
  *  or `adjustmentStep === 0`; letter-spacing only when it is nonzero

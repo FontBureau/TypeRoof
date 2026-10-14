@@ -195,9 +195,11 @@ import {
     featuresKeyOf,
 } from "./measurer.ts";
 import {
-    discoverPotentials,
     calculatePotentials,
     anchorPotentialsToLocation,
+    resolvePotentialsSelection,
+    fontDefaultLocation,
+    potentialsSelectionString,
 } from "./justification-potentials.ts";
 import {
     createTreatmentStepper,
@@ -975,6 +977,69 @@ export class CompositionController extends _BaseComponent {
             styleOf = (sourceIndex: number): LeafStyle =>
                 leafStyles[sourceIndex] ?? textblockStyle;
 
+        // Milestone 6: the shared named-potentials resolution (BOTH
+        // greedy-fit and knuth-plass): the selection (auto = best-fit
+        // discovery, the status quo; a named key = that table, no
+        // family/axis gates), the anchoring mode (run = status quo;
+        // font = resolve+anchor at the font's fvar defaults, one
+        // stable anchor per font shared by all runs; off = the
+        // authored triple verbatim), and the manual location
+        // overrides (fill-only: they apply to table dimensions the
+        // run's font does NOT carry; entries for axes the font has
+        // are ignored, protecting step-0 identity for run/font).
+        const potentialsConfigOf = (key: string) => {
+                const valid =
+                    key === "TextCompositionAlgorithmGreedyFitModel" ||
+                    key === "TextCompositionAlgorithmKnuthPlassModel";
+                if (!valid)
+                    return {
+                        selection: "auto" as const,
+                        anchoring: "run" as const,
+                        overrides: new Map<string, number>(),
+                    };
+                const selectionRaw = nodeProperties.get(
+                        "textCompositionAlgorithm/potentials",
+                    ),
+                    selection = (
+                        [
+                            "auto",
+                            "robotoFlexText",
+                            "robotoFlexHeadline",
+                            "amstelvarText",
+                            "amstelvarHeadline",
+                        ] as const
+                    ).includes(selectionRaw as never)
+                        ? (selectionRaw as
+                              | "auto"
+                              | "robotoFlexText"
+                              | "robotoFlexHeadline"
+                              | "amstelvarText"
+                              | "amstelvarHeadline")
+                        : "auto",
+                    anchoringRaw = nodeProperties.get(
+                        "textCompositionAlgorithm/potentialsAnchoring",
+                    ),
+                    anchoring = (["run", "font", "off"] as const).includes(
+                        anchoringRaw as never,
+                    )
+                        ? (anchoringRaw as "run" | "font" | "off")
+                        : "run",
+                    overridesRaw = nodeProperties.get(
+                        "textCompositionAlgorithm/potentialsLocationOverrides",
+                    ),
+                    overrides = new Map<string, number>(
+                        Object.entries(
+                            (overridesRaw as Record<string, number>) ?? {},
+                        ).filter(
+                            ([tag, value]) =>
+                                typeof value === "number" &&
+                                !(tag in (font?.axisRanges ?? {})),
+                        ),
+                    );
+                return { selection, anchoring, overrides };
+            },
+            potentialsConfig = potentialsConfigOf(algorithmKey);
+
         // Justification potentials + the Treatment Planner (milestone
         // 4): Host policy, engaged whenever a font has potentials —
         // algorithms that only probe step 0 (dummy, greedy-ragged)
@@ -991,22 +1056,26 @@ export class CompositionController extends _BaseComponent {
                 | null =
                 algorithmKey === "TextCompositionAlgorithmGreedyFitModel"
                     ? {
-                          treatments: new Set<string>(
-                              (
-                                  [
-                                      ["treatmentXTRA", "XTRA"],
-                                      ["treatmentTracking", "tracking"],
-                                      ["treatmentWordspace", "wordspace"],
-                                  ] as [string, string][]
-                              )
-                                  .filter(
-                                      ([field]) =>
-                                          (nodeProperties.get(
-                                              `textCompositionAlgorithm/${field}`,
-                                          ) ?? true) === true,
-                                  )
-                                  .map(([, treatment]) => treatment),
-                          ),
+                          // the off-list semantics: NOT in the list =
+                          // enabled (all treatments the resolved leaf
+                          // offers); in the list = disabled. Milestone 6
+                          // replaces the three legacy booleans with this
+                          // one list (axis tags + the pseudo-axes
+                          // "tracking"/"wordspace").
+                          treatments:
+                              nodeProperties.get(
+                                  "textCompositionAlgorithm/treatments",
+                              ) === undefined
+                                  ? "all"
+                                  : new Set<string>(
+                                        (
+                                            nodeProperties.get(
+                                                "textCompositionAlgorithm/treatments",
+                                            ) as string[]
+                                        ).filter(
+                                            (tag) => typeof tag === "string",
+                                        ),
+                                    ),
                           direction: (
                               ["both", "narrowing", "widening"] as const
                           ).includes(
@@ -1094,22 +1163,68 @@ export class CompositionController extends _BaseComponent {
             plannerCache = new Map<LeafStyle, any>(),
             plannerOf = (style: LeafStyle): any => {
                 if (!plannerCache.has(style)) {
-                    const table = discoverPotentials(style.font);
+                    const table = resolvePotentialsSelection(
+                        potentialsConfig.selection,
+                        style.font,
+                    );
                     let entry = null;
                     if (table !== null) {
-                        const location = new Map(style.axesEntries),
-                            // re-anchored to the run's location (the
-                            // tables are avar1-authored; avar2 fonts
-                            // sit elsewhere — the potentials express
-                            // deltas from the natural state)
-                            potentials = anchorPotentialsToLocation(
-                                calculatePotentials(table, location),
-                                location,
-                                style.font.axisRanges,
+                        // the working location per anchoring mode:
+                        // "run" = the run's resolved axes (status quo);
+                        // "font" = the font's fvar defaults (one stable
+                        // anchor per font, shared by all runs);
+                        // "off" = the run's location navigates the
+                        // table, but the anchoring is skipped (the
+                        // authored triple applies verbatim).
+                        const runLocation = new Map(style.axesEntries),
+                            location =
+                                potentialsConfig.anchoring === "font"
+                                    ? fontDefaultLocation(style.font)
+                                    : runLocation,
+                            // fill-only overrides: apply to dimensions
+                            // the run's font does NOT carry (entries for
+                            // present axes were filtered out above)
+                            filledLocation = new Map(location);
+                        for (const dimension of table.dimensions) {
+                            if (filledLocation.has(dimension)) continue;
+                            const override =
+                                potentialsConfig.overrides.get(dimension);
+                            if (override !== undefined) {
+                                filledLocation.set(dimension, override);
+                                continue;
+                            }
+                            const fallback =
+                                table.defaultLocations[
+                                    table.dimensions.indexOf(dimension)
+                                ];
+                            if (fallback !== undefined)
+                                filledLocation.set(dimension, fallback);
+                        }
+                        const resolvedLeaf = calculatePotentials(
+                                table,
+                                filledLocation,
+                            ),
+                            // re-anchored to the working location (the
+                            // tables are avar1-authored; avar2 fonts sit
+                            // elsewhere — the potentials express deltas
+                            // from the natural state); "off" keeps the
+                            // authored triple verbatim.
+                            potentials =
+                                potentialsConfig.anchoring === "off"
+                                    ? resolvedLeaf
+                                    : anchorPotentialsToLocation(
+                                          resolvedLeaf,
+                                          location,
+                                          style.font.axisRanges,
+                                      ),
+                            selectionString = potentialsSelectionString(
+                                table,
+                                filledLocation,
                             );
                         entry = {
                             table,
                             potentials,
+                            selectionString,
                             stepper: createTreatmentStepper(
                                 potentials,
                                 plannerConfig,
@@ -1157,13 +1272,24 @@ export class CompositionController extends _BaseComponent {
                 hyphenationConfig.minBefore,
                 hyphenationConfig.minAfter,
                 hyphenationPattern,
+                // the shared named-potentials resolution (milestone 6):
+                // selection, anchoring mode, overrides — consumed by
+                // plannerOf for BOTH greedy-fit and knuth-plass
+                potentialsConfig.selection,
+                potentialsConfig.anchoring,
+                [...potentialsConfig.overrides.entries()]
+                    .map(([tag, value]) => `${tag}=${value}`)
+                    .sort()
+                    .join(","),
                 // the Treatment Planner config (greedy-fit):
                 // treatment toggles + direction gate the step values;
                 // colorCoding flows into the payload
                 ...(greedyFitConfig === null
                     ? []
                     : [
-                          [...plannerConfig.treatments].sort().join(","),
+                          plannerConfig.treatments === "all"
+                              ? "all"
+                              : [...plannerConfig.treatments].sort().join(","),
                           plannerConfig.direction,
                           greedyFitConfig.colorCoding,
                       ]),
@@ -1234,6 +1360,7 @@ export class CompositionController extends _BaseComponent {
             return;
         }
         const paragraphs = [];
+        // TEMPORARY m6 debug (removed before commit)
         for (const logicalParagraph of logicalParagraphs) {
             if (!this._sourceIsCurrent(textblockPathString, source)) return;
             let { segments, breaks } = logicalParagraph;
@@ -1645,11 +1772,24 @@ export class CompositionController extends _BaseComponent {
                 }),
                 paragraphs,
                 // the Treatment Planner configuration (the applicator
-                // applies the same enabled-treatments/direction)
+                // applies the same enabled-treatments/direction):
+                // treatments = "all" or the enabled tag array (KP
+                // publishes "all" — the planner defaults)
                 treatmentConfig: {
-                    treatments: [...plannerConfig.treatments],
+                    treatments:
+                        plannerConfig.treatments === "all"
+                            ? "all"
+                            : [...plannerConfig.treatments].sort(),
                     direction: plannerConfig.direction,
                 },
+                // the generated selection doc string (milestone 6):
+                // what the potential was selected by (dimension order,
+                // run location / overrides / table defaults) — per
+                // leaf style (null when the leaf has no potentials)
+                potentialsSelections: leaves.map(
+                    (leaf, index) =>
+                        plannerOf(styleOf(index))?.selectionString ?? null,
+                ),
                 // The resolved diagnostics color-coding MODE for the
                 // applicator (Phase 4): "potentials" — the legacy
                 // adjustment-intensity codes (what the line did
