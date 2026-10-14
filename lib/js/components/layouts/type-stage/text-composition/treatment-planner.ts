@@ -27,14 +27,18 @@ import type {
 } from "./justification-potentials.ts";
 
 export interface TreatmentPlannerConfig {
-    /** Enabled treatment names (e.g. "XTRA", "tracking", "wordspace"). */
-    treatments: ReadonlySet<string>;
+    /** Enabled treatments: "all" present in the resolved potentials
+     *  leaf, or an explicit tag set — axis treatments (4-char
+     *  OpenType tags, e.g. "XTRA", "wdth") and/or the pseudo-axes
+     *  "tracking"/"wordspace" (the off-list semantics: NOT in the
+     *  set = disabled, "all" = everything the leaf offers). */
+    treatments: "all" | ReadonlySet<string>;
     /** Direction gating: steps on the disallowed side are 0. */
     direction: "both" | "narrowing" | "widening";
 }
 
 export const TREATMENT_PLANNER_DEFAULTS: TreatmentPlannerConfig = {
-    treatments: new Set(["XTRA", "tracking", "wordspace"]),
+    treatments: "all",
     direction: "both",
 };
 
@@ -93,14 +97,13 @@ export function createTreatmentStepper(
             if (config.direction === "widening" && step < 0) return 0;
             return Math.max(-1, Math.min(1, step));
         },
+        enabled = (treatment: string): boolean =>
+            config.treatments === "all" || config.treatments.has(treatment),
         axisTreatments = Object.keys(potentials).filter(
-            (treatment) =>
-                _isAxisTreatment(treatment) && config.treatments.has(treatment),
+            (treatment) => _isAxisTreatment(treatment) && enabled(treatment),
         ),
-        trackingEnabled =
-            config.treatments.has("tracking") && "tracking" in potentials,
-        wordspaceEnabled =
-            config.treatments.has("wordspace") && "wordspace" in potentials;
+        trackingEnabled = enabled("tracking") && "tracking" in potentials,
+        wordspaceEnabled = enabled("wordspace") && "wordspace" in potentials;
     return {
         axisTreatments,
         axesAt(step: number): Map<string, number> {
