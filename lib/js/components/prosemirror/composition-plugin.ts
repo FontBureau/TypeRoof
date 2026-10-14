@@ -55,6 +55,7 @@ import {
     lineSpanStyles,
     potentialsLineColorCode,
     kpLineColorCode,
+    treatmentConfigFromPayload,
 } from "../layouts/type-stage/text-composition/line-attrs.ts";
 
 export const editorCompositionPluginKey = new PluginKey<DecorationSet>(
@@ -167,10 +168,7 @@ function _payloadDecorations(
                 spec,
             ),
         ],
-        treatmentConfig = {
-            treatments: new Set(payload.treatmentConfig.treatments),
-            direction: payload.treatmentConfig.direction,
-        };
+        treatmentConfig = treatmentConfigFromPayload(payload.treatmentConfig);
     for (const frag of payloadFragmentRanges(payload, resolve)) {
         const classes = lineSpanClasses({
                 isLineStart: frag.isLineStart,
