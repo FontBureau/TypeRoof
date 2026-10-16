@@ -402,7 +402,7 @@ class RampController extends _BaseContainerComponent {
                 ],
                 TypeSpecPropertiesManager,
                 new Map([...zones, ["main", propertiesManagerContainer]]),
-                { showMarkStyleLinks: false },
+                { showMarkStyleLinks: false, showNodeStyleLinks: false },
             ],
             [
                 // Always-active, DOM-free text-composition SERVICE:
