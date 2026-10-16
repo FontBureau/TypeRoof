@@ -47,6 +47,10 @@ export interface CompositionPayloadSegment {
 }
 export interface CompositionPayloadLine extends ComposedLine {
     trackingGapsBySourceIndex?: Record<number, number>;
+    /** underfullTreatment revert (milestone 6): per-leaf axes
+     *  entries the line renders at, keyed by sourceIndex (present
+     *  only on lines marked underfullRevert). */
+    revertAxesEntriesBySourceIndex?: Record<number, [string, number][]>;
 }
 export interface CompositionPayloadParagraph {
     segments: CompositionPayloadSegment[];
