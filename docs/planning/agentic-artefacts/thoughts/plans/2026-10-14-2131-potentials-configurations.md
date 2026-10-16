@@ -515,3 +515,14 @@ controller resolution + ingredient, and the two test suites.
 underfullTreatment is greedy-fit-only now. Full suite 582; all five
 QA probes green (measurement 0/99, headline, panels, caret,
 whitespace-css).
+
+## Post-plan addendum 6: viewer revert lookup fix (operator QA 2026-10-16 16:40)
+
+Post-conclusion fix: the viewer's revertAxesEntries lookup indexed the
+per-sourceIndex map by leaves[leafIndex].sourceIndex — the payload
+leaves carry no sourceIndex field, so the underfullTreatment revert
+never applied in the VIEWER (h2/h3 rendered the authored wdth 151
+while the editor correctly reverted to 100). leafIndex IS the
+sourceIndex in the viewer loop; pinned by qa-m6-viewer-revert.mjs in
+the operator's state 2026-10-16-163733 (compare mode, h1 fills 117.4 +
+reverted 100, h2/h3 100 with styled wght intact).
