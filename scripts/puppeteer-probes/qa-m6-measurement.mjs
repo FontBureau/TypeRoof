@@ -148,13 +148,19 @@ export async function run({ page, consoleLines, setTimeout, log }) {
     // decisive: scratch-measure the exact composed-line text at the
     // same font/size/axes with white-space: nowrap (no wrap artifacts)
     const scratch = await page.evaluate(() => {
-        const firstSpan = [
-            ...document.querySelectorAll(".typeroof-composition-line"),
-        ].find(
-            (span) =>
-                parseFloat(getComputedStyle(span).fontSize) < 30 &&
-                (span.getBoundingClientRect().width * 72) / 96 > 284,
-        ),
+        const spans = [...document.querySelectorAll(".typeroof-composition-line")],
+            // prefer an overflowing t-line for the divergence check,
+            // fall back to any body-text line (none overflow anymore)
+            firstSpan =
+                spans.find(
+                    (span) =>
+                        parseFloat(getComputedStyle(span).fontSize) < 30 &&
+                        (span.getBoundingClientRect().width * 72) / 96 > 284,
+                ) ??
+                spans.find(
+                    (span) =>
+                        parseFloat(getComputedStyle(span).fontSize) < 30,
+                ),
             firstBlock = firstSpan?.closest(".typeroof-composed");
         const text = firstSpan.textContent,
             runStyle = getComputedStyle(firstSpan),

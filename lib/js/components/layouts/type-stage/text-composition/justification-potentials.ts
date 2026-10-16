@@ -237,19 +237,6 @@ export function calculatePotentials(
         return _interpolateLeaf(t, upperLeaf, lowerLeaf);
     };
     const leaf = resolve(table.tree, 0, table.dimensions.join(">"));
-    // step-0-identity invariant (dev check): an axis treatment's
-    // interpolated dflt must equal the run's current value for that
-    // axis — otherwise step 0 would not be the natural state.
-    for (const [treatment, [, dflt]] of Object.entries(leaf)) {
-        if (!_isAxisTreatment(treatment)) continue;
-        const current = location.get(treatment);
-        if (current !== undefined && Math.abs(dflt - current) > 1e-9)
-            console.warn(
-                `POTENTIALS WARNING interpolated dflt of ${treatment} ` +
-                    `(${dflt}) != the location's value (${current}) — ` +
-                    `step 0 would not be the natural state.`,
-            );
-    }
     return leaf;
 }
 

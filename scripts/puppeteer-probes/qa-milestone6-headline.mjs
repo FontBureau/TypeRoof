@@ -83,10 +83,65 @@ export async function run({ page, consoleLines, setTimeout, log }) {
     if (fill.spans[0].colorCode !== true)
         throw new Error("fill: no color code on the composed line");
 
+    // potentialsAnchoring "off": the authored dflt (wdth 151) is
+    // EXPLICITLY written at step 0 (the identity idea is removed) —
+    // the configuration asserts its natural state and it RENDERS.
+    // Back to ragged (the last line stays as composed), anchoring off:
+    // every step-0 line must carry font-variation-settings with the
+    // authored wdth 151.
+    await setRoot({
+        potentials: "robotoFlexHeadline",
+        lastLineHandling: "ragged",
+        potentialsAnchoring: "off",
+    });
+    await settle();
+    const readBack = await page.evaluate(() => {
+        const instance = shell.getEntry(
+            "/activeState/typeSpec/textCompositionAlgorithm/instance",
+        );
+        return {
+            lastLineHandling: instance.get("lastLineHandling").isEmpty
+                ? "(empty)"
+                : instance.get("lastLineHandling").value,
+            anchoring: instance.get("potentialsAnchoring").isEmpty
+                ? "(empty)"
+                : instance.get("potentialsAnchoring").value,
+        };
+    });
+    log("readBack:", JSON.stringify(readBack));
+    const offState = await h1();
+    log("anchoring off:", JSON.stringify(offState, null, 1));
+    const offSpans = offState?.spans ?? [];
+    if (offSpans.length > 0) {
+        // every line carries the explicit fvs (the identity idea is
+        // removed — nothing renders bare)
+        for (const span of offSpans)
+            if (span.wdth === undefined)
+                throw new Error(
+                    "anchoring off: a line renders WITHOUT font-variation-settings",
+                );
+        const wdths = offSpans.map((span) => parseFloat(span.wdth));
+        // line 1 (overfull at the authored natural state) narrows
+        // WITHIN the authored span [35..151]; the ragged last line
+        // sits at step 0 = the authored dflt 151 exactly.
+        if (wdths.some((wdth) => wdth < 34 || wdth > 152))
+            throw new Error(
+                `anchoring off: wdth ${wdths} outside the authored span [35..151]`,
+            );
+        const lastWdth = wdths.at(-1);
+        if (Math.abs(lastWdth - 151) > 1)
+            throw new Error(
+                `anchoring off: the ragged last line renders wdth ${lastWdth}, not the authored dflt 151`,
+            );
+        log(
+            `anchoring off: wdth ${wdths} — last line at the authored dflt 151`,
+        );
+    }
+
     const errors = consoleLines.filter(
         (line) => line.includes("Uncaught") || line.includes("TypeError"),
     );
     if (errors.length > 0)
         throw new Error(`console errors: ${errors.length}`);
-    log("OK — lastLineHandling fill composes the headline onto one line");
+    log("OK — lastLineHandling fill composes the headline onto one line; off-anchoring renders the authored dflt at step 0");
 }

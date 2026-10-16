@@ -1406,27 +1406,6 @@ export class CompositionController extends _BaseComponent {
             // hyphen opportunities, but the browser renders only
             // the hyphen at the break actually TAKEN at the line
             // end. lineWidthAtStep adds it candidate-wise below.
-            const hyphenWidthOf = (() => {
-                const widths = new Map<LeafStyle, number>();
-                return (style: LeafStyle): number => {
-                    let width = widths.get(style);
-                    if (width === undefined) {
-                        width =
-                            this._measurer!.measureEm(
-                                style.font,
-                                style.axesEntries,
-                                style.axesKey,
-                                style.featuresEntries,
-                                style.featuresKey,
-                                style.language,
-                                style.direction,
-                                "-",
-                            ) * style.fontSizePt;
-                        widths.set(style, width);
-                    }
-                    return width;
-                };
-            })();
             // Shape once per segment: width and visible output-glyph
             // count share the Measurer cache. Tracking is allocated over
             // complete candidate lines from these shaped counts.
@@ -1454,12 +1433,6 @@ export class CompositionController extends _BaseComponent {
                         breakOpportunity,
                     ]),
                 ),
-                widthOf = (from: number, to: number) => {
-                    let width = 0;
-                    for (let i = from; i < to; i++)
-                        width += segments[i]!.widthPt;
-                    return width;
-                },
                 axesAtStep = (style: LeafStyle, step: number) => {
                     const entry = plannerOf(style),
                         axes = entry?.stepper.axesAt(step) ?? new Map(),
@@ -1484,7 +1457,6 @@ export class CompositionController extends _BaseComponent {
                     )
                         return 0;
                     const style = styleOf(segments[to - 1]!.sourceIndex);
-                    if (step === 0) return hyphenWidthOf(style);
                     const { axesEntries, axesKey } = axesAtStep(style, step);
                     return (
                         this._measurer!.measureEm(
@@ -1591,10 +1563,13 @@ export class CompositionController extends _BaseComponent {
                     to: number,
                     step: number,
                 ): number => {
-                    if (step === 0)
-                        return (
-                            widthOf(from, to) + candidateHyphenWidth(to, step)
-                        );
+                    // step 0 flows through the stepper like every
+                    // other step (the identity idea is removed): for
+                    // "run" anchoring the stepper's dflts ARE the
+                    // run's own values — the Measurer cache hits and
+                    // this reduces to the natural widths; "font"/"off"
+                    // measure at the anchored location, matching what
+                    // the applicator explicitly writes at step 0.
                     let width = 0;
                     const trackingRuns = [];
                     for (let i = from; i < to; i++) {

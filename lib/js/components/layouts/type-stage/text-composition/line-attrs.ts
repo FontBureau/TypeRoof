@@ -197,12 +197,13 @@ export function treatmentConfigFromPayload(payloadConfig: {
 }
 
 /** Style properties for one line-fragment span. Encapsulates the
- *  skip rules: nothing but the color code when `treatment` is null
- *  or `adjustmentStep === 0`; letter-spacing only when it is nonzero
- *  AND the line actually has tracking gaps in this leaf; word-spacing
- *  is the factor times the leaf's natural space advance; the axes
- *  override merges treated tags at their step values into the run's
- *  own axes location. */
+ *  skip rules: nothing but the color code when `treatment` is null;
+ *  step 0 is EXPLICITLY written (the axes override at the anchored
+ *  dflt — the identity idea is removed); letter-spacing only when it
+ *  is nonzero AND the line actually has tracking gaps in this leaf;
+ *  word-spacing is the factor times the leaf's natural space advance;
+ *  the axes override merges treated tags at their step values into
+ *  the run's own axes location. */
 export function lineSpanStyles(opts: {
     treatment: CompositionLeafTreatment | null;
     treatmentConfig: TreatmentPlannerConfig;
@@ -213,7 +214,13 @@ export function lineSpanStyles(opts: {
     const styles: [string, string][] = [];
     let dataTrackingGaps: number | null = null;
     const { treatment } = opts;
-    if (treatment !== null && opts.adjustmentStep !== 0) {
+    // step 0 is EXPLICITLY written (milestone 6: the identity idea
+    // is removed): the axes override always carries the anchored
+    // dflt values — identical to the run's own location for "run"
+    // anchoring (explicit, not skipped), the font's fvar defaults
+    // for "font", the authored dflt for "off". Tracking/wordspace
+    // emit nothing at step 0 anyway (their dflts are 0).
+    if (treatment !== null) {
         const { axes, letterSpacingPt, wordSpaceFactor } =
             treatmentValuesAtStep(
                 treatment.potentials,
