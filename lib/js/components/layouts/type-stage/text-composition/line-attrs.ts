@@ -235,10 +235,10 @@ export function lineSpanStyles(opts: {
     }
     // step 0 is EXPLICITLY written (milestone 6: the identity idea
     // is removed): the axes override always carries the anchored
-    // dflt values — identical to the run's own location for "run"
-    // anchoring (explicit, not skipped), the font's fvar defaults
-    // for "font", the authored dflt for "off". Tracking/wordspace
-    // emit nothing at step 0 anyway (their dflts are 0).
+    // dflt values (the potentialsAnchoring mode's choice). The
+    // underfullTreatment revert (revertAxesEntries) short-circuits
+    // above. Tracking/wordspace emit nothing at step 0 anyway
+    // (their dflts are 0).
     if (treatment !== null) {
         const { axes, letterSpacingPt, wordSpaceFactor } =
             treatmentValuesAtStep(

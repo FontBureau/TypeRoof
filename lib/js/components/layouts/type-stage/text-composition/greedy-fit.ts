@@ -61,11 +61,11 @@ export interface GreedyFitConfig {
      *  does (milestone 6): "off" (default, status quo) applies the
      *  maximum widening potential (step +1 — stretched but still
      *  ragged); "run" reverts the line to the run's own axes
-     *  location; "font" to the font's fvar defaults. The revert is
+     *  location. The revert is
      *  marked on the line (underfullRevert) — the Host renders and
      *  measures the line there. Orthogonal to potentialsAnchoring
      *  (same value shape, separate control). */
-    underfullTreatment?: "run" | "font" | "off";
+    underfullTreatment?: "run" | "off";
 }
 
 /** The greedy-fit factory (the dummy/KP pattern): config is resolved
@@ -206,7 +206,7 @@ export function createGreedyFitComposition(
                     lineWidthAtStep(fromSegment, end, 1) >
                     lineWidthAtStep(fromSegment, end, 0);
             let adjustmentStep = 0,
-                underfullRevert: "run" | "font" | undefined = undefined;
+                underfullRevert: "run" | undefined = undefined;
             // fill mode: the last line is composed like a regular line
             if (!isLastLine || composeLastLine) {
                 // NARROW: pull more segments onto the line (minimal

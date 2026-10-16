@@ -36,7 +36,7 @@ export async function run({ page, consoleLines, setTimeout, log }) {
 
     // all three headings per underfullTreatment mode (set on the
     // HEADINGS typeSpec, where the state's config lives)
-    for (const treatment of ["run", "font", "off"]) {
+    for (const treatment of ["run", "off"]) {
         await page.evaluate(async (treatment) => {
             await shell.changeState(() => {
                 const instance = shell.getEntry(
@@ -70,6 +70,9 @@ export async function run({ page, consoleLines, setTimeout, log }) {
                         wdth: span.style
                             .getPropertyValue("font-variation-settings")
                             .match(/"wdth" ([\d.]+)/)?.[1],
+                        wght: span.style
+                            .getPropertyValue("font-variation-settings")
+                            .match(/"wght" ([\d.]+)/)?.[1],
                     })),
                 });
             return out;

@@ -208,12 +208,12 @@ export interface KnuthPlassConfig {
     /** What an underfull NON-FINAL line that widening cannot fill
      *  does (milestone 6, the greedy-fit parity): "off" (default)
      *  applies the maximum widening potential (status quo);
-     *  "run"/"font" revert the line to the run's own axes location /
-     *  the font's fvar defaults (marked underfullRevert; the Host
-     *  renders and measures it there). The DP still charges the
+     *  "run" reverts the line to the run's own axes location
+     *  (marked underfullRevert; the Host renders and measures it
+     *  there). The DP still charges the
      *  gap-proportional extraDemerits for a reverted line — the gap
      *  did not disappear, it is priced at the natural width. */
-    underfullTreatment: "run" | "font" | "off";
+    underfullTreatment: "run" | "off";
 }
 
 export const KNUTH_PLASS_DEFAULTS: KnuthPlassConfig = {
@@ -297,7 +297,7 @@ interface EdgeEvaluation {
     extraDemerits?: number;
     /** set when the widening branch reverted an unfillable
      *  underfull line instead of max-widening it (milestone 6) */
-    underfullRevert?: "run" | "font";
+    underfullRevert?: "run";
 }
 
 interface ChosenEdge {
@@ -306,7 +306,7 @@ interface ChosenEdge {
     badness: number;
     feasible: boolean;
     naturalWidthPt: number;
-    underfullRevert?: "run" | "font";
+    underfullRevert?: "run";
 }
 
 interface Slot {
