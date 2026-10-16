@@ -1055,7 +1055,7 @@ export class CompositionController extends _BaseComponent {
                 | (TreatmentPlannerConfig & {
                       colorCoding: boolean;
                       lastLineHandling: "ragged" | "fill";
-                      underfullTreatment: "run" | "font" | "off";
+                      underfullTreatment: "run" | "off";
                   })
                 | null =
                 algorithmKey === "TextCompositionAlgorithmGreedyFitModel"
@@ -1109,12 +1109,14 @@ export class CompositionController extends _BaseComponent {
                               : "ragged",
                           // milestone 6: an underfull line that
                           // widening cannot fill reverts to the
-                          // run's location ("run") or the font's
-                          // fvar defaults ("font") instead of
+                          // run's location ("run") instead of
                           // stretching to the maximum potential;
                           // "off" (default) keeps the status quo.
+                          // ("font" was removed: the revert wrote
+                          // the full fvar location and stomped
+                          // styled axes the potentials don't treat)
                           underfullTreatment: (
-                              ["run", "font", "off"] as const
+                              ["run", "off"] as const
                           ).includes(
                               nodeProperties.get(
                                   "textCompositionAlgorithm/underfullTreatment",
@@ -1122,7 +1124,7 @@ export class CompositionController extends _BaseComponent {
                           )
                               ? (nodeProperties.get(
                                     "textCompositionAlgorithm/underfullTreatment",
-                                ) as "run" | "font" | "off")
+                                ) as "run" | "off")
                               : "off",
                           colorCoding:
                               (nodeProperties.get(
@@ -1653,7 +1655,7 @@ export class CompositionController extends _BaseComponent {
                               // milestone 6: the greedy-fit parity —
                               // revert an unfillable underfull line
                               underfullTreatment: (
-                                  ["run", "font", "off"] as const
+                                  ["run", "off"] as const
                               ).includes(
                                   nodeProperties.get(
                                       "textCompositionAlgorithm/underfullTreatment",
@@ -1661,7 +1663,7 @@ export class CompositionController extends _BaseComponent {
                               )
                                   ? (nodeProperties.get(
                                         "textCompositionAlgorithm/underfullTreatment",
-                                    ) as "run" | "font" | "off")
+                                    ) as "run" | "off")
                                   : "off",
                               latticeStepsPerSide: (() => {
                                   if (segments.length === 0)
@@ -1760,16 +1762,14 @@ export class CompositionController extends _BaseComponent {
                             style = styleOf(segment.sourceIndex);
                         if (!seen.has(segment.sourceIndex)) {
                             seen.add(segment.sourceIndex);
-                            const entries =
-                                line.underfullRevert === "font"
-                                    ? [
-                                          ...fontDefaultLocation(
-                                              style.font,
-                                          ).entries(),
-                                      ]
-                                    : [...style.axesEntries];
-                            revertEntriesBySourceIndex[segment.sourceIndex] =
-                                entries;
+                            // "run" is the only revert target (the
+                            // "font" variant was removed — it wrote
+                            // the FULL fvar-default location and
+                            // stomped axes the potentials don't
+                            // treat, e.g. a styled wght 700 -> 400)
+                            revertEntriesBySourceIndex[segment.sourceIndex] = [
+                                ...style.axesEntries,
+                            ];
                         }
                         const entries =
                             revertEntriesBySourceIndex[segment.sourceIndex]!;
