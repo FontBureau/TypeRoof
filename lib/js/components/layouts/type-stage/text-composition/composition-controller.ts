@@ -1139,7 +1139,7 @@ export class CompositionController extends _BaseComponent {
                           colorCoding:
                               (nodeProperties.get(
                                   "textCompositionAlgorithm/colorCoding",
-                              ) ?? true) === true,
+                              ) ?? false) === true,
                       }
                     : null,
             // Knuth-Plass++ (milestone 5): the resolved struct
@@ -1202,7 +1202,7 @@ export class CompositionController extends _BaseComponent {
                               ? (nodeProperties.get(
                                     "textCompositionAlgorithm/colorCoding",
                                 ) as "potentials" | "kp" | "off")
-                              : "kp",
+                              : "off",
                       }
                     : null,
             plannerConfig =
