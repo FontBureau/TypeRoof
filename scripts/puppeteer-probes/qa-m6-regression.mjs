@@ -41,6 +41,10 @@ export async function run({ page, setTimeout, log }) {
                               n.nodeType === 3 && n.textContent.trim() !== "",
                       );
                       const range = document.createRange();
+                      if (text === undefined) return {
+                          text: span.textContent.trim().slice(0, 12),
+                          y: null,
+                      };
                       range.setStart(text, 0);
                       range.setEnd(text, 0);
                       const rect = range.getClientRects()[0];
@@ -64,4 +68,12 @@ export async function run({ page, setTimeout, log }) {
         };
     });
     log(JSON.stringify(dump, null, 1));
+    // assertion: the 11 t1 fragments must land on exactly 6 composed
+    // baselines (the \A inline break; the display:block variant
+    // isolated mark-started lines — operator QA 2026-10-16 14:56)
+    if (dump.distinctBaselines !== 6)
+        throw new Error(
+            `expected 6 composed baselines, got ${dump.distinctBaselines}`,
+        );
+    log("OK — t1 renders 6 composed lines, marks inline, no isolation");
 }
