@@ -133,16 +133,39 @@ export function segmentTextRun(
 
     while (i < text.length) {
         const char = text[i]!;
-        if (char === " " || char === "\n") {
+        if (char === " " || char === "\n" || char === "\t" || char === "\r") {
+            // CSS white-space collapsing parity (nowrap/normal): a RUN
+            // of collapsible whitespace renders as ONE space — consume
+            // the whole run as a single segment (the measurement shapes
+            // it normalized; the raw offsets stay valid for the editor
+            // applicator, which maps segment.start/end directly to PM
+            // positions). A run containing \n is an explicit break.
             flushRun(runStart, i);
-            pushSegment(i, i + 1);
+            const runEnd = (() => {
+                let j = i;
+                while (j < text.length) {
+                    const runChar = text[j]!;
+                    if (
+                        runChar === " " ||
+                        runChar === "\n" ||
+                        runChar === "\t" ||
+                        runChar === "\r"
+                    )
+                        j++;
+                    else break;
+                }
+                return j;
+            })();
+            pushSegment(i, runEnd);
             breaks.push({
                 afterSegment: segments.length - 1,
-                kind: char === "\n" ? "explicit" : "space",
+                kind: text.slice(i, runEnd).includes("\n")
+                    ? "explicit"
+                    : "space",
                 penalty: 0,
                 collapses: true,
             });
-            i++;
+            i = runEnd;
             runStart = i;
         } else i++;
     }

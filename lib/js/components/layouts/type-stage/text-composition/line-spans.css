@@ -4,10 +4,10 @@
  * prefix and reduced to what PREDICTIVE composition needs.
  *
  * Ported:
- *   - explicit line breaking: each line's first span gets a
- *     ::before{display:block} — the mechanism that forces our
- *     composed line breaks (and normalizes Chrome/Firefox hyphen
- *     behavior); unset for paragraph-first lines to keep text-indent;
+ *   - explicit line breaking: each line's first span IS a block-level
+ *     box — the mechanism that forces our composed line breaks (and
+ *     keeps every caret position walkable); unset for paragraph-first
+ *     lines to keep text-indent;
  *   - the hyphen ::after for lines broken at a hyphenation point;
  *   - a --line-color-code custom property hook for diagnostics
  *     (the demo's adjustment color-coding).
@@ -20,16 +20,25 @@
  *   - the @-moz-document Firefox block (feedback-loop quirks).
  */
 
-/* Each composed line's first span forces the break before it.
+/* Each composed line's first span IS the line break: the span is a
+ * block-level box (width: fit-content keeps the color-coding
+ * background hugging the text), so its text starts on a fresh line —
+ * and the caret positions at its start are ordinary block-start
+ * positions. The previous mechanism — an inline span carrying a
+ * ::before{display:block} pseudo — rendered identically but Blink's
+ * forward caret walk SKIPPED the line's first text position (the
+ * block-in-inline pseudo boundary made "before D" unstable: the
+ * caret jumped one glyph in; operator QA 2026-10-16, pinned by
+ * qa-m6-caret.mjs).
  * Must be unset for paragraph-first lines to keep text-indent. */
-.typeroof-composition-line-first::before {
-    content: "";
+.typeroof-composition-line-first {
     display: block;
+    width: fit-content;
 }
 
-.typeroof-composition-paragraph-first-line.typeroof-composition-line-first::before {
-    content: unset;
-    display: unset;
+.typeroof-composition-paragraph-first-line.typeroof-composition-line-first {
+    display: revert;
+    width: revert;
 }
 
 /* A line broken at a hyphenation point shows the hyphen. */

@@ -205,15 +205,6 @@ export interface KnuthPlassConfig {
      *  latticeStepsPerSide). Default 6 (a 12pt font, the Host's
      *  own fallback size). */
     enPt: number;
-    /** What an underfull NON-FINAL line that widening cannot fill
-     *  does (milestone 6, the greedy-fit parity): "off" (default)
-     *  applies the maximum widening potential (status quo);
-     *  "run" reverts the line to the run's own axes location
-     *  (marked underfullRevert; the Host renders and measures it
-     *  there). The DP still charges the
-     *  gap-proportional extraDemerits for a reverted line — the gap
-     *  did not disappear, it is priced at the natural width. */
-    underfullTreatment: "run" | "off";
 }
 
 export const KNUTH_PLASS_DEFAULTS: KnuthPlassConfig = {
@@ -227,7 +218,6 @@ export const KNUTH_PLASS_DEFAULTS: KnuthPlassConfig = {
     prohibitedPenalty: 1_000_000,
     exhaustedGapDemerits: 1000,
     enPt: 6,
-    underfullTreatment: "off",
 };
 
 /** Beyond any feasible paragraph's total demerits (see header). */
@@ -295,9 +285,6 @@ interface EdgeEvaluation {
     // gap-proportional extra demerits (widening-exhausted lines
     // only, see KnuthPlassConfig.exhaustedGapDemerits)
     extraDemerits?: number;
-    /** set when the widening branch reverted an unfillable
-     *  underfull line instead of max-widening it (milestone 6) */
-    underfullRevert?: "run";
 }
 
 interface ChosenEdge {
@@ -306,7 +293,6 @@ interface ChosenEdge {
     badness: number;
     feasible: boolean;
     naturalWidthPt: number;
-    underfullRevert?: "run";
 }
 
 interface Slot {
@@ -393,26 +379,7 @@ function* knuthPlassImpl(
         const collapses = collapsesOf(to),
             naturalWidthPt = lineWidthAtStep(from, to, 0),
             w0 = fittingWidth(from, to, 0, collapses);
-        if (w0 <= available && isLastLine) {
-            // underfullTreatment (milestone 6, UNIFORM — no
-            // final/non-final distinction): a fitting last line that
-            // widening cannot fill (including a zero widening range)
-            // reverts to the configured location; "off" keeps the
-            // status quo (step 0). No gap price here: the DP's
-            // last-line pricing (linePenalty + badness) is unchanged
-            // — the revert is a rendering decision.
-            if (
-                fittingWidth(from, to, 1, collapses) <= available &&
-                cfg.underfullTreatment !== "off"
-            )
-                return {
-                    step: 0,
-                    badness: badnessAtStep(0),
-                    feasible: true,
-                    naturalWidthPt,
-                    fittingWidthPt: w0,
-                    underfullRevert: cfg.underfullTreatment,
-                };
+        if (w0 <= available && isLastLine)
             return {
                 step: 0,
                 badness: badnessAtStep(0),
@@ -420,7 +387,6 @@ function* knuthPlassImpl(
                 naturalWidthPt,
                 fittingWidthPt: w0,
             };
-        }
         if (w0 > available) {
             // smallest-|step| narrowing lattice step that fits
             // (binary search; monotonicity per contract)
@@ -468,23 +434,12 @@ function* knuthPlassImpl(
         // extra demerits so the DP prefers alternatives over a
         // grossly underfull line (see the config doc). The gap is
         // priced in EN of the paragraph's font size, cubic growth.
-        // underfullTreatment (milestone 6): a line that maximum
-        // widening still leaves ragged reverts to the configured
-        // location ("off" = status quo, keep step +1). The DP keeps
-        // the gap price — the gap did not disappear, the reverted
-        // line renders at the natural width and the remaining gap
-        // is priced identically.
-        const revert =
-            step === 1 && cfg.underfullTreatment !== "off"
-                ? cfg.underfullTreatment
-                : undefined;
         return {
-            step: revert !== undefined ? 0 : step,
-            badness: badnessAtStep(revert !== undefined ? 0 : step),
+            step,
+            badness: badnessAtStep(step),
             feasible: true,
             naturalWidthPt,
             fittingWidthPt: w0,
-            ...(revert !== undefined ? { underfullRevert: revert } : {}),
             ...(step === 1 && cfg.enPt > 0
                 ? {
                       extraDemerits:
@@ -657,12 +612,6 @@ function* knuthPlassImpl(
                             badness: evaluation.badness,
                             feasible: evaluation.feasible,
                             naturalWidthPt: evaluation.naturalWidthPt,
-                            ...(evaluation.underfullRevert !== undefined
-                                ? {
-                                      underfullRevert:
-                                          evaluation.underfullRevert,
-                                  }
-                                : {}),
                         },
                     };
                 if (devOn && cost < devMinCost) devMinCost = cost;
@@ -726,10 +675,7 @@ function* knuthPlassImpl(
             cfg.polish &&
             edge.feasible &&
             step !== 1 &&
-            !(isLastLine && step === 0) &&
-            // a reverted underfull line stays at step 0 (milestone
-            // 6): the polish search would re-widen it
-            edge.underfullRevert === undefined
+            !(isLastLine && step === 0)
         ) {
             // the lattice cell [step, step + 1/K] brackets the exact
             // fitting step (see header)
@@ -761,9 +707,6 @@ function* knuthPlassImpl(
             breakAt: edge.breakAt,
             naturalWidthPt: edge.naturalWidthPt,
             adjustmentStep: step,
-            ...(edge.underfullRevert !== undefined
-                ? { underfullRevert: edge.underfullRevert }
-                : {}),
         });
         badness.push(lineBadness);
         fitnessClasses.push(FITNESS_CLASSES[classIndexOf(step)]!);
