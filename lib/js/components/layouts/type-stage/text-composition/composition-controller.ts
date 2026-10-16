@@ -347,6 +347,16 @@ export const memoizeWidthAtStep = (
 const hostBadnessAtStep = (step: number): number =>
     Math.abs(step) > 1 ? Infinity : 100 * Math.abs(step) ** 3;
 
+/** CSS white-space collapsing parity: a run of collapsible
+ *  whitespace renders as ONE space under the composed spans'
+ *  white-space: nowrap. The segmenter consumes such runs as single
+ *  segments (raw offsets preserved for the editor applicator); the
+ *  measurement shapes them NORMALIZED. NBSP is NOT collapsible and
+ *  must not be touched (JS \s includes \u00a0 — explicit class). */
+const COLLAPSIBLE_RUN = /[ \t\n\r\f\v]+/g,
+    collapsedSegmentText = (text: string): string =>
+        text.replace(COLLAPSIBLE_RUN, " ");
+
 export class CompositionController extends _BaseComponent {
     [UPDATE_STRATEGY] = UPDATE_STRATEGY_NO_UPDATE;
 
@@ -1351,11 +1361,6 @@ export class CompositionController extends _BaseComponent {
                           knuthPlassConfig.polish,
                           knuthPlassConfig.latticeQuantum,
                           knuthPlassConfig.colorCoding,
-                          // milestone 6 (read from nodeProperties
-                          // directly above — join the filter)
-                          nodeProperties.get(
-                              "textCompositionAlgorithm/underfullTreatment",
-                          ),
                       ]),
                 // per-run styles: the resolved link id + the CONSUMED
                 // values per leaf (flat — nulls for unstyled leaves;
@@ -1445,10 +1450,12 @@ export class CompositionController extends _BaseComponent {
                         style.featuresKey,
                         style.language,
                         style.direction,
-                        leafTexts[segment.sourceIndex]?.slice(
-                            segment.start,
-                            segment.end,
-                        ) ?? "",
+                        collapsedSegmentText(
+                            leafTexts[segment.sourceIndex]?.slice(
+                                segment.start,
+                                segment.end,
+                            ) ?? "",
+                        ),
                     );
                 segment.widthPt = metrics.advanceEm * style.fontSizePt;
                 segment.glyphCount = metrics.glyphCount;
@@ -1542,11 +1549,12 @@ export class CompositionController extends _BaseComponent {
                             },
                         };
                     else {
-                        const text =
+                        const text = collapsedSegmentText(
                                 leafTexts[segment.sourceIndex]?.slice(
                                     segment.start,
                                     segment.end,
                                 ) ?? "",
+                            ),
                             {
                                 axesEntries: stepAxesEntries,
                                 axesKey: stepAxesKey,
@@ -1652,19 +1660,6 @@ export class CompositionController extends _BaseComponent {
                                       100),
                               balanceGray: knuthPlassConfig.balanceGray,
                               polish: knuthPlassConfig.polish,
-                              // milestone 6: the greedy-fit parity —
-                              // revert an unfillable underfull line
-                              underfullTreatment: (
-                                  ["run", "off"] as const
-                              ).includes(
-                                  nodeProperties.get(
-                                      "textCompositionAlgorithm/underfullTreatment",
-                                  ),
-                              )
-                                  ? (nodeProperties.get(
-                                        "textCompositionAlgorithm/underfullTreatment",
-                                    ) as "run" | "off")
-                                  : "off",
                               latticeStepsPerSide: (() => {
                                   if (segments.length === 0)
                                       return { narrowing: 4, widening: 4 };
@@ -1782,10 +1777,12 @@ export class CompositionController extends _BaseComponent {
                                 style.featuresKey,
                                 style.language,
                                 style.direction,
-                                leafTexts[segment.sourceIndex]?.slice(
-                                    segment.start,
-                                    segment.end,
-                                ) ?? "",
+                                collapsedSegmentText(
+                                    leafTexts[segment.sourceIndex]?.slice(
+                                        segment.start,
+                                        segment.end,
+                                    ) ?? "",
+                                ),
                             ).advanceEm * style.fontSizePt;
                     }
                     Object.assign(line, {
@@ -1799,11 +1796,12 @@ export class CompositionController extends _BaseComponent {
                     const segment = segments[i]!,
                         style = styleOf(segment.sourceIndex),
                         entry = plannerOf(style),
-                        text =
+                        text = collapsedSegmentText(
                             leafTexts[segment.sourceIndex]?.slice(
                                 segment.start,
                                 segment.end,
                             ) ?? "",
+                        ),
                         { axesEntries: lineAxes, axesKey: lineAxesKey } =
                             axesAtStep(style, line.adjustmentStep),
                         metrics = this._measurer!.shapeMetricsEm(
