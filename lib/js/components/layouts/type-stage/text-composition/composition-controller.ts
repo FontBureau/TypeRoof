@@ -206,7 +206,7 @@ import {
     TREATMENT_PLANNER_DEFAULTS,
 } from "./treatment-planner.ts";
 import type { TreatmentPlannerConfig } from "./treatment-planner.ts";
-import { greedyFitComposition } from "./greedy-fit.ts";
+import { createGreedyFitComposition } from "./greedy-fit.ts";
 import { createDummyComposition } from "./dummy-composition.ts";
 import { greedyRaggedComposition } from "./greedy-ragged.ts";
 import {
@@ -1052,7 +1052,10 @@ export class CompositionController extends _BaseComponent {
         // switch for the color-coded lines (published for the
         // applicator).
         const greedyFitConfig:
-                | (TreatmentPlannerConfig & { colorCoding: boolean })
+                | (TreatmentPlannerConfig & {
+                      colorCoding: boolean;
+                      lastLineHandling: "ragged" | "fill";
+                  })
                 | null =
                 algorithmKey === "TextCompositionAlgorithmGreedyFitModel"
                     ? {
@@ -1087,6 +1090,22 @@ export class CompositionController extends _BaseComponent {
                                     "textCompositionAlgorithm/direction",
                                 ) as "both" | "narrowing" | "widening")
                               : "both",
+                          // milestone 6: "ragged" = the \parfillskip rule
+                          // (the final line is never composed); "fill" =
+                          // the final line is composed like a regular
+                          // line (pull the remainder narrowed; widen an
+                          // underfull final line to the measure)
+                          lastLineHandling: (
+                              ["ragged", "fill"] as const
+                          ).includes(
+                              nodeProperties.get(
+                                  "textCompositionAlgorithm/lastLineHandling",
+                              ),
+                          )
+                              ? (nodeProperties.get(
+                                    "textCompositionAlgorithm/lastLineHandling",
+                                ) as "ragged" | "fill")
+                              : "ragged",
                           colorCoding:
                               (nodeProperties.get(
                                   "textCompositionAlgorithm/colorCoding",
@@ -1291,6 +1310,7 @@ export class CompositionController extends _BaseComponent {
                               ? "all"
                               : [...plannerConfig.treatments].sort().join(","),
                           plannerConfig.direction,
+                          greedyFitConfig.lastLineHandling,
                           greedyFitConfig.colorCoding,
                       ]),
                 // the resolved Knuth-Plass config (every knob feeds
@@ -1674,7 +1694,11 @@ export class CompositionController extends _BaseComponent {
                         ? createDummyComposition(algorithmConfig as number)
                         : algorithmKey ===
                             "TextCompositionAlgorithmGreedyFitModel"
-                          ? greedyFitComposition
+                          ? createGreedyFitComposition({
+                                lastLineHandling:
+                                    greedyFitConfig?.lastLineHandling ??
+                                    "ragged",
+                            })
                           : algorithmKey ===
                               "TextCompositionAlgorithmKnuthPlassModel"
                             ? knuthPlassAlgorithm!
