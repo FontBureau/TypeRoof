@@ -4,10 +4,10 @@
  * prefix and reduced to what PREDICTIVE composition needs.
  *
  * Ported:
- *   - explicit line breaking: each line's first span IS a block-level
- *     box — the mechanism that forces our composed line breaks (and
- *     keeps every caret position walkable); unset for paragraph-first
- *     lines to keep text-indent;
+ *   - explicit line breaking: each line's first span carries a
+ *     ::before{content:"\A"} forced line break — the mechanism that
+ *     forces our composed line breaks (and keeps every caret position
+ *     walkable); unset for paragraph-first lines to keep text-indent;
  *   - the hyphen ::after for lines broken at a hyphenation point;
  *   - a --line-color-code custom property hook for diagnostics
  *     (the demo's adjustment color-coding).
@@ -20,25 +20,24 @@
  *   - the @-moz-document Firefox block (feedback-loop quirks).
  */
 
-/* Each composed line's first span IS the line break: the span is a
- * block-level box (width: fit-content keeps the color-coding
- * background hugging the text), so its text starts on a fresh line —
- * and the caret positions at its start are ordinary block-start
- * positions. The previous mechanism — an inline span carrying a
- * ::before{display:block} pseudo — rendered identically but Blink's
- * forward caret walk SKIPPED the line's first text position (the
- * block-in-inline pseudo boundary made "before D" unstable: the
- * caret jumped one glyph in; operator QA 2026-10-16, pinned by
- * qa-m6-caret.mjs).
+/* Each composed line's first span carries a FORCED line break as
+ * ::before pseudo-content: "\A" (LF) under white-space:pre — the
+ * span stays INLINE (unlike the display:block variant, which split
+ * inline mark contexts: a block box inside <strong>/<em> stacked the
+ * rest of the line below it — every multi-leaf line starting inside
+ * a mark rendered isolated; operator QA 2026-10-16). An inline
+ * pseudo line break also keeps every caret position walkable (the
+ * earlier Blink caret-skip happened with a display:block pseudo —
+ * the LF mechanism avoids the block-in-inline boundary entirely).
  * Must be unset for paragraph-first lines to keep text-indent. */
-.typeroof-composition-line-first {
-    display: block;
-    width: fit-content;
+.typeroof-composition-line-first::before {
+    content: "\A";
+    white-space: pre;
 }
 
-.typeroof-composition-paragraph-first-line.typeroof-composition-line-first {
-    display: revert;
-    width: revert;
+.typeroof-composition-paragraph-first-line.typeroof-composition-line-first::before {
+    content: unset;
+    white-space: unset;
 }
 
 /* A line broken at a hyphenation point shows the hyphen. */
