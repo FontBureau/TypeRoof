@@ -213,11 +213,16 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
      * options.showMarkStyleLinks: set to false to omit the
      * "Hard Style Links" UI (UIMarkStyleLinksContainer) in Ramp.
      */
-    constructor(widgetBus, zones, { showMarkStyleLinks = true } = {}) {
+    constructor(
+        widgetBus,
+        zones,
+        { showMarkStyleLinks = true, showNodeStyleLinks = true } = {},
+    ) {
         // provision widgets dynamically!
         super(widgetBus, zones);
         this._collapsibleStates = new Map();
         this._showMarkStyleLinks = showMarkStyleLinks;
+        this._showNodeStyleLinks = showNodeStyleLinks;
     }
     get dependencies() {
         const dependencies = super.dependencies;
@@ -528,16 +533,26 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                               ],
                           ]
                         : []),
-                    [
-                        { rootPath: typeSpecPath, zone: "main" },
-                        [
-                            [".", "typeSpecPath"],
-                            ["./inlineNodesStyleLinks", "localStyleLinks"],
-                            ["./stylePatchesSource", "stylesSourceMap"],
-                        ],
-                        UIInlineNodesStyleLinksContainer,
-                        require("raw:zones"),
-                    ],
+                    ...(this._showNodeStyleLinks
+                        ? [
+                              [
+                                  { rootPath: typeSpecPath, zone: "main" },
+                                  [
+                                      [".", "typeSpecPath"],
+                                      [
+                                          "./inlineNodesStyleLinks",
+                                          "localStyleLinks",
+                                      ],
+                                      [
+                                          "./stylePatchesSource",
+                                          "stylesSourceMap",
+                                      ],
+                                  ],
+                                  UIInlineNodesStyleLinksContainer,
+                                  require("raw:zones"),
+                              ],
+                          ]
+                        : []),
                 ],
                 this._getCollapsibleState(
                     "typespec_style_links_collapsible",
