@@ -1010,7 +1010,7 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
                         revertAxesEntries:
                             line.underfullRevert !== undefined
                                 ? (line.revertAxesEntriesBySourceIndex?.[
-                                      leaves[leafIndex].sourceIndex
+                                      leafIndex
                                   ] ?? null)
                                 : null,
                     });
