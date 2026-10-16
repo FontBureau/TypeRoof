@@ -210,10 +210,29 @@ export function lineSpanStyles(opts: {
     adjustmentStep: number;
     trackingGaps: number;
     colorCode: string;
+    /** underfullTreatment revert (milestone 6): the concrete axes
+     *  entries the line renders at (the Host resolved underfullRevert
+     *  to the run's location or the font's fvar defaults). When set,
+     *  the fvs override carries these verbatim — no stepper merge —
+     *  and the spacing treatments are skipped (the line sits at the
+     *  revert location, unadjusted). */
+    revertAxesEntries?: [string, number][] | null;
 }): LineSpanStyles {
     const styles: [string, string][] = [];
     let dataTrackingGaps: number | null = null;
     const { treatment } = opts;
+    // underfull revert: the line renders at the resolved location
+    // verbatim (status quo for "off" — no revert, never set)
+    if (treatment !== null && opts.revertAxesEntries != null) {
+        styles.push([
+            "font-variation-settings",
+            opts.revertAxesEntries
+                .map(([tag, value]) => `"${tag}" ${value}`)
+                .join(","),
+        ]);
+        styles.push(["--line-color-code", opts.colorCode]);
+        return { styles, dataTrackingGaps };
+    }
     // step 0 is EXPLICITLY written (milestone 6: the identity idea
     // is removed): the axes override always carries the anchored
     // dflt values — identical to the run's own location for "run"

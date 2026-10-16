@@ -194,6 +194,12 @@ function _payloadDecorations(
                     frag.line.trackingGapsBySourceIndex?.[frag.leafIndex] ?? 0,
                 ),
                 colorCode,
+                revertAxesEntries:
+                    frag.line.underfullRevert !== undefined
+                        ? (frag.line.revertAxesEntriesBySourceIndex?.[
+                              frag.leafIndex
+                          ] ?? null)
+                        : null,
             }),
             attrs: Record<string, string> = { class: classes.join(" ") },
             // Empty values are dropped (the CSS custom-property

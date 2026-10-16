@@ -236,6 +236,14 @@ export interface ComposedLine {
      *  it back into concrete axis and spacing values when applying
      *  the result. */
     adjustmentStep: number;
+    /** Set when an underfull NON-FINAL line was REVERTED instead of
+     *  max-widened (underfullTreatment "run"/"font", milestone 6):
+     *  the line renders and measures at the revert location ("run":
+     *  the run's own axes location; "font": the font's fvar
+     *  defaults), NOT at the potentials' step values. The Host
+     *  publishes the concrete entries as `revertAxesEntries` on the
+     *  payload line; absent/undefined = not reverted (status quo). */
+    underfullRevert?: "run" | "font";
 }
 
 /** A rejected line candidate of the paragraph-optimizing DP

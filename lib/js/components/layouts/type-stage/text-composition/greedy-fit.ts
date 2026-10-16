@@ -57,6 +57,15 @@ export interface GreedyFitConfig {
      *  becomes the final one, narrowed to fit) and an underfull
      *  final line widens to the measure. */
     lastLineHandling?: "ragged" | "fill";
+    /** What an underfull NON-FINAL line that widening cannot fill
+     *  does (milestone 6): "off" (default, status quo) applies the
+     *  maximum widening potential (step +1 — stretched but still
+     *  ragged); "run" reverts the line to the run's own axes
+     *  location; "font" to the font's fvar defaults. The revert is
+     *  marked on the line (underfullRevert) — the Host renders and
+     *  measures the line there. Orthogonal to potentialsAnchoring
+     *  (same value shape, separate control). */
+    underfullTreatment?: "run" | "font" | "off";
 }
 
 /** The greedy-fit factory (the dummy/KP pattern): config is resolved
@@ -66,6 +75,7 @@ export function createGreedyFitComposition(
     config: GreedyFitConfig = {},
 ): CompositionAlgorithm {
     const composeLastLine = config.lastLineHandling === "fill";
+    const { underfullTreatment = "off" } = config;
     return (input) => {
         const { segments, breaks, lineWidthPt, lineWidthAtStep } = input,
             breakAfter = new Map<number, BreakOpportunity>(
@@ -195,7 +205,8 @@ export function createGreedyFitComposition(
                 hasWideningPotential = (end: number): boolean =>
                     lineWidthAtStep(fromSegment, end, 1) >
                     lineWidthAtStep(fromSegment, end, 0);
-            let adjustmentStep = 0;
+            let adjustmentStep = 0,
+                underfullRevert: "run" | "font" | undefined = undefined;
             // fill mode: the last line is composed like a regular line
             if (!isLastLine || composeLastLine) {
                 // NARROW: pull more segments onto the line (minimal
@@ -261,7 +272,10 @@ export function createGreedyFitComposition(
                     if (breakAt.kind === "explicit") break;
                     if (step > -_STEP_EPSILON) break; // fits naturally now
                 }
-                // WIDEN: only when narrowing pulled nothing up
+                // WIDEN: only when narrowing pulled nothing up. A
+                // revert-mode line that cannot fill does not stretch
+                // toward the maximum (the uniform check below marks
+                // it); "off" keeps the status quo (step +1).
                 if (
                     adjustmentStep === 0 &&
                     hasWideningPotential(toSegment) &&
@@ -273,22 +287,29 @@ export function createGreedyFitComposition(
                     ) < available
                 ) {
                     const collapses = collapsesOf(toSegment),
-                        step =
+                        cannotFill =
                             fittingWidth(
                                 fromSegment,
                                 toSegment,
                                 1,
                                 collapses,
-                            ) <= available
-                                ? 1 // max potential, still fits (underfull)
-                                : findFittingStep(
-                                      fromSegment,
-                                      toSegment,
-                                      collapses,
-                                      available,
-                                      0,
-                                      1,
-                                  );
+                            ) <= available,
+                        skipStretch =
+                            cannotFill &&
+                            underfullTreatment !== "off" &&
+                            underfullTreatment !== undefined,
+                        step = skipStretch
+                            ? null
+                            : cannotFill
+                              ? 1 // max potential, still fits (underfull)
+                              : findFittingStep(
+                                    fromSegment,
+                                    toSegment,
+                                    collapses,
+                                    available,
+                                    0,
+                                    1,
+                                );
                     if (step !== null && step > _STEP_EPSILON)
                         adjustmentStep = step;
                 }
@@ -316,6 +337,23 @@ export function createGreedyFitComposition(
                     : null;
                 adjustmentStep = step === null ? -2 : step; // -2: exhausted
             }
+            // underfullTreatment (milestone 6, UNIFORM — no
+            // final/non-final distinction): a line that is underfull
+            // and that widening cannot fill (INCLUDING a zero
+            // widening range: the maximum == step 0) reverts to the
+            // configured location instead of sitting at the anchored
+            // dflt stretched ("off" = status quo: no revert, the line
+            // keeps whatever step the strategy chose).
+            if (
+                adjustmentStep === 0 &&
+                underfullTreatment !== "off" &&
+                underfullTreatment !== undefined &&
+                fittingWidth(fromSegment, toSegment, 0, finalCollapses) <
+                    available &&
+                fittingWidth(fromSegment, toSegment, 1, finalCollapses) <=
+                    available
+            )
+                underfullRevert = underfullTreatment;
 
             const naturalWidthPt = lineWidthAtStep(fromSegment, toSegment, 0),
                 fittingWidthPt = fittingWidth(
@@ -333,6 +371,7 @@ export function createGreedyFitComposition(
                 breakAt,
                 naturalWidthPt,
                 adjustmentStep,
+                ...(underfullRevert !== undefined ? { underfullRevert } : {}),
             });
             badness.push(
                 overfull

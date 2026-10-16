@@ -1055,6 +1055,7 @@ export class CompositionController extends _BaseComponent {
                 | (TreatmentPlannerConfig & {
                       colorCoding: boolean;
                       lastLineHandling: "ragged" | "fill";
+                      underfullTreatment: "run" | "font" | "off";
                   })
                 | null =
                 algorithmKey === "TextCompositionAlgorithmGreedyFitModel"
@@ -1106,6 +1107,23 @@ export class CompositionController extends _BaseComponent {
                                     "textCompositionAlgorithm/lastLineHandling",
                                 ) as "ragged" | "fill")
                               : "ragged",
+                          // milestone 6: an underfull line that
+                          // widening cannot fill reverts to the
+                          // run's location ("run") or the font's
+                          // fvar defaults ("font") instead of
+                          // stretching to the maximum potential;
+                          // "off" (default) keeps the status quo.
+                          underfullTreatment: (
+                              ["run", "font", "off"] as const
+                          ).includes(
+                              nodeProperties.get(
+                                  "textCompositionAlgorithm/underfullTreatment",
+                              ),
+                          )
+                              ? (nodeProperties.get(
+                                    "textCompositionAlgorithm/underfullTreatment",
+                                ) as "run" | "font" | "off")
+                              : "off",
                           colorCoding:
                               (nodeProperties.get(
                                   "textCompositionAlgorithm/colorCoding",
@@ -1311,6 +1329,7 @@ export class CompositionController extends _BaseComponent {
                               : [...plannerConfig.treatments].sort().join(","),
                           plannerConfig.direction,
                           greedyFitConfig.lastLineHandling,
+                          greedyFitConfig.underfullTreatment,
                           greedyFitConfig.colorCoding,
                       ]),
                 // the resolved Knuth-Plass config (every knob feeds
@@ -1330,6 +1349,11 @@ export class CompositionController extends _BaseComponent {
                           knuthPlassConfig.polish,
                           knuthPlassConfig.latticeQuantum,
                           knuthPlassConfig.colorCoding,
+                          // milestone 6 (read from nodeProperties
+                          // directly above — join the filter)
+                          nodeProperties.get(
+                              "textCompositionAlgorithm/underfullTreatment",
+                          ),
                       ]),
                 // per-run styles: the resolved link id + the CONSUMED
                 // values per leaf (flat — nulls for unstyled leaves;
@@ -1626,6 +1650,19 @@ export class CompositionController extends _BaseComponent {
                                       100),
                               balanceGray: knuthPlassConfig.balanceGray,
                               polish: knuthPlassConfig.polish,
+                              // milestone 6: the greedy-fit parity —
+                              // revert an unfillable underfull line
+                              underfullTreatment: (
+                                  ["run", "font", "off"] as const
+                              ).includes(
+                                  nodeProperties.get(
+                                      "textCompositionAlgorithm/underfullTreatment",
+                                  ),
+                              )
+                                  ? (nodeProperties.get(
+                                        "textCompositionAlgorithm/underfullTreatment",
+                                    ) as "run" | "font" | "off")
+                                  : "off",
                               latticeStepsPerSide: (() => {
                                   if (segments.length === 0)
                                       return { narrowing: 4, widening: 4 };
@@ -1673,6 +1710,9 @@ export class CompositionController extends _BaseComponent {
                                 lastLineHandling:
                                     greedyFitConfig?.lastLineHandling ??
                                     "ragged",
+                                underfullTreatment:
+                                    greedyFitConfig?.underfullTreatment ??
+                                    "off",
                             })
                           : algorithmKey ===
                               "TextCompositionAlgorithmKnuthPlassModel"
@@ -1699,6 +1739,61 @@ export class CompositionController extends _BaseComponent {
             // applicator/diagnostics. Boundary gaps belong to the preceding
             // source run; a taken hyphen is the final glyph.
             for (const line of result.lines) {
+                // underfullTreatment revert (milestone 6): a line
+                // marked underfullRevert renders and measures at the
+                // revert location — publish the concrete entries
+                // per line and recompute the natural width there
+                // (the algorithm is pure; it marked, the Host
+                // resolves).
+                if (line.underfullRevert !== undefined) {
+                    // per-leaf revert entries (a line can mix
+                    // styles; each leaf's run location or font
+                    // defaults are its own)
+                    const revertEntriesBySourceIndex: Record<
+                        number,
+                        [string, number][]
+                    > = {};
+                    let naturalWidthPt = 0;
+                    const seen = new Set<number>();
+                    for (let i = line.fromSegment; i < line.toSegment; i++) {
+                        const segment = segments[i]!,
+                            style = styleOf(segment.sourceIndex);
+                        if (!seen.has(segment.sourceIndex)) {
+                            seen.add(segment.sourceIndex);
+                            const entries =
+                                line.underfullRevert === "font"
+                                    ? [
+                                          ...fontDefaultLocation(
+                                              style.font,
+                                          ).entries(),
+                                      ]
+                                    : [...style.axesEntries];
+                            revertEntriesBySourceIndex[segment.sourceIndex] =
+                                entries;
+                        }
+                        const entries =
+                            revertEntriesBySourceIndex[segment.sourceIndex]!;
+                        naturalWidthPt +=
+                            this._measurer!.shapeMetricsEm(
+                                style.font,
+                                entries,
+                                axesKeyOfEntries(style.font, entries),
+                                style.featuresEntries,
+                                style.featuresKey,
+                                style.language,
+                                style.direction,
+                                leafTexts[segment.sourceIndex]?.slice(
+                                    segment.start,
+                                    segment.end,
+                                ) ?? "",
+                            ).advanceEm * style.fontSizePt;
+                    }
+                    Object.assign(line, {
+                        revertAxesEntriesBySourceIndex:
+                            revertEntriesBySourceIndex,
+                        naturalWidthPt,
+                    });
+                }
                 const trackingRuns = [];
                 for (let i = line.fromSegment; i < line.toSegment; i++) {
                     const segment = segments[i]!,

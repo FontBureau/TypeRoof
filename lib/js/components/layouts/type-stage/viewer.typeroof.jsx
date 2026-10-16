@@ -1007,6 +1007,12 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
                             line.trackingGapsBySourceIndex?.[leafIndex] ?? 0,
                         ),
                         colorCode,
+                        revertAxesEntries:
+                            line.underfullRevert !== undefined
+                                ? (line.revertAxesEntriesBySourceIndex?.[
+                                      leaves[leafIndex].sourceIndex
+                                  ] ?? null)
+                                : null,
                     });
                 for (const [prop, value] of styles)
                     span.style.setProperty(prop, value);
