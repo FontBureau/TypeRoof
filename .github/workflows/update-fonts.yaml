@@ -30,6 +30,7 @@ jobs:
                             ]
                     - repo: googlefonts/amstelvar-avar2
                       unique_path: amstelvar-avar2
+                      ref: dev
                       files:
                           - [
                                 "Fonts/variable/Amstelvar[...,GRAD,opsz,wdth,wght].ttf",
@@ -68,6 +69,7 @@ jobs:
                   path: ${{ matrix.FILES_SPEC.unique_path }}
                   # otherwise we don't get proper commit hashes for the logs
                   fetch-depth: 0
+                  ref: ${{ matrix.FILES_SPEC.ref || "" }}
             - name: Woff2 and copy files
               shell: bash
               env:
