@@ -1034,6 +1034,30 @@ select and drag
     background: var(--cell-background-color, none);
 }
 
+.actor_renderer-videoproof_input {
+    width: 100%;
+
+    /*
+     * This is part of a hack to override the application of
+     * background-color layout specific.
+     */
+    background-color: var(--background-color);
+}
+
+/*
+ * Also .ProseMirror to win over the rules of prosemirror.css. It disables
+ * ligatures, but the typographic properties, including OpenType features,
+ * are set on the parent and the text is measured with ligatures ("+liga").
+ */
+.actor_renderer-videoproof_input-editor.ProseMirror {
+    /* A single line of text, the font-size is fitted to the space. */
+    white-space: pre;
+    font-variant-ligatures: inherit;
+    font-feature-settings: inherit;
+    overflow-wrap: normal;
+    background: var(--cell-background-color, none);
+}
+
 .actor_renderer-videoproof_array {
     /**
      * This way it scrolls vertically within the stage.
@@ -1178,7 +1202,8 @@ select and drag
     }
 
     .actor_renderer-videoproof_array_v2,
-    .actor_renderer-videoproof_contextual-content {
+    .actor_renderer-videoproof_contextual-content,
+    .actor_renderer-videoproof_input {
         /*
          * This is a switch specific to layouts/videoproof where the layout
          * can set that var to `none` and render the background itself on a
