@@ -33,11 +33,11 @@ jobs:
                       ref: dev
                       files:
                           - [
-                                "Fonts/variable/Amstelvar[...,GRAD,opsz,wdth,wght].ttf",
+                                "Fonts/AmstelvarA2-Roman_avar2.ttf",
                                 lib/assets/fonts/AmstelvarA2-Roman_avar2.woff2,
                             ]
                           - [
-                                "Fonts/variable/Amstelvar-Italic[...,GRAD,opsz,wdth,wght].ttf",
+                                "Fonts/AmstelvarA2-Italic_avar2.ttf",
                                 lib/assets/fonts/AmstelvarA2-Italic_avar2.woff2,
                             ]
                     - repo: google/fonts
