@@ -1237,11 +1237,11 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
     //     rule: { kind: "atom", typeKey: "reproduce-as-block" },
     //     context: "block",
     // },
-    {
-        selector: ".mw-cite-backlink",
-        rule: { kind: "atom", typeKey: "reproduce-as-inline" },
-        context: "inline",
-    },
+    // {
+    //     selector: ".mw-cite-backlink",
+    //     rule: { kind: "atom", typeKey: "reproduce-as-inline" },
+    //     context: "inline",
+    // },
     // NOTE: <bdi> was atomized here before (evaporated the enclosing
     // BookSources <a> mark — marks land on text only); it is an inline
     // node now (see WIKIPEDIA_BLOCK_RULES).
