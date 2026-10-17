@@ -35,15 +35,26 @@
             [
                 "headings",
                 {
+                    "leading": {
+                      "instance": {
+                        "leading": "1.05"
+                      },
+                      "leadingAlgorithmTypeKey": "ManualLeading"
+                    },
+                    "textCompositionAlgorithm": {
+                      "instance": {
+                        "potentials": "robotoFlexHeadline",
+                        "potentialsAnchoring": "off",
+                        "lastLineHandling": "fill",
+                        "underfullTreatment": "run"
+                      },
+                      "textCompositionAlgorithmTypeKey": "TextCompositionAlgorithmGreedyFitModel"
+                    },
                     "children": [
                         [
                             "h1",
                             {
                                 "blockMargins": {
-                                    "start": {
-                                        "unit": "baseEm",
-                                        "value": "2.00000"
-                                    },
                                     "end": {
                                         "unit": "lineHeightAfter",
                                         "value": "1.00000"
@@ -85,6 +96,9 @@
             [
                 "paragraphs",
                 {
+                    "textCompositionAlgorithm": {
+                        "textCompositionAlgorithmTypeKey": "TextCompositionAlgorithmKnuthPlassModel"
+                    },
                     "children": [
                         [
                             "t1",
@@ -124,9 +138,15 @@
             [
                 "section",
                 {
+                    "blockMargins": {
+                        "start": {
+                            "unit": "baseEm",
+                            "value": "2.00000"
+                        }
+                    },
                     "horizontalLayout": {
                         "instance": {
-                            "minLineLength": "40",
+                            "minLineLength": "33",
                             "minPadding": "5",
                             "columnGutter": {
                                 "instance": {
@@ -135,7 +155,7 @@
                                         "gutter": "3"
                                     },
                                     "b": {
-                                        "columnWidth": "45",
+                                        "columnWidth": "40",
                                         "gutter": "2"
                                     },
                                     "minGutter": "1.5",
@@ -147,7 +167,12 @@
                             "growColumns": {
                                 "mode": "false"
                             },
-                            "columns": ["65"]
+                            "columns": [
+                                  "65",
+                                  "65",
+                                  "50",
+                                  "40"
+                            ]
                         },
                         "horizontalLayoutAlgorithmTypeKey": "HorizontalLayoutRunionModel"
                     },
@@ -272,6 +297,13 @@
                 "italic link span sup",
                 {
                     "stylePatch": "italic sup link",
+                    "mode": "link"
+                }
+            ],
+            [
+                "sup",
+                {
+                    "stylePatch": "sup",
                     "mode": "link"
                 }
             ],
