@@ -1192,6 +1192,15 @@ export const WIKIPEDIA_TRANSPARENT_RULES: readonly EmissionRuleEntry[] = [
         selector: ".side-box-flex",
         rule: { kind: "transparent" },
     },
+    // mw:Entity is Parsoid's encoding of an HTML entity (&mdash;,
+    // &nbsp;, ...): exactly one character, never styled. As an atom its
+    // visible advance was invisible to the composition measurer
+    // (inline atoms are zero-width segments) — first lines overflowed.
+    // Transparent: the character joins the surrounding text run.
+    {
+        selector: '[typeof="mw:Entity"]',
+        rule: { kind: "transparent" },
+    },
 ];
 
 export const WIKIPEDIA_RAW_RULES: readonly EmissionRuleEntry[] = [];
@@ -1245,11 +1254,6 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
     // NOTE: <bdi> was atomized here before (evaporated the enclosing
     // BookSources <a> mark — marks land on text only); it is an inline
     // node now (see WIKIPEDIA_BLOCK_RULES).
-    {
-        selector: '[typeof="mw:Entity"]',
-        rule: { kind: "atom", typeKey: "reproduce-as-inline" },
-        context: "inline",
-    },
     // COinS metadata span (Z39.88 ContextObject) inside citations:
     // empty element, its bibliographic data lives in the title attr;
     // kept verbatim.
