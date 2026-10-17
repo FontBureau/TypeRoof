@@ -1170,6 +1170,27 @@ export const WIKIPEDIA_SKIP_RULES: readonly EmissionRuleEntry[] = [
             ".mw-empty-elt, meta, [rel='mw:PageProp/Category'], [rel='mw-deduplicated-inline-style']",
         rule: { kind: "skip" },
     },
+    {
+        selector: ".shortdescription",
+        rule: { kind: "skip" },
+    },
+    // I was hoping to get some more styles for these boxes with this
+    // rule, as I'm not planning to style these, but so far, this doesn't
+    // look useful.
+    {
+        selector: ".navbox-styles",
+        rule: { kind: "skip" },
+    },
+    // For the demo there's no time left to get these into a reasonable
+    // state, thus it's preferabble to simply skip.
+    {
+        selector: ".navbox",
+        rule: { kind: "skip" },
+    },
+    {
+        selector: ".side-box",
+        rule: { kind: "skip" },
+    },
 ];
 
 export const WIKIPEDIA_TRANSPARENT_RULES: readonly EmissionRuleEntry[] = [
@@ -1186,6 +1207,10 @@ export const WIKIPEDIA_TRANSPARENT_RULES: readonly EmissionRuleEntry[] = [
     //                  <div typeof="mw:Extension/references">
     {
         selector: 'div:has(> [typeof="mw:Extension/references"])',
+        rule: { kind: "transparent" },
+    },
+    {
+        selector: ".mw-references-wrap, .refbegin",
         rule: { kind: "transparent" },
     },
     {
@@ -1266,18 +1291,6 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
         selector: ".side-box-image",
         rule: { kind: "atom", typeKey: "reproduce-as-block" },
     },
-    {
-        selector: ".navbox",
-        rule: { kind: "atom", typeKey: "navbox" },
-    },
-    // I was hoping to get some more styles for these boxes with this
-    // rule, as I'm not planning to style these, but so far, this doesn't
-    // look useful. keeping for observation ...
-    // seems like the rules may be too specific to match our navboxes
-    {
-        selector: ".navbox-styles",
-        rule: { kind: "atom", typeKey: "reproduce-as-block" },
-    },
 ];
 
 // Article structure. Operator-confirmed initial known-set
@@ -1293,6 +1306,14 @@ export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
     {
         selector: "section section",
         rule: { kind: "block", typeKey: "sub-section" },
+    },
+    {
+        selector: "section:has(#References)",
+        rule: { kind: "block", typeKey: "references-section" },
+    },
+    {
+        selector: "section:has(#External_links)",
+        rule: { kind: "block", typeKey: "external-links-section" },
     },
     { selector: "section", rule: { kind: "block", typeKey: "section" } },
     { selector: "blockquote", rule: { kind: "block", typeKey: "blockquote" } },
@@ -1312,7 +1333,8 @@ export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
             },
         }),
     ),
-    { selector: "ol, ul", rule: { kind: "block", typeKey: "list" } },
+    { selector: "ul", rule: { kind: "block", typeKey: "ul-list" } },
+    { selector: "ol", rule: { kind: "block", typeKey: "ol-list" } },
     // <li> directly under <ul> or <ol>: li-inline or li-block, decided by
     // the children (see emitSplitItem). A stray <li> matches nothing
     // and falls to the catch-alls. Both types share tag "li" and
@@ -1333,10 +1355,10 @@ export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
         selector: "figcaption",
         rule: { kind: "block", typeKey: "figcaption", inlineContent: true },
     },
-    {
-        selector: ".side-box",
-        rule: { kind: "block", typeKey: "sidebox" },
-    },
+    // {
+    //     selector: ".side-box",
+    //     rule: { kind: "block", typeKey: "sidebox" },
+    // },
     {
         selector: ".side-box-text",
         rule: { kind: "block", typeKey: "sideboxtext", inlineContent: true },
@@ -1355,14 +1377,6 @@ export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
     },
     // generic-block: we keep these but not primarily for styling, only
     // for structure '[typeof="mw:Extension/references"]'
-    {
-        selector: ".mw-references-wrap",
-        rule: { kind: "block", typeKey: "generic-block" },
-    },
-    {
-        selector: ".refbegin",
-        rule: { kind: "block", typeKey: "generic-block" },
-    },
     {
         selector: "cite",
         rule: { kind: "inline-node", typeKey: "generic-inline" },

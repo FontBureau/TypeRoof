@@ -299,6 +299,7 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                 "--node-anchor-name",
                 this._nodeAnchorName,
             );
+        this.outerElement.removeAttribute("data-has-styler");
     }
 
     destroy() {
@@ -322,6 +323,7 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
             this._cleanUp();
             return;
         }
+        this.outerElement.setAttribute("data-has-styler", "");
         // geometry from the nodeProperties@ channel (unregistered, may
         // be null until the root registers), style from properties@.
         const nodePropertiesEntry = changedMap.has("nodeProperties@")

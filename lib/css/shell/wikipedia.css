@@ -88,6 +88,18 @@ etc
         padding: 0; /* var(--space-before) 0 var(--space-after) 0; */
         display: inline;
     }
+
+    /* FIXME should become configuration
+     * CAUTION: thi now defaults to "outset" which means the list
+     * typespec should be set up to provide the required space
+     * (using 4en for double-digit space currently.);
+     */
+    *[data-node-type="ol-list"] {
+        list-style: decimal;
+    }
+    *[data-node-type="ul-list"] {
+        list-style: disc;
+    }
 }
 
 /* Hide ProseMirror's editing-only hack nodes (no document counterpart)

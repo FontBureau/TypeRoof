@@ -3,17 +3,7 @@
         "languageTag": {
             "language": "en"
         },
-        "lineLength": "53.0",
         "baseFontSize": "14",
-        "inlineNodesStyleLinks": [
-            [
-                "quote",
-                {
-                    "stylePatch": "serif italic",
-                    "mode": "link"
-                }
-            ]
-        ],
         "textColor": {
             "instance": {
                 "L": "0.00000",
@@ -36,19 +26,19 @@
                 "headings",
                 {
                     "leading": {
-                      "instance": {
-                        "leading": "1.05"
-                      },
-                      "leadingAlgorithmTypeKey": "ManualLeading"
+                        "instance": {
+                            "leading": "1.05"
+                        },
+                        "leadingAlgorithmTypeKey": "ManualLeading"
                     },
                     "textCompositionAlgorithm": {
-                      "instance": {
-                        "potentials": "robotoFlexHeadline",
-                        "potentialsAnchoring": "off",
-                        "lastLineHandling": "fill",
-                        "underfullTreatment": "run"
-                      },
-                      "textCompositionAlgorithmTypeKey": "TextCompositionAlgorithmGreedyFitModel"
+                        "instance": {
+                            "potentials": "robotoFlexHeadline",
+                            "potentialsAnchoring": "off",
+                            "lastLineHandling": "fill",
+                            "underfullTreatment": "run"
+                        },
+                        "textCompositionAlgorithmTypeKey": "TextCompositionAlgorithmGreedyFitModel"
                     },
                     "children": [
                         [
@@ -56,11 +46,14 @@
                             {
                                 "blockMargins": {
                                     "end": {
-                                        "unit": "lineHeightAfter",
-                                        "value": "1.00000"
+                                        "value": "1.00000",
+                                        "unit": "lineHeightAfter"
                                     }
                                 },
-                                "relativeFontSize": "4.571428571",
+                                "relativeFontSize": {
+                                    "value": "4.571428571",
+                                    "unit": "baseEm"
+                                },
                                 "autoOPSZ": "1",
                                 "axesLocations": [["wght", "700"]],
                                 "label": "Heading 1"
@@ -69,12 +62,10 @@
                         [
                             "h2",
                             {
-                                "blockMargins": {
-                                    "start": {
-                                        "value": "0.00000"
-                                    }
+                                "relativeFontSize": {
+                                    "value": "1.785714286",
+                                    "unit": "baseEm"
                                 },
-                                "relativeFontSize": "1.785714286",
                                 "autoOPSZ": "1",
                                 "axesLocations": [["wght", "600"]],
                                 "label": "Heading 2"
@@ -83,7 +74,10 @@
                         [
                             "h3",
                             {
-                                "relativeFontSize": "1.285714286",
+                                "relativeFontSize": {
+                                    "value": "1.285714286",
+                                    "unit": "baseEm"
+                                },
                                 "autoOPSZ": "1",
                                 "axesLocations": [["wght", "550"]],
                                 "label": "Heading 3"
@@ -96,28 +90,102 @@
             [
                 "paragraphs",
                 {
+                    "openTypeFeatures": [["onum", "1"]],
                     "textCompositionAlgorithm": {
-                        "textCompositionAlgorithmTypeKey": "TextCompositionAlgorithmKnuthPlassModel"
+                        "textCompositionAlgorithmTypeKey": "TextCompositionAlgorithmGreedyFitModel"
                     },
                     "children": [
                         [
                             "t1",
                             {
-                                "relativeFontSize": "1.285714286",
+                                "relativeFontSize": {
+                                    "value": "1.285714286",
+                                    "unit": "baseEm"
+                                },
                                 "autoOPSZ": "1",
+                                "children": [
+                                    [
+                                        "ul-list",
+                                        {
+                                            "horizontalLayout": {
+                                                "instance": {
+                                                    "inlineMargins": {
+                                                        "start": {
+                                                            "value": "2",
+                                                            "unit": "en"
+                                                        }
+                                                    }
+                                                },
+                                                "horizontalLayoutAlgorithmTypeKey": "ManualHorizontalLayoutModel"
+                                            },
+                                            "excludeFromFallback": "1",
+                                            "label": "Unordered List"
+                                        }
+                                    ],
+                                    [
+                                        "ol-list",
+                                        {
+                                            "horizontalLayout": {
+                                                "instance": {
+                                                    "inlineMargins": {
+                                                        "start": {
+                                                            "value": "3.2",
+                                                            "unit": "en"
+                                                        }
+                                                    }
+                                                },
+                                                "horizontalLayoutAlgorithmTypeKey": "ManualHorizontalLayoutModel"
+                                            },
+                                            "excludeFromFallback": "1",
+                                            "label": "Ordered List"
+                                        }
+                                    ],
+                                    [
+                                        "li",
+                                        {
+                                            "blockMargins": {
+                                                "end": {
+                                                    "value": "0.00000",
+                                                    "unit": "lineHeight"
+                                                }
+                                            },
+                                            "openTypeFeatures": [["pnum", "1"]],
+                                            "label": "List Item"
+                                        }
+                                    ]
+                                ],
                                 "label": "Text 1"
                             }
                         ],
                         [
                             "t2",
                             {
-                                "relativeFontSize": "1",
+                                "blockMargins": {
+                                    "end": {
+                                        "value": "0.00000",
+                                        "unit": "em"
+                                    }
+                                },
+                                "relativeFontSize": {
+                                    "value": "1",
+                                    "unit": "baseEm"
+                                },
                                 "autoOPSZ": "1",
                                 "label": "Text 2"
                             }
                         ]
                     ],
-                    "label": "Paragraphs"
+                    "label": "Paragraphs",
+                    "intentStyleLinks": [
+                        [
+                            "italic",
+                            {
+                                "stylePatch": "serif italic",
+                                "mode": "link"
+                            }
+                        ]
+                    ],
+                    "activeFontKey": "from-url AmstelvarA2 Roman wght400 Version_0-001"
                 }
             ],
             [
@@ -126,8 +194,8 @@
                     "backgroundColor": {
                         "instance": {
                             "L": "100.00000",
-                            "C": "60.00000",
-                            "H": "0.4100000",
+                            "C": "0.4000000",
+                            "H": "0.41000",
                             "alpha": "57.00000"
                         },
                         "colorTypeKey": "OKLCH"
@@ -140,8 +208,8 @@
                 {
                     "blockMargins": {
                         "start": {
-                            "unit": "baseEm",
-                            "value": "2.00000"
+                            "value": "2.00000",
+                            "unit": "baseEm"
                         }
                     },
                     "horizontalLayout": {
@@ -167,12 +235,7 @@
                             "growColumns": {
                                 "mode": "false"
                             },
-                            "columns": [
-                                  "65",
-                                  "65",
-                                  "50",
-                                  "40"
-                            ]
+                            "columns": ["65", "65", "50", "40"]
                         },
                         "horizontalLayoutAlgorithmTypeKey": "HorizontalLayoutRunionModel"
                     },
@@ -184,6 +247,76 @@
                 {
                     "noStyler": "1",
                     "label": "Sub-Section"
+                }
+            ],
+            [
+                "references",
+                {
+                    "horizontalLayout": {
+                        "instance": {
+                            "minLineLength": "33",
+                            "minPadding": "5",
+                            "columnGutter": {
+                                "instance": {
+                                    "a": {
+                                        "columnWidth": "54",
+                                        "gutter": "2"
+                                    },
+                                    "b": {
+                                        "columnWidth": "33",
+                                        "gutter": "1.5"
+                                    }
+                                },
+                                "columnGutterAlgorithmTypeKey": "linear"
+                            },
+                            "paddingRatioStart": "60.00000",
+                            "growColumns": {
+                                "mode": "false"
+                            },
+                            "columns": ["65", "65", "54"]
+                        },
+                        "horizontalLayoutAlgorithmTypeKey": "HorizontalLayoutRunionModel"
+                    },
+                    "label": "References"
+                }
+            ],
+            [
+                "external-links",
+                {
+                    "horizontalLayout": {
+                        "instance": {
+                            "minLineLength": "33",
+                            "minPadding": "5",
+                            "paddingRatioStart": "60.00000",
+                            "growColumns": {
+                                "mode": "false"
+                            },
+                            "columns": ["166"]
+                        },
+                        "horizontalLayoutAlgorithmTypeKey": "HorizontalLayoutRunionModel"
+                    },
+                    "label": "External Links"
+                }
+            ],
+            [
+                "figcontent",
+                {
+                    "blockMargins": {
+                        "end": {
+                            "value": "0.00000",
+                            "unit": "em"
+                        }
+                    },
+                    "textAlign": "center",
+                    "backgroundColor": {
+                        "instance": {
+                            "L": "93.00000",
+                            "C": "0.0000000",
+                            "alpha": "100.00000"
+                        },
+                        "colorTypeKey": "OKLCH"
+                    },
+                    "label": "Figcontent"
                 }
             ]
         ],
@@ -344,6 +477,15 @@
                     "mode": "link"
                 }
             ]
+        ],
+        "inlineNodesStyleLinks": [
+            [
+                "quote",
+                {
+                    "stylePatch": "serif italic",
+                    "mode": "link"
+                }
+            ]
         ]
     },
     "stylePatchesSource": [
@@ -396,7 +538,7 @@
                     "textColor": {
                         "instance": {
                             "L": "60.00000",
-                            "C": "46.00000",
+                            "C": "0.4000000",
                             "H": "183.00000",
                             "alpha": "100.00000"
                         },
@@ -458,7 +600,7 @@
             "italic lang-la",
             {
                 "instance": {
-                    "styles": ["italic", "lang-la"]
+                    "styles": ["serif italic", "lang-la"]
                 },
                 "stylePatchTypeKey": "CompositeStylePatch"
             }
@@ -479,7 +621,7 @@
             "italic lang el-Latn",
             {
                 "instance": {
-                    "styles": ["italic", "lang-el-Latn"]
+                    "styles": ["serif italic", "lang-el-Latn"]
                 },
                 "stylePatchTypeKey": "CompositeStylePatch"
             }
@@ -497,7 +639,10 @@
             "sup",
             {
                 "instance": {
-                    "relativeFontSize": "0.7"
+                    "relativeFontSize": {
+                        "value": "0.7",
+                        "unit": "baseEm"
+                    }
                 },
                 "stylePatchTypeKey": "SimpleStylePatch"
             }
@@ -521,11 +666,52 @@
             }
         ]
     ],
-    "editingStylePatch": "./link",
     "proseMirrorSchema": {
         "nodes": [
             [
                 "section",
+                {
+                    "content": "block*",
+                    "group": "block",
+                    "tag": "section",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "references-section",
+                {
+                    "content": "block*",
+                    "group": "block",
+                    "tag": "section",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "external-links-section",
                 {
                     "content": "block*",
                     "group": "block",
@@ -797,7 +983,28 @@
                 }
             ],
             [
-                "list",
+                "ul-list",
+                {
+                    "content": "li+",
+                    "group": "block",
+                    "tag": "ul",
+                    "attrs": [
+                        [
+                            "htmlTag",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "ol-list",
                 {
                     "content": "li+",
                     "group": "block",
@@ -1211,14 +1418,14 @@
         [
             "li-inline",
             {
-                "link": "/paragraphs/t1",
+                "link": "/paragraphs/t1/li",
                 "label": ""
             }
         ],
         [
             "li-block",
             {
-                "link": "/paragraphs/t1",
+                "link": "/paragraphs/t1/li",
                 "label": ""
             }
         ],
@@ -1244,24 +1451,59 @@
             }
         ],
         [
+            "references-section",
+            {
+                "link": "/references",
+                "label": ""
+            }
+        ],
+        [
+            "external-links-section",
+            {
+                "link": "/external-links",
+                "label": ""
+            }
+        ],
+        [
             "link span sup",
             {
-                "stylePatch": "sup link",
-                "mode": "link"
+                "link": "",
+                "label": ""
             }
         ],
         [
             "italic link span sup",
             {
-                "stylePatch": "italic sup link",
-                "mode": "link"
+                "link": "",
+                "label": ""
             }
         ],
         [
             "span sup",
             {
-                "stylePatch": "sup",
-                "mode": "link"
+                "link": "",
+                "label": ""
+            }
+        ],
+        [
+            "ul-list",
+            {
+                "link": "/paragraphs/t1/ul-list",
+                "label": ""
+            }
+        ],
+        [
+            "ol-list",
+            {
+                "link": "/paragraphs/t1/ol-list",
+                "label": ""
+            }
+        ],
+        [
+            "figcontent",
+            {
+                "link": "/figcontent",
+                "label": ""
             }
         ]
     ],

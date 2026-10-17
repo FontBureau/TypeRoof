@@ -81,20 +81,21 @@ prosemirror
     /** margin-left: 2em; */
 
     *[data-node-type] {
-        line-height: var(--line-height);
-        padding: var(--space-before) 0 var(--space-after) 0;
+        &[data-has-styler] {
+            line-height: var(--line-height);
+            padding: var(--space-before) 0 var(--space-after) 0;
 
-        /* FIXME: not functioning in Firefox, requires workaround! */
+            /* FIXME: not functioning in Firefox, requires workaround! */
 
-        /*
-         * has a bug in Chrome and is not supported in Firefox yet.
-         * https://issues.chromium.org/issues/559001358
-        text-box: trim-start text;
-         */
+            /*
+             * has a bug in Chrome and is not supported in Firefox yet.
+             * https://issues.chromium.org/issues/559001358
+            text-box: trim-start text;
+             */
 
-        --space-before: var(--margin-block-start, 0);
-        --space-after: var(--margin-block-end, 0);
-
+            --space-before: var(--margin-block-start, 0);
+            --space-after: var(--margin-block-end, 0);
+        }
         .has-node-labels &::before {
             content: "";
             anchor-name: var(--node-anchor-name);
@@ -256,7 +257,7 @@ prosemirror
 
 .ui_type_spec_label {
     position: absolute;
-    inset-block: anchor(start) anchor(end);
+    inset-block-start: anchor(start);
     inset-inline: anchor(start) anchor(end);
     z-index: 1234;
     padding: 0.15rem;
