@@ -154,6 +154,13 @@ prosemirror
 .editor-advanced *[data-node-type] {
     width: fit-content;
 
+    /* One-element inline DOM (approach (a) phase 3): without a
+     * [data-node-content] child the node element itself receives
+     * the padding and width. */
+    &:not(:has(> [data-node-content])) {
+        box-sizing: border-box;
+    }
+
     & > [data-node-content] {
         /* this element receives the padding and width */
         box-sizing: border-box;
@@ -229,8 +236,13 @@ prosemirror
      * with prosemirror, one with this, it wouldn't matter much. prosemirror
      * uses display grid on the inner elements, and they contain
      * instrumentation that we can't change easily.
-     */
+
     display: table;
+
+    In FireFox, however, this prevents the paragraphs inside a column layout
+    to break and distribute to many columns, i.e. the paragraph is only always
+    within on column, that is worse than the chrome issue.
+     */
 }
 
 .ui_prosemirror_host-anchor_targets_container {

@@ -31,6 +31,8 @@ import "prosemirror-view/style/prosemirror.css";
 
 import DOMPurify from "dompurify";
 
+import { createEditorCompositionPlugin } from "./composition-plugin.ts";
+
 export function getPathOfTypes(
     path /* { path } = resolved */,
     currentType = null,
@@ -368,20 +370,40 @@ export class ProsemirrorNodeView {
             // outer element (guarded; the content element is untouched)
             if (node.attrs.htmlAttrs)
                 _applyHtmlAttrsBag(this.dom, node.attrs.htmlAttrs);
-            // FIXME: depending on the type of the outer node, this might
-            // better be a span.
-            const contentElement = widgetBus.domTool.createElement("div", {
-                "data-node-content": "",
-            });
-            element.append(contentElement);
-            // For the subscription it is important that this element is
-            // the same as the contentDOM, the element that will be the parent
-            // of the marks.
-            this._stylerDOM = contentElement;
-            // The DOM node that should hold the node's content
-            // this is probably only required when this._stylerDOM != this.dom
-            // this is also part of the ProseMiror API
-            this.contentDOM = contentElement;
+            if (node.isInline) {
+                // One-element inline DOM (approach (a) phase 3,
+                // operator 2026-10-12): an editable INLINE node renders
+                // as a single element — contentDOM === dom, exactly
+                // like a mark view (ProseMirror supports the equality
+                // natively: the top doc desc and all marks are that
+                // case). Its renderDescs wholesale-removes any
+                // non-descendant child of contentDOM, so NOTHING may
+                // be appended to this element — the outfitter's
+                // outer-zone widgets (parameters display, element
+                // labels) stay inactive for outer === inner (operator:
+                // inline nodes need neither). The spec tag IS the
+                // content container (generic-inline: span — resolving
+                // the old FIXME about the inner div).
+                this._stylerDOM = this.dom;
+                this.contentDOM = this.dom;
+            } else {
+                // Block nodes keep the two-element DOM: the outer
+                // element hosts the outfitter's widgets (parameters
+                // display, element labels) OUTSIDE contentDOM, where
+                // PM's renderDescs can't touch them.
+                const contentElement = widgetBus.domTool.createElement("div", {
+                    "data-node-content": "",
+                });
+                element.append(contentElement);
+                // For the subscription it is important that this element is
+                // the same as the contentDOM, the element that will be the parent
+                // of the marks.
+                this._stylerDOM = contentElement;
+                // The DOM node that should hold the node's content
+                // this is probably only required when this._stylerDOM != this.dom
+                // this is also part of the ProseMiror API
+                this.contentDOM = contentElement;
+            }
         }
         const subscriptionsWidget = widgetBus.getWidgetById(
             this._subscriptionsId,
@@ -392,8 +414,10 @@ export class ProsemirrorNodeView {
         const structuralElements = {
             // required to style e.g. the margins between paragraphs
             outer: this.dom,
-            // for reproducing atoms outer === inner (an anticipated
-            // case in UIDocumentNodeOutfitter)
+            // for reproducing atoms AND one-element inline nodes
+            // outer === inner (an anticipated case in
+            // UIDocumentNodeOutfitter — its outer-zone widgets stay
+            // inactive, nothing is appended to the element)
             inner: this._stylerDOM,
         };
 
@@ -426,7 +450,17 @@ export class ProsemirrorNodeView {
             // see the constructor: void elements have no content
             if (node.attrs.html)
                 this.dom.innerHTML = DOMPurify.sanitize(node.attrs.html);
-        }
+        } else if (
+            // one-element inline DOM: a changed tag can't be patched
+            // in place — the element IS PM's content container. Like
+            // the reproducing case, reject so PM rebuilds the view
+            // with the new tag.
+            this.contentDOM === this.dom &&
+            "htmlTag" in (node.type.spec.attrs ?? {}) &&
+            _reproducingTag(node, this._specTag) !==
+                this.dom.tagName.toLowerCase()
+        )
+            return false;
         const subscriptionsWidget = this.widgetBus.getWidgetById(
             this._subscriptionsId,
             null,
@@ -450,10 +484,27 @@ export class ProsemirrorNodeView {
     // element. For reproducing atoms those must not trigger a
     // readDOMChange (template: ProsemirrorMarkView.ignoreMutation).
     ignoreMutation(mutation) {
-        return (
+        if (
             this._isReproducing &&
             mutation.type === "attributes" &&
             mutation.target === this.dom
+        )
+            return true;
+        // The outfitter widgets (UIDocumentNodeOutfitter placeholder
+        // comments, parameters UI) live inside this.dom but OUTSIDE
+        // contentDOM. Their childList churn on cascade updates is not
+        // document content; letting it reach readDOMChange makes PM
+        // re-parse (and spuriously replace) the affected range
+        // (downloads/issue.txt). For the one-element inline DOM
+        // (contentDOM === dom) nothing is ever appended and every
+        // childList churn inside is document content — the guard
+        // returns false there, exactly like for a mark view.
+        return (
+            !this._isReproducing &&
+            mutation.type === "childList" &&
+            this.contentDOM !== undefined &&
+            mutation.target !== this.contentDOM &&
+            !this.contentDOM.contains(mutation.target)
         );
     }
 
@@ -520,6 +571,10 @@ export class ProsemirrorMarkView {
         if (attrNames === null)
             attrNames = Object.keys(mark.type.spec.attrs ?? {});
         for (const attrName of attrNames) {
+            // htmlAttrs is the BAG: replayed as individual attributes
+            // (see _applyHtmlAttrsBag in constructor/update), never a
+            // literal attribute on the element
+            if (attrName === "htmlAttrs") continue;
             const value = mark.attrs[attrName];
             if (value === undefined || value === null)
                 this.dom.removeAttribute(attrName);
@@ -550,6 +605,10 @@ export class ProsemirrorMarkView {
 
     _getTag(mark) {
         const fallback = "span";
+        // generic-style: the funneled source tag (ingest) is more
+        // specific than any spec — it reproduces the parsed source.
+        if (mark.type.name === "generic-style" && mark.attrs.htmlTag)
+            return mark.attrs.htmlTag;
         const mmSchema = this.widgetBus.getLinked(mark.type.schema);
         if (!mmSchema) return fallback;
         const mmMarks = mmSchema.get("marks");
@@ -695,6 +754,7 @@ import {
     applyHtmlAttrsBag as _applyHtmlAttrsBag,
     collectHtmlAttrsToBag as _collectHtmlAttrsToBag,
     htmlAttrsBagToSpec as _htmlAttrsBagToSpec,
+    isStylerOwnedAttr as _isStylerOwnedAttr,
 } from "./html-attrs.ts";
 
 // Editable attr replay (inferred by a declared htmlAttrs attr):
@@ -709,8 +769,13 @@ function _createEditableGetAttrs(attributeSpecMap) {
         );
     return (dom) =>
         Object.assign(declaredGetAttrs(dom), {
-            htmlAttrs: _collectHtmlAttrsToBag(dom, (name) =>
-                declaredNamesLower.has(name),
+            // foreign attributes collect into the bag (guarded, minus
+            // declared names and styler-owned attributes — see
+            // isStylerOwnedAttr)
+            htmlAttrs: _collectHtmlAttrsToBag(
+                dom,
+                (name) =>
+                    declaredNamesLower.has(name) || _isStylerOwnedAttr(name),
             ),
         });
 }
@@ -919,10 +984,15 @@ export class ProseMirror extends _BaseComponent {
         // element as well, but not the `ui_prosemirror_host` class of
         // the template, you should set that yourself if required.
         element = null,
+        // Enables the text-composition applicator plugin (composition-plugin.ts).
+        // false: off, true: on and if a dependency "composeInEditor" is also
+        // defined: user selectable. (Plan 2026-10-07-1223, Phase 3)
+        composeInEditor = false,
     ) {
         super(widgetBus);
         this._idMap = idMap;
         this._originTypeSpecPath = originTypeSpecPath;
+        this._composeInEditorFlag = composeInEditor;
         this._proseMirrorDefaultSchema = proseMirrorDefaultSchema;
         // The cache is bi-directional, meaning that both mappings will be
         // set: proseMirrorNode -> metamodelNode and metamodelNode ->
@@ -982,29 +1052,37 @@ export class ProseMirror extends _BaseComponent {
         this.anchorTargetsContainer.remove();
     }
 
-    _initProseMirrorView(element) {
-        const initialSchema = {
-                nodes: { ...this._proseMirrorDefaultSchema.nodes },
-                marks: { ...this._proseMirrorDefaultSchema.marks },
-            },
-            schema = new Schema(initialSchema),
-            // FIXME: splitBlockAs without a function as argument is the
-            // same as the default splitBlock. However, I leave this in here
-            // because this is the door to a feature where we could define
-            // which block is inserted after another block, when we press
-            // "Enter" at the end of a block. Currently, the first block
-            // that is appliable in the NodeSpec-Map is used, e.g. if
-            // "heading-1" is at the top, that will be created.
-            // It would be cool, to optionally, and dynamically via the UI,
-            // define e.g. the follow-up block of 'heading-1' is 'paragraph-1'
-            // and the follow-up block of 'paragraph-1' is 'paragraph-2',
-            // making the writing and editing experience more fluid.
-            // Ideally, an author of a document would be able to do this,
-            // but having it as the author of the nodeSpec is not too
-            // bad either, and in the beginning, these roles won't be
-            // separated by the tool. Later maybe there's a writing
-            // tool which doesn't allow changing the nodeSpec.
-            mySplitBlock = splitBlockAs(),
+    _isComposeInEditorOn() {
+        return (
+            this._composeInEditorFlag === true &&
+            // If it doesn't have the 'composeInEditor' dependency
+            // it's always on, otherwise it is controllable by the
+            // user via that dependency.
+            (!this.widgetBus.wrapper.dependencyReverseMapping.has(
+                "composeInEditor",
+            ) ||
+                this.getEntry("composeInEditor").value)
+        );
+    }
+
+    _buildPlugins() {
+        // FIXME: splitBlockAs without a function as argument is the
+        // same as the default splitBlock. However, I leave this in here
+        // because this is the door to a feature where we could define
+        // which block is inserted after another block, when we press
+        // "Enter" at the end of a block. Currently, the first block
+        // that is appliable in the NodeSpec-Map is used, e.g. if
+        // "heading-1" is at the top, that will be created.
+        // It would be cool, to optionally, and dynamically via the UI,
+        // define e.g. the follow-up block of 'heading-1' is 'paragraph-1'
+        // and the follow-up block of 'paragraph-1' is 'paragraph-2',
+        // making the writing and editing experience more fluid.
+        // Ideally, an author of a document would be able to do this,
+        // but having it as the author of the nodeSpec is not too
+        // bad either, and in the beginning, these roles won't be
+        // separated by the tool. Later maybe there's a writing
+        // tool which doesn't allow changing the nodeSpec.
+        const mySplitBlock = splitBlockAs(),
             // Leaving this a s a quick way back into the topic...
             //node => {
             //  console.log('splitBlock node:', node);
@@ -1060,20 +1138,44 @@ export class ProseMirror extends _BaseComponent {
                     mySplitBlock,
                 ),
                 ...configureBr(),
+            });
+        return [
+            history(),
+            keymap({
+                "Mod-z": undo,
+                "Mod-y": redo,
+                //    , "Mod-b": toggleMark(proseMirrorTestingSchema.marks.strong)
+                //    , "Mod-B": toggleMark(proseMirrorTestingSchema.marks.strong)
             }),
+            keymap(typeRoofKeymap),
+            ...("menu" in this._idMap ? [this._menuPlugin()] : []),
+            ...(this._isComposeInEditorOn()
+                ? [
+                      createEditorCompositionPlugin({
+                          getWidgetById: (id, defaultValue) =>
+                              this._childrenWidgetBus.getWidgetById(
+                                  id,
+                                  defaultValue,
+                              ),
+                          getEntry: (path) => this.getEntry(path),
+                          documentPath: Path.fromString(
+                              this.widgetBus.getExternalName("document"),
+                          ).toString(),
+                      }),
+                  ]
+                : []),
+        ];
+    }
+
+    _initProseMirrorView(element) {
+        const initialSchema = {
+                nodes: { ...this._proseMirrorDefaultSchema.nodes },
+                marks: { ...this._proseMirrorDefaultSchema.marks },
+            },
+            schema = new Schema(initialSchema),
             state = EditorState.create({
                 schema: schema,
-                plugins: [
-                    history(),
-                    keymap({
-                        "Mod-z": undo,
-                        "Mod-y": redo,
-                        //    , "Mod-b": toggleMark(proseMirrorTestingSchema.marks.strong)
-                        //    , "Mod-B": toggleMark(proseMirrorTestingSchema.marks.strong)
-                    }),
-                    keymap(typeRoofKeymap),
-                    ...("menu" in this._idMap ? [this._menuPlugin()] : []),
-                ],
+                plugins: this._buildPlugins(),
                 doc: schema.topNodeType.createAndFill(),
             }),
             view = new EditorView(element, {
@@ -1367,7 +1469,14 @@ export class ProseMirror extends _BaseComponent {
             });
         }
 
-        if (this._originTypeSpecPath !== null) {
+        // Only transactions that (re)place the selection — genuine user
+        // cursor actions like click, arrow keys, typing, paste, undo —
+        // may move the editing target. System transactions (e.g. the
+        // composition plugin's decoration flush) carry the current,
+        // possibly stale selection and would otherwise re-assert it,
+        // e.g. jumping editingTypeSpec back to the node the cursor
+        // happened to be in when "compose in editor" is switched on.
+        if (this._originTypeSpecPath !== null && transaction.selectionSet) {
             const typeSpecs = this._getTypeSpecs(this.view.state);
             // With silent nodes (noStyler), getTypeSpecs can be empty
             // when the selection is not inside any node the resolver
@@ -1483,6 +1592,18 @@ export class ProseMirror extends _BaseComponent {
             this._nodesCache = new WeakMap();
             mapSetBiDirectional(this._nodesCache, schema, proseMirrorSchema);
         }
+        // Rebuild the plugins, they are initially created,
+        // so far only composeInEditor changes the set of plugins.
+        // The composeInEditor flag changed: rebuild the plugins array
+        // (with/without the composition plugin). PM destroys/re-creates
+        // plugin views on plugin-set change, so the plugin's
+        // subscription lifecycle (constructor/destroy) drives
+        // engagement; the state re-creation below applies the change.
+        if (
+            this._composeInEditorFlag === true &&
+            changedMap.has("composeInEditor")
+        )
+            newConfigItems.push(["plugins", this._buildPlugins()]);
         // it looks like document has to change...
         const document = changedMap.has("document")
             ? changedMap.get("document")

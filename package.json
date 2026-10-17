@@ -25,7 +25,8 @@
     "stylelint:check": "stylelint .",
     "typecheck": "tscw --noEmit --pretty false --project ./tsconfig.json",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "perf:composition": "scripts/perf-composition"
   },
   "keywords": [
     "typography",
@@ -45,6 +46,8 @@
     "driver.js": "^1.9.0",
     "eleventy-plugin-embed-everything": "^1.19.0",
     "globals": "^15.12.0",
+    "hypher": "^0.2.5",
+    "linebreak": "^1.1.0",
     "markdown-it-github-headings": "^2.0.1",
     "prosemirror-commands": "^1.7.1",
     "prosemirror-history": "^1.4.1",
@@ -78,7 +81,7 @@
     "typescript-eslint": "^8.43.0",
     "vite": "^8.1.5",
     "vite-plugin-static-copy": "^4.1.1",
-    "vitest": "^5.0.1"
+    "vitest": "5.0.3"
   },
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.44.1"

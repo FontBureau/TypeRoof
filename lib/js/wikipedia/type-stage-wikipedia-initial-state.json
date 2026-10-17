@@ -5,6 +5,15 @@
         },
         "lineLength": "53.0",
         "baseFontSize": "14",
+        "inlineNodesStyleLinks": [
+            [
+                "quote",
+                {
+                    "stylePatch": "serif italic",
+                    "mode": "link"
+                }
+            ]
+        ],
         "textColor": {
             "instance": {
                 "L": "0.00000",
@@ -26,15 +35,26 @@
             [
                 "headings",
                 {
+                    "leading": {
+                      "instance": {
+                        "leading": "1.05"
+                      },
+                      "leadingAlgorithmTypeKey": "ManualLeading"
+                    },
+                    "textCompositionAlgorithm": {
+                      "instance": {
+                        "potentials": "robotoFlexHeadline",
+                        "potentialsAnchoring": "off",
+                        "lastLineHandling": "fill",
+                        "underfullTreatment": "run"
+                      },
+                      "textCompositionAlgorithmTypeKey": "TextCompositionAlgorithmGreedyFitModel"
+                    },
                     "children": [
                         [
                             "h1",
                             {
                                 "blockMargins": {
-                                    "start": {
-                                        "unit": "baseEm",
-                                        "value": "2.00000"
-                                    },
                                     "end": {
                                         "unit": "lineHeightAfter",
                                         "value": "1.00000"
@@ -76,6 +96,9 @@
             [
                 "paragraphs",
                 {
+                    "textCompositionAlgorithm": {
+                        "textCompositionAlgorithmTypeKey": "TextCompositionAlgorithmKnuthPlassModel"
+                    },
                     "children": [
                         [
                             "t1",
@@ -111,6 +134,57 @@
                     },
                     "label": "Generic"
                 }
+            ],
+            [
+                "section",
+                {
+                    "blockMargins": {
+                        "start": {
+                            "unit": "baseEm",
+                            "value": "2.00000"
+                        }
+                    },
+                    "horizontalLayout": {
+                        "instance": {
+                            "minLineLength": "33",
+                            "minPadding": "5",
+                            "columnGutter": {
+                                "instance": {
+                                    "a": {
+                                        "columnWidth": "65",
+                                        "gutter": "3"
+                                    },
+                                    "b": {
+                                        "columnWidth": "40",
+                                        "gutter": "2"
+                                    },
+                                    "minGutter": "1.5",
+                                    "maxGutter": "3.5"
+                                },
+                                "columnGutterAlgorithmTypeKey": "linear"
+                            },
+                            "paddingRatioStart": "60.00000",
+                            "growColumns": {
+                                "mode": "false"
+                            },
+                            "columns": [
+                                  "65",
+                                  "65",
+                                  "50",
+                                  "40"
+                            ]
+                        },
+                        "horizontalLayoutAlgorithmTypeKey": "HorizontalLayoutRunionModel"
+                    },
+                    "label": "Section"
+                }
+            ],
+            [
+                "sub-section",
+                {
+                    "noStyler": "1",
+                    "label": "Sub-Section"
+                }
             ]
         ],
         "label": "",
@@ -138,13 +212,135 @@
                     "mode": "link",
                     "tag": "strong"
                 }
+            ],
+            [
+                "link",
+                {
+                    "stylePatch": "link",
+                    "mode": "link",
+                    "tag": "a"
+                }
+            ],
+            [
+                "italic link",
+                {
+                    "stylePatch": "italic link",
+                    "mode": "link",
+                    "tag": ""
+                }
+            ],
+            [
+                "bold italic link",
+                {
+                    "stylePatch": "bold italic link",
+                    "mode": "link",
+                    "tag": ""
+                }
+            ],
+            [
+                "link span",
+                {
+                    "stylePatch": "link",
+                    "mode": "link"
+                }
+            ],
+            [
+                "span",
+                {
+                    "stylePatch": "",
+                    "mode": "link"
+                }
+            ],
+            [
+                "italic link span",
+                {
+                    "stylePatch": "italic link",
+                    "mode": "link"
+                }
+            ],
+            [
+                "serif",
+                {
+                    "stylePatch": "serif",
+                    "mode": "link"
+                }
+            ],
+            [
+                "italic link serif",
+                {
+                    "stylePatch": "serif italic link",
+                    "mode": "link"
+                }
+            ],
+            [
+                "italic-lang-el-latn span",
+                {
+                    "stylePatch": "italic lang el-Latn",
+                    "mode": "link"
+                }
+            ],
+            [
+                "italic-lang-la span",
+                {
+                    "stylePatch": "italic lang-la",
+                    "mode": "link"
+                }
+            ],
+            [
+                "link span sup",
+                {
+                    "stylePatch": "sup link",
+                    "mode": "link"
+                }
+            ],
+            [
+                "italic link span sup",
+                {
+                    "stylePatch": "italic sup link",
+                    "mode": "link"
+                }
+            ],
+            [
+                "sup",
+                {
+                    "stylePatch": "sup",
+                    "mode": "link"
+                }
+            ],
+            [
+                "span sup",
+                {
+                    "stylePatch": "sup",
+                    "mode": "link"
+                }
             ]
         ],
         "markStyleLinks": [
             [
-                "strong",
+                "tag-em",
                 {
-                    "stylePatch": "bold",
+                    "stylePatch": "",
+                    "mode": "link"
+                }
+            ],
+            [
+                "tag-strong",
+                {
+                    "stylePatch": "",
+                    "mode": "link"
+                }
+            ],
+            [
+                "tag-a",
+                {
+                    "stylePatch": "",
+                    "mode": "link"
+                }
+            ],
+            [
+                "tag-sup",
+                {
+                    "stylePatch": "",
                     "mode": "link"
                 }
             ]
@@ -201,13 +397,127 @@
                         "instance": {
                             "L": "60.00000",
                             "C": "46.00000",
-                            "H": "0.6200000",
+                            "H": "183.00000",
                             "alpha": "100.00000"
                         },
                         "colorTypeKey": "OKLCH"
                     }
                 },
                 "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "italic link",
+            {
+                "instance": {
+                    "styles": ["italic", "link"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "bold italic link",
+            {
+                "instance": {
+                    "styles": ["bold", "italic", "link"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "serif",
+            {
+                "instance": {
+                    "activeFontKey": "from-url AmstelvarA2 Roman wght400 Version_0-001"
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "serif italic",
+            {
+                "instance": {
+                    "activeFontKey": "from-url AmstelvarA2 Italic wght400 Version_0-001"
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "lang-la",
+            {
+                "instance": {
+                    "languageTag": {
+                        "language": "la",
+                        "script": "Latn"
+                    }
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "italic lang-la",
+            {
+                "instance": {
+                    "styles": ["italic", "lang-la"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "lang-el-Latn",
+            {
+                "instance": {
+                    "languageTag": {
+                        "language": "el",
+                        "script": "Latn"
+                    }
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "italic lang el-Latn",
+            {
+                "instance": {
+                    "styles": ["italic", "lang-el-Latn"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "serif italic link",
+            {
+                "instance": {
+                    "styles": ["link", "serif italic"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "sup",
+            {
+                "instance": {
+                    "relativeFontSize": "0.7"
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "italic sup link",
+            {
+                "instance": {
+                    "styles": ["italic", "sup link"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "sup link",
+            {
+                "instance": {
+                    "styles": ["link", "sup"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
             }
         ]
     ],
@@ -216,6 +526,27 @@
         "nodes": [
             [
                 "section",
+                {
+                    "content": "block*",
+                    "group": "block",
+                    "tag": "section",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "sub-section",
                 {
                     "content": "block*",
                     "group": "block",
@@ -789,13 +1120,19 @@
         ],
         "marks": [
             [
-                "strong",
+                "tag-strong",
                 {
                     "tag": "strong"
                 }
             ],
             [
-                "link",
+                "tag-em",
+                {
+                    "tag": "em"
+                }
+            ],
+            [
+                "tag-a",
                 {
                     "attrs": [
                         [
@@ -818,6 +1155,12 @@
                         ]
                     ],
                     "tag": "a"
+                }
+            ],
+            [
+                "tag-sup",
+                {
+                    "tag": "sup"
                 }
             ]
         ]
@@ -884,6 +1227,41 @@
             {
                 "link": "/generic",
                 "label": ""
+            }
+        ],
+        [
+            "section",
+            {
+                "link": "/section",
+                "label": ""
+            }
+        ],
+        [
+            "sub-section",
+            {
+                "link": "/sub-section",
+                "label": ""
+            }
+        ],
+        [
+            "link span sup",
+            {
+                "stylePatch": "sup link",
+                "mode": "link"
+            }
+        ],
+        [
+            "italic link span sup",
+            {
+                "stylePatch": "italic sup link",
+                "mode": "link"
+            }
+        ],
+        [
+            "span sup",
+            {
+                "stylePatch": "sup",
+                "mode": "link"
             }
         ]
     ],

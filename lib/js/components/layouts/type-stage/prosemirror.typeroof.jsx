@@ -70,6 +70,7 @@ export class RampProseMirrorContext extends BaseProseMirrorContext {
                 originTypeSpecPath,
                 ["editor-advanced"],
                 proseMirrorHostElement,
+                true, // composeInEditor
             ],
             [{}, ["showNodeTypeSpecLabels"], UpdateLabelListener],
             [
@@ -120,6 +121,7 @@ export class TypeStageProseMirrorContext extends BaseProseMirrorContext {
                     "document",
                     "nodeSpecToTypeSpec",
                     "editingTypeSpec",
+                    "composeInEditor",
                 ],
                 ProseMirror,
                 proseMirrorDefaultSchema,
@@ -127,6 +129,7 @@ export class TypeStageProseMirrorContext extends BaseProseMirrorContext {
                 originTypeSpecPath,
                 ["editor-advanced"],
                 proseMirrorHostElement,
+                true, // composeInEditor
             ],
             [{}, ["showNodeTypeSpecLabels"], UpdateLabelListener],
             [

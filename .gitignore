@@ -23,4 +23,6 @@ _site
 
 # vitest coverage output
 coverage/
-coverage/
+
+# generated performance profiles/results
+artifacts/perf-composition/

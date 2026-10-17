@@ -24,6 +24,15 @@ import {
     UIDocumentUnknownStyleStyler,
 } from "../../prosemirror/type-spec.typeroof.jsx";
 import { getTypeSpecPropertiesIdMethod } from "../../prosemirror/integration.typeroof.jsx";
+import {
+    kpLineColorCode,
+    lineEndSourceIndex,
+    lineSpanClasses,
+    lineSpanStyles,
+    lineStartSourceIndex,
+    potentialsLineColorCode,
+    treatmentConfigFromPayload,
+} from "./text-composition/line-attrs.ts";
 import { TypeStagePaneStyler } from "./pane-styler.typeroof.jsx";
 import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
 
@@ -38,7 +47,11 @@ import {
     getStyleLinkPropertiesId,
     getWrapMarks,
     wrapResultsAreEqual,
+    getResolvablePathOfTypes,
 } from "./document-nodes-meta/derivations.mjs";
+
+import { getEffectiveStyleLinks } from "../../prosemirror/type-spec.typeroof.jsx";
+import { INLINE_NODES_STYLE_LINKS } from "../../registered-properties-definitions.mjs";
 
 class GenericUpdater extends _BaseComponent {
     constructor(widgetBus, updateHandlerFn) {
@@ -254,16 +267,36 @@ export class UIDocumentElement extends _UIDocumentAttachment {
         defaultSchemaSpec,
         originTypeSpecPath,
         layoutRootPath,
+        compositionReveal = "lazy",
     ) {
         super(widgetBus, zones, metaInfo, attachmentRegistry);
         const plan = metaInfo.renderingPlan;
         this._defaultSchemaSpec = defaultSchemaSpec;
         this._context = metaInfo.context;
+        this._typeKey = plan.typeKey;
+        this._isInlineNode = plan.isInlineNode === true;
         this._hasTypeSpecStyling = plan.hasTypeSpecStyling;
         this._pathOfTypes = plan.pathOfTypes;
         this._originTypeSpecPath = originTypeSpecPath;
         this._layoutRootPath = layoutRootPath;
         this._typeSpecStylerWrapper = null;
+        // approach (a) phase 4: the inline node's mark-style styler
+        // (UIDocumentStyleStyler via inlineNodesStyleLinks) + the
+        // resolved styleLinkProperties@ id (rebuild comparison) +
+        // the containing-typeSpec wake trigger (the composition@
+        // GenericUpdater pattern — see _provisionInlineStyleStyler)
+        this._inlineStyleStylerWrapper = null;
+        this._inlineStyleLinkPropertiesId = null;
+        this._inlineStyleTriggerWrapper = null;
+        this._inlineStyleTriggerTypeId = null;
+        this._compositionUnsubscribe = null;
+        this._compositionUnobserve = null;
+        this._compositionDemandToken = {};
+
+        // Keep the meta-derived resolution current for nodes whose
+        // immutable identity survives a structural edit at a new path
+        // (e.g. Enter splits a paragraph and shifts following siblings).
+        this._syncMetaInfo(metaInfo, compositionReveal);
 
         // The attr-driven DOM state as applied below (the htmlAttrs bag
         // and the verbatim html of reproducing atoms);
@@ -295,6 +328,116 @@ export class UIDocumentElement extends _UIDocumentAttachment {
             this.node,
             parentRendererNode,
         );
+        // text-composition: toggle the nowrap class on composed
+        // textblocks. The child maps the FULL external protocol id
+        // itself (the styler-wrapper pattern).
+        const compositionId = `composition@${metaInfo.rootPath.toString()}`,
+            widgets = [
+                [
+                    {},
+                    [[compositionId, "composition@"]],
+                    GenericUpdater,
+                    this._updateComposedClass.bind(this),
+                ],
+            ];
+        this._initWidgets(widgets);
+        if (this._isTextblockPlan(plan)) {
+            const service = this.widgetBus.getWidgetById(
+                "compositionController",
+                null,
+            );
+            if (service !== null) {
+                this._compositionUnobserve = service.observe(
+                    this._documentNodePath,
+                    (payload) =>
+                        this.node.classList.toggle(
+                            "typeroof-composed",
+                            payload !== null,
+                        ),
+                );
+                this._compositionUnsubscribe = service.subscribe(
+                    this._documentNodePath,
+                    this._compositionDemandToken,
+                );
+            }
+            if (service !== null && compositionReveal === "sync")
+                service.flushSync(this._documentNodePath);
+        }
+    }
+
+    _isTextblockPlan(plan) {
+        return (
+            plan.innerHtml === null &&
+            !plan.context.inInlineContext &&
+            !!plan.childrenInInlineContext
+        );
+    }
+
+    _syncMetaInfo(metaInfo, compositionReveal = "lazy", scopeSettled = false) {
+        const plan = metaInfo.renderingPlan,
+            pathChanged =
+                this._pathOfTypes?.join("\u0001") !==
+                plan.pathOfTypes.join("\u0001");
+        this._context = plan.context;
+        this._hasTypeSpecStyling = plan.hasTypeSpecStyling;
+        this._pathOfTypes = plan.pathOfTypes;
+        this._compositionReveal = compositionReveal;
+        if (pathChanged || scopeSettled) {
+            // the current styler wrapper (either channel) is destroyed
+            // and re-provisioned through the channel dispatcher
+            // (inline nodes: the style-link styler; blocks: the
+            // per-node typeSpec styler)
+            const oldWrapper = this._isInlineNode
+                ? this._inlineStyleStylerWrapper
+                : this._typeSpecStylerWrapper;
+            if (oldWrapper !== null) {
+                const index = this._widgets.indexOf(oldWrapper);
+                if (index !== -1) this._widgets.splice(index, 1);
+                this._destroyWidget(oldWrapper);
+                this._typeSpecStylerWrapper = null;
+                this._inlineStyleStylerWrapper = null;
+                this._inlineStyleLinkPropertiesId = null;
+                if (this._inlineStyleTriggerWrapper !== null) {
+                    const triggerIndex = this._widgets.indexOf(
+                        this._inlineStyleTriggerWrapper,
+                    );
+                    if (triggerIndex !== -1)
+                        this._widgets.splice(triggerIndex, 1);
+                    this._destroyWidget(this._inlineStyleTriggerWrapper);
+                    this._inlineStyleTriggerWrapper = null;
+                    this._inlineStyleTriggerTypeId = null;
+                }
+            }
+            // (re)provision through the channel dispatcher. For the
+            // block channel this stays gated on an existing wrapper
+            // (unchanged behavior); for the inline channel it is
+            // UNCONDITIONAL: a scope settle after a live typeSpec
+            // edit (an inlineNodesStyleLinks edge added/removed/
+            // re-linked after this element initialized) must resolve
+            // the edge NOW — the element had no styler wrapper yet,
+            // and nothing else re-provisions it.
+            const wrappers = this._isInlineNode
+                ? this._provisionInlineStyleStyler()
+                : oldWrapper !== null
+                  ? [this._provisionTypeSpecStyler()]
+                  : [];
+            for (const wrapper of wrappers) {
+                if (wrapper === null) continue;
+                this._createWidget(wrapper);
+                const changedMap = new Map();
+                for (const local of wrapper.dependencyReverseMapping.keys())
+                    changedMap.set(local, wrapper.widget.getEntry(local));
+                wrapper.widget.update(changedMap);
+            }
+        }
+    }
+
+    _updateComposedClass(changedMap) {
+        if (changedMap.has("composition@"))
+            this.node.classList.toggle(
+                "typeroof-composed",
+                changedMap.get("composition@") !== null,
+            );
     }
 
     _getTypeSpecPropertiesId = getTypeSpecPropertiesIdMethod;
@@ -401,13 +544,170 @@ export class UIDocumentElement extends _UIDocumentAttachment {
         // constructor-baked, attr-driven DOM before provisioning.
         this._applyAttrDrivenDOMUpdates();
         const requiresFullInitialUpdate = new Set();
-        if (this._hasTypeSpecStyling) {
+        // approach (a) phase 4 — the channel split: INLINE nodes
+        // style like MARKS (the styleLinkProperties@ merge channel,
+        // UIDocumentStyleStyler) and never reach the per-node block
+        // styler; blocks keep it. a1 is realized by this routing.
+        if (this._isInlineNode) {
+            const wrappers = this._provisionInlineStyleStyler();
+            for (const wrapper of wrappers)
+                if (wrapper !== null) requiresFullInitialUpdate.add(wrapper);
+        } else if (this._hasTypeSpecStyling) {
             const wrapper = this._provisionTypeSpecStyler();
             if (wrapper) requiresFullInitialUpdate.add(wrapper);
         }
         for (const wrapper of super._provisionWidgets())
             requiresFullInitialUpdate.add(wrapper);
         return requiresFullInitialUpdate;
+    }
+
+    // The inline node's mark-style styling: resolves the
+    // inlineNodesStyleLinks edge of the CONTAINING typeSpec (the
+    // same resolution mark st ylers use — pathOfTypes without the
+    // own typeKey) and provisions a UIDocumentStyleStyler on the
+    // single element. No edge or a declaration edge (empty
+    // stylePatch): NO styler — the element renders inherit-only
+    // (the containing context's cascade; roadmap observation 3's
+    // root-fallback font-size write disappears).
+    //
+    // Because the edge lives on the CONTAINING typeSpec, its state
+    // (added/removed/re-linked) changes that typeSpecnion's stream —
+    // the element itself has no such dependency. A GenericUpdater
+    // trigger on the containing typeSpecProperties@ (the
+    // composition@ pattern) wakes the element to re-resolve the edge
+    // and rebuild the styler when its id changes. Without it, a
+    // freshly provisioned viewer element that ran before the
+    // typeSpec tree settled (e.g. a mode switch racing an edge edit)
+    // would keep its initial (null) resolution forever.
+    // Both wrappers are _widgets MEMBERS (the block channel's
+    // splice(0, 0, …) convention, _provisionTypeSpecStyler): a fresh
+    // attachment after a mode switch has NO scope-settle or path-change
+    // event (the always-active meta tree's scopes settle before the
+    // attachment exists and attach does not replay settled state), so
+    // membership is what lets the framework's base _provisionWidgets
+    // loop create the wrappers and _update deliver their full initial
+    // changedMap.
+    _provisionInlineStyleStyler() {
+        // approach (a) phase 6: the containing chain runs through
+        // getResolvablePathOfTypes — nested inline chains (cite
+        // inside generic-inline) would otherwise still end at an
+        // entry-less key and fall to the ROOT spec.
+        const containingPathOfTypes = getResolvablePathOfTypes(
+                this.getEntry("nodeSpecToTypeSpec"),
+                this._pathOfTypes.slice(0, -1),
+            ),
+            typeSpecPropertiesPath = this._getTypeSpecPropertiesId(
+                containingPathOfTypes,
+                true /* asPath */,
+            ),
+            typeSpecProperties = this._getTypeSpecPropertiesId(
+                containingPathOfTypes,
+            ),
+            links = getEffectiveStyleLinks(
+                this.widgetBus,
+                typeSpecProperties,
+                INLINE_NODES_STYLE_LINKS,
+            ),
+            edge = links.get(this._typeKey),
+            styleLinkPropertiesId =
+                edge !== undefined && edge.get("stylePatch").value !== ""
+                    ? getStyleLinkPropertiesId(
+                          this.widgetBus,
+                          typeSpecPropertiesPath,
+                          "inlineNodesStyleLinks",
+                          this._typeKey,
+                      )
+                    : null,
+            newWrappers = [];
+        // the containing typeSpecProperties@ changed: (re)build the
+        // trigger (its dependency id is the containing typeSpec)
+        if (
+            this._inlineStyleTriggerWrapper === null ||
+            this._inlineStyleTriggerTypeId !== typeSpecProperties
+        ) {
+            if (this._inlineStyleTriggerWrapper !== null) {
+                const index = this._widgets.indexOf(
+                    this._inlineStyleTriggerWrapper,
+                );
+                if (index !== -1) this._widgets.splice(index, 1);
+                this._destroyWidget(this._inlineStyleTriggerWrapper);
+                this._inlineStyleTriggerWrapper = null;
+            }
+            this._inlineStyleTriggerTypeId = typeSpecProperties;
+            this._inlineStyleTriggerWrapper = this._initWrapper(
+                this._childrenWidgetBus,
+                {},
+                [[typeSpecProperties, "containingTypeSpecProperties@"]],
+                GenericUpdater,
+                this._inlineStyleTriggerUpdate.bind(this),
+            );
+            this._widgets.splice(0, 0, this._inlineStyleTriggerWrapper);
+            newWrappers.push(this._inlineStyleTriggerWrapper);
+        }
+        // rebuild comparison: the resolved id is the styler wrapper's
+        // identity (an edge edit changes it)
+        if (this._inlineStyleStylerWrapper !== null) {
+            if (this._inlineStyleLinkPropertiesId === styleLinkPropertiesId)
+                return newWrappers;
+            const index = this._widgets.indexOf(this._inlineStyleStylerWrapper);
+            if (index !== -1) this._widgets.splice(index, 1);
+            this._destroyWidget(this._inlineStyleStylerWrapper);
+            this._inlineStyleStylerWrapper = null;
+        }
+        this._inlineStyleLinkPropertiesId = styleLinkPropertiesId;
+        if (styleLinkPropertiesId === null) return newWrappers;
+        const settings = {},
+            dependencyMappings = [
+                [styleLinkPropertiesId, "properties@"],
+                ["/font", "rootFont"],
+                [
+                    this._layoutRootPath
+                        .append("verboseFontVariationSettings")
+                        .toString(),
+                    "verboseFontVariationSettings",
+                ],
+            ],
+            Constructor = UIDocumentStyleStyler,
+            args = [this.node];
+        const wrapper = this._initWrapper(
+            this._childrenWidgetBus,
+            settings,
+            dependencyMappings,
+            Constructor,
+            ...args,
+        );
+        this._inlineStyleStylerWrapper = wrapper;
+        this._widgets.splice(0, 0, wrapper);
+        newWrappers.push(wrapper);
+        return newWrappers;
+    }
+
+    // GenericUpdater handler: the containing typeSpecnion's stream
+    // changed (an inlineNodesStyleLinks edge was added/removed/
+    // re-linked there, or a parent re-anchored) — re-resolve the edge
+    // and rebuild the styler when its id changed. The styler's own
+    // properties@ dependency covers payload-content updates; this
+    // trigger covers identity changes.
+    _inlineStyleTriggerUpdate() {
+        if (!this._isInlineNode) return;
+        const wrappers = this._provisionInlineStyleStyler(),
+            stylerWrapper = this._inlineStyleStylerWrapper;
+        if (wrappers.includes(stylerWrapper) && stylerWrapper !== null) {
+            this._createWidget(stylerWrapper);
+            const changedMap = new Map();
+            for (const local of stylerWrapper.dependencyReverseMapping.keys())
+                changedMap.set(local, stylerWrapper.widget.getEntry(local));
+            stylerWrapper.widget.update(changedMap);
+        }
+    }
+
+    destroy() {
+        if (this._compositionUnsubscribe !== null)
+            this._compositionUnsubscribe();
+        if (this._compositionUnobserve !== null) this._compositionUnobserve();
+        this._compositionUnsubscribe = null;
+        this._compositionUnobserve = null;
+        super.destroy();
     }
 
     // A resolved spec with "noStyler" renders inherit-only via the
@@ -510,8 +810,10 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
         defaultSchemaSpec,
         originTypeSpecPath,
         layoutRootPath,
+        compositionReveal = "lazy",
     ) {
         super(widgetBus, zones, metaInfo, attachmentRegistry);
+        void compositionReveal;
         this._layoutRootPath = layoutRootPath;
         this._defaultSchemaSpec = defaultSchemaSpec;
         this._context = metaInfo.context;
@@ -523,26 +825,225 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
             parentRendererNode,
         );
         this._markWrappers = [];
-        const widgets = [
-            [{}, ["text"], GenericUpdater, this._updateNode.bind(this)],
-        ];
+        // text-composition applicator state: the current text and the
+        // composition payload of the enclosing textblock (null = OFF
+        // MODE, today's single-text-node behavior)
+        this._text = "";
+        this._composition = null;
+        this._compositionUnobserve = null;
+        // a carrier span we created to hold line spans in the
+        // mark-less case (null when this.node is the bare text node)
+        this._carrierSpan = null;
+        // text-composition: the child widget maps the FULL external
+        // protocol id itself (a bare "composition@" shorthand would
+        // be intercepted as protocol syntax with an empty address,
+        // not forwarded as the attachment's local — the styler
+        // wrappers map external ids the same way). Direct runs sit at
+        // <textblock>/content/<index>; runs NESTED inside inline
+        // nodes (<textblock>/content/<i>/content/<j>) use the
+        // textblockRootPath threaded through the context by the
+        // textblock's element provisioning — the textblock is the
+        // composition boundary (only _isTextblock nodes compose).
+        const compositionSourcePath =
+                metaInfo.context.textblockRootPath ??
+                metaInfo.rootPath.parent.parent,
+            compositionId = `composition@${compositionSourcePath.toString()}`,
+            widgets = [
+                [{}, ["text"], GenericUpdater, this._updateNode.bind(this)],
+                [
+                    {},
+                    [[compositionId, "composition@"]],
+                    GenericUpdater,
+                    this._updateComposition.bind(this),
+                ],
+            ];
         this._initWidgets(widgets);
+        const service = this.widgetBus.getWidgetById(
+            "compositionController",
+            null,
+        );
+        if (service !== null)
+            this._compositionUnobserve = service.observe(
+                compositionSourcePath,
+                (payload) => {
+                    this._composition = payload;
+                    this._renderContent();
+                },
+            );
         this._initalWidgetsLength = this._widgets.length;
     }
 
     _updateNode(changedMap) {
         if (changedMap.has("text")) {
-            const { Node } = this._domTool.window,
-                text = changedMap.get("text").value;
-            if (this.node.nodeType === Node.TEXT_NODE) this.node.data = text;
-            else {
-                // drill down
-                let deepest = this.node;
-                while (deepest.firstElementChild)
-                    deepest = deepest.firstElementChild;
-                deepest.textContent = text;
-            }
+            const text = changedMap.get("text");
+            // StringOrEmptyModel: undefined when empty
+            this._text = text.isEmpty ? "" : (text.value ?? "");
+            this._renderContent();
         }
+    }
+
+    _updateComposition(changedMap) {
+        if (changedMap.has("composition@")) {
+            // payload or null (OFF MODE / vanished)
+            this._composition = changedMap.get("composition@");
+            this._renderContent();
+        }
+    }
+
+    // --- text-composition applicator ---
+    // Renders the run's content: OFF MODE = one text node (today's
+    // behavior); composed = per-line spans (the ported
+    // typeroof-composition-line structure), each with its own text
+    // node slice. Spans are throwaway: undo is re-rendering. The
+    // one-text-node invariant breaks BY DESIGN here (plan phase 6).
+    _renderContent() {
+        const { Node } = this._domTool.window;
+        if (this.node.nodeType === Node.TEXT_NODE) {
+            if (this._composition === null) {
+                this.node.data = this._text;
+                return;
+            }
+            // composed content needs an element carrier: swap the
+            // bare text node for a span (tracked for undo)
+            this._carrierSpan = this._domTool.createElement("span");
+            // identifies the composition-owned wrapper of a
+            // mark-less run (the attachment's outermost node must
+            // stay ONE node for the registry; a bare text node
+            // can't host line spans)
+            this._carrierSpan.classList.add("typeroof-composition-run");
+            this._swapNode(this._carrierSpan);
+        }
+        // back to the bare text node when composition turns off and
+        // there are no mark wrappers
+        if (
+            this._composition === null &&
+            this._carrierSpan !== null &&
+            this.node === this._carrierSpan
+        ) {
+            const textNode = this._domTool.createTextNode(this._text);
+            this._swapNode(textNode);
+            this._carrierSpan = null;
+            return;
+        }
+        // The content carrier: the innermost MARK WRAPPER if marks
+        // exist, else the node itself (our carrier span). NO
+        // firstElementChild drill-down: once composed, the carrier's
+        // children ARE the line spans (elements) — drilling would
+        // descend into the first line span and re-render inside it,
+        // leaving the other (stale) line spans untouched.
+        const carrier = this._markWrappers.length
+            ? this._markWrappers[0][this.constructor._MARK_ELEMENT]
+            : this.node;
+        if (this._composition === null) {
+            carrier.replaceChildren(this._domTool.createTextNode(this._text));
+            return;
+        }
+        carrier.replaceChildren(...this._buildLineSpans());
+    }
+
+    // The line-fragment presentation math (classes, treatment style
+    // props, both color-code palettes) lives in
+    // text-composition/line-attrs.ts — shared with the ProseMirror
+    // decoration applicator (extracted from here, behavior-preserving).
+    _buildLineSpans() {
+        const { leaves, paragraphs } = this._composition,
+            myPath = this._documentNodePath.toString(),
+            leafIndex = leaves.findIndex((leaf) => leaf.path === myPath);
+        if (leafIndex === -1)
+            // not part of the composition (e.g. structure changed
+            // mid-cycle): render uncomposed, the next update fixes it
+            return [
+                this._domTool.createTextNode(
+                    this._composition.sources.leafTexts?.[leafIndex] ??
+                        this._text,
+                ),
+            ];
+        const spans = [];
+        for (const { segments, result } of paragraphs) {
+            result.lines.forEach((line, lineIndex) => {
+                const mySegments = [];
+                for (let i = line.fromSegment; i < line.toSegment; i++)
+                    if (segments[i].sourceIndex === leafIndex)
+                        mySegments.push(segments[i]);
+                if (mySegments.length === 0) return;
+                const isLineStart =
+                        lineStartSourceIndex(segments, line) === leafIndex,
+                    isLineEnd =
+                        lineEndSourceIndex(segments, line) === leafIndex,
+                    span = this._domTool.createElement("span");
+                for (const cls of lineSpanClasses({
+                    isLineStart,
+                    isParagraphFirstLine: lineIndex === 0,
+                    isHyphenBreak: isLineEnd && line.breakAt?.kind === "hyphen",
+                }))
+                    span.classList.add(cls);
+                // Treatment values + diagnostics color-coding: shared
+                // math in text-composition/line-attrs.ts (justification-
+                // potentials treatments, milestone 4: every fragment of
+                // a line applies identical values for its own style;
+                // measured == rendered. Palettes: "potentials" codes by
+                // adjustment intensity, "kp" by the DP diagnostics;
+                // dummy/greedy-ragged algorithms always have
+                // adjustmentStep 0 and mode "off" anyway).
+                const colorCoding = this._composition.colorCoding,
+                    colorCode =
+                        colorCoding === "potentials"
+                            ? potentialsLineColorCode(
+                                  line.adjustmentStep,
+                                  result.diagnostics.overfullLines.includes(
+                                      lineIndex,
+                                  ),
+                              )
+                            : colorCoding === "kp"
+                              ? kpLineColorCode(lineIndex, result.diagnostics)
+                              : "",
+                    { styles, dataTrackingGaps } = lineSpanStyles({
+                        treatment: leaves[leafIndex].treatment,
+                        treatmentConfig: treatmentConfigFromPayload(
+                            this._composition.treatmentConfig,
+                        ),
+                        adjustmentStep: line.adjustmentStep,
+                        trackingGaps: Number(
+                            line.trackingGapsBySourceIndex?.[leafIndex] ?? 0,
+                        ),
+                        colorCode,
+                        revertAxesEntries:
+                            line.underfullRevert !== undefined
+                                ? (line.revertAxesEntriesBySourceIndex?.[
+                                      leafIndex
+                                  ] ?? null)
+                                : null,
+                    });
+                for (const [prop, value] of styles)
+                    span.style.setProperty(prop, value);
+                if (dataTrackingGaps !== null)
+                    span.dataset.trackingGaps = String(dataTrackingGaps);
+                span.append(
+                    this._domTool.createTextNode(
+                        mySegments
+                            .map((segment) => {
+                                const sourceText =
+                                    this._composition.sources.leafTexts?.[
+                                        leafIndex
+                                    ] ?? this._text;
+                                return sourceText.slice(
+                                    segment.start,
+                                    segment.end,
+                                );
+                            })
+                            .join(""),
+                    ),
+                );
+                spans.push(span);
+            });
+        }
+        return spans;
+    }
+
+    destroy() {
+        if (this._compositionUnobserve !== null) this._compositionUnobserve();
+        this._compositionUnobserve = null;
+        super.destroy();
     }
 
     getTextNode() {
@@ -641,7 +1142,11 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
                 markElement = this._domTool.createElement(tag);
             if (htmlAttributesBag)
                 applyHtmlAttrsBag(markElement, htmlAttributesBag);
-            if (styleLinkName)
+            // data-style-name IS the intent identity (the generic-style
+            // round-trip key, parse priority 60). Structure marks carry
+            // no style link — their wrapper stays bare (data-style-name
+            // on it would re-parse as a bogus intent).
+            if (styleLinkName && markType === "generic-style")
                 markElement.setAttribute("data-style-name", styleLinkName);
             if (markType) markElement.setAttribute("data-mark-type", markType);
             if (current) markElement.append(current);
@@ -683,17 +1188,29 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
             // context.pathOfTypes contains the typeKeys from the document
             // root down to and including the parent element, i.e. without
             // the own "text" type (equivalent to the old .slice(0, -1)).
-            pathOfTypes = this._context.pathOfTypes ?? [],
+            // approach (a) phase 6: the run's marks anchor at the
+            // CONTAINING typeSpec — entry-less trailing inline keys
+            // (generic-inline, cite …) are dropped to the nearest
+            // resolvable ancestor, instead of falling to the root spec.
+            pathOfTypes = getResolvablePathOfTypes(
+                this.getEntry("nodeSpecToTypeSpec"),
+                this._context.pathOfTypes ?? [],
+            ),
             typeSpecPropertiesPath = this._getTypeSpecPropertiesId(
                 pathOfTypes,
                 true /*asPath*/,
             ),
             wrapResults = this._getWrapMarks(typeSpecPropertiesPath);
         if (!this._wrapResultsAreEqual(this._markWrappers, wrapResults)) {
-            const textNode = this.getTextNode(),
-                newWidgetWrappers = [];
-            if (wrapResults.length === 0) this._swapNode(textNode);
-            else {
+            const newWidgetWrappers = [];
+            if (wrapResults.length === 0) {
+                // content is re-rendered below from this._text (the
+                // composed structure has multiple text nodes, there
+                // is nothing to preserve)
+                this._carrierSpan = null;
+                this._swapNode(this._domTool.createTextNode(""));
+                this._markWrappers = [];
+            } else {
                 this._createWrapperDOM(wrapResults);
                 newWidgetWrappers.push(
                     ...this._createStylerWidgets(
@@ -701,12 +1218,13 @@ export class UIDocumentTextRun extends _UIDocumentAttachment {
                         wrapResults,
                     ),
                 );
+                this._carrierSpan = null;
                 this._swapNode(
                     wrapResults.at(-1)[this.constructor._MARK_ELEMENT],
                 );
-                wrapResults[0][this.constructor._MARK_ELEMENT].append(textNode);
                 this._markWrappers = wrapResults;
             }
+            this._renderContent();
             const deleted = this._widgets.splice(
                 this._initalWidgetsLength,
                 Infinity,
@@ -736,6 +1254,7 @@ export class UIDocumentViewer extends _BaseContainerComponent {
         originTypeSpecPath,
         documentNodesMetaId,
         baseClass = "typeroof-document",
+        { compositionReveal = "lazy" } = {},
     ) {
         const documentContainer = widgetBus.domTool.createElement("article", {
             class: baseClass,
@@ -745,6 +1264,11 @@ export class UIDocumentViewer extends _BaseContainerComponent {
         this.nodesElement = documentContainer;
         this._originTypeSpecPath = originTypeSpecPath;
         this._documentNodesMetaId = documentNodesMetaId;
+        if (!new Set(["lazy", "sync"]).has(compositionReveal))
+            throw new Error(
+                `unknown composition reveal policy ${compositionReveal}`,
+            );
+        this._compositionReveal = compositionReveal;
         // The viewer's rootPath is "<layoutRoot>/document" (see its
         // relativeRootPath in the layout), hence its parent is the
         // layout root where layout level settings live (e.g.
@@ -772,13 +1296,30 @@ export class UIDocumentViewer extends _BaseContainerComponent {
         ];
         this._initWidgets(widgets);
         this.__attachHandler = this._attachHandler.bind(this);
-        // No null fallback: without the meta widget the viewer renders
-        // nothing — indefinitely and silently. Widget ordering
-        // currently guarantees the meta exists; fail loud if that ever
-        // changes. (The reverse race — handler before tree — is
-        // handled by DocumentNodesMeta.initialUpdate.)
-        const meta = this.widgetBus.getWidgetById(documentNodesMetaId);
-        meta.attachRenderer(this.__attachHandler);
+        this._rendererAttached = false;
+    }
+
+    initialUpdate(rootState) {
+        // Attach HERE, not in the constructor. Parent containers run
+        // ALL activation provisioning before updating their children:
+        // when a state change both changes the document shape and
+        // activates the viewer, constructor-time attachment sees the
+        // meta tree from the PREVIOUS state (its update comes first in
+        // the parent's _update loop, but after provisioning). A
+        // shrinking replace then inserts stale /content/N attachments
+        // against the NEW shorter collection and keyToIndex throws.
+        // At initialUpdate time, widget ordering guarantees the
+        // always-active DocumentNodesMeta has already updated/pruned.
+        // No null fallback: without the meta the viewer renders
+        // nothing indefinitely — fail loud.
+        if (!this._rendererAttached) {
+            const meta = this.widgetBus.getWidgetById(
+                this._documentNodesMetaId,
+            );
+            meta.attachRenderer(this.__attachHandler);
+            this._rendererAttached = true;
+        }
+        return super.initialUpdate(rootState);
     }
 
     // The renderer handler, called per document node by the meta tree.
@@ -808,8 +1349,34 @@ export class UIDocumentViewer extends _BaseContainerComponent {
         return [
             {},
             metaInfo.typeKey === "text"
-                ? ["text", "marks"]
-                : [["./attrs", "attrs"]],
+                ? [
+                      "text",
+                      "marks",
+                      // text-composition: the composed lines of the
+                      // enclosing textblock (null = OFF MODE). Direct
+                      // runs sit at <textblock>/content/<index>; runs
+                      // nested inside inline nodes use the threaded
+                      // textblockRootPath (the textblock is the
+                      // composition boundary).
+                      [
+                          `composition@${(
+                              metaInfo.context.textblockRootPath ??
+                              metaInfo.rootPath.parent.parent
+                          ).toString()}`,
+                          "composition@",
+                      ],
+                  ]
+                : [
+                      ["./attrs", "attrs"],
+                      // text-composition: textblocks toggle the
+                      // typeroof-composed class (nowrap) on their own
+                      // composition@ entry (null = OFF MODE);
+                      // non-textblock elements get null forever.
+                      [
+                          `composition@${metaInfo.rootPath.toString()}`,
+                          "composition@",
+                      ],
+                  ],
             Constructor,
             // Injected by the meta node that initializes this
             // description: its own zones.
@@ -820,6 +1387,7 @@ export class UIDocumentViewer extends _BaseContainerComponent {
             proseMirrorDefaultSchemaSpec,
             this._originTypeSpecPath,
             this._layoutRootPath,
+            this._compositionReveal,
         ];
     }
 
@@ -841,7 +1409,8 @@ export class UIDocumentViewer extends _BaseContainerComponent {
             this._documentNodesMetaId,
             null,
         );
-        meta?.detachRenderer(this.__attachHandler);
+        if (this._rendererAttached) meta?.detachRenderer(this.__attachHandler);
+        this._rendererAttached = false;
         this.__attachHandler = null;
         super.destroy();
     }

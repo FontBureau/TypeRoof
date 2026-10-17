@@ -38,6 +38,19 @@ export interface IngestionReport {
     // "tag.attr" -> count of policy-excluded (not collected) element
     // attrs — fed by blocks, marks, inline nodes and list items alike
     skippedHtmlAttrs: Record<string, number>;
+    // composite style name -> count of text runs that received a
+    // collapsed composite intent mark (nested combinable elements,
+    // see combineAs on mark/generic rules)
+    compositeMarks: Record<string, number>;
+    // mark name -> count of text runs carrying this schema-mark (the
+    // tag-* structure marks: the OUTER elements of combinable chains;
+    // the innermost rides on the intent via the funnel)
+    structureMarks: Record<string, number>;
+    // mark/style name -> count of mark/generic elements demoted to a
+    // bare generic-inline node because no markable text descends from
+    // them (the mark would evaporate silently — marks land on text
+    // only; tag and attrs survive as structure)
+    demotedMarks: Record<string, number>;
     // mark name -> count of `mark` rules that fell back to intent
     // because the schema does not define the named mark
     unresolvedMarkRules: Record<string, number>;
@@ -88,10 +101,21 @@ export type EmissionContext = "block" | "inline";
 // - split-item: inlineTypeKey without block-level children, else
 //   blockTypeKey with inline runs lifted into liftedRunWrapper
 //   nodes (e.g. li -> li-inline/li-block).
+// combineAs (mark/generic, optional): the element is combinable —
+// every occurrence contributes its style name to the per-descent
+// composite stack; the text at the bottom carries ONE composite
+// generic-style mark (the sorted, joined names, e.g. "italic link"),
+// so runs stay style-link-exclusive (one styleLinkProperties@ id per
+// run). Resolved "mark" rules push a structure mark (the outer
+// elements' wrapper); the innermost combinable element's tag and
+// attrs bag ride on the intent itself (the funnel: htmlTag/htmlAttrs
+// on generic-style) — no demotion, no extra wrapper, the full
+// element structure survives. Generic/unresolved combinables
+// contribute style only (no structure mark).
 export type EmissionRule =
     | { kind: "block"; typeKey: string; inlineContent?: boolean }
-    | { kind: "mark"; name: string }
-    | { kind: "generic"; styleName: string }
+    | { kind: "mark"; name: string; combineAs?: string }
+    | { kind: "generic"; styleName: string; combineAs?: string }
     | { kind: "inline-node"; typeKey?: string }
     | { kind: "atom"; typeKey: string }
     | { kind: "raw" }
@@ -262,6 +286,14 @@ export interface IngestionOptions {
     // raw_html_inline). Empty/omitted: everything is caught (the
     // empty-engine contract).
     emissionRules?: EmissionRuleEntry[];
+    // Rule table for mark/generic DEMOTIONS (a combinable element of a
+    // nested chain, or a mark element with no markable text below):
+    // the first matching inline-node rule decides the emitted node —
+    // selector-matched by the element, like emissionRules, so the
+    // demotion outcome is configuration, not engine policy. Default
+    // (no table/no match): a bare inline node with the tag-derived
+    // typeKey (-> reserved unknown_inline via sync).
+    demotionRules?: readonly EmissionRuleEntry[];
     // typeKey wrapping inline runs where blocks are required: stray
     // text in block context and the inline runs inside a split-item's
     // block variant. Default "paragraph".
@@ -481,9 +513,15 @@ function count(record: Record<string, number>, key: string): void {
 
 // Marks accumulate while descending: either a style name
 // (expressed via the generic-style mark) or a schema-defined
-// (semantic) mark with its harvested attrs.
+// (semantic) mark with its harvested attrs. The style variant
+// carries the funnel's htmlTag ("" outside combinable subtrees).
 type MarkDesc =
-    | { kind: "style"; styleName: string; htmlAttrs: string }
+    | {
+          kind: "style";
+          styleName: string;
+          htmlTag: string;
+          htmlAttrs: string;
+      }
     | {
           kind: "mark";
           name: string;
@@ -491,10 +529,26 @@ type MarkDesc =
           htmlAttrs: string;
       };
 
+// The funnel records the innermost combinable element of the current
+// descent: its pushed MarkDesc (identity — filtered from the run's
+// emitted marks at the TEXT_NODE), its source tag and its attrs bag.
+// The ONE intent mark carries them (htmlTag/htmlAttrs on
+// generic-style): the innermost element reproduces faithfully as the
+// intent's own wrapper — no extra element. null outside combinable
+// subtrees; desc null = the rule pushed no structure mark (generic/
+// unresolved combinables contribute style only).
+interface CombinableFunnel {
+    desc: MarkDesc | null;
+    tag: string;
+    htmlAttrs: string;
+}
+
 interface Ctx {
     report: IngestionReport;
     // the one ordered emission table (options.emissionRules verbatim)
     rules: readonly EmissionRuleEntry[];
+    // demotion table for mark/generic elements (options.demotionRules)
+    demotionRules: readonly EmissionRuleEntry[];
     schemaMarkAttrs: Readonly<Record<string, string[]>>;
     schemaNodeAttrs: Readonly<Record<string, ReadonlySet<string>>>;
     // null without a schema (block rules use their inlineContent flag)
@@ -568,9 +622,11 @@ function ingestChildrenInto(
     out: any[],
     ctx: Ctx,
     inInline: boolean,
+    composite: readonly string[] = [],
+    funnel: CombinableFunnel | null = null,
 ): void {
     for (const child of Array.from(el.childNodes))
-        ingestNode(child, marks, out, ctx, inInline);
+        ingestNode(child, marks, out, ctx, inInline, composite, funnel);
 }
 
 // Ingest children of `el` as the content of a new container draft.
@@ -580,11 +636,83 @@ function fillContent(
     marks: MarkDesc[],
     ctx: Ctx,
     inInline: boolean,
+    composite: readonly string[] = [],
+    funnel: CombinableFunnel | null = null,
 ): void {
     const out: any[] = [];
-    ingestChildrenInto(el, marks, out, ctx, inInline);
+    ingestChildrenInto(el, marks, out, ctx, inInline, composite, funnel);
     const content = draft.get("content");
     for (const item of out) content.push(item);
+}
+
+// Lookahead for the mark demotion: does any descendant TEXT node
+// carry non-whitespace content? Only text reachable through inline
+// descent counts — it is the only text marks can land on. Atom, raw
+// and skip rules keep their text out of mark reach (verbatim or
+// dropped), void/block/split-item are boundaries, catch-all atoms
+// likewise.
+function hasMarkableTextDescendant(ctx: Ctx, el: Element): boolean {
+    for (const child of Array.from(el.childNodes)) {
+        if (child.nodeType === Node.TEXT_NODE) {
+            if ((child.textContent ?? "").trim()) return true;
+            continue;
+        }
+        if (child.nodeType !== Node.ELEMENT_NODE) continue;
+        const childEl = child as Element,
+            childRule = findMatchingRule(ctx, childEl, true);
+        if (childRule === null) continue;
+        switch (childRule.kind) {
+            case "mark":
+            case "generic":
+            case "inline-node":
+            case "transparent":
+                if (hasMarkableTextDescendant(ctx, childEl)) return true;
+                break;
+            default:
+                // no markable text below (see above)
+                break;
+        }
+    }
+    return false;
+}
+
+// Pick the demotion rule for el: the first matching inline-node rule
+// of the demotion table wins (selector-matched, inline context);
+// inline-node is the only fitting demotion outcome. The neutral
+// default reproduces the source tag as the typeKey (-> reserved
+// unknown_inline via sync).
+function findDemotionRule(
+    ctx: Ctx,
+    el: Element,
+): Extract<EmissionRule, { kind: "inline-node" }> {
+    for (const entry of ctx.demotionRules) {
+        if (!ruleFitsContext(entry, true)) continue;
+        if (entry.rule.kind !== "inline-node") continue;
+        if (el.matches(entry.selector)) return entry.rule;
+    }
+    return { kind: "inline-node" };
+}
+
+// Shared demotion emission of the mark/generic case: a bare inline
+// node per the demotion table (source tag via htmlTag, attrs via the
+// htmlAttrs bag — e.g. the link's href survives as structure);
+// children are ingested inline with the current marks and composite
+// stack.
+function emitDemotedInline(
+    el: Element,
+    marks: MarkDesc[],
+    out: any[],
+    ctx: Ctx,
+    composite: readonly string[],
+    funnel: CombinableFunnel | null = null,
+): void {
+    const rule = findDemotionRule(ctx, el);
+    count(ctx.report.inlineNodes, el.tagName);
+    const draft = newNodeDraft(rule.typeKey ?? el.tagName.toLowerCase());
+    setHtmlAttrsBag(draft, el, ctx);
+    setHtmlTag(rule, draft, el, ctx);
+    fillContent(draft, el, marks, ctx, true, composite, funnel);
+    out.push(draft.metamorphose());
 }
 
 // Whether a child joins an inline run in block context (scoped
@@ -680,6 +808,8 @@ function ingestNode(
     out: any[],
     ctx: Ctx,
     inInline: boolean,
+    composite: readonly string[] = [],
+    funnel: CombinableFunnel | null = null,
 ): void {
     const { report } = ctx;
 
@@ -690,17 +820,58 @@ function ingestNode(
             report.skippedEmptyTexts++;
             return;
         }
-        count(report.markSets, markSetKey(marks));
+        // The composite stack of combinable elements (see the
+        // mark/generic case): its sorted-joined name is the ONE
+        // intent mark per run (>=2 contributions: the canonical
+        // composite name); a single contribution is the plain
+        // intent. The innermost combinable element (the funnel)
+        // BECOMES the intent: its pushed structure mark never
+        // reaches the run — its tag and attrs bag ride on the intent
+        // (htmlTag/htmlAttrs) — so the source reproduces without an
+        // extra wrapper and runs stay style-link-exclusive by
+        // construction.
+        let emittedMarks: MarkDesc[] = [...marks];
+        if (composite.length > 0) {
+            const styleName = [...new Set(composite)].sort().join(" ");
+            if (styleName.includes(" "))
+                count(report.compositeMarks, styleName);
+            if (funnel !== null && funnel.desc !== null)
+                // the innermost combinable's mark -> the intent carries
+                // its tag/attrs instead
+                emittedMarks = emittedMarks.filter((m) => m !== funnel.desc);
+            // Q6: PM allows one mark per type per run — same-name
+            // structure marks dedupe (redundant nesting keeps one
+            // wrapper; the innermost instance renders via htmlTag).
+            const seenNames = new Set<string>();
+            emittedMarks = emittedMarks.filter((m) => {
+                if (m.kind !== "mark") return true;
+                if (seenNames.has(m.name)) return false;
+                seenNames.add(m.name);
+                return true;
+            });
+            emittedMarks.push({
+                kind: "style",
+                styleName,
+                htmlTag: funnel === null ? "" : funnel.tag,
+                htmlAttrs: funnel === null ? "" : funnel.htmlAttrs,
+            });
+        }
+        for (const m of emittedMarks)
+            if (m.kind === "mark") count(report.structureMarks, m.name);
+        count(report.markSets, markSetKey(emittedMarks));
         const textDraft = newNodeDraft("text");
         textDraft.get("text").value = text;
         const marksList = textDraft.get("marks");
-        for (const m of marks)
+        for (const m of emittedMarks)
             marksList.push(
                 m.kind === "style"
                     ? newMarkDraft(
                           marksList,
                           "generic-style",
-                          { "data-style-name": m.styleName },
+                          {
+                              "data-style-name": m.styleName,
+                              htmlTag: m.htmlTag,
+                          },
                           m.htmlAttrs,
                       )
                     : newMarkDraft(marksList, m.name, m.attrs, m.htmlAttrs),
@@ -778,7 +949,16 @@ function ingestNode(
             // in block context the children need run-lifting too —
             // text directly in a transparent container must not leak
             // into block content unwrapped
-            if (inInline) ingestChildrenInto(el, marks, out, ctx, true);
+            if (inInline)
+                ingestChildrenInto(
+                    el,
+                    marks,
+                    out,
+                    ctx,
+                    true,
+                    composite,
+                    funnel,
+                );
             else fillBlockContent(out, el, ctx);
             return;
         case "skip":
@@ -806,6 +986,19 @@ function ingestNode(
         }
         case "mark":
         case "generic": {
+            // No markable text below (e.g. a link wrapping only
+            // reproducing atoms): the mark would evaporate silently —
+            // marks land on text nodes only. Demote to a bare
+            // generic-inline node instead: tag and attrs (the href)
+            // survive as structure.
+            if (!hasMarkableTextDescendant(ctx, el)) {
+                count(
+                    report.demotedMarks,
+                    rule.kind === "mark" ? rule.name : rule.styleName,
+                );
+                emitDemotedInline(el, marks, out, ctx, composite, funnel);
+                return;
+            }
             // No node: push a MarkDesc and descend. Schema-declared
             // attrs are harvested for "mark" emissions; a "mark" rule
             // naming a mark the schema does not define falls back to
@@ -823,6 +1016,7 @@ function ingestNode(
                 markDesc = {
                     kind: "style",
                     styleName: rule.name,
+                    htmlTag: "",
                     htmlAttrs,
                 };
             } else if (rule.kind === "mark")
@@ -836,10 +1030,49 @@ function ingestNode(
                 markDesc = {
                     kind: "style",
                     styleName: rule.styleName,
+                    htmlTag: "",
                     htmlAttrs,
                 };
             countSkippedHtmlAttrs(ctx, el);
-            ingestChildrenInto(el, [...marks, markDesc], out, ctx, inInline);
+            const combineAs = rule.combineAs;
+            if (combineAs === undefined) {
+                // plain mark/intent emission: the desc lands on the
+                // runs below as-is (funnel untouched)
+                ingestChildrenInto(
+                    el,
+                    [...marks, markDesc],
+                    out,
+                    ctx,
+                    inInline,
+                    composite,
+                    funnel,
+                );
+                return;
+            }
+            // Combinable (combineAs): unified push + funnel. The
+            // style contribution joins the composite stack (the ONE
+            // intent per run, sorted-joined); the structure mark
+            // pushes only for resolved "mark" rules — outer chain
+            // elements keep their wrapper, the innermost combinable
+            // (per run!) is recorded in the funnel and its mark is
+            // filtered at the TEXT_NODE, its tag/attrs bag riding on
+            // the intent. Generic/unresolved combinables contribute
+            // style only (no structure mark).
+            const pushDesc: MarkDesc | null =
+                markDesc.kind === "mark" ? markDesc : null;
+            ingestChildrenInto(
+                el,
+                pushDesc === null ? marks : [...marks, markDesc],
+                out,
+                ctx,
+                inInline,
+                [...composite, combineAs],
+                {
+                    desc: pushDesc,
+                    tag: el.tagName.toLowerCase(),
+                    htmlAttrs,
+                },
+            );
             return;
         }
         case "void":
@@ -852,7 +1085,7 @@ function ingestNode(
             );
             setHtmlAttrsBag(draft, el, ctx);
             setHtmlTag(rule, draft, el, ctx);
-            fillContent(draft, el, marks, ctx, true);
+            fillContent(draft, el, marks, ctx, true, composite, funnel);
             out.push(draft.metamorphose());
             return;
         }
@@ -869,6 +1102,9 @@ function logReport(logger: IngestLogger, report: IngestionReport): void {
     logger.log("[ingest] skipped nodes:", report.skippedNodes);
     logger.log("[ingest] skipped html attrs:", report.skippedHtmlAttrs);
     logger.log("[ingest] unresolved mark rules:", report.unresolvedMarkRules);
+    logger.log("[ingest] composite marks:", report.compositeMarks);
+    logger.log("[ingest] structure marks:", report.structureMarks);
+    logger.log("[ingest] demoted marks:", report.demotedMarks);
     logger.log("[ingest] skipped empty texts:", report.skippedEmptyTexts);
     logger.log("[ingest] lifted runs:", report.liftedRuns);
 }
@@ -887,12 +1123,16 @@ export function ingestDOM(
             rawAtoms: {},
             skippedNodes: {},
             skippedHtmlAttrs: {},
+            compositeMarks: {},
+            structureMarks: {},
+            demotedMarks: {},
             unresolvedMarkRules: {},
             reproNodes: {},
             skippedEmptyTexts: 0,
             liftedRuns: 0,
         },
         rules: options.emissionRules ?? [],
+        demotionRules: options.demotionRules ?? [],
         schemaMarkAttrs: facts.schemaMarkAttrs,
         schemaNodeAttrs: facts.schemaNodeAttrs,
         inlineContentNodes: facts.inlineContentNodes,
@@ -952,6 +1192,15 @@ export const WIKIPEDIA_TRANSPARENT_RULES: readonly EmissionRuleEntry[] = [
         selector: ".side-box-flex",
         rule: { kind: "transparent" },
     },
+    // mw:Entity is Parsoid's encoding of an HTML entity (&mdash;,
+    // &nbsp;, ...): exactly one character, never styled. As an atom its
+    // visible advance was invisible to the composition measurer
+    // (inline atoms are zero-width segments) — first lines overflowed.
+    // Transparent: the character joins the surrounding text run.
+    {
+        selector: '[typeof="mw:Entity"]',
+        rule: { kind: "transparent" },
+    },
 ];
 
 export const WIKIPEDIA_RAW_RULES: readonly EmissionRuleEntry[] = [];
@@ -966,16 +1215,17 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
     // rules (-> inline node). Inline-only: a citation stray in block
     // context degrades to the raw_html_block catch-all instead of
     // crashing PM's block* content.
-    {
-        selector: "sup.reference",
-        rule: { kind: "atom", typeKey: "cite-link" },
-        context: "inline",
-    },
-    {
-        selector: "sup:not(.reference)",
-        rule: { kind: "atom", typeKey: "reproduce-as-inline" },
-        context: "inline",
-    },
+    // {
+    //     selector: "sup.reference",
+    //     rule: { kind: "atom", typeKey: "cite-link" },
+    //     context: "inline",
+    // },
+    // {
+    //     selector: "sup:not(.reference)",
+    //     rule: { kind: "atom", typeKey: "reproduce-as-inline" },
+    //     context: "inline",
+    // },
+
     // figure content (thumb <a><img></a>, bare <img>, <pre>, ...):
     // reproduced verbatim; the spec declares htmlTag, so the source
     // tag survives round-trips.
@@ -996,19 +1246,19 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
     //     rule: { kind: "atom", typeKey: "reproduce-as-block" },
     //     context: "block",
     // },
+    // {
+    //     selector: ".mw-cite-backlink",
+    //     rule: { kind: "atom", typeKey: "reproduce-as-inline" },
+    //     context: "inline",
+    // },
+    // NOTE: <bdi> was atomized here before (evaporated the enclosing
+    // BookSources <a> mark — marks land on text only); it is an inline
+    // node now (see WIKIPEDIA_BLOCK_RULES).
+    // COinS metadata span (Z39.88 ContextObject) inside citations:
+    // empty element, its bibliographic data lives in the title attr;
+    // kept verbatim.
     {
-        selector: ".mw-cite-backlink",
-        rule: { kind: "atom", typeKey: "reproduce-as-inline" },
-        context: "inline",
-    },
-    // <bdi> is used for ISBN numbers in references of books
-    {
-        selector: "bdi",
-        rule: { kind: "atom", typeKey: "reproduce-as-inline" },
-        context: "inline",
-    },
-    {
-        selector: '[typeof="mw:Entity"]',
+        selector: ".Z3988",
         rule: { kind: "atom", typeKey: "reproduce-as-inline" },
         context: "inline",
     },
@@ -1040,6 +1290,10 @@ export const WIKIPEDIA_ATOM_RULES: readonly EmissionRuleEntry[] = [
 // inlineContent flags are the no-schema fallback; the state schema's
 // content expressions win for the typeKeys they declare.
 export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
+    {
+        selector: "section section",
+        rule: { kind: "block", typeKey: "sub-section" },
+    },
     { selector: "section", rule: { kind: "block", typeKey: "section" } },
     { selector: "blockquote", rule: { kind: "block", typeKey: "blockquote" } },
     {
@@ -1113,6 +1367,15 @@ export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
         selector: "cite",
         rule: { kind: "inline-node", typeKey: "generic-inline" },
     },
+    // <bdi> (ISBN numbers in book citations): a bare inline node —
+    // bidi isolation comes from the browser's UA style; enclosing
+    // marks (the BookSources <a>) land on its text. Deliberately NOT
+    // an atom (verbatim reproduction evaporated the enclosing mark).
+    {
+        selector: "bdi",
+        rule: { kind: "inline-node", typeKey: "generic-inline" },
+        context: "inline",
+    },
     {
         selector: ".mw-reference-text",
         rule: { kind: "inline-node", typeKey: "generic-inline" },
@@ -1123,19 +1386,65 @@ export const WIKIPEDIA_BLOCK_RULES: readonly EmissionRuleEntry[] = [
     },
 ];
 
+// Demotion outcomes for mark/generic elements that must not emit a
+// mark (combinable elements of a nested chain — combineAs — or mark
+// elements with no markable text below): the first matching
+// inline-node rule decides the emitted node, the source tag and attrs
+// are preserved (htmlTag/htmlAttrs bag). Declared next to the other
+// Wikipedia tables and propagated via options.demotionRules — the
+// engine stays agnostic (its default is a tag-derived inline node).
+export const WIKIPEDIA_DEMOTE_RULES: readonly EmissionRuleEntry[] = [
+    { selector: "*", rule: { kind: "inline-node", typeKey: "generic-inline" } },
+];
+
 // Mark emission. First fitting match wins, so these precede the
 // generic styles in HTML_PHRASING_RULES for the same tags.
+// combineAs: the combinable elements — every occurrence pushes its
+// structure mark (tag-*, the outer wrappers) and its style name onto
+// the composite stack; the ONE intent per run is the sorted-joined
+// name (the composites compose in CompositeStylePatches), and the
+// innermost element (per run) reproduces as the intent's own wrapper
+// via the funnel (htmlTag/htmlAttrs — e.g. the link's href rides
+// there). Deprecated tags route to the canonical mark (b ->
+// tag-strong, i -> tag-em); the funnel preserves the ACTUAL source
+// tag of the innermost element.
 export const WIKIPEDIA_MARK_RULES: readonly EmissionRuleEntry[] = [
-    // <b> and <strong> become the schema-defined "strong" mark (the
-    // document "carries around" strong already; note <b> is NOT the
-    // schema tag, so schema derivation alone would not cover it).
-    { selector: "b, strong", rule: { kind: "mark", name: "strong" } },
-    // There is no schema mark for <i>/<em>: they become
-    // generic-style intent with the style name "italic".
-    { selector: "i, em", rule: { kind: "generic", styleName: "italic" } },
-    // <a> becomes the schema-defined "link" mark (equivalent to what
-    // markRulesFromSchema would derive; explicit for completeness).
-    { selector: "a", rule: { kind: "mark", name: "link" } },
+    {
+        selector: "b, strong",
+        rule: { kind: "mark", name: "tag-strong", combineAs: "bold" },
+    },
+    {
+        selector: "i[lang='la']",
+        rule: { kind: "mark", name: "tag-em", combineAs: "italic-lang-la" },
+    },
+    {
+        selector: "i[lang='el-Latn']",
+        rule: {
+            kind: "mark",
+            name: "tag-em",
+            combineAs: "italic-lang-el-latn",
+        },
+    },
+    {
+        selector: "i, em",
+        rule: { kind: "mark", name: "tag-em", combineAs: "italic" },
+    },
+    {
+        selector: "a",
+        rule: { kind: "mark", name: "tag-a", combineAs: "link" },
+    },
+    {
+        selector: "span[style*='font-family:serif']",
+        rule: { kind: "mark", name: "tag-serif", combineAs: "serif" },
+    },
+    {
+        selector: "span",
+        rule: { kind: "mark", name: "tag-span", combineAs: "span" },
+    },
+    {
+        selector: "sup",
+        rule: { kind: "mark", name: "tag-sup", combineAs: "sup" },
+    },
 ];
 
 // Generic HTML phrasing content — not Wikipedia-specific. Inline
@@ -1230,6 +1539,10 @@ export function ingestWikipediaDocument(
         ],
 
         attrPolicy: WIKIPEDIA_ATTR_POLICY,
+
+        // Demotion outcomes for mark/generic elements (combinable
+        // chains, textless marks) — see WIKIPEDIA_DEMOTE_RULES.
+        demotionRules: WIKIPEDIA_DEMOTE_RULES,
 
         // Inline runs that need a block wrapper (stray text, li-block
         // runs) become paragraphs.

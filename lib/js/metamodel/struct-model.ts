@@ -1447,9 +1447,17 @@ export class _AbstractStructModel extends _BaseContainerModel {
 
         if (!this.isDraft) return item;
 
-        // Don't create proxy twice and thereby detach the old one.
-        if (!item.isDraft && this[_LOCAL_PROXIES].byKey.has(key))
-            return this[_LOCAL_PROXIES].byKey.get(key) as _BaseModel; // => proxy;
+        if (!item.isDraft && this[_LOCAL_PROXIES].byKey.has(key)) {
+            const proxies = this[_LOCAL_PROXIES],
+                proxy = proxies.byKey.get(key) as _BaseModel;
+            // Preserve live proxies, but not a cached read of the old child:
+            // a partial metamorphosis can freeze the updated child before
+            // a later ResourceRequirement suspends the parent.
+            if (unwrapPotentialWriteProxy(proxy, "immutable") === item)
+                return proxy;
+            proxies.byKey.delete(key);
+            proxies.byProxy.delete(proxy);
+        }
 
         // The function understands if item is already a draft
         // and does not proxify item in that case.

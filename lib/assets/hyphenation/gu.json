@@ -1,0 +1,16 @@
+{
+ "_meta": {
+  "source": "https://github.com/bramstein/hyphenation-patterns/blob/dc01d58a667eece8d082ec3c3a1e88ed332bf802/patterns/gu.js",
+  "upstreamCommit": "dc01d58a667eece8d082ec3c3a1e88ed332bf802",
+  "license": "LGPL unless otherwise noted in the linked upstream pattern source",
+  "generator": "lib/assets/hyphenation/update-patterns",
+  "note": "Complete pinned bramstein/hyphenation-patterns catalog; vendored for deterministic async runtime loading and in-tree extensibility."
+ },
+ "id": "gu",
+ "leftmin": 2,
+ "rightmin": 2,
+ "specialChars": "આઅઇઈઉઊઋએઐઔકગખઘઙચછજઝઞટઠડઢણતથદધનપફબભમયરલવશષસહળિીાુૂૃેાોૈૌ્ઃં‍",
+ "patterns": {
+  "2": "અ1આ1ઇ1ઈ1ઉ1ઊ1ઋ1એ1ઐ1ઔ1િ1ા1ી1ુ1ૂ1ૃ1ે1ો1ૌ1્2ઃ1ં11ક1ગ1ખ1ઘ1ઙ1ચ1છ1જ1ઝ1ઞ1ટ1ઠ1ડ1ઢ1ણ1ત1થ1દ1ધ1ન1પ1ફ1બ1ભ1મ1ય1ર1લ1વ1શ1ષ1સ1હ1ળ"
+ }
+}
