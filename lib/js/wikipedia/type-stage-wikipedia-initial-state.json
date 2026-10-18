@@ -345,6 +345,22 @@
                     },
                     "label": "Blockquote"
                 }
+            ],
+            [
+                "intro-section",
+                {
+                    "textAlign": "left",
+                    "horizontalLayout": {
+                        "instance": {
+                            "minLineLength": "33",
+                            "minPadding": "5",
+                            "paddingRatioStart": "60.00000",
+                            "columns": ["65"]
+                        },
+                        "horizontalLayoutAlgorithmTypeKey": "HorizontalLayoutRunionModel"
+                    },
+                    "label": "intro"
+                }
             ]
         ],
         "label": "",
@@ -1366,6 +1382,14 @@
                         ]
                     ]
                 }
+            ],
+            [
+                "introsection",
+                {
+                    "content": "block*",
+                    "group": "block",
+                    "tag": "section"
+                }
             ]
         ],
         "marks": [
@@ -1555,17 +1579,142 @@
                 "link": "/blockquote",
                 "label": ""
             }
+        ],
+        [
+            "introsection",
+            {
+                "link": "/intro-section",
+                "label": ""
+            }
         ]
     ],
     "document": {
         "typeKey": "doc",
         "content": [
             {
-                "typeKey": "heading-1",
+                "typeKey": "introsection",
                 "content": [
                     {
-                        "typeKey": "text",
-                        "text": "Typography"
+                        "typeKey": "heading-1",
+                        "attrs": [
+                            [
+                                "htmlAttrs",
+                                {
+                                    "type": "string",
+                                    "string": ""
+                                }
+                            ]
+                        ],
+                        "content": [
+                            {
+                                "typeKey": "text",
+                                "text": "Wikipedia Demo—TypêRoof"
+                            }
+                        ]
+                    },
+                    {
+                        "typeKey": "paragraph",
+                        "attrs": [
+                            [
+                                "htmlAttrs",
+                                {
+                                    "type": "string",
+                                    "string": ""
+                                }
+                            ]
+                        ],
+                        "content": [
+                            {
+                                "typeKey": "text",
+                                "text": "This demo showcases our ambition to typeset complex documents using real-world content. To see it in action, click here: "
+                            },
+                            {
+                                "typeKey": "text",
+                                "marks": [
+                                    {
+                                        "typeKey": "generic-style",
+                                        "attrs": [
+                                            [
+                                                "data-style-name",
+                                                {
+                                                    "type": "string",
+                                                    "string": "link"
+                                                }
+                                            ],
+                                            [
+                                                "htmlTag",
+                                                {
+                                                    "type": "string",
+                                                    "string": "a"
+                                                }
+                                            ],
+                                            [
+                                                "htmlAttrs",
+                                                {
+                                                    "type": "string",
+                                                    "string": "[[\"rel\",\"mw:WikiLink\"],[\"href\",\"./Typography\"],[\"title\",\"Typography\"]]"
+                                                }
+                                            ]
+                                        ]
+                                    }
+                                ],
+                                "text": "Typography"
+                            }
+                        ]
+                    },
+                    {
+                        "typeKey": "paragraph-2",
+                        "attrs": [
+                            [
+                                "htmlAttrs",
+                                {
+                                    "type": "string",
+                                    "string": ""
+                                }
+                            ]
+                        ],
+                        "content": [
+                            {
+                                "typeKey": "text",
+                                "text": "Please bear in mind that this is a work in progress; you will encounter unhandled or partially styled content where edge cases are not yet supported. Enjoy where things work out, and help us fix where they don't at "
+                            },
+                            {
+                                "typeKey": "text",
+                                "marks": [
+                                    {
+                                        "typeKey": "generic-style",
+                                        "attrs": [
+                                            [
+                                                "data-style-name",
+                                                {
+                                                    "type": "string",
+                                                    "string": "link"
+                                                }
+                                            ],
+                                            [
+                                                "htmlTag",
+                                                {
+                                                    "type": "string",
+                                                    "string": "a"
+                                                }
+                                            ],
+                                            [
+                                                "htmlAttrs",
+                                                {
+                                                    "type": "string",
+                                                    "string": "[[\"href\",\"https://forum.typeroof.org\"]]"
+                                                }
+                                            ]
+                                        ]
+                                    }
+                                ],
+                                "text": "forum.typeroof.org"
+                            },
+                            {
+                                "typeKey": "text",
+                                "text": "."
+                            }
+                        ]
                     }
                 ]
             }
