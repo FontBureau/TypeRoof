@@ -756,6 +756,18 @@ function isRunMember(ctx: Ctx, child: Node): boolean {
     const el = child as Element;
     const inlineRule = findMatchingRule(ctx, el, true);
     if (inlineRule?.kind === "skip") return true;
+    // A transparent element emits no node (children pass through), so
+    // it can never be a block boundary itself. But see-through only
+    // joins the run when the whole subtree is inline: a transparent
+    // BLOCK wrapper (e.g. .side-box-flex around <p>s) must keep
+    // splitting the item. Transparent rules fit BOTH contexts, so
+    // the no-block-match test below alone would always reject them
+    // (mw:Entity spans are the common inline case: exactly one
+    // character, a text node).
+    if (inlineRule?.kind === "transparent")
+        return Array.from(el.childNodes).every((grandChild) =>
+            isRunMember(ctx, grandChild),
+        );
     return findMatchingRule(ctx, el, false) === null && inlineRule !== null;
 }
 
