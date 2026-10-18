@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="structure-marks-for-nested-combinable-chains--implementation-plan" class="heading_anchor" href="#structure-marks-for-nested-combinable-chains--implementation-plan" aria-hidden="true">#</a>Structure marks for nested combinable chains — Implementation Plan</h1>
+<p>RPI cycle: research <code>thoughts/research/2026-10-11-1300-structure-marks-for-nested-combinable-chains.md</code>
+(all file:line references trace there). Date 2026-10-11, HEAD 57e1e3dc, branch
+<code>feature/composition-and-justification</code>.</p>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Replace the Wikipedia ingest chain-demotion (nested <code>b/strong i/em a</code> chains collapse into
+<code>generic-inline</code> <strong>nodes</strong>) with a <strong>mark push</strong>: outer chain elements push non-intent
+<code>tag-*</code> structure marks (markSpecs carrying tag + attrs — real-world HTML semantics), the
+<strong>innermost</strong> element’s tag/attrs funnel onto the ONE composite <code>generic-style</code> intent per
+run (<code>htmlTag</code>/<code>htmlAttrs</code>). Motivation: <code>generic-inline</code> has no <code>nodeSpecToTypeSpec</code> link,
+so demoted chains attenuate typeSpec resolution toward the nearest registered ancestor —
+the same chain under different parents would need per-context typeSpec attachments.
+Marks attach to the text run’s parent context directly; no attachment bookkeeping.</p>
+<h2><a id="decision-log-operator-2026-10-11-one-by-one" class="heading_anchor" href="#decision-log-operator-2026-10-11-one-by-one" aria-hidden="true">#</a>Decision Log (operator, 2026-10-11, one by one)</h2>
+<ol>
+<li><strong>Naming (Q1)</strong>: <code>tag-*</code> family, <strong>canonical three only</strong>: <code>tag-strong</code>, <code>tag-em</code>,
+<code>tag-a</code>. Selectors route deprecated tags: <code>b</code>→<code>tag-strong</code>, <code>i</code>→<code>tag-em</code>
+(marks fully dynamic in state; small fidelity upgrade accepted).
+<strong>Extension (operator)</strong>: unify — <em>every</em> combinable element pushes a structure mark
+and contributes to the intent; standalone elements render exactly as today; the
+existing <code>strong</code>/<code>link</code> style marks fold away; styling flows exclusively through
+<code>intentStyleLinks</code>; <code>markStyleLinks</code> stays as unused engine capability.
+<strong>Funnel (operator idea, adopted)</strong>: the innermost element’s tag + attrs ride on the
+intent mark itself (<code>htmlTag</code>, <code>htmlAttrs</code> — the bag attr exists for exactly this),
+NOT on the edge (edges are static per intent name, innermost varies per run —
+combinatorial). Tag chain: <code>attrs.htmlTag || edge.tag || &quot;span&quot;</code> — htmlTag is the
+ingested truth, edge.tag the PM/menu fallback (“bold” menu intent → <code>&lt;strong&gt;</code>).</li>
+<li><strong>Excludes policy (Q2)</strong>: <strong>(a)</strong> reserved <code>generic-style</code> → <code>group: &quot;style&quot;</code>,
+<code>excludes: &quot;style&quot;</code> (code — <code>default-schema.ts:200</code>). Intents stay mutually exclusive
+at the PM layer (<code>Mark.addToSet</code>); <code>tag-*</code> marks get no excludes/group declarations —
+PM defaults (own type only) give free coexistence with each other + exactly one intent.
+Ingest bypasses <code>addToSet</code> regardless.</li>
+<li><strong><code>data-style-name</code> on wrappers (Q3)</strong>: <strong>(a)</strong> viewer sets <code>data-style-name</code> only on
+<code>generic-style</code> (intent) wrappers — it IS the intent’s identity and round-trip key.
+Structure wrappers render bare tag + bag; parse-back falls through the priority-60
+catch-all to the per-tag rule (<code>{tag: &quot;em&quot;}</code> → declared attrs harvested). No bogus
+intent capture.</li>
+<li><strong>Missing composite patches (Q4)</strong>: <strong>(a)</strong> add <code>&quot;italic link&quot;</code> + <code>&quot;bold italic link&quot;</code>
+<code>CompositeStylePatch</code> entries + <code>intentStyleLinks</code> edges — <strong>extra, minimal, state-only
+commit before the engine switch</strong> (the <code>&lt;em&gt;&lt;a&gt;</code> chain is the demo path; must style).</li>
+<li><strong>Report (Q5)</strong>: <strong>(5a)</strong> keep structure marks in <code>markSets</code> keys (honest provenance);
+<strong>(5b)</strong> add <code>structureMarks: Record&lt;string, number&gt;</code> counter per mark name.</li>
+<li><strong>Same-type dedupe (Q6)</strong>: <strong>(a)</strong> dedupe at push time — PM allows one mark per type
+per run anyway. Semantic note (operator): nested <code>&lt;em&gt;&lt;em&gt;</code> is degree-of-emphasis
+HTML semantics, but hardly used and not representable in the PM mark model without
+node structures — accepted trade. (Plan note: the pop-last funnel in fact PRESERVES
+redundant same-type nesting: <code>&lt;em&gt;&lt;em&gt;</code> renders <code>&lt;em&gt;&lt;em data-style-name=…&gt;</code> — outer
+mark, inner intent. Only &gt;1 same-type <em>outer</em> marks dedupe. Degree-of-emphasis via
+patch level (e.g. a future intensity intent) fits this design; out of scope.)</li>
+<li><strong>Blast radius (Q7)</strong>: <strong>(7a)</strong> fixture regenerates wholesale in the engine phase
+(same observable change, no extra commit); <strong>(7b)</strong> test rewrite = rewrite combineAs
+describe to marks assertions, keep demotionRules describe, fix the rest against the
+suite run (assert behavior, not implementation).</li>
+</ol>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li>Engine (<code>lib/js/wikipedia/ingest.ts</code>): mark/generic case :946-1031 branches into
+combineAs-chain demotion (:953-976, <code>hasCombinableDescendant</code> :621-651), textless
+demotion (:977-987, <code>hasMarkableTextDescendant</code> :655-682), mark push (:989-1030,
+<code>schemaMarkAttrs</code> harvest :997-1014, unresolved fallback :1001-1008). TEXT_NODE
+:812-851 pushes the ONE composite <code>{kind:&quot;style&quot;}</code> (:825-837, dedupe/sort/join,
+<code>compositeMarks</code> counted when joined name has a space :829-833; <code>markSetKey</code> :498-504).
+<code>emitDemotedInline</code> :702-719 + <code>findDemotionRule</code> :685-699 (demotionRules :291/:526/:1087).
+Tables: <code>WIKIPEDIA_MARK_RULES</code> :1357-1381 (b,strong→strong/bold; i,em→generic italic;
+a→link/link), <code>WIKIPEDIA_DEMOTE_RULES</code> :1343-1345.</li>
+<li>Reserved mark (<code>lib/js/components/prosemirror/default-schema.ts</code>): <code>generic-style</code>
+:198-243 — <code>excludes:&quot;_&quot;</code> :200, attrs data-style-name+htmlAttrs :201-206, parseDOM
+<code>*[data-style-name]</code> priority 60 :207-230, toDOM <code>[&quot;span&quot;, …]</code> :231-241.</li>
+<li>Wrap descriptors (<code>lib/js/components/layouts/type-stage/document-nodes-meta/derivations.mjs</code>):
+<code>getWrapMarks</code> :418-515 — inside-out <code>toReversed()</code> :439; generic-style branch tag from
+the intent edge else “span” :450-470; markSpec branch tag from <code>mmMarkSpec.get(&quot;tag&quot;)</code>
+:478-486; <code>styleLinkName</code> defaults to markType :490; native/mark <code>styleName</code> from
+<code>markStyleLinks</code> edge :487-497.</li>
+<li>Viewer (<code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx</code>):
+<code>_createWrapperDOM</code> :931-947 (sets <code>data-style-name</code> :940-941 on every wrapper with
+non-null styleLinkName), <code>_createStylerWidgets</code> :949-974.</li>
+<li>MarkView editor-side (<code>lib/js/components/prosemirror/integration.typeroof.jsx</code>):
+<code>_getTag</code> :563-574 (markSpec tag, “span” fallback), <code>_applyDeclaredAttrs</code> :516-540.</li>
+<li>State (<code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code>): marks strong/link
+:858-895; intentStyleLinks :156-181; markStyleLinks :183-197; stylePatchesSource
+:200-262 (<code>&quot;bold italic&quot;</code> CompositeStylePatch precedent :235-243); editingStylePatch
+“./link” :261; NO generic-inline in nodeSpecToTypeSpec :893-985.</li>
+<li>Composition contract (<code>…/text-composition/composition-controller.ts</code>): <code>_resolveLeafStyleLink</code>
+:635-684 — skips null styleLinkName/styleName descriptors :657-661, CONTRACT VIOLATION
+guard :668-677 (innermost wins). Textless-only demotion stays; the chain demotion goes.</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<pre><code>&lt;b&gt;bold &lt;i&gt;x&lt;/i&gt;&lt;/b&gt;                    &lt;a href=&quot;./x&quot;&gt;y&lt;/a&gt;
+run &quot;bold &quot;: [generic-style &quot;bold&quot;, htmlTag b]            → &lt;b data-style-name=&quot;bold&quot;&gt;bold &lt;/b&gt;
+run &quot;x&quot;:    [tag-b, generic-style &quot;bold italic&quot;, htmlTag i] → &lt;b data-mark-type=&quot;tag-b&quot;&gt;&lt;i data-style-name=&quot;bold italic&quot;&gt;x&lt;/i&gt;&lt;/b&gt;
+standalone: [generic-style &quot;link&quot;, htmlTag a, htmlAttrs href] → &lt;a data-style-name=&quot;link&quot; href=&quot;./x&quot;&gt;y&lt;/a&gt;
+</code></pre>
+<ul>
+<li>One style-resolving intent per run (contract kept by construction, now schema-enforced
+via <code>group/excludes &quot;style&quot;</code> at the PM layer).</li>
+<li>Full HTML semantics reproduction (tags, nested order, href) with ZERO typeSpec
+attachment bookkeeping — text runs resolve in their parent’s context like plain runs.</li>
+<li>Styling flows exclusively through <code>intentStyleLinks</code> + patches; <code>markStyleLinks</code>
+capability retained but unused by the Wikipedia state.</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>Variant B: multi style-links per run / live property merging (rejected — free
+combinations must stay impossible; constraints force typographic shape into StylePatches).</li>
+<li>Per-parent/per-context typeSpec attachments for chain elements (obsoleted by design).</li>
+<li><code>tag-b</code>/<code>tag-i</code> marks (Q1-B: deprecated tags upgrade to canonical via selectors).</li>
+<li>Degree-of-emphasis semantics for nested same-type emphasis (documented future idea).</li>
+<li><code>npm run perf:composition</code> / <code>scripts/perf-composition</code> — OFF LIMITS (operator rule
+2026-10-06). Live checks use the puppeteer DEBUG harness only.</li>
+<li>Style-menu/UI changes beyond what markSpec enumeration surfaces implicitly.</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Four phases, one commit proposal each (RPI: pause after every phase for operator
+confirmation; commit messages carry model/provider/agent metadata per <a href="http://COLLABORATION.md">COLLABORATION.md</a>).
+Phase order keeps every commit coherent: reserved-mark groundwork is behavior-neutral,
+the state addition is consumable-but-unused until the engine switches, the engine switch</p>
+<ul>
+<li>state deletions + test/fixture rewrites are one observable change, live verification
+closes the cycle.</li>
+</ul>
+<h3><a id="the-engine-rule-the-whole-mechanism-for-reference-in-phase-3" class="heading_anchor" href="#the-engine-rule-the-whole-mechanism-for-reference-in-phase-3" aria-hidden="true">#</a>The engine rule (the whole mechanism, for reference in Phase 3)</h3>
+<p>On descent, EVERY combinable element (mark/generic rule) does the same three things —
+no outer/innermost branching:</p>
+<ol>
+<li>push its structure <code>MarkDesc</code> (name = the rule’s mark name, e.g. <code>tag-strong</code>) onto
+the marks stack — declared attrs harvested per its markSpec (<code>tag-a</code>: href + bag),
+same-name dedupe (Q6);</li>
+<li>push its <code>combineAs</code> name onto the composite stack;</li>
+<li>record itself as the current funnel (<code>el.tagName.toLowerCase()</code> + its attrs bag).</li>
+</ol>
+<p>At TEXT_NODE: pop the LAST structure mark (it is the innermost element <em>for this run</em>),
+funnel its tag/attrs onto the ONE intent mark:</p>
+<pre class="language-ts"><code class="language-ts"><span class="token keyword">const</span> emittedMarks <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token operator">...</span>marks<span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token comment">// outer→inner</span>
+<span class="token keyword">const</span> intentName <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token operator">...</span><span class="token keyword">new</span> <span class="token class-name">Set</span><span class="token punctuation">(</span>composite<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">sort</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token string">" "</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// as today</span>
+<span class="token keyword">const</span> funnel <span class="token operator">=</span> <span class="token comment">/* current innermost source element */</span><span class="token punctuation">;</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span>emittedMarks<span class="token punctuation">.</span><span class="token function">at</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token operator">?.</span>kind <span class="token operator">===</span> <span class="token string">"mark"</span><span class="token punctuation">)</span> emittedMarks<span class="token punctuation">.</span><span class="token function">pop</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// innermost → intent</span>
+emittedMarks<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+    kind<span class="token operator">:</span> <span class="token string">"style"</span><span class="token punctuation">,</span> styleName<span class="token operator">:</span> intentName<span class="token punctuation">,</span>
+    htmlTag<span class="token operator">:</span> funnel<span class="token punctuation">.</span>tag<span class="token punctuation">,</span> htmlAttrs<span class="token operator">:</span> funnel<span class="token punctuation">.</span>attrs<span class="token punctuation">,</span> <span class="token comment">// NEW: funneled onto the intent</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">count</span><span class="token punctuation">(</span>report<span class="token punctuation">.</span>markSets<span class="token punctuation">,</span> <span class="token function">markSetKey</span><span class="token punctuation">(</span>emittedMarks<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Q5a: structure names stay</span></code></pre>
+<p><code>hasCombinableDescendant</code> (:621-651) and the <code>composite.length &gt; 0 || …</code> chain condition
+(:965-970) delete entirely. Per-run funnel correctness falls out: each descent into a
+sibling text sets the funnel to ITS innermost element (<code>&lt;b&gt;bold &lt;i&gt;x&lt;/i&gt;&lt;/b&gt;</code>: run &quot;bold &quot;
+carries <code>htmlTag &quot;b&quot;</code>, run “x” carries <code>tag-b</code> + intent <code>htmlTag &quot;i&quot;</code>). Standalone
+elements: push+pop → NO structure wrapper, intent carries their tag/attrs → renders
+exactly as today. Same-type nesting (<code>&lt;em&gt;&lt;em&gt;</code>): the popped innermost renders via the
+intent’s <code>htmlTag</code>, outer <code>tag-em</code> stays → redundant nesting preserved.</p>
+<hr>
+<h2><a id="phase-1--reserved-mark-groundwork-behavior-neutral-code" class="heading_anchor" href="#phase-1--reserved-mark-groundwork-behavior-neutral-code" aria-hidden="true">#</a>Phase 1 — Reserved-mark groundwork (behavior-neutral code)</h2>
+<p><strong>Files</strong>: <code>default-schema.ts</code>, <code>derivations.mjs</code>, <code>viewer.typeroof.jsx</code>, <code>integration.typeroof.jsx</code> (MarkView).</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required</h3>
+<h4><a id="1-generic-style-gains-htmltag--style-group" class="heading_anchor" href="#1-generic-style-gains-htmltag--style-group" aria-hidden="true">#</a>1. <code>generic-style</code> gains <code>htmlTag</code> + style group</h4>
+<p><strong>File</strong>: <code>lib/js/components/prosemirror/default-schema.ts:198-243</code></p>
+<ul>
+<li>attrs: add <code>&quot;htmlTag&quot;: { default: &quot;&quot;, validate: &quot;string&quot; }</code> (:201-206).</li>
+<li><code>excludes: &quot;_&quot;</code> → <code>group: &quot;style&quot;, excludes: &quot;style&quot;</code> (:200) — Q2a.</li>
+<li>parseDOM getAttrs (:209-230): harvest <code>&quot;htmlTag&quot;: dom.tagName.toLowerCase()</code> alongside
+<code>data-style-name</code> + <code>collectHtmlAttrsToBag(dom, isStylerOwnedAttr)</code>; the bag must skip
+declared names (<code>htmlTag</code> never enters the bag).</li>
+<li>toDOM (:231-241): tag = <code>node.attrs.htmlTag || &quot;span&quot;</code>; <code>data-style-name</code> as today;
+bag replayed as today.</li>
+</ul>
+<h4><a id="2-tag-chain--data-style-name-gating" class="heading_anchor" href="#2-tag-chain--data-style-name-gating" aria-hidden="true">#</a>2. Tag chain + <code>data-style-name</code> gating</h4>
+<p><strong>File</strong>: <code>…/document-nodes-meta/derivations.mjs:450-470</code> (generic-style branch)</p>
+<ul>
+<li><code>tag = attrs.htmlTag (non-empty) || edge tag (non-empty) || &quot;span&quot;</code> — htmlTag is the
+ingested truth, edge.tag the PM/menu fallback.</li>
+</ul>
+<p><strong>File</strong>: <code>…/type-stage/viewer.typeroof.jsx:931-947</code> (<code>_createWrapperDOM</code>)</p>
+<ul>
+<li>set <code>data-style-name</code> ONLY for <code>markType === &quot;generic-style&quot;</code> (Q3a) — the intent
+identity; structure wrappers stay bare (parse-back falls through to per-tag rules).</li>
+</ul>
+<h4><a id="3-markview-editor-parity" class="heading_anchor" href="#3-markview-editor-parity" aria-hidden="true">#</a>3. MarkView editor parity</h4>
+<p><strong>File</strong>: <code>…/prosemirror/integration.typeroof.jsx:563-574</code> (<code>_getTag</code>)</p>
+<ul>
+<li>for <code>generic-style</code>, read <code>node.attrs.htmlTag</code> before the markSpec/“span” fallbacks.</li>
+</ul>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification" class="heading_anchor" href="#automated-verification" aria-hidden="true">#</a>Automated Verification</h4>
+<ul>
+<li>[x] <code>npm run typecheck</code>, <code>npm run lint</code> pass</li>
+<li>[x] vitest suites green (behavior-neutral: <code>htmlTag</code> defaults <code>&quot;&quot;</code> → edge.tag → “span”,
+same DOM as today; <code>group/excludes &quot;style&quot;</code> only bites PM mark-set mutations,
+no test relies on <code> &quot;_&quot;</code> eviction semantics)
+— two test expectations updated to the new truth (see Phase 1 note):
+integration.test.mjs reserved-mark guard asserts group/excludes “style”;
+G7 (viewer behavior) queries [data-mark-type] instead of [data-style-name]
+(schema marks carry data-mark-type as their wrapper identity; data-style-name
+is the intent identity only — its presence on schema-mark wrappers was
+pre-existing parse-back corruption, now fixed by design Q3a)</li>
+</ul>
+<h4><a id="manual-verification" class="heading_anchor" href="#manual-verification" aria-hidden="true">#</a>Manual Verification</h4>
+<ul>
+<li>[ ] Viewer/editor render unchanged on the current state (htmlTag empty everywhere)</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause for operator confirmation + commit proposal.</p>
+<hr>
+<h2><a id="phase-2--state-addition-extra-minimal-commit-q4" class="heading_anchor" href="#phase-2--state-addition-extra-minimal-commit-q4" aria-hidden="true">#</a>Phase 2 — State addition (extra minimal commit, Q4)</h2>
+<p><strong>File</strong>: <code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code></p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required</h3>
+<ul>
+<li><code>proseMirrorSchema.marks</code> (:858-895) ADD: <code>tag-strong {tag:&quot;strong&quot;}</code>,
+<code>tag-em {tag:&quot;em&quot;}</code>, <code>tag-a {attrs:[[href…],[htmlAttrs…]], tag:&quot;a&quot;}</code> (mirror the <code>link</code>
+markSpec shape — round-trip closures are generated from this alone).</li>
+<li><code>intentStyleLinks</code> (:156-181) ADD: <code>&quot;link&quot; {stylePatch:&quot;link&quot;, mode:&quot;link&quot;, tag:&quot;a&quot;}</code>,
+<code>&quot;italic link&quot; {stylePatch:&quot;italic link&quot;, tag:&quot;&quot;}</code>, <code>&quot;bold italic link&quot; {…, tag:&quot;&quot;}</code>
+(composites get the neutral “”→span fallback; simples keep semantic tags).</li>
+<li><code>stylePatchesSource</code> (:200-262) ADD: <code>&quot;italic link&quot;</code> <code>{instance:{styles:[&quot;italic&quot;,&quot;link&quot;]}, stylePatchTypeKey:&quot;CompositeStylePatch&quot;}</code>,
+<code>&quot;bold italic link&quot;</code> <code>{instance:{styles:[&quot;bold&quot;,&quot;italic&quot;,&quot;link&quot;]}, …}</code>.</li>
+<li>KEEP (until Phase 3): <code>strong</code>/<code>link</code> markSpecs, <code>markStyleLinks</code> edges — additive only.</li>
+</ul>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification-1" class="heading_anchor" href="#automated-verification-1" aria-hidden="true">#</a>Automated Verification</h4>
+<ul>
+<li>[x] typecheck/lint, full suite green (nothing consumes the additions yet)</li>
+</ul>
+<h4><a id="manual-verification-1" class="heading_anchor" href="#manual-verification-1" aria-hidden="true">#</a>Manual Verification</h4>
+<ul>
+<li>[ ] style menu may surface the new intents (acceptable, note in commit msg)</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause + commit proposal (state-only, <code>bdba82a1</code> pattern).</p>
+<hr>
+<h2><a id="phase-3--engine-switch--cleanup-the-observable-change" class="heading_anchor" href="#phase-3--engine-switch--cleanup-the-observable-change" aria-hidden="true">#</a>Phase 3 — Engine switch + cleanup (the observable change)</h2>
+<p><strong>Files</strong>: <code>ingest.ts</code>, <code>ingest.test.mjs</code>, initial-state JSON (deletions), fixture regen.</p>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required</h3>
+<h4><a id="1-engine-rule-see-implementation-approach" class="heading_anchor" href="#1-engine-rule-see-implementation-approach" aria-hidden="true">#</a>1. Engine rule (see Implementation Approach)</h4>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest.ts</code></p>
+<ul>
+<li>mark/generic case :946-1031: unconditional push of structure MarkDesc (harvest via
+<code>schemaMarkAttrs</code> per the rule’s mark name — existing :997-1014; unresolved fallback
+:1001-1008 stays), combineAs onto composite, funnel recording; DELETE the chain branch
+(:953-976) + <code>hasCombinableDescendant</code> (:621-651). Textless guard (:977-987) stays.</li>
+<li>TEXT_NODE :812-851: pop-last + funnel (<code>htmlTag</code>, <code>htmlAttrs</code> on the intent MarkDesc);
+<code>compositeMarks</code> counting stays; ADD <code>structureMarks: Record&lt;string, number&gt;</code> counter
+(count at push, Q5b) + report field (:26-62) + <code>logReport</code> line (:1049-1063).</li>
+<li><code>MarkDesc.style</code> gains <code>htmlTag</code> (:512-520); <code>newMarkDraft</code> (:327-344) serializes it.</li>
+<li><code>WIKIPEDIA_MARK_RULES</code> :1357-1381: selectors <code>b, strong</code> → mark <code>tag-strong</code> combineAs
+“bold”; <code>i, em</code> → mark <code>tag-em</code> combineAs “italic”; <code>a</code> → mark <code>tag-a</code> combineAs “link”.</li>
+<li><code>combineAs</code> rule doc (:100-110) rewrites to the unified push+funnel semantics.</li>
+</ul>
+<h4><a id="2-state-deletions-same-commit" class="heading_anchor" href="#2-state-deletions-same-commit" aria-hidden="true">#</a>2. State deletions (same commit)</h4>
+<ul>
+<li>initial-state JSON: REMOVE <code>strong</code>/<code>link</code> markSpecs (:858-895), <code>markStyleLinks</code>
+edges (:183-197) — table-empty capability stays in code.</li>
+<li><code>editingStylePatch: &quot;./link&quot;</code> (:261) — verify what it references post-unification
+(the <code>&quot;link&quot;</code> patch stays in stylePatchesSource; the <em>edge</em> type moves to intents).</li>
+</ul>
+<h4><a id="3-tests--fixture" class="heading_anchor" href="#3-tests--fixture" aria-hidden="true">#</a>3. Tests + fixture</h4>
+<p><strong>File</strong>: <code>lib/js/wikipedia/ingest.test.mjs</code></p>
+<ul>
+<li>REWRITE <code>&quot;nested-mark collapse (combineAs)&quot;</code> (:1402-1547) → marks-stack assertions
+(<code>allMarksOf</code>/<code>marksOf</code>; e.g. <code>[[tag-b, {}], [generic-style, {data-style-name:&quot;bold italic&quot;, htmlTag:&quot;i&quot;, …}]]</code>,
+href on the intent bag, standalone cases unchanged-render).</li>
+<li>KEEP <code>&quot;demotionRules option&quot;</code> (:1652-1714) + textless describe (:1576-1649).</li>
+<li>Run the suite; fix remaining expectations to actual behavior (7b) — engine-level mark
+tests use local rules/schemas and stay engine-valid.
+<strong>File</strong>: <code>lib/js/tests/fixtures/type-stage-wikipedia-replacement-state.json</code></li>
+<li>regenerate wholesale from a fresh boot (7a) — document the regen procedure in the commit.</li>
+</ul>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification-2" class="heading_anchor" href="#automated-verification-2" aria-hidden="true">#</a>Automated Verification</h4>
+<ul>
+<li>[x] typecheck/lint; FULL vitest suite green (525 tests, 55 files)</li>
+<li>[x] no <code>generic-inline</code> demotion emitted for chains (fixture document: the
+<code>&lt;a href=&quot;./X&quot;&gt;link&lt;/a&gt;</code> run is now <code>generic-style(&quot;link&quot;, htmlTag: &quot;a&quot;,     htmlAttrs: href)</code> — no demoted nodes, no structure marks; report keys assert it)</li>
+</ul>
+<h4><a id="manual-verification-2" class="heading_anchor" href="#manual-verification-2" aria-hidden="true">#</a>Manual Verification</h4>
+<ul>
+<li>[ ] operator review of the marks/fixture diff</li>
+</ul>
+<p><strong>Implementation notes / deviations from the plan text (all behavior-preserving
+or test-vehicle changes, documented for the review):</strong></p>
+<ul>
+<li><code>structureMarks</code> is counted at TEXT emission per run (not at push): a
+push-counter would count funneled-away innermost marks that never land on
+any run; per-run counting matches <code>compositeMarks</code>/<code>markSets</code> provenance.</li>
+<li>Combinable push: the structure MarkDesc pushes only for RESOLVED <code>mark</code>
+rules; generic/unresolved combinables contribute style + funnel only (no
+structure mark exists for them — outer wrappers for such rules are not
+reproduced; the Wikipedia config uses mark rules exclusively).</li>
+<li>Test cascades diagnosed and fixed at the root: G7’s <code>strong</code> mark vehicle
+became schema-unknown (its leaked mark crashed editor-only/compare tests —
+the test’s assertion aborts run before its cleanup splice); vehicle is now
+<code>tag-strong</code>. Per-run style tests moved from markStyleLinks/strong to
+intentStyleLinks/bold; the exclusivity-guard test now stacks two
+generic-style intents (bold outer, italic inner); the unused-patch test
+tombstones the <code>link</code> intent edge first (CompositeStylePatch has no
+relativeFontSize field, so composites can’t be the unused-patch vehicle).</li>
+<li>Fixture regen: temporary buildWorld-based script (deleted after use); the
+diff is small and semantic (+61/-24 — the frozen replacement document is
+tiny; the predicted wholesale churn applied to the full-state
+re-serialization in 57e1e3dc, not to this small fixture).</li>
+<li>Operator addition (this session): the state declares tag-* marks in
+markStyleLinks with EMPTY stylePatch (mode “link”) — management-surface
+declarations (the marks are visible/connectable in the style-link UI).
+Mechanical consequence verified: empty-patch edges still provision
+StyleLinkLiveProperties (getStyleLinks includes any non-null edge), so
+the styleLinkProperties@ ids REGISTER — getWrapMarks now leaves
+styleName null for an empty patch (a declaration is not a style),
+keeping chain runs at exactly ONE resolved style link. The guard test
+gained the permanent regression: tag-em + intent on one run fires NO
+violation and keeps the intent’s id; a non-empty patch on such an
+edge WOULD fire it (two style-resolving marks — the contract holds).
+The fixture regenerated with the edges.</li>
+</ul>
+<p><strong>Implementation Note</strong>: pause + commit proposal.</p>
+<hr>
+<h2><a id="phase-4--live-verification--archive" class="heading_anchor" href="#phase-4--live-verification--archive" aria-hidden="true">#</a>Phase 4 — Live verification + archive</h2>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required</h3>
+<ul>
+<li>Puppeteer DEBUG probe (<code>scripts/puppeteer-probes/qa-structure-marks.mjs</code>, runner
+<code>scripts/debug-with-puppeteer.mjs</code> — NOT the perf suite): live remote Typography load;
+assert zero CONTRACT VIOLATION console errors; chains render real tags + href;
+standalone renders unchanged; marks resolve in parent contexts.</li>
+<li>Operator manual check in the browser.</li>
+<li>Archive: move research + plan docs to
+<code>docs/planning/agentic-artefacts/thoughts/{research,plan}/</code> (RPI archive rules) —
+concludes the cycle.</li>
+</ul>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification-3" class="heading_anchor" href="#automated-verification-3" aria-hidden="true">#</a>Automated Verification</h4>
+<ul>
+<li>[x] probe exits 0 — PASSED on the live en/Typography load: zero
+CONTRACT VIOLATION; structure wrappers tag-em 16 / tag-a 14 /
+tag-strong 1, all 14 tag-a carrying href (declared attr); 320
+standalone links render <code>&lt;a href&gt;</code> (funnel tag + bag); composite
+intents wrap <code>&lt;a href&gt;</code>; parent-context observation consistent
+(figcaption-styled 18.7px vs paragraph-styled 24px).</li>
+</ul>
+<h4><a id="manual-verification-3" class="heading_anchor" href="#manual-verification-3" aria-hidden="true">#</a>Manual Verification</h4>
+<ul>
+<li>[ ] operator confirms live behavior + archive</li>
+</ul>
+<h3><a id="live-verification-findings-two-real-defects-caught-both-fixed-in" class="heading_anchor" href="#live-verification-findings-two-real-defects-caught-both-fixed-in" aria-hidden="true">#</a>Live-verification findings (two real defects caught, both fixed in</h3>
+<p><code>derivations.mjs</code>, documented for the record):</p>
+<ol>
+<li><strong>Stale descriptor state in getWrapMarks</strong> (caught as 25 CONTRACT
+VIOLATIONs on the <code>&lt;i&gt;&lt;a&gt;</code> chains): <code>kind</code>/<code>styleLinkName</code>/
+<code>styleLinkType</code>/<code>styleName</code> were declared once OUTSIDE the per-mark
+loop and never reset — the empty-patch guard (operator’s
+markStyleLinks declarations) left <code>styleName</code> at the previous mark’s
+value, so tag-em descriptors leaked the innermost intent’s
+“italic link” and resolved their registered id. Root fix: reset the
+four fields per mark — each mark derives ONLY from itself — plus
+full inertness for empty-patch declarations (no styleLinkName
+either: structure wrappers get no styler at all).</li>
+<li><strong>Intent htmlAttrs bag never replayed</strong> (caught as href-less link
+wrappers): the intent branch probed
+<code>&quot;htmlAttrs&quot; in defaultSchemaSpec.marks[&quot;generic-style&quot;]</code> — the SPEC
+TOP LEVEL, not <code>.attrs</code> — always false, a pre-existing bug made
+visible by unification (previously only <code>lang</code> rode intent bags,
+and lang is styler-owned — the styler re-wrote it; links carried
+href as the mark’s declared attr via the working mark branch).
+Fix: probe <code>.attrs</code> (also correct for a compiled MarkType).</li>
+</ol>
+<hr>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<ul>
+<li><strong>Unit</strong> (<code>ingest.test.mjs</code>): unified push+funnel (standalone / nested / partial
+nesting <code>&lt;b&gt;bold &lt;i&gt;x&lt;/i&gt;&lt;/b&gt;</code> per-run funnels / same-type <code>&lt;em&gt;&lt;em&gt;</code> / href-on-intent /
+structureMarks counter / markSets keys incl. structure names / textless demotion
+unchanged / unresolved-mark fallback with new mark names).</li>
+<li><strong>Integration</strong>: fixture regen; state-replace stale-width regression green on the new
+fixture; suite-wide.</li>
+<li><strong>Manual/live</strong>: puppeteer debug probe + operator review.</li>
+</ul>
+<h2><a id="risk-notes" class="heading_anchor" href="#risk-notes" aria-hidden="true">#</a>Risk Notes</h2>
+<ul>
+<li><code>markSets</code> keys get longer (accepted Q5a). <code>editingStylePatch</code>/menu surfaces must be
+re-checked after Phase 3 deletions (grep consumers of <code>markStyleLinks</code>).</li>
+<li><code>data-style-name</code> gating (Phase 1) must not regress generic-style round-trip: the
+intent wrapper keeps the attr; structure wrappers never carried intent meaning.</li>
+<li>The fixture regen is large (~1900 lines) — reviewed by report/summary, not line-by-line.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="sprint-a-measurement-truth-text-composition" class="heading_anchor" href="#sprint-a-measurement-truth-text-composition" aria-hidden="true">#</a>Sprint A: Measurement Truth (text-composition)</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Make the Measurer shape with the true font at the true axes location
+(per-run), with the shaping-relevant inputs (features, language,
+direction) honored — and make recomposition fire only when the
+consumed ingredients actually change (drive-level input equality, the
+property-aware filtering reframe). Follows milestone 1
+(<code>docs/planning/agentic-artefacts/thoughts/plan/2026-10-03-0933-composition-controller-milestone1.md</code>);
+research:
+<code>thoughts/research/2026-10-03-1549-sprint-a-measurement-truth.md</code>
+(all questions resolved in its Follow-up sections).</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li>v0 measures with the app ROOT font at the DEFAULT axes location
+(composition-controller.ts: font via <code>/font</code>, Measurer without
+setVariations), buffer language/direction guessed from text.</li>
+<li>The observed symptom: overfull boundary errors (measured wider/
+narrower than rendered).</li>
+<li>Research proves the properties stream already carries everything:
+the node scope’s effective map is CascadingMap(local=layout/*,
+typeSpec=typeSpecnion settled, parent) — <code>specific/font</code> (the font
+OBJECT), <code>axesLocations/&lt;tag&gt;</code>, <code>opentype-features/&lt;tag&gt;</code>,
+<code>language/lang</code>, <code>generic/fontSize</code>, <code>generic/direction</code>,
+<code>layout/availableWidth</code> all readable from the payload the drive
+already receives (node-properties.mjs:185-196).</li>
+</ul>
+<h3><a id="key-discoveries-research-doc" class="heading_anchor" href="#key-discoveries-research-doc" aria-hidden="true">#</a>Key Discoveries (research doc)</h3>
+<ul>
+<li><code>specific/font</code> = VideoProofFont (.hbFace, .axisRanges
+{min,max,default}, .fullName); fallback typeSpecGetFontMethod
+pattern (root font).</li>
+<li>setVariations shaping precedent: videoproof-array.mjs:1206-1217;
+measurement pattern: videoproof-contextual/layout.mjs:44-69.</li>
+<li>Cache keys (decided): sparse normalized axesKey (tag=value, tag
+order, omit == default); hbFont cache Map fullName → axesKey →
+hbFont (no WeakMap); width cache (fullName, axesKey, featuresKey,
+language, direction, text) → em. Features/language/direction are
+shape-time parameters (hbFont cache unaffected).</li>
+<li>Property-aware filtering reframe (decided): the relevant set IS the
+consumed set; the filter is the drive-level input equality check.
+No key-wise property diff exists in the codebase; the filter is
+new, local to text-composition.</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<p>Measured widths equal rendered widths at any typeSpec configuration
+(font, axes, features, language, direction): the overfull boundary
+error observed in milestone 1 review disappears (verifiable by hand:
+narrow/widen a heading via wdth and see overfull flip at the correct
+character count). Editing a non-compositional property (e.g.
+backgroundColor) produces NO recomposition (no new composition@
+publication).</p>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>Treatment Planner / stretch potentials (milestone 4).</li>
+<li>Per-paragraph gate engagement (milestone 4).</li>
+<li>Hyphenation, UAX#14, greedy algorithms (milestones 2/3).</li>
+<li>Async scheduling, workers.</li>
+<li>Scope-level relevance predicates (shared machinery — the filter is
+local to text-composition).</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Two phases, each a reviewable unit with its own commit; stop after
+each with a proposed message and wait for OKOK.</p>
+<hr>
+<h2><a id="phase-1-measurer-v1--true-font-true-location" class="heading_anchor" href="#phase-1-measurer-v1--true-font-true-location" aria-hidden="true">#</a>Phase 1: Measurer v1 — true font, true location</h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p>Read all measurement inputs from the textblock’s nodeProperties
+payload (already received by the drive); shape at the resolved
+location; cache as decided.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required</h3>
+<h4><a id="1-measurer" class="heading_anchor" href="#1-measurer" aria-hidden="true">#</a>1. Measurer</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/text-composition/measurer.ts</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>measureEm(font, axesKey, featuresKey, language, direction, text)</code>
+with the full cache key; shaping sets variations (harfbuzz
+Variation per axesKey entry), features (harfbuzz.Feature list),
+buffer language/direction when given (else guessSegmentProperties).</li>
+<li>Helpers: <code>axesKeyOf(font, properties)</code> — sparse normalized
+(tag=value, tag order, omit == font.axisRanges[tag].default);
+<code>featuresKeyOf(properties)</code> — sparse over opentype-features/*;
+both pure and exported for the controller + tests.</li>
+</ul>
+<h4><a id="2-controller-input-assembly" class="heading_anchor" href="#2-controller-input-assembly" aria-hidden="true">#</a>2. Controller input assembly</h4>
+<p><strong>File</strong>: <code>…/text-composition/composition-controller.ts</code>
+<strong>Changes</strong>: in <code>composeTextblock</code>, read from the payload:
+font = <code>specific/font</code> ?? root <code>/font</code>; axesKey/featuresKey/
+language/direction/fontSize/availableWidth; per-segment measure with
+the full key set. (v0 keeps uniform per-textblock values — per-RUN
+values come with per-run style spans; noted in code.)</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated" class="heading_anchor" href="#automated" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] New behavior test <code>measurer.test.mjs</code> (4 tests, real shaping
+with the repo’s RobotoFlex in node): wdth min≠max, sparse-key
+normalization (explicit default == unset, same measurement),
+-liga changes “fi” width, language code path runs.
+DEVIATION: featuresEntriesOf includes explicit FALSE (=
+disable, “-tag”) — only absent keys are omitted; the plan’s
+“non-default entries” phrasing would have dropped exactly the
+disable signal.</li>
+<li>[x] typecheck, lint, full suite pass. (330/330)</li>
+</ul>
+<h4><a id="manual" class="heading_anchor" href="#manual" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] Overfull diagnostics flip at the correct character count when
+changing wdth/wght of a heading (compare against rendered).</li>
+</ul>
+<hr>
+<h2><a id="phase-1b-nowrap-on-composed-textblocks" class="heading_anchor" href="#phase-1b-nowrap-on-composed-textblocks" aria-hidden="true">#</a>Phase 1b: nowrap on composed textblocks</h2>
+<h3><a id="overview-2" class="heading_anchor" href="#overview-2" aria-hidden="true">#</a>Overview</h3>
+<p>So the viewer shows exactly OUR line breaks: the browser must not
+soft-wrap inside composed textblocks. <code>white-space: nowrap</code> on
+composed blocks (inheritance reaches the line spans); our spans’
+::before{display:block} remain the only breaks. This is the
+go-forward model — when justification sets explicit line widths,
+browser wrapping would double-break. (The “does the browser agree
+with our measurements” comparison remains available via OFF MODE.)
+Ideally via a class, not inline style (the styler owns
+element.style; classList is the attachment’s business).</p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx</code>
+<strong>Changes</strong>: <code>UIDocumentElement</code> consumes <code>composition@&lt;ownPath&gt;</code>
+(its rootPath IS the textblock path) and toggles a class
+(<code>typeroof-composed</code>) on its node: payload → add, null → remove.</p>
+<p><strong>File</strong>: <code>…/text-composition/line-spans.css</code>
+<strong>Changes</strong>: <code>.typeroof-composed { white-space: nowrap; }</code> with a
+comment (browser soft-wrap off; our spans are the only breaks; the
+OFF-MODE comparison remains available).</p>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-1" class="heading_anchor" href="#automated-1" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[ ] stylelint, typecheck, full suite pass.</li>
+</ul>
+<h4><a id="manual-1" class="heading_anchor" href="#manual-1" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] Composed textblocks show exactly the dummy’s breaks (the
+browser never wraps on its own); overfull lines visibly
+overflow instead of wrapping. OFF MODE reverts to browser
+wrapping.</li>
+</ul>
+<hr>
+<h2><a id="phase-2-drive-level-input-equality-filter" class="heading_anchor" href="#phase-2-drive-level-input-equality-filter" aria-hidden="true">#</a>Phase 2: Drive-level input equality filter</h2>
+<h3><a id="overview-3" class="heading_anchor" href="#overview-3" aria-hidden="true">#</a>Overview</h3>
+<p>Skip recompose+republish when the consumed ingredients are unchanged.</p>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>…/text-composition/composition-controller.ts</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li>In <code>composeTextblock</code>: assemble the ingredients (font, axesKey,
+featuresKey, language, direction, fontSize, availableWidth, plus
+the textblock’s inline-content identity — the text/structure),
+store them per textblock; if identical to the stored previous
+ingredients, return WITHOUT republishing (no setUpdated — consumers
+keep their applied state; purity guarantees same input → same
+output).</li>
+<li>Content changes: the ingredients include the item texts, so typing
+always invalidates. (Text identity via the assembled leaf texts —
+cheap string compare; fine at this scale.)</li>
+<li>The gate-off and destroy paths are unchanged (unpublish+notify).</li>
+</ul>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-2" class="heading_anchor" href="#automated-2" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] typecheck, lint, full suite pass. (331/331)</li>
+<li>[x] Behavior coverage where extractable pure (ingredients compare
+helper) — else manual. (kept inline in composeTextblock; the
+observable outcome is the absence of publication — verified
+manually)</li>
+</ul>
+<h4><a id="manual-2" class="heading_anchor" href="#manual-2" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] Changing backgroundColor of a typeSpec produces NO new
+<code>published composition@…</code> log; changing fontSize/wdth DOES.</li>
+<li>[ ] No regression in composition behavior (typing reflows, off
+mode cleans up).</li>
+</ul>
+<hr>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<ul>
+<li>Measurer behavior tests with the real font (node + harfbuzzjs).</li>
+<li>Input-equality: manual verification via the publication log (the
+observable outcome), per the behavior-not-implementation rule.</li>
+<li>Full suite + typecheck + lint per phase.</li>
+</ul>
+<h2><a id="sub-rpi-handoff-rule" class="heading_anchor" href="#sub-rpi-handoff-rule" aria-hidden="true">#</a>Sub-RPI handoff rule</h2>
+<p>As in the milestone-1 plan: if a phase balloons (suspect: per-run
+style spans), spawn a sub-cycle. Handoff chain: this plan → Sprint A
+research doc → design headers in text-composition/ → ROADMAP.</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

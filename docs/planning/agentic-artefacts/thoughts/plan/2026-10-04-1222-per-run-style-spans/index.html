@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="per-run-style-spans-inline-stylesmarks-for-text-composition" class="heading_anchor" href="#per-run-style-spans-inline-stylesmarks-for-text-composition" aria-hidden="true">#</a>Per-run style spans (inline styles/marks) for text composition</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Measure every run at its true resolved style (font/axes/features/
+language/fontSize), so composition matches rendering. Observed case:
+a “bold” style setting wdth to max renders wider than measured —
+line breaks don’t move and the lines overflow (ROADMAP “When cases
+arise”). Research: <code>docs/planning/agentic-artefacts/thoughts/research/2026-10-04-1155-per-run-style-spans.md</code>
+(all key questions resolved there + in session).</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li>The controller derives measurement inputs ONCE per textblock
+(composition-controller.ts:367-384, “v1 keeps them uniform per
+textblock — per-RUN values come with per-run style spans”) and
+<code>_buildInlineItems</code> never reads <code>marks</code> (265-297).</li>
+<li>The ingredients filter (457-493) has no per-run style values:
+a mark style change would not invalidate composition.</li>
+<li>Runs are already style-uniform: PM-shaped document model — text
+nodes carry <code>marks</code>; different mark sets are separate text nodes.
+Mark boundaries == the segmenter’s leaf boundaries.</li>
+<li>Measurer (measurer.ts) is fully per-call parameterized; caches
+keyed by (fullName, axesKey, featuresKey, language, direction,
+text). READY.</li>
+<li>Applicator (viewer.typeroof.jsx:658-712) renders line spans as
+per-run slices inside the run’s mark wrappers; per-run CSS keeps
+flowing from the existing stylers. READY, no change.</li>
+<li>Resolved per-style-link values exist AS DATA:
+<code>styleLinkProperties@&lt;typeSpecPath&gt;/&lt;linkType&gt;/&lt;key&gt;</code> → the
+registered <code>StyleLinkLiveProperties</code> component (meta.typeroof.jsx:
+92-96) with <code>.typeSpecnion.getProperties()</code> — typeSpec cascade +
+patch merged, font-dependent axis synthetics pre-resolved. Exactly
+what UIDocumentStyleStyler consumes (type-spec.typeroof.jsx:1018).</li>
+<li>Key prefixes align: patch generators yield <code>axesLocations/&lt;tag&gt;</code>
+and <code>opentype-features/&lt;tag&gt;</code> — what the measurer helpers read.</li>
+</ul>
+<h3><a id="key-decisions-with-operator" class="heading_anchor" href="#key-decisions-with-operator" aria-hidden="true">#</a>Key Decisions (with operator)</h3>
+<ul>
+<li><strong>Marks are style-EXCLUSIVE</strong>: <code>styleLinkProperties@</code> is the full
+story per run — no CSS-cascade/inheritance merge is replicated at
+data level. (Links attach to the id by design.) If the contract
+breaks, that’s out of scope — BUT:</li>
+<li><strong>Guard</strong>: resolving a leaf to MORE THAN ONE style-linked mark
+fires <code>console.error</code> (a big contract issue) and picks the
+innermost deterministically. Simple and dumb on purpose; refine or
+rework the contract when it ever fires (e.g. a future style adding
+only color/text-decoration/href could become allowable — not now).</li>
+<li>Resolution seam: the META ELEMENT owns the typeSpec resolution
+context (pathOfTypes, nodeSpecToTypeSpec, _originTypeSpecPath);
+the controller consumes registered styleLink payloads and owns
+measurement. No new model properties — this is pure Host wiring.</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>Multi-mark/multi-link style merging at data level (out of scope
+by the exclusivity contract; the guard watches violations).</li>
+<li>Contract changes (composition-types.ts StyleSpan stays unused;
+the pipeline’s HostSegment.sourceIndex model already fits).</li>
+<li>Applicator/viewer changes (line spans already slice per run).</li>
+<li>Segmenter taxonomy changes (no style field on InlineItem; leaves
+ARE the style runs).</li>
+<li>inlineContainer styles (links as inline blocks): children are
+separate leaves measured by their own marks; a container’s own
+style stays unhandled (document as limitation if hit).</li>
+<li>Missing-glyph diagnostic / font-fallback measurement (ROADMAP
+“beyond this roadmap” items, untouched).</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Three phases, each a reviewable unit with its own commit; stop after
+each with a proposed message and wait for OKOK.</p>
+<hr>
+<h2><a id="phase-1-per-leaf-style-resolution--measurement" class="heading_anchor" href="#phase-1-per-leaf-style-resolution--measurement" aria-hidden="true">#</a>Phase 1: Per-leaf style resolution + measurement</h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p>The meta element resolves, per textblock, the typeSpecPropertiesPath
+(already its context); the controller resolves per text leaf the
+exclusive style link (with the guard), consumes the registered
+StyleLinkLiveProperties payload, and measures each segment at its
+leaf’s tuple. Ingredients gain per-leaf style keys.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>…/type-stage/document-nodes-meta/index.mjs</code>
+<strong>Changes</strong>: <code>_driveComposition</code> passes a style-resolution context to
+<code>composeTextblock</code>: <code>{ typeSpecPropertiesPath, markSpec, context }</code>
+where typeSpecPropertiesPath = <code>getTypeSpecPropertiesIdMethod.call( this, plan.pathOfTypes, true)</code> (memoized, integration.typeroof.jsx:
+188), markSpec = the schema marks model (external mapping
+<code>../proseMirrorSchema/marks</code>, as the text-run wrappers map it),
+context = <code>{ hasTypeSpecStyling, pathOfTypes }</code> from the
+_renderingPlan (index.mjs:266-293, 881). No meta structural change —
+the info is all in context today.</p>
+<p><strong>File</strong>: <code>…/text-composition/composition-controller.ts</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>_buildInlineItems</code>: for each text leaf, resolve style links via
+the pure <code>getWrapMarks</code> (derivations.mjs:418-504) with the passed
+context; collect descriptors with <code>styleLinkName</code>.
+GUARD: <code>&gt;1</code> style-linked descriptor → <code>console.error</code> (contract
+violation, include leaf path + link names) and use the innermost
+(last wrapper). Id via <code>getStyleLinkPropertiesId</code>
+(derivations.mjs:390-412; null = unregistered → treat unstyled).
+<code>leaves</code> entries gain <code>styleLinkPropertiesId</code> (string | null).</li>
+<li>Per-leaf measurement tuple: for leaves WITH an id, read the
+registered payload (<code>getProtocolHandlerImplementation( &quot;styleLinkProperties@&quot;).getRegistered(id)</code>) →
+<code>.typeSpecnion.getProperties()</code> (the styler’s accessor); derive
+font (<code>specific/font</code> ?? textblock font ?? rootFont),
+axesEntries/axesKey, featuresEntries/featuresKey, language,
+direction, fontSizePt — each falling back to the textblock scope
+values. Cache the resolved tuple per (id, payload identity) within
+one compose (multiple leaves share a link).</li>
+<li>Measurement loop: use the segment’s leaf tuple (widths and hyphen
+width); pt conversion per leaf fontSizePt.</li>
+<li>Ingredients: append per-leaf <code>[styleLinkPropertiesId, font identity, axesKey, featuresKey, language, direction, fontSizePt, payload identity]</code> (flat-joined) — “what we CONSUME is what
+invalidates”.</li>
+</ul>
+<p><strong>Tests</strong> (<code>lib/js/tests/text-composition/index.test.mjs</code>):</p>
+<ul>
+<li>fixture mark (“bold” via the existing mark style-link machinery)
+with a patch setting wdth to max: the marked word’s segment
+widths EXCEED the same text unstyled (payload level);
+line breaking changes vs. unstyled (line count/structure differ).</li>
+<li>unstyled documents: composition unchanged (existing tests are the
+regression net — byte-identical payloads where no marks resolve).</li>
+<li>guard: a leaf with two style-linked marks logs console.error and
+composes with the innermost link.</li>
+</ul>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated" class="heading_anchor" href="#automated" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] New tests pass; full suite green (existing composition tests
+unchanged = unstyled path untouched); typecheck/lint green.</li>
+</ul>
+<h4><a id="manual" class="heading_anchor" href="#manual" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[x] Viewer: wdth-max bold text re-breaks lines; previously
+overflowing styled lines fit (operator, 2026-10-04).</li>
+</ul>
+<hr>
+<h2><a id="phase-2-invalidation-triggers-patch-content-edits" class="heading_anchor" href="#phase-2-invalidation-triggers-patch-content-edits" aria-hidden="true">#</a>Phase 2: Invalidation triggers (patch-content edits)</h2>
+<h3><a id="erratum-2026-10-04-resolved-by-phase-1--no-mechanism-needed" class="heading_anchor" href="#erratum-2026-10-04-resolved-by-phase-1--no-mechanism-needed" aria-hidden="true">#</a>ERRATUM (2026-10-04): resolved by Phase 1 — no mechanism needed</h3>
+<p>The premise (“nothing re-drives on patch edits”) was wrong: the meta
+cascade drives composition on EVERY state change (hook (a) — the
+element’s update is not pruned by changedMaps), and Phase 1’s
+per-leaf style values in the input-equality ingredients detect patch
+edits. Verified by red-check: the behavioral test passes with no
+subscription machinery (built, then reverted as dead weight).
+Operator confirmation: line breaking DID update on patch edits in
+the viewer already.</p>
+<p><strong>Tests</strong> (kept, comments amended to the real mechanism): editing a
+consumed patch’s value (native-mark link “bold”/strong AND intent
+link “italic” — <i> ingests as generic-style intent) recomposes the
+affected textblocks (payload identity + widths); editing the
+edgeless “link” patch recomposes nothing (payload identity stable).
+Found: an EXPLICIT relativeFontSize=1 on a patch resolves
+baseFontSize to the model default, not the document cascade
+(existing patch semantics — composition and rendering agree, both
+read the same resolved map; noted for the type-spec side).</i></p>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-x-tests-pass-full-suite-green" class="heading_anchor" href="#automated-x-tests-pass-full-suite-green" aria-hidden="true">#</a>Automated: [x] tests pass; full suite green.</h4>
+<h4><a id="manual-x-editing-the-bold-patch-value-live-re-breaks-the" class="heading_anchor" href="#manual-x-editing-the-bold-patch-value-live-re-breaks-the" aria-hidden="true">#</a>Manual: [x] editing the “bold” patch value live re-breaks the</h4>
+<p>styled text (operator, 2026-10-04).</p>
+<hr>
+<h2><a id="phase-3-e2e-regression--perf--roadmap" class="heading_anchor" href="#phase-3-e2e-regression--perf--roadmap" aria-hidden="true">#</a>Phase 3: E2E regression + perf + ROADMAP</h2>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>Tests</strong> (<code>lib/js/tests/text-composition/index.test.mjs</code>): the
+operator case end-to-end — wdth-max bold mark in a narrow measure:
+lines break differently than unstyled; no styled line is flagged
+overfull that wouldn’t be when rendered (spot-check: measured
+widths at the patch location match the DOM-rendered widths within
+tolerance); OFF MODE still costs zero.</p>
+<p><strong>Perf</strong>: <code>npm run perf:composition</code>, review together (per-leaf
+measuring multiplies measureEm calls — shared LRU absorbs; watch
+typing ratio), --write-baseline only deliberately.</p>
+<p><strong>File</strong>: <code>docs/planning/text-composition/ROADMAP.md</code>
+<strong>Changes</strong>: move the per-run style spans item from “When cases
+arise” to the milestone-3 follow-ups done list (it’s pre-milestone-4
+foundation: the Treatment Planner needs per-run resolution too).</p>
+<h3><a id="success-criteria-2026-10-04" class="heading_anchor" href="#success-criteria-2026-10-04" aria-hidden="true">#</a>Success Criteria (2026-10-04)</h3>
+<h4><a id="automated-x-full-suite-green-x-perf-ratios-100103-" class="heading_anchor" href="#automated-x-full-suite-green-x-perf-ratios-100103-" aria-hidden="true">#</a>Automated: [x] full suite green; [x] perf ratios 1.00/1.03 —</h4>
+<p>noise level (the onMs “regressions” remain the known environmental
+false positive). E2E note: the harness’s fixed tiny measure packs
+~one word per line regardless of font size, so break MOVEMENT and
+overfull correctness are not assertable there — covered visually.</p>
+<h4><a id="manual-x-the-operators-original-case-is-visibly-fixed" class="heading_anchor" href="#manual-x-the-operators-original-case-is-visibly-fixed" aria-hidden="true">#</a>Manual: [x] the operator’s original case is visibly fixed</h4>
+<p>(2026-10-04).</p>
+<hr>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<p>Behavior assertions from document/patch inputs: segment widths in
+payloads, line structure, invalidation on patch edits, guard firing.
+Not implementation details (no tuple-cache internals). Existing
+harness: real Roboto Flex + harfbuzz; wdth axis is the natural probe
+(Roboto Flex wdth 25–151, big advance deltas).</p>
+<h2><a id="sub-rpi-handoff-rule" class="heading_anchor" href="#sub-rpi-handoff-rule" aria-hidden="true">#</a>Sub-RPI handoff rule</h2>
+<p>As before. Suspect: the phase-2 subscription mechanics (dynamic
+dependency wiring in the meta) — the least charted area.</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

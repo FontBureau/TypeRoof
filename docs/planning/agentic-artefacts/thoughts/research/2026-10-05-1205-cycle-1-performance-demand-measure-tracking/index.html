@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-cycle-1--performance-demand-measure-tracking" class="heading_anchor" href="#research-cycle-1--performance-demand-measure-tracking" aria-hidden="true">#</a>Research: Cycle 1 — performance, demand, measure, tracking</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Map the codebase for the first prerequisite cycle before
+Knuth–Plass++:</p>
+<ol>
+<li>establish real composition performance values and profiling /
+bottleneck surfaces;</li>
+<li>establish why composition runs with no consumer (editor-only)
+and what OFF/None currently costs;</li>
+<li>map the existing geometry path and a controllable Host test
+measure;</li>
+<li>map tracking prediction versus browser CSS letter-spacing.</li>
+</ol>
+<p>The committed scope is in
+<code>docs/planning/text-composition/ROADMAP.md</code>, “Cycle 1 — KP++
+prerequisites”.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<h3><a id="performance" class="heading_anchor" href="#performance" aria-hidden="true">#</a>Performance</h3>
+<p>The current <code>perf:composition</code> script is a valid whole-cycle
+regression smoke test for one scenario only: verified wikipedia
+state (1,087 text nodes), viewer mode, Greedy Fit ON versus None,
+30 sequential typing or root-relative-font-size edits. It measures
+one <code>performance.now()</code> interval around each burst. It does not
+measure initial load, cold versus warm behavior, editor/compare
+modes, per-textblock work, cache behavior, HarfBuzz shape calls,
+applicator work, or call stacks. No current source uses CDP CPU
+profiling/tracing, <code>performance.mark/measure</code>, <code>console.time</code>, or
+composition-specific counters. Historical documentation describes
+an untracked Node inspector profiler harness, but its executable
+files no longer exist.</p>
+<p>Both active algorithms matter for no-consumer performance. The
+unchanged-input filter occurs only after inline traversal, paragraph
+segmentation, language/hyphenation resolution, per-leaf style
+resolution, treatment setup and ingredient construction. The operator
+observes the default Greedy Ragged noticeably slowing editor-only mode:
+it still pays all Host preparation, natural segment shaping and greedy
+line breaking even though it probes only step 0. Greedy Fit is visibly
+slower again and adds repeated <code>lineWidthAtStep</code> evaluations; each
+nonzero probe scans and may reshape candidate segments through a
+24-iteration binary search. <code>Measurer</code> has two bounded LRU caches but
+exposes no hit/miss/font-creation/shape counters.</p>
+<h3><a id="demand" class="heading_anchor" href="#demand" aria-hidden="true">#</a>Demand</h3>
+<p><code>CompositionController</code> and <code>DocumentNodesMeta</code> are always active in
+all document renderer modes. Editor-only mode has no <code>composition@</code>
+consumer, yet the meta tree drives every affected textblock through
+the complete composition pipeline and retains publications/caches.
+<code>SimpleProtocolHandler</code> knows publishers and update marks, not
+subscriber counts. That does not require changing the protocol:
+demand can be owned by an explicit widget/service lifecycle (for
+example an activation-gated publisher or an ad-hoc service reached by
+<code>getWidgetById(...).subscribe()</code> plus a cleanup token), while
+publication remains a SimpleProtocolHandler concern. Viewer
+attach/detach currently removes only renderer attachments; it does not
+influence composition publications or controller activity.</p>
+<p>Explicit None is materially different inside CompositionController:
+it reads the settled property map, detects
+<code>TextCompositionAlgorithmNoneModel</code>, unpublishes once when necessary,
+and returns before traversal, segmentation, shaping, treatment planning
+or algorithm execution. Subsequent affected updates still traverse
+the always-active document meta tree, update/rebuild scopes as relevant,
+classify textblocks, resolve the service, and perform the gate/path/
+registration checks. The operator nevertheless observes editor-only
+None as slower than expected; the early gate proves only that deep
+composition roles are absent, not that the whole TypeStage/meta/scope
+update is cheap. Cycle-1 profiles must attribute that remaining cost.
+Local inherited None has the same per-textblock controller behavior.</p>
+<p>The closest existing lifecycle patterns are: renderer callback tokens
+(<code>DocumentNodesMeta.attachRenderer/detachRenderer</code>), cleanup closures
+from protocol/listener registration, first/last pending-mark observer
+activation in <code>TypeSpecSubscriptions</code>, and shell state-dependency
+reference counters.</p>
+<h3><a id="measure" class="heading_anchor" href="#measure" aria-hidden="true">#</a>Measure</h3>
+<p>The composition controller reads the textblock’s incoming
+<code>layout/availableWidth</code>, while the viewer styler writes the SAME
+node’s <code>layout/width</code> to CSS and horizontal layout computes a local
+<code>layout/columnWidth</code> as the per-column line measure. Column width is
+projected as <code>availableWidth</code> only to descendants. These can differ on
+the textblock itself; this is not hypothetical in the operator’s
+latest Wikipedia debug state (details below).</p>
+<p>The shared jsdom harness publishes environment dimensions as
+<code>{width:0,height:0}</code>. The state’s default <code>100 percent-layout</code> width
+therefore resolves to exactly <code>0pt</code>; zero is numeric, so the
+controller’s non-number 480pt fallback does not activate. The
+composition e2e suite consequently produces minimal/overfull lines
+and cannot assert realistic break movement. The harness already
+returns its mutable <code>environmentHandler</code>; an existing full-stack test
+re-publishes layout as 400×300px and verifies the scope resolves
+300pt. The operator’s real fully-expanded screen is 1920px wide with
+a measured layout area of 1600px; these are the target realistic
+browser/profile environment facts (the small Host fixture can still
+use a deliberately selected deterministic pt measure). Pure geometry/
+unit/runion tests cover the individual pieces, but no current test
+ties an explicit nonzero measure to exact CompositionController line
+results.</p>
+<h3><a id="tracking" class="heading_anchor" href="#tracking" aria-hidden="true">#</a>Tracking</h3>
+<p>Potentials define tracking as absolute pt letter-spacing; the Host
+currently predicts its width as:</p>
+<pre class="language-text"><code class="language-text">trackingPt(step) × (segment.end − segment.start)</code></pre>
+<p>Segment offsets are JavaScript string offsets, so the count is source
+UTF-16 code units. The viewer applies the value as CSS
+<code>letter-spacing</code> on one span per leaf/line fragment. No browser-versus-
+HarfBuzz tracking geometry test exists.</p>
+<p>HarfBuzz’s vendored API already exposes post-shape glyph count and
+clusters (<code>Buffer.getLength</code>, <code>getGlyphInfos</code>, <code>cluster</code>, cluster
+levels). Its own tests demonstrate that <code>fi</code> changes from two input
+items to one ligature glyph and that combining sequences share
+clusters. The current <code>Measurer</code> discards that information and caches
+only total em width. Open parity questions also include spacing at
+separate leaf/span boundaries and whether the generated end hyphen
+receives CSS letter-spacing not represented by Host math.</p>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-current-performance-harness" class="heading_anchor" href="#1-current-performance-harness" aria-hidden="true">#</a>1. Current performance harness</h3>
+<h4><a id="entry-fixture-and-modes" class="heading_anchor" href="#entry-fixture-and-modes" aria-hidden="true">#</a>Entry, fixture and modes</h4>
+<ul>
+<li><code>package.json:10-30</code> registers <code>npm run perf:composition</code>.</li>
+<li><code>scripts/perf-composition:1-68</code> defines the browser benchmark,
+checked-in baseline, 30-cycle default, 1.5 regression factor,
+source wikipedia fixture and temporary Vite-served copy.</li>
+<li><code>scripts/perf-composition:136-188</code> stages the fixture, launches
+headless Chromium at 1920×1080, opens the generic player via
+<code>from-url</code>, waits for <code>window.shell</code>, counts text nodes and fails
+below 100. The current fixture reports 1,087 and TypeStage layout.</li>
+<li><code>scripts/perf-composition:78-94</code> selects Greedy Fit for ON and None
+for OFF before timing.</li>
+<li>The fixture itself starts in viewer mode
+(<code>docs/states-library/fixtures/wikipedia-snapshot.json:28612</code>).
+The script does not vary document renderer mode.</li>
+</ul>
+<h4><a id="timed-operations" class="heading_anchor" href="#timed-operations" aria-hidden="true">#</a>Timed operations</h4>
+<ul>
+<li><code>scripts/perf-composition:96-110</code> finds the first text leaf by
+recursive immutable-model walk.</li>
+<li><code>scripts/perf-composition:112-130</code> wraps all cycles in one
+<code>performance.now()</code> interval:
+<ul>
+<li>typing replaces the first text value;</li>
+<li>recompose alternates root <code>relativeFontSize</code> by <code>0.0001</code>;</li>
+<li>every state transaction is awaited.</li>
+</ul>
+</li>
+<li><code>scripts/perf-composition:190-201</code> runs OFF then ON for typing and
+recompose, recording cumulative milliseconds and ON/OFF ratio.</li>
+<li><code>scripts/perf-composition:207-267</code> writes/compares baseline values
+(<code>onMs</code> and ratio), exits 1 beyond 1.5× and exits 2 on setup errors.</li>
+<li><code>scripts/perf-composition.baseline.json</code> currently records Greedy
+Fit: typing 4162.2/4232.7ms (1.017), recompose
+7278.6/9216ms (1.266), 30 cycles at commit <code>521db920</code>.</li>
+</ul>
+<h4><a id="existing-profiling-surfaces" class="heading_anchor" href="#existing-profiling-surfaces" aria-hidden="true">#</a>Existing profiling surfaces</h4>
+<ul>
+<li>No executable source calls <code>page.createCDPSession</code>,
+<code>Profiler.*</code>, <code>Tracing.*</code>, <code>page.tracing</code>, <code>performance.mark</code>,
+<code>performance.measure</code>, <code>console.time</code> or composition counters.</li>
+<li><code>scripts/create-clip-frames:17-84</code> is another Puppeteer/player
+precedent (state access, deterministic <code>shell.changeState</code>, frame
+capture), but does not profile.</li>
+<li><code>docs/planning/performance-investigation-viewer-update-propagation-260820.md:29-98,232-243</code>
+documents a former monkey-patched jsdom benchmark and optional
+<code>node:inspector</code> CPU profile. The named <code>viewer-perf*.mjs</code> files are
+not in the current tree.</li>
+</ul>
+<h3><a id="2-composition-work-and-caches" class="heading_anchor" href="#2-composition-work-and-caches" aria-hidden="true">#</a>2. Composition work and caches</h3>
+<h4><a id="always-active-service-and-drive" class="heading_anchor" href="#always-active-service-and-drive" aria-hidden="true">#</a>Always-active service and drive</h4>
+<ul>
+<li><code>lib/js/components/layouts/type-stage/index.typeroof.jsx:681-719</code>
+installs the CompositionController and DocumentNodesMeta without
+activation tests, before mode-gated editor/viewer widgets.</li>
+<li><code>composition-controller.ts:262-297</code> gives the service
+<code>UPDATE_STRATEGY_NO_UPDATE</code>; it is called directly by meta nodes.
+Construction creates a Measurer (when HarfBuzz exists), maps for
+registrations/ingredients/Hyphers, and lazy protocol references.</li>
+<li><code>document-nodes-meta/index.mjs:769-815</code> identifies textblocks and
+calls <code>composeTextblock</code> after state/scope/service gates.</li>
+<li><code>document-nodes-meta/index.mjs:834-846</code> drives before ordinary/
+initial child cascade; <code>:948-1003</code> wires a second drive after fresh
+scope settlement. A cycle may invoke both paths.</li>
+</ul>
+<h4><a id="early-return-boundaries" class="heading_anchor" href="#early-return-boundaries" aria-hidden="true">#</a>Early-return boundaries</h4>
+<ul>
+<li><code>composition-controller.ts:464-486</code>: explicit None does path
+conversion, scope map read, algorithm lookup, and unpublication,
+then returns. No inline traversal or expensive role has run.</li>
+<li><code>composition-controller.ts:487-497</code>: missing HarfBuzz returns at the
+same early boundary (one warning first time).</li>
+<li><code>composition-controller.ts:499-760</code>: active composition has already
+traversed inline nodes, assembled logical paragraphs, resolved
+fonts/geometry/features/language/configuration/hyphenation,
+resolved per-leaf style links and prepared per-style treatment
+planners before ingredient equality is known.</li>
+<li><code>composition-controller.ts:763-831</code>: ingredient equality then skips
+hyphenation, normal segment shaping, algorithm execution and
+publication. Building the ingredients may itself call <code>plannerOf</code>,
+discover/interpolate/anchor potentials and shape a natural space.</li>
+<li><code>composition-controller.ts:833-1077</code>: cache miss proceeds through
+hyphenation, source segment shaping, conditional-hyphen handling,
+algorithm evaluation, payload creation and protocol replacement.</li>
+</ul>
+<h4><a id="expensive-candidate-path" class="heading_anchor" href="#expensive-candidate-path" aria-hidden="true">#</a>Expensive candidate path</h4>
+<ul>
+<li>Greedy Ragged is the unresolved/default algorithm and still runs the
+complete Host preparation + natural shaping + publication path. In
+addition, current payload construction calls <code>plannerOf(styleOf(index))</code>
+for every leaf even for Greedy Ragged, so potential discovery,
+interpolation/anchoring, stepper construction and natural-space
+shaping are not currently Greedy-Fit-only
+(<code>composition-controller.ts:723-760,1030-1052</code>).</li>
+<li><code>composition-controller.ts:874-893</code> shapes each natural segment at
+its run style.</li>
+<li><code>composition-controller.ts:906-950</code> derives treated axes and can
+shape candidate-end hyphens.</li>
+<li><code>composition-controller.ts:968-1025</code> nonzero
+<code>lineWidthAtStep</code> loops every candidate segment, reshapes it at
+treated axes, adds tracking/wordspace, then conditional hyphen.</li>
+<li><code>greedy-fit.ts:36-78</code> uses 24 binary-search iterations per fitting
+step; <code>:82-260</code> invokes candidate width repeatedly for natural
+selection, potential tests, pull-up, widening and overfull fitting.</li>
+<li><code>composition-controller.ts:1078-1086</code> currently logs every
+publication with line/overfull counts.</li>
+</ul>
+<h4><a id="measurer-cache-behavior" class="heading_anchor" href="#measurer-cache-behavior" aria-hidden="true">#</a>Measurer cache behavior</h4>
+<ul>
+<li><code>measurer.ts:89-101</code>: 50,000 width entries; 32 HarfBuzz locations
+per font; no exposed metrics.</li>
+<li><code>measurer.ts:103-151</code>: map-based LRU refresh/eviction and
+HarfBuzz-font construction on location miss.</li>
+<li><code>measurer.ts:154-199</code>: width key = font fullName, axes, features,
+language, direction, text. Miss creates features/buffer, shapes,
+sums <code>xAdvance</code>, normalizes and caches. Empty text returns zero.</li>
+</ul>
+<h3><a id="3-current-demandconsumer-lifecycle" class="heading_anchor" href="#3-current-demandconsumer-lifecycle" aria-hidden="true">#</a>3. Current demand/consumer lifecycle</h3>
+<h4><a id="renderer-modes" class="heading_anchor" href="#renderer-modes" aria-hidden="true">#</a>Renderer modes</h4>
+<ul>
+<li><code>document-renderer-mode/model.mjs:1-17</code> defines editor/viewer/compare
+and alternate defaults.</li>
+<li><code>type-stage/index.typeroof.jsx:353-365</code> activates editor for
+editor/compare and viewer for viewer/compare.</li>
+<li><code>type-stage/index.typeroof.jsx:650-757</code> shows mode-gated editor and
+viewer around the always-active composition/meta services.</li>
+<li>The production TypeStage variant uses editor-default mode
+(<code>type-stage/index.typeroof.jsx:320-324</code>). Empty/inherited algorithm
+ultimately defaults to Greedy Ragged in the controller
+(<code>composition-controller.ts:548-550</code>). Thus the ordinary default is
+editor-only while active composition still runs.</li>
+</ul>
+<h4><a id="publisher-widget-and-publications-are-not-subscriptions" class="heading_anchor" href="#publisher-widget-and-publications-are-not-subscriptions" aria-hidden="true">#</a>Publisher widget and publications are not subscriptions</h4>
+<ul>
+<li><code>type-stage/index.typeroof.jsx:681-696</code> installs the actual publisher,
+<code>CompositionController</code>, as always-active widget ID
+<code>compositionController</code>; it has no activationTest. Document meta
+looks it up directly and calls it.</li>
+<li>This existing ID-addressed service boundary can host a domain-specific
+explicit subscribe/unsubscribe API without giving
+SimpleProtocolHandler subscriber semantics; TypeSpecSubscriptions is
+a current analogous service (<code>prosemirror/type-spec.typeroof.jsx: 1104-1157,1561-1709</code>). Widget-ID presence itself is not a declared
+activation dependency, so lifecycle notifications must be explicit.</li>
+<li><code>basics/component.mjs:171-245</code> SimpleProtocolHandler stores producer
+values and updated IDs only. <code>register</code> returns an unregister
+closure; <code>hasRegistered</code> means a value exists. It has no consumer
+registration/count.</li>
+<li>Consumer dependency mappings are interpreted by ComponentWrapper
+during update-map/relevance processing (<code>component.mjs:648-659, 961-977</code>) and are not reported to the handler.</li>
+<li><code>composition-controller.ts:1067-1099</code> retains one producer cleanup
+closure and ingredient vector per textblock. Unpublication removes
+both and marks the missing/fallback-null ID updated.</li>
+</ul>
+<h4><a id="viewer-lifecycle" class="heading_anchor" href="#viewer-lifecycle" aria-hidden="true">#</a>Viewer lifecycle</h4>
+<ul>
+<li><code>viewer.typeroof.jsx:960-1026</code> creates the article/registry and
+attaches its callback to DocumentNodesMeta during initialUpdate
+(after meta update ordering).</li>
+<li><code>document-nodes-meta/index.mjs:1191-1217</code> stores renderer callback
+identities and cascades attach/detach across the existing tree.</li>
+<li><code>viewer.typeroof.jsx:1029-1088</code> creates element/text-run attachments
+mapped to composition IDs.</li>
+<li><code>viewer.typeroof.jsx:1104-1113</code> detaches on destruction.</li>
+<li>Detachment destroys DOM/attachments only; CompositionController
+publications, ingredients, Measurer/Hypher caches and continued meta
+drives remain.</li>
+</ul>
+<h4><a id="no-consumer-and-none-behavior" class="heading_anchor" href="#no-consumer-and-none-behavior" aria-hidden="true">#</a>No-consumer and None behavior</h4>
+<ul>
+<li>In editor-only mode no viewer attachment or ProseMirror
+composition consumer exists, but affected textblocks still execute
+all active composition roles and publish retained payloads.</li>
+<li>First active→None drive unregisters prior results and notifies active
+consumers through the null fallback.</li>
+<li>Later affected drives while None still update the meta/scope,
+classify/resolve the service, read the path/properties/algorithm and
+test registration, but return before inline/shape/algorithm work.</li>
+<li>Tests cover compare/editor/viewer transitions and no article in
+editor mode (<code>type-stage-viewer-behavior/index.test.mjs:72-110, 331-401</code>), document shrink + viewer activation
+(<code>type-stage-document-replace/shrink-activation-repro.test.mjs:29-79</code>),
+global None (<code>text-composition/index.test.mjs:253-288</code>) and inherited
+per-TypeSpec None (<code>:290-336</code>). They do not count composition-role
+invocations.</li>
+</ul>
+<h3><a id="4-existing-explicit-lifecycle-patterns" class="heading_anchor" href="#4-existing-explicit-lifecycle-patterns" aria-hidden="true">#</a>4. Existing explicit lifecycle patterns</h3>
+<ul>
+<li><strong>Renderer callback token:</strong> <code>DocumentNodesMeta.attachRenderer / detachRenderer</code> stores handler identity; per-node
+<code>RendererAttachments</code> owns exact handler→widget mappings and rejects
+duplicates (<code>document-nodes-meta/index.mjs:60-120,1191-1217</code>).</li>
+<li><strong>Cleanup closures:</strong> SimpleProtocolHandler registration
+(<code>component.mjs:192-207</code>), EnvironmentProvider publications
+(<code>environment-provider.mjs:92-152,175-220</code>), StageDOMNode
+(<code>actors/stage.mjs:34-65,150-153</code>) and ReactRoot listeners
+(<code>react-integration.jsx:67-95,214-255</code>) bind cleanup to owner life.</li>
+<li><strong>First/last observer demand:</strong> TypeSpecSubscriptions starts its
+MutationObserver when the first pending mark arrives and disconnects
+after the last is processed/unsubscribed; node/mark view destruction
+explicitly unsubscribes (<code>prosemirror/type-spec.typeroof.jsx: 1434-1472,1561-1635,1659-1709</code>; integration node/mark destroy at
+<code>prosemirror/integration.typeroof.jsx:460-464,572-576</code>).</li>
+<li><strong>Reference counter:</strong> shell dependency drafts use use/unuse counts
+and a try/finally context wrapper (<code>shell.mjs:754-846,1264-1288</code>).</li>
+<li><strong>Activation lifecycle:</strong> ComponentWrapper activation tests create /
+destroy mode-gated widgets and execute complete cleanup
+(<code>basics/component.mjs:724-803,1287-1334</code>).</li>
+</ul>
+<h3><a id="5-geometry-and-composition-measure" class="heading_anchor" href="#5-geometry-and-composition-measure" aria-hidden="true">#</a>5. Geometry and composition measure</h3>
+<h4><a id="data-flow" class="heading_anchor" href="#data-flow" aria-hidden="true">#</a>Data flow</h4>
+<ul>
+<li>TypeStage persistent dimensions are <code>width</code>/<code>height</code>
+(<code>type-stage/index.typeroof.jsx:325-326</code>); TypeSpec owns the
+horizontal-layout dynamic model (<code>type-spec/models.mjs:243-295</code>).</li>
+<li><code>availableSizesGen</code> resolves root LengthModels against environment
+facts to <code>layout/availableWidth</code> in pt
+(<code>node-properties-generators.mjs:43-85</code>; conversion in
+<code>length-models.mjs:114-172</code>).</li>
+<li>Manual geometry reads incoming available width + font sizes,
+converts units and computes local <code>columnWidth</code>, <code>width</code>, padding,
+gap (<code>node-properties-generators.mjs:109-228</code>). Runion performs the
+equivalent EN-domain solve (<code>:352-460</code>).</li>
+<li><code>layout/availableWidth ← layout/columnWidth</code> is demarcated for
+descendant inheritance rather than inserted as the current node’s
+local property (<code>node-properties-generators.mjs:572-584</code>;
+<code>node-properties.mjs:157-196</code>; <code>scope-resolution.mjs:86-142</code>).</li>
+<li>Document-node scopes use resolved TypeSpec + parent projected map
+(<code>document-nodes-meta/index.mjs:608-680</code>).</li>
+<li><code>composition-controller.ts:525-535</code> reads current node’s incoming
+<code>layout/availableWidth</code>, not local <code>layout/columnWidth</code>; the constant
+measure enters algorithm input at <code>:951-968</code> and ingredients.</li>
+</ul>
+<h4><a id="css-width-versus-composition-measure-verified-follow-up" class="heading_anchor" href="#css-width-versus-composition-measure-verified-follow-up" aria-hidden="true">#</a>CSS width versus composition measure (verified follow-up)</h4>
+<ul>
+<li><code>UIDocumentElement</code> provisions <code>UIDocumentTypeSpecStyler</code> with the
+same element as inner + outer target (<code>viewer.typeroof.jsx:248-360</code>).</li>
+<li><code>UIDocumentTypeSpecStyler.update()</code> layers node properties over
+TypeSpec facts, then maps <strong><code>layout/width</code> → CSS <code>width:&lt;pt&gt;</code></strong> on
+the outer element (<code>prosemirror/type-spec.typeroof.jsx:330-367, 375-450</code>). Multi-column inner CSS additionally maps
+<code>layout/columnWidth</code> to <code>column-width</code> and <code>layout/columnGap</code> to
+<code>column-gap</code> (<code>:485-505</code>). It does not style from
+<code>layout/availableWidth</code>.</li>
+<li>Manual geometry explicitly defines:
+<code>columnWidthPT = lineLengthPT ?? fill</code>,
+<code>widthPT = margins + n×columnWidth + gaps</code>; it yields local
+<code>layout/columnWidth</code> and local <code>layout/width</code>, and only projects
+<code>columnWidth</code> as descendant <code>availableWidth</code>
+(<code>node-properties-generators.mjs:520-584</code>).</li>
+<li>Composition reads current textblock <code>layout/availableWidth</code>
+(<code>composition-controller.ts:525-535</code>), not its local columnWidth.
+This is a correctness bug, not an open semantic choice: the existing
+AutoLinearLeading generator explicitly consumes local
+<code>layout/columnWidth</code> and documents it as “the node’s own computed
+line box”; <code>availableWidth</code> is the inherited parent input budget
+(<code>node-properties-generators.mjs:658-684</code>). Composition must consume
+that same already-computed authoritative line measure.</li>
+<li>Latest debug save
+<code>downloads/typeroof-20261005-115730.TypeStage.json</code> has stage width
+<code>100 percent-layout</code>, viewer mode, and a manual horizontal layout on
+<code>/typeSpec/children/paragraphs</code> with <code>lineLength: 60en</code>. Paragraph
+node types link beneath that TypeSpec. At each paragraph, local CSS
+width/columnWidth is the 60en manual result, while composition uses
+incoming parent availableWidth; only the paragraph’s children inherit
+the 60en value. This is the concrete Wikipedia misbehavior case the
+operator set aside for Cycle 1.</li>
+</ul>
+<h4><a id="why-jsdom-is-zero" class="heading_anchor" href="#why-jsdom-is-zero" aria-hidden="true">#</a>Why jsdom is zero</h4>
+<ul>
+<li><code>type-stage-toggles/harness.mjs:195-217</code> installs its own
+environment protocol and publishes all dimensions as
+<code>{width:0,height:0}</code> (dpr=1). It exposes no geometry option but does
+return the mutable handler (<code>:232-243</code>).</li>
+<li>The harness state omits TypeStage width, so coherence gives
+<code>100 percent-layout</code>; 100% of zero resolves to 0pt.</li>
+<li>Zero is numeric, so the controller’s fallback only for non-number
+(<code>composition-controller.ts:531-535</code>) does not run.</li>
+<li>The legacy state’s top-level lineLength is not a current
+TypeSpec/horizontalLayout field. Current fallback geometry is fill,
+still zero.</li>
+<li><code>type-stage-viewer-behavior/index.test.mjs:515-548</code> explicitly
+asserts zero is resolved, then republishes 400×300 CSS px and verifies
+300pt scope width.</li>
+</ul>
+<h4><a id="existing-controllable-pieces-and-tests" class="heading_anchor" href="#existing-controllable-pieces-and-tests" aria-hidden="true">#</a>Existing controllable pieces and tests</h4>
+<ul>
+<li>Harness <code>environmentHandler</code> is already mutable and update-markable.</li>
+<li>Root generator tests assert absolute/percent available widths
+(<code>node-properties.test.mjs:27-111</code>).</li>
+<li>Inline length conversion covers pt/px/cm/mm/in/em/en/base units
+(<code>type-spec/fundamentals.mjs:89-118</code>; tests <code>:9-61</code>).</li>
+<li>Pure runion tests cover fixed/variable/zero budgets
+(<code>horizontal-layout-runion.test.mjs:23-290</code>).</li>
+<li>Full-stack tests cover parent scope projection/fill and editor/viewer
+CSS width parity (<code>type-stage-viewer-behavior/index.test.mjs: 404-639</code>).</li>
+<li>No current test connects a deterministic nonzero scope measure to
+exact CompositionController breaks. The e2e composition test itself
+documents that break movement is not assertable under the tiny
+measure (<code>text-composition/index.test.mjs:732-737</code>).</li>
+</ul>
+<h3><a id="6-trackingcss-parity-surfaces" class="heading_anchor" href="#6-trackingcss-parity-surfaces" aria-hidden="true">#</a>6. Tracking/CSS parity surfaces</h3>
+<h4><a id="current-predictive-formula" class="heading_anchor" href="#current-predictive-formula" aria-hidden="true">#</a>Current predictive formula</h4>
+<ul>
+<li>Potentials define tracking as absolute pt per glyph and wordspace as
+a factor of natural space (<code>justification-potentials.ts:7-19</code>;
+<code>treatment-planner.ts:1-18</code>).</li>
+<li><code>treatment-planner.ts:41-46,88-123</code> maps normalized asymmetric step
+to treatment value, gates direction and toggles.</li>
+<li><code>composition-controller.ts:968-1025</code> reshapes each candidate segment
+at treated axes, then adds:</li>
+</ul>
+<pre class="language-text"><code class="language-text">letterSpacingPtAt(step) × (segment.end − segment.start)</code></pre>
+<p>plus wordspace for whitespace-only segments and conditional taken
+hyphen.</p>
+<ul>
+<li>Segment offsets come from JavaScript string indexing/<code>text.length</code>
+(<code>segmenter.ts:91-146</code>), so this is UTF-16 code-unit count.</li>
+<li>The controller applies tracking to every segment, including spaces;
+conditional hyphen width has no explicit tracking term.</li>
+</ul>
+<h4><a id="rendered-formula" class="heading_anchor" href="#rendered-formula" aria-hidden="true">#</a>Rendered formula</h4>
+<ul>
+<li>Viewer produces one span per leaf participating in a line, joining
+all that leaf’s line segments into one text node
+(<code>viewer.typeroof.jsx:661-682,755-764</code>).</li>
+<li>It recomputes treatment values and sets
+<code>--line-letter-spacing:&lt;pt&gt;</code> and word spacing
+(<code>viewer.typeroof.jsx:692-721</code>).</li>
+<li><code>line-spans.css:35-51</code> applies CSS <code>letter-spacing</code> and
+<code>word-spacing</code>; a taken hyphen is generated in <code>::after</code> under the
+same span.</li>
+</ul>
+<h4><a id="harfbuzz-data-available-today" class="heading_anchor" href="#harfbuzz-data-available-today" aria-hidden="true">#</a>HarfBuzz data available today</h4>
+<ul>
+<li><code>measurer.ts:154-199</code> currently returns/caches only width after
+shaping and discards glyph/cluster information.</li>
+<li>Vendored API exposes <code>Buffer.getLength</code>, <code>getGlyphInfos</code>,
+<code>getGlyphPositions</code>, <code>getGlyphInfosAndPositions</code>, <code>cluster</code>, and
+selectable cluster level (<code>vendor/harfbuzzjs/index.d.mts:16-23, 602-623</code>; implementation <code>index.mjs:1920-1997</code>).</li>
+<li><code>addText</code> uses UTF-16 input; default cluster level is monotone
+graphemes (<code>vendor/harfbuzzjs/.build/harfbuzzjs/src/buffer.ts: 56-63,108-123,204-212</code>).</li>
+<li>Vendored tests show <code>fi</code> becomes one glyph after shaping and
+<code>x\u0300fi</code> produces clusters <code>0,0,2</code>
+(<code>vendor/harfbuzzjs/.build/harfbuzzjs/test/index.test.js: 1507-1518,1533-1589</code>).</li>
+</ul>
+<h4><a id="existing-coverage-and-unresolved-observables" class="heading_anchor" href="#existing-coverage-and-unresolved-observables" aria-hidden="true">#</a>Existing coverage and unresolved observables</h4>
+<ul>
+<li>Treatment tests assert step values and axis width changes, not
+browser letter-spacing geometry
+(<code>treatment-planner.test.mjs:32-205</code>).</li>
+<li>Measurer tests cover axes, feature/ligature width, cache eviction and
+language without DOM (<code>measurer.test.mjs:71-138</code>).</li>
+<li>Integrated composition tests assert spacing properties exist, not
+rendered tracking width (<code>text-composition/index.test.mjs:803-865</code>).</li>
+<li>No current browser-vs-HarfBuzz tracking probe exists. Current code
+does not establish whether CSS spacing opportunities correspond to
+UTF-16 units, code points, grapheme clusters, HarfBuzz clusters,
+shaped glyphs, or boundary-sensitive span behavior.</li>
+<li>TypeStage simple style patches do not currently expose baseline
+letter/word spacing, although global registered properties and actor
+renderers do (<code>registered-properties.mjs:405-418</code>;
+<code>actors/models.mjs:117-125</code>; <code>actors/line-of-text.mjs:95-99</code>).</li>
+</ul>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<h3><a id="performance-1" class="heading_anchor" href="#performance-1" aria-hidden="true">#</a>Performance</h3>
+<ul>
+<li><code>scripts/perf-composition:1-271</code> — current aggregate browser
+benchmark and baseline workflow.</li>
+<li><code>scripts/perf-composition.baseline.json</code> — current Greedy Fit
+baseline.</li>
+<li><code>composition-controller.ts:763-831</code> — late ingredient filter.</li>
+<li><code>composition-controller.ts:968-1025</code> — candidate reshaping callback.</li>
+<li><code>greedy-fit.ts:36-260</code> — binary searches and repeated probes.</li>
+<li><code>measurer.ts:89-199</code> — caches and HarfBuzz miss path.</li>
+<li><code>viewer.typeroof.jsx:593-767</code> — applicator/span work.</li>
+<li><code>docs/planning/performance-investigation-viewer-update-propagation-260820.md</code>
+— historical profiling record (no current executable harness).</li>
+</ul>
+<h3><a id="demand-1" class="heading_anchor" href="#demand-1" aria-hidden="true">#</a>Demand</h3>
+<ul>
+<li><code>type-stage/index.typeroof.jsx:650-757</code> — widget ordering and mode
+activation.</li>
+<li><code>document-nodes-meta/index.mjs:769-859</code> — composition drives and
+destruction unpublication.</li>
+<li><code>composition-controller.ts:464-497,1067-1105</code> — None/no-HB gates,
+publication and unpublication.</li>
+<li><code>basics/component.mjs:171-245</code> — protocol values/updates, no
+subscriber accounting.</li>
+<li><code>document-nodes-meta/index.mjs:60-120,1191-1217</code> — explicit renderer
+attach/detach token lifecycle.</li>
+<li><code>prosemirror/type-spec.typeroof.jsx:1434-1472,1561-1709</code> — existing
+first/last demand-driven observer pattern.</li>
+</ul>
+<h3><a id="geometry" class="heading_anchor" href="#geometry" aria-hidden="true">#</a>Geometry</h3>
+<ul>
+<li><code>type-stage-toggles/harness.mjs:195-243</code> — zero environment and
+exposed handler.</li>
+<li><code>node-properties-generators.mjs:43-85,109-228,352-460,572-584</code> —
+available sizes, manual/runion geometry and inheritance projection.</li>
+<li><code>node-properties.mjs:157-196</code> — effective/local/inherited maps.</li>
+<li><code>composition-controller.ts:525-535,951-968</code> — selected line measure.</li>
+<li><code>type-stage-viewer-behavior/index.test.mjs:404-548</code> — projection and
+mutable nonzero environment precedent.</li>
+</ul>
+<h3><a id="tracking-1" class="heading_anchor" href="#tracking-1" aria-hidden="true">#</a>Tracking</h3>
+<ul>
+<li><code>justification-potentials.ts:7-19</code> — units/meaning.</li>
+<li><code>treatment-planner.ts:41-123</code> — step mapping.</li>
+<li><code>composition-controller.ts:968-1025</code> — predictive formula.</li>
+<li><code>viewer.typeroof.jsx:692-764</code>; <code>line-spans.css:35-51</code> — rendered
+formula and span boundaries.</li>
+<li><code>measurer.ts:154-199</code>; <code>vendor/harfbuzzjs/index.d.mts:16-23,602-623</code>
+— discarded versus available shape information.</li>
+</ul>
+<h2><a id="operator-decisions--design-requirements" class="heading_anchor" href="#operator-decisions--design-requirements" aria-hidden="true">#</a>Operator decisions / design requirements</h2>
+<ul>
+<li><strong>Demand granularity: per textblock result</strong> (<code>composition@&lt;path&gt;</code>),
+not one global applicator subscription and not one subscription per
+text leaf. One viewer textblock attachment owns one token while its
+text runs share the payload; future editor/other applicators can
+subscribe independently. Resolved per-node TypeSpec remains the
+authority for algorithm/None after demand exists.</li>
+<li><strong>Explicit source + consumer lifecycle</strong> is required for a durable
+implementation: meta textblocks register/unregister their current
+drive/source; consumers subscribe/unsubscribe by textblock path;
+first demand requests the current result; demanded source changes
+re-drive; last demand stops work; source destruction invalidates.
+This can live as an ID-addressed domain service without adding
+subscriber semantics to SimpleProtocolHandler.</li>
+<li><strong>Sync + genuinely cooperative async execution</strong> should be designed
+into the lifecycle. Promise-wrapping synchronous work does not
+unblock UI. Textblock/logical-paragraph boundaries already provide
+scheduling points; a generator/task runner analogous to resource
+loading could be drained synchronously or resumed asynchronously.
+Initial compose-before-reveal may request sync; steady-state dirty
+nodes may request async. Async requires immutable-input/staleness
+checks. The synchronous path remains a first-class performance
+target.</li>
+<li><strong>Last consumer drops state immediately.</strong> On 1→0 demand, cancel
+pending work, unregister <code>composition@&lt;path&gt;</code>, discard ingredients /
+source/result state and notify disappearance where relevant. No
+dormant published result or private cache in this cycle; profile
+reactivation later before adding cache/eviction complexity.</li>
+<li><strong>Async demand + explicit sync reveal/flush.</strong> Persistent demand is
+scheduling-neutral. Cooperative async is acceptable for first
+composition and is the normal steady-state update mode; textblocks
+may publish out of document order. A lazy viewer may stay visible
+with browser wrapping until each first result arrives. Sync remains
+an explicit <code>flushSync</code>/sync-reveal policy for callers that require
+compose-before-reveal, and remains a first-class optimized/
+benchmarked path. Async tasks must reject stale immutable inputs;
+last-unsubscribe/source destruction cancels immediately.</li>
+<li><strong>Viewer publishes/renders an atomic completed snapshot.</strong> The viewer
+need not mirror the editor’s newest model state while async work is
+pending: it may keep the last complete source+composition snapshot
+and atomically switch when the result for a newer immutable source
+is ready. The payload therefore must carry the exact leaf text/source
+it composed, rather than offsets interpreted against independently
+updated attachment text. With no prior snapshot, lazy reveal may use
+browser-wrapped current content; sync reveal flushes first. Structural
+deletion/retyping still removes attachments normally.</li>
+<li><strong>ProseMirror policy stays open.</strong> A future applicator may use browser
+composition for the focused/actively edited block and asynchronously
+compose inactive blocks, but Cycle 1 must not bake in this unproven
+editor policy.</li>
+<li><strong>Profiling starts external; hooks, if required, are generic and
+opt-in.</strong> First use CDP CPU/trace profiles + scenario control without
+production changes. If attribution or structural zero-work tests need
+hooks, build a sustainable cross-subsystem instrumentation facility,
+not composition-specific counters: guarded/no-op <code>count(id)</code> and
+<code>timerStart(id)</code>/<code>timerStop(id)</code> calls when no collector is installed;
+a central reset/snapshot/scenario-aware collector when enabled. Metric
+IDs and purposes must be documented (meaning, unit/scope, lifecycle,
+kind and observer effect). Prefer structural metric assertions over
+wall-clock tests.</li>
+<li><strong>Benchmark sampling convention.</strong> Cold activation/transitions: five
+independent fresh-page samples (median + range, first-result and
+all-demanded completion where applicable). Steady state: independent
+identical state per arm, five warmup edits then 30 individually timed
+edits; report median, p95/max, total and aggregate regression ratio.
+Alternate arm order across repetitions to reduce drift. Capture one
+representative CDP CPU profile for cold and one for warm work, not
+every sample; include structural metrics when available.</li>
+<li><strong>Tracking prediction has a TypeRoof/HarfBuzz contract, not a browser
+screenshot oracle.</strong> Use a simple deterministic shaping-derived
+spacing model and apply CSS letter-spacing correctly. Browser/OS
+engines may differ (including whether nonzero spacing decomposes an
+<code>fi</code> ligature); such disagreement may remain visibly diagnostic.
+Cross-product screenshot capture over macOS/Windows/Linux and
+Safari/Firefox/Chrome is explicitly not an acceptance/ACID test. A
+local browser probe may explain a case but does not define the
+contract. If tighter parity becomes necessary later, direct rendering
+or a redesigned applicator are legitimate responses.</li>
+<li><strong>Tracking opportunities are shaped-glyph gaps.</strong> A line with N
+visible shaped glyphs has N−1 tracking increments: one between each
+adjacent pair, none after the final glyph. Segment/run boundaries
+remain continuous; the preceding run owns the cross-run gap. A
+ligated <code>fi</code> remains one glyph unless shaping features disable the
+ligature—tracking does not implicitly disable ligatures this cycle.
+A taken end hyphen is the final visible glyph: the preceding source
+glyph receives the tracking gap before it; the hyphen receives no
+trailing gap. A one-glyph line has zero tracking width.</li>
+<li><strong>Controlled Host fixture uses manual absolute geometry.</strong> Its purpose
+is text-composition correctness, not fluid-column/runion testing:
+publish realistic 1920px screen / 1600px layout facts, then put an
+explicit <code>ManualHorizontalLayoutModel</code> with 280pt lineLength on a
+paragraph inside the much wider 1200pt parent. Assert CSS/local
+<code>layout/columnWidth</code> and composition all use 280pt; parent incoming
+<code>availableWidth</code> remains distinguishable. Include 280→220pt break
+changes, exact Greedy Ragged boundaries, Greedy Fit target tolerance,
+and a nested no-override child inheriting projected column width.</li>
+<li><strong>Small cooperative task abstraction now; finer checkpoints later.</strong>
+Define/document one task protocol that can be drained synchronously
+or resumed asynchronously with work-budget, cancellation and immutable
+staleness checks. Keep upfront cost low: checkpoint only between Host
+phases/logical paragraphs; do not rewrite Greedy Fit internals.
+Schedule continuation through a rendering-friendly task boundary, not
+an unbounded microtask chain, and publish only complete atomic
+snapshots. Preserve a low-overhead direct sync path and benchmark the
+runner overhead. KP++ later adds candidate-batch/search checkpoints
+behind the same protocol.</li>
+<li><strong>Reveal mode is renderer/widget configuration, not document state.</strong>
+Configure <code>UIDocumentViewer</code> at its TypeStage widget declaration
+(<code>lazy</code> default, <code>sync</code> option) via constructor/settings arguments.
+This is deployment/rendering policy, so Cycle 1 adds no TypeStage
+model field, PPS/UI or serialization. Promote it to runtime/authored
+state only if later use demonstrates that need.</li>
+</ul>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<p>No operator-level design questions remain for plan creation. Resolved
+in review:</p>
+<ul>
+<li>per-textblock demand with explicit meta source + applicator consumer
+lifecycle;</li>
+<li>immediate cancellation/unpublication/state drop on last consumer;</li>
+<li>cooperative async by default, explicit sync reveal/flush, atomic
+viewer source+composition snapshots, ProseMirror policy deferred;</li>
+<li>external profiling first, generic opt-in instrumentation only when
+needed, with documented metric purposes;</li>
+<li>five-sample cold/transition and 5-warmup+30-sample steady-state
+benchmark convention;</li>
+<li>authoritative textblock measure is the existing local
+<code>layout/columnWidth</code> (same fact consumed by AutoLinearLeading);</li>
+<li>deterministic manual 280pt Host fixture inside realistic 1600px
+layout environment;</li>
+<li>TypeRoof/HarfBuzz tracking contract: N−1 gaps between visible shaped
+glyphs, continuous across segments/runs, taken hyphen final, no
+implicit ligature decomposition;</li>
+<li>minimal cooperative task abstraction now (Host-phase/logical-
+paragraph checkpoints), KP++ search checkpoints later.</li>
+</ul>
+<p>Implementation-level API naming, scheduler primitive and profiler hook
+shape remain plan details, to be chosen against current framework
+patterns and verified by the performance investigation.</p>
+<h2><a id="phase-1-performance-investigation-2026-10-05" class="heading_anchor" href="#phase-1-performance-investigation-2026-10-05" aria-hidden="true">#</a>Phase 1 performance investigation (2026-10-05)</h2>
+<p>Phase 1 replaced the single aggregate Fit-versus-None burst with a
+machine-readable Puppeteer/CDP harness. The harness stages immutable
+fixtures for every editor/viewer/compare and None/Ragged/Fit arm, fails
+unless the state is exactly 1,087 text leaves with the TypeStage layout
+and requested mode/algorithm, and records the 1920×1080 viewport plus
+measured layout geometry. It covers cold load, typing, relevant and
+irrelevant style edits, full recomposition, renderer-mode transitions,
+and algorithm transitions. Full mode uses five fresh cold samples and
+5 warmups + 30 individually timed edits; quick mode reduces those
+counts without changing the matrix. Generated JSON and CPU profiles are
+under ignored artifacts/perf-composition/.</p>
+<p>The first external CDP profile required no production instrumentation.
+A representative editor-only Greedy Fit cold load was dominated by
+Measurer cache maintenance and HarfBuzz extraction:</p>
+<ul>
+<li>Measurer._cacheSet: 2,010 ms + 646 ms + 638 ms self time;</li>
+<li>HarfBuzz getGlyphInfosAndPositions remained among the dominant named stacks;</li>
+<li>Measurer cache lookup and measureEm remained visible;</li>
+<li>garbage collection remained material.</li>
+</ul>
+<p>This confirms that editor-only composition performs substantial shaping
+and cache work although it has no applicator. The warm viewer Greedy Fit
+full-recompose profile was much flatter (largest named samples included
+scope resolution and DOM style writes at about 5 ms self each); its
+501 ms program bucket means CPU sampling alone
+cannot cleanly split the synchronous transaction. Publication
+completion is therefore also captured externally by intercepting the
+controller’s existing publication log until Phase 2 introduces a stable
+demand seam. No generic production hooks were added in Phase 1.</p>
+<p>The checked-in milestone-4 baseline remains historical context rather
+than the new baseline: at commit 521db920, 30-edit viewer Greedy Fit
+bursts measured typing 4,232.7 ms versus None 4,162.2 ms (1.017x), and
+full recomposition 9,216 ms versus None 7,278.6 ms (1.266x). Cycle 1
+writes a replacement demand-aware baseline only in Phase 6 after the
+lifecycle, scheduling, measure, and tracking contracts are complete.</p>
+<p>The original exhaustive before run completed on Chrome 152 with a
+1920x1080 viewport and verified 1600px layout. It contains 45 cold
+samples (five per mode/algorithm arm) and 54 scenarios that originally
+applied the steady 5+30 convention to transitions as well. Review found
+that made the run unacceptably long; the corrected harness treats
+transitions as five independent samples and reserves 5+30 for steady
+operations only. Median cold shell-ready time was 5.36-6.78s
+for None/Ragged and 12.07-13.05s for Fit. Active algorithms first
+published at about 2.4-2.6s; Ragged completed all publications at
+3.39-3.65s, while Fit required 9.15-9.58s. None emitted no publications.</p>
+<p>Representative steady medians in milliseconds (None / Ragged / Fit):</p>
+<table>
+<thead>
+<tr>
+<th>operation</th>
+<th style="text-align:right">editor</th>
+<th style="text-align:right">viewer</th>
+<th style="text-align:right">compare</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>typing</td>
+<td style="text-align:right">247.1 / 256.6 / 266.5</td>
+<td style="text-align:right">239.4 / 240.7 / 261.5</td>
+<td style="text-align:right">274.9 / 273.6 / 280.5</td>
+</tr>
+<tr>
+<td>shadowed style (originally mislabeled relevant)</td>
+<td style="text-align:right">372.0 / 470.3 / 486.5</td>
+<td style="text-align:right">408.4 / 514.5 / 527.0</td>
+<td style="text-align:right">588.8 / 718.9 / 717.3</td>
+</tr>
+<tr>
+<td>irrelevant style</td>
+<td style="text-align:right">419.9 / 533.2 / 525.8</td>
+<td style="text-align:right">453.9 / 569.5 / 574.4</td>
+<td style="text-align:right">646.1 / 762.7 / 775.6</td>
+</tr>
+<tr>
+<td>inherited-style partial recompose (10/209 blocks)</td>
+<td style="text-align:right">437.9 / 546.5 / 575.2</td>
+<td style="text-align:right">440.6 / 566.8 / 580.4</td>
+<td style="text-align:right">701.6 / 842.7 / 837.3</td>
+</tr>
+</tbody>
+</table>
+<p>Review found that the original relevant-style target was shadowed by the
+linked t1/t2 TypeSpecs and published nothing, while the root font-size
+edit reached only 10 of 209 textblocks. Those values are retained as
+historical evidence of update/equality cost, not authoritative relevant
+style or whole-document measurements. The harness now targets the
+consumed paragraphs/t1 value, names the ten-block case explicitly, and
+validates publication counts for every workload. Transitions now follow
+the five-independent-sample convention rather than the steady 5+30
+loop, and the default quick command uses representative arms only.</p>
+<p>Editor-only active composition is therefore measurable despite having
+no applicator: aggregate Ragged/Fit ratios versus None were 1.046/1.079
+for typing, 1.253/1.313 for relevant style, 1.405/1.267 for irrelevant
+style, and 1.250/1.348 for full recomposition. Transitioning to Fit was
+the conspicuous worst case: 7.21s editor, 7.40s viewer and 7.58s compare
+median, versus 0.67-1.03s for Ragged. The validated machine-readable
+result remains generated evidence at /tmp/perf-composition-full.json;
+it is not a repository baseline.</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

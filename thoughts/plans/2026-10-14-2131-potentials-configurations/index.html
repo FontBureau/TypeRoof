@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="named-justification-potentials-configurations--implementation-plan" class="heading_anchor" href="#named-justification-potentials-configurations--implementation-plan" aria-hidden="true">#</a>Named Justification-Potentials Configurations — Implementation Plan</h1>
+<p>status: concluded (2026-10-16 15:43, operator “wrap it up now”)</p>
+<p>date: 2026-10-14T21:31:00+02:00
+research: thoughts/research/2026-10-14-1810-potentials-configurations.md
+branch: feature/composition-and-justification</p>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Selectable justification potentials for BOTH greedy-fit and
+knuth-plass: <code>potentials</code> = “auto” (today’s best-fit discovery) or a
+named configuration (first: the headline wdth-narrowing tables,
+folded from the varla-varfo <code>WDTH_JUSTIFICATION_SPECS</code> stub into the
+unified potentials structure with a real dflt slot). Named selection
+is maximally graceful: no family/axis gating, missing navigation
+dimensions filled from table-declared <code>defaultLocations</code> or manual
+overrides, treated axes the font lacks applied anyway (no-ops). The
+treatment config generalizes: ONE toggle surface for axis tags and the
+pseudo-axes <code>tracking</code>/<code>wordspace</code>. Anchoring becomes a triple option
+(run / font / off).</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li><code>justification-potentials.ts</code>: <code>PotentialsTable</code> :42 (dimensions +
+tree), <code>validatePotentialsTable</code> :66 (leaf key-set uniformity,
+triple ordering, monotonic levels; validated at module load),
+<code>calculatePotentials</code> :164 (throws when the location misses a
+dimension — discovery guarantees presence for auto),
+<code>anchorPotentialsToLocation</code> :247 (dflt := run value, min/max
+shifted, clamped to font.axisRanges; absent axis keeps the authored
+triple), <code>_POTENTIALS_REGISTRY</code> :549 + <code>discoverPotentials</code> :586
+(best-fit: longest family prefix, then most required axes; ALL
+navigated/treated axes must exist in font.axisRanges).</li>
+<li><code>treatment-planner.ts</code>: <code>TreatmentPlannerConfig</code> :29
+{treatments: ReadonlySet<string>, direction}, defaults :36 =
+{XTRA, tracking, wordspace} + “both”; <code>createTreatmentStepper</code> :84
+is already generic over any tag names (4-char convention separates
+re-anchorable axes from the named pseudo-axes).</string></li>
+<li><code>composition-controller.ts</code>: <code>greedyFitConfig</code> :989-1022 (toggles
+-&gt; treatments set), <code>plannerConfig = greedyFitConfig ?? TREATMENT_PLANNER_DEFAULTS</code> :1091, <code>plannerOf(style)</code> :1101-1120
+(discover -&gt; calculate -&gt; anchor -&gt; stepper; table identity joins
+the ingredients filter), <code>axesAtStep</code> :1316-1331 (replaces values
+ONLY for tags already in style.axesEntries — treated axes the font
+lacks are dropped from measurement), payload :1626-1650.</li>
+<li>Properties/metamodel path: struct models
+<code>type-spec/text-composition-models.mjs</code> (GreedyFit :66-75, KP
+:108-172, dynamic registration with labels :185ff); field lists in
+<code>properties-generators.mjs</code> <code>textCompositionGen</code> :52-108 (yields
+<code>textCompositionAlgorithm/&lt;field&gt;</code>); widget map
+<code>type-driven-ui.mjs</code> <code>uiElementsMap</code> :243ff (enum -&gt; UISelectInput,
+StringModel -&gt; UILineOfTextInput, list precedent
+CharGroupArgumentsListModel -&gt; UITypeDrivenListWithAddButton,
+ordered-map precedent AxesMathAxisLocationsModel -&gt; UIAxesMathLocation).</li>
+<li>Graceful application is already in place: measurement drops
+unknown axes (axesAtStep), rendering writes font-variation-settings
+(font ignores unsupported axes), HB/CSS both clamp out-of-range
+values to fvar — measurement/render parity holds by construction.</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<ol>
+<li><code>potentials</code> selectable per typeSpec on both greedy-fit and
+knuth-plass: “auto” (default, behavior byte-identical to today) or
+one of <code>robotoFlexText</code> / <code>robotoFlexHeadline</code> / <code>amstelvarText</code> /
+<code>amstelvarHeadline</code>.</li>
+<li>Headline tables carry the stub semantics: natural state = the WIDE
+end (wdth 151 / 125), narrowing-only by construction:
+<code>{ wdth: [35, 151, 151] }</code> / <code>{ wdth: [50, 125, 125] }</code>, flat
+leaves, provenance comments incl. the widening FIXME.</li>
+<li><code>PotentialsTable.defaultLocations</code> (parallel to dimensions):
+missing navigation dimensions resolve from it; manual overrides
+(ordered map tag -&gt; number, fill-only) take precedence.</li>
+<li><code>potentialsAnchoring</code>: “run” (default, status quo: dflt := the
+run’s resolved value, step 0 = no change) | “font” (the WHOLE
+resolution — leaf navigation AND anchoring — at the font’s default
+location: one stable anchor per font, shared by all runs) |
+“off” (navigate at the run’s location, apply the authored triple
+verbatim — the configuration asserts its natural state).</li>
+<li><code>treatments</code>: list of DISABLED treatment tags (axis tags + the
+pseudo-axes <code>tracking</code>/<code>wordspace</code>); set semantics, coherence
+dedupes and prunes entries not offered by the selected NAMED
+configuration (auto is font-dependent: no pruning there; unknown
+tags ignored gracefully at resolution). Empty list = all on.</li>
+<li>The generated selection doc string (“the potential is selected
+by: opsz(14), wght(400), wdth(100)”) travels with the payload.</li>
+<li>No changes to the pure algorithms; no migration for dropped
+struct fields (in-repo documents are updated directly; a
+deserialization check documents that unknown fields drop
+silently).</li>
+</ol>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>Editable/document-scoped potentials storage + metamodel (stays
+code-level; the ROADMAP’s open deferred item).</li>
+<li>Advanced selection schemes (family + useCase auto-selection).</li>
+<li>KP treatment/anchoring UI beyond the three shared fields (KP
+keeps planner defaults for treatments; exposing the list later is
+trivial).</li>
+<li>Per-treatment impact weights / ordering; inter-line harmonization.</li>
+<li>Any migration code for <code>treatmentXTRA</code>/<code>treatmentTracking</code>/
+<code>treatmentWordspace</code>.</li>
+<li>Perf harness (OFF LIMITS per operator rule 2026-10-06).</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Bottom-up in dependency order: data + resolution, planner config,
+metamodel/UI, controller wiring — each phase independently verifiable
+(the algorithm contract stays pure throughout). The five design picks
+settled with the operator: clean ordered map for overrides; validated
+StringModel items for the treatments list; doc string in the payload;
+anchoring governs auto AND named (default “run” = status quo); “font”
+mode resolves leaf AND anchor at the font defaults.</p>
+<h2><a id="phase-1-data--resolution-justification-potentialsts" class="heading_anchor" href="#phase-1-data--resolution-justification-potentialsts" aria-hidden="true">#</a>Phase 1: Data &amp; resolution (justification-potentials.ts)</h2>
+<h3><a id="changes" class="heading_anchor" href="#changes" aria-hidden="true">#</a>Changes</h3>
+<ol>
+<li><code>PotentialsTable</code> gains <code>defaultLocations: number[]</code> (parallel to
+<code>dimensions</code>; the modeling font’s defaults).</li>
+<li><code>validatePotentialsTable</code>: require
+<code>defaultLocations.length === dimensions.length</code> and finite values.</li>
+<li><code>calculatePotentials</code>: for each dimension, <code>location.get(dim)</code> —
+when absent use <code>table.defaultLocations[depth]</code>; absent from BOTH
+throws (config error). Auto is unaffected (its discovery gate
+guarantees presence; the fill never triggers there).</li>
+<li>New headline tables (flat leaves, verbatim provenance comments):
+<code>JUSTIFICATION_POTENTIALS_ROBOTO_FLEX_HEADLINE =   { dimensions: [], defaultLocations: [], tree: { wdth: [35,151,151] } }</code>
+<code>JUSTIFICATION_POTENTIALS_AMSTELVAR_HEADLINE =   { dimensions: [], defaultLocations: [], tree: { wdth: [50,125,125] } }</code></li>
+<li>Text tables declare their defaultLocations (Roboto Flex: wght 400,
+wdth 100, opsz 14 per [wght,wdth,opsz]; Amstelvar equivalents) —
+VERIFY against the shipped fonts’ fvar during implementation.</li>
+<li>Named-configuration map + selection resolution:
+<code>POTENTIALS_CONFIGURATIONS: { [key: string]: PotentialsTable }</code>
+(robotoFlexText/Headline, amstelvarText/Headline);
+<code>resolvePotentialsSelection(selection, font): PotentialsTable | null</code>
+— “auto” -&gt; today’s <code>discoverPotentials</code> (registry = the Text
+pair, identical to current behavior); named -&gt; the mapped table
+(no family matching, no axis gate; unknown key -&gt; warn + auto).</li>
+<li>Anchoring modes — <code>anchorPotentialsToLocation</code> unchanged; the
+mode selects WHERE it anchors (controller-side, see Phase 4).
+Location builders exported for reuse:
+<ul>
+<li>run: today’s <code>new Map(style.axesEntries)</code></li>
+<li>font: font-default location (all axes at axisRanges[tag].default)</li>
+<li>off: run location for navigation, anchoring skipped</li>
+</ul>
+</li>
+<li><code>potentialsSelectionString(table, location)</code>: the generated doc
+string in the table’s dimension order.</li>
+</ol>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h3>
+<ul>
+<li>[x] <code>npm run test</code> passes: justification-potentials.test.mjs
+extended — defaultLocations validation; flat-leaf tables pass
+validation; fill-in from defaults for font-lacking dimensions;
+named resolution returns the table regardless of font;
+headline triples anchor/run/font/off behave as specified
+(run: step-0 identity; off: authored verbatim; font: stable
+per font). NOTE: “off” and “font” anchoring MODES are applied
+controller-side (Phase 4); Phase 1 delivers the location
+builder + the unchanged anchor function, both tested.</li>
+<li>[x] <code>npm run typecheck</code>, <code>npm run lint</code> pass.</li>
+</ul>
+<p><strong>Pause point:</strong> proposed commit, operator confirmation.</p>
+<h2><a id="phase-2-treatment-planner-generalization-treatment-plannerts" class="heading_anchor" href="#phase-2-treatment-planner-generalization-treatment-plannerts" aria-hidden="true">#</a>Phase 2: Treatment Planner generalization (treatment-planner.ts)</h2>
+<h3><a id="changes-1" class="heading_anchor" href="#changes-1" aria-hidden="true">#</a>Changes</h3>
+<ol>
+<li><code>TreatmentPlannerConfig</code> -&gt; <code>{ treatments: &quot;all&quot; | ReadonlySet&lt;string&gt;; direction: &quot;both&quot; | &quot;narrowing&quot; | &quot;widening&quot; }</code>
+— the set may contain axis tags AND the pseudo-axes
+“tracking”/“wordspace”; <code>TREATMENT_PLANNER_DEFAULTS</code> =
+<code>{ treatments: &quot;all&quot;, direction: &quot;both&quot; }</code>.</li>
+<li><code>createTreatmentStepper</code>: enabled per leaf key =
+<code>config.treatments === &quot;all&quot; || config.treatments.has(key)</code>;
+axis vs pseudo-axis distinction stays via the 4-char convention
+(only real axes re-anchor; tracking/wordspace remain dflt-0
+treatments).</li>
+<li><code>treatmentValuesAtStep</code> follows the new config shape.</li>
+</ol>
+<p>Behavioral no-op for existing callers (defaults equivalent to the
+old trio for the current tables).</p>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria</h3>
+<ul>
+<li>[x] treatment-planner.test.mjs updated: “all” default, explicit
+sets incl. pseudo-axes, direction gating unchanged, wdth axis
+treatment maps correctly. (14 tests; full composition suite
+154 + integration 19 green — behavioral no-op confirmed.)</li>
+<li>[x] typecheck/lint pass.</li>
+</ul>
+<p><strong>Pause point:</strong> proposed commit, operator confirmation.</p>
+<h2><a id="phase-3-metamodel-properties--ui" class="heading_anchor" href="#phase-3-metamodel-properties--ui" aria-hidden="true">#</a>Phase 3: Metamodel, properties &amp; UI</h2>
+<h3><a id="changes-2" class="heading_anchor" href="#changes-2" aria-hidden="true">#</a>Changes</h3>
+<ol>
+<li><code>type-spec/text-composition-models.mjs</code>:
+<ul>
+<li><code>PotentialsSelectionModel</code> = enum
+[“auto”, “robotoFlexText”, “robotoFlexHeadline”,
+“amstelvarText”, “amstelvarHeadline”], default “auto” + OrEmpty.</li>
+<li><code>PotentialsAnchoringModel</code> = enum [“run”, “font”, “off”],
+default “run” + OrEmpty.</li>
+<li><code>PotentialsLocationOverridesModel</code> = _AbstractOrderedMapModel
+with number items and <code>validateKeyFn: validateOpenTypeTagString</code>
+(clean model — no logicalValue cruft; see pick 1).</li>
+<li><code>TreatmentTagModel</code> = StringModel subclass validating 4-char
+OpenType tags or “tracking”/“wordspace”;
+<code>TreatmentsOffListModel</code> = list of TreatmentTagModel.</li>
+<li>GreedyFit struct: DROP treatmentXTRA/treatmentTracking/
+treatmentWordspace; ADD [“potentials”, …OrEmpty],
+[“potentialsLocationOverrides”, PotentialsLocationOverridesModel],
+[“potentialsAnchoring”, …OrEmpty], [“treatments”,
+TreatmentsOffListModel]; keep direction, colorCoding.</li>
+<li>KnuthPlass struct: ADD potentials, potentialsLocationOverrides,
+potentialsAnchoring (same models).</li>
+<li>CoherenceFunction on both structs
+([“treatments”, “potentials”]): dedupe the list; when
+<code>potentials</code> is a NAMED selection, remove entries not offered
+by that configuration’s table; when “auto” (font-dependent),
+leave the list (resolution ignores unknown tags gracefully).
+Mutation precedent: SimpleStylePatchModel’s autoOPSZ
+coherence (type-spec/models.mjs :439-444); list item removal
+API to verify during implementation.</li>
+</ul>
+</li>
+<li><code>properties-generators.mjs</code> <code>textCompositionGen</code> :52-108: add
+the new fields to the greedy-fit and knuth-plass field lists.
+Check registered-properties.mjs :429 for required registrations.</li>
+<li>Widget mapping (<code>type-driven-ui.mjs</code> uiElementsMap):
+<ul>
+<li>enums + StringModel render via existing mappings;</li>
+<li>TreatmentsOffListModel -&gt; UITypeDrivenListWithAddButton
+(CharGroupArgumentsListModel pattern);</li>
+<li>PotentialsLocationOverridesModel: follow the
+AxesMathAxisLocationsModel -&gt; UIAxesMathLocation pattern if the
+item UI can degrade to a plain number input, else a minimal
+tag-&gt;number map widget (same _UIBaseMap family).</li>
+</ul>
+</li>
+<li><code>ui-text-composition.typeroof.jsx</code>: verify the dynamic struct
+container picks up the new field types (FieldType map may need
+the new models listed).</li>
+</ol>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria</h3>
+<ul>
+<li>[x] type-spec/model.test.mjs extended: fields resolve; OrEmpty
+inherit; coherence dedupes + prunes (named) / leaves (auto);
+a document serialized with treatmentXTRA loads cleanly
+(field dropped silently). (4 new tests; full suite 569 green.)</li>
+<li>[x] typecheck/lint/test pass. NOTE (implementation): the
+treatments item model needed identity serializeFN/deserializeFN
+(createClass config REPLACES the base config, does not merge) —
+caught by the round-trip test. UI: option B widget
+ui-potentials-location-overrides.mjs (UIPotentialsLocationOverrides
++ UIPotentialsOverrideValue, the _UIBaseAxesMap pattern with
+plain number values) + uiElementsMap entries for the list
+(UITypeDrivenListWithAddButton) and the map; dropped legacy
+toggles from the struct (interim: the controller’s ?? true
+fallback yields the equivalent all-on defaults).
+OPERATOR QA (2026-10-14 22:24) surfaced two UI defects, both
+fixed: (1) the treatments item had no registered UI element —
+StringModel’s uiElementsMap entry does not cover subclasses and
+UITypeDrivenListItem only falls back to struct-field walking, so
+the “+ disable treatment” click crashed; fix: a dedicated
+[PotentialsTreatmentTagModel -&gt; UILineOfTextInput] entry (the
+model needed exporting). (2) The overrides map’s add-tag button
+was rendered but hidden: .ui_base_map-tools &gt; * { display: none }
+requires a family-specific reveal rule; fix:
+.ui_potentials-location_overrides-tools &gt; * { display: initial }.
+Regression coverage: scripts/puppeteer-probes/qa-milestone6-panels.mjs
+(panel widgets, off-list typing commit, coherence pruning via the
+potentials select, overrides tag-&gt;number commit, zero console
+errors) — passing; KP named-fields round-trip added to
+type-spec/model.test.mjs. Full suite 569 green, typecheck/lint/
+stylelint clean.</li>
+</ul>
+<p><strong>Pause point:</strong> proposed commit, operator confirmation.</p>
+<h2><a id="phase-4-controller-wiring-composition-controllerts" class="heading_anchor" href="#phase-4-controller-wiring-composition-controllerts" aria-hidden="true">#</a>Phase 4: Controller wiring (composition-controller.ts)</h2>
+<h3><a id="changes-3" class="heading_anchor" href="#changes-3" aria-hidden="true">#</a>Changes</h3>
+<ol>
+<li>Resolve the shared potentials config for BOTH algorithm keys
+(extend the greedyFitConfig/knuthPlassConfig blocks):
+<code>potentials</code> (OrEmpty -&gt; “auto”), <code>potentialsAnchoring</code>
+(-&gt; “run”), <code>potentialsLocationOverrides</code> (ordered map -&gt;
+[tag, number][]).</li>
+<li><code>plannerOf(style)</code> rework:
+<ul>
+<li>table = <code>resolvePotentialsSelection(selection, style.font)</code>
+(auto = today’s discoverPotentials);</li>
+<li>location per anchoring mode: “run” -&gt; new Map(axesEntries);
+“font” -&gt; font-default location; “off” -&gt; axesEntries for
+navigation only;</li>
+<li>override fill: for each table dimension ABSENT from the working
+location (font lacks the axis), use override[tag] if present,
+else table.defaultLocations (fill-only — entries for axes the
+font carries are ignored, protecting step-0 identity);</li>
+<li>anchor per mode: “run”/“font” -&gt; anchorPotentialsToLocation
+against the mode’s location (status quo for “run”);
+“off” -&gt; skip (authored triple verbatim);</li>
+<li>stepper with the generalized config; spaceAdvancePt unchanged.</li>
+</ul>
+</li>
+<li>Treatment config: greedy-fit -&gt; treatments set = leaf keys minus
+the off-list (“all” when empty), direction from the struct;
+KP -&gt; TREATMENT_PLANNER_DEFAULTS. The set (incl. pseudo-axes)
+feeds the stepper; payload treatmentConfig carries the resolved
+set + direction.</li>
+<li>Ingredients: add resolved selection, anchoring mode, sorted
+off-list, overrides entries.</li>
+<li>Payload: publish <code>potentialsSelectionString(table, location)</code>
+(diagnostics field) for the UI.</li>
+</ol>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria</h3>
+<ul>
+<li>[x] composition-controller tests green: auto path identical (the
+default-config composition results are byte-equal — the
+full-suite greedy-fit/knuth-plass viewer tests pass
+unchanged); named selection applies the table without gates;
+overrides fill missing dims; anchoring modes resolve as
+specified (run = status quo; font = fvar location for leaf AND
+anchor; off = authored verbatim); off-list disables treatments
+via the generalized planner config. BUG FIXED on the way:
+properties-generators yielded <code>treatments: []</code> for the EMPTY
+off-list (list models have no isEmpty — <code>!isEmpty</code> is always
+truthy) which the controller read as “disable everything”;
+now empty lists/maps yield nothing (= the default, all-on).
+KP keeps TREATMENT_PLANNER_DEFAULTS via plannerConfig; the
+payload carries treatments as “all” | sorted array and
+potentialsSelections (the generated doc string per leaf).</li>
+<li>[x] typecheck/lint/test pass (569 tests / 55 files; puppeteer
+QA probe green end-to-end).</li>
+</ul>
+<p><strong>Pause point:</strong> proposed commit, operator confirmation.</p>
+<h2><a id="phase-5-verification-sweep" class="heading_anchor" href="#phase-5-verification-sweep" aria-hidden="true">#</a>Phase 5: Verification sweep</h2>
+<ul>
+<li>[ ] Full <code>npm run test</code>, <code>npm run typecheck</code>, <code>npm run lint</code>,
+<code>npm run format:check</code> (format:write if needed).</li>
+<li>[ ] Update in-repo documents that used the dropped greedy-fit
+treatment fields (direct edit, no migration code).</li>
+</ul>
+<h3><a id="manual-verification-operator" class="heading_anchor" href="#manual-verification-operator" aria-hidden="true">#</a>Manual Verification (operator)</h3>
+<ul>
+<li>[ ] h1 textblock (Roboto Flex at wdth 151) + greedy-fit +
+<code>potentials: robotoFlexHeadline</code> + <code>direction: narrowing</code>:
+lines narrow from 151 (no widening).</li>
+<li>[ ] Same with knuth-plass.</li>
+<li>[ ] A run on a font lacking wdth: values applied, no error,
+rendering unchanged (graceful no-op).</li>
+<li>[ ] <code>potentialsAnchoring: off</code> on a run away from the authored
+dflt: step 0 applies the configuration’s dflt.</li>
+<li>[ ] <code>potentialsAnchoring: font</code> on differently-styled runs of
+one font: identical potentials (stable anchor).</li>
+<li>[ ] treatments off-list: disabling wdth/tracking/wordspace
+changes only the remaining treatments’ contribution.</li>
+<li>[ ] Default config (everything unset): output identical to
+current build.</li>
+</ul>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<p>Behavior-first (<a href="http://COLLABORATION.md">COLLABORATION.md</a>): resolution outputs (which table,
+which leaf, which triple) and observable composition effects —
+never internal call graphs. Table validation errors are part of
+the contract (module-load throws). Parity between measured and
+rendered treatment values is guaranteed structurally (same stepper
+math, same locations) — spot-check one anchored + one authored
+case in line-attrs.test.mjs if the payload shape changed.</p>
+<h2><a id="post-plan-addendum-lastlinehandling-operator-qa-2026-10-15-0056" class="heading_anchor" href="#post-plan-addendum-lastlinehandling-operator-qa-2026-10-15-0056" aria-hidden="true">#</a>Post-plan addendum: lastLineHandling (operator QA 2026-10-15 00:56)</h2>
+<p>The operator’s headline QA rounds (the editor-applicator treatments fix
+landed in Phase 4’s commit) surfaced the actual headline gap: greedy-fit
+never absorbs the paragraph REMAINDER onto a line (the pull loop needs a
+next break; a short heading has none) and the final line is never composed
+(the \parfillskip rule) — “Heading One” broke into two lines instead of
+narrowing onto one.</p>
+<p>Landed:</p>
+<ul>
+<li>greedy-fit.ts: converted to the factory pattern (the dummy/KP
+precedent), createGreedyFitComposition({lastLineHandling}):
+“ragged” (default, status quo) | “fill” — fill composes the final line
+like a regular line: the pull loop may absorb the whole remainder (the
+line BECOMES the final one, narrowed to fit; explicit breaks are never
+swallowed) and an underfull final line widens to the measure.</li>
+<li>Metamodel: GreedyFitLastLineHandlingModel on the greedy-fit struct;
+generator + controller resolve it per textblock; ingredient.</li>
+<li>Tests: greedy-fit.test.mjs lastLineHandling suite (6 tests: remainder
+absorption, status-quo ragged, underfull-final widen vs \parfillskip,
+explicit-break safety); struct round-trip extended. Full suite 577.</li>
+<li>QA: qa-milestone6-headline.mjs — ragged control (2 lines) vs fill
+(“Heading One” on ONE line, wdth treatment + color code applied).</li>
+</ul>
+<p>Deferred: KP last-line handling (its DP prices the final line via
+linePenalty — a fill mode there is a separate design question).</p>
+<h2><a id="post-plan-addendum-2-the-identity-idea-is-removed-operator-2026-10-16-1044" class="heading_anchor" href="#post-plan-addendum-2-the-identity-idea-is-removed-operator-2026-10-16-1044" aria-hidden="true">#</a>Post-plan addendum 2: the identity idea is removed (operator 2026-10-16 10:44)</h2>
+<p>The operator decided against the step-0-identity model entirely: step 0 is
+ALWAYS explicitly written out. Consequences, all landed:</p>
+<ul>
+<li>lineSpanStyles: the <code>adjustmentStep !== 0</code> skip is gone; step 0 emits the
+axes override at the anchored dflt (tracking/wordspace emit nothing there
+anyway — their dflts are 0). For “run” anchoring the written values equal
+the run’s own location (explicit, not skipped — pure CSS redundancy);
+for “font” the fvar defaults; for “off” the authored dflt — THE point: the
+off mode’s “the configuration asserts its natural state” now RENDERS.</li>
+<li>composition-controller: the step-0 measurement shortcuts are gone
+(hostWidthAtStep flows through the stepper like every step;
+candidateHyphenWidth measures at the step axes; hyphenWidthOf removed) —
+measurement and rendering agree in every anchoring mode, no per-mode
+special case. For “run” the Measurer cache reduces step 0 to the natural
+widths (the stepper dflts ARE the run’s own values).</li>
+<li>justification-potentials: the step-0-identity dev warning is removed
+(its premise is gone; in “off” mode the “divergence” is the feature).
+Its test with it.</li>
+<li>Tests: line-attrs “explicitly writes step 0” (axes override at dflt,
+no spacing); measurement/headline/panels probes all green — the
+headline probe now pins off-anchoring end to end: line 1 narrows within
+the authored span (132.8 of [35…151]), the ragged last line renders the
+authored dflt 151 at step 0. Full suite 576.</li>
+</ul>
+<h2><a id="post-plan-addendum-3-underfulltreatment-operator-2026-10-16-1150-1218" class="heading_anchor" href="#post-plan-addendum-3-underfulltreatment-operator-2026-10-16-1150-1218" aria-hidden="true">#</a>Post-plan addendum 3: underfullTreatment (operator 2026-10-16 11:50-12:18)</h2>
+<p>The demo’s actual answer (varla-varfo justification.mjs: feedback control +
+direction gating) framed it: our “leave at max potential (step +1)” is a
+predictive shortcut the demo never takes. Decision (b): fix the mechanic, no
+revert-mode-vs-config split; then the operator generalized it to a tri-state:</p>
+<p><code>underfullTreatment: enum(&quot;run&quot;, &quot;font&quot;, &quot;off&quot;)</code>, default “off” (status quo,
+byte-identical), on BOTH greedy-fit and knuth-plass. An underfull NON-FINAL
+line that maximum widening cannot fill reverts to the run’s location
+(“run”) or the font’s fvar defaults (“font”) instead of staying stretched.
+“natural is always the run”; orthogonal to potentialsAnchoring (same value
+shape, separate control — the operator’s explicit call).</p>
+<ul>
+<li>Contract: ComposedLine.underfullRevert (“run” | “font”) marks reverted
+lines; the Host resolves (controller recomputes naturalWidthPt at the
+revert entries per leaf style; payload carries
+revertAxesEntriesBySourceIndex; both applicators render the entries
+verbatim via lineSpanStyles’ revertAxesEntries — no stepper merge).</li>
+<li>GF: the widen branch cannot-fill check; step 0 + marker.</li>
+<li>KP: evaluateEdge marks the widening branch; the DP KEEPS the
+gap-proportional extraDemerits for reverted lines (the gap is priced at
+the natural width — a reverted line must stay expensive or the DP would
+park looseness there); polish skips reverted edges (would re-widen);
+badness at step 0.</li>
+<li>Metamodel: GreedyFitUnderfullTreatmentModel shared by both structs;
+generator + controller + ingredients wired.</li>
+<li>Tests: GF 4 (off status quo incl. default, run, font, fillable-keeps-
+widening), KP 3 (off, run, marker + line shape), struct round-trip.
+Full suite 583; all three QA probes green (incl. the operator’s state:
+0/99 overflows).</li>
+<li>“font” REMOVED from underfullTreatment (operator QA 2026-10-16 13:38):
+the “font” revert wrote the FULL fvar-default location — stomping
+styled axes the potentials don’t treat (h1 wght 700 -&gt; 400, really bad).
+“run” is the only revert target now (enum [“run”, “off”]; the marker,
+the controller’s revert resolution and both algorithm configs
+narrowed; GF/KP “font” tests dropped, probe modes narrowed).
+potentialsAnchoring KEEPS its “font” — different control, correct
+treated-axes-only scope. Verified in the operator’s headline state:
+wght 700/600/550 intact in every mode, wdth 100 with run, 151 with off.</li>
+<li>UNIFORM FIX (operator QA, downloads/typeroof-20261016-125603.TypeStage,
+2026-10-16 12:58-13:11): underfullTreatment has NO final/non-final
+distinction — my first cut gated the revert to non-final lines AND to
+the hasWideningPotential branch, so a fitting FINAL line with a ZERO
+widening range (the h2/h3 headline case, GF fill mode) rendered
+stretched at the anchored dflt (wdth 151) in every mode. The check is
+now UNIFORM (GF: after the strategy, any step-0 line that is underfull
+and that widening cannot fill incl. zero range reverts; the widen
+branch never stretches a revert-mode line toward a fill it can’t
+reach. KP: evaluateEdge marks the fitting-last-line branch too — no
+gap price there, the DP’s last-line pricing is unchanged, the revert
+is a rendering decision). Verified in the operator’s state: h1 48.35
+(fills narrowed), h2/h3 wdth 100 with run, 151 with off (the anchored
+dflt), 100 with font. GF+KP suites extended (zero-range + final-line
+cases); full suite 589; all four QA probes green.</li>
+</ul>
+<h2><a id="post-plan-addendum-4-qa-round-2026-10-16-1405-1435" class="heading_anchor" href="#post-plan-addendum-4-qa-round-2026-10-16-1405-1435" aria-hidden="true">#</a>Post-plan addendum 4: QA round 2026-10-16 14:05-14:35</h2>
+<p>Operator smell: KP h1 “The Universe  Next Door” — the middle line
+(“verse Next”, wdth 76.77) did not fill the 10cm measure though polish
+is on. KP/polish were CORRECT (the DP picked lattice −0.6875, polish
+converged to the exact fit −0.6399) — the line MEASURED full but
+RENDERED one space short. Root cause: CSS white-space parity. The
+composed spans render white-space: nowrap (line-spans.css, overriding
+PM’s vendor break-spaces — verified empirically in-page), and nowrap
+COLLAPSES runs of collapsible whitespace to one space, while HarfBuzz
+shaped every character. The operator’s text had a double space; the
+ingest (ingest.ts:818) leaves HTML indentation after replacing
+newlines — every pretty-printed source ingests ~13-space runs. ALL
+ingested documents with formatted HTML were affected.</p>
+<p>Fix (measured == rendered):</p>
+<ul>
+<li>segmenter.ts: a whitespace RUN is ONE segment (raw offsets preserved
+— the editor applicator maps segment.start/end directly to PM
+positions); a run containing \n is an explicit break.</li>
+<li>composition-controller: segment texts shaped NORMALIZED (runs → one
+space; explicit [ \t\n\r\f\v] class — JS \s includes U+00A0 which
+must NOT collapse).</li>
+<li>3 hardcoded fixture break tables updated (they encoded the
+space-inflated measurements; e.g. t1 now 7 lines instead of 9).</li>
+</ul>
+<p>Follow-up caret bug (operator 14:25): ArrowRight from a line end jumped
+one glyph into the next line (between “D” and “o”). Diagnosis (caret
+rects): the three positions around the collapsed trailing space share
+one rect and before-D is a VALID rect — Blink’s forward walk skipped
+the line-first span’s first text position because its
+::before{display:block} pseudo sits INSIDE the inline span. Fix:
+line-first spans are display:block THEMSELVES (width: fit-content
+keeps the color-coding background hugging the text) — the ::before
+mechanism is gone; caret positions are ordinary block-start positions.
+Pinned by qa-m6-caret.mjs (ArrowRight lands exactly before “D”).</p>
+<p>KP underfullTreatment removed (operator 13:55/14:05 decision: KP is
+not appropriate for headline treatment): the config field, the
+evaluateEdge marking (last-line + widening branches), the marker
+propagation, the polish skip, the struct field, generator list,
+controller resolution + ingredient, and the two test suites.
+underfullTreatment is greedy-fit-only now. Full suite 582; all five
+QA probes green (measurement 0/99, headline, panels, caret,
+whitespace-css).</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

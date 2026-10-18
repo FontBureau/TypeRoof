@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-milestone-2--greedy-ragged" class="heading_anchor" href="#research-milestone-2--greedy-ragged" aria-hidden="true">#</a>Research: Milestone 2 — greedy ragged</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Scope and contract surface for the greedy ragged algorithm; does it
+include hyphenation, and where would hyphenation DATA come from?
+(Note: delegate infra was down; research done directly — the
+questions were narrow and the codebase well-mapped from previous
+cycles.)</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<ul>
+<li><strong>Milestone 2 does NOT include hyphenation</strong> per the roadmap and
+the milestone list (composition-controller.ts:65-66: “2. simple
+greedy alignment — ragged; 3. greedy ragged + hyphenation — same
+algorithm as 2, richer input”). Hyphenation is a HOST pre-pass
+(Hyphenator role) that only enriches the input — the greedy
+algorithm is literally unchanged between milestones 2 and 3.</li>
+<li><strong>Hyphenation data: nothing exists in the repo today</strong> — no
+hypher/hyphen/hyphenopoly in dependencies, node_modules, or vendor;
+no CSS <code>hyphens:</code> usage. varla-varfo’s hyphen handling was a
+DISPLAY heuristic (<code>_needsHyphen</code>, justification.mjs:660-674): the
+BROWSER hyphenated (CSS), the demo only detected mid-word breaks —
+no patterns, no data. A commented-out <code>hyphens</code> property exists in
+type-spec/models.mjs:289-290 with the note “CSS hyphens=auto
+without a lang tag won’t work as expected!”.</li>
+<li><strong>Data source decision for milestone 3</strong>: TeX/Knuth-Liang
+hyphenation patterns per language — the established route is a JS
+implementation (hypher-style: pattern data as JSON + Liang’s
+algorithm, small and pure; hyphenopoly is the WASM alternative).
+Selected per textblock via <code>language/lang</code> (already read by the
+controller for the Measurer). Browser CSS hyphenation as an oracle
+is OFF the table: it needs DOM layout — violates the
+no-DOM-measurement design and jsdom testing.</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="contract-surface-for-greedy-ragged-composition-typests" class="heading_anchor" href="#contract-surface-for-greedy-ragged-composition-typests" aria-hidden="true">#</a>Contract surface for greedy ragged (composition-types.ts)</h3>
+<ul>
+<li><code>CompositionInput</code>: segments (widthPt at current axes), breaks
+(space/hyphen/explicit + penalty), <code>lineWidthPt(lineIndex)</code>,
+<code>lineWidthAtStep(from, to, step)</code>.</li>
+<li>Ragged uses ONLY step 0 (natural widths): no fitting — every line
+gets <code>adjustmentStep: 0</code> like the dummy. The Breaker fills lines
+greedily; the Fitter is a no-op.</li>
+<li><strong>Greedy ragged semantics</strong>: walk breaks in order; a line ends at
+the last break whose natural width still fits <code>lineWidthPt</code>;
+overfull (a single segment wider than the line) → the line is that
+segment alone, flagged in diagnostics.overfullLines.</li>
+<li><strong>Last-line rule</strong>: never widened — with adjustmentStep 0
+everywhere this is automatic; the last line just ends.</li>
+<li>Mandatory breaks (kind ‘explicit’) end lines early (the dummy
+already implements this — reuse).</li>
+<li><strong>Trailing space</strong>: the break is AFTER the space segment, so a
+line’s last segment is the space — its width must NOT count toward
+the fitting width (it collapses at line end). The dummy’s widthOf
+counts it (visible as slightly-early breaks); greedy ragged should
+exclude the trailing space from the fit test but still include the
+segment in the line (the applicator renders it; CSS collapses it).
+This is the one real semantic refinement over the dummy.</li>
+<li>Diagnostics: overfullLines + badness per line (ragged badness:
+e.g. (lineWidth - naturalWidth) normalized — the “raggedness” the
+proofing UI will color).</li>
+</ul>
+<h3><a id="reuse" class="heading_anchor" href="#reuse" aria-hidden="true">#</a>Reuse</h3>
+<ul>
+<li>dummy-composition.ts: structure + explicit-break handling + test
+patterns (dummy-composition.test.mjs style).</li>
+<li>The dummy stays (milestone 1 infra proof; also the off/baseline
+comparison algorithm). Algorithm SELECTION is a static choice in
+the controller for now (the dynamic-struct algorithm selection is
+the model evolution, later).</li>
+</ul>
+<h3><a id="hyphenation-milestone-3-recorded-now" class="heading_anchor" href="#hyphenation-milestone-3-recorded-now" aria-hidden="true">#</a>Hyphenation (milestone 3, recorded now)</h3>
+<ul>
+<li>Contract ready: Hyphenator adds segments + breaks (kind ‘hyphen’);
+a hyphenated segment includes the hyphen glyph in its measured
+width (segmenter/controller headers); the applicator’s
+<code>-line-hyphen</code> class + <code>::after{content:'-'}</code> CSS are already
+wired (viewer.typeroof.jsx:689, line-spans.css).</li>
+<li>Open for the milestone-3 cycle: pattern format/dependency choice
+(hypher vs vendored TeX patterns vs hyphenopoly), pattern
+loading/bundling per language, language fallbacks (de-AT → de).</li>
+</ul>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>composition-controller.ts:65-66</code> — milestone 2/3 wording</li>
+<li><code>composition-types.ts</code> — CompositionInput/Result, last-line rule,
+BreakOpportunity</li>
+<li><code>dummy-composition.ts</code> — structure to reuse</li>
+<li><code>segmenter.ts</code> — break-after-space semantics</li>
+<li><code>viewer.typeroof.jsx:689</code> + <code>line-spans.css</code> — hyphen rendering
+already wired</li>
+<li><code>type-spec/models.mjs:289-290</code> — commented-out CSS hyphens note</li>
+<li><code>~/varla-varfo/lib/js/justification.mjs:660-674</code> — display-only
+hyphen heuristic (no data)</li>
+</ul>
+<h2><a id="follow-up-decisions-2026-10-03-review" class="heading_anchor" href="#follow-up-decisions-2026-10-03-review" aria-hidden="true">#</a>Follow-up Decisions (2026-10-03, review)</h2>
+<ol>
+<li>
+<p><strong>Q1 RESOLVED — slack-based badness</strong>: <code>badness = (lineWidth − naturalWidth) / lineWidth</code> per line (0 = full, →1 = loose;
+overfull ≥ 1). Baseline algorithm; KP may eventually produce
+ragged text too — no investment here now.</p>
+</li>
+<li>
+<p><strong>Q2 RESOLVED — trailing space</strong>: kept IN the line (semantic
+value: copy/paste, text search, selection), excluded only from
+the fit test (it collapses at line end). ‘explicit’ breaks have
+no trailing-space question (the line ends before the break
+opportunity).</p>
+</li>
+<li>
+<p><strong>Q3 RESOLVED — dynamic struct NOW, per typeSpec.</strong> Algorithm
+selection + configuration as a dynamic type (precedents:
+createAvailableTypes/createDynamicType as in CharsSelectorModel;
+CharGroupOptionsModel), types: Dummy { segmentsPerLine default 4 },
+GreedyRagged {} (no config yet); INHERIT = OrEmpty around the
+dynamic type (CombinatorOrCharsSelectorModel precedent). Travel:
+WHOLE STRUCTS through the properties stream under a namespaced
+key, inheriting by default — the style-links precedent
+(intentStyleLinks/* carry struct instances,
+registered-properties-definitions.mjs). A new textCompositionGen
+yields boolean + struct; the drive reads the resolved struct per
+textblock, switches on type, passes config to the implementation;
+ingredients snapshot gains the struct identity (an algorithm
+change invalidates). Per-typeSpec selection also brings
+per-textblock ENGAGEMENT of the boolean into scope (same
+mechanism).</p>
+</li>
+<li>
+<p><strong>CORRECTIONS (2026-10-03)</strong>: (a) The precedent to follow is
+<code>horizontalLayout</code> / HorizontalLayoutAlgorithmModel
+(type-spec/horizontal-layout-models.mjs:177, createDynamicModel;
+the generator yields horizontalLayout/algorithm + instance,
+properties-generators.mjs:544ff) — NOT intentStyleLinks.
+(b) Configuration MODELS live in the type-spec submodule;
+algorithm IMPLEMENTATION in greedy-ragged.ts.
+© Keep the boolean (explicit off = we do nothing ourselves —
+correct as is); a coherence function clears the algorithm struct
+to empty/inherit when composition is off.
+(d) BUG + PHASE 1 OF THE CYCLE: the textComposition boolean is
+NOT inheritable today (BooleanDefaultTrueModel, read from the
+ROOT typeSpec only — turning it off on t1 does nothing in the
+viewer). Fix: BooleanDefaultTrueOrEmptyModel (empty = inherit),
+yielded into the properties stream, resolved PER TEXTBLOCK by
+the drive — turning it off on <code>paragraphs</code> must turn it off on
+<code>paragraphs/t1</code> and <code>paragraphs/t2</code>.</p>
+</li>
+</ol>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ol>
+<li>Ragged badness formula for diagnostics (raggedness per line:
+slack/lineWidth? KP-style badness^3? — proofing will visualize
+it; pick something simple and documented).</li>
+<li>Trailing-space handling confirmed as above (exclude from fit
+test, keep in line)? Any interplay with ‘explicit’ breaks?</li>
+<li>Where the algorithm module lives: <code>greedy-ragged.ts</code> next to
+<code>dummy-composition.ts</code>, exporting a CompositionAlgorithm;
+controller picks it (static switch or replaces the dummy call?).</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-cycle-2--knuthplass-codebase-map" class="heading_anchor" href="#research-cycle-2--knuthplass-codebase-map" aria-hidden="true">#</a>Research: Cycle 2 — Knuth–Plass++ codebase map</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Map the codebase as it exists today for ROADMAP Cycle 2 (milestone 5
+research/design: Knuth–Plass++): candidate graph/DP, badness/demerits
+over the asymmetric adjustmentStep, break penalties, candidate step
+solving via <code>lineWidthAtStep</code>, diagnostics, and performance
+(memoization/pruning, cooperative checkpoints).</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p>The Cycle-1 work left the codebase unusually ready for KP++:</p>
+<ul>
+<li>The contract (<code>composition-types.ts</code>) already carries
+<code>BreakOpportunity.penalty</code> (populated by the hyphenator, unread by
+all algorithms), a fully general <code>lineWidthAtStep(from, to, step)</code>
+probe, an extensible break <code>kind</code> enum, and a free-form
+<code>diagnostics.badness</code> slot. No contract change is strictly required
+for a first DP implementation.</li>
+<li>All Host machinery (UAX#14 segmentation, Knuth–Liang hyphenation,
+HarfBuzz measurement with shaped-glyph metrics, Treatment Planner,
+tracking-gap arithmetic) is algorithm-agnostic and reusable as-is.</li>
+<li>The cooperative task runner already supports weighted checkpoints
+(<code>CompositionCheckpoint.work</code>, <code>workBudget</code>) — declared but unused;
+the single un-interruptible unit is the synchronous algorithm call
+at <code>composition-controller.ts:1178</code>.</li>
+<li>Prior art contains NO Knuth-Plass code: varla-varfo is greedy-fit
+with a render-measure-render loop; videoproof-contextual is plain
+greedy first-fit. Badness/demerits/fitness classes must be designed
+from the TeX model, not ported.</li>
+<li>The main performance fact: <code>lineWidthAtStep</code> at step ≠ 0 costs one
+HarfBuzz shape per segment per <em>novel</em> treated axis location, and
+there is <strong>no candidate-width memoization above the Measurer shape
+cache</strong> — the DP’s candidate-count × step-search multiplication
+makes memoization a first-order design concern.</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="module-map--libjscomponentslayoutstype-stagetext-composition--26-files-5677-loc" class="heading_anchor" href="#module-map--libjscomponentslayoutstype-stagetext-composition--26-files-5677-loc" aria-hidden="true">#</a>Module map (<code>lib/js/components/layouts/type-stage/text-composition/</code>, 26 files, 5677 LOC)</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>composition-types.ts</code></td>
+<td>230</td>
+<td>Host/Algorithm contract: <code>CompositionInput → CompositionResult</code></td>
+</tr>
+<tr>
+<td><code>composition-controller.ts</code></td>
+<td>1412</td>
+<td>Host orchestrator (service widget); the impure edges</td>
+</tr>
+<tr>
+<td><code>composition-task.ts</code></td>
+<td>98</td>
+<td>Cooperative task protocol (generator checkpoints)</td>
+</tr>
+<tr>
+<td><code>segmenter.ts</code></td>
+<td>195</td>
+<td>UAX#14 segmentation (npm <code>linebreak</code>)</td>
+</tr>
+<tr>
+<td><code>hyphenator.ts</code></td>
+<td>141</td>
+<td>Knuth–Liang hyphenation (npm <code>hypher</code>)</td>
+</tr>
+<tr>
+<td><code>hyphenation-pattern-catalog.mjs</code></td>
+<td>66</td>
+<td>Vendored bramstein pattern catalog</td>
+</tr>
+<tr>
+<td><code>measurer.ts</code></td>
+<td>236</td>
+<td>HarfBuzz shaping, em-normalized caches</td>
+</tr>
+<tr>
+<td><code>justification-potentials.ts</code></td>
+<td>601</td>
+<td>Per-font potentials tables (Roboto Flex/Delta, Amstelvar)</td>
+</tr>
+<tr>
+<td><code>treatment-planner.ts</code></td>
+<td>127</td>
+<td>Pure step → treatment value math</td>
+</tr>
+<tr>
+<td><code>tracking.ts</code></td>
+<td>49</td>
+<td>Shaped-glyph tracking-gap arithmetic (Cycle 1)</td>
+</tr>
+<tr>
+<td><code>dummy-composition.ts</code></td>
+<td>102</td>
+<td>Algorithm M1 (pure)</td>
+</tr>
+<tr>
+<td><code>greedy-ragged.ts</code></td>
+<td>169</td>
+<td>Algorithm M2 (pure)</td>
+</tr>
+<tr>
+<td><code>greedy-fit.ts</code></td>
+<td>293</td>
+<td>Algorithm M4 (pure)</td>
+</tr>
+<tr>
+<td>tests (11 files)</td>
+<td>1823</td>
+<td>colocated pure/Host tests</td>
+</tr>
+</tbody>
+</table>
+<p>Pure algorithms import only from <code>composition-types.ts</code>; KP++ slots
+in as a new pure module beside <code>greedy-fit.ts</code>.</p>
+<h3><a id="contract-anatomy--composition-typests-" class="heading_anchor" href="#contract-anatomy--composition-typests-" aria-hidden="true">#</a>Contract anatomy (<code>composition-types.ts</code>)</h3>
+<ul>
+<li><code>Paragraph</code> (:71) = <code>{text, styles: StyleSpan[]}</code> — Host staging
+only; the Algorithm never sees it.</li>
+<li><code>Segment</code> (:82) = <code>{start, end, widthPt}</code> — width at the natural
+axis location; <code>start/end</code> retained so diagnostics can name text
+(:85–86).</li>
+<li><code>BreakOpportunity</code> (:98) = <code>{afterSegment, kind, penalty, collapses?}</code>; <code>kind: &quot;space&quot;|&quot;hyphen&quot;|&quot;explicit&quot;</code> (:108, enum
+documented extensible); <code>penalty</code> (:113–115) explicitly documented
+as the hook for “later Knuth-Plass penalties”; <code>collapses</code> marks
+trailing zero-width segments excluded from fit tests.</li>
+<li><code>CompositionInput</code> (:134) = <code>{segments, breaks, lineWidthPt(lineIndex), lineWidthAtStep(from, to, step)}</code>.
+<code>lineWidthPt</code> is per-line-index (constant today; shaped containers
+anticipated). Monotonicity of <code>lineWidthAtStep</code> in step is assumed
+(greedy-fit’s binary search relies on it).</li>
+<li><code>ComposedLine</code> (:180) = <code>{fromSegment, toSegment, breakAt, naturalWidthPt, adjustmentStep}</code>.</li>
+<li><code>CompositionResult</code> (:198) = <code>{lines, diagnostics: {overfullLines, badness}}</code> — badness is explicitly
+“algorithm-specific” (:205–207).</li>
+<li><code>CompositionAlgorithm</code> (:228) = pure synchronous function.
+Mandatory-break rule and last-line rule (never widened, may narrow;
+TeX <code>\parfillskip</code>) are contractual (:211–227), not data-driven.</li>
+</ul>
+<h3><a id="adjustmentstep-semantics" class="heading_anchor" href="#adjustmentstep-semantics" aria-hidden="true">#</a>adjustmentStep semantics</h3>
+<ul>
+<li>Normalized: 0 natural, −1 max narrowing, +1 max widening
+(composition-types.ts:150–178).</li>
+<li><strong>Asymmetric</strong>: each direction maps linearly against its own triple
+half (<code>treatment-planner.ts:44–49</code>); physical distances per side
+differ.</li>
+<li><code>|step| &gt; 1</code> = probe/exhausted: Host clamps widths at the extreme so
+the Algorithm detects impossible fits; a result line with
+<code>|step| &gt; 1</code> signals unsatisfiable (greedy-fit emits −2,
+<code>greedy-fit.ts:260</code>).</li>
+</ul>
+<h3><a id="break-enumeration--penalties-today" class="heading_anchor" href="#break-enumeration--penalties-today" aria-hidden="true">#</a>Break enumeration &amp; penalties today</h3>
+<ul>
+<li>UAX#14 (<code>segmenter.ts:97</code>): BK → <code>explicit</code>; allowed breaks →
+<code>space</code> (with <code>collapses:false</code> at ideograph boundaries, :84–89);
+real spaces → <code>space</code> + <code>collapses:true</code> (:136–144). All segmenter
+penalties are <strong>0</strong>.</li>
+<li>Hyphenation (<code>hyphenator.ts:73</code>): splits word segments (gates
+minWordLength 6 / minBefore 2 / minAfter 3, :33–37); every hyphen
+break gets the flat constant <code>HYPHENATION_PENALTY = 10</code> (:27,127).
+The hypher/Knuth–Liang digit weights are consumed internally by the
+library and <strong>not exposed per point</strong> — per-point weighting would
+need new plumbing.</li>
+<li>Conditional taken hyphen: not in segment width; added
+candidate-wise by the Host inside <code>lineWidthAtStep</code>
+(composition-controller.ts:1073–1077, 1144–1168) and rendered via
+CSS <code>::after</code>.</li>
+<li>Hard breaks split Host-side into separate logical paragraphs
+(<code>assembleLogicalParagraphs</code>, segmenter.ts:151); the algorithm runs
+once per logical paragraph (controller:1057ff).</li>
+</ul>
+<h3><a id="how-greedy-fit-solves-steps-the-incumbent-strategy" class="heading_anchor" href="#how-greedy-fit-solves-steps-the-incumbent-strategy" aria-hidden="true">#</a>How greedy-fit solves steps (the incumbent strategy)</h3>
+<p><code>greedy-fit.ts</code>: natural greedy pick (:81–124) → NARROW loop pulling
+the next break’s segments up at minimal narrowing step (:172–210) →
+WIDEN only if narrowing pulled nothing (:211–237) → overfull rescue
+(:238–260, emits −2). Last lines skipped (:170–171).</p>
+<p><code>findFittingStep</code> (:63–78): binary search, 24 iterations
+(<code>_SEARCH_ITERATIONS</code>, :38), largest step whose <code>fittingWidth</code> fits;
+<code>fittingWidth</code> (:53–61) may cost 2 <code>lineWidthAtStep</code> calls (collapse
+subtraction) → up to ~48 calls per search, plus ±1/0 potential
+probes (:144–148). <code>_STEP_EPSILON = 1e-4</code> (:40).</p>
+<p>Diagnostics produced: <code>overfullLines</code> (:264–273), slack-based
+<code>badness</code> (:280–283: <code>1 + excess/available</code> overfull, else
+<code>max(0, slack/available)</code>; same formula in greedy-ragged :156–160).</p>
+<h3><a id="measurement-machinery--cost-structure" class="heading_anchor" href="#measurement-machinery--cost-structure" aria-hidden="true">#</a>Measurement machinery &amp; cost structure</h3>
+<ul>
+<li><code>lineWidthAtStep</code> Host implementation: composition-controller.ts
+:1188–1264. Step 0 = pure sum of pre-measured <code>segment.widthPt</code> +
+conditional hyphen width (:1189–1193). Step ≠ 0 = per segment:
+treated axis values via <code>stepper.axesAt(step)</code> (computed, but
+rebuilds entries array + <code>axesKeyOfEntries</code> string per call,
+:1132–1148) → <code>Measurer.shapeMetricsEm</code> re-shape at shifted
+coordinates (:1218–1226) → wordspace arithmetic (:1236–1246) →
+tracking collection + line-level <code>allocateTracking</code> (:1247–1254,
+tracking.ts:27–53).</li>
+<li>Measurer caches (measurer.ts): hbFont LRU
+<code>Map&lt;fullName, Map&lt;axesKey, Font&gt;&gt;</code> capped at 32 locations/font
+(:93,105,157); shape cache <code>Map&lt;string, ShapeMetrics&gt;</code> key =
+<code>fullName|axesKey|featuresKey|language|direction|text</code> (:175–182),
+LRU cap 50000 (:92). <code>ShapeMetrics = {advanceEm, glyphCount}</code> (Cycle
+1, :96–100) — one shape serves width + tracking; no cluster data.</li>
+<li><strong>No memoization of <code>lineWidthAtStep</code> results exists</strong> — no
+<code>(from, to, step) → width</code> cache anywhere. Reuse happens only at
+the shape-cache level: repeated probes at identical treated
+locations hit; novel step values each pay one HarfBuzz shape per
+segment (plus hb.Font variation instance creation, bounded by the
+32-location LRU).</li>
+<li>Existing caches to build on: per-style planner cache
+(<code>plannerCache</code>, controller:947–986), hyphen width cache
+(:1078–1101), whole-composition ingredients identity filter
+(:990–1057).</li>
+<li>Acknowledged hotspot: greedy-fit’s 24-iteration searches mostly
+miss the shape cache (distinct midpoints → distinct locations);
+header of measurer.ts (:8–30) notes string-key cost at scale.</li>
+</ul>
+<h3><a id="cooperative-task-protocol--checkpoint-slots" class="heading_anchor" href="#cooperative-task-protocol--checkpoint-slots" aria-hidden="true">#</a>Cooperative task protocol &amp; checkpoint slots</h3>
+<ul>
+<li><code>composition-task.ts</code>: <code>CompositionCheckpoint {reason, work?}</code>
+(:11–14, <code>work</code> declared-but-unused); <code>CompositionTask</code> =
+Generator (:20–24); cancellation token checked before/between
+resumes (:75–90); <code>drainTaskSync</code> (:53–63); <code>resumeTaskAsync</code> with
+<code>workBudget</code> (default 1 checkpoint/macrotask, :65–98); scheduler
+injectable, default <code>setTimeout(0)</code> — <code>requestIdleCallback</code>
+rejected for starvation (:44–51).</li>
+<li>Controller: staleness via immutable identity <code>===</code>
+(<code>_sourceIsCurrent</code>, :366–376, rationale :147–156); one task slot
+per textblock path (:306); sync drain and async resume share the
+same generator (:660–662).</li>
+<li>Existing checkpoints in <code>_composeTextblockTask</code>: <code>collect/resolve</code>
+(:693), per-logical-paragraph (:1311), <code>finalize/publish</code> (:1359).</li>
+<li><strong>The synchronous <code>algorithm({...})</code> call at controller:1178 is the
+single un-interruptible unit</strong> — candidate-batch yields for KP++
+slot inside/around that invocation without touching runner,
+scheduler, or cancellation machinery. Contract anticipates
+async/streaming variants (composition-types.ts:211–215).</li>
+</ul>
+<h3><a id="algorithm-registration--diagnostics-wiring" class="heading_anchor" href="#algorithm-registration--diagnostics-wiring" aria-hidden="true">#</a>Algorithm registration &amp; diagnostics wiring</h3>
+<ul>
+<li>Models: <code>type-spec/text-composition-models.mjs</code> —
+<code>TextCompositionAlgorithm{None,Dummy,GreedyRagged,GreedyFit}Model</code>
+via <code>createDynamicModel(&quot;TextCompositionAlgorithm&quot;, …)</code> (:77–102);
+mounted on TypeSpecModel (models.mjs:497); registered-property
+default inheritable (registered-properties.mjs:426–433); root
+default in layouts/type-stage/defaults.mjs:229–240; UI in
+type-driven-ui.mjs:444–447; property generator <code>textCompositionGen</code>
+(properties-generators.mjs:48–82).</li>
+<li>Runtime dispatch: controller:1171–1177 (<code>algorithmKey</code> read :773–
+775, default GreedyRagged; None → OFF gate :700–703). GreedyFit
+config: treatments set, direction gate, <code>colorCoding</code> (:905–942).</li>
+<li>Diagnostics pipeline: per-paragraph <code>result.diagnostics</code> ships in
+the payload (:1338); per-line enrichments <code>trackingWidthPt</code>,
+<code>trackingGapsBySourceIndex</code> (:1303–1308); per-leaf potentials for
+deterministic applicator re-derivation (:1324–1337);
+<code>colorCoding</code> flag (:1345–1347); publish-time console.log
+(:1375–1382).</li>
+<li>Viewer: <code>_lineColorCode(adjustmentStep, overfull)</code> (viewer.
+typeroof.jsx:739–748, varla-varfo port: cyan narrowing / red
+widening / overfull override), per-line <code>--line-color-code</code>
+(:845–856), CSS hook line-spans.css:40–48. <strong><code>badness</code> is published
+but currently unconsumed</strong> — only <code>overfullLines</code> and
+<code>adjustmentStep</code> feed rendering.</li>
+</ul>
+<h3><a id="prior-art-no-kp-code-exists" class="heading_anchor" href="#prior-art-no-kp-code-exists" aria-hidden="true">#</a>Prior art (no KP code exists)</h3>
+<ul>
+<li><code>varla-varfo/lib/js/justification.mjs</code> (sibling repo, 2189 LOC):
+greedy-fit only; zero matches for knuth/badness/demerit/fitness/
+graph. Render-measure-render feedback loop
+(<code>JustificationController</code> L1993–2189). Notable ideas: per-font
+spec tables with interpolation (L1033–1063), step-budget heuristic
+<code>narrowingStops = nAxes × (fontSizePT/12) × (columnWidthEN/65) × 10</code>
+(L1818–1831), widening via control loop driving unused whitespace
+to &lt;1px (L782–794), inter-line harmonization seeding a line’s
+initial step from previous lines (L1497–1508), line color coding
+(L1371–1385).</li>
+<li><code>lib/js/components/actors/videoproof-contextual/layout.mjs</code> (322
+LOC): pure greedy first-fit (<code>computeLineStarts</code> L83–101), no
+adjustment; binary search over font size (L139–199); pure/impure
+split at HarfBuzz measurement (L43–67).</li>
+<li>Repo-wide grep: no <code>demerit</code>, <code>fitness class</code>, or <code>optimum fit</code>
+code anywhere (vendor license noise excluded). Design references
+exist only in docs/plans and the milestone-5 comment at
+composition-controller.ts:74–76.</li>
+</ul>
+<h3><a id="contract-gaps-for-a-dp-algorithm-design-surface-for-cycle-2" class="heading_anchor" href="#contract-gaps-for-a-dp-algorithm-design-surface-for-cycle-2" aria-hidden="true">#</a>Contract gaps for a DP algorithm (design surface for Cycle 2)</h3>
+<p>Missing today (each a design decision, none blocking a first pass):</p>
+<ul>
+<li>No contract-level badness/demerits function — each algorithm
+invents its own slack-based badness for diagnostics only.</li>
+<li>No fitness classes (tight/decent/loose/very-loose); adjustmentStep
+is a continuous scalar.</li>
+<li>No consecutive-hyphen policy — hyphen breaks carry flat penalty 10;
+a DP must count <code>breakAt.kind === &quot;hyphen&quot;</code> runs itself.</li>
+<li>Penalty semantics unspecified: no infinite/negative penalty
+convention, no “never break here” representation (absence serves
+that role); penalty documented irrelevant for <code>explicit</code>.</li>
+<li>No tolerance/emergency configuration in <code>CompositionInput</code>;
+unsatisfiable lines signalled only post-hoc via <code>|step| &gt; 1</code>.</li>
+<li>Last-line rule is contractual, not data — DP must special-case the
+final line (greedy-fit’s <code>isLastLine</code> precedent).</li>
+<li>No output channel for per-line mechanism mix (step is one scalar;
+concrete values re-derived Host-side via <code>treatmentValuesAtStep</code>).</li>
+</ul>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/components/layouts/type-stage/text-composition/composition-types.ts:98-121</code> — BreakOpportunity (penalty hook)</li>
+<li><code>…/composition-types.ts:134-178</code> — CompositionInput / lineWidthAtStep contract</li>
+<li><code>…/composition-types.ts:198-230</code> — CompositionResult diagnostics, algorithm contract, last-line rule</li>
+<li><code>…/composition-controller.ts:1171-1178</code> — algorithm dispatch + the un-interruptible sync call</li>
+<li><code>…/composition-controller.ts:1188-1264</code> — Host lineWidthAtStep (measure vs compute split)</li>
+<li><code>…/composition-controller.ts:905-986</code> — greedy-fit config + per-style planner cache</li>
+<li><code>…/greedy-fit.ts:38-78</code> — 24-iteration binary step search</li>
+<li><code>…/measurer.ts:92-182</code> — cache keys/caps, ShapeMetrics</li>
+<li><code>…/treatment-planner.ts:44-99</code> — per-side linear step map, gating/clamping</li>
+<li><code>…/composition-task.ts:11-98</code> — checkpoint/workBudget/cancellation protocol</li>
+<li><code>…/hyphenator.ts:27,122-129</code> — flat HYPHENATION_PENALTY = 10</li>
+<li><code>lib/js/components/type-spec/text-composition-models.mjs:77-102</code> — dynamic struct registration</li>
+<li><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx:739-748,845-856</code> — line color coding</li>
+<li><code>/var/lib/agent/varla-varfo/lib/js/justification.mjs:1818-1831</code> — step-budget heuristic (prior art)</li>
+</ul>
+<h2><a id="resolved-design-decisions-operator-2026-10-06" class="heading_anchor" href="#resolved-design-decisions-operator-2026-10-06" aria-hidden="true">#</a>Resolved Design Decisions (operator, 2026-10-06)</h2>
+<ol>
+<li><strong>Badness — Host-injected, TeX-shaped initially.</strong> The contract
+gains <code>badnessAtStep(step)</code> next to <code>lineWidthAtStep</code>. The Host’s
+first implementation is <code>100·|step|³</code> for <code>|step| ≤ 1</code>, infinite
+beyond (unsatisfiable). The asymmetry is absorbed by the per-side
+step normalization. Injection (not algorithm-internal) because it
+is the natural counterpart to future potentials-policy changes —
+e.g. stretching a line to completeness with wordspace after
+potential exhaustion must be reflectable in badness.</li>
+<li><strong>Penalties — TeX demerits formula, non-negative domain with a
+prohibited threshold.</strong> <code>demerits = (linePenalty + badness)² + p²</code>
+(p ≥ 0); <code>linePenalty</code> default 10, <code>hyphenPenalty</code> default 50
+(retuned from the arbitrary milestone-3 value 10). No negative
+sentinels: forced breaks = <code>kind: &quot;explicit&quot;</code>; prohibited breaks =
+enumeration-level suppression (segmenter, for <code>&amp;nbsp;</code>/U+2060/
+non-breaking hyphen) OR a documented penalty threshold (≥ 1e6) the
+DP treats as infeasible; “hardly break here” = large finite
+penalty. <strong>Algorithm configuration enters model-first</strong> via the
+<code>textCompositionAlgorithm</code> dynamic struct → factory closure in the
+controller (GreedyFit precedent); the pure
+<code>CompositionInput → CompositionResult</code> shape is untouched.</li>
+<li><strong>Consecutive hyphens — TeX-faithful costs.</strong> <code>doubleHyphenDemerits</code>
+per hyphen-after-hyphen edge (default 10000; runs of n accumulate
+(n−1)× for free — no extra DP state, the active node knows its own
+break kind); <code>finalHyphenDemerits</code> for a hyphenated penultimate
+line (default 5000). Both struct-configurable. Documented but NOT
+implemented: a <code>maxConsecutiveHyphens</code> hard cap (future config) and
+a possible escalation toward a steeper (e.g. quadratic) cost curve
+if proofing shows linear accumulation is too lenient.</li>
+<li><strong>Fitness classes — TeX classes from the signed step, with an
+off-switch.</strong> tight: step ≤ −0.5; decent: −0.5 &lt; step ≤ 0.5;
+loose: 0.5 &lt; step ≤ 1; very loose: |step| &gt; 1 (emergency only).
+<code>adjDemerits</code> (default 10000) when adjacent lines jump ≥ 2 classes;
+DP state = (breakpoint, class) — the finite quantization is what
+makes path-dependent adjacency costs tractable. Struct boolean
+<strong><code>balanceGray</code></strong> disables adjacency costs (default ON). Class
+boundaries are documented constants first, promoted to config only
+if proofing demands.</li>
+<li><strong>Candidate evaluation — quantized step lattice with adaptive K +
+per-step memoization.</strong> All edges evaluate steps on one shared
+lattice per paragraph; treated widths depend only on
+(style, lattice step) → memoized scalars / prefix sums, edge
+evaluation ~O(1). K is adaptive:
+<code>K_side = clamp(ceil(ΔPt_side / q), Kmin=4, Kmax=16)</code> where ΔPt is
+the measured potential swing of a representative full-measure span
+and <code>q</code> a target physical quantum (struct knob, default ~1 pt) —
+long measures get finer lattices automatically; Kmax also protects
+the 32-slot hbFont location LRU. Optional continuous polish of the
+~n chosen lines after the DP (flag, default on). Fitness-class
+boundaries snap to lattice/nearest.</li>
+<li><strong>Checkpoints — algorithm may return a generator.</strong> Contract
+becomes <code>(input) =&gt; CompositionResult | CompositionTask &lt;CompositionResult&gt;</code>; the controller duck-types
+(<code>typeof x.next === &quot;function&quot;</code>) and <code>yield*</code>-delegates. KP++
+yields per relaxation round (per source breakpoint / per N edges)
+with <code>work</code> = edges processed — activating the existing
+<code>workBudget</code> machinery. Sync drain (<code>flushSync</code>, sync reveal)
+unchanged: same generator, drained. Other algorithms return plain
+results; zero churn. <strong>Worker-pool compatibility confirmed</strong> as a
+later execution backend: the lattice separates measurement
+(main-thread, serializable tables) from the DP (pure arithmetic,
+worker-shaped); the generator itself can’t cross a worker
+boundary — a worker runs its own drain loop and reports via
+messages. Timing per ROADMAP: only when measured cost requires it.</li>
+<li><strong>Diagnostics — two tiers.</strong> Always on (cheap): per-line <code>badness</code>
+(now meaningful — gives the published-but-unread field its first
+consumer), fitness class, paragraph total demerits, unsatisfiable
+count, exhausted-potential flags; viewer color coding upgraded to
+consume badness/classes (intensity = badness, hue = class/
+direction) under the existing <code>colorCoding</code> switch. Opt-in heavy
+tier: rejected-candidate records (runner-up edges with demerits
+and rejection margins, pruned/infeasible counts per source break)
+— gated by a <strong>non-UI dev flag</strong> (not serialized into the struct,
+no inspection UI this round); the DP computes runner-up demerits
+during relaxation anyway, the flag only controls retention.</li>
+</ol>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ul>
+<li>Emergency/unsatisfiable-path policy detail: infeasible edges get
+very high demerits rather than exclusion so a path always exists
+(matching the contract’s <code>|step| &gt; 1</code> representation) — exact
+magnitude and interaction with the polish pass to be fixed in the
+plan/implementation.</li>
+<li>The editor-typing performance regression and latency-amplified
+ProseMirror cursor-jump defect (ROADMAP “Open performance
+regression”) remain unresolved and independent of KP++; a focused
+editor-only CPU profile is still owed.</li>
+</ul>
+<h2><a id="phase-5-validation-results-cycle-3-2026-10-06" class="heading_anchor" href="#phase-5-validation-results-cycle-3-2026-10-06" aria-hidden="true">#</a>Phase-5 validation results (Cycle 3, 2026-10-06)</h2>
+<p>Quick-suite perf (Wikipedia fixture, 209 blocks, viewer mode, per-arm
+initial compose drained to the full 209 publications before sampling;
+medians of 3 steady samples after 1 warmup):</p>
+<table>
+<thead>
+<tr>
+<th>arm</th>
+<th>none</th>
+<th>ragged</th>
+<th>fit</th>
+<th>kp</th>
+<th>kp/fit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>typing</td>
+<td>256.4</td>
+<td>248.4</td>
+<td>260.3</td>
+<td>266.9</td>
+<td><strong>1.03×</strong></td>
+</tr>
+<tr>
+<td>inherited-style partial recompose</td>
+<td>—</td>
+<td>634.0</td>
+<td>633.3</td>
+<td>664.5</td>
+<td><strong>1.05×</strong></td>
+</tr>
+<tr>
+<td>relevant-style</td>
+<td>—</td>
+<td>608.7</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>initial full compose (last publication)</td>
+<td>—</td>
+<td>6.6s</td>
+<td>11.8s</td>
+<td>37.3s</td>
+<td><strong>3.2×</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Typing and recompose are at parity — far below the 3× tripwire. The
+initial full compose is the discussion item (3.2× fit): per-block
+cooperative tasks stream, adaptive-K probes add measurement, and the
+hbFont LRU thrash compounds (below). Levers: <code>HBFONT_LOCATIONS_CAP</code>
+and the worker backend.</p>
+<p>Adaptive-K vs hbFont LRU (temporary probe, Wikipedia fixture, KP,
+sync drain): <strong>218 distinct treated locations</strong> (style × lattice
+step × polish-refinement axesKeys) against the per-font cap of 32 —
+6 684 hbFont creations on ONE full compose, LRU permanently at cap.
+Reducing Kmax cannot fix it (polish probes are off-lattice reals);
+options: raise the cap (hbFont creation is a light WASM object) or
+quantize polish-probe axesKeys.</p>
+<p>Sync/async e2e (new permanent test, <code>index.test.mjs</code> “async
+scheduling e2e (production scheduler)”): boots with the DEFAULT
+macrotask scheduler (no injected sync drain), editor → KP select →
+viewer reveal (lazy publications, stable count), two rapid
+consecutive text edits with no settle in between — after settle the
+DOM carries the FINAL edit and the intermediate value never remains
+applied (no stale publications).</p>
+<p>Perf-harness repairs needed to get there (stale since the demand
+lifecycle f7c3c374 and the cooperative scheduler): editor-only arms
+expect/measure zero composition; typing arms moved editor → viewer;
+publication snapshots wait for quiescence; the initial compose is
+drained to the full 209 count before sampling (KP’s 37s stream with
+multi-hundred-ms gaps defeated quiet-window detection: 181/209 then
+stragglers polluting samples); dev-server reload races retried
+(vite dependency re-optimization destroys the execution context
+mid-open); recompose expectation 10 → 9 (uniform across
+ragged/fit/kp since the demand lifecycle).</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

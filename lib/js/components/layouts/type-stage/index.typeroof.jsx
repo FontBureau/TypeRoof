@@ -2,15 +2,23 @@ import {
     _BaseContainerComponent,
     SimpleProtocolHandler,
 } from "../../basics/component.mjs";
-import { _BaseLayoutModel, CommentsModel } from "../../main-model.mjs";
+import {
+    _BaseLayoutModel,
+    CommentsModel,
+    InstalledHyphenationPatternsModel,
+    HyphenationPatternRequirement,
+} from "../../main-model.mjs";
 import {
     PathModelOrEmpty,
     Path,
     BooleanModel,
+    BooleanDefaultTrueModel,
     CoherenceFunction,
-    deserializeSync,
+    deserializeGen,
     SERIALIZE_OPTIONS,
     SERIALIZE_FORMAT_OBJECT,
+    InternalizedDependency,
+    unwrapPotentialWriteProxy,
 } from "../../../metamodel.mjs";
 import {
     TypeSpecModel,
@@ -34,6 +42,7 @@ import { UINodeSpecToTypeSpecLinksMap } from "../../type-spec/fundamentals.mjs";
 import { getTypeSpecDefaultsMap } from "./defaults.mjs";
 
 import { LengthModel } from "../../length-models.mjs";
+import { createHyphenationPatternDeriver } from "./hyphenation-pattern-languages.mjs";
 
 import { TypeStagePaneStyler } from "./pane-styler.typeroof.jsx";
 import {
@@ -57,6 +66,7 @@ import {
 import DEFAULT_STATE from "../../../../assets/type-stage-initial-state.json" with { type: "json" };
 import { UIDocumentViewer } from "./viewer.typeroof.jsx";
 import { DocumentNodesMeta } from "./document-nodes-meta/index.mjs";
+import { CompositionController } from "./text-composition/composition-controller.ts";
 import { schemaSpec as proseMirrorDefaultSchemaSpec } from "../../prosemirror/default-schema";
 
 import {
@@ -82,7 +92,7 @@ export function initTypeSpecCoherenceFn(DEFAULT_STATE) {
             "proseMirrorSchema",
             "nodeSpecToTypeSpec",
         ],
-        function initTypeSpec({
+        function* initTypeSpec({
             typeSpec,
             document,
             stylePatchesSource,
@@ -121,7 +131,16 @@ export function initTypeSpecCoherenceFn(DEFAULT_STATE) {
                                 format: SERIALIZE_FORMAT_OBJECT,
                             },
                         ),
-                        newItem = deserializeSync(
+                        // Generator, NOT deserializeSync: the seeded
+                        // state may reference resources (e.g. a style
+                        // patch's activeFontKey -> installedFonts). As a
+                        // coherence generator the requirements forward
+                        // to the outer metamorphose drive: the async
+                        // resolver installs fonts on demand (the
+                        // __asyncMetamorphoseState boot contract), the
+                        // sync driver keeps failing deliberately (a
+                        // sync context cannot resolve resources).
+                        newItem = yield* deserializeGen(
                             Model,
                             target.dependencies,
                             data,
@@ -158,6 +177,52 @@ export const ensureDimensionBoundnessCoherenceFn = CoherenceFunction.create(
             if (widthValue.isEmpty) widthValue.value = 100;
         }
         // otherwise value is filled by LengthModel's own coherence.
+    },
+);
+
+// --- Hyphenation pattern loading (milestone 3, simplified) -------
+// Resource requirements are yielded DIRECTLY from derived language
+// usage. There is deliberately no serializable reference map: the
+// actual pattern objects live only in the session dependency
+// installedHyphenationPatterns and are reproducible vendored assets.
+// The language derivation lives in ./hyphenation-pattern-languages.mjs
+// and is memoized: this coherence runs on every root metamorphose
+// where typeSpec/stylePatchesSource is a draft — including pure
+// axis-value edits — while languages change rarely.
+
+const hyphenationPatternDeriver = createHyphenationPatternDeriver();
+
+export const requireHyphenationPatternsCoherenceFn = CoherenceFunction.create(
+    [
+        "initTypeSpec",
+        "typeSpec",
+        "stylePatchesSource",
+        "installedHyphenationPatterns",
+    ],
+    function* requireHyphenationPatterns(
+        { typeSpec, stylePatchesSource, installedHyphenationPatterns },
+        { isNew },
+    ) {
+        const typeSpecRaw = unwrapPotentialWriteProxy(typeSpec),
+            stylePatchesSourceRaw =
+                unwrapPotentialWriteProxy(stylePatchesSource);
+        if (!isNew && !typeSpecRaw.isDraft && !stylePatchesSourceRaw.isDraft)
+            return; // languages unchanged — requirements can't have changed
+        // Memoized (hyphenation-pattern-languages.mjs): when nothing
+        // language-relevant changed — e.g. pure axis-value edits — this
+        // collapses to one O(1) walk hit plus two identity compares.
+        const requiredKeys =
+            hyphenationPatternDeriver.deriveRequiredPatternKeys(
+                typeSpecRaw,
+                stylePatchesSourceRaw,
+            );
+        for (const key of requiredKeys) {
+            if (installedHyphenationPatterns.has(key)) continue;
+            yield new HyphenationPatternRequirement(
+                installedHyphenationPatterns,
+                key,
+            );
+        }
     },
 );
 
@@ -206,6 +271,11 @@ export function createTypeStageModelVariantWithDefaults(
         // The equivalent of the legacy tools "applyDefaultsExplicitly" flag.
         ["verboseFontVariationSettings", BooleanModel],
         ["showNodeTypeSpecLabels", BooleanModel],
+        // Render text-composition in the ProseMirror editor as decorations.
+        // Default on.
+        // Originally this was opt-in, default off (plan 2026-10-07-1223, Phase 3),
+        // but, so far it's working very well, so trying to have it on.
+        ["composeInEditor", BooleanDefaultTrueModel],
         _getType(
             "documentRendererMode",
             DocumentRendererModeModel,
@@ -213,8 +283,21 @@ export function createTypeStageModelVariantWithDefaults(
         ),
         ["width", LengthModel],
         ["height", LengthModel],
+        // Session-only pattern objects. The coherence below derives
+        // requirements directly from TypeSpec + style-patch languages;
+        // no reference/cache field is serialized with the document.
+        [
+            "installedHyphenationPatterns",
+            new InternalizedDependency(
+                "installedHyphenationPatterns",
+                InstalledHyphenationPatternsModel,
+            ),
+        ],
         ensureDimensionBoundnessCoherenceFn,
         initTypeSpecCoherenceFn(DEFAULT_STATE),
+        // order is enforced by the "initTypeSpec" name DEPENDENCY
+        // (see the coherence), not by this position
+        requireHyphenationPatternsCoherenceFn,
         // fixme: add a coherence function to ensure the link paths in nodeSpecToTypeSpec
         // are explicitly relative, i.e. start with a "./" not "/". could eventually also
         // start with "../"
@@ -325,6 +408,20 @@ class TypeStageController extends _BaseContainerComponent {
         // the linked stylePatchProperties@ plus typeSpecProperties@
         widgetBus.wrapper.setProtocolHandlerImplementation(
             ...SimpleProtocolHandler.create("styleLinkProperties@"),
+        );
+
+        // per textblock composition results (text-composition
+        // sub-module, milestone 1): published by the composition
+        // controller, consumed by renderer attachments (viewer).
+        widgetBus.wrapper.setProtocolHandlerImplementation(
+            // does not raise when not found, instead returns null:
+            // REQUIRED — OFF MODE is the absence of entries, so
+            // consumers must get null instead of a KEY ERROR (the
+            // fallback is the off-mode mechanism at the consumption
+            // site).
+            ...SimpleProtocolHandler.create("composition@", {
+                notFoundFallbackValue: null,
+            }),
         );
         // widgetBus.insertElement(stageManagerContainer);
         super(widgetBus, zones);
@@ -541,6 +638,22 @@ class TypeStageController extends _BaseContainerComponent {
                 proseMirrorHostElement,
             ],
             [
+                // Always-active, DOM-free text-composition SERVICE:
+                // owns the Measurer, segmenter/algorithm invocation
+                // and the composition@ publication. NO update-cycle
+                // role (UPDATE_STRATEGY_NO_UPDATE): DocumentNodesMeta
+                // drives composition inside its own cascade and looks
+                // this service up by id (getWidgetById, null fallback
+                // — composition is optional). relativeRootPath only
+                // for path derivation (layout root = parent).
+                {
+                    id: "compositionController",
+                    relativeRootPath: Path.fromParts(".", "document"),
+                },
+                [],
+                CompositionController,
+            ],
+            [
                 // Always-active, DOM-free document-tree meta layer: the
                 // viewer/editor attach to it via its id; without a
                 // renderer it walks the document with zero attachments.
@@ -600,6 +713,8 @@ class TypeStageController extends _BaseContainerComponent {
                 originTypeSpecPath,
                 documentNodesMetaId,
                 // baseClass = "typeroof-document",
+                undefined,
+                { compositionReveal: "lazy" },
             ],
             [
                 { zone: "editor-manager" },
@@ -623,6 +738,13 @@ class TypeStageController extends _BaseContainerComponent {
                 UICheckboxInput,
                 "show-node-type-spec-labels", // classToken
                 "Show Element Labels", //label
+            ],
+            [
+                { zone: "editor-manager" },
+                [["composeInEditor", "value"]],
+                UICheckboxInput,
+                "compose-in-editor", // classToken
+                "Compose Text in Editor", //label
             ],
             [
                 { zone: "main" },
@@ -741,6 +863,9 @@ class TypeStageController extends _BaseContainerComponent {
         this.widgetBus.wrapper
             .getProtocolHandlerImplementation("nodeProperties@")
             .resetUpdatedLog();
+        this.widgetBus.wrapper
+            .getProtocolHandlerImplementation("composition@")
+            .resetUpdatedLog();
         super.update(...args);
     }
     initialUpdate(...args) {
@@ -755,6 +880,9 @@ class TypeStageController extends _BaseContainerComponent {
             .resetUpdatedLog();
         this.widgetBus.wrapper
             .getProtocolHandlerImplementation("nodeProperties@")
+            .resetUpdatedLog();
+        this.widgetBus.wrapper
+            .getProtocolHandlerImplementation("composition@")
             .resetUpdatedLog();
         super.initialUpdate(...args);
     }

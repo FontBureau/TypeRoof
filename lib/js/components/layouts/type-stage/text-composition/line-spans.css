@@ -1,0 +1,91 @@
+/**
+ * Line-span CSS for text composition — ported from the varla-varfo
+ * justification demo (lib/css/general.css:781-867), renamed to our
+ * prefix and reduced to what PREDICTIVE composition needs.
+ *
+ * Ported:
+ *   - explicit line breaking: each line's first span carries a
+ *     ::before{content:"\A"} forced line break — the mechanism that
+ *     forces our composed line breaks (and keeps every caret position
+ *     walkable); unset for paragraph-first lines to keep text-indent;
+ *   - the hyphen ::after for lines broken at a hyphenation point;
+ *   - a --line-color-code custom property hook for diagnostics
+ *     (the demo's adjustment color-coding).
+ *
+ * Deliberately NOT ported (they served the demo's render-measure-
+ * render feedback loop, which predictive composition does not have):
+ *   - .line-in-progress* (live-narrowing visualization),
+ *   - .new-style-current-last-line-elem (Chrome "missing textNode"
+ *     workaround),
+ *   - the @-moz-document Firefox block (feedback-loop quirks).
+ */
+
+/* Each composed line's first span carries a FORCED line break as
+ * ::before pseudo-content: "\A" (LF) under white-space:pre — the
+ * span stays INLINE (unlike the display:block variant, which split
+ * inline mark contexts: a block box inside <strong>/<em> stacked the
+ * rest of the line below it — every multi-leaf line starting inside
+ * a mark rendered isolated; operator QA 2026-10-16). An inline
+ * pseudo line break also keeps every caret position walkable (the
+ * earlier Blink caret-skip happened with a display:block pseudo —
+ * the LF mechanism avoids the block-in-inline boundary entirely).
+ * Must be unset for paragraph-first lines to keep text-indent. */
+.typeroof-composition-line-first::before {
+    content: "\A";
+    white-space: pre;
+}
+
+.typeroof-composition-paragraph-first-line.typeroof-composition-line-first::before {
+    content: unset;
+    white-space: unset;
+}
+
+/* A line broken at a hyphenation point shows the hyphen. */
+.typeroof-composition-line-hyphen::after {
+    content: "-";
+}
+
+/* Diagnostics hook: the applicator sets --line-color-code per line.
+ * Two palettes, selected by the payload's resolved colorCoding mode
+ * (milestone 5, Phase 4) — deliberately different visual
+ * vocabularies so they are never confused:
+ *   - "potentials": the demo's adjustment-intensity coding (what the
+ *     line did physically) — narrowing cyan, widening red, overfull
+ *     light red; serves the type designer / potentials configurator;
+ *   - "kp": the Knuth-Plass DP diagnostics (why the DP chose the
+ *     line) — hue per fitness class (tight violet, decent green,
+ *     loose amber, veryLoose magenta), lightness by per-line
+ *     badness, overfull/exhausted deep magenta; serves proofing.
+ * Justification-potentials treatments (milestone 4): the applicator
+ * sets --line-letter-spacing / --line-word-spacing per line from the
+ * line's adjustmentStep; the axes treatments are applied as
+ * font-variation-settings directly on the spans. The controller
+ * measured with the same products (measured == rendered). */
+.typeroof-composition-line {
+    background-color: var(--line-color-code, transparent);
+    letter-spacing: var(--line-letter-spacing, 0);
+    word-spacing: var(--line-word-spacing, 0);
+}
+
+/* A composed textblock: the browser must not soft-wrap on its own —
+ * our line spans' ::before{display:block} are the only breaks. This
+ * is the go-forward model (justification will set explicit line
+ * widths; browser wrapping would double-break). The "does the
+ * browser agree with our measurements" comparison remains available
+ * via OFF MODE. */
+.typeroof-composed {
+    white-space: nowrap;
+}
+
+/* Editor applicator (composition-plugin.ts, plan 2026-10-07-1223):
+ * PM puts the composed node decoration on the NodeView's OUTER
+ * element ([data-node-type]); the text lives one level deeper in
+ * [data-node-content]. white-space inherits, but make it explicit
+ * there: PM's vendor CSS sets .ProseMirror{white-space:break-spaces}
+ * and the editor's `[data-node-type]{width:fit-content}` shrink-wrap
+ * must not pick up a wrap mode from anywhere else. Scoped to the
+ * advanced editor; the class exists only while a textblock has a
+ * composition payload (the condition). */
+.editor-advanced .typeroof-composed > [data-node-content] {
+    white-space: nowrap;
+}

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-named-justification-potentials-configurations" class="heading_anchor" href="#research-named-justification-potentials-configurations" aria-hidden="true">#</a>Research: Named justification-potentials configurations</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Enable selecting a justification-potentials variant beyond auto-discovery,
+for BOTH greedy-fit and knuth-plass: a <code>potentials</code> choice of “auto”
+(current best-fit discovery) or a named configuration — first entries:
+the headline wdth-narrowing treatment from the varla-varfo
+<code>WDTH_JUSTIFICATION_SPECS</code> stub, folded into the unified potentials
+structure with a real dflt slot. Named selection must be “maximally
+graceful”: no family/axis gating, missing navigation dimensions filled
+from table-declared defaults or manual overrides, treated axes the font
+doesn’t support applied anyway (no-ops). Generalize the treatment
+config: any number of axis tags plus optional tracking/wordspace,
+replacing the hard-coded trio.</p>
+<h2><a id="operator-briefing-decisions-of-this-session--the-feature-contract" class="heading_anchor" href="#operator-briefing-decisions-of-this-session--the-feature-contract" aria-hidden="true">#</a>Operator briefing (decisions of this session — the feature contract)</h2>
+<ul>
+<li>The wdth stub semantics: h1/“main” headlines sit at the WIDE end
+(RobotoFlex wdth 151, AmstelVar 125) and ONLY narrow; the dflt slot
+IS the wide end, so widening potential is zero by construction:
+<code>{ wdth: [35, 151, 151] }</code> (RobotoFlex) / <code>{ wdth: [50, 125, 125] }</code>
+(Amstelvar); provenance comments carried over, incl. the
+“widening not confirmed” FIXME.</li>
+<li><code>PotentialsTable</code> gains <code>defaultLocations: number[]</code> parallel to
+<code>dimensions</code> — the modeling font’s defaults, used when the run’s
+font lacks a dimension’s axis. The existing RF/Amstelvar full
+tables get theirs declared (verify against the shipped fvar).</li>
+<li>Named configurations = a flat map selected BY NAME. NO family
+matching, NO axis-existence gate. Graceful piecewise: missing nav
+dims -&gt; defaultLocations or manual override; treated axes the font
+lacks -&gt; applied anyway (render/measurement no-ops; the line
+justifies via the remaining treatments); no effective overlap -&gt;
+step 0 everywhere, “we just render the font”, never an error.</li>
+<li>Config names: enum (<code>auto</code>, <code>robotoFlexText</code>, <code>robotoFlexHeadline</code>,
+<code>amstelvarText</code>, <code>amstelvarHeadline</code>). <code>auto</code> = today’s best-fit
+discovery, explicitly restricted to the Text pair (behavior
+identical to the current registry, which is exactly those two
+tables). <code>*Text</code> = the existing full tables (their wdth-100 branch
+is commented “default reading text spec”); <code>*Headline</code> = the flat
+wdth tables. Future: more advanced selection (family + useCase
+like “text”/“headline” per font) is explicitly OUT of scope now.</li>
+<li><code>potentialsLocationOverrides</code>: ordered map axis tag -&gt; NUMBER (no
+logical values); FILL-ONLY — applies only to dimensions the run’s
+font does not carry; entries for axes the font has are ignored.
+Precedence: override &gt; defaultLocations. Fill-only protects the
+step-0-identity invariant (overriding an axis the run uses would
+re-anchor the treatment away from the run’s actual value and
+change rendering AT step 0).</li>
+<li>The documenting string (“the potential is selected by: opsz(14),
+wght(400), wdth(100)”) is GENERATED from the effective location,
+not stored (cannot drift out of sync).</li>
+<li>Treatment config generalization (“not hard-coded to 3 treatments”):
+<code>axisTreatments: &quot;all&quot; | ReadonlySet&lt;string&gt;</code> + <code>tracking</code> /
+<code>wordspace</code> booleans. Greedy-fit struct: <code>treatmentAxes</code> = list of
+validated axis tags (empty = all axis treatments of the resolved
+table), <code>treatmentTracking</code>/<code>treatmentWordspace</code> booleans stay
+(they already exist); <code>treatmentXTRA</code> is DROPPED, no migration.
+KP keeps planner defaults (all treatments on, direction “both”),
+gaining only <code>potentials</code> + <code>potentialsLocationOverrides</code>.</li>
+<li>No changes to the pure algorithms (greedy-fit.ts, knuth-plass.ts);
+the anchoring/measurement/applicator paths are already graceful
+(evidence below).</li>
+<li>CORRECTION (operator, 2026-10-14 19:42): the potential’s authored
+span IS its identity — the headline config MEANS “start at 151,
+narrow toward 35”. It is not a font-derived range: recasting the
+config on another font as a “[75,100] narrowing potential”
+misrepresents the authored semantics.</li>
+<li>Anchoring becomes a TRIPLE-valued OPTION (operator 2026-10-14
+20:04; presumably a struct knob next to <code>potentials</code>, default
+“run”, to confirm in planning) — <code>potentialsAnchoring: &quot;run&quot; | &quot;font&quot; | &quot;off&quot;</code>:
+<ul>
+<li>“run” (default, STATUS QUO): today’s <code>anchorPotentialsToLocation</code>,
+unchanged (dflt := the run’s RESOLVED axis value — the style’s
+explicit setting or the font’s axis default when unset, never
+the table’s authored dflt; min/max shifted by the same delta,
+clamped to font.axisRanges — step 0 is “no change” by
+construction). The auto path and existing tables are untouched.</li>
+<li>“font”: dflt := the FONT’s axis defaults (fvar), regardless of
+where the style pushes the run — one stable anchor per font,
+shared by all runs; min/max shifted + clamped as above. Step 0
+= the font’s default position: no change only for runs not
+styled away from the defaults. (Operator 20:07: this
+run-independence is exactly the point — stable, consistent
+potentials across runs of the same font, unaffected by where
+styles push individual runs.)</li>
+<li>“off”: no anchoring — authored triple verbatim. Regardless of
+the run’s current value / the font’s axis default, the
+treatment starts at the CONFIGURATION’s own dflt (the mid slot
+of the triple, e.g. 151) and traverses the authored span;
+values the font cannot reach clamp at the application boundary
+(HarfBuzz and CSS both clamp to fvar — measurement/render
+parity holds), i.e. the existing no-op machinery for
+unsupported axes. NOTE: with “off”, step 0 applies the
+authored dflt — for a run not sitting there, step 0 is no
+longer the run’s unadjusted state (the configuration asserts
+its natural state; a conscious authoring statement, differs
+from the step-0-identity invariant elsewhere).</li>
+</ul>
+</li>
+</ul>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p>The pipeline is ready for this feature: the Treatment Planner is
+already generic over arbitrary axis tags (only struct fields,
+properties-generator lists and the controller’s toggle mapping
+hardcode the trio); measurement and rendering already no-op treated
+axes the font lacks; anchoring already clamps to the font’s axis
+ranges (a wdth table cross-applied to another font yields sane,
+cross-applied to another font degrades gracefully). The work is:
+data (wdth tables +
+defaultLocations), a named-configuration map + graceful resolver in
+justification-potentials.ts, config-shape change in
+treatment-planner.ts, struct fields + properties-generator entries</p>
+<ul>
+<li>widget mappings on the metamodel/UI side, controller wiring for
+both algorithms, and the generated selection doc string.</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed findings</h2>
+<h3><a id="potentials-data-model--resolution" class="heading_anchor" href="#potentials-data-model--resolution" aria-hidden="true">#</a>Potentials data model &amp; resolution</h3>
+<ul>
+<li><code>lib/js/components/layouts/type-stage/text-composition/justification-potentials.ts</code>
+<ul>
+<li><code>PotentialsTable</code> :42 (dimensions + tree; to gain defaultLocations),
+<code>PotentialsLevel</code>/leaf types :26-40. Leaf = treatment triples
+[min, dflt, max]; axis treatments are 4-char tags, <code>tracking</code> is
+ABSOLUTE pt, <code>wordspace</code> a FACTOR of the natural space advance.</li>
+<li><code>validatePotentialsTable</code> :66 — leaf key-set uniformity across ALL
+leaves, triple min&lt;=dflt&lt;=max, numeric monotonic levels; both stub
+tables validated at module load.</li>
+<li><code>calculatePotentials</code> :164 — separable multilinear interpolation,
+levels bottom out early, out-of-range clamps to edge stops;
+THROWS when the location misses a dimension (the guarantee that
+named selection must relax); step-0-identity dev warning for axis
+treatments.</li>
+<li><code>anchorPotentialsToLocation</code> :247 — re-anchors axis triples to
+the run’s location (dflt := run value, min/max shifted, clamped
+to font.axisRanges); a treated axis ABSENT from the location keeps
+the authored triple unclamped (graceful for unsupported axes).
+UNCHANGED when the anchoring option is ON (status quo); OFF
+skips it entirely (authored triple verbatim).</li>
+<li><code>_POTENTIALS_REGISTRY</code> :549, <code>discoverPotentials</code> :586 — best-fit:
+longest family-name prefix, then most required axes; requires ALL
+navigated/treated axes present in font.axisRanges (the gate that
+named selection must NOT apply).</li>
+<li>Data: <code>JUSTIFICATION_POTENTIALS_AMSTELVAR</code> / <code>_ROBOTO_FLEX</code>
+(verbatim varla-varfo port; the wdth-100 branch is commented
+“default reading text spec” — the natural <code>*Text</code> configs).</li>
+</ul>
+</li>
+</ul>
+<h3><a id="treatment-planner" class="heading_anchor" href="#treatment-planner" aria-hidden="true">#</a>Treatment Planner</h3>
+<ul>
+<li><code>.../treatment-planner.ts</code>: <code>TreatmentPlannerConfig</code> :29
+{ treatments: ReadonlySet<string>, direction }, defaults :36 =
+{XTRA, tracking, wordspace} + “both”. <code>treatmentValueAt</code> — per-side
+linear step maps; <code>createTreatmentStepper</code> :84 — direction gating,
+|step|&gt;1 clamp, axis treatments filtered by the 4-char-tag
+convention AND config set. The stepper math is ALREADY generic
+over any tag names — only the wiring hardcodes the trio. The 4-char
+convention stays (it marks re-anchorable axis treatments).</string></li>
+</ul>
+<h3><a id="controller-wiring-host-policy" class="heading_anchor" href="#controller-wiring-host-policy" aria-hidden="true">#</a>Controller wiring (Host policy)</h3>
+<ul>
+<li><code>.../composition-controller.ts</code> (composeTextblock):
+<ul>
+<li><code>greedyFitConfig</code> :989-1022 — treatments set built from the three
+boolean toggles (<code>textCompositionAlgorithm/treatmentXTRA|...</code>),
+direction enum, colorCoding; <code>knuthPlassConfig</code> :1023-1077;
+<code>plannerConfig = greedyFitConfig ?? TREATMENT_PLANNER_DEFAULTS</code> :1091.</li>
+<li><code>plannerOf(style)</code> :1101-1120 — discoverPotentials -&gt; location
+(Map of axesEntries) -&gt; calculatePotentials -&gt;
+anchorPotentialsToLocation (axisRanges) -&gt; stepper +
+spaceAdvancePt; cached per LeafStyle; the table OBJECT joins the
+input-equality ingredients filter (:1163ff,
+<code>plannerOf(styleOf(index))?.table ?? null</code>).</li>
+<li><code>axesAtStep</code> :1316-1331 — replaces values ONLY for tags already
+present in <code>style.axesEntries</code> (the font’s own axes): a treated
+axis the font lacks is silently dropped from measurement.</li>
+<li>Payload :1626-1650 — leaves[].treatment {axesEntries, potentials,
+spaceAdvancePt} + treatmentConfig {treatments, direction}; the
+applicator derives per-line values deterministically per fragment.</li>
+</ul>
+</li>
+</ul>
+<h3><a id="properties--metamodel--ui-path-where-new-fields-register" class="heading_anchor" href="#properties--metamodel--ui-path-where-new-fields-register" aria-hidden="true">#</a>Properties / metamodel / UI path (where new fields register)</h3>
+<ul>
+<li>Struct models: <code>lib/js/components/type-spec/text-composition-models.mjs</code>
+— GreedyFitModel :66-75 (three treatment booleans as
+BooleanDefaultTrueOrEmpty, JustificationDirectionModel enum :60,
+colorCoding), KnuthPlassModel :108ff (all fields OrEmpty).</li>
+<li>Properties generator: <code>.../type-stage/properties-generators.mjs</code>
+<code>textCompositionGen</code> :52-108 — resolves the dynamic struct per
+typeKey and yields <code>textCompositionAlgorithm/&lt;field&gt;</code> for non-empty
+fields. NEW FIELDS MUST BE ADDED TO THE PER-TYPE FIELD LISTS here.</li>
+<li>Registration: <code>lib/js/components/registered-properties.mjs</code> :429;
+TypeSpecModel field <code>type-spec/models.mjs</code> :623.</li>
+<li>UI: <code>ui-text-composition.typeroof.jsx</code> (UIDynamicStructContainer
+subclass; fields render via ProcessedPropertiesSystemMap). Widget
+map <code>type-driven-ui.mjs</code> <code>uiElementsMap</code> :243ff —
+_AbstractEnumModel -&gt; UISelectInput :247 / UISelectOrEmptyInput :525,
+StringModel -&gt; UILineOfTextInput :244, list precedent
+CharGroupArgumentsListModel -&gt; UITypeDrivenListWithAddButton :268
+(validated string items), LengthValueListModel :279, ordered-map
+precedent AxesMathAxisLocationsModel -&gt; UIAxesMathLocation :399
+(inline notes document its drag-handle caveats).</li>
+</ul>
+<h3><a id="graceful-application-paths-evidence-apply-anyway-is-safe" class="heading_anchor" href="#graceful-application-paths-evidence-apply-anyway-is-safe" aria-hidden="true">#</a>Graceful application paths (evidence “apply anyway” is safe)</h3>
+<ul>
+<li>Measurement: <code>.../measurer.ts</code> <code>axesEntriesOf</code> :33-52 — location is
+built from font.axisRanges only (an axis the font lacks is absent
+from the location); axesAtStep drops unknown tags; HarfBuzz shapes
+at the font’s real axes. Measured == rendered for no-op axes.</li>
+<li>Rendering: <code>.../line-attrs.ts</code> <code>lineSpanStyles</code> :199-224 —
+per-line-span font-variation-settings (unsupported axes ignored by
+the font), wordspace = factor * natural space advance, tracking via
+shaped glyph counts; viewer.typeroof.jsx applies it per fragment.</li>
+<li>Anchoring (mode examples, the triple from 20:04): the Flex
+headline table <code>{wdth:[35,151,151]}</code>: a run AT wdth 151 (the h1
+case) is the identity case — narrowing-only by construction. A
+plain-Roboto run at wdth 100 with “run” (status quo) re-anchors
+per today’s code to [75,100,100] (dflt := 100, shifted +
+clamped). With “font” the anchor is the font’s fvar default
+(plain Roboto wdth 100 → same [75,100,100]; a run STYLED to 90
+would still anchor at 100, step 0 moving it back). With “off”
+the authored triple applies verbatim: the treatment starts at
+151 and the font clamps applied values at its boundary (plain
+Roboto renders the start at its max 100 and narrows along the
+authored span until its floor 75). A font without wdth keeps
+the authored triple, applies it, ignores it.</li>
+</ul>
+<h3><a id="reuse-precedents-for-the-new-fields" class="heading_anchor" href="#reuse-precedents-for-the-new-fields" aria-hidden="true">#</a>Reuse precedents for the new fields</h3>
+<ul>
+<li>Ordered map with validated OpenType-tag keys:
+<code>axes-math-models.mjs</code> <code>AxesMathAxisLocationsModel</code> :198
+(_AbstractOrderedMapModel.createClass,
+validateKeyFn: validateOpenTypeTagString — util.mjs :81); item
+<code>AxesMathAxisLocationValueModel</code> :180 ({logicalValue:
+default|min|max|number, numericValue}). Operator decision:
+overrides need NUMBERS ONLY — either a clean ordered map
+(tag -&gt; number; one new widget mapping, modeled on the existing
+patterns) or reuse with logicalValue fixed to ‘number’ by a
+coherence function (free UI, but serializes a meaningless enum per
+entry). <code>AxesMathLocationModel</code> :219 wraps the map for axes-math.</li>
+<li>StylePatch uses the same map as <code>axesLocations</code>
+(type-spec/models.mjs :435) with a CoherenceFunction example
+:439-444 (autoOPSZ deletes the opsz entry) — the coherence pattern
+for cleaning no-longer-meaningful entries.</li>
+<li>treatmentAxes list precedent: CharGroupArgumentsListModel items are
+validated strings rendered via UITypeDrivenListWithAddButton with
+StringModel items -&gt; UILineOfTextInput — the shape for a list of
+axis tags (validation: the item model or a list coherence function).</li>
+<li>Dynamic-struct machinery: createDynamicModel
+(dynamic-types-pattern.mjs; text-composition-models.mjs :31),
+primitives: StringModel (metamodel/simple-models.ts :109),
+struct-model.ts, ordered-map-model.ts :92, list-model.ts.</li>
+</ul>
+<h3><a id="test-layout--verification" class="heading_anchor" href="#test-layout--verification" aria-hidden="true">#</a>Test layout &amp; verification</h3>
+<ul>
+<li>Co-located vitest files in <code>.../text-composition/</code>:
+justification-potentials.test.mjs, treatment-planner.test.mjs,
+composition-controller-task.test.mjs, line-attrs.test.mjs,
+measurer.test.mjs, greedy-fit.test.mjs, knuth-plass.test.mjs, plus
+type-spec/model.test.mjs and lib/js/tests/text-composition/index.test.mjs
+(struct/integration level).</li>
+<li>Commands: <code>npm run typecheck</code>, <code>npm run lint</code>, <code>npm run test</code>
+(vitest run), <code>npm run format:write</code>.</li>
+<li>Testing strategy: assert behavior (inputs -&gt; observable outcomes),
+not implementation internals (<a href="http://COLLABORATION.md">COLLABORATION.md</a>).</li>
+<li><code>scripts/perf-composition</code> is OFF LIMITS (operator rule 2026-10-06).</li>
+</ul>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li>justification-potentials.ts :26-66 (types/validation), :164
+(calculatePotentials), :247 (anchor), :549/:586 (registry/discovery)</li>
+<li>treatment-planner.ts :29-36 (config/defaults), :84 (stepper)</li>
+<li>composition-controller.ts :989-1120 (config resolution, plannerOf),
+:1316 (axesAtStep), :1626-1650 (treatment payload)</li>
+<li>properties-generators.mjs :52-108 (textCompositionGen)</li>
+<li>text-composition-models.mjs :60-75, :108+ (structs)</li>
+<li>type-driven-ui.mjs :243-296, :399, :525 (widget map)</li>
+<li>axes-math-models.mjs :180-224 (Location models)</li>
+<li>type-spec/models.mjs :423-444 (SimpleStylePatchModel axesLocations)</li>
+<li>measurer.ts :33-52 (axesEntriesOf); line-attrs.ts :199-224</li>
+<li>util.mjs :81 (validateOpenTypeTagString)</li>
+<li>Prior art / context:
+thoughts/research/2026-10-04-1644-justification-potentials.md
+(archived: docs/planning/agentic-artefacts/thoughts/research/);
+docs/planning/text-composition/ROADMAP.md “Milestone 4 design notes”
+(deferred item: “unified headline wdth treatment”).</li>
+</ul>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ol>
+<li>Overrides map model: clean ordered map tag-&gt;number (new model +
+one widget mapping) vs. reuse AxesMathAxisLocationsModel with the
+logicalValue enum fixed to ‘number’ by coherence (free UI,
+serialized cruft). Operator leans numbers-only; plan decides.</li>
+<li>treatmentAxes item validation: validated StringModel subclass vs.
+list-level coherence function — follow the CharGroupArgumentsModel
+pattern found during planning.</li>
+<li>Deserialization of the DROPPED treatmentXTRA field: confirm
+removed/unknown struct fields drop silently on document load
+(dynamic-struct-model.ts / serialization.ts) — expected, verify
+with a plan-phase test.</li>
+<li>Where the generated selection doc string surfaces (composition
+payload diagnostics vs. a UI label) — small, decide in plan.</li>
+<li>KP treatment toggles: deliberately not exposed now (planner
+defaults); note as a future knob.</li>
+<li>Anchoring option scope: struct knob next to <code>potentials</code>
+(assumed) — does it govern <code>auto</code>-discovered potentials too
+(default ON), or only named configurations?</li>
+</ol>
+<h2><a id="tooling-note-for-toolingmd-not-yet-filed" class="heading_anchor" href="#tooling-note-for-toolingmd-not-yet-filed" aria-hidden="true">#</a>Tooling note (for ~/TOOLING.md, not yet filed)</h2>
+<ul>
+<li>This session the delegate sub-agents were unusable: the
+<code>instructions</code> parameter was silently dropped ~35 times (only short
+scalar params like <code>source</code>/<code>async</code> arrived at the tool); one
+source-based delegate (gortex-search) ran WITHOUT its task
+parameters and produced a confident, unrelated report (answered a
+different feature’s question). Research was executed directly as
+fallback. Suspected payload-size-dependent parameter truncation in
+the tool-call layer (same family as the 2026-05-07 entries).</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

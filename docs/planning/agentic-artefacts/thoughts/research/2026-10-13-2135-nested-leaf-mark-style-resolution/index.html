@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-nested-leafmark-style-resolution--measured-vs-rendered-basis-phase-6" class="heading_anchor" href="#research-nested-leafmark-style-resolution--measured-vs-rendered-basis-phase-6" aria-hidden="true">#</a>Research: Nested leaf/mark style resolution — measured vs rendered basis (phase 6)</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Handover scope: nested leaves/marks inside inline nodes must measure
+against the same basis they render with. (i) Where does every style-link
+resolution site anchor for content nested inside inline nodes, and what
+basis results today (root fallback vs containing typeSpec vs textblock
+typeSpec)? (ii) What design space exists for a containing-typeSpec
+ancestor walk? (iii) What is the compose-vs-innermost decision’s blast
+radius? (iv) Re-tuning inventory (states).</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p><strong>Three anchoring variants exist in the codebase today, and they
+disagree for nested runs.</strong> The inline NODE channels (viewer V2,
+editor E1) slice off the node’s own type key and anchor at the
+CONTAINING typeSpec (correct). The run-level MARK channels (viewer V1,
+editor E2) hand the path in UNSLICED — it ends at the inline node
+(<code>generic-inline</code>), whose empty <code>nodeSpecToTypeSpec</code> link collapses
+<code>getTypeSpecPropertiesIdMethod</code>’s walk to the <strong>ROOT</strong> (base 14pt —
+the operator’s <code>1em → 14pt</code> symptom). The composition channel (V3)
+anchors marks at the <strong>TEXTBLOCK’s</strong> own typeSpec. For the operator’s
+live case all three <em>correct</em> candidates coincide — <code>li-inline</code> →
+<code>/paragraphs/t1</code> and the li-inline <strong>is</strong> the textblock, so the
+containing spec, the textblock spec, and the node channel’s spec are
+all <code>t1</code> (18pt) — only V1/E2 (root, 14pt) are wrong. The measured side
+(<code>_resolveLeafStyleLink</code>) is mark-list-only by construction
+(<code>getWrapMarks</code> reads only <code>node.marks</code>); inline-node edges never reach
+it, and nested leaves fall back to the textblock style. The single-id
+shape of <code>CompositionLeaf</code>/<code>leafStyles</code> physically embodies the
+“at-most-one link per leaf” contract on the measured side — while the
+viewer already RENDERS nested marks composed (one styler per wrapper
+element). No state ships an <code>inlineNodesStyleLinks</code> edge today.</p>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-the-shared-resolver-and-the-root-fallback" class="heading_anchor" href="#1-the-shared-resolver-and-the-root-fallback" aria-hidden="true">#</a>1. The shared resolver and the root fallback</h3>
+<ul>
+<li><code>getTypeSpecPropertiesIdMethod</code> (<code>prosemirror/integration.typeroof.jsx:190</code>,
+exported; aliased as <code>_getTypeSpecPropertiesId</code> at
+<code>viewer.typeroof.jsx:1058</code>, <code>type-spec.typeroof.jsx:958/:1671+</code>,
+<code>document-nodes-meta/index.mjs:807</code>): takes <code>pathOfTypes</code> (type keys,
+last = the node in question), reads
+<code>nodeSpecToTypeSpec.get(typeKey).get(&quot;link&quot;)</code> (:216-218). Missing OR
+empty entry ⇒ <code>typeSpecLink = &quot;&quot;</code>. Link discriminator (:224-230):
+absolute links are origin-anchored; bare/<code>./</code>/<code>..</code> links are
+parent-anchored (recursive on <code>slice(0, -1)</code>, :236-253). An <strong>empty
+link has no parts ⇒ neither</strong> — <code>resolvedPath</code> stays null and the
+walk falls to <code>_getBestTypeSpecPropertiesId</code> (:117): <code>initialParts = []</code> ⇒ <code>testPath = originTypeSpecPath</code> — the walk <strong>starts at the
+typeSpec root</strong> and only climbs up (:156). This is the root-of-self
+fallback (:189-191).</li>
+<li><strong>State of the entries</strong> (verified in
+<code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code>):
+<code>li-inline → {&quot;link&quot;: &quot;/paragraphs/t1&quot;}</code> (the same spec as
+<code>paragraph</code>; its 18pt = root base 14 × t1’s 1.285714286 — the phase-2
+unit-test chain); <strong><code>generic-inline</code>, <code>cite</code>, <code>bdi</code> have NO entries</strong>
+→ empty link → root. Ancestor levels with entries: heading-1/2/3
+(<code>/headings/h1/2/3</code>), paragraph/paragraph-2 (<code>/paragraphs/t1</code>/<code>t2</code>),
+figcaption (t2), li-block (t1), generic-block (<code>/generic</code>), section,
+sub-section.</li>
+<li><code>getStyleLinkPropertiesId</code> (<code>document-nodes-meta/derivations.mjs:405-424</code>):
+pure id-constructor + registry check —
+<code>styleLinkProperties@&lt;typeSpecPropertiesPath&gt;/&lt;styleLinkType&gt;/&lt;styleLinkName&gt;</code>;
+the anchoring decision is made entirely by whoever produced
+<code>typeSpecPropertiesPath</code>.</li>
+<li><code>getEffectiveStyleLinks</code> (<code>prosemirror/type-spec.typeroof.jsx:2062-2080</code>):
+resolves inherited+local edges for a registered <code>typeSpecProperties@</code>
+id; needs NO ancestor walk itself (inheritance is folded into the
+typeSpecnion) — but choosing an edge’s ANCHOR requires knowing the
+containing typeSpec path.</li>
+</ul>
+<h3><a id="2-the-five-resolution-sites-rendered--measured" class="heading_anchor" href="#2-the-five-resolution-sites-rendered--measured" aria-hidden="true">#</a>2. The five resolution sites (rendered + measured)</h3>
+<table>
+<thead>
+<tr>
+<th>Site</th>
+<th>Walks the method?</th>
+<th>Path handed in</th>
+<th><code>[typography, li-inline, generic-inline]</code> lands at</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>V1 viewer run marks (<code>viewer.typeroof.jsx:1180-1183</code>)</td>
+<td>yes</td>
+<td>run’s <code>context.pathOfTypes</code>, UNSLICED (ends at generic-inline)</td>
+<td><strong>ROOT</strong></td>
+</tr>
+<tr>
+<td>E2 editor marks (<code>type-spec.typeroof.jsx:1682</code> via the inline node’s own subscription; <code>_getParentSubscription</code> :1394-1406 — inline nodes DO subscribe, <code>integration.typeroof.jsx:424</code>)</td>
+<td>yes (by the inline node’s subscription)</td>
+<td>same chain, ends at generic-inline</td>
+<td><strong>ROOT</strong></td>
+</tr>
+<tr>
+<td>V2 viewer inline channel (<code>_provisionInlineStyleStyler</code>, <code>viewer.typeroof.jsx:589</code>: <code>slice(0, -1)</code> BEFORE resolving)</td>
+<td>yes</td>
+<td><code>[typography, li-inline]</code></td>
+<td><strong>containing spec (t1)</strong> — correct</td>
+</tr>
+<tr>
+<td>E1 editor inline channel (<code>_inlineStyleLinkPropertiesIdFor</code>, <code>type-spec.typeroof.jsx:826-837</code>: <code>getPathOfTypes(...).slice(0, -1)</code>)</td>
+<td>yes</td>
+<td><code>[typography, li-inline]</code></td>
+<td><strong>containing spec (t1)</strong> — correct</td>
+</tr>
+<tr>
+<td>V3 composition leaves (<code>composition-controller.ts:649</code> against <code>StyleResolutionContext.typeSpecPropertiesPath</code>, built once per TEXTBLOCK at <code>document-nodes-meta/index.mjs:901-913</code> from the textblock’s own <code>plan.pathOfTypes</code>)</td>
+<td>no (pre-resolved)</td>
+<td>the textblock’s own path</td>
+<td><strong>textblock spec</strong></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Why V1/E2 fall to root:</strong> the run’s <code>context.pathOfTypes</code> is the
+inline node’s <code>plan.pathOfTypes</code> copied by reference into
+<code>childrenContext</code> (<code>derivations.mjs:288/:291-301</code>; run metaInfo at
+<code>index.mjs:1221-1236</code>) — complete from the document root, but
+<strong>ending at the inline node</strong> (the run’s immediate parent). The
+“parent element decides mark styling” rule
+(<code>derivations.mjs:296-298</code>) treats <code>generic-inline</code> as the styling
+context; its empty link then collapses the resolution to root. The
+inline channels slice BEFORE resolving; the mark channels never slice.</li>
+<li><strong>The three-way disagreement</strong> (V1/E2 root vs V2/E1 containing vs V3
+textblock) exists only for runs nested inside inline nodes; for
+DIRECT runs in a textblock, parent = textblock and all agree.</li>
+<li>In the operator’s live case the li-inline IS the textblock and its
+spec IS <code>/paragraphs/t1</code> — the containing-spec and textblock-spec
+anchorings COINCIDE (t1); only the root anchoring is wrong.</li>
+</ul>
+<h3><a id="3-the-measured-side-composition-controller" class="heading_anchor" href="#3-the-measured-side-composition-controller" aria-hidden="true">#</a>3. The measured side (composition controller)</h3>
+<ul>
+<li><code>_resolveLeafStyleLink</code> (<code>composition-controller.ts:624-682</code>): the
+leaf’s identity is its node’s <code>marks</code> (via <code>getWrapMarks</code>) + its
+document path (error message only). Descriptors ordered INSIDE-OUT
+(<code>derivations.mjs:446</code>); each mapped via <code>getStyleLinkPropertiesId</code>
+against the textblock’s <code>typeSpecPropertiesPath</code>; <strong>contract guard</strong>
+(:670-680): <code>&gt;1</code> ids ⇒ console.error, <code>ids[0]</code> (innermost) wins.
+Returns a single id or null. Sole call site: <code>_buildInlineItems</code>
+(:590-596).</li>
+<li><code>_buildInlineItems</code> (:562-620): recurses <code>inlineContainer</code> items
+(:598-610) with the SAME <code>leaves</code> array and the SAME
+<code>styleResolution</code>/<code>markSpec</code> — the recursion READS each inline
+node’s <code>typeKey</code> (:577) and <strong>discards it</strong> (<code>InlineItem</code> is
+<code>{kind, items}</code> only, <code>segmenter.ts:70-75</code>). Nested leaves land
+depth-first with paths <code>&lt;textblock&gt;/content/&lt;i&gt;/content/&lt;j&gt;</code>.</li>
+<li>Measured basis (:889-937): <code>leafStyles</code> from the registered
+<code>styleLinkProperties@</code> payload (<code>payload.typeSpecnion.getProperties()</code>,
+the same read as <code>UIDocumentStyleStyler</code>), <code>leafFontSize = properties.get(&quot;generic/fontSize&quot;)</code> (:914-915);
+<code>styleOf(i) = leafStyles[i] ?? textblockStyle</code> (:936-937). So nested
+leaves measure against (a) their own mark payload (root-anchored —
+the defect) or (b) the TEXTBLOCK’s style — the inline node’s edge
+contributes NOTHING to measurement today, while the viewer DOES
+render the node’s element from it. Measured ≠ rendered.</li>
+<li>Consumption: shaping <code>style.fontSizePt</code> (:1248-1262, :1300, :1349,
+:1540), planners (:1168, :1594, :1601), invalidation ingredients
+(:1150-1167). The <code>em</code> basis inside a payload resolves via
+<code>CONTAINING_FONT_SIZE</code> against the ORIGIN typeSpec’s outbound
+effective size (phase 2) — so anchoring the payload at t1 fixes the
+em basis to 18pt with NO new machinery.</li>
+<li><strong>What the controller would need</strong> for inline-edge resolution: (i) a
+typeSpec path per ancestor level — either reconstructed from the
+mmNode type keys (read at :577, currently discarded) or handed down
+from the meta layer; (ii) a place to put the result —
+<code>CompositionLeaf</code> has ONE id slot (:251-255), <code>leafStyles</code> is
+one-per-sourceIndex (:905), <code>styleOf</code> returns one <code>LeafStyle</code>
+(:936-937): the “at-most-one” contract is physically embodied here.</li>
+<li><code>getWrapMarks</code> (<code>derivations.mjs:425-560</code>): reads ONLY
+<code>node.get(&quot;marks&quot;)</code> (:434) — inline-node ancestry is structurally
+invisible to it. Empty stylePatch = declaration (no identity);
+“chain runs keep exactly ONE resolved style link (the contract)”
+(:536-546). Consumers: the controller (:649), the viewer’s run
+channel (VIEWER:1110-1119 → wrapper DOM :1126-1146, stylers
+:1148-1170), <code>wrapResultsAreEqual</code> (:549+).</li>
+</ul>
+<h3><a id="4-the-compose-vs-innermost-decision-space" class="heading_anchor" href="#4-the-compose-vs-innermost-decision-space" aria-hidden="true">#</a>4. The compose-vs-innermost decision space</h3>
+<ul>
+<li><strong>The viewer already RENDERS composed</strong>: <code>_createStylerWidgets</code> loops
+ALL wrapper descriptors and attaches one styler per nested wrapper
+element (VIEWER:1148-1170) — nested marks stack visually. Only the
+MEASURED side collapses to one (the contract + the single-id shape).</li>
+<li>With an inline edge AND a mark edge both applicable to a nested
+leaf: <strong>innermost-wins</strong> would pick one payload (which one — the
+mark, as the “innermost” of the leaf, or the inline edge as the
+closest scope?); <strong>compose</strong> would need a two-payload merge the
+properties system does not offer per-leaf (<code>createPatched</code> merges a
+patch against an ORIGIN typeSpec, not patch-onto-patch within the
+controller’s leafStyles array) — the <code>em</code> basis of the inner patch
+would resolve against the containing context, not the outer patch.</li>
+<li>Invalidation ingredients hash only the consumed tuple (:1150-1167):
+a discarded second link would not invalidate.</li>
+<li>Blast radius of changing the contract: <code>CompositionLeaf</code> shape,
+<code>leafStyles</code>, <code>styleOf</code>, the guard, plus the applicators (find
+segments by leaf path — unaffected by id-count changes). The mark
+contract itself (“at-most-one per leaf” for MARK chains) is not
+violated by adding the inline edge as a SEPARATE resolution step
+(node edges are keyed by node type keys, marks by mark names — they
+cannot collide).</li>
+</ul>
+<h3><a id="5-re-tuning-inventory" class="heading_anchor" href="#5-re-tuning-inventory" aria-hidden="true">#</a>5. Re-tuning inventory</h3>
+<ul>
+<li><strong>No state ships an <code>inlineNodesStyleLinks</code> edge today</strong> (verified:
+<code>grep inlineNodesStyleLinks</code> over <code>lib/assets/*.json</code>,
+<code>lib/js/wikipedia/*.json</code>, <code>lib/js/tests/fixtures/*.json</code> — zero
+hits). Defaults empty ⇒ no migration.</li>
+<li>The en wikipedia state (<code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code>)
+ships the nested chains (li-inline textblocks: backlink +
+reference-text &gt; cite &gt; em/a marks — the operator readout’s DOM) and
+the nodeSpecToTypeSpec map incl. <code>li-inline → /paragraphs/t1</code>.
+Optional demo edge (plan §6.4): the typeSpec tree there (root
+baseFontSize 14; children headings/paragraphs/…) can carry e.g. a
+<code>generic-inline</code> → patch edge; the “bold” patch in
+<code>stylePatchesSource</code> is the established probe knob.</li>
+<li>Visible defect inventory (before/after): nested <code>em</code>/<code>a</code> marks
+inside inline nodes currently render at the ROOT base (14pt + opsz 14
+per the readout) instead of the li context (18pt) — every styled
+nested mark in the references list changes size once V1/E2 anchor at
+the containing spec. Direct-run marks (not nested) are unaffected.</li>
+</ul>
+<h3><a id="6-ancestor-walk-design-space-mapped-not-decided" class="heading_anchor" href="#6-ancestor-walk-design-space-mapped-not-decided" aria-hidden="true">#</a>6. Ancestor-walk design space (mapped, not decided)</h3>
+<ul>
+<li>(a) <strong>Slice-last-retry on empty link</strong>: when the walk hits an empty
+link at the deepest typeKey, drop trailing typeKeys until a level
+with an entry resolves ([…, li-inline] → t1). Coincides with the
+inline channels’ containing-spec for the one-deep case; generalizes
+to nested inline chains (cite inside generic-inline inside li).</li>
+<li>(b) <strong>textblockRootPath-derived</strong>: the run’s context carries
+<code>textblockRootPath</code> (approach (b) threading; set at the textblock
+boundary, <code>index.mjs:1156-1163</code>, passed through unchanged at inline
+levels) — but it is a DOCUMENT-NODE path, not a typeSpec path; the
+textblock’s typeSpec path is available to the meta layer (V3 already
+builds it) and could be threaded into the run’s context the same way.</li>
+<li>© <strong>Reuse the node channel’s anchor</strong>: the mark channels resolve
+against the same containing typeSpec as the enclosing inline node’s
+own channel (V2/E1) — “marks style through their inline node”.</li>
+<li>Editor side (E2): no <code>textblockRootPath</code> equivalent — the
+subscription chain (<code>_getParentSubscription</code>) walks the DOM; inline
+nodes’ own subscriptions hold the full <code>pathOfTypes</code>
+(<code>type-spec.typeroof.jsx:1682-1710</code>), so a slice/walk is possible
+there without new plumbing.</li>
+</ul>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<p>(see the site tables above; key files:
+<code>viewer.typeroof.jsx:588-681, 1097-1215</code>, <code>prosemirror/type-spec.typeroof.jsx:795-886, 1394-1406, 1423-1352, 1671-1697</code>,
+<code>prosemirror/integration.typeroof.jsx:117-235, 424, 518-552</code>,
+<code>text-composition/composition-controller.ts:251-264, 562-620, 624-695, 766-772, 804-820, 889-937, 1150-1167, 1248-1262</code>,
+<code>document-nodes-meta/derivations.mjs:288-301, 405-424, 425-560</code>,
+<code>document-nodes-meta/index.mjs:807, 901-913, 1156-1163, 1221-1236</code>,
+<code>registered-properties-definitions.mjs:44-84</code>,
+<code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code>)</p>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ol>
+<li>Which anchor for the run-level mark channels — containing-spec
+walk (a/c) vs textblock-spec (b)? In the common case they coincide
+(li-inline IS the textblock); they diverge when a nested inline
+chain’s containing typeSpec differs from the textblock’s (e.g.
+inline content directly under a textblock whose spec differs from
+an intermediate inline node’s spec — possible with entries like
+figcaption). Operator decision for the plan.</li>
+<li>Compose vs innermost-wins for the measured side when BOTH an inline
+edge and a mark edge apply (§4). Innermost-wins with the MARK as
+innermost preserves today’s mark contract and needs no merge
+machinery; compose needs patch-onto-patch semantics that do not
+exist in the leaf pipeline.</li>
+<li>Should the MEASURED side resolve inline-node edges at all when the
+leaf has its own mark link (today: mark payload or textblock
+fallback)? The viewer renders BOTH (node element styled by the
+edge + wrapper elements by marks) — a measured basis that ignores
+the inline edge diverges from the rendered DOM whenever the edge’s
+patch changes font-size. Same decision point as 2.</li>
+<li>Editor-side (E2) mechanism: slice-last-retry inside
+<code>getTypeSpecPropertiesIdMethod</code> (shared, fixes V1+E2 in one place)
+vs per-site slices (viewer V1 + editor E2 separately) — the shared
+walk change affects ALL getTypeSpecPropertiesIdMethod consumers
+(scope it: only the empty-link-at-deepest-level case).</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

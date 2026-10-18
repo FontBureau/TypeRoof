@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="milestone-3-hyphenation--uax14-segmentation" class="heading_anchor" href="#milestone-3-hyphenation--uax14-segmentation" aria-hidden="true">#</a>Milestone 3: Hyphenation + UAX#14 segmentation</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>State-of-the-art segmentation (UAX#14 via the <code>linebreak</code> package,
+replacing the v0 space tokenizer) and hyphenation (hypher/Knuth-Liang
+with VENDORED pattern assets loaded async on demand via the
+generalized ResourceRequirement machinery — the font machinery’s
+second instance). Research:
+<code>docs/planning/agentic-artefacts/thoughts/research/2026-10-03-2227-milestone-3-hyphenation-uax14.md</code>
+(all questions resolved).</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li>Greedy ragged treats hyphen breaks like any break (contract ready:
+kind ‘hyphen’ + penalty; width baked into measurement).</li>
+<li>Hyphen RENDERING wired: CSS ::after + applicator class; mid-word
+offsets work with existing slicing.</li>
+<li>Intl.Segmenter line granularity DOES NOT EXIST (V8 never shipped
+it) — linebreak package is the route.</li>
+<li>The ResourceRequirement/_asyncResolve machinery resolves fonts
+(shell.mjs:1358; else-throw branches = plug-in points).</li>
+<li>Licenses checked: hypher BSD-3, patterns MIT, linebreak MIT.</li>
+</ul>
+<h3><a id="key-decisions-research-doc" class="heading_anchor" href="#key-decisions-research-doc" aria-hidden="true">#</a>Key Decisions (research doc)</h3>
+<ul>
+<li>Full linebreak-driven segmentation (not glue); CJK test paragraphs
+are the built-in behavior test.</li>
+<li>Patterns: VENDORED in-tree assets (lib/assets/hyphenation/,
+license headers kept), async on demand, session-only (no
+persistence); hypher as npm dependency.</li>
+<li>Config: own inheritable struct on TypeSpecModel ({enabled,
+minWordLength, minBefore, minAfter}, OrEmpty semantics).</li>
+<li>Hyphen width: ASCII “-” at the run’s font/axes via the Measurer.</li>
+<li>Language: BCP47 language/lang → pattern key, fallback de-AT → de.</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>Dictionary scripts (Thai/Lao/Khmer/Myanmar — linebreak has hooks;
+later).</li>
+<li>Penalty-aware breaking (KP uses penalties; greedy ignores them).</li>
+<li>U+2010 hyphen glyph, hyphenation ZONE (pre-hyphenate lookahead).</li>
+<li>Pattern persistence/caching beyond the session.</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Five phases, each a reviewable unit with its own commit; stop after
+each with a proposed message and wait for OKOK.</p>
+<hr>
+<h2><a id="phase-1-uax14-segmentation" class="heading_anchor" href="#phase-1-uax14-segmentation" aria-hidden="true">#</a>Phase 1: UAX#14 segmentation</h2>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>package.json</code> — add <code>linebreak</code> dependency.</p>
+<p><strong>File</strong>: <code>…/text-composition/segmenter.ts</code>
+<strong>Changes</strong>: replace the <code>_TOKENIZE</code> space tokenizer in
+<code>segmentTextRun</code> with linebreak-driven segmentation: iterate UAX#14
+break opportunities; each maximal non-break span is a segment; a
+trailing space stays its own segment (kept-in-line semantics
+preserved: break AFTER the space); required breaks (BK class) map
+to kind ‘explicit’, spaces to ‘space’. The InlineItem taxonomy and
+assembleLogicalParagraphs are UNCHANGED.</p>
+<p><strong>File</strong>: <code>…/text-composition/segmenter.test.mjs</code>
+<strong>Changes</strong>: update/extend — punctuation (don’t break before
+closing punctuation), CJK breaks between ideographs (the test
+document’s Chinese paragraphs), existing space semantics unchanged.</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated" class="heading_anchor" href="#automated" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[ ] Tests pass; full suite green (the harness composition tests
+run on UAX#14 segments — structural assertions must hold).</li>
+</ul>
+<h4><a id="manual" class="heading_anchor" href="#manual" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] The viewer’s CJK paragraphs break (visibly different,
+correct).</li>
+</ul>
+<hr>
+<h2><a id="phase-2-hyphenation-config-struct-model-first" class="heading_anchor" href="#phase-2-hyphenation-config-struct-model-first" aria-hidden="true">#</a>Phase 2: Hyphenation config struct (model-first)</h2>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/components/type-spec/text-composition-models.mjs</code>
+<strong>Changes</strong>: HyphenationModel struct {enabled
+(BooleanDefaultTrueOrEmptyModel — on by default at the root via
+registration, empty = inherit), minWordLength, minBefore, minAfter
+(OrEmpty numbers with registered defaults)}.</p>
+<p><strong>File</strong>: <code>lib/js/components/type-spec/models.mjs</code>
+<strong>Changes</strong>: field [‘hyphenation’, HyphenationModel] on
+TypeSpecModel.</p>
+<p><strong>Files</strong>: registered-properties.mjs (generic entries with
+defaults), properties-generators.mjs (hyphenationGen yields the
+resolved values), pps-maps/defaults as the struct requires (generic
+PPS for the struct fields → UI for free).</p>
+<p><strong>File</strong>: model tests: defaults/inheritance/round-trip.</p>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-tests-pass-full-suite-green" class="heading_anchor" href="#automated-tests-pass-full-suite-green" aria-hidden="true">#</a>Automated: tests pass; full suite green.</h4>
+<h4><a id="manual-the-hyphenation-section-renders-in-the-typespec-ui" class="heading_anchor" href="#manual-the-hyphenation-section-renders-in-the-typespec-ui" aria-hidden="true">#</a>Manual: the hyphenation section renders in the typeSpec UI.</h4>
+<hr>
+<h2><a id="phase-3-dynamic-pattern-asset-machinery" class="heading_anchor" href="#phase-3-dynamic-pattern-asset-machinery" aria-hidden="true">#</a>Phase 3: Dynamic pattern asset machinery</h2>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/assets/hyphenation/en-us.json</code>, <code>de.json</code> (new)
+<strong>Changes</strong>: vendored TeX patterns converted from the
+hyphenation.en-us / <a href="http://hyphenation.de">hyphenation.de</a> packages (JSON: {patterns,
+exceptions?}, license/provenance headers preserved as a comment
+field or sibling LICENSE note).</p>
+<p><strong>Files</strong>: main-model.mjs / shell state dependencies
+<strong>Changes</strong>: InstalledHyphenationPatternsModel (ordered map of
+generic values = parsed pattern objects) + a state dependency
+(‘installedHyphenationPatterns’) registered like installedFonts.</p>
+<p><strong>File</strong>: the hyphenation config/reference
+<strong>Changes</strong>: pattern key resolution via a ForeignKey with CUSTOM
+constraint yielding a ResourceRequirement (the activeFontKey
+pattern, models.mjs:197-221) when the key is not installed.</p>
+<p><strong>File</strong>: <code>lib/js/shell.mjs</code>
+<strong>Changes</strong>: _asyncResolve branch for the patterns container: map
+language → asset URL, fetch + parse + install into the state
+dependency draft (session-only). Language fallback chain
+(de-AT → de → null).</p>
+<p><strong>File</strong>: <code>lib/js/wikipedia/main.mjs</code> (and other shells if needed)
+<strong>Changes</strong>: register the state dependency.</p>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-full-suite-green" class="heading_anchor" href="#automated-full-suite-green" aria-hidden="true">#</a>Automated: full suite green.</h4>
+<h4><a id="manual-loading-a-document-with-hyphenation-enabled-fetches" class="heading_anchor" href="#manual-loading-a-document-with-hyphenation-enabled-fetches" aria-hidden="true">#</a>Manual: loading a document with hyphenation enabled fetches</h4>
+<p>the pattern (network tab); no reload loops.</p>
+<hr>
+<h2><a id="phase-4-hyphenator-pass--wiring" class="heading_anchor" href="#phase-4-hyphenator-pass--wiring" aria-hidden="true">#</a>Phase 4: Hyphenator pass + wiring</h2>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>package.json</code> — add <code>hypher</code> dependency.</p>
+<p><strong>File</strong>: <code>…/text-composition/hyphenator.ts</code> (new)
+<strong>Changes</strong>: the pure pass: (segments, leafTexts, patterns,
+{minWordLength, minBefore, minAfter}, measureHyphenWidth) →
+{segments, breaks} with word segments split at hyphenation points,
+kind ‘hyphen’ breaks with a penalty (e.g. 10), first-part segments
+marked to include the hyphen width. Per-language Hypher instance
+cache.</p>
+<p><strong>File</strong>: <code>…/text-composition/composition-controller.ts</code>
+<strong>Changes</strong>: run the Hyphenator between segmentation and
+measurement when enabled + pattern installed + language mapped;
+measure the hyphen glyph width via the Measurer (ASCII “-”) and add
+it to first-part segment widths; ingredients snapshot gains the
+hyphenation config + pattern identity.</p>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-1" class="heading_anchor" href="#automated-1" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] hyphenator.test.mjs behavior tests (split points, min-length
+gates, hyphen width baked in, penalty present); full suite
+green. (Hyphen width: asserted end-to-end in the wiring test —
+the controller bakes it into hyphenAfter segment widths, not
+the hyphenator itself.)</li>
+<li>[x] Wiring test (lib/js/tests/text-composition): hyphen segments +
+lines broken at hyphen points in the payload, the
+-line-hyphen class in the DOM, source text reconstructed
+exactly (no hyphen character), Host control off = no hyphens.</li>
+</ul>
+<h4><a id="manual-1" class="heading_anchor" href="#manual-1" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] The viewer hyphenates (de/en text, narrow column); the
+-line-hyphen ::after renders; selection/copy of hyphenated
+words contains NO hyphen character.</li>
+</ul>
+<hr>
+<h2><a id="phase-5-perf-re-run--snapshot" class="heading_anchor" href="#phase-5-perf-re-run--snapshot" aria-hidden="true">#</a>Phase 5: Perf re-run + snapshot</h2>
+<ul>
+<li><code>npm run perf:composition</code>, review numbers together (hyphenation
+on = more segments + pattern fetch), --write-baseline deliberately.</li>
+</ul>
+<h3><a id="outcome-2026-10-04" class="heading_anchor" href="#outcome-2026-10-04" aria-hidden="true">#</a>Outcome (2026-10-04)</h3>
+<ul>
+<li>[x] Ratios fine and stable across 4 runs: typing 0.98–1.04,
+recompose 0.92–0.99 (baseline 1.022 / 0.962) — hyphenation
+costs nothing measurable at wikipedia scale.</li>
+<li>[x] The onMs absolute “regressions” (50–70x typing) are
+ENVIRONMENTAL: reproduced on the pre-phase-4 parent commit
+(801205f8) with composition OFF — the whole cycle is slower in
+this environment, not composition. Decision (operator):
+NO --write-baseline; the checked-in baseline’s ratios hold.</li>
+<li>Note: the script’s onMs absolute gate can’t survive cross-load/
+cross-environment runs; ratio is the documented machine-stable
+metric. (Perf-script improvement candidate, not done here.)</li>
+</ul>
+<h2><a id="sub-rpi-handoff-rule" class="heading_anchor" href="#sub-rpi-handoff-rule" aria-hidden="true">#</a>Sub-RPI handoff rule</h2>
+<p>As before. Suspect: the state-dependency registration (installedFonts
+has several touch points: shell, main-ui, wikipedia main).</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

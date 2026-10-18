@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="text-composition-milestone-1-host-executes-the-dummy-end-to-end-viewer" class="heading_anchor" href="#text-composition-milestone-1-host-executes-the-dummy-end-to-end-viewer" aria-hidden="true">#</a>Text Composition Milestone 1: Host executes the dummy end-to-end (viewer)</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Wire the Composition Controller into the type-stage layout so the dummy
+algorithm (<code>dummy-composition.ts</code>, exists + tested) runs against real
+documents and its result is visible in the viewer: lines wrapped in
+spans, styled by a CSS port of the varla-varfo line-span structure.
+Model-first kick-off; Controller-first plumbing for live feedback.</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li>Contract + roles + integration/scheduling plans: committed in
+<code>lib/js/components/layouts/type-stage/text-composition/</code> headers.</li>
+<li>Dummy algorithm + behavior tests: <code>dummy-composition.ts</code>,
+<code>dummy-composition.test.mjs</code> (passing).</li>
+<li>Research: <code>thoughts/research/2026-10-02-1800-composition-controller-integration.md</code>
+— all questions resolved (see “Follow-up Decisions”).</li>
+<li>Missing: everything Host-side (Controller, Segmenter, Measurer,
+Applicator) and the model seed.</li>
+</ul>
+<h3><a id="key-discoveries-from-research" class="heading_anchor" href="#key-discoveries-from-research" aria-hidden="true">#</a>Key Discoveries (from research)</h3>
+<ul>
+<li>DOM-less widgets are first-class; <code>DocumentNodesMeta</code> is instantiated
+without zone at <code>index.typeroof.jsx:540-566</code> and must update BEFORE
+renderers (<code>:545-550</code>).</li>
+<li>Protocol auto-registration via wrapper settings keys
+(<code>component.mjs:293-300, 768-789</code>); manual per-path registration +
+<code>setUpdated</code> + no-op <code>changeState</code> precedent:
+<code>environment-provider.mjs:93-103</code>.</li>
+<li>Change detection exists: <code>update(compareResult)</code> → <code>StateComparison</code>
+with per-path entries (compare.ts:450). No re-walk/identity-diff.</li>
+<li>Textblock identification: PM-parallel rule via existing pure
+derivations (<code>getMMChildIsBlock</code>,
+<code>specChildrenInInlineContext</code> in document-nodes-meta/derivations.mjs).
+Composition boundary = OUTERMOST block containing inline content.</li>
+<li><code>UIDocumentTextRun</code> currently maintains a ONE-text-node invariant
+(viewer.typeroof.jsx:503-723) which line-span wrapping breaks BY
+DESIGN (we split at line boundaries).</li>
+<li>varla-varfo line-span structure: <code>_packLine</code>
+(varla-varfo/lib/js/justification.mjs:948-993) + CSS
+(varla-varfo/lib/css/general.css:781-867).</li>
+<li>Vite CSS import pattern: <code>import &quot;./tree-editor.css&quot;</code>
+(tree-editor.typeroof.jsx:12) — CSS local to the component dir.</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<p>Open a type-stage document in viewer mode: text is broken into lines by
+the dummy algorithm (4 segments/line — obviously wrong, visibly
+working), each line wrapped in spans with the ported CSS applied
+(hyphens visible where the dummy takes a hyphen break — n/a for v0
+without hyphenation; visible via line span styling). Editing text or
+toggling the model boolean recomposes. OFF MODE (boolean false) =
+today’s browser breaking, zero applicator special-casing.</p>
+<h3><a id="how-to-verify" class="heading_anchor" href="#how-to-verify" aria-hidden="true">#</a>How to verify</h3>
+<ul>
+<li><code>npm run typecheck</code>, <code>npm run lint</code>, <code>npx vitest run</code> (new tests
+included) pass.</li>
+<li>Manual: viewer shows dummy-broken lines; edits recompose; boolean
+off → browser default.</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>Real fitting / Treatment Planner (adjustmentStep stays 0; step→CSS
+mapping is milestone 4 territory).</li>
+<li>Hyphenation (milestone 3).</li>
+<li>Async/worker scheduling (sync in-cycle first; the scheduling plan
+stands but is not implemented now).</li>
+<li>ProseMirror editor applicator (experimental, later).</li>
+<li>Per-paragraph style-dirty precision (ROADMAP optimization).</li>
+<li>Milestone 2+ algorithms.</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Six phases, each a small reviewable unit with its own commit (per
+<a href="http://COLLABORATION.md">COLLABORATION.md</a>: stop after each phase with proposed commit message,
+wait for OKOK). Tests assert behavior, not implementation.</p>
+<hr>
+<h2><a id="phase-1a-model-seed--kick-off-boolean-in-typespecmodel" class="heading_anchor" href="#phase-1a-model-seed--kick-off-boolean-in-typespecmodel" aria-hidden="true">#</a>Phase 1a: Model seed — kick-off boolean in TypeSpecModel</h2>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/components/type-spec/models.mjs</code>
+<strong>Changes</strong>: add a minimal boolean field to TypeSpecModel (name
+proposal: <code>textComposition</code>, <code>BooleanModel</code> — default TRUE during
+implementation per roadmap decision; opt-out mechanism). Locate the
+TypeSpecModel fields and add alongside other top-level typeSpec
+properties. Serialization/migration: legacy documents without the
+field must default to TRUE — verify metamodel default behavior for
+missing fields (behavior test).</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated" class="heading_anchor" href="#automated" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] Behavior test: typeSpec without the field metamorphoses to
+default TRUE; explicit false round-trips through serialize.
+(Pattern: <code>index.test.mjs</code> width/height migration tests.)
+→ added to <code>type-spec/model.test.mjs</code> (3 tests).
+DEVIATION (resolved): the defaults pipeline (defaults.mjs
+typeSpecGetDefaults via pps-maps.mjs TYPESPEC_PPS_MAP)
+requires every TypeSpecModel field to be a REGISTERED
+processed property (or explicitly excluded). textComposition
+IS a processed style property (inherits through the
+typeSpecnion like any other), so it was registered in the
+GENERIC registry (registered-properties.mjs:
+generic/textComposition, inherit: true, default: true).
+Phase 4 reads it via the nodeProperties@/typeSpecProperties@
+stream as originally envisioned.</li>
+<li>[x] <code>npm run typecheck</code>, existing tests pass. (318/318 vitest)</li>
+</ul>
+<h4><a id="manual-none-model-only" class="heading_anchor" href="#manual-none-model-only" aria-hidden="true">#</a>Manual: none (model-only).</h4>
+<hr>
+<h2><a id="phase-1b-composition-protocol-handler" class="heading_anchor" href="#phase-1b-composition-protocol-handler" aria-hidden="true">#</a>Phase 1b: <code>composition@</code> protocol handler</h2>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/index.typeroof.jsx</code>
+<strong>Changes</strong>: install <code>SimpleProtocolHandler.create('composition@', { treatAdressAsRootPath: true, notFoundFallbackValue: null })</code> next to
+the existing handlers (<code>:303-326</code>). The null fallback IS the off-mode
+consumption mechanism.</p>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-1" class="heading_anchor" href="#automated-1" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] <code>npm run typecheck</code>, lint pass. (318/318 vitest as well)</li>
+</ul>
+<h4><a id="manual" class="heading_anchor" href="#manual" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] App boots unchanged (protocol unused yet).</li>
+</ul>
+<hr>
+<h2><a id="phase-2-segmenter-v0-pure--tests" class="heading_anchor" href="#phase-2-segmenter-v0-pure--tests" aria-hidden="true">#</a>Phase 2: Segmenter v0 (pure) + tests</h2>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/text-composition/segmenter.ts</code> (new)
+<strong>Changes</strong>: pure function: paragraph text (+ uniform placeholder
+style for v0) → <code>{ segments, breaks }</code>. v0 rules:</p>
+<ul>
+<li>split at space characters (UAX#14 refinement later);</li>
+<li><code>\n</code> (hard break) splits into MULTIPLE logical paragraphs
+(Controller invokes the algorithm per logical paragraph — the
+segmenter returns a list of logical-paragraph inputs);</li>
+<li>each space produces a <code>'space'</code> break opportunity (the space is its
+own segment, matching how measurement will treat it);</li>
+<li>no hyphenation.</li>
+</ul>
+<p><strong>File</strong>: <code>…/segmenter.test.mjs</code> (new)
+<strong>Changes</strong>: behavior tests: words/spaces segmentation, break
+opportunities at the right segment boundaries, hard-break splitting,
+empty text edge case.</p>
+<p>DEVIATION (review-driven): hard breaks are NOT ‘\n’ in text —
+ProseMirror has a <code>hard_break</code> INLINE NODE (default-schema.ts:32),
+sibling to text runs. Logical-paragraph splitting is node-level:
+consecutive text runs form a logical paragraph, split at hard_break
+(and any inline atom boundary). Inline nodes participate in
+composition, three cases: inlineContainer (recursion — e.g. a link
+as inline block; its text joins the same paragraph), inlineAtom
+(unbreakable box → one segment), hardBreak (boundary). API:
+<code>segmentTextRun</code> (per-run, local offsets) +
+<code>assembleLogicalParagraphs</code> (pure assembly over classified
+InlineItems; HostSegment carries sourceIndex for Applicator
+mapping). Extension point documented: classification of inline
+items should become schema-driven/smart when actual cases come up
+(freely configurable schemas).</p>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-2" class="heading_anchor" href="#automated-2" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] New tests pass; <code>npm run typecheck</code>, lint pass.
+(6 segmenter behavior tests, 10 total in the module)</li>
+</ul>
+<h4><a id="manual-none" class="heading_anchor" href="#manual-none" aria-hidden="true">#</a>Manual: none.</h4>
+<hr>
+<h2><a id="phase-3-controller-skeleton-dirty-detection--textblock-index--partly-superseded-see-phase-6-amendment" class="heading_anchor" href="#phase-3-controller-skeleton-dirty-detection--textblock-index--partly-superseded-see-phase-6-amendment" aria-hidden="true">#</a>Phase 3: Controller skeleton (dirty detection + textblock index) — PARTLY SUPERSEDED (see Phase 6 amendment)</h2>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/text-composition/composition-controller.ts</code>
+<strong>Changes</strong>: implement <code>CompositionController extends _BaseContainerComponent</code> (or <code>_BaseComponent</code>): DOM-less, no zone.</p>
+<ul>
+<li>Dependency mappings: <code>document</code>, <code>typeSpec</code>, <code>stylePatches</code>,
+<code>nodeSpecToTypeSpec</code>, <code>nodeSpec</code>, <code>markSpec</code> (coarse — update fires
+on any relevant change).</li>
+<li>Textblock index: scan the document model using the SHARED pure
+derivations (<code>getMMChildIsBlock</code>, <code>specChildrenInInlineContext</code> from
+<code>document-nodes-meta/derivations.mjs</code>); boundary = outermost block
+with children in inline context; index maps textblock path → child
+text-run paths.</li>
+<li>Dirty detection from <code>compareResult</code> (StateComparison entries):
+paths under <code>./document</code> → enclosing textblock dirty; structural
+changes → re-scan affected subtree; paths under style inputs → ALL
+paragraphs dirty (v1, ROADMAP-documented).</li>
+<li>v0 output: <code>console.log</code> what would be composed (dirty paragraphs).
+NO composition@ publication yet.</li>
+</ul>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/index.typeroof.jsx</code>
+<strong>Changes</strong>: instantiate the controller in the <code>widgets</code> array AFTER
+DocumentNodesMeta (<code>:540-566</code>), before renderers (same ordering
+constraint, <code>:545-550</code>); settings <code>{ id: &quot;compositionController&quot;, relativeRootPath: layout root }</code>.</p>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-3" class="heading_anchor" href="#automated-3" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[ ] Pure helper(s) (path → enclosing textblock mapping) get
+behavior tests if extractable. (not extracted; the skeleton’s
+observable behavior is console logging — verified manually)</li>
+<li>[x] <code>npm run typecheck</code>, lint, existing tests pass. (326/326)
+DEVIATION: first .ts file importing .mjs modules — tsconfig
+gained allowJs:true (checkJs stays off) and lost
+declaration/declarationMap (noEmit typecheck only; vite
+builds). Model instances deliberately <code>any</code>-typed (file-level
+eslint-disable, precedent wikipedia/ingest.ts).</li>
+</ul>
+<h4><a id="manual-1" class="heading_anchor" href="#manual-1" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] Console shows correct dirty paragraphs when typing in the
+editor / on load (initial: all).</li>
+</ul>
+<hr>
+<h2><a id="phase-4-measurer-v0--input-assembly--publication--partly-superseded-see-phase-6-amendment" class="heading_anchor" href="#phase-4-measurer-v0--input-assembly--publication--partly-superseded-see-phase-6-amendment" aria-hidden="true">#</a>Phase 4: Measurer v0 + input assembly + publication — PARTLY SUPERSEDED (see Phase 6 amendment)</h2>
+<h3><a id="changes-required-4" class="heading_anchor" href="#changes-required-4" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>…/text-composition/measurer.ts</code> (new)
+<strong>Changes</strong>: shape-and-sum per segment following
+<code>videoproof-contextual/layout.mjs:43-66</code> (<code>measureWordWidths</code>
+pattern: <code>new harfbuzz.Font(font.hbFace)</code>, <code>setScale(upem,upem)</code>,
+<code>setVariations(currentAxes)</code>, Buffer → shape → sum xAdvance → em;
+pt = em × fontSizePt). Cache keyed by (text, fontKey, axesKey) —
+font units, size-independent. <code>widgetBus.harfbuzz</code> for the module.
+Line width from node-properties (<code>availableWidth</code> — the
+TypeStagePaneStyler precedent, pane-styler.typeroof.jsx:67-79), NOT
+from DOM measurement. Font resolution per text run: trace the
+typeSpec font reference → installedFonts entry (RESEARCH DETAIL to
+execute at implementation start: how stylers’ <code>/font → rootFont</code>
+relates to per-typeSpec fonts; the resolved font object must carry
+<code>.hbFace</code>).</p>
+<p><strong>File</strong>: <code>…/text-composition/composition-controller.ts</code>
+<strong>Changes</strong>: build <code>CompositionInput</code> per dirty logical paragraph
+(segments from segmenter v0 with uniform v0 style, widths from
+measurer, <code>lineWidthPt</code> constant from node-properties,
+<code>lineWidthAtStep</code> = step-ignoring sum for the dummy), run
+<code>dummyComposition</code>, publish <code>composition@&lt;documentNodePath&gt;</code> via
+manual registration into the handler (EnvironmentProvider precedent:
+register → keep unregister closure; <code>setUpdated</code>; entries replaced on
+recompose, unregistered when a paragraph disappears or the boolean
+turns off). Gate everything on the Phase-1a boolean flowing through
+typeSpecProperties@/nodeProperties@ (resolve like any property).</p>
+<h3><a id="success-criteria-4" class="heading_anchor" href="#success-criteria-4" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-4" class="heading_anchor" href="#automated-4" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[ ] Measurer behavior test with a test font if available in repo
+(skipped: no fixture wired; Measurer is a thin wrapper over the
+proven videoproof-contextual pattern — verified manually).</li>
+<li>[x] typecheck, lint, full test suite pass. (326/326)
+DEVIATIONS (v0 simplifications, documented in code):
+1. Font = app ROOT font object (/font), not per-typeSpec fonts.
+2. Gate = ROOT typeSpec textComposition (global), not
+per-paragraph.
+3. Capability fallback: no harfbuzz module → controller
+degrades to OFF (no crash), e.g. test harnesses.
+4. nodeProperties@ registered value is the meta dispatcher
+widget; payload via its .nodeProperties getter.
+5. Atoms measure 0; no setVariations (default location).</li>
+</ul>
+<h4><a id="manual-2" class="heading_anchor" href="#manual-2" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] Console/inspection shows composition@ entries per paragraph
+with plausible widths; toggling the boolean
+registers/unregisters.</li>
+</ul>
+<hr>
+<h2><a id="phase-5-line-span-css--structure-port" class="heading_anchor" href="#phase-5-line-span-css--structure-port" aria-hidden="true">#</a>Phase 5: Line-span CSS + structure port</h2>
+<h3><a id="changes-required-5" class="heading_anchor" href="#changes-required-5" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>…/text-composition/line-spans.css</code> (new)
+<strong>Changes</strong>: port the varla-varfo line-span CSS
+(varla-varfo/lib/css/general.css:781-867), renamed to our prefix
+(e.g. <code>.typeroof-composition-line</code>, <code>-first</code>, <code>-last</code>, <code>-hyphen</code>):</p>
+<ul>
+<li><code>.line-first::before { content:''; display:block }</code> line-breaking
+normalization (unset for paragraph-first lines to keep
+text-indent);</li>
+<li>hyphen <code>::after { content:'-' }</code>;</li>
+<li>line color-coding custom property hook (<code>--line-color-code</code>) for
+diagnostics;</li>
+<li>SKIP the in-progress/browser-workaround classes
+(<code>line-in-progress*</code>, <code>new-style-current-last-line-elem</code>,
+<code>@-moz-document</code> block) — those served the feedback-loop demo’s
+live narrowing; our composition is predictive. Document the
+omission in the file header.</li>
+</ul>
+<p><strong>File</strong>: <code>…/text-composition/composition-controller.ts</code> or the
+applicator module
+<strong>Changes</strong>: <code>import &quot;./line-spans.css&quot;;</code> (vite pattern,
+tree-editor.typeroof.jsx:12).</p>
+<h3><a id="success-criteria-5" class="heading_anchor" href="#success-criteria-5" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-5" class="heading_anchor" href="#automated-5" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] stylelint (<code>npm run stylelint:check</code>) passes. (full lint +
+typecheck + 326/326 vitest; added ambient-css.d.ts —
+TS needs a module declaration for vite CSS imports)</li>
+</ul>
+<h4><a id="manual-3" class="heading_anchor" href="#manual-3" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] none yet (no DOM consumer until Phase 6).</li>
+</ul>
+<hr>
+<h2><a id="phase-6-viewer-applicator--amended-meta-driven-composition" class="heading_anchor" href="#phase-6-viewer-applicator--amended-meta-driven-composition" aria-hidden="true">#</a>Phase 6: Viewer Applicator — AMENDED (meta-driven composition)</h2>
+<h3><a id="amendment-post-implementation-pivot" class="heading_anchor" href="#amendment-post-implementation-pivot" aria-hidden="true">#</a>Amendment (post-implementation pivot)</h3>
+<p>The original phase 6 (commit dee5b9f9, kept in history) implemented
+the viewer applicator AND a publication-timing approach via widget
+ordering. The applicator is KEPT; the timing approach FAILED manual
+verification (no markup change) and was diagnosed as structurally
+fragile:</p>
+<ul>
+<li>The composition@ updated-log resets at the start of every cycle
+(TypeStageController update/initialUpdate), so setUpdated marks
+only reach widgets updated LATER in the same cascade.</li>
+<li>The viewer attachments update WITH THE META (they live in meta
+nodes’ _widgets) — before a controller placed after the meta;
+placing the controller before the meta incurs the inverse
+one-cycle-lag on the nodeProperties@ scopes it reads (width/
+fontSize stale by one cycle) — not viable post v0.</li>
+</ul>
+<p>RESOLUTION — DocumentNodesMeta DRIVES composition inside its own
+cascade (execution order becomes structural, not coincidental):</p>
+<ul>
+<li>The meta’s per-element update order is already: scope component
+FIRST (“G8 contract”), then children, then attachments.</li>
+<li>DocumentNodesMetaElement (or its dispatcher) invokes composition
+for textblocks right after its scope (re)builds: scopes are
+FRESH, composition@ marks are set BEFORE attachments update in
+the same cycle — delivery guaranteed, no lag, no compareResult
+mining (the meta element’s own update IS the dirty signal).</li>
+<li>The controller widget degrades to a DOM-less SERVICE: owns the
+Measurer, segmenter invocation, the algorithm, composition@
+publication. The meta looks it up by id
+(getWidgetById(“compositionController”) — same pattern as the
+viewer looking up the meta). No update-cycle role: the
+compareResult mining, textblock index, coarse deps and ordering
+constraints from phases 3/4 are DELETED (the code was the
+exploration; history keeps it).</li>
+</ul>
+<h3><a id="changes-required-amended" class="heading_anchor" href="#changes-required-amended" aria-hidden="true">#</a>Changes Required (amended)</h3>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/text-composition/composition-controller.ts</code>
+<strong>Changes</strong>: strip to a service class: constructor keeps Measurer +
+registrations; <code>composeTextblock(textblockPath, textblockNode, nodePropertiesPayload)</code> does item classification, segmentation,
+measurement, dummy composition, publication (unchanged phase-4
+logic); gate check (root typeSpec textComposition + harfbuzz
+capability). No _BaseComponent, no update/initialUpdate, no
+compareResult, no textblock index. Instantiate as a DOM-less widget
+(id “compositionController”) purely for widgetBus/harfbuzz access
+and id-lookup; UPDATE_STRATEGY_NO_UPDATE.</p>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs</code>
+<strong>Changes</strong>: in the element meta node’s update flow, after the
+scope component settles: if the node is a textblock (shared
+derivations: getMMChildIsBlock + specChildrenInInlineContext) and
+its scope or content changed, invoke
+<code>compositionService.composeTextblock(rootPath, mmNode, scopePayload)</code>.
+Service lookup via getWidgetById with null fallback (composition is
+optional — OFF when the widget is absent).</p>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/index.typeroof.jsx</code>
+<strong>Changes</strong>: controller widget: UPDATE_STRATEGY_NO_UPDATE, deps [];
+ordering constraint comment removed (position no longer matters for
+delivery); placed next to the meta for readability.</p>
+<p><strong>Unchanged</strong> (from dee5b9f9): the viewer applicator
+(UIDocumentTextRun line spans), the payload shape, line-spans.css.</p>
+<h3><a id="success-criteria-amended" class="heading_anchor" href="#success-criteria-amended" aria-hidden="true">#</a>Success Criteria (amended)</h3>
+<h4><a id="automated-6" class="heading_anchor" href="#automated-6" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] applicator side: typecheck, lint, full suite pass (326/326,
+at dee5b9f9).</li>
+<li>[x] after the pivot: typecheck, lint, full suite pass (326/326).
+Pivot review fixes: child updater maps the FULL external
+composition@ id (bare “composition@” shorthand = empty
+address); carrier addresses content precisely (NO
+firstElementChild drill-down — would descend into line
+spans); gate-off unpublishes + notifies; carrier span gets
+the typeroof-composition-run class (ROADMAP technical debt).</li>
+</ul>
+<h4><a id="manual-4" class="heading_anchor" href="#manual-4" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[x] Viewer shows dummy line breaking (4 segments/line — obviously
+wrong, visibly working); span structure + classes in DOM
+inspector; line spans visibly styled (CSS port proven).
+CONFIRMED by operator (“OK, profit!!”).</li>
+<li>[x] Typing recomposes; boolean off → browser default rendering,
+no spans. CONFIRMED (incl. overfull red on/off).</li>
+<li>[ ] Compare mode side-by-side doesn’t break (viewer attachment is
+per-renderer; meta untouched).</li>
+<li>[x] Style changes (fontSize/width-relevant) recompose with FRESH
+scopes in the same cycle (no lag). (scope-settled hook)</li>
+</ul>
+<hr>
+<h2><a id="sub-rpi-cycles-handoff-rule" class="heading_anchor" href="#sub-rpi-cycles-handoff-rule" aria-hidden="true">#</a>Sub-RPI Cycles (handoff rule)</h2>
+<p>If a phase hits unexpected complexity during implementation (the
+prime suspects: Phase 4 font-reference resolution, Phase 6
+text-run invariant change), spawn a sub-RPI cycle for it rather
+than letting the phase balloon: /research_codebase → /create_plan
+for the sub-topic, then resume this plan.</p>
+<p>Handoff documents for the other agent/session (in order):</p>
+<ol>
+<li>THIS plan (phases, exclusions, verification).</li>
+<li>The research doc
+<code>thoughts/research/2026-10-02-1800-composition-controller-integration.md</code>
+(codebase map + resolved questions).</li>
+<li>The design headers in
+<code>lib/js/components/layouts/type-stage/text-composition/</code>
+(<code>composition-controller.ts</code>, <code>composition-types.ts</code>) — the
+authoritative contract and roles.</li>
+<li><code>docs/planning/text-composition/ROADMAP.md</code> — big picture and
+deferred items.</li>
+</ol>
+<p>The sub-cycle’s documents live in <code>thoughts/</code> alongside these and
+are archived the same way when it concludes.</p>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<h3><a id="unitbehavior-tests-vitest" class="heading_anchor" href="#unitbehavior-tests-vitest" aria-hidden="true">#</a>Unit/behavior tests (vitest):</h3>
+<ul>
+<li>Phase 1a: model default/migration/round-trip.</li>
+<li>Phase 2: segmenter behavior (segmentation, breaks, hard-break
+split, empty).</li>
+<li>Phase 3: path→textblock mapping helper if extractable pure.</li>
+<li>Phase 4: measurer shape-sum with a test font if a fixture exists.</li>
+</ul>
+<h3><a id="integration-manual" class="heading_anchor" href="#integration-manual" aria-hidden="true">#</a>Integration (manual):</h3>
+<ul>
+<li>Phase 6 checklist above.</li>
+</ul>
+<h3><a id="not-tested-per-behavior-not-implementation-rule" class="heading_anchor" href="#not-tested-per-behavior-not-implementation-rule" aria-hidden="true">#</a>NOT tested (per behavior-not-implementation rule):</h3>
+<ul>
+<li>Internal controller bookkeeping; registry mechanics.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

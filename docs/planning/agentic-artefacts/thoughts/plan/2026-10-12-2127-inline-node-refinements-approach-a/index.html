@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="approach-a--font-size-re-basing--node-style-links-implementation-plan" class="heading_anchor" href="#approach-a--font-size-re-basing--node-style-links-implementation-plan" aria-hidden="true">#</a>Approach (a) — Font-size re-basing &amp; Node Style Links: Implementation Plan</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Per ROADMAP approach (a) + the 2026-10-12 design conversation: (1)
+<code>relativeFontSize</code> becomes a unit-carrying <code>{value, unit}</code> pair (plain
+numbers migrate as <code>baseEm</code>, non-breaking); (2) <code>em</code> unit semantics
+resolve in the MERGE channel (<code>createPatched</code>) against the origin
+typeSpec’s outbound effective font-size — the true relative basis for
+style patches and marks; (3) inline nodes become a third style-link
+family <code>inlineNodesStyleLinks</code>, routed to <code>UIDocumentStyleStyler</code>
+(the mark styler) in both renderers, on a single-element inline DOM.
+Approach (b) composition threading is already implemented (<code>6dbbf38e</code>).</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li><code>fontSize</code> is purely synthetic (<code>baseFontSize × relativeFontSize</code>,
+<code>properties-generators.mjs:209-244</code>); every consumer receives the
+pre-flattened number; nothing strips units (research §1).</li>
+<li>Patch scopes have no parent (<code>baseFontSize</code> falls to the model
+default 12): patches resolve against the ROOT base — the “bold: 2 →
+28pt instead of 36pt” defect (<code>live-properties.typeroof.jsx:225-344</code>,
+in-test documentation <code>index.test.mjs:984-988</code>; research §2).</li>
+<li>The merge channel already carries the needed basis:
+<code>PatchedScopeProperties</code> “parent” layer = origin outbound effective
+map incl. resolved <code>generic/fontSize</code> (<code>scope-resolution.mjs:370-414, :462-483</code>) — what measurement reads (<code>composition-controller.ts:913-933</code>).</li>
+<li>Inline nodes style exclusively via <code>UIDocumentTypeSpecStyler</code> (full
+block write set) with the root-fallback font basis
+(<code>integration.typeroof.jsx:226-231</code>); no inline branch exists
+anywhere in the stylers (research §2, task 2026-10-12 #11).</li>
+<li>The style-link pipeline is family-parametric except at enumeration
+points (TypeSpecModel fields, <code>styleLinksGen</code> list, StyleLinksMeta
+instantiations, pps-maps/defaults lists, editor ternaries, UI
+classes) — task 2026-10-12 #10 §4.</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<ul>
+<li>State authors write <code>relativeFontSize</code> as <code>{value, unit}</code> — units:
+<code>baseEm</code> (default; today’s semantics), <code>em</code> (relative to the
+containing context’s effective size), absolute (<code>pt</code>…). Existing
+plain-number states parse unchanged as <code>baseEm</code>.</li>
+<li>A style patch with <code>em</code> composes against the containing typeSpec’s
+effective size (li 18pt × 2 = 36pt) in the SAME merged scope
+measurement reads — rendered and measured bases agree.</li>
+<li>An inline node styles like a mark: via an <code>inlineNodesStyleLinks</code>
+edge to a style patch, applied by <code>UIDocumentStyleStyler</code> on its
+single element; without an edge it INHERITS the containing context
+(no explicit font-size write — today’s root-fallback 14pt write
+disappears; roadmap observation 3 fixed).</li>
+<li>Block nodes: zero behavior change (a1 realized by routing, not by
+branching; <code>UIDocumentTypeSpecStyler</code> serves blocks only;
+<code>baseFontSize</code> semantics untouched).</li>
+<li>Per-phase verification: <code>npm run typecheck</code>, <code>npm run lint</code>, vitest,
+puppeteer DEBUG harness (<code>scripts/debug-with-puppeteer.mjs</code> +
+<code>scripts/puppeteer-probes/</code>). <code>npm run perf:composition</code> OFF-LIMITS.</li>
+</ul>
+<h3><a id="key-discoveries-load-bearing-facts" class="heading_anchor" href="#key-discoveries-load-bearing-facts" aria-hidden="true">#</a>Key Discoveries (load-bearing facts)</h3>
+<ul>
+<li>Pair precedent (re-use per operator): <code>InlineLengthValueModel</code>
+struct + <code>unitValuePairCoherenceFn</code> + <code>UnitModel.enumItems</code> unit
+select — <code>type-spec/horizontal-layout-models.mjs:16-36</code>,
+<code>length-models.mjs:56-71</code>; pair defaults deserialization
+<code>defaults.mjs:199-215</code>; pair generator transport <code>_inlineLengthGen</code>
+<code>properties-generators.mjs:482-497</code> (task #8).</li>
+<li>PM natively supports <code>contentDOM === dom</code> (top doc desc + ALL marks
+— prosemirror-view dist :1519, :1234) and wholesale-removes non-desc
+children of <code>contentDOM</code> on sync (:1646-1662): single-element views
+must keep host children EMPTY — outfitter widgets already gate on
+<code>outer !== inner</code> and stay inactive (task #12).</li>
+<li><code>UIDocumentStyleStyler</code> write surface = the a1 target surface exactly
+(font-family, font-size, features/variations, colors, direction,
+lang — <code>type-spec.typeroof.jsx:1008-1100</code>; NO width/text-align/
+margins/columns) (task #11).</li>
+<li>Dep-resolution shadowing trap: a synthetic dep on <code>generic/fontSize</code>
+resolves LOCALLY first (<code>scope-resolution.mjs:295-303</code>) — the em
+basis must NOT be threaded as a dep on that name into a scope that
+yields its own fontSize synthetic; the merge boundary (origin
+outbound) is the clean basis source (task #9).</li>
+<li><code>getWrapMarks</code> is mark-list-only (<code>derivations.mjs:412+536</code>);
+composition <code>_resolveLeafStyleLink</code> (<code>composition-controller.ts:636-678</code>)
+resolves leaves against mark descriptors only — nested leaves under
+inline nodes need an explicit resolution extension (phase 6).</li>
+<li>Editor DOM split consumers: only 2 CSS selectors + the probe helper
+(<code>querySelector ?? el</code>, already tolerant) — <code>type-stage.css:157-160</code>
+(box-sizing; viewer parity :220-223 puts it on <code>*[data-node-type]</code>
+directly), <code>line-spans.css:81</code> (textblocks only — unaffected),
+<code>editor-dom.mjs:65/:90</code> (task #13).</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>NO α: no typeSpec-channel parent-basis synthetics; block font-size
+semantics unchanged (operator 2026-10-12: <code>generic/fontSize</code> is
+already the true em value — a parallel parent synthetic would fork
+the basis).</li>
+<li>NO <code>baseFontSize</code> change (kept as feature: mid-tree sub-document
+re-anchoring); NO key rename (<code>relativeFontSize</code> stays).</li>
+<li>NO inline-block / width path for inline atoms (a1 unconditional).</li>
+<li>NO <code>UIDocumentTypeSpecStyler.update</code> restructure or inline branch —
+superseded by routing (inline elements stop reaching it).</li>
+<li>NO composition geometry changes (the controller measures
+correctly; only leaf basis threading, phase 6).</li>
+<li>NO perf-composition runs; NO resolution machinery keyed on node
+kinds (units carry intent — convention over machinery).</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Six phases, marks/patches FIRST (operator: inline handling last, so
+marks/patches are verified working before node routing):</p>
+<ol>
+<li>Pair form (non-breaking) → 2. merge-channel <code>em</code> (patches/marks
+fixed; live checkpoint) → 3. one-element inline DOM (PM-contract
+change, probe-gated) → 4. <code>inlineNodesStyleLinks</code> + routing to the
+mark styler → 5. “Node Style Links” UI wiring → 6. composition basis
+threading + QA + state re-tuning.</li>
+</ol>
+<p>Each phase ends with the verification battery + proposed commit;
+pauses for operator confirmation (RPI protocol). Tests assert
+behavior (inputs → observable outcomes), not implementations.</p>
+<h2><a id="phase-1--pair-form-relativefontsize" class="heading_anchor" href="#phase-1--pair-form-relativefontsize" aria-hidden="true">#</a>Phase 1 — Pair-form <code>relativeFontSize</code></h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p><code>relativeFontSize</code> becomes <code>{value, unit}</code>; plain numbers parse as
+<code>baseEm</code> (today’s semantics); states/fixtures unchanged.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required</h3>
+<ol>
+<li><strong>Unit + value models</strong> — <code>lib/js/components/type-spec/models.mjs</code>
+(near :153-176): <code>RelativeFontSizeUnitModel</code> enum
+<code>[...ABSOLUTE_UNITS, 'em', 'baseEm']</code>, default <code>'baseEm'</code>
+(<code>BlockMarginUnitModel</code>/<code>InlineLengthUnitModel</code> pattern:
+<code>models.mjs:153-159</code>, <code>horizontal-layout-models.mjs:16-21</code>);
+<code>RelativeFontSizeValueModel</code> struct: <code>['value', …OrEmpty], ['unit', …OrEmpty], unitValuePairCoherenceFn</code>
+(<code>length-models.mjs:56-71</code> re-used — <code>InlineLengthValueModel</code>
+precedent <code>horizontal-layout-models.mjs:25-30</code>); TypeSpecModel
+field swap at <code>models.mjs:184-188</code>; deserializer helper beside
+<code>:614-620</code>. Bare strings keep parsing (<code>FontSizeModel</code>) and read
+as <code>baseEm</code>.</li>
+<li><strong>Generators</strong> — <code>properties-generators.mjs baseFontSizeGen</code>
+(:195-207): yield the pair (value+unit) under
+<code>generic/relativeFontSize</code> (pair transport per <code>blockMarginsGen</code>
+:306-326 / <code>_inlineLengthGen</code> :482-497); <code>fontSizeGen.calculate</code>
+(:233-242): per-unit branch — <code>baseEm</code>/absent → <code>base × value</code>;
+absolute (<code>pt</code>) → <code>value</code>; <code>em</code> → parsed but NOT resolved in the
+typeSpec channel (α rejected) — semantics arrive with the merge
+channel in phase 2; document that in the code comment.
+STYLE_PATCH list (:676-700) re-uses the same generators.</li>
+<li><strong>registered-properties</strong> — <code>registered-properties.mjs:323-331</code>:
+pair default (precedents <code>columnGutter</code> :340-344, <code>blockMargins</code>
+:380-391); label unchanged.</li>
+<li><strong>UI</strong> — pair widget for the typeface sections:
+<code>type-spec-properties.typeroof.jsx:295-299</code> +
+<code>style-patches.typeroof.jsx:166-171</code> via <code>UIValueUnitPairInput</code>
+(<code>ui-margins.typeroof.jsx:12-89</code>, unit select from
+<code>UnitModel.enumItems</code> :68) — register in <code>type-driven-ui.mjs</code>
+pair entry (:497-504 pattern) for this key.</li>
+<li><strong>Defaults</strong> — <code>defaults.mjs</code> generic branch (:253-259): pair
+deserialization (precedent :199-215); field name unchanged, so
+<code>pps-maps.mjs</code> untouched.</li>
+</ol>
+<h3><a id="phase-1-amendment-operator-2026-10-12--channel-split" class="heading_anchor" href="#phase-1-amendment-operator-2026-10-12--channel-split" aria-hidden="true">#</a>Phase 1 amendment (operator, 2026-10-12 — channel split)</h3>
+<p><code>em</code> is NOT a typeSpec unit: <code>RelativeFontSizeUnitModel</code> (typeSpec
+channel) = absolute + <code>baseEm</code> ONLY; the style-patch variant
+(<code>RelativeFontSizePatchValueModel</code> / <code>RelativeFontSizePatchUnitModel</code>,
+parameterized <code>typographyInlineMixinFor</code> — <code>TypeSpecModel</code> keeps the
+typeSpec variant, <code>SimpleStylePatchModel</code> carries the patch variant)
+adds <code>em</code>, resolved in the merge channel (phase 2). <code>calculate()</code>'s
+<code>em</code> case (patch-channel input) remains the phase-2 placeholder.
+Tests: the typeSpec variant REJECTS <code>em</code>; the patch variant
+round-trips it (55 files / 537 tests). ROADMAP a2 table + decision
+note updated.</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h3>
+<ul>
+<li>[x] <code>npm run typecheck</code> + <code>npm run lint</code> pass (2026-10-12)</li>
+<li>[x] vitest: models round-trip (pair / bare string / empty — 4 new
+RelativeFontSizeValueModel tests in models.test.mjs); text-
+composition suite green (doubling :929-941, clear-restore :984-1001 —
+setPatchRelativeFontSize/clear helpers adapted to the pair paths
+/instance/relativeFontSize/{value,unit}); <code>fundamentals.test.mjs</code> green
+(55 files / 534 tests)</li>
+<li>[x] All state files parse with zero value diff (pair default =
+baseEm → identical <code>generic/fontSize</code>); <code>qa-structure-marks.mjs</code>
+unchanged-green (PROBE PASSED, exit 0 — 152/153 nested composed,
+18.6667px/24px, identical to the pre-migration baseline)</li>
+<li>[x] Manual smoke: unit selector renders beside the value (operator
+confirmed 2026-10-12: <code>em</code> offered ONLY in the patch variant’s unit
+dropdown, not in the typeSpec one)</li>
+</ul>
+<h2><a id="phase-2--em-semantics-in-the-merge-channel" class="heading_anchor" href="#phase-2--em-semantics-in-the-merge-channel" aria-hidden="true">#</a>Phase 2 — <code>em</code> semantics in the merge channel</h2>
+<h3><a id="overview-2" class="heading_anchor" href="#overview-2" aria-hidden="true">#</a>Overview</h3>
+<p>A patch/mark edge with <code>{value, unit: 'em'}</code> resolves against the
+origin typeSpec’s outbound effective font-size — the same merged
+scope measurement reads. Rendered and measured bases agree.</p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required</h3>
+<ol>
+<li><strong>Basis plumbing at the merge boundary</strong> —
+<code>scope-resolution.mjs createPatched</code> (:462-483): thread the origin’s
+effective size (from the origin outbound projection, <code>:465-466</code>)
+into the patch synthetics. Decision point (in-phase, unit-test
+pinned): extend the calculate signature with a basis arg supplied
+per channel (typeSpec channel → null) vs a parent-only dep name
+never yielded locally (task #9 design-space B). Constraint: NO dep
+on <code>generic/fontSize</code> (local-first shadowing, :295-303).
+<code>PatchedScopeProperties</code> (:370-414) wires the resolution.</li>
+<li><strong>Patch generators</strong> — <code>STYLE_PATCH_PROPERTIES_GENERATORS</code>
+(<code>properties-generators.mjs:676-700</code>): <code>fontSizeGen.calculate</code>
+gains the em branch with the merge-channel basis; the FIXME
+(:687-692) is thereby addressed for the BASIS only — patch
+application semantics unchanged.</li>
+<li><strong>Measurement consistency</strong> — <code>composition-controller.ts:913-933</code>
+reads the merged payload <code>getProperties()</code>: verify no change needed
+(the basis arrives resolved inside the synthetic); if the merged
+leaf fontSize needs the em-aware path, extend there.</li>
+</ol>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria</h3>
+<ul>
+<li>[x] <code>npm run typecheck</code> + <code>npm run lint</code> + vitest green (2026-10-12,
+55 files / 538 tests)</li>
+<li>[x] NEW unit test: patch <code>{value: 2, unit: 'em'}</code> on an 18pt context
+→ 36pt (origin outbound basis — the t1 chain: base 14 × 1.285714286);
+<code>baseEm</code> still × base (28pt); bare-string states unchanged
+(text-composition/index.test.mjs “per-run styles: patch unit ‘em’
+composes against the containing context (merge channel)”)</li>
+<li>[x] text-composition suite green (doubling/clear-restore semantics
+unchanged — the baseEm default keeps them byte-identical)</li>
+<li>[x] Automated probes: <code>qa-editor-mark-styling.mjs</code> (PROBE PASSED,
+exit 0) and <code>qa-structure-marks.mjs</code> (PROBE PASSED, exit 0 —
+baseline-identical)</li>
+<li>[ ] <strong>LIVE CHECKPOINT (operator)</strong>: marks/patches render + measure
+consistently</li>
+</ul>
+<p>Implementation note: the basis-plumbing decision point resolved to the
+alias mechanism — <code>PatchedScopeProperties</code> publishes the origin’s
+outbound effective <code>generic/fontSize</code> under <code>CONTAINING_FONT_SIZE</code>
+(<code>registered-properties-definitions.mjs</code>) as the synthetic-dep source
+for <code>fontSizePatchGen</code> (<code>properties-generators.mjs</code>, patch channel
+only); the local channel never yields that name, so it cannot shadow
+the patch’s own <code>generic/fontSize</code> synthetic (the rejected dep-name
+would cycle). The typeSpec channel’s <code>fontSizeGen</code> lost the dead em
+case (channel split); shared resolution in <code>resolveFontSizePairOnBase</code>.</p>
+<h2><a id="phase-2b--slot-in-operator-2026-10-12-no-basefontsize-on-style-patches" class="heading_anchor" href="#phase-2b--slot-in-operator-2026-10-12-no-basefontsize-on-style-patches" aria-hidden="true">#</a>Phase 2b — Slot-in (operator, 2026-10-12): NO baseFontSize on style patches</h2>
+<h3><a id="overview-3" class="heading_anchor" href="#overview-3" aria-hidden="true">#</a>Overview</h3>
+<p>Patches are leafs — they neither inherit an anchored base nor re-anchor
+one (the mid-tree sub-document feature is typeSpec territory); absolute
+sizes are stated directly via the pair’s absolute units; em/baseEm
+compose against the containing context. The <code>baseFontSize</code> FIELD leaves
+<code>SimpleStylePatchModel</code> (operator: “it doesn’t make much sense”).</p>
+<h3><a id="changes-required-implemented-2026-10-12" class="heading_anchor" href="#changes-required-implemented-2026-10-12" aria-hidden="true">#</a>Changes Required (implemented 2026-10-12)</h3>
+<ol>
+<li><code>models.mjs</code>: <code>typographyStylePatchPureModelMixin</code> (no
+baseFontSize) + shared <code>_typographyColorModelMixin</code>;
+<code>typographyInlineMixinFor(pureModelMixin)</code> takes the spread fields.</li>
+<li><code>properties-generators.mjs</code>: <code>baseFontSizeGen</code> split — the pair
+transport is now <code>relativeFontSizePairGen</code> (shared; the patch list
+uses it WITHOUT baseFontSizeGen); <code>fontSizePatchGen</code> reads no base
+field; the merged scope sources <code>generic/baseFontSize</code> from the
+ORIGIN typeSpec (as it already did for patches that never set one —
+no state carries a patch-level baseFontSize: fixtures verified).</li>
+<li>UI: style-patches typeface section drops “baseFontSize”;
+<code>removeItems</code> gains it (out of sections.rest); live-properties
+comment updated.</li>
+<li>Legacy: operator downloads with a patch-level baseFontSize drop the
+field silently (lenient struct deserialization, non-strict).</li>
+</ol>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria</h3>
+<ul>
+<li>[x] typecheck/lint/vitest green (55 files / 538 tests; the em gate
+test holds: baseEm 2 → 28pt with the ORIGIN-sourced base, em 2 →
+36pt)</li>
+<li>[x] Probes: qa-structure-marks + qa-editor-mark-styling PASSED
+(exit 0)</li>
+<li>[ ] <strong>LIVE CHECKPOINT (operator)</strong>: style-patch UI shows no
+baseFontSize; absolute/em/baseEm patch sizes behave as before</li>
+</ul>
+<hr>
+<h2><a id="phase-3--one-element-inline-node-dom" class="heading_anchor" href="#phase-3--one-element-inline-node-dom" aria-hidden="true">#</a>Phase 3 — One-element inline-node DOM</h2>
+<h3><a id="overview-4" class="heading_anchor" href="#overview-4" aria-hidden="true">#</a>Overview</h3>
+<p>Editor inline nodes render as a single element (<code>contentDOM === dom</code>),
+matching marks and the viewer; the inner <code>div[data-node-content]</code>
+disappears for inline. Blocks KEEP the two-element split (features,
+parameters display, labels).</p>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required</h3>
+<ol>
+<li><strong>ProsemirrorNodeView</strong> — <code>integration.typeroof.jsx:371-386</code>:
+branch on <code>node.type.isInline &amp;&amp; !this._isReproducing</code> → no inner
+div; <code>_stylerDOM = this.dom</code>; <code>contentDOM = this.dom</code> (reproducing
+atoms unchanged — already single-element :362). FIXME :370-371
+(span) resolves: the spec tag IS the content container
+(<code>generic-inline</code> → <code>span</code>). PM contract (task #12): equality
+supported natively; children of <code>contentDOM</code> are PM-managed — the
+host must append NOTHING (renderDescs clobber, dist :1646-1662).</li>
+<li><strong>structuralElements</strong> — <code>integration.typeroof.jsx:394-400</code>:
+<code>{outer: this.dom, inner: this._stylerDOM}</code> — same element;
+widget activationTests already suppress parameters display
+(<code>type-spec.typeroof.jsx:708-712</code>) and labels (:812-817) when
+<code>outer === inner</code> — operator: inline nodes need neither.</li>
+<li><strong>ignoreMutation</strong> — <code>integration.typeroof.jsx:454-473</code>: align the
+equality case with <code>ProsemirrorMarkView</code> behavior; childList churn
+inside <code>dom</code> belongs to PM (no widgets live there).</li>
+<li><strong>CSS</strong> — <code>lib/css/shell/type-stage.css:157-160</code>: the <code>&amp; &gt; [data-node-content]</code> box-sizing selector — give inline
+single-elements the viewer-parity treatment (:220-223 puts
+box-sizing on <code>*[data-node-type]</code> directly); consolidate.
+<code>line-spans.css:81</code> untouched (textblocks keep their split).</li>
+<li><strong>Tag-swap parity</strong> — <code>_swapMarkElement</code>
+(<code>type-spec.typeroof.jsx:1443-1476</code>) assumes <code>contentDOM === dom</code>:
+inline nodes become eligible for <code>htmlTag</code> swaps (probe it).</li>
+</ol>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria</h3>
+<ul>
+<li>[x] <code>npm run typecheck</code> + <code>npm run lint</code> + vitest green (2026-10-13:
+55 files / 539 tests)</li>
+<li>[x] <code>integration.test.mjs</code>: NEW “renders editable inline nodes as
+a single element (contentDOM === dom)” — spec-tag element, no
+<code>[data-node-content]</code>, direct text, childElementCount 0, typing
+inserts inside (re-query after dispatch — PM rebuilds when
+update() rejects); the cite-link reproducing case + block split
+unchanged</li>
+<li>[x] Probe: NEW <code>scripts/puppeteer-probes/qa-inline-node-dom.mjs</code>
+(PROBE PASSED, exit 0): 153 generic-inline single-element, 253
+block content children kept, box-sizing: border-box via the new
+<code>:has()</code> rule, caret typing inside inline content lands + element
+stays single-element, typing/undo/copy-paste dispatch without
+PAGEERROR (text-revert coverage delegated to qa-compose-in-editor
+— its undo/redo PASS on this DOM)</li>
+<li>[x] <strong>LIVE CHECKPOINT (operator)</strong>: editor DOM parity (confirmed
+2026-10-13: “live looking good”)</li>
+</ul>
+<h2><a id="phase-4--inlinenodesstylelinks-family--routing" class="heading_anchor" href="#phase-4--inlinenodesstylelinks-family--routing" aria-hidden="true">#</a>Phase 4 — <code>inlineNodesStyleLinks</code> family + routing</h2>
+<h3><a id="overview-5" class="heading_anchor" href="#overview-5" aria-hidden="true">#</a>Overview</h3>
+<p>Third style-link family keyed on node type keys; inline nodes route
+to <code>UIDocumentStyleStyler</code> (mark styler) in both renderers; the block
+styler stops serving inline elements entirely.</p>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required</h3>
+<ol>
+<li><strong>Models</strong> — <code>type-spec/models.mjs</code>:
+<code>InlineNodeStylePatchLinkModel</code> (mixin :371-386, NO tag — tags come
+from node specs), <code>InlineNodesStyleLinksMapModel</code> (ordered map,
+:399-407 pattern); TypeSpecModel fields beside :525-526.</li>
+<li><strong>Prefix + inheritance</strong> — <code>registered-properties-definitions.mjs:38-39</code>:
+<code>INLINE_NODES_STYLE_LINKS = 'inlineNodesStyleLinks/'</code>;
+<code>styleLinksGen</code> (<code>properties-generators.mjs:435-446</code>) third entry —
+the single inheritance chokepoint.</li>
+<li><strong>Payload registration</strong> — <code>meta.typeroof.jsx:281-324</code>: third
+StyleLinksMeta instantiation <code>(&quot;inlineNodesStyleLinks&quot;, INLINE_NODES_STYLE_LINKS)</code> — <code>getStyleLinkPropertiesId</code>
+(<code>derivations.mjs:389-405</code>) is already parametric.</li>
+<li><strong>Bookkeeping</strong> — <code>pps-maps.mjs:53-56, :109-112</code>;
+<code>defaults.mjs:165-166</code> (<code>_skipPrefix</code>).</li>
+<li><strong>Viewer routing</strong> — <code>viewer.typeroof.jsx</code>:
+<code>UIDocumentElement._provisionWidgets</code> (:496-507) branches on
+inline-ness (context <code>inInlineContext</code> / rendering plan): inline
+elements get a style-styler wrapper (the
+<code>UIDocumentTextRun._createStylerWrapper</code> pattern :877-905) with
+<code>_getStyleLinkPropertiesId(typeSpecPropertiesPath, 'inlineNodesStyleLinks', typeKey)</code> (:963-968 pattern); NO
+<code>_provisionTypeSpecStyler</code> for inline.</li>
+<li><strong>Editor routing</strong> — <code>type-spec.typeroof.jsx</code>: inline node
+subscriptions provision <code>UIDocumentStyleStyler</code> (deps:
+<code>properties@</code> ← styleLink id, rootFont, verboseFontVariationSettings
+— the <code>_createStyleStylerWrapper</code> pattern :1226-1244) instead of the
+outfitter’s dynamic block styler; resolution replaces the <code>isIntent</code>
+ternary (:1190-1191) with a three-way lookup incl. node type keys;
+declaration (<code>_hasStyleLinkDeclaration</code> :1302-1314) → no styler
+(inherit).</li>
+<li><strong>a1 realized</strong> — inline elements no longer reach
+<code>UIDocumentTypeSpecStyler</code>: block write set (width, text-align,
+block margins, columns, display:block) never applies to inline;
+font-size comes from the style-link payload
+(<code>properties-util.mjs:36-41</code>) or not at all (inherit).</li>
+<li><strong>Editor style menu</strong> — unchanged: intent-only (:2401-2427).</li>
+</ol>
+<h3><a id="success-criteria-4" class="heading_anchor" href="#success-criteria-4" aria-hidden="true">#</a>Success Criteria</h3>
+<ul>
+<li>[x] <code>npm run typecheck</code> + <code>npm run lint</code> + vitest green; parametric
+style-link tests extended to the third prefix (type-specnion.test.mjs,
+text-composition/index.test.mjs :729/:825/:880 patterns) — committed
+<code>6394787b</code> (2026-10-13)</li>
+<li>[x] Probe: inline node WITH edge styles via <code>UIDocumentStyleStyler</code>
+(font-size/colors/features on the single element); WITHOUT edge →
+no explicit font-size → inherits containing context (observation 3);
+block styling byte-identical — <code>qa-inline-node-style-links.mjs</code>
+(2026-10-13: 6 of 6 after the sub-cycle fix <code>4532ae22</code>: inline
+styler/trigger wrappers gain <code>_widgets</code> membership — fresh attach
+after mode switch styles; see the sub-cycle research/plan docs)</li>
+<li>[x] <strong>LIVE CHECKPOINT (operator)</strong> — 2026-10-13 via DOM readout (the
+designed UI checkpoint became possible with phase 5); readout
+recorded as a phase-6 input (nested marks resolve at the root
+fallback)</li>
+</ul>
+<h2><a id="phase-5--node-style-links-ui-wiring" class="heading_anchor" href="#phase-5--node-style-links-ui-wiring" aria-hidden="true">#</a>Phase 5 — “Node Style Links” UI wiring</h2>
+<h3><a id="overview-6" class="heading_anchor" href="#overview-6" aria-hidden="true">#</a>Overview</h3>
+<p>Editing surface for the third family, next to “Soft Style Links” and
+“Hard Style Links”.</p>
+<h3><a id="changes-required-4" class="heading_anchor" href="#changes-required-4" aria-hidden="true">#</a>Changes Required</h3>
+<ol>
+<li><strong>fundamentals.mjs</strong> — <code>UIInlineNodesStyleLinksMap/Value</code> (copy
+the <code>UIMarkStyleLinksMap*</code> :853-860 pattern — no tag), inherited
+list (<code>UIInheritedMarkStyleLinksList</code> :952 pattern), container
+<code>UIInlineNodesStyleLinksContainer</code> (“Node Style Links” — copy
+<code>UIMarkStyleLinksContainer</code> :993-1030).</li>
+<li><strong>Mount</strong> — <code>type-spec-properties.typeroof.jsx:502/:517</code>: third
+container mount in TypeSpecPropertiesManager.</li>
+<li><strong>Wiring exclusion</strong> — <code>type-driven-ui.mjs</code>: keep the third
+container class family out of the generic type-driven map (same
+exclusion as the two existing containers).</li>
+</ol>
+<h3><a id="success-criteria-5" class="heading_anchor" href="#success-criteria-5" aria-hidden="true">#</a>Success Criteria</h3>
+<ul>
+<li>[x] <code>npm run typecheck</code> + <code>npm run lint</code> + vitest green (2026-10-13:
+55 files / 541 tests)</li>
+<li>[x] Probe smoke: NEW <code>scripts/puppeteer-probes/qa-node-style-links-ui.mjs</code>
+(PROBE PASSED, exit 0) — tree item click opens a typeSpec in the
+properties manager; “Node Style Links” renders next to Soft/Hard
+Style Links; the create select offers the style patches; a REAL UI
+create flow (select patch → key input → create button) yields mode
+<code>link</code> + <code>stylePatch: &quot;bold&quot;</code> on the created edge; the map lists the
+node type key with the key-change select offering the unlink mode;
+the inherited list hides while all edges are local and shows the
+inherited whole edge on a child typeSpec</li>
+<li>[x] Manual smoke (operator): interactive feel — drag/drop ordering,
+per-item delete, create/unlink via clicks, live styling via the UI
+on en/Typography (now possible: the editing surface exists) —
+confirmed 2026-10-13</li>
+</ul>
+<h2><a id="phase-6--composition-basis-threading--qa--re-tuning" class="heading_anchor" href="#phase-6--composition-basis-threading--qa--re-tuning" aria-hidden="true">#</a>Phase 6 — Composition basis threading + QA + re-tuning</h2>
+<h3><a id="overview-7" class="heading_anchor" href="#overview-7" aria-hidden="true">#</a>Overview</h3>
+<p>Nested leaves inside inline nodes measure against the same basis they
+render with; full QA; optional state re-tuning.</p>
+<h3><a id="changes-required-5" class="heading_anchor" href="#changes-required-5" aria-hidden="true">#</a>Changes Required</h3>
+<ol>
+<li><strong>Leaf style resolution</strong> — <code>composition-controller.ts _resolveLeafStyleLink</code> (:636-678): extend beyond mark descriptors
+(<code>getWrapMarks</code> is mark-list-only): a leaf inside an inline node
+resolves the innermost applicable <code>inlineNodesStyleLinks</code> edge
+(walk the leaf’s node ancestors); basis = that edge’s merged
+payload (<code>createPatched</code> vs the containing typeSpec — same as
+rendered). Decision point (in-phase, test + probe pinned):
+compose (inline edge ∘ mark edge) vs innermost-wins (the mark
+contract today: at-most-one per leaf, :636-678).</li>
+<li><strong>Measurement reads</strong> — <code>:913-933</code>: <code>leafFontSize</code> from the
+resolved payload (mechanics unchanged; the payload now exists for
+inline edges). Verify measured == rendered basis on the references
+list (the original overflow symptom — ROADMAP problem 1).</li>
+<li><strong>QA probes</strong> — extend <code>qa-structure-marks.mjs</code> with inline-edge
+styling assertions; new probe <code>qa-inline-node-styling.mjs</code> if the
+surface needs its own (runner <code>scripts/debug-with-puppeteer.mjs</code>,
+port 3100; NEVER <code>npm run perf:composition</code> — OFF-LIMITS).</li>
+<li><strong>States/fixtures</strong> — defaults empty (no required migration);
+OPTIONAL: a demo <code>inlineNodesStyleLinks</code> edge in the en wikipedia
+initial state (e.g. cite) to exercise the feature live —
+operator’s call in-phase.</li>
+</ol>
+<h3><a id="success-criteria-6" class="heading_anchor" href="#success-criteria-6" aria-hidden="true">#</a>Success Criteria</h3>
+<ul>
+<li>[ ] <code>npm run typecheck</code> + <code>npm run lint</code> + vitest green (incl. new
+basis tests)</li>
+<li>[ ] Probes: <code>qa-structure-marks</code>, <code>qa-editor-mark-styling</code>, new
+inline probe — all green on the en/Typography load; references list
+renders without overflow with styled cites</li>
+<li>[ ] <strong>LIVE CHECKPOINT (operator)</strong>: the cycle’s visible goal —
+18pt li context, styled cite content, no root-fallback 14pt write</li>
+</ul>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<h3><a id="unit-vitest" class="heading_anchor" href="#unit-vitest" aria-hidden="true">#</a>Unit (vitest)</h3>
+<ul>
+<li>Models: pair parse/round-trip, bare string → baseEm, value↔unit
+coherence, link modes, cross-family non-resolution (models.test.mjs
+patterns :51/:62/:100/:113/:130).</li>
+<li>Fundamentals: <code>inlineLengthToPT</code> unchanged (em/en vs baseEm/baseEn
+contracts, <code>fundamentals.test.mjs:10-36</code>).</li>
+<li>Merge channel: em basis = origin outbound effective (NEW, phase 2);
+<code>baseEm</code>/absolute unchanged; bare-string states unchanged.</li>
+<li>Composition suite: <code>text-composition/index.test.mjs</code> vehicles —
+doubling (bold/italic → width &gt; ×1.3), clear-vs-explicit-1
+(:905-1001) — green through EVERY phase.</li>
+</ul>
+<h3><a id="integration" class="heading_anchor" href="#integration" aria-hidden="true">#</a>Integration</h3>
+<ul>
+<li>Single-element inline DOM, tag-swap, declaration cases
+(<code>integration.test.mjs:441</code> pattern).</li>
+<li>Parametric third-prefix style-link resolution (type-specnion.test.mjs).</li>
+</ul>
+<h3><a id="live-probes-puppeteer-debug-harness--never-perf-composition" class="heading_anchor" href="#live-probes-puppeteer-debug-harness--never-perf-composition" aria-hidden="true">#</a>Live probes (puppeteer DEBUG harness — never perf-composition)</h3>
+<ul>
+<li>Phase-gated: 1 → <code>qa-structure-marks</code> unchanged-green; 2 →
+<code>qa-editor-mark-styling</code> (marks/patches checkpoint); 3 → DOM parity
+probe; 4 → inline styling probe; 6 → full pass + overflow check.</li>
+</ul>
+<h3><a id="manual-operator" class="heading_anchor" href="#manual-operator" aria-hidden="true">#</a>Manual (operator)</h3>
+<ul>
+<li>Per-phase checkpoints (phases 2, 3, 4, 6) on the live en/Typography
+load; UI sections smoke (phases 1, 5).</li>
+</ul>
+<h2><a id="verification-protocol-every-phase" class="heading_anchor" href="#verification-protocol-every-phase" aria-hidden="true">#</a>Verification Protocol (every phase)</h2>
+<ol>
+<li><code>npm run typecheck</code> 2. <code>npm run lint</code> 3. <code>npm run format:write</code>
+(if touched files drift) 4. vitest suites 5. phase probe(s)</li>
+<li>STOP — propose commit message with model/provider/agent metadata;
+wait for operator confirmation (MANNERS / COLLABORATION).</li>
+</ol>
+<h2><a id="references" class="heading_anchor" href="#references" aria-hidden="true">#</a>References</h2>
+<ul>
+<li>ROADMAP (decisions + status): <code>docs/planning/inline-node-refinements/ROADMAP.md</code></li>
+<li>Research round: <code>thoughts/research/2026-10-12-1723-font-size-resolution-and-rebasing.md</code></li>
+<li>Design conversation 2026-10-12 (this session): pivot to
+<code>inlineNodesStyleLinks</code>, α rejected / β confirmed, one-element DOM
+feasibility (research tasks 20261012_10–13), phase ordering.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

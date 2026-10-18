@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-font-size-resolution--re-basing" class="heading_anchor" href="#research-font-size-resolution--re-basing" aria-hidden="true">#</a>Research: Font-size resolution &amp; re-basing</h1>
+<p>Research cycle for the inline-node refinements roadmap
+(<code>docs/planning/inline-node-refinements/ROADMAP.md</code>, approach (a), RPI
+kick-off step 2, scopes (i)-(v)). Four parallel read-only sub-agents:
+fontSize family + inline/patch basis; nodeProperties channel;
+em/baseEm/en resolution sites; migration blast radius. This documents
+what IS, not what should be.</p>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Where and how fontSize / baseFontSize / relativeFontSize are synthesized
+and consumed (i); how the nodeProperties scope is composed and threaded
+(ii); every em/baseEm/en resolution site and its assumed basis (iii);
+the inline-node and patch scope basis today (iv); and the migration
+surface for a unit-carrying relativeFontSize (v).</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<ol>
+<li>fontSize is purely synthetic: baseFontSize x relativeFontSize
+(fontSizeGen, properties-generators.mjs:233-238). Every downstream
+consumer (layout math, margins, runion boundaries, per-run
+measurement, the styler’s outer-element write) receives the
+pre-flattened plain number. Nothing strips units: a unit-carrying
+relativeFontSize would flow into the bare multiplication unchanged
+and corrupt every fontSize consumer.</li>
+<li>The only plain-factor arithmetic on relativeFontSize is the
+fontSizeGen multiply itself (live) plus legacy paths
+(models.mjs:269-272 design comment; videoproof-controller.mjs). The
+live LeadingRunion removed the /relativeFontSize division entirely
+(node-properties-generators.mjs:666-674).</li>
+<li>The nodeProperties channel is confirmed as the basis vehicle:
+per-node scopes cascade local &gt; typeSpec &gt; parent, the parent layer
+IS the parent’s control-projected settled map (cascade nesting =
+inheritance), and generic/fontSize is readable from any node scope
+(the emAfter sibling lookup proves it). A node-em against the
+containing node’s scope is addressable today.</li>
+<li>Inline nodes have no dedicated font machinery: no nodeSpecToTypeSpec
+entries for cite/bdi/generic-inline; the empty link is
+origin-anchored and the resolver walks up to the root
+(integration.typeroof.jsx:226-231).</li>
+<li>Patch scopes have no parent: baseFontSize inside a patch resolves
+from the patch’s own fields, else the origin typeSpecnion’s defaults
+layer (createPatched / PatchedScopeProperties); the merged
+style-link scope that measurement reads layers the patch over the
+containing typeSpec.</li>
+<li>Migration is non-breaking at document scope: all stored values are
+plain-number strings (no em-intent values exist); a baseEm migration
+reproduces today’s arithmetic exactly. The blast edges are
+patch-scope basis asymmetry, explicit 1 vs unset, and JSON string
+parsing (14 source files + operator downloads).</li>
+</ol>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-the-fontsize-family-declaration-registration-synthesis-consumption" class="heading_anchor" href="#1-the-fontsize-family-declaration-registration-synthesis-consumption" aria-hidden="true">#</a>1. The fontSize family: declaration, registration, synthesis, consumption</h3>
+<p><strong>Registration &amp; defaults</strong> (<code>lib/js/components/registered-properties.mjs</code>,
+GENERIC map starts :229):</p>
+<ul>
+<li>fontSize :305-313 — inherit: true, unit ‘px’ (comment “// ??? why not
+PT??”), default 36, min 0.</li>
+<li>baseFontSize :314-322 — inherit: true, unit ‘pt’, default 12.</li>
+<li>relativeFontSize :323-330 — inherit: true, NO unit, default 1,
+step 0.01.</li>
+</ul>
+<p><strong>Model</strong> (<code>lib/js/components/type-spec/models.mjs:184-188</code>):
+[‘baseFontSize’, FontSizeModel] “// in PT” and [‘relativeFontSize’,
+FontSizeModel] (“in em i.e. relative to baseFontSize, no unit, will be
+multiplied with baseFontSize”). fontSize has NO model field anywhere in
+TypeSpecModel — it exists only as a synthetic.</p>
+<p><strong>Synthesis</strong> (<code>lib/js/components/layouts/type-stage/properties-generators.mjs</code>):</p>
+<ul>
+<li>baseFontSizeGen :195-202 — yields generic/baseFontSize and
+generic/relativeFontSize from the host instance when non-empty.</li>
+<li>fontSizeGen :209-244 — returns when BOTH args are empty
+(inherited/default is “just as good”); else yields
+[‘generic/fontSize’, SyntheticValue(calculate, [‘generic/baseFontSize’,
+‘generic/relativeFontSize’])] (:240) with calculate (:233-238):
+baseFontSize * (relativeFontSize ?? 1); null if base is null.</li>
+<li>Generator lists: TYPE_SPEC_PROPERTIES_GENERATORS :657-674 (fontSizeGen
+must precede axisLocationsGen :666-667); STYLE_PATCH_PROPERTIES_GENERATORS
+:676-700 reuses both, with a FIXME about patch semantics (:687-692).</li>
+<li>Same-file consumer: axisLocationsGen :255 — autoOPSZ writes
+axesLocations/opsz &lt;- generic/fontSize (also axisMathLocationsGen :410).</li>
+</ul>
+<p><strong>Root defaults map</strong> (<code>lib/js/components/layouts/type-stage/defaults.mjs</code>):
+getTypeSpecDefaultsMap() :173 runs the generators against a default
+TypeSpecModel draft and freezes (:261-271) — the defaults map therefore
+contains a synthesized generic/fontSize = 12 (base 12 x 1);
+seedTypeSpecDefaults :26-43 adds specific/font and layout dims.</p>
+<p><strong>Per-run measurement</strong>
+(<code>lib/js/components/layouts/type-stage/text-composition/composition-controller.ts</code>):</p>
+<ul>
+<li>:803-805 — textblock fontSize = nodeProperties.get(generic/fontSize)
+with hard fallback 12 when not a number (warned at :880-884).</li>
+<li>:902-917 — leaf styles read each leaf’s styleLinkProperties@ payload
+(payload.typeSpecnion.getProperties(), :913-915):
+leafFontSize = properties.get(generic/fontSize) (:917), falling back
+to the textblock value (:930-933). This is the roadmap’s anchor —
+measurement reads the MERGED style-link scope, not the raw patch.</li>
+<li>:1088-:1380 — style.fontSizePt scales advanceEm/hangingEn widths;
+:1453-1463 documents “COMPUTED font size (fontSizePt is the
+fontSizeGen synthetic base x relative)”. Measurer caching keys by
+fontSizePt / unitsPerEm (measurer.ts:7-8).</li>
+</ul>
+<p><strong>DOM writes</strong> (<code>lib/js/components/prosemirror/type-spec.typeroof.jsx</code>,
+UIDocumentTypeSpecStyler):</p>
+<ul>
+<li>:576-584 — outer element font-size in pt from
+propertyValuesMap.get(generic/fontSize) (“that way, we can use EM
+also on the outer element”).</li>
+<li>:552-571 — nextNodeProperties@ margin-end branch:
+nsProps.get(generic/fontSize) + leading/line-height-em -&gt;
+lineHeightAfter / emAfter in pt.</li>
+<li>Outfitter FIXME :340-351 — “currently using baseFontSize would break
+the least existing code … em is calculated in the parent and the
+descendant inherits the absolute value”.</li>
+</ul>
+<h3><a id="2-inline-nodes--patch-scope-basis-today" class="heading_anchor" href="#2-inline-nodes--patch-scope-basis-today" aria-hidden="true">#</a>2. Inline nodes &amp; patch scope basis today</h3>
+<p><strong>nodeSpecToTypeSpec</strong> (<code>lib/js/components/layouts/type-stage/index.typeroof.jsx:263</code>):
+seeded from lib/assets/type-stage-initial-state.json — entries exist for
+section, heading-1…3, paragraph, paragraph-2, p2russian, p2greek; NONE
+for cite/bdi/generic-inline. Ingest rules map them as inline nodes
+(lib/js/wikipedia/ingest.ts:1363, :1371).</p>
+<p><strong>Resolution &amp; root fallback</strong>
+(<code>lib/js/components/prosemirror/integration.typeroof.jsx</code>):</p>
+<ul>
+<li>getTypeSpecPropertiesIdMethod :181-296 — a missing entry yields
+typeSpecLink = “” (:226-227); “An empty link ‘’ is origin-anchored by
+construction … fallback to root (root-of-self)” (:229-231).</li>
+<li>_getBestTypeSpecPropertiesId :112-165 walks UPWARDS to
+originTypeSpecPath (testPath.slice(0, -2) per step, :164), returning
+the first registered typeSpecProperties@… level.</li>
+<li>Meta-layer equivalent: root delegation
+nodeProperties@${originTypeSpecPath} with the root’s control-projected
+map (document-nodes-meta/index.mjs:1286-1296).</li>
+<li>Inline classification is shape-based, not spec-based:
+specChildrenInInlineContext (document-nodes-meta/derivations.mjs:45-55,
+/\binline\b/ content-expression test), determineUnknownType :57-118
+(unknown_block vs unknown_inline). There is NO special inline
+font-size path — inline nodes ride the same fallback walk as blocks.</li>
+</ul>
+<p><strong>Patch scope has no parent</strong>
+(<code>lib/js/components/layouts/type-stage/live-properties.typeroof.jsx</code>):</p>
+<ul>
+<li>StylePatchSourceLiveProperties :225-344 — its generator-facing API has
+hasParentProperty: () =&gt; false and a getParentProperty that THROWS
+(:243-251). baseFontSize in the patch’s own map comes only from the
+patch’s own fields.</li>
+<li>The MERGED style-link scope (StyleLinkLiveProperties :347-420) reads
+stylePatchProperties@ + typeSpecProperties@ and builds
+typeSpecnion.createPatched(patchMap) (:401-404) — createPatched
+(scope-resolution.mjs:462-483) -&gt; PatchedScopeProperties (:370-414):
+cascade local (patch) &gt; originOutboundProjection &gt; parentContext
+(inherited + typeSpecDefaultsMap) — “a derived view of its origin
+scope, not a link in the hierarchy” (:371-389). The defaults layer is
+the documented model-default fallback.</li>
+<li>In-test documentation of the asymmetry: explicit relativeFontSize 1
+in patch scope != unset because the patch scope’s baseFontSize
+resolves to the MODEL default, not the document cascade
+(lib/js/tests/text-composition/index.test.mjs:984-988).</li>
+<li>style-patches.typeroof.jsx:298-299 — the removeItems set for
+baseFontSize in the patch UI is EMPTY today.</li>
+</ul>
+<p><strong>styleLinkProperties@</strong> (document-nodes-meta/derivations.mjs:389-405):
+the id points at the node’s resolved typeSpec path extended by the
+style-link edge — i.e. the typeSpec + merged patch scope that
+measurement reads. Callers: viewer.typeroof.jsx:911-923,
+composition-controller.ts:215, :664, :913-915, type-spec.typeroof.jsx:1210-1218.</p>
+<h3><a id="3-the-nodeproperties-channel-basis-threading-vehicle" class="heading_anchor" href="#3-the-nodeproperties-channel-basis-threading-vehicle" aria-hidden="true">#</a>3. The nodeProperties channel (basis-threading vehicle)</h3>
+<p><strong>Registration ids</strong> (document-nodes-meta/index.mjs unless noted):</p>
+<ul>
+<li>nodeProperties@<documentNodePath> — registered on the dispatcher in
+_createWrapper settings :479 (payload = nodeProperties getter :371 -&gt;
+_scopeLikePayload :266).</documentNodePath></li>
+<li>rootNodeProperties@ — every dispatcher maps
+[nodeProperties@${originTypeSpecPath}, “rootNodeProperties@”]
+:490-493; guaranteed chain endpoint.</li>
+<li>@parentNodeProperties (trigger-only) :1058 — declared so a parent
+scope rebuild re-triggers this component’s update (:1051-1057
+comment); the id is threaded through containers :501-502.</li>
+<li>nextNodeProperties@ — resolveNextNodePropertiesId
+(derivations.mjs:336-347): the next SIBLING’s nodeProperties@ id or
+null (last child); wired via typeSpecStylerDependencyMappings
+(:353-384).</li>
+</ul>
+<p><strong>Scope composition</strong> (node-properties.mjs:59-197,
+HierarchicalScopeNodeProperties):</p>
+<ul>
+<li>Effective map = CascadingMap([local, typeSpec, parent]) (:190-197) —
+own generated layout facts &gt; own typeSpec/style facts &gt; inherited
+layer. The typeSpecMap host is fed by DocumentNodeProperties.update
+from the resolved typeSpecProperties@<path> (index.mjs:696-699).</path></li>
+<li>Synthetics (incl. fontSize) are resolved against this same cascade
+(initPropertyValuesMap :186-192, allowParentOnlyResolution = true) —
+which is why the sibling fontSize lookup works
+(derivations.mjs:330-335 design comment).</li>
+</ul>
+<p><strong>Inheritance = cascade nesting</strong> (:32-35): a child is built via
+createFromParentMap (:135-153) with the parent layer = the parent’s
+CONTROL-PROJECTED settled map (ancestorSettledProperties,
+index.mjs:401-416; inheritableSettledProperties :644-648;
+scope-resolution.mjs:86-138 — inheritance controls applied, TOMBSTONE
+withheld). Controls come from DEMARCATION_INHERITANCE generator entries
+(NODE_PROPERTIES_INHERITANCE_POLICY :45-48 =
+horizontalLayoutConsumptionPolicyGen :482-503 +
+blockMarginsConsumptionPolicyGen :745) — they withhold layout/* style
+inputs; generic/fontSize is NOT withheld, so the containing node’s
+effective font-size is present in the layer a child reads.</p>
+<p><strong>Boot races</strong>: child scope build defers until the parent’s exists
+(:685-694); until built, getProperties() falls back up the dispatcher
+chain to the root (empty Map() when transiently null, :609-626). Text
+runs are consume-only (no scope of their own, :1226-1254) — the
+dispatcher answers the parent element’s scope for them (:266-280).</p>
+<p><strong>Consumers</strong>: viewer _createTypeSpecStylerWrapper :398-419 and
+_provisionTypeSpecStyler :527-588 (rebuild triggers: properties@,
+nextNodeProperties@; own id excluded :565-580); editor
+type-spec.typeroof.jsx :768-786 / :861-945 / update :322-395 (own
+node &gt; style cascade, node wins :362-374).</p>
+<p><strong>Read order for a value</strong>: own effective map (local &gt; typeSpec &gt;
+parent) -&gt; while unbuilt, parent payload chain -&gt; root; descendants
+see the control-projected projection, never the raw effective map.</p>
+<h3><a id="4-em--baseem--en-resolution-sites-and-their-assumed-bases" class="heading_anchor" href="#4-em--baseem--en-resolution-sites-and-their-assumed-bases" aria-hidden="true">#</a>4. em / baseEm / en resolution sites and their assumed bases</h3>
+<p><strong>Unit vocabularies</strong>:</p>
+<ul>
+<li>BlockMarginUnitModel (type-spec/models.mjs:155-159):
+[…ABSOLUTE_UNITS, ‘lineHeight’, ‘em’, ‘baseEm’, ‘lineHeightAfter’,
+‘emAfter’], default ‘lineHeight’. Values are plain numbers/percent in
+a SEPARATE unit field (BlockMarginValueModel :161-171) — the
+pair-shape precedent for a unit-carrying value.</li>
+<li>InlineLengthUnitModel (type-spec/horizontal-layout-models.mjs:28-30):
+[…ABSOLUTE_UNITS, ‘em’, ‘baseEm’, ‘en’, ‘baseEn’], default ‘en’ —
+used for inlineMargins, columnGutter, minPadding, minLineLength (same
+value/unit pair shape :34-40).</li>
+</ul>
+<p><strong>Canonical converter</strong> inlineLengthToPT
+(type-spec/fundamentals.mjs:95-118): em -&gt; value x fontSize;
+en -&gt; value x 0.5 x fontSize; baseEm -&gt; value x baseFontSize;
+baseEn -&gt; value x 0.5 x baseFontSize; absolutes direct; UNKNOWN UNIT
+THROWS (:114-117). enToPt/enToPtNumeric :81-87 — en against the
+consuming scope’s fontSize. Contract test: fundamentals.test.mjs:10-36.</p>
+<p><strong>fontSizeGen’s assumption</strong> (properties-generators.mjs:234-238):
+relativeFontSize is a plain unitless factor (FontSizeModel, “no unit”);
+a unit-carrying value would flow into the bare multiplication
+UNCHANGED — there is no unit stripping anywhere in the pipeline.
+<strong>LeadingRunion en-compensation</strong>:</p>
+<ul>
+<li>Design comment (models.mjs:268-272):
+actuallineLength = lineLengthEn / relativeFontSize — plain-factor
+arithmetic, still the documented TypeSpec-side contract.</li>
+<li>LIVE implementation (node-properties-generators.mjs:560-688):
+calculate(columnWidthPT, fontSizePT) :670-674 —
+actualLineWidthEn = columnWidthPT / (0.5 x fontSizePT), with the
+comment :666-669 “already local en — no relativeFontSize
+normalization”. The division is GONE from the live path.</li>
+<li>Legacy: lib/js/legacy/videoproof-controller.mjs :2515-2540,
+:5959-5966, :2599-2602 — pt round-trip instead of the direct
+division, plain numbers throughout.</li>
+</ul>
+<p><strong>Margins</strong>:</p>
+<ul>
+<li>Style channel passthrough (blockMarginsGen,
+properties-generators.mjs:307-329): raw {value, unit} pairs.</li>
+<li>Node channel (createBlockMargin,
+node-properties-generators.mjs:689-700): lineHeight -&gt; value x
+lineHeightEm x fontSize; em -&gt; value x fontSize (own scope);
+baseEm -&gt; value x baseFontSize; lineHeightAfter / emAfter -&gt; NULL
+(deferred to the renderer); absolutes passthrough.</li>
+<li>Renderer (prosemirror/type-spec.typeroof.jsx:535-572): for the *After
+units reads the NEXT SIBLING’s scope (nextNodeProperties@):
+lineHeightAfter -&gt; value x nsLineHeightEm x nsFontSize;
+emAfter -&gt; value x nsFontSize; falls back to the own map when the
+sibling dedups to the same TypeSpec (:539-542); last child handled
+by CSS :not(:last-child) (:534-535). Default end margin
+{value: 1, unit: ‘lineHeightAfter’} (registered-properties.mjs:388-390).
+<strong>Horizontal layout</strong>:</li>
+<li>Manual (manualHorizontalLayoutGen,
+node-properties-generators.mjs:87-207): lengthToPT :128-138 -&gt;
+inlineLengthToPT(fontSize, baseFontSize) — em/en against the
+CONSUMING node’s fontSize (:98-106 comment); the old “en transport”
+(convert at the defining scope, re-expand at the consumer) is
+explicitly rejected (:107-110).</li>
+<li>Runion (horizontalLayoutRunionGen :~310-470 +
+horizontal-layout-runion.mjs): boundary in —
+availableWidthPT / (0.5 x fontSizePT) :356-361; solver pure
+plain-number en arithmetic (:196-282); boundary out — enToPtNumeric
+synthetics for lineLength -&gt; columnWidth (:441-449), margins, gutter,
+fullWidth -&gt; width (:425-459), all against the consuming scope’s
+fontSize.</li>
+</ul>
+<p><strong>Line-height-em (em ratio) consumers</strong>: actors/line-of-text.mjs:88
+(CSS line-height in em), videoproof-contextual/layout.mjs:127-191,
+videoproof-array.mjs:1231-1299, :1451-1469;
+registered-properties.mjs:71 (default 1.3, inherit: true; unit
+‘EM’/‘EN’ labels at :349-373 are metadata only, values plain numbers).</p>
+<p><strong>Flow shape</strong>: every consumer receives already-flattened plain
+numbers (fontSize from fontSizeGen, baseFontSize); a unit-carrying
+relativeFontSize would be seen by none of them as a unit — it would
+corrupt the synthetic upstream.</p>
+<h3><a id="5-migration-blast-radius-unit-carrying-relativefontsize" class="heading_anchor" href="#5-migration-blast-radius-unit-carrying-relativefontsize" aria-hidden="true">#</a>5. Migration blast radius (unit-carrying relativeFontSize)</h3>
+<p><strong>Contract to preserve</strong>: fontSize = baseFontSize x relativeFontSize,
+with the unset-vs-explicit distinction intact (fontSizeGen returns
+early when both args are empty — the inheritance path).</p>
+<p><strong>Stored values — all plain-number JSON strings, no units anywhere</strong>.
+The headings chain (h1 4.571428571 -&gt; 64pt at base 14; h2 1.785714286;
+h3/t1 1.285714286; t2 explicit “1”) is replicated across
+lib/js/tests/fixtures/type-stage-default-state.json (base “14”),
+type-stage-wikipedia-replacement-state.json (patches carry no
+relativeFontSize), lib/js/wikipedia/type-stage-wikipedia-initial-state.json
+(sup patch 0.7), lib/assets/type-stage-initial-state.json,
+lib/assets/wikipedia-demo.json (small/sup 0.8),
+docs/states-library/fixtures/wikipedia-snapshot.json, and four operator
+downloads under downloads/ (plus generated mirrors in dist/ and
+_site/, not source).</p>
+<p><strong>Tests</strong>:</p>
+<ul>
+<li>lib/js/tests/text-composition/index.test.mjs — the main vehicle:
+setPatchRelativeFontSize helper :905-917; bold/italic -&gt; 2 doubling
+assertions :929-941 (width &gt; before x 1.3, conservative because
+autoOPSZ tracks the doubled size); link -&gt; 2 recomposes nothing once
+consumers are tombstoned :956-963; clear-vs-explicit-1 semantics
+:984-1001 (toBeCloseTo restore); baseFontSize 40 &lt;-&gt; 14 restorations
+:637/:708 and :1433/:1466.</li>
+<li>type-spec/fundamentals.test.mjs:10-36 — em/en vs baseEm/baseEn
+reference values (fontSize 18 = 14 x 1.285714286).</li>
+<li>hyphenation-pattern-languages.test.mjs — baseFontSize 20 at :117,
+:170, :199, :239; 21 at :248.</li>
+<li>live-properties.test.mjs:8-10 — frozen seed generic/fontSize 12,
+generic/baseFontSize 12.
+<strong>Probes</strong>: no numeric font-size expectations anywhere.
+qa-editor-mark-styling.mjs (sup-shrink regression) logs computedFontSize
+(:87) / paragraphFontSize (:94) and asserts only via CONTRACT VIOLATION
+console lines; qa-structure-marks.mjs :105/:186/:273 are best-effort
+logged observations. For completeness only:
+scripts/perf-composition-page.mjs:286-287 mutates relativeFontSize
+paths (the OFF-LIMITS perf suite).</li>
+</ul>
+<p><strong>Classification</strong>:</p>
+<ul>
+<li>-&gt; baseEm, non-breaking: every stored value today (N baseEm = N x
+baseFontSize reproduces the current arithmetic at document scope).</li>
+<li>-&gt; em opt-in: none exist today — no fixture, state, or test stores
+an em-intent value.</li>
+<li>Blast edges: (1) patch scope — baseFontSize resolves to the model
+default (12), not the document base (14), already true today
+(index.test.mjs:984-988); a unit value in patch scope multiplies
+against a different reference than in typeSpec scope. (2) explicit
+“1” vs unset (t2) must survive the migration. (3) JSON string
+parsing — a unit suffix changes the parse path in every state file
+(14 source files + 4 downloads + generated mirrors). (4) em-length
+interplay — inlineLengthToPT and the legacy
+lineLengthEn / relativeFontSize paths already resolve against
+base x relative; their basis order is fixed.</li>
+</ul>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<p>(Paths relative to repo root; verified 2026-10-12 at 0df81838.)</p>
+<ul>
+<li>lib/js/components/registered-properties.mjs:305-330 — fontSize/baseFontSize/relativeFontSize registration &amp; defaults</li>
+<li>lib/js/components/type-spec/models.mjs:155-188, 268-272 — unit vocabulary, font-size model fields, LeadingRunion design comment</li>
+<li>lib/js/components/type-spec/horizontal-layout-models.mjs:28-62 — InlineLengthUnitModel, value/unit pairs</li>
+<li>lib/js/components/type-spec/fundamentals.mjs:81-118 — enToPt, inlineLengthToPT (canonical unit converter)</li>
+<li>lib/js/components/layouts/type-stage/properties-generators.mjs:195-244, 255, 657-700 — baseFontSizeGen, fontSizeGen, generator lists, opsz synthetic</li>
+<li>lib/js/components/layouts/type-stage/defaults.mjs:26-43, 173 — root defaults map (contains synthesized fontSize 12)</li>
+<li>lib/js/components/layouts/type-stage/node-properties.mjs:32-48, 59-197 — scope composition (local &gt; typeSpec &gt; parent), inheritance policy</li>
+<li>lib/js/components/layouts/type-stage/node-properties-generators.mjs:87-207, 310-470, 560-741 — unit contracts, runion boundaries, LeadingRunion, margins</li>
+<li>lib/js/components/layouts/type-stage/scope-resolution.mjs:86-138, 370-483, 509-546 — settled projection, PatchedScopeProperties/createPatched, defaults fallback</li>
+<li>lib/js/components/layouts/type-stage/live-properties.typeroof.jsx:44-70, 160-215, 225-420 — root scope seeding, patch scope (no parent), style-link merge</li>
+<li>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs:476-494, 609-727, 1028-1296 — nodeProperties@ registration, rootNodeProperties@, parent delegation, root fallback</li>
+<li>lib/js/components/layouts/type-stage/document-nodes-meta/derivations.mjs:45-55, 57-118, 327-344, 389-405 — inline classification, resolveNextNodePropertiesId, getStyleLinkPropertiesId</li>
+<li>lib/js/components/layouts/type-stage/text-composition/composition-controller.ts:803-933, 1453-1463 — measurement basis, leaf styles, en scaling</li>
+<li>lib/js/components/prosemirror/integration.typeroof.jsx:112-296 — nodeSpecToTypeSpec resolution, origin-anchored root fallback walk</li>
+<li>lib/js/components/prosemirror/type-spec.typeroof.jsx:305-584, 768-945 — UIDocumentTypeSpecStyler.update, outer font-size, nextNodeProperties margins</li>
+<li>lib/js/wikipedia/ingest.ts:1363-1371 — ingest rules mapping cite/bdi to inline-node typeKey</li>
+<li>lib/js/tests/text-composition/index.test.mjs:905-1001 — patch font-size behavior contracts</li>
+<li>lib/js/components/type-spec/fundamentals.test.mjs:10-36 — em/baseEm/en reference-value contract</li>
+</ul>
+<h2><a id="open-questions-feeding-create_plan" class="heading_anchor" href="#open-questions-feeding-create_plan" aria-hidden="true">#</a>Open Questions (feeding /create_plan)</h2>
+<ol>
+<li><strong>Unit representation</strong>: the length vocabularies carry units as a
+separate field in {value, unit} pairs (BlockMarginValueModel,
+InlineLengthValueModel); relativeFontSize today is a bare number
+(FontSizeModel). A unit-carrying relativeFontSize needs a
+representation decision — and every state file stores values as
+JSON strings, so the parse path changes in all of them.</li>
+<li><strong>Patch scope basis</strong> (roadmap OQ4): the patch’s own map has no
+parent (baseFontSize falls to the model default), while measurement
+reads the merged style-link scope (patch layered over the
+containing typeSpec, composition-controller.ts:913-917). A
+patch-scope em must be pinned to the basis measurement already
+reads.</li>
+<li><strong>Node-em lookup design</strong> (roadmap OQ3): the child’s own typeSpec
+layer sits above the parent layer in the cascade and its own
+fontSizeGen recomputes base x relative — a node-em must not
+double-apply the containing node’s relative factor. The parent
+layer demonstrably carries generic/fontSize (the emAfter sibling
+lookup reads it), so the channel exists; the design question is
+which read avoids the own-typeSpec re-multiply.</li>
+<li><strong>baseFontSize as root-only anchor</strong> (roadmap: “withers to
+root-only?”): no stored mid-tree baseFontSize value breaks under a
+root-only rule, but the property is registered inherit: true and
+the patch-scope default fallback depends on it.</li>
+<li><strong>Registered-metadata inconsistencies</strong> (documented, not judged):
+registered fontSize default 36 with unit ‘px’ (comment “??? why
+not PT??”) vs the live seed 12; unit ‘EM’/‘EN’ labels are metadata
+only.</li>
+<li><strong>Inline nodes and a1</strong> (roadmap OQ1): confirmed there is no inline
+font-size machinery at all — inline nodes ride the same typeSpec
+fallback walk as blocks; whether the a1 generator skip is
+unconditional stays a design call for the plan.</li>
+<li><strong>Test surface to keep green</strong>: the text-composition
+doubling/clear-restore contracts (index.test.mjs:905-1001) and the
+four hyphenation-suite baseFontSize overrides
+(hyphenation-pattern-languages.test.mjs:117, 170, 199, 239).
+Probes carry no numeric font-size expectations.</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

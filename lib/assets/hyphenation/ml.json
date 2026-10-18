@@ -1,0 +1,17 @@
+{
+ "_meta": {
+  "source": "https://github.com/bramstein/hyphenation-patterns/blob/dc01d58a667eece8d082ec3c3a1e88ed332bf802/patterns/ml.js",
+  "upstreamCommit": "dc01d58a667eece8d082ec3c3a1e88ed332bf802",
+  "license": "LGPL unless otherwise noted in the linked upstream pattern source",
+  "generator": "lib/assets/hyphenation/update-patterns",
+  "note": "Complete pinned bramstein/hyphenation-patterns catalog; vendored for deterministic async runtime loading and in-tree extensibility."
+ },
+ "id": "ml",
+ "leftmin": 2,
+ "rightmin": 2,
+ "patterns": {
+  "2": "ാ1ി1ീ1ു1ൂ1ൃ1െ1േ1ൈ1ൊ1ോ1ൌ1ൗ11ക1ഖ1ഗ1ഘ1ങ1ച1ഛ1ജ1ഝ1ഞ1ട1ഠ1ഡ1ഢ1ണ1ത1ഥ1ദ1ധ1ന1പ1ഫ1ബ1ഭ1മ1യ1ര1റ1ല1ള1ഴ1വ1ശ1ഷ1സ1ഹ2ൺ2ൻ2ർ2ൽ2ൾ2ൿ",
+  "3": "1അ11ആ11ഇ11ഈ11ഉ11ഊ11ഋ11ൠ11ഌ11ൡ11എ11ഏ11ഐ11ഒ11ഓ11ഔ12ഃ12ം12്2ന്2ര്2ള്2ല്2ക്2ണ്2",
+  "4": "2ന്‍2ര്‍2ല്‍2ള്‍2ണ്‍2ക്‍"
+ }
+}

@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="cycle-1-performance-truth-demand-lifecycle-controllable-measure--tracking-truth" class="heading_anchor" href="#cycle-1-performance-truth-demand-lifecycle-controllable-measure--tracking-truth" aria-hidden="true">#</a>Cycle 1: Performance truth, demand lifecycle, controllable measure + tracking truth</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Before Knuth–Plass++, establish trustworthy costs, stop composition
+work nobody consumes, introduce a low-cost future-facing cooperative
+task lifecycle, fix the authoritative line measure, and replace
+UTF-16 tracking arithmetic with a deterministic HarfBuzz shaped-glyph
+model.</p>
+<p>Research:
+<code>docs/planning/agentic-artefacts/thoughts/research/2026-10-05-1205-cycle-1-performance-demand-measure-tracking.md</code>
+(all operator-level design questions resolved).</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li><code>CompositionController</code> + <code>DocumentNodesMeta</code> are always active;
+editor-only has no composition applicator but active algorithms
+still fully traverse/shape/break/publish each affected textblock.</li>
+<li>Default unresolved algorithm = Greedy Ragged (already noticeable in
+editor); Greedy Fit adds repeated treated-axis reshaping through
+24-iteration step searches.</li>
+<li>Explicit None returns before expensive composition roles, but the
+entire TypeStage meta/scope/editor update still runs and is
+perceived slower than expected — profile attribution is needed.</li>
+<li>Input equality is late: traversal, segmentation, style resolution,
+hyphen/potential setup happen before the skip; Greedy Ragged payload
+construction currently calls <code>plannerOf</code> per leaf despite step 0.</li>
+<li><code>SimpleProtocolHandler</code> has publications/update marks but no
+subscribers. <code>CompositionController</code> is already an ID-addressed
+publisher service; DocumentNodesMeta has explicit renderer callback
+lifecycle precedents; TypeSpecSubscriptions has first/last demand.</li>
+<li>Viewer results currently interpret offsets against independently
+updated attachment text; async requires a self-contained atomic
+source+composition snapshot.</li>
+<li>Perf harness measures one viewer Greedy-Fit-vs-None burst; no initial
+load, mode matrix, per-operation distributions, role/cache counters
+or current CDP profile harness.</li>
+<li>jsdom harness publishes <code>layout={width:0,height:0}</code>: composition gets
+exactly 0pt and cannot assert realistic breaks.</li>
+<li>Composition reads incoming <code>layout/availableWidth</code>; authoritative
+per-block line box is local <code>layout/columnWidth</code> — already consumed
+by AutoLinearLeading. Viewer CSS writes local <code>layout/width</code> /
+column-width. Latest Wikipedia debug save proves the mismatch.</li>
+<li>Tracking prediction uses source UTF-16 units; Measurer shapes glyphs
+but returns/caches width only. HarfBuzz exposes glyph count/clusters.</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<ul>
+<li>Before/after performance report with repeatable scenario matrix,
+distributions and representative browser CPU profiles; optional
+generic instrumentation only where external profiling is
+insufficient.</li>
+<li>Composition runs only for demanded textblocks. Editor-only without a
+future applicator invokes zero composition roles/publications.
+Explicit None pays only transition unapply + cheap demand/gate work.</li>
+<li>Per-textblock source+consumer lifecycle supports multiple
+applicators, immediate last-consumer cancellation/unpublish/drop,
+and first-demand work.</li>
+<li>One documented task abstraction supports direct synchronous drain
+and cooperative async resumption. Lazy viewer reveal is default;
+sync reveal is widget configuration. Results are atomic snapshots;
+stale async work cannot publish.</li>
+<li>Composition consumes local <code>layout/columnWidth</code>, with deterministic
+nonzero ManualHorizontalLayout Host tests.</li>
+<li>Tracking width = gaps between adjacent visible shaped glyphs over a
+complete candidate line (N−1), continuous across segments/runs,
+with taken hyphen final. Browser screenshots are diagnostic only.</li>
+<li>Demand-aware profile/baseline replaces the milestone-4 aggregate
+snapshot; ROADMAP records Cycle 1 done.</li>
+</ul>
+<h2><a id="decisions--invariants" class="heading_anchor" href="#decisions--invariants" aria-hidden="true">#</a>Decisions / Invariants</h2>
+<h3><a id="demand" class="heading_anchor" href="#demand" aria-hidden="true">#</a>Demand</h3>
+<ul>
+<li>Granularity: <code>composition@&lt;textblockPath&gt;</code>.</li>
+<li>Meta textblock registers/unregisters one source/drive by path.</li>
+<li>Each applicator textblock subscribes independently; its text runs
+share the payload.</li>
+<li>First subscriber schedules current composition.</li>
+<li>Last subscriber cancels pending work, unregisters publication and
+drops ingredients/source/result/task state synchronously.</li>
+<li>No dormant cache/publication in this cycle.</li>
+<li>TypeSpec algorithm/None remains authoritative after demand exists.</li>
+</ul>
+<h3><a id="scheduling--snapshots" class="heading_anchor" href="#scheduling--snapshots" aria-hidden="true">#</a>Scheduling / snapshots</h3>
+<ul>
+<li>Persistent demand is scheduling-neutral.</li>
+<li>Cooperative async is normal for first lazy result + steady updates;
+textblocks may publish out of document order.</li>
+<li><code>flushSync(path)</code> is explicit for sync reveal/controlled use.</li>
+<li>Same generator/task protocol can be direct-drained synchronously or
+resumed with a work/time budget asynchronously.</li>
+<li>Initial checkpoints: Host phases + logical paragraphs only; no
+Greedy-Fit inner rewrite. KP++ adds candidate-batch checkpoints.</li>
+<li>Use a rendering-friendly task boundary (not unbounded microtasks).</li>
+<li>Async verifies immutable source/ingredient identity at resume/publish.</li>
+<li>Viewer renders the last COMPLETE payload snapshot including exact
+leaf source text. It need not mirror current editor state while a
+newer snapshot is pending.</li>
+<li>No previous snapshot + lazy reveal: ordinary browser-wrapped current
+text until result. Sync reveal flushes before expose.</li>
+<li>Future ProseMirror policy (possibly browser composition for focused
+block) remains out of scope.</li>
+</ul>
+<h3><a id="reveal-policy" class="heading_anchor" href="#reveal-policy" aria-hidden="true">#</a>Reveal policy</h3>
+<p>Renderer/widget constructor configuration, not document state:</p>
+<pre class="language-js"><code class="language-js"><span class="token function">UIDocumentViewer</span><span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">compositionReveal</span><span class="token operator">:</span> <span class="token string">"lazy"</span> <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token comment">// default</span>
+<span class="token function">UIDocumentViewer</span><span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">compositionReveal</span><span class="token operator">:</span> <span class="token string">"sync"</span> <span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+<p>No metamodel/PPS/UI/serialization this cycle.</p>
+<h3><a id="profiling" class="heading_anchor" href="#profiling" aria-hidden="true">#</a>Profiling</h3>
+<ul>
+<li>External CDP CPU/trace first.</li>
+<li>If hooks are necessary: one generic opt-in cross-subsystem
+instrumentation facility (<code>count</code>, <code>timerStart</code>, <code>timerStop</code>), cheap
+no-op/guard without collector; reset/snapshot/scenario tagging with
+collector. Document every metric purpose/unit/scope/lifecycle/type
+and observer effect. No wall-clock test assertions.</li>
+<li>Cold/transitions: 5 fresh-page samples (median + range; first/all
+result times).</li>
+<li>Steady state: independent identical state per arm; 5 warmups + 30
+individually timed edits; median, p95/max, total, aggregate ratio;
+alternate arm order.</li>
+<li>One representative cold and warm CDP profile.</li>
+</ul>
+<h3><a id="measure-fixture" class="heading_anchor" href="#measure-fixture" aria-hidden="true">#</a>Measure fixture</h3>
+<ul>
+<li>Browser/profile environment: 1920px viewport; observed layout area
+1600px.</li>
+<li>Deterministic Host fixture: parent 1200pt, paragraph explicit
+<code>ManualHorizontalLayoutModel</code>, lineLength 280pt (then 220pt).</li>
+<li>Composition measure = same local <code>layout/columnWidth</code> consumed by
+AutoLinearLeading.</li>
+</ul>
+<h3><a id="tracking" class="heading_anchor" href="#tracking" aria-hidden="true">#</a>Tracking</h3>
+<ul>
+<li>TypeRoof/HarfBuzz contract, not cross-browser screenshot oracle.</li>
+<li>N visible shaped glyphs → N−1 tracking gaps over a line.</li>
+<li>Continuous across segment/run boundaries; preceding run owns gap.</li>
+<li>Ligatures follow HarfBuzz features; tracking does not disable them.</li>
+<li>Taken hyphen is final glyph: gap before it, none after it.</li>
+<li>One-glyph line = zero tracking.</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>KP++ graph/search/checkpoints (Cycle 2/3; task protocol reserves them).</li>
+<li>ProseMirror composition applicator/focus policy.</li>
+<li>Paragraph viewport/lazy demand filtering beyond explicit consumers.</li>
+<li>Dormant result cache / eviction.</li>
+<li>Runtime/user reveal-mode model/UI.</li>
+<li>Fluid/runion layout correctness in the controlled composition fixture.</li>
+<li>Browser/OS screenshot matrix or browser-defined tracking semantics.</li>
+<li>Font fallback/coverage work.</li>
+<li>Editable justification potentials.</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Six phases, each separately reviewable/committable. Stop after every
+phase for operator review/OKOK. If profiling uncovers unexpected
+complexity, use the sub-RPI handoff rule rather than expanding a phase.</p>
+<hr>
+<h2><a id="phase-1--performance-investigation-harness--before-profile" class="heading_anchor" href="#phase-1--performance-investigation-harness--before-profile" aria-hidden="true">#</a>Phase 1 — Performance investigation harness + before profile</h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p>Build trustworthy scenarios and profile CURRENT behavior before
+optimizing. Prefer external observation; add generic hooks only if
+required after the first profile.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>scripts/perf-composition</code> (likely split reusable driver into
+<code>scripts/perf-composition-lib.mjs</code>)</p>
+<ul>
+<li>Preserve verified fixture staging (1087 text nodes/layout identity).</li>
+<li>Add scenarios:
+<ul>
+<li>modes: editor, viewer, compare;</li>
+<li>algorithms: None, Greedy Ragged, Greedy Fit;</li>
+<li>cold initial/first-demand-like activation (current publication
+behavior measured as-is), typing, relevant style edit, irrelevant
+style edit, full recompose, mode/algorithm transitions.</li>
+</ul>
+</li>
+<li>Fresh independent page/state per arm; alternate arm order.</li>
+<li>Sampling convention above; machine-readable JSON result (scenario,
+commit, browser/version, viewport/layout, sample distribution).</li>
+<li>Record first/all composition publication completion where observable.</li>
+<li>Add explicit lightweight/full profile CLI modes; regular regression
+path stays practical.</li>
+<li>Use CDP <code>Profiler</code> (and <code>Tracing</code> only where useful) for one
+representative cold + warm operation; persist <code>.cpuprofile</code>/
+trace as ignored/generated artifacts, summarize dominant stacks in
+research output, not repository history by default.</li>
+</ul>
+<p><strong>Production instrumentation (conditional)</strong></p>
+<ul>
+<li>First run CDP/external monkey-patch observation.</li>
+<li>Only if gaps remain, create a generic instrumentation module (location
+decided after file-pattern review), disabled by default; add minimal
+calls at composition/Measurer/applicator surfaces.</li>
+<li>Document metric catalog beside the module or under docs/planning;
+include role meaning/unit/lifecycle and observer effect.</li>
+</ul>
+<p><strong>Research artefact update</strong></p>
+<ul>
+<li>Add actual before numbers and profile findings to this cycle’s
+research document.</li>
+</ul>
+<h3><a id="scenarios--metrics" class="heading_anchor" href="#scenarios--metrics" aria-hidden="true">#</a>Scenarios / Metrics</h3>
+<ul>
+<li>Editor-only default Ragged and Greedy Fit are required—not just Fit.</li>
+<li>Editor-only None attributes residual meta/scope/editor cost.</li>
+<li>Viewer/compare distinguish applicator cost.</li>
+<li>Capture lineWidth probes and shape/cache work if external stacks cannot
+quantify them.</li>
+</ul>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated" class="heading_anchor" href="#automated" aria-hidden="true">#</a>Automated</h4>
+<ul>
+<li>[x] Fixture identity failure is loud.</li>
+<li>[x] Result JSON validates all required scenario/sample counts.</li>
+<li>[x] Profile command produces readable CPU profile.</li>
+<li>[x] Existing suite/lint/typecheck green.</li>
+</ul>
+<h4><a id="manual" class="heading_anchor" href="#manual" aria-hidden="true">#</a>Manual</h4>
+<ul>
+<li>[x] Review before-values + dominant stacks with operator before Phase 2.</li>
+</ul>
+<hr>
+<h2><a id="phase-2--per-textblock-demandsource-lifecycle-sync-core" class="heading_anchor" href="#phase-2--per-textblock-demandsource-lifecycle-sync-core" aria-hidden="true">#</a>Phase 2 — Per-textblock demand/source lifecycle (sync core)</h2>
+<h3><a id="overview-2" class="heading_anchor" href="#overview-2" aria-hidden="true">#</a>Overview</h3>
+<p>Make lifecycle correct and prove zero work without introducing async
+scheduling yet.</p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>…/text-composition/composition-controller.ts</code></p>
+<p>Add domain service APIs keyed by textblock path (names finalized in
+implementation):</p>
+<pre class="language-ts"><code class="language-ts"><span class="token function">registerSource</span><span class="token punctuation">(</span>path<span class="token punctuation">,</span> sourceDriver<span class="token punctuation">)</span><span class="token operator">:</span> unregisterSource
+<span class="token function">subscribe</span><span class="token punctuation">(</span>path<span class="token punctuation">,</span> consumerToken<span class="token operator">?</span><span class="token punctuation">)</span><span class="token operator">:</span> unsubscribe
+<span class="token function">flushSync</span><span class="token punctuation">(</span>path<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span></code></pre>
+<p>State per path:</p>
+<ul>
+<li>source driver/current immutable source access;</li>
+<li>subscriber identities/count;</li>
+<li>publication unregister closure;</li>
+<li>ingredients;</li>
+<li>task slot (reserved for Phase 3).</li>
+</ul>
+<p>Lifecycle:</p>
+<ul>
+<li>source and demand can arrive in either order;</li>
+<li>first subscriber + source performs current sync composition in Phase 2;</li>
+<li>source changes re-drive iff demanded;</li>
+<li>last subscriber cancels/resets/unpublishes/drops state immediately;</li>
+<li>source unregister does same + removes source;</li>
+<li>duplicate source/subscription and invalid cleanup fail/tolerate per
+documented ownership semantics.</li>
+</ul>
+<p><strong>File</strong>: <code>…/document-nodes-meta/index.mjs</code></p>
+<ul>
+<li>Textblock meta element registers its driver/source once its scope/path
+exists; unregister on textblock destruction/retype.</li>
+<li>Current update/scope-settled hooks notify/change the registered source
+rather than directly composing.</li>
+<li>Expose/reuse a current-drive method sufficient for first demand.</li>
+</ul>
+<p><strong>File</strong>: <code>…/viewer.typeroof.jsx</code></p>
+<ul>
+<li>Textblock <code>UIDocumentElement</code> subscribes one token for its path when
+attached; unsubscribe in destruction.</li>
+<li>Text-run attachments remain payload consumers; no per-leaf demand.</li>
+<li>Viewer root/mode teardown balances every token.</li>
+</ul>
+<p><strong>None fast path</strong></p>
+<ul>
+<li>Demand may exist, but source resolution of None produces no active
+composition; transition unregisters once.</li>
+<li>Continued None source changes do not enter expensive roles.</li>
+</ul>
+<p><strong>Tests</strong></p>
+<ul>
+<li>Editor-only Ragged/Fit: no publications; zero expensive-role metrics
+(generic metrics if installed, otherwise behavior spies at service
+seam); no Measurer shapes.</li>
+<li>Viewer/compare: per-textblock subscribe; first result; multiple
+consumers reference-count; one unsubscribe retains; last removes.</li>
+<li>Viewer→editor drops all publications/controller per-result state.</li>
+<li>Editor→viewer composes current sources.</li>
+<li>None transition un-applies; steady None performs no role work.</li>
+<li>Node delete/retype and renderer mode/document replace lifecycle.</li>
+</ul>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-1" class="heading_anchor" href="#automated-1" aria-hidden="true">#</a>Automated</h4>
+<ul>
+<li>[x] No-consumer/steady-None tests prove zero expensive composition roles.</li>
+<li>[x] Demand/source lifecycle balanced across existing mode suites.</li>
+<li>[x] Full suite/lint/typecheck green.</li>
+</ul>
+<h4><a id="manual-1" class="heading_anchor" href="#manual-1" aria-hidden="true">#</a>Manual</h4>
+<ul>
+<li>[x] Editor-only interaction no longer emits composition publications/logs.</li>
+</ul>
+<hr>
+<h2><a id="phase-3--cooperative-task-runner--atomic-viewer-snapshots" class="heading_anchor" href="#phase-3--cooperative-task-runner--atomic-viewer-snapshots" aria-hidden="true">#</a>Phase 3 — Cooperative task runner + atomic viewer snapshots</h2>
+<h3><a id="overview-3" class="heading_anchor" href="#overview-3" aria-hidden="true">#</a>Overview</h3>
+<p>Introduce low-upfront-cost async capability behind the stable demand
+API; lazy reveal default, sync constructor option.</p>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>New pure utility</strong>: <code>…/text-composition/composition-task.ts</code>
+(or appropriate shared task module if research finds broader owner)</p>
+<p>Define/document task protocol:</p>
+<ul>
+<li>generator/checkpoint value (reason/work estimate optional);</li>
+<li>sync drain;</li>
+<li>async resume under time/work budget;</li>
+<li>cancellation token;</li>
+<li>scheduler injection (default rendering-friendly macrotask /
+requestIdleCallback-with-fallback as environment allows);</li>
+<li>completion/error/stale outcome;</li>
+<li>no publication of partial payloads.</li>
+</ul>
+<p>Keep generator overhead out of the hot inner loops. Current
+<code>composeTextblock</code> is decomposed only enough for checkpoints between:</p>
+<ol>
+<li>collect/resolve input;</li>
+<li>per logical paragraph work;</li>
+<li>payload finalize/publish.</li>
+</ol>
+<p>Greedy Fit remains synchronous within one paragraph. Sync drain should
+be direct and measured for overhead.</p>
+<p><strong>CompositionController</strong></p>
+<ul>
+<li>First demand schedules async by default.</li>
+<li>Source updates cancel/supersede prior tasks; immutable ingredient /
+source identity checked at resume and before publish.</li>
+<li><code>flushSync(path)</code> drains current task or rebuilds current source
+synchronously.</li>
+<li>Last unsubscribe/source unregister cancels immediately.</li>
+<li>Publish one atomic payload containing exact leaf source text used by
+result (not only paths/offsets).</li>
+</ul>
+<p><strong>Viewer</strong></p>
+<ul>
+<li>Constructor option <code>{ compositionReveal: &quot;lazy&quot; | &quot;sync&quot; }</code>, default
+lazy, passed from TypeStage widget declaration (no model).</li>
+<li>Lazy: subscribe; current browser-wrapped source visible until first
+complete snapshot; results may arrive out of document order.</li>
+<li>After a previous snapshot exists, render that snapshot’s source +
+composition until newer snapshot atomically arrives—do not combine
+old offsets with live updated text.</li>
+<li>Sync: subscribe + <code>flushSync(path)</code> during initial attachment/reveal;
+later updates still async.</li>
+<li>Structural deletion/retype removes attachment normally.</li>
+</ul>
+<p><strong>Tests</strong></p>
+<ul>
+<li>Pure task sync/async equivalence and checkpoint order.</li>
+<li>Yield actually crosses a task/render boundary (not microtask starvation).</li>
+<li>cancellation/staleness: old task never publishes.</li>
+<li>out-of-order textblock completion.</li>
+<li>atomic source/result snapshots during typing.</li>
+<li>lazy first browser rendering → composition; sync first composition.</li>
+<li>task errors isolated/reported without stale partial state.</li>
+<li>runner sync overhead benchmark.</li>
+</ul>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-2" class="heading_anchor" href="#automated-2" aria-hidden="true">#</a>Automated</h4>
+<ul>
+<li>[x] Sync/async produce behavior-identical payloads.</li>
+<li>[x] Lifecycle/cancellation/staleness tests green.</li>
+<li>[x] Full suite/lint/typecheck green.</li>
+</ul>
+<h4><a id="manual-2" class="heading_anchor" href="#manual-2" aria-hidden="true">#</a>Manual</h4>
+<ul>
+<li>[x] Lazy viewer remains responsive; textblocks compose independently.</li>
+<li>[x] Sync configured viewer has no first-result reflow (automated flushSync coverage; policy is not UI-exposed).</li>
+</ul>
+<hr>
+<h2><a id="phase-4--authoritative-line-measure--controlled-host-fixture" class="heading_anchor" href="#phase-4--authoritative-line-measure--controlled-host-fixture" aria-hidden="true">#</a>Phase 4 — Authoritative line measure + controlled Host fixture</h2>
+<h3><a id="overview-4" class="heading_anchor" href="#overview-4" aria-hidden="true">#</a>Overview</h3>
+<p>Fix composition to consume the already-defined line box and create a
+nondegenerate integration fixture.</p>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>…/text-composition/composition-controller.ts</code></p>
+<ul>
+<li>Replace <code>layout/availableWidth</code> composition input with local
+<code>layout/columnWidth</code> (the same resolved fact AutoLinearLeading uses).</li>
+<li>No semantic fallback to parent budget where local line box exists;
+handle truly missing/non-number property consistently with Host
+capability/error policy.</li>
+<li>Ingredients track the consumed column width.</li>
+</ul>
+<p><strong>Harness</strong>: <code>lib/js/tests/type-stage-toggles/harness.mjs</code></p>
+<ul>
+<li>Add explicit environment geometry option; retain historical zero
+default for unrelated callers or migrate deliberately with test review.</li>
+<li>Browser/perf scenarios: viewport 1920px, layout 1600px.</li>
+<li>Composition fixture sets parent surface to 1200pt-equivalent and
+paragraph TypeSpec to <code>ManualHorizontalLayoutModel</code>, absolute 280pt
+lineLength. No fluid/runion behavior under test.</li>
+</ul>
+<p><strong>New/extended composition Host tests</strong></p>
+<ul>
+<li>scope local <code>columnWidth=280</code>, local CSS <code>width=280pt</code>, incoming
+<code>availableWidth=1200</code> remains distinct;</li>
+<li>payload exposes/diagnostically permits asserting consumed 280pt
+measure (or assert exact lines sufficient without expanding payload);</li>
+<li>exact Greedy Ragged boundaries at 280pt;</li>
+<li>280→220pt causes expected break movement/recomposition;</li>
+<li>Greedy Fit ordinary adjusted lines reach target tolerance; max-potential
+lines/last line keep documented behavior;</li>
+<li>nested textblock without override inherits projected 280pt.</li>
+<li>Regression using structure/config from
+<code>downloads/typeroof-20261005-115730.TypeStage.json</code> (promote minimal
+version to tracked fixture; do not depend on operator downloads).</li>
+</ul>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-3" class="heading_anchor" href="#automated-3" aria-hidden="true">#</a>Automated</h4>
+<ul>
+<li>[x] Composition and AutoLinearLeading consume identical line box fact.</li>
+<li>[x] Deterministic break assertions pass at nonzero measure.</li>
+<li>[x] Full suite/lint/typecheck green.</li>
+</ul>
+<h4><a id="manual-3" class="heading_anchor" href="#manual-3" aria-hidden="true">#</a>Manual</h4>
+<ul>
+<li>[x] Wikipedia debug case no longer composes against parent width.</li>
+</ul>
+<hr>
+<h2><a id="phase-5--harfbuzz-shaped-glyph-tracking-model" class="heading_anchor" href="#phase-5--harfbuzz-shaped-glyph-tracking-model" aria-hidden="true">#</a>Phase 5 — HarfBuzz shaped-glyph tracking model</h2>
+<h3><a id="overview-5" class="heading_anchor" href="#overview-5" aria-hidden="true">#</a>Overview</h3>
+<p>Replace UTF-16 source length with the agreed deterministic TypeRoof
+tracking contract.</p>
+<h3><a id="changes-required-4" class="heading_anchor" href="#changes-required-4" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>…/text-composition/measurer.ts</code></p>
+<ul>
+<li>Extend shaping result/cache from numeric width only to reusable shape
+metrics sufficient for both width + visible glyph count (API names
+decided in implementation). Preserve <code>measureEm</code> compatibility or
+refactor callers coherently (DRY—one shape/cache miss).</li>
+<li>Cache key remains font/axes/features/language/direction/text.</li>
+<li>Metrics expose shaped glyph count (and cluster data only if needed for
+diagnostics/future work); counters/profiler hooks integrate if Phase 1
+added them.</li>
+</ul>
+<p><strong>File</strong>: <code>…/text-composition/composition-controller.ts</code></p>
+<ul>
+<li>Candidate tracking width is computed across the WHOLE candidate line,
+not independently as source units per segment:
+<ul>
+<li>sum shaped glyph counts for visible source segments;</li>
+<li>include conditional taken hyphen as one final glyph;</li>
+<li>apply N−1 gaps globally;</li>
+<li>distribute per-run tracking values with preceding-run ownership at
+boundaries (implementation must retain each run’s gap value);</li>
+<li>no trailing gap after ordinary final glyph or final hyphen.</li>
+</ul>
+</li>
+<li>Spaces remain glyphs for tracking and also receive wordspace delta.</li>
+<li>Ligature count follows shaping/features naturally.</li>
+</ul>
+<p><strong>Viewer/applicator contract</strong></p>
+<ul>
+<li>Continue applying CSS letter-spacing per run fragment.</li>
+<li>Add focused local browser probe only as diagnostic documentation; do
+not make browser pixel matching/cross-platform screenshots acceptance.</li>
+<li>Document known potential browser divergence and future direct-render /
+applicator options.</li>
+</ul>
+<p><strong>Tests</strong> (real font/HarfBuzz + pure candidate arithmetic)</p>
+<ul>
+<li>plain Latin N−1;</li>
+<li>one glyph = 0;</li>
+<li><code>fi</code> liga on (1 glyph) vs <code>-liga</code> (2);</li>
+<li>base+combining mark;</li>
+<li>surrogate-pair/emoji covered by chosen font or controlled fake shape
+result;</li>
+<li>multiple source segments same run;</li>
+<li>mixed run styles/tracking values, preceding run owns boundary;</li>
+<li>taken hyphen adds one glyph/gap before it only;</li>
+<li>wordspace + tracking composition.</li>
+</ul>
+<h3><a id="success-criteria-4" class="heading_anchor" href="#success-criteria-4" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-4" class="heading_anchor" href="#automated-4" aria-hidden="true">#</a>Automated</h4>
+<ul>
+<li>[x] Tracking tests pin every agreed rule.</li>
+<li>[x] No duplicate shaping for width + glyph metrics on cache hits.</li>
+<li>[x] Full suite/lint/typecheck green.</li>
+</ul>
+<h4><a id="manual-4" class="heading_anchor" href="#manual-4" aria-hidden="true">#</a>Manual</h4>
+<ul>
+<li>[x] Diagnostic browser probe documented; visible discrepancies are
+understood as renderer variation, not test failure.</li>
+</ul>
+<hr>
+<h2><a id="phase-6--demand-aware-reprofile-optimize-baseline--roadmap" class="heading_anchor" href="#phase-6--demand-aware-reprofile-optimize-baseline--roadmap" aria-hidden="true">#</a>Phase 6 — Demand-aware reprofile, optimize, baseline + ROADMAP</h2>
+<blockquote>
+<p><strong>Status (2026-10-06): descoped and closed after operator review.</strong>
+The demand-aware full-matrix reprofile and new baseline were judged
+low-value: the structural zero-work guarantees are enforced by the
+Phase-2 behavior tests, no optimization decision is pending, and the
+exhaustive matrix is too slow/fragile for routine use. The first
+attempt also failed operationally (overnight session lost to a
+tool-failure retry loop and a multi-hour hang — no benchmark ever
+ran). Closed with typecheck/lint/suite green (428 tests) and ROADMAP
+Cycle 1 marked done. Postmortem + retry rules:
+<code>docs/planning/agentic-artefacts/thoughts/notes/2026-10-06-phase-6-session-failure-log.md</code>.</p>
+</blockquote>
+<h3><a id="overview-6" class="heading_anchor" href="#overview-6" aria-hidden="true">#</a>Overview</h3>
+<p>Repeat Phase 1 after all correctness/lifecycle work; optimize only
+measured dominant bottlenecks, then establish Cycle-1 baseline.</p>
+<h3><a id="changes-required-5" class="heading_anchor" href="#changes-required-5" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>Perf/profile harness</strong></p>
+<p>Run full matrix with agreed sampling:</p>
+<ul>
+<li>editor-only no consumer: None/Ragged/Fit;</li>
+<li>viewer lazy and sync: None/Ragged/Fit;</li>
+<li>compare where useful;</li>
+<li>initial subscribe: first/all results;</li>
+<li>typing, relevant/irrelevant style, full recompose;</li>
+<li>first/last consumer and None/active transitions;</li>
+<li>sync task drain vs async runner overhead.</li>
+</ul>
+<p>Compare before/after:</p>
+<ul>
+<li>wall distributions;</li>
+<li>CPU dominant stacks;</li>
+<li>shape/cache/probe/span counters where available;</li>
+<li>no-demand and steady-None structural zero-work.</li>
+</ul>
+<p>Apply only bounded, reviewable optimizations justified by profiles
+(possible known surfaces: planner work on Ragged payloads, late
+ingredient filter, repeated candidate sums/reshapes, console logging—
+none pre-approved without data). Reprofile each accepted optimization.</p>
+<p><strong>Baseline</strong></p>
+<ul>
+<li>Review results with operator.</li>
+<li>Write baseline only deliberately after scenarios/fixture/mode are
+validated.</li>
+<li>Keep regular quick regression command and explicit heavy profile mode.</li>
+</ul>
+<p><strong>ROADMAP</strong></p>
+<ul>
+<li>Mark Cycle 1 done; record numbers, lifecycle/task/measure/tracking
+contracts, remaining bottlenecks and handoff to Cycle 2.</li>
+</ul>
+<h3><a id="success-criteria-5" class="heading_anchor" href="#success-criteria-5" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-5" class="heading_anchor" href="#automated-5" aria-hidden="true">#</a>Automated</h4>
+<ul>
+<li>[ ] Complete matrix/result schema passes.</li>
+<li>[ ] Baseline rerun passes absolute/ratio gates.</li>
+<li>[ ] 1920/1600 fixture identity validated.</li>
+<li>[ ] Full suite/lint/typecheck green.</li>
+</ul>
+<h4><a id="manual-5" class="heading_anchor" href="#manual-5" aria-hidden="true">#</a>Manual</h4>
+<ul>
+<li>[ ] Operator reviews profile evidence + accepted optimizations/baseline.</li>
+</ul>
+<hr>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<h3><a id="behavior-over-implementation" class="heading_anchor" href="#behavior-over-implementation" aria-hidden="true">#</a>Behavior over implementation</h3>
+<p>Tests assert observable lifecycle/work outcomes, not private helper
+names:</p>
+<ul>
+<li>no demand → no publication/no shaping/no algorithm;</li>
+<li>demand transitions → current result/unpublication;</li>
+<li>sync/async same snapshot; stale task cannot publish;</li>
+<li>viewer source and composition are from same immutable snapshot;</li>
+<li>known measure → known breaks/treatments;</li>
+<li>shaped glyph input → known tracking gaps.</li>
+</ul>
+<p>Structural profiler metrics may be asserted only through the generic
+public snapshot interface (if Phase 1 proves hooks necessary), not by
+mocking private methods.</p>
+<h3><a id="fixtures" class="heading_anchor" href="#fixtures" aria-hidden="true">#</a>Fixtures</h3>
+<ul>
+<li>Small controlled TypeStage state/HTML promoted into tracked test
+fixtures; no dependency on <code>downloads/</code>.</li>
+<li>Real Roboto Flex + HarfBuzz where shaping matters.</li>
+<li>Verified wikipedia state for large performance only.</li>
+</ul>
+<h3><a id="performance-tests" class="heading_anchor" href="#performance-tests" aria-hidden="true">#</a>Performance tests</h3>
+<p>No brittle wall-clock assertions in Vitest. Browser benchmark owns
+performance thresholds; behavior tests own zero-work/count invariants.</p>
+<h2><a id="documentation" class="heading_anchor" href="#documentation" aria-hidden="true">#</a>Documentation</h2>
+<ul>
+<li>Research doc gains Phase-1 before/after numbers and profile findings.</li>
+<li>Generic metric catalog documents every hook if instrumentation lands.</li>
+<li>Cooperative task protocol gets an authoritative design header in its
+module; scheduling/reveal/staleness contracts also reflected in
+<code>composition-controller.ts</code>/ROADMAP.</li>
+<li>Tracking semantics documented in contract/Measurer/controller.</li>
+</ul>
+<h2><a id="sub-rpi-handoff-rule" class="heading_anchor" href="#sub-rpi-handoff-rule" aria-hidden="true">#</a>Sub-RPI Handoff Rule</h2>
+<p>If Phase 1 profiling identifies a large bottleneck whose fix would
+balloon Phase 2–6 (e.g. scope-resolution/update-relevance redesign),
+stop and create a sub-RPI handoff: current plan, this research doc,
+relevant design headers, profile artefacts/summary and exact observed
+cost. The operator drives that cycle separately, then this plan resumes.</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

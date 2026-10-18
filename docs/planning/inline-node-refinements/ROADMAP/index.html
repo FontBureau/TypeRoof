@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Inline Node Refinements — ROADMAP (composition threading &amp; font-size basis) - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/large-file-investigation-260723/">Large File Investigation</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li>
+<li><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-initial-analysis/">PPS: Initial Analysis</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-2026-07/">Metamodel: 2026-07</a></li>
+<li><a href="/TypeRoof/docs/planning/columns/REPORT/">Columns: Runion Report</a></li>
+<li><a href="/TypeRoof/docs/planning/overview/architectural-overview/">Architectural Overview</a></li>
+<li><a href="/TypeRoof/docs/planning/performance-investigation-viewer-update-propagation-260820/">Perf: Viewer Update Propagation</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Fable-5/">TypeSpec Resolution: NULL-TypeSpec Analysis</a></li>
+<li><a href="/TypeRoof/docs/planning/DEMARCATION_FALLBACK/">DEMARCATION_FALLBACK</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Kimi-K3/">TypeSpec Resolution: NULL-TypeSpec Analysis (Kimi-K3)</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-implementation-plan_Fable-5/">TypeSpec Resolution: Implementation Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-second-analysis_Fable-5.1/">PPS: Second Analysis (Fable-5.1)</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/inline-node-refinements/ROADMAP/">Inline Node Refinements: ROADMAP</a></li>
+<li><a href="/TypeRoof/docs/planning/text-composition/ROADMAP/">Text Composition: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/text-composition/avar2-potentials-anchoring/">Text Composition: avar2 Potentials Anchoring</a></li>
+<li><a href="/TypeRoof/docs/planning/inline-node-refinements/2026-10-13-phase4-viewer-channel-HANDOVER/">Phase 4 Handover: viewer channel</a></li>
+<li><a href="/TypeRoof/docs/planning/inline-node-refinements/2026-10-13-phase6-composition-basis-HANDOVER/">Phase 6 Handover: composition basis</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="inline-node-refinements--roadmap-composition-threading--font-size-basis" class="heading_anchor" href="#inline-node-refinements--roadmap-composition-threading--font-size-basis" aria-hidden="true">#</a>Inline Node Refinements — ROADMAP: composition threading &amp; font-size basis</h1>
+<blockquote>
+<p><strong>Status:</strong> Open — design conversation concluded 2026-10-12, captured here
+as the base for a formal RPI cycle. Approach (b) is IMPLEMENTED
+(<code>6dbbf38e</code>); approach (a) is the cycle’s remaining scope — research round COMPLETE 2026-10-12 (see RPI kick-off step 2). File
+references are as of <code>499be3bd</code> (pre-implementation) unless noted.
+Preceded by the structure-marks cycle
+(<code>docs/planning/agentic-artefacts/thoughts/{research,plan}/2026-10-11-*</code>,
+implemented in <code>77d81198</code>–<code>788853d8</code>) and the sup-marks round
+(<code>84861807</code> + editor fixes <code>499be3bd</code>).</p>
+</blockquote>
+<ul>
+<li>Written: 2026-10-12, session with the operator (z-ai/glm-5.3).</li>
+<li>Verification tooling: <code>scripts/puppeteer-probes/qa-structure-marks.mjs</code>
+(viewer) and <code>qa-editor-mark-styling.mjs</code> (editor), both pass on the
+live en/Typography load.</li>
+</ul>
+<h2><a id="the-original-problem" class="heading_anchor" href="#the-original-problem" aria-hidden="true">#</a>The original problem</h2>
+<p>Observation from the live Wikipedia article rendering (references list,
+<code>li-inline</code> textblocks containing <code>generic-inline</code> / <code>reproduce-as-inline</code>
+chains — e.g. <code>li &gt; span[mw-cite-backlink] &gt; … &gt; cite &gt; a &gt; span</code>):</p>
+<ol>
+<li><strong>Nested runs don’t take part in composition</strong> — the cite’s content
+renders as raw, uncomposed text next to the composed line spans of
+the direct runs; the textblock’s measured line geometry diverges
+from the rendered DOM → composed lines are too wide, content
+overflows the column (“does not fit into the column”).</li>
+<li><strong>Inline node elements carry block-scope properties</strong> — every
+<code>[data-node-type]</code> inline element gets full block <code>nodeProperties</code>
+writes: <code>width: 455pt</code>, <code>text-align</code>, block margins. Currently
+layout-inert (<code>display: inline</code> survives; the <code>display: table</code> hack
+in <code>lib/css/shell/type-stage.css:219-243</code> is commented out), but
+wrong.</li>
+<li><strong>The visible bite of the same defect: font-size</strong> — inline nodes
+(<code>cite</code>, <code>bdi</code>, <code>reproduce-as-inline</code>) have no <code>nodeSpecToTypeSpec</code>
+entries, so their scopes resolve via the <em>root fallback</em>: an
+18pt <code>li</code> (effective font-size via its typeSpec chain) contains
+<code>cite</code> content explicitly written at <strong>14pt</strong> (root <code>baseFontSize</code>)
+— the inline node’s explicit write cascades <em>over</em> the textblock’s
+typographic context. This is the same per-parent-context problem
+that motivated the structure-marks cycle, now for inline <em>nodes</em>.</li>
+</ol>
+<h2><a id="root-causes-verified-with-references" class="heading_anchor" href="#root-causes-verified-with-references" aria-hidden="true">#</a>Root causes (verified, with references)</h2>
+<h3><a id="b-composition-the-applicator-assumes-direct-runs" class="heading_anchor" href="#b-composition-the-applicator-assumes-direct-runs" aria-hidden="true">#</a>(b) Composition: the applicator assumes direct runs</h3>
+<ul>
+<li><code>viewer.typeroof.jsx:1142</code> (attach mapping) and <code>:649</code> (constructor)
+build the run’s composition subscription as
+<code>composition@${metaInfo.rootPath.parent.parent}</code> with the explicit
+assumption <em>“The run’s path is <code>&lt;textblock&gt;/content/&lt;index&gt;</code>”</em>.</li>
+<li>That only holds for DIRECT runs. A run inside an inline node
+(<code>&lt;textblock&gt;/content/0/content/1</code>) resolves <code>parent.parent</code> to the
+<strong>inline node</strong> — which never publishes a composition: only
+<code>_isTextblock</code> elements compose (<code>document-nodes-meta/index.mjs:830</code>:
+<code>innerHtml === null &amp;&amp; !inInlineContext &amp;&amp; !!childrenInInlineContext</code>;
+inline nodes are themselves <em>in</em> inline context).</li>
+<li>The <strong>controller measures the nested text correctly</strong> —
+<code>_buildInlineItems</code> (<code>composition-controller.ts:568-619</code>) recurses
+<code>inlineContainer</code> items; the nested leaves are in the payload with
+their paths. Only the applicator never receives it: nested runs
+observe a dead id and render OFF-MODE forever.</li>
+<li>Consequence per textblock: composed line spans for the direct runs +
+raw flowing text for everything nested → the payload’s line boxes and
+the rendered flow disagree → overflow. A textblock without direct
+text runs (e.g. <code>li &gt; backlink-atom + reference-text-node</code>) composes
+visually not at all.</li>
+</ul>
+<h3><a id="a-font-size-basis-inheritance-is-shadowing-not-product" class="heading_anchor" href="#a-font-size-basis-inheritance-is-shadowing-not-product" aria-hidden="true">#</a>(a) Font-size basis: inheritance is shadowing, not product</h3>
+<ul>
+<li><code>baseFontSize</code> and <code>relativeFontSize</code> are single <strong>inherited</strong> scalar
+properties (<code>registered-properties.mjs:314-331</code>, <code>inherit: true</code>,
+defaults 12pt / 1). Inheritance is <em>value shadowing</em>: a child scope
+that sets its own <code>relativeFontSize</code> <strong>replaces</strong> the parent’s
+factor — it does not multiply onto the parent’s effective size.</li>
+<li>The effective font-size is synthesized per scope as
+<code>baseFontSize × relativeFontSize</code>
+(<code>type-spec/fundamentals.mjs:91</code>), and consumers read the resolved
+<code>GENERIC fontSize</code> (e.g. per-run measurement:
+<code>composition-controller.ts:917</code>, <code>properties.get(GENERIC fontSize)</code>).</li>
+<li>Consequences (all observed live):
+<ul>
+<li><code>baseFontSize: 14</code> set at the root <em>rides</em> the whole tree; every
+level’s <code>relativeFontSize</code> replaces rather than composes.</li>
+<li>A patch’s <code>relativeFontSize</code> (e.g. <code>bold: 2</code>) computes from the
+<strong>root base</strong> (28pt), not from the containing textblock’s
+effective size (18pt × 2 = 36pt) — “marks are in a good spot [the
+scope resolves at the textblock] … however, to be truly useful,
+their <code>baseFontSize === 1</code> should probably be the full font-size
+of their parent typeSpec, which isn’t the case” (operator).</li>
+<li>Inline nodes resolve the <strong>root fallback</strong> (no nodeSpecToTypeSpec
+entry), so their explicit <code>fontSize</code> write lands at the root’s
+14pt regardless of the containing textblock’s 18pt context — see
+observation 3.</li>
+</ul>
+</li>
+</ul>
+<h3><a id="design-refinements-operator-this-session" class="heading_anchor" href="#design-refinements-operator-this-session" aria-hidden="true">#</a>Design refinements (operator, this session)</h3>
+<ol>
+<li>Nodes with <strong>inline content</strong> (textblocks) should inherit another
+base font-size than blocks with block children.</li>
+<li><strong>Preferred:</strong> like the vertical margins, use a <strong>unit-selector for
+base font size</strong> instead of new machinery.</li>
+<li>The <strong>basis threading</strong> goes through the <strong>nodeProperties channel</strong>:
+nodeProperties inherit from their parent node; the <code>emAfter</code> margin
+machinery proves cross-scope resolution is already wired (below).</li>
+</ol>
+<h2><a id="approach-b--composition-threading-implemented-6dbbf38e-" class="heading_anchor" href="#approach-b--composition-threading-implemented-6dbbf38e-" aria-hidden="true">#</a>Approach (b) — composition threading (IMPLEMENTED: <code>6dbbf38e</code>)</h2>
+<p>Thread the enclosing <strong>textblock path</strong> through the renderer walk
+instead of deriving it by path arithmetic:</p>
+<ul>
+<li>The dispatcher (<code>document-nodes-meta/index.mjs</code>) knows when it
+descends from a <code>_isTextblock</code> element; its <code>childrenContext</code> (the
+<code>{...context}</code> spread — see <code>derivations.mjs:277-289</code>,
+<code>resolveElementRenderingPlan</code>) gains a <code>textblockRootPath</code> field,
+set at the textblock boundary and <strong>passed through unchanged</strong> for
+deeper inline levels.</li>
+<li>The two viewer sites (<code>viewer.typeroof.jsx:1142</code>, <code>:649</code>) use
+<code>metaInfo.context.textblockRootPath ?? parent.parent</code> (fallback =
+today’s behavior) to build the <code>composition@</code> id.</li>
+<li>Nested runs then observe the real textblock’s composition payload,
+find their leaves by path (the payload already contains them), and
+render per-line spans like direct runs.</li>
+</ul>
+<p>Effect: nested inline content composes; the textblock’s rendered lines
+match the measured geometry; the references list stops overflowing.
+No controller change (it measures correctly today); no CSS change.</p>
+<p><strong>Status: implemented 2026-10-12 in <code>6dbbf38e</code></strong> — textblock element
+provisioning threads <code>textblockRootPath</code> into the children context
+(<code>document-nodes-meta/index.mjs</code>), both viewer sites use it with the
+<code>parent.parent</code> fallback (<code>viewer.typeroof.jsx</code>), and
+<code>qa-structure-marks</code> gained the nested-composition regression
+(live: 152 of 153 nested inline nodes in the references list carry
+composition-line spans; the delta is an atom-only node). The (a)
+layers below remain open for the RPI cycle.</p>
+<h2><a id="approach-a--inline-node-properties-in-three-layers" class="heading_anchor" href="#approach-a--inline-node-properties-in-three-layers" aria-hidden="true">#</a>Approach (a) — inline node properties, in three layers</h2>
+<h3><a id="layer-a1--targeted-skip-block-layout-writes-for-inline-specs" class="heading_anchor" href="#layer-a1--targeted-skip-block-layout-writes-for-inline-specs" aria-hidden="true">#</a>Layer a1 — targeted: skip block-layout writes for inline specs</h3>
+<p>The nodeProperties generator skips the block-layout writes (<code>width</code>,
+<code>text-align</code>, block margins) when the node spec is inline
+(<code>nodeSpec.get(&quot;inline&quot;)</code> / <code>inlineContent</code> context). Font-size stays
+(an inline node may deliberately set one) — this only removes the
+inert-but-wrong block baggage.</p>
+<p>Operator comment: This, to me, suggests to branch within <code>update</code> in
+<code>UIDocumentTypeSpecStyler</code>. If feasible: this could be a chance to restructure
+that implementation for readability.</p>
+<p><strong>Decided 2026-10-12 (operator): the skip is UNCONDITIONAL for pure
+inline nodes</strong> — TypeRoof has no “inline-block” concept; an atom’s
+width comes from the measurement/composition channel, not a CSS <code>width</code>
+write (inert on <code>display: inline</code> anyway). A future intrinsically-sized
+atom would be a new spec flag (a new concept), not a reason to keep
+dead writes. Font-size stays as scoped above.</p>
+<h3><a id="layer-a2--design-unit-selector-font-sizes--node-scope-basis" class="heading_anchor" href="#layer-a2--design-unit-selector-font-sizes--node-scope-basis" aria-hidden="true">#</a>Layer a2 — design: unit-selector font sizes + node-scope basis</h3>
+<p><strong>Precedent (existing, verified):</strong> the leading dimension’s values
+already carry their basis as a <strong>unit</strong> —
+<code>type-spec/models.mjs:157</code>: <code>'lineHeight', 'em', 'baseEm', 'lineHeightAfter', 'emAfter'</code> — where <code>em</code> resolves against the scope’s
+<em>effective</em> font-size (<code>baseFontSize × relativeFontSize</code>,
+<code>fundamentals.mjs:91</code>) and <code>baseEm</code> against the root base. The proposal
+widens this existing vocabulary to the font-size dimension itself
+instead of inventing new machinery.</p>
+<p><strong><code>relativeFontSize</code> as a unit-carrying value:</strong></p>
+<table>
+<thead>
+<tr>
+<th>unit</th>
+<th>semantics</th>
+<th>migration/impact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>baseEm</code></td>
+<td>× root <code>baseFontSize</code> — <strong>today’s behavior</strong></td>
+<td>migration default for plain numbers: every tuned state keeps its exact meaning (non-breaking)</td>
+</tr>
+<tr>
+<td><code>em</code></td>
+<td>× the <strong>containing context’s effective font-size</strong></td>
+<td><strong>style patches ONLY</strong> — channel split, operator 2026-10-12: NOT a typeSpec unit (see the note under the table)</td>
+</tr>
+<tr>
+<td><code>pt</code></td>
+<td>absolute effective size</td>
+<td>captions/anchors pinned regardless of context</td>
+</tr>
+</tbody>
+</table>
+<p><s>Convention over machinery: <strong>the node-kind distinction becomes a
+state-level convention</strong> — textblock typeSpecs (nodes with inline
+content) write their fonts in <code>em</code> (their inline content inherits the
+parent’s effective size as basis); block containers write theirs in
+<code>baseEm</code>/<code>pt</code> (the subtree scales from the base as today).</s> No
+“inline vs block children” special-casing in the resolution engine;
+the units express the intent per value, exactly as the margins do.</p>
+<p><strong>Channel split — Decided 2026-10-12 (operator):</strong> <code>em</code> is NOT a
+typeSpec unit — the typeSpec vocabulary is <code>baseEm</code> (anchored basis)</p>
+<ul>
+<li>absolute only; <code>em</code> exists ONLY in the style-patch variant
+(<code>RelativeFontSizePatchUnitModel</code>), where it resolves against the
+containing context in the MERGE channel (phase 2). In the typeSpec
+channel <code>baseEm</code> was already the only basis — so <code>em</code> there would
+have been an alias, not a capability. The mid-tree “compose onto the
+parent’s effective size” that the struck-through sentence wanted for
+textblock scopes is covered by the KEPT mid-tree <code>baseFontSize</code>
+re-anchoring (sub-document descriptions) instead.</li>
+</ul>
+<p>Operator question: do we need to rename “relativeFontSize” to a better fitting name?</p>
+<p><strong>Decided 2026-10-12 (operator):</strong> pair form <code>{value, unit}</code> per the
+<code>InlineLengthValueModel</code> precedent (<code>ManualHorizontalLayoutModel</code> /
+<code>inlineMargins</code>, <code>type-spec/horizontal-layout-models.mjs</code>) — re-use
+or copy that model; plain numbers/strings parse as <code>baseEm</code>
+(non-breaking migration default). Sub-question from the same exchange —
+<strong>Decided (operator): KEEP <code>baseFontSize</code></strong> as a first-class feature:
+mid-tree values + <code>baseEm</code> <code>relativeFontSize</code> enable entire
+sub-document descriptions (re-anchoring a subtree) within the same
+typeSpec. No dissolution, no root-only restriction.</p>
+<p><strong>Rename — Decided 2026-10-12 (operator): KEEP the key
+<code>relativeFontSize</code></strong> (pair form under the same key; zero migration
+cost, all states + downloads keep parsing via the <code>baseEm</code> default).
+<code>fontSizeSpec</code> rejected as annoying; <code>fontSize</code> would be the best
+name but is taken by the processed/synthetic property (research §1:
+purely synthetic, no model field). UI label polish may follow post-cycle.</p>
+<p><strong>Slot-in Decided + implemented 2026-10-12 (operator): NO
+<code>baseFontSize</code> field on style patches</strong> — patches are leafs (no
+inheritance, no re-anchoring; absolute sizes go via the pair’s absolute
+units; em/baseEm compose against the containing context). The pair
+transport moved to <code>relativeFontSizePairGen</code> (shared); the merged scope
+sources the base from the ORIGIN typeSpec. Plan phase 2b.</p>
+<p><strong>Pivot — Decided 2026-10-12 (operator, design conversation):</strong> treat
+inline nodes like MARKS via a third style-link family
+<code>inlineNodesStyleLinks</code> (next to intent/markStyleLinks): a third
+StyleLinksMeta provisioning + map/prefix, and inline nodes route to
+<code>UIDocumentStyleStyler</code> (the mark styler) in both renderers — its
+write surface (font-family, font-size, features/variations, colors,
+direction, lang) IS the a1 property surface, so the “branch within
+update” shrinks to routing. α (typeSpec-channel parent-basis
+synthetics) is REJECTED: <code>generic/fontSize</code> per-scope effective is
+already the true em value; a parallel parent synthetic would fork the
+basis (paradigm shift in the wrong direction). β (merge-channel basis)
+is right for style patches — and thus for inline nodes:
+<code>createPatched</code> resolves against the origin typeSpec’s outbound
+effective size (<code>scope-resolution.mjs</code> :462-483). Inline-node
+handling moves LAST in the phase plan (marks/patches verified first).
+One-element inline-node DOM assessed FEASIBLE: PM natively supports
+<code>contentDOM === dom</code> (doc desc + all marks are that case;
+prosemirror-view dist :1519/:1234), the viewer already runs
+single-element, outfitter widgets already gate on <code>outer !== inner</code>
+(parameters display / labels stay inactive for inline — operator:
+inline nodes need neither), two CSS selectors to consolidate.</p>
+<p><strong>Basis threading — the nodeProperties channel (the <code>emAfter</code>
+precedent):</strong></p>
+<ul>
+<li><code>resolveNextNodePropertiesId</code>
+(<code>document-nodes-meta/derivations.mjs:330-345</code>) computes the next
+<strong>sibling’s</strong> <code>nodeProperties@&lt;documentNodePath&gt;</code> registration id,
+with the design comment: <em>“The sibling’s style facts (fontSize via
+its typeSpec layer, leading via the layout keys) live in its
+per-document-node node-properties scope; the typeSpec-based lookup
+this replaces could not resolve the layout keys.”</em></li>
+<li>The consumers read the neighbor scope’s resolved values:
+<code>nsProps.get(GENERIC fontSize)</code>
+(<code>prosemirror/type-spec.typeroof.jsx:535+</code>; viewer counterpart at
+<code>viewer.typeroof.jsx:534</code>), wired as <code>nextNodeProperties@</code> in both
+renderers.</li>
+<li>A “node-em” is the <strong>same lookup one hop in the other direction</strong> —
+against the <strong>containing node’s</strong> scope instead of the sibling’s.
+The parent-scope channel is already threaded: text runs delegate to
+“the parent element’s scope component”
+(<code>document-nodes-meta/index.mjs</code>, <code>parentNodeProperties</code>), and
+<code>rootNodeProperties@</code> seeds the chain.</li>
+<li>nodeProperties scopes <strong>inherit down the document-node tree</strong> (the
+operator’s verification), so the basis a nested node needs (the
+textblock’s effective 18pt) is addressable <strong>today</strong> — the margins
+prove the pattern with the sibling instead of the parent.</li>
+</ul>
+<p><strong>Architectural consequence:</strong> this dissolves the original a2 problem
+— inline nodes stop needing <code>nodeSpecToTypeSpec</code> links (combinatorial
+per-parent bookkeeping, as rejected at the start of the
+structure-marks cycle) and become <strong>readers of the node-scope chain</strong>:
+their font basis resolves in the containing node’s scope, not the root
+fallback. The typeSpec channel stays what it is — the tree of
+per-block typographic contexts whose synthesized <code>fontSize</code> feeds the
+node scopes (“fontSize via its typeSpec layer”).</p>
+<p><strong>Three layers, one architecture:</strong></p>
+<ol>
+<li><strong>Units as basis-selectors</strong> (the margins precedent): plain numbers
+migrate to <code>baseEm</code> (non-breaking); <s>textblocks and patches opt into
+<code>em</code></s> <strong>CORRECTED (channel split, operator 2026-10-12): only
+style patches offer <code>em</code></strong> — implemented 2026-10-12 (approach (a)
+phase 1+2: pair form + merge-channel em basis via the
+<code>CONTAINING_FONT_SIZE</code> alias in <code>PatchedScopeProperties</code>; plan
+<code>thoughts/plans/2026-10-12-2127-…</code>, commits <code>abcf36f0</code> + phase-2
+commit).</li>
+<li><strong>The nodeProperties channel as the threading vehicle</strong> (the
+<code>emAfter</code> precedent): inline-node and mark/patch scopes resolve
+their font basis against the containing node’s scope.</li>
+<li><strong>The typeSpec channel unchanged</strong>: per-block typographic contexts;
+its <code>fontSize</code> synthesis feeds the node scopes.</li>
+</ol>
+<h3><a id="known-downstream-mapped-in-the-research-cycle-2026-10-12--research-doc-4" class="heading_anchor" href="#known-downstream-mapped-in-the-research-cycle-2026-10-12--research-doc-4" aria-hidden="true">#</a>Known downstream (mapped in the research cycle 2026-10-12 — research doc §4)</h3>
+<ul>
+<li>The <code>LeadingRunion</code>’s en-compensation
+(<code>type-spec/models.mjs:269-272</code>:
+<code>actuallineLength = lineLengthEn / relativeFontSize</code>) — arithmetic
+assumes a plain factor; needs re-derivation per unit.</li>
+<li>All <code>em</code>/<code>baseEm</code>/<code>en</code> consumers (line-length, gutters, paddings,
+margins) must be inventoried for which basis they assumed.</li>
+<li><s>Whether <code>baseFontSize</code> withers to a root-only anchor (pt) once
+mid-tree scopes are <code>em</code>-based.</s> <strong>Decided 2026-10-12: NO — kept
+as a feature (sub-document re-anchoring); see the operator decision
+under layer a2 above.</strong></li>
+<li>The patch/style-link scope basis today (mark style links resolve at
+the textblock’s typeSpec — <code>derivations.mjs</code>
+<code>getStyleLinkPropertiesId</code>; whether their <code>em</code> values resolve
+against the containing node’s scope needs mapping).</li>
+</ul>
+<h2><a id="rpi-kick-off-plan" class="heading_anchor" href="#rpi-kick-off-plan" aria-hidden="true">#</a>RPI kick-off plan</h2>
+<p>Recommended sequence (operator’s call):</p>
+<ol>
+<li><s><strong>Implement (b) first</strong> — composition threading</s> — <strong>DONE</strong>
+(<code>6dbbf38e</code>): dispatcher context threading + the two viewer sites +
+<code>qa-structure-marks</code> probe extension for nested-run composition,
+live-verified on Typography.</li>
+<li><strong><code>/research_codebase</code> cycle on font-size resolution &amp; re-basing</strong>:
+(i) where <code>fontSize</code>/<code>baseFontSize</code>/<code>relativeFontSize</code> are
+synthesized and consumed (registered-properties, fundamentals,
+node-properties-generators, composition measurement);
+(ii) the nodeProperties scope composition (how the typeSpec layer
+lands in each node scope; parent/root threading);
+(iii) every <code>em</code>/<code>baseEm</code>/<code>en</code> resolution site (margins,
+<code>LeadingRunion</code>, leading, line-length);
+(iv) the inline-node + patch scope basis today (root fallbacks,
+mark style-link resolution contexts);
+(v) the unit vocabulary decision: plain number → <code>baseEm</code>
+migration, <code>em</code> semantics, node-em lookup design against the
+containing node’s scope.
+<strong>DONE 2026-10-12</strong> — research doc:
+<code>thoughts/research/2026-10-12-1723-font-size-resolution-and-rebasing.md</code>
+(RPI convention: cycle docs live in <code>thoughts/</code> at project root during
+the cycle and archive to
+<code>docs/planning/agentic-artefacts/thoughts/</code> when the plan concludes —
+the earlier sketch of an output location inside this directory was an
+oversight, per operator 2026-10-12).
+Key resolutions for the plan: (a) <code>fontSize</code> is a pure synthetic
+(base × relative) and every consumer receives pre-flattened plain
+numbers — no unit stripping exists anywhere; (b) the nodeProperties
+parent layer demonstrably carries the containing node’s
+<code>generic/fontSize</code> (the <code>emAfter</code> sibling lookup reads it), so
+node-em is addressable today; © patch scopes have no parent
+(<code>baseFontSize</code> falls to the model default) — the patch <code>em</code> basis
+must be pinned to the merged style-link scope that measurement
+reads; (d) no em-intent values exist in states/fixtures — the
+plain-number → <code>baseEm</code> migration is non-breaking at document
+scope; (e) inline nodes have no dedicated font-size machinery —
+the empty nodeSpecToTypeSpec link is origin-anchored and walks up
+to the root. Next: <code>/create_plan</code> for the implementation phases
+(likely: generator skip a1; units + migration; node-em threading;
+inline-node scope re-resolution away from root fallback; states
+re-tuning).</li>
+<li>Live-verify per the established pattern (puppeteer DEBUG probes —
+NOT <code>npm run perf:composition</code>, which stays OFF LIMITS per the
+operator rule 2026-10-06).</li>
+<li><strong><code>/create_plan</code> cycle</strong> — <strong>DONE 2026-10-12</strong> — plan doc:
+<code>thoughts/plans/2026-10-12-2127-inline-node-refinements-approach-a.md</code>
+(six phases: pair form → merge-channel <code>em</code> → one-element inline
+DOM → <code>inlineNodesStyleLinks</code> + routing → “Node Style Links” UI
+wiring → composition basis threading + QA/re-tuning). Next:
+<code>/implement_plan</code>.</li>
+<li><strong>Implementation status 2026-10-13</strong>: phases 1 (<code>abcf36f0</code>), 2
+(<code>0524e3d6</code>), 2b (<code>c2b42282</code>), 3 (<code>0d012dd4</code>) committed; phase 4 in
+the working tree (family + routing, reconstructed clean; 541 vitest
+green; probe steps 1–5 pass). <strong>One open failure</strong> — fresh viewer
+attach after a mode switch leaves inline elements unstyled →
+handed over to a sub-RPI cycle; handover doc:
+<code>docs/planning/inline-node-refinements/2026-10-13-phase4-viewer-channel-HANDOVER.md</code>.</li>
+<li><strong>Cycle CONCLUDED 2026-10-13 (late)</strong>: approach (a) phases 1–6 all
+complete and committed — phase 4 <code>6394787b</code> + fresh-attach fix
+<code>4532ae22</code> (sub-cycle docs archived); phase 5 “Node Style Links” UI
+<code>31107d2a</code>; phase 6 <code>9ad62e29</code> (nested marks anchor at the
+containing typeSpec — <code>getResolvablePathOfTypes</code> at all four
+rendered channels) + <code>a014ceaf</code> (the measured-side fallback:
+<code>CompositionSource.resolveInlineStyleLink</code>, innermost-wins
+threading, explicit-everything contract) + <code>d5b98d0b</code> (the quote →
+serif italic demo edge in the wikipedia state). The cycle’s visible
+goal verified live: nested italic <code>{1, em}</code> at the li context
+(18pt/24px) in both renderers; quotes at AmstelvarA2 Italic 18pt;
+references list composed without overflow. Open follow-up: the
+manual-wake refactor (below).</li>
+</ol>
+<h2><a id="follow-ups-out-of-current-scope" class="heading_anchor" href="#follow-ups-out-of-current-scope" aria-hidden="true">#</a>Follow-ups (out of current scope)</h2>
+<ul>
+<li><strong>Manual-wake refactor</strong> (2026-10-13, sub-cycle decision): the inline
+styler fresh-attach fix establishes <code>_widgets</code> membership for the
+inline wrappers (plan
+<code>thoughts/plans/2026-10-13-1616-inline-styler-fresh-attach-membership.md</code>,
+research <code>thoughts/research/2026-10-13-1503-viewer-fresh-attach-inline-styler.md</code>).
+The hand-rolled <code>_createWidget</code> + changedMap + <code>widget.update</code> wake
+sites (<code>viewer.typeroof.jsx</code> <code>_syncMetaInfo</code> dispatcher — which also
+serves the block channel — and <code>_inlineStyleTriggerUpdate</code>) are
+deliberately NOT refactored yet. A follow-up cycle may evaluate full
+framework reliance (drop the manual blocks; requires verifying that a
+cascade always follows a <code>_syncMetaInfo</code> re-provision) with a shared
+helper as fallback. See the plan’s “Follow-up Note”.</li>
+</ul>
+<h2><a id="related" class="heading_anchor" href="#related" aria-hidden="true">#</a>Related</h2>
+<ul>
+<li>Archived cycle docs:
+<code>docs/planning/agentic-artefacts/thoughts/research/2026-10-11-1300-structure-marks-for-nested-combinable-chains.md</code>,
+<code>docs/planning/agentic-artefacts/thoughts/plan/2026-10-11-1355-structure-marks-nested-combinables.md</code>.</li>
+<li>Sup-marks round: <code>84861807</code> (sup citations as marks),
+<code>bd129521</code> (tests), <code>499be3bd</code> (editor mark subscriptions: nested
+marks, declarations, bag leak).</li>
+<li>Sibling planning: <code>docs/planning/type-spec-resolution/</code> (order 49) —
+relative typeSpec linking &amp; silent typeSpecs.</li>
+<li>Probes: <code>scripts/puppeteer-probes/qa-structure-marks.mjs</code>,
+<code>qa-editor-mark-styling.mjs</code>; runner
+<code>scripts/debug-with-puppeteer.mjs</code>.</li>
+</ul>
+<h2><a id="open-questions-for-the-cycle" class="heading_anchor" href="#open-questions-for-the-cycle" aria-hidden="true">#</a>Open questions (for the cycle)</h2>
+<ol>
+<li><s>Does <code>width</code> ever legitimately apply to inline nodes (e.g.
+<code>reproduce-as-inline</code> atoms), or is the a1 skip unconditional for
+inline specs?</s> <strong>Answered 2026-10-12: unconditional — no
+inline-block concept exists; see layer a1 decision note.</strong></li>
+<li>Which existing <code>relativeFontSize</code> values re-interpret under <code>em</code>
+(the states’ headings chain: h1 4.5714 → multiplicative)?
+Breaking-change review, level by level.
+— <strong>Answered (research 2026-10-12, §5)</strong>: none; all stored values
+are plain-number baseEm-equivalents.</li>
+<li>Node-em basis for runs <em>directly</em> under the textblock: the
+textblock’s own scope (same as today) — confirm no
+double-application of the textblock’s own relative factor.
+— <strong>Answered 2026-10-12</strong>: no double-application risk — α rejected;
+<code>em</code> resolves in the merge channel against the origin outbound
+effective size (see the pivot note under layer a2).</li>
+<li>Patch scopes: <code>em</code> against the containing node’s scope (the li’s
+18pt) or the typeSpec layer’s effective size — pin the resolved
+basis the composition already measures against
+(<code>composition-controller.ts:917</code>).
+— <strong>Answered 2026-10-12</strong>: merge channel (<code>createPatched</code>, origin
+outbound effective size) — the same merged scope measurement reads;
+see the pivot note under layer a2.</li>
+<li>Fixture/test blast radius: states, fixtures, the
+<code>text-composition</code> suite vehicles (<code>setPatchRelativeFontSize</code>
+asserts doubling), probe expectations.
+— <strong>Mapped (research 2026-10-12, §5)</strong>: all fixtures plain-number
+strings; probes carry no numeric font-size expectations; concrete
+test surface: the text-composition doubling/clear-restore contracts
+and four hyphenation-suite <code>baseFontSize</code> overrides.</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

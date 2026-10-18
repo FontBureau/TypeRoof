@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-viewer-fresh-attach-lifecycle--inline-style-stylers-after-a-mode-switch" class="heading_anchor" href="#research-viewer-fresh-attach-lifecycle--inline-style-stylers-after-a-mode-switch" aria-hidden="true">#</a>Research: Viewer fresh-attach lifecycle — inline style stylers after a mode switch</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Handover scope (phase-4 sub-RPI seed): why does a <strong>fresh viewer attach after
+an editor→viewer mode switch</strong> leave all 153 <code>[data-node-type=&quot;generic-inline&quot;]</code>
+elements unstyled (<code>styleAttr: null</code>) while every live edge-edit path (add /
+tombstone / re-link, editor mode) styles correctly? Sub-questions from the
+handover: where fresh <code>UIDocumentElement</code> attachments provision, when
+<code>_syncMetaInfo</code>/<code>_scopeSettled</code> fire relative to <code>StyleLinksMeta</code> registration,
+whether the trigger wrapper is cascade-pruned (its protocol-only dependency),
+and the <code>TRIGGERS made=776 fired=0</code> observation.</p>
+<p>Note: the handover described the phase-4 work as uncommitted; it has since
+been committed as <code>6394787b</code> (working tree clean). All line references are to
+that commit. <code>V = lib/js/components/layouts/type-stage/viewer.typeroof.jsx</code>,
+<code>M = .../document-nodes-meta/index.mjs</code>, <code>C = .../basics/component.mjs</code>,
+<code>L = .../type-stage/index.typeroof.jsx</code>, <code>TS = .../prosemirror/type-spec.typeroof.jsx</code>.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p><strong>Root cause found — a provisioning-membership gap, not a registration or
+timing problem.</strong> The inline styler wrapper and its trigger wrapper are
+constructed with bare <code>_initWrapper</code> inside <code>_provisionInlineStyleStyler</code>
+(V:618-625, V:666) and are <strong>never inserted into <code>this._widgets</code></strong> — unlike
+the block channel (<code>_provisionTypeSpecStyler</code> splices into <code>_widgets</code>,
+V:733) and unlike the <code>composition@</code> trigger (created via <code>_initWidgets</code>,
+V:336-341). Every framework wake channel (<code>_update</code> → <code>activeWidgets()</code> →
+<code>updateWidget</code>) iterates only <code>_widgets</code> members with <code>widget !== null</code>
+(C:1108-1115, C:1259), so the inline wrappers are structurally invisible to
+all cascades. They are only ever woken by the two <strong>manual</strong> paths
+(<code>_syncMetaInfo</code>’s scope-settled channel, V:413-429; <code>_inlineStyleTriggerUpdate</code>,
+V:679-681), which hand-roll <code>_createWidget</code> + changedMap + <code>widget.update</code>.
+Live edge edits trigger a scope <strong>rebuild</strong> → <code>_scopeSettled()</code> → refresh →
+manual wake (works). A fresh attach after a mode switch produces <strong>no scope
+event at all</strong> — the always-active meta tree’s scopes settled long before the
+attachment existed, <code>attach</code> does not replay settled state (M:85-124), and
+<code>pathChanged</code>/<code>scopeSettled</code> are both false on the constructor path (V:277,
+V:297) — so the manual wake never runs. The fresh-attach path’s only hope is
+the framework convention (<code>_provisionWidgets</code> → <code>requiresFullInitialUpdate</code>
+set → <code>_update</code>’s consumption), but that consumption only reaches wrappers
+already dispatched (C:1265-1267) — i.e. <code>_widgets</code> members. Net effect:
+wrapper shells built, ids resolve non-null (VWRES-CALL 765×), <code>widget</code> stays
+<code>null</code> forever, <code>UIDocumentStyleStyler.update</code> never runs, <code>styleAttr: null</code>.
+An id-equality early return (V:627-636) then pins the dead state against all
+later <code>_provisionWidgets</code> passes.</p>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-mode-switch-flow-fresh-attachments-reused-scopes" class="heading_anchor" href="#1-mode-switch-flow-fresh-attachments-reused-scopes" aria-hidden="true">#</a>1. Mode-switch flow: fresh attachments, reused scopes</h3>
+<ul>
+<li>The viewer is <strong>mode-gated by activation test</strong> (L:310-322, L:702); the meta
+tree (<code>DocumentNodesMeta</code>) is <strong>always-active</strong> (<code>UPDATE_STRATEGY_NO_UPDATE</code>,
+M:1230-1238) and survives mode switches with its scopes/registrations intact.</li>
+<li>viewer→editor: <code>UIDocumentViewer.destroy</code> (V:1378-1388) → <code>detachRenderer</code>
+(M:1323-1332) → per-node <code>RendererAttachments.detach</code> (M:126-135) destroys
+every <code>UIDocumentElement</code>. Editor→viewer: the layout re-creates a fresh
+<code>UIDocumentViewer</code> (C:1298-1333 → V:1222), whose <code>initialUpdate</code>
+(V:1274-1294) calls <code>meta.attachRenderer</code> (M:1310-1321, “Mid-life (a mode
+switch) the cascade runs here”) → <code>_attachCascade</code> → per node
+<code>RendererAttachments.attach</code> (M:75-124): <code>_initWrapper</code> → <code>_createWidget</code>
+(instantiates the <code>UIDocumentElement</code>) → <code>widgetWrapper.widget.initialUpdate(rootState)</code>
+(M:123; rootState cached at the meta root, M:1335-1347).</li>
+<li>Ordering: TypeSpecMeta (origin registry) → DocumentNodesMeta tree (scopes
+settle during early boot cycles) → mode flip → attach cascade → element
+constructors → <code>initialUpdate</code> → <code>_provisionWidgets</code>. So on fresh attach the
+typeSpec tree IS settled — the failure is not a settle-race.</li>
+</ul>
+<h3><a id="2-the-two-provisioning-conventions--and-the-missing-membership" class="heading_anchor" href="#2-the-two-provisioning-conventions--and-the-missing-membership" aria-hidden="true">#</a>2. The two provisioning conventions — and the missing membership</h3>
+<ul>
+<li><strong>Framework convention</strong>: <code>_BaseContainerComponent.initialUpdate</code> →
+<code>_provisionWidgets</code> (C:1296-1333, C:1365) → wrappers returned via
+<code>requiresFullInitialUpdate</code> are consumed in <code>_update</code> (C:1244-1285), which
+loops <code>activeWidgets()</code> = <code>this._widgets</code> members with <code>widget !== null</code>
+(C:1108-1115) and consults the requiresFullInitialUpdate set <strong>only for
+wrappers it already dispatches to</strong> (C:1265-1267). <code>_provisionWidgets</code>’s
+base loop <code>_createWidget</code>s only <code>this._widgets</code> members (C:1319-1323).</li>
+<li><strong>Block channel</strong> uses the convention: <code>_provisionTypeSpecStyler</code> splices
+its wrapper into <code>_widgets</code> (V:733) → created + full initial changedMap from
+current state (C:1195-1206, C:1222). This is why blocks style correctly on
+fresh attach.</li>
+<li><strong>Inline channel</strong> (phase 4) returns wrappers built via bare <code>_initWrapper</code>
+(never <code>_initWidgets</code> — grep confirms zero <code>_widgets.push</code> in
+viewer.typeroof.jsx): trigger wrapper V:618-625, styler wrapper V:637-671
+(<code>_initWrapper</code> at V:666). <strong>No <code>_widgets</code> insertion exists</strong> — the splice
+calls that ARE present run in the <em>cleanup</em> direction (V:612-615, V:634-635:
+splice-out of old wrappers), cleanup for a membership that is never created.
+The base loop and <code>_update</code> therefore never see them; <code>widget</code> stays <code>null</code>;
+<code>UIDocumentStyleStyler</code> never instantiates; its <code>update</code> (TS:1119+) is the
+only code that writes <code>element.style</code> (constructor TS:1113-1117 writes
+nothing) → <code>styleAttr: null</code>.</li>
+<li><strong>Manual convention (the live paths)</strong>: <code>_syncMetaInfo</code>’s channel dispatcher
+(V:383-420) and <code>_inlineStyleTriggerUpdate</code> (V:672-683) both explicitly
+<code>this._createWidget(wrapper)</code> + hand-build a full changedMap
+(V:412-418: <code>changedMap.set(local, wrapper.widget.getEntry(local))</code> per
+<code>dependencyReverseMapping.keys()</code>) + <code>wrapper.widget.update(changedMap)</code>
+(V:424-428, V:679-681). Live edits work <strong>entirely because of this
+hand-rolling</strong> — the wrappers are just as invisible to cascades there.</li>
+</ul>
+<h3><a id="3-_syncmetainfo--_scopesettled--no-wake-on-fresh-attach" class="heading_anchor" href="#3-_syncmetainfo--_scopesettled--no-wake-on-fresh-attach" aria-hidden="true">#</a>3. <code>_syncMetaInfo</code> / <code>_scopeSettled</code>: no wake on fresh attach</h3>
+<ul>
+<li><code>DocumentNodesMetaElement._scopeSettled()</code> (M:839-846) refreshes <strong>all</strong> the
+node’s attached handlers (<code>refresh(handlerFn, metaInfo, true)</code> →
+<code>widget._syncMetaInfo(metaInfo, undefined, scopeSettled)</code>, M:137-144). It
+is wired as the <code>scopeSettledCallback</code> of the node’s <code>DocumentNodeProperties</code>
+component (M:1079) and fires <strong>only when that scope (re)builds</strong>
+(<code>DocumentNodeProperties.update</code>, M:651: defer gate M:685-690 while the
+parent’s settled map is null; input-identity early return M:656-662 —
+settlement is a rebuild event, not a wake event; on rebuild it creates the
+scope M:692-707, marks the registration updated M:709-716, invokes the
+callback M:731).</li>
+<li>On a fresh post-mode-switch attach: <code>_nodeProperties</code> is already non-null
+with unchanged inputs → every meta update cycle early-returns (M:656-662)
+→ <strong>no rebuild, no <code>_scopeSettled()</code>, no refresh</strong>. The settlement fired at
+boot / at the last live edit, when this handler was not attached (the
+previous viewer’s attachments were detached, V:1383-1386). <code>attach</code>
+(M:85-124) does not check settled-ness and never synthesizes a
+<code>scopeSettled=true</code> refresh — <strong>no replay of settled state</strong>.</li>
+<li>Constructor path: <code>_pathOfTypes</code> is preset from the same plan (V:272) before
+<code>_syncMetaInfo(metaInfo, compositionReveal)</code> (V:297) → <code>pathChanged</code> false
+(V:376-379), <code>scopeSettled</code> defaults false → the dispatcher block
+(<code>pathChanged || scopeSettled</code>, V:385) — including the unconditional inline
+re-provision (V:406, V:417-418, the wake-gap fix) — is <strong>structurally
+unreachable</strong> on fresh attach. The wake-gap fix covers “element attached,
+edge settles later”; the failing direction is “edge already settled,
+element attaches later”.</li>
+<li>Mode switch reuses scopes, not new ones (meta tree always-active, M:1238);
+for the fresh attachment <code>scopeSettled</code> can only become true via a FUTURE
+rebuild (typeSpec relink, typeSpecnion change, parent-scope identity change).</li>
+</ul>
+<h3><a id="4-trigger-machinery-made776--fired0-and-the-protocol-piggyback" class="heading_anchor" href="#4-trigger-machinery-made776--fired0-and-the-protocol-piggyback" aria-hidden="true">#</a>4. Trigger machinery: <code>made=776 / fired=0</code> and the protocol piggyback</h3>
+<ul>
+<li><code>GenericUpdater</code> (V:54-61): <code>_BaseComponent</code> with <code>UPDATE_STRATEGY_SIMPLE</code>
+(C:35). <strong>Made</strong> = <code>ComponentWrapper</code> construction (<code>_initWrapper</code>,
+C:1057-1073 — which, unlike <code>_initWidgets</code> (C:1076-1081), does NOT push into
+<code>this._widgets</code>). <strong>Fired</strong> = dispatch through the container cascade:
+<code>update</code> → <code>_provisionWidgets</code> → <code>_update</code> (C:1238-1272) → <code>activeWidgets()</code>
+→ relevance gate (C:1268-1270) → <code>updateWidget</code> fires only
+<code>if (changeLocaldMap.size)</code> (C:1211-1212).</li>
+<li>The inline trigger is made via <code>_initWrapper</code> (V:618-625) → not a <code>_widgets</code>
+member → <code>_provisionWidgets</code> never <code>_createWidget</code>s it → <strong>no state cascade
+can ever dispatch it</strong> (structural exclusion, before the relevance filter
+even evaluates). Its only fire channels are the manual loops (§2). The 776
+constructions = cumulative remakes across inline elements × provision passes
+(the id-comparison <code>_inlineStyleTriggerTypeId !== typeSpecProperties</code>
+remakes the wrapper whenever the resolved containing id shifts, V:609);
+0 fires = it is un-dispatchable. The <code>composition@</code> trigger fires reliably
+because it IS a list member (created via <code>_initWidgets</code>, V:336-341 /
+V:833-841 → pushed C:1079 → created C:1319-1323 → relevance-checked per pass
+→ fired when <code>composition@&lt;path&gt;</code> was marked in the same pass,
+composition-controller.ts:1653/:1695).</li>
+<li><strong>Protocol <code>setUpdated</code> piggyback confirmed</strong> (handover hypothesis):
+<code>SimpleProtocolHandler.setUpdated</code> (C:234) only adds the id to <code>_updatedLog</code>;
+the log is consumed in exactly one place — <code>getChangedMapFromCompareResult</code>
+(C:604-653, C:631-651) — i.e. marks are only visible to a wrapper <strong>if a
+cascade dispatches to it in the same top-level pass</strong>. Logs are reset at the
+start of each top-level pass (L:856-886; type-tools-grid.mjs:2267/:2271).
+<code>isInitialUpdate</code> delivers protocol deps unconditionally (C:643-647) — which
+would have covered a fresh attach, had the wrapper been dispatchable.</li>
+<li>Relevance filter (C:828-996): model deps = prefix intersection with
+changedRoots; protocol deps → <code>getUpdated(external)</code>, missing/unregistered
+→ conservative <code>true</code> (C:972-978). So protocol-id-only wrappers are not
+pruned <em>because of</em> the protocol dep — a non-member wrapper is excluded
+before the filter runs (membership is the dominant exclusion layer).</li>
+<li><code>TRIGGERS made=776 fired=0</code> is thus fully explained by the membership gap —
+no separate cascade-pruning bug needs to be assumed.</li>
+</ul>
+<h3><a id="5-the-id-equality-early-return-pins-the-dead-state" class="heading_anchor" href="#5-the-id-equality-early-return-pins-the-dead-state" aria-hidden="true">#</a>5. The id-equality early return pins the dead state</h3>
+<p><code>_provisionInlineStyleStyler</code> (V:580-672) stores the resolved id
+(<code>_inlineStyleLinkPropertiesId</code>) and the wrapper shells. Once set, a
+subsequent call with an unchanged id early-returns (V:627-636) without
+rebuilding — so every later <code>_provisionWidgets</code> pass is a <strong>no-op forever</strong>,
+even though nothing was ever created or styled. The first pass pins the
+resolution; the un-created shells make it permanent.</p>
+<h3><a id="6-slm-registration-timing--ruled-out-as-the-cause" class="heading_anchor" href="#6-slm-registration-timing--ruled-out-as-the-cause" aria-hidden="true">#</a>6. SLM registration timing — ruled out as the cause</h3>
+<p><code>StyleLinksMeta</code>’s registrations (<code>styleLinkProperties@…</code>) live in the
+always-active meta tree and persist across the mode switch; the ids resolve
+non-null at fresh-attach provision time (VWRES-CALL 765×, and
+<code>_provisionInlineStyleStyler</code> builds the styler wrapper precisely because the
+id is non-null, V:637-671). <code>StyleLinksMeta</code>, unlike the viewer, DOES manage
+its dynamic wrappers as <code>_widgets</code> members (meta.typeroof.jsx:184:
+<code>this._widgets.splice(0, Infinity, ...newWidgets)</code>). The <code>hasRegistered</code>-lag
+and payload-lag hypotheses from the handover are <strong>not</strong> what fails — the
+payload exists; nothing consumes it on the fresh-attach path.</p>
+<h3><a id="7-working-precedents-to-mirror-for-the-plan-not-prescriptions" class="heading_anchor" href="#7-working-precedents-to-mirror-for-the-plan-not-prescriptions" aria-hidden="true">#</a>7. Working precedents to mirror (for the plan, not prescriptions)</h3>
+<ul>
+<li>Block channel: <code>_provisionTypeSpecStyler</code> → <code>this._widgets.splice(0, 0, …)</code>
+(V:733) — membership makes the framework deliver the full initial update.</li>
+<li><code>composition@</code> trigger: <code>_initWidgets</code>-created list member (V:336-341) —
+created once by <code>_provisionWidgets</code>, woken by every same-pass mark.</li>
+<li>The live inline paths already hand-roll create+update (V:424-428, V:679-681)
+— the same hand-rolling on the constructor path would also close the gap.</li>
+</ul>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx</code>
+<ul>
+<li>:272, :297 — constructor presets <code>_pathOfTypes</code>, then <code>_syncMetaInfo</code>
+(pathChanged/scopeSettled both false on construction)</li>
+<li>:336-341, :833-841 — <code>composition@</code> triggers via <code>_initWidgets</code> (members)</li>
+<li>:383-420 — <code>_syncMetaInfo</code> channel dispatcher; :385 gate
+<code>pathChanged || scopeSettled</code>; :406/:417-418 unconditional inline
+re-provision; :411-419/:424-428 manual <code>_createWidget</code> + changedMap
+<ul>
+<li><code>widget.update</code> (the live-path wake)</li>
+</ul>
+</li>
+<li>:539-561 — <code>_provisionWidgets</code> (fresh-attach entry via C:1365); :549-553
+inline branch; wrappers only ADDED to <code>requiresFullInitialUpdate</code>, never
+<code>_widgets</code></li>
+<li>:580-672 — <code>_provisionInlineStyleStyler</code>; :581-585 containing typeSpec;
+:589-598 styleLink id; :601-626 trigger wrapper (bare <code>_initWrapper</code>,
+:618-625); :609 trigger-type-id remakes (the “made” churn); :612-617
+dead <code>_widgets</code> splice-out; :627-636 id-equality early return; :637-671
+styler wrapper; :666 <code>_initWrapper</code>; :672-683 <code>_inlineStyleTriggerUpdate</code>
+(manual create+update :679-681)</li>
+<li>:733 — block-channel <code>_widgets</code> splice (the missing counterpart)</li>
+<li>:1222, :1274-1294, :1378-1388 — viewer create/initialUpdate/destroy</li>
+</ul>
+</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs</code>
+<ul>
+<li>:75-124 — <code>RendererAttachments.attach</code>; :122-123 <code>_createWidget</code> +
+<code>initialUpdate(rootState)</code> (no settled-state replay); :126-135 detach;
+:137-144 <code>refresh</code> → <code>_syncMetaInfo(metaInfo, undefined, scopeSettled)</code></li>
+<li>:651, :656-662, :685-690, :692-731 — <code>DocumentNodeProperties.update</code>:
+defer + identity gates, rebuild, <code>scopeSettledCallback</code> (fires only on
+rebuild)</li>
+<li>:839-846 — <code>_scopeSettled()</code> refresh-all; :1079 callback wiring</li>
+<li>:1230-1238 — meta tree always-active (<code>UPDATE_STRATEGY_NO_UPDATE</code>)</li>
+<li>:1305-1332 — <code>attachRenderer</code>/<code>_attachCascade</code>/<code>detachRenderer</code> (“Mid-life
+(a mode switch) the cascade runs here”); :1335-1347 rootState cache</li>
+</ul>
+</li>
+<li><code>lib/js/components/basics/component.mjs</code>
+<ul>
+<li>:1057-1073 <code>_initWrapper</code> (no <code>_widgets</code> push) vs :1076-1081 <code>_initWidgets</code></li>
+<li>:1108-1115 <code>activeWidgets()</code> (<code>_widgets</code> members, <code>widget !== null</code>)</li>
+<li>:604-653, :631-651 <code>getChangedMapFromCompareResult</code> (sole consumer of
+protocol <code>_updatedLog</code>); :643-647 initialUpdate delivers protocol deps</li>
+<li>:1189-1216 <code>updateWidget</code> (fires only <code>if (changedMap.size)</code>),
+:1238-1285 <code>_update</code> (requiresFullInitialUpdate consulted only for
+dispatched wrappers, :1265-1267), :1296-1333 base <code>_provisionWidgets</code></li>
+<li>:171-247 <code>SimpleProtocolHandler</code> — <code>setUpdated</code> (:234) adds to log only;
+:225 <code>resetUpdatedLog</code></li>
+</ul>
+</li>
+<li><code>lib/js/components/layouts/type-stage/index.typeroof.jsx</code>
+<ul>
+<li>:310-322, :695-720 mode-gated viewer wrapper; :856-886 per-pass
+<code>resetUpdatedLog</code> of the protocol logs</li>
+</ul>
+</li>
+<li><code>lib/js/components/layouts/type-stage/meta.typeroof.jsx</code>
+<ul>
+<li>:184 StyleLinksMeta manages wrappers as <code>_widgets</code> members;
+:255-266 TypeSpecMeta registrations</li>
+</ul>
+</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx</code>
+<ul>
+<li>:1112-1117 <code>UIDocumentStyleStyler</code> constructor (writes nothing);
+:1119+ <code>update()</code> — the only DOM-style writer</li>
+</ul>
+</li>
+<li><code>lib/js/components/prosemirror/composition-controller.ts</code>
+<ul>
+<li>:1653, :1695 — <code>composition@</code> <code>setUpdated</code> marks (same-pass wake source
+for the working trigger precedent)</li>
+</ul>
+</li>
+<li><code>scripts/puppeteer-probes/qa-inline-node-style-links.mjs</code> — the gate probe;
+failing step: “back to viewer (stable edge)”</li>
+</ul>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ol>
+<li><strong>Design decision for <code>/create_plan</code></strong> (not prescribed here): where the
+fresh-attach wake should come from — (a) establish <code>_widgets</code> membership
+for the inline wrappers (the block-channel precedent, V:733) and let the
+framework deliver the initial update; (b) hand-roll <code>_createWidget</code> +
+initial update on the <code>_provisionWidgets</code>/constructor path (the live-path
+precedent, V:424-428); © replay settled scope state on <code>attach</code>
+(meta-side change, M:85-124 — would also generalize the wake gap). Note the
+id-equality early return (V:627-636) interacts with whichever choice: a
+rebuild no-op must not re-pin un-created wrappers.</li>
+<li><strong>VWPROV=0 anomaly</strong>: statically every fresh attachment must run
+<code>_provisionWidgets</code> at least once (M:123 → C:1365). The instrumented count
+of 0 is inconsistent with the flow — the counter was likely placed in a
+branch not executed for inline nodes (e.g. the block <code>else if</code>
+<code>_hasTypeSpecStyling</code>, V:554) or in the meta element’s own
+<code>_provisionWidgets</code> (M:1086). Worth one re-instrumentation pass if the
+plan wants a before/after counter; does not change the root cause.</li>
+<li><strong>Trigger-wrapper strategy</strong>: even once the fresh-attach gap is closed,
+the trigger wrapper remains cascade-invisible (fires only via manual
+paths). Whether that is acceptable (its wake sources are scope rebuilds,
+which DO reach <code>_syncMetaInfo</code>) or should also become a <code>_widgets</code> member
+(the <code>composition@</code> precedent) is a plan-level call.</li>
+<li>Probe detail for verification: the fix must make the probe’s “back to
+viewer (stable edge)” step pass while keeping the other 5 steps, the
+composition suite (the canary), typecheck/lint, and the 541 vitest green.</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

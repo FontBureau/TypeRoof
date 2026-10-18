@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="sprint-b-testing-harness--performance-baseline-text-composition" class="heading_anchor" href="#sprint-b-testing-harness--performance-baseline-text-composition" aria-hidden="true">#</a>Sprint B: Testing Harness + Performance Baseline (text-composition)</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Two deliverables that build on each other: (1) a composition testing
+harness asserting composed line structure FROM DOCUMENT INPUTS;
+(2) a performance baseline script with regression detection. Research:
+<code>thoughts/research/2026-10-03-1922-sprint-b-harness-and-baseline.md</code>
+(all questions resolved in its Follow-up sections). Follows Sprint A
+(concluded 425babab).</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li>buildWorld (lib/js/tests/type-stage-toggles/harness.mjs:108-183)
+boots the real TypeStageController in jsdom, ingests an HTML
+fixture, drives updates synchronously; the composition controller
+runs but no-ops (no harfbuzz on the bus — capability fallback).</li>
+<li>measurer.test.mjs proves node-side harfbuzz + real RobotoFlex
+loading.</li>
+<li>Composition is jsdom-safe by design (no DOM measurements in the
+pipeline).</li>
+<li>No benchmark infrastructure exists; puppeteer ^25.8.0 devDep;
+create-clip-frames is the driving pattern; dev server on :3000.</li>
+<li>No TypeStage state files exist (fixtures must be created).</li>
+</ul>
+<h3><a id="key-decisions-research-doc-follow-up-sections" class="heading_anchor" href="#key-decisions-research-doc-follow-up-sections" aria-hidden="true">#</a>Key Decisions (research doc Follow-up sections)</h3>
+<ul>
+<li>Regression detection: <code>npm run perf:composition</code>; key metric =
+overhead RATIO (t_on/t_off, machine-stable); checked-in baseline
+snapshot JSON updated deliberately (PR diffs show performance
+movement); &gt;1.5x deviation = regression exit code; NOT git commits
+as compare points. Console table + gitignored local history; CI
+later, informational first.</li>
+<li>Fixtures: SMALL = the type-stage DEFAULT STATE (NOT the wikipedia
+JSON — too massive); LARGE = a current wikipedia-app export,
+explicitly a snapshot-in-time (operator exports at implementation
+time).</li>
+<li>Harness: extend buildWorld with an options object ({harfbuzz,
+font}; defaults = today’s behavior — existing tests untouched).</li>
+<li>Assertions at BOTH levels: payload (precise composition
+regressions; future-proof for a non-DOM backend) + DOM
+(applicator regressions).</li>
+<li>Timing profiles: BOTH typing bursts (incremental recomposition)
+and full-document recompose (style-change burst).</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<ul>
+<li><code>npx vitest run lib/js/tests/text-composition/</code> asserts composed
+structure from document inputs (payload + DOM), green in the full
+suite.</li>
+<li><code>npm run perf:composition</code> prints the overhead-ratio table and
+exits non-zero on &gt;1.5x regression vs. the checked-in snapshot.</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>CI gating (informational first).</li>
+<li>Real-algorithm benchmarks (milestone 2+; this baseline is dummy +
+OFF).</li>
+<li>Wikipedia fixture maintenance automation (snapshot-in-time).</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Three phases, each a reviewable unit with its own commit; stop after
+each with a proposed message and wait for OKOK.</p>
+<hr>
+<h2><a id="phase-1-harness-groundwork" class="heading_anchor" href="#phase-1-harness-groundwork" aria-hidden="true">#</a>Phase 1: Harness groundwork</h2>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/tests/type-stage-toggles/harness.mjs</code>
+<strong>Changes</strong>: <code>buildWorld(options = {})</code> — <code>{harfbuzz = null, fontLoader = null}</code>; when given, put harfbuzz on the widgetBus and
+install a real font (the measurer.test.mjs loading pattern:
+decompressFontBuffer + createFontObject + axisRanges from
+fontObject.tables.fvar) instead of the stub. Defaults preserve
+today’s behavior exactly.</p>
+<p><strong>File</strong>: <code>lib/js/tests/fixtures/type-stage-default-state.json</code> (new)
+<strong>Changes</strong>: the type-stage DEFAULT STATE serialized (small fixture;
+source: the TypeStageModel defaults, e.g. via the running app or
+programmatic serialization — NOT the wikipedia initial-state JSON,
+which is massive).</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated" class="heading_anchor" href="#automated" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[ ] Existing harness consumers pass unchanged (type-stage-toggles,
+viewer-behavior, document-replace).</li>
+<li>[ ] typecheck, lint, full suite pass.</li>
+</ul>
+<h4><a id="manual-none" class="heading_anchor" href="#manual-none" aria-hidden="true">#</a>Manual: none.</h4>
+<hr>
+<h2><a id="phase-2-composition-structure-tests" class="heading_anchor" href="#phase-2-composition-structure-tests" aria-hidden="true">#</a>Phase 2: Composition structure tests</h2>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/tests/text-composition/index.test.mjs</code> (new)
+<strong>Changes</strong>: <code>// @vitest-environment jsdom</code>; boot via buildWorld with
+the real font + harfbuzz and the small fixture in VIEWER mode; drive
+updates via the synchronous StateComparison pattern. Assertions,
+both levels, behavior-level (from document inputs):</p>
+<ul>
+<li>payload: read the composition@ registry via the layout
+controller’s getProtocolHandlerImplementation — paragraphs exist
+per textblock, line text slices reconstruct the source text,
+overfull lines reported for a known-narrow case.</li>
+<li>DOM: <code>.typeroof-composed</code> on textblocks, line spans per paragraph,
+concatenated line-span textContent equals the source text, the
+carrier span for mark-less runs, overfull color-coding present.</li>
+<li>off mode: toggle root textComposition → spans gone, class removed.</li>
+<li>editing: change text via draft → recomposition reflects it.</li>
+</ul>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-1" class="heading_anchor" href="#automated-1" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[x] New tests pass; full suite green; typecheck, lint.
+(336/336; 5 composition structure tests)
+ENGINEERING NOTES (hard-won):
+1. NODE env + manual JSDOM globals (window, document, DOMParser,
+Node, NodeFilter, Element, HTMLElement, DocumentFragment,
+CustomEvent, MutationObserver, rAF via pretendToBeVisual,
+ResizeObserver copied from the setup.ts stub) — jsdom env
+breaks harfbuzz’s WASM resolution; emscripten treats any
+global document as “browser”, so harfbuzz must be a STATIC
+import (initializes under plain node) and the harness chain
+dynamic AFTER globals.
+2. GOTCHA: vitest scans comments for the environment pragma —
+do not write the jsdom-environment pragma even to explain
+its absence (this exact bug cost a debugging round).
+3. Payload ids derived from the DOM (–node-anchor-name) —
+no white-box registry key listing.
+4. Text-node edits: find the path in the immutable tree, get
+the draft via getEntry (draft containers don’t yield child
+drafts on .value).</li>
+</ul>
+<h4><a id="manual-none-1" class="heading_anchor" href="#manual-none-1" aria-hidden="true">#</a>Manual: none.</h4>
+<hr>
+<h2><a id="phase-3-performance-script--baseline-snapshot" class="heading_anchor" href="#phase-3-performance-script--baseline-snapshot" aria-hidden="true">#</a>Phase 3: Performance script + baseline snapshot</h2>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>scripts/perf-composition</code> (new, node executable)
+<strong>Changes</strong>: puppeteer (create-clip-frames pattern) against the dev
+server; loads the LARGE fixture (wikipedia export — OPERATOR
+DEPENDENCY: exported at implementation time, committed to
+docs/states-library/fixtures/ — a NEW “fixtures” category:
+NOT a demo (the wikipedia output is not representative yet),
+clearly labeled snapshot-in-time for measurement purposes);
+via <code>window.shell</code>: N typing-burst cycles + N full-recompose bursts,
+each with textComposition ON and OFF; report per-profile absolute ms</p>
+<ul>
+<li>overhead ratio.</li>
+</ul>
+<p><strong>File</strong>: <code>package.json</code>
+<strong>Changes</strong>: <code>&quot;perf:composition&quot;: &quot;scripts/perf-composition&quot;</code>.</p>
+<p><strong>File</strong>: baseline snapshot JSON (next to the script or fixture):
+<code>{gitCommit, date, metrics}</code>; the script compares and exits non-zero
+beyond 1.5x; console table output; optional gitignored local history
+append.</p>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-2" class="heading_anchor" href="#automated-2" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[ ] Script runs against the dev server; prints the table; exit
+code reflects the comparison (first run WRITES the snapshot
+with --write-baseline).</li>
+</ul>
+<h4><a id="manual" class="heading_anchor" href="#manual" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] Numbers are plausible (composition overhead visible but not
+catastrophic at wikipedia scale with the dummy).</li>
+</ul>
+<hr>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<ul>
+<li>The harness IS the test (behavior-level, from document inputs).</li>
+<li>Perf script: manual/informational; regression exit code for future
+CI.</li>
+</ul>
+<h2><a id="sub-rpi-handoff-rule" class="heading_anchor" href="#sub-rpi-handoff-rule" aria-hidden="true">#</a>Sub-RPI handoff rule</h2>
+<p>As before: if a phase balloons (suspect: puppeteer state-loading
+edge cases), spawn a sub-cycle. Handoff chain: this plan → Sprint B
+research doc → text-composition design headers → ROADMAP.</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

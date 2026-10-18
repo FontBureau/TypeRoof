@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-per-run-style-spans-inline-stylesmarks-for-text-composition" class="heading_anchor" href="#research-per-run-style-spans-inline-stylesmarks-for-text-composition" aria-hidden="true">#</a>Research: Per-run style spans (inline styles/marks) for text composition</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Inline styles (marks) are not measured: a mark that changes advance
+widths (observed: “bold” style with wdth=max) renders wider than
+measured — line breaks don’t move and lines overflow (ROADMAP,
+“When cases arise”). How do marks flow from the document model to
+per-run rendering, what resolved per-run style DATA exists, and how
+ready are the Measurer / segmenter / applicator / controller for
+per-run measurement?</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p>The news is mostly good — most pieces are already per-run:</p>
+<ul>
+<li><strong>Runs are already style-uniform for free</strong>: the document model is
+ProseMirror-shaped; text nodes carry <code>marks</code>, and PM semantics keep
+adjacent text with different mark sets as separate text nodes. Mark
+boundaries coincide with the segmenter’s leaf boundaries — no
+segmenter change needed for the common case.</li>
+<li><strong>Measurer: READY.</strong> Fully parameterized per call
+(font/axes/features/language/direction); caches keyed accordingly;
+mixed-style paragraphs cost only cache-key diversity within existing
+LRU bounds.</li>
+<li><strong>Applicator: READY.</strong> Composed line spans are already per-run
+slices nested inside the run’s mark wrappers; per-run CSS keeps
+coming from the existing stylers.</li>
+<li><strong>Resolved per-style-link values exist AS DATA</strong>:
+<code>styleLinkProperties@&lt;typeSpecPath&gt;/&lt;linkType&gt;/&lt;linkName&gt;</code> →
+<code>StyleLinkLiveProperties.typeSpecnion</code> (a PatchedScopeProperties
+over the typeSpec cascade) with <code>getProperties()</code> /
+<code>getPropertyValuesMap()</code> — resolved <code>specific/font</code>,
+<code>axesLocations/&lt;tag&gt;</code> (font-dependent synthetics resolved),
+features, language, fontSize. This is what UIDocumentStyleStyler
+turns into CSS.</li>
+</ul>
+<p>The two real gaps:</p>
+<ol>
+<li><strong>No per-run aggregate</strong>: resolution granularity is per STYLE LINK
+(per mark type/intent), not per run. A run with several marks gets
+several independent styleLink stylers; the cross-mark merge (and
+the merge with the run’s base element style) happens ONLY in the
+DOM via CSS cascade. Text runs build no nodeProperties scope of
+their own (explicitly scope-less; the dispatcher answers with the
+parent element’s scope).</li>
+<li><strong>Controller ignorance + ingredients gap</strong>: <code>composeTextblock</code>
+derives measurement inputs ONCE per textblock (comment: “v1 keeps
+them uniform per textblock — per-RUN values come with per-run
+style spans”, composition-controller.ts:376-384); <code>_buildInlineItems</code>
+never reads <code>marks</code> (274-280); the input-equality ingredients
+(457-493) contain no per-run style values, so a mark style change
+would not invalidate composition.</li>
+</ol>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="document-model-marks-split-text-nodes" class="heading_anchor" href="#document-model-marks-split-text-nodes" aria-hidden="true">#</a>Document model: marks split text nodes</h3>
+<ul>
+<li>Text nodes carry a <code>marks</code> collection (metamodel:
+<code>textDraft.get(&quot;marks&quot;)</code>, prosemirror/integration.test.mjs:88-92;
+consumed in document-nodes-meta/derivations.mjs:426).</li>
+<li>The meta layer re-provisions the text-run attachment when marks
+change (“Mark additions/removals must re-provision the text run”,
+document-nodes-meta/index.mjs:266-269; viewer mapping “marks”,
+viewer.typeroof.jsx:990).</li>
+<li><code>_buildInlineItems</code> (composition-controller.ts:265-297) reads only
+<code>text</code> for typeKey “text” — marks are never inspected.</li>
+</ul>
+<h3><a id="mark--style-link--style-patch--resolved-values-data" class="heading_anchor" href="#mark--style-link--style-patch--resolved-values-data" aria-hidden="true">#</a>Mark → style link → style patch → resolved values (data)</h3>
+<ol>
+<li><code>getWrapMarks</code> (document-nodes-meta/derivations.mjs:418-504 —
+pure, no DOM): mark descriptors <code>{kind, tag, markType, styleLinkName, styleLinkType, ...}</code>. Schema marks (“bold”) →
+<code>styleLinkType: &quot;markStyleLinks&quot;</code>, <code>styleLinkName: markType</code>;
+intents (“generic-style”) resolve via <code>intentStyleLinks</code> keyed by
+<code>data-style-name</code>. Effective (inherited) links:
+<code>getEffectiveStyleLinks</code> (prosemirror/type-spec.typeroof.jsx:1919).</li>
+<li>Edge models: type-spec/models.mjs — <code>SimpleStylePatchModel</code>
+(309-328, incl. <code>axesLocations</code>), <code>IntentStylePatchLinkModel</code>
+(~382-389, adds <code>tag</code>), <code>MarkStylePatchLinkModel</code> (~393-396);
+attached to TypeSpecModel at 525-526. (<code>MarkSpecMapModel</code>/
+<code>MarkSpecPropertiesManager</code> are schema model + editor UI, not
+style resolution.)</li>
+<li>Edges enter the typeSpecnion stream: <code>styleLinksGen</code>
+(properties-generators.mjs:392+) yields per-typeSpec-scope edges;
+whole-edge override; <code>mode: 'unlinked'</code> yields a null tombstone.</li>
+<li>Per-edge live properties: meta.typeroof.jsx (~92-165) provisions
+one <code>StyleLinkLiveProperties</code> per effective edge, registering
+<code>styleLinkProperties@&lt;typeSpecPath&gt;/&lt;field&gt;/&lt;key&gt;</code> with deps
+<code>stylePatchProperties@&lt;sourcePath&gt;/&lt;key&gt;</code> + <code>typeSpecProperties@…</code>.</li>
+<li>Patch → property map: <code>StylePatchSourceLiveProperties</code>
+(live-properties.typeroof.jsx:227-348) runs
+STYLE_PATCH_PROPERTIES_GENERATORS (properties-generators.mjs:645-670)
+incl. <code>axisMathLocationsGen</code> — yields <code>axesLocations/&lt;tag&gt;</code> with
+symbolic min|max|default resolved against the font’s axisRanges
+via SyntheticValue (322-361).</li>
+<li>Merge: <code>StyleLinkLiveProperties.update</code>
+(live-properties.typeroof.jsx:351-418):
+<code>typeSpecnion.createPatched(patchMap)</code> → PatchedScopeProperties
+(scope-resolution.mjs:365+, 462-481) layered over the typeSpec’s
+inheritable + parent-context maps. Consumed as
+<code>.typeSpecnion.getProperties()</code> / <code>.getPropertyValuesMap()</code>.</li>
+</ol>
+<h3><a id="css-generation-the-existing-consumer" class="heading_anchor" href="#css-generation-the-existing-consumer" aria-hidden="true">#</a>CSS generation (the existing consumer)</h3>
+<ul>
+<li><code>UIDocumentStyleStyler.update</code> (prosemirror/type-spec.typeroof.jsx:
+1008-1094): reads the resolved map (1018-1022), writes font-family,
+–units-per-em/–ascender/–descender, colors, and typographic CSS
+via <code>setTypographicPropertiesToSample</code>
+(actors/properties-util.mjs:33-81: font-size,
+font-variation-settings from <code>axesLocations/&lt;tag&gt;</code>,
+font-feature-settings, language tag).</li>
+<li>A data-level axis extractor already exists: <code>getAxesLocations</code>
+(actors/properties-util.mjs:101-113).</li>
+<li>The run’s base (unmarked) style: the enclosing element’s styler
+(<code>UIDocumentElement</code>, viewer.typeroof.jsx:247+) from its
+<code>nodeProperties@&lt;documentNodePath&gt;</code> scope (325-332); mark wrappers
+nest inside, CSS-cascade merging base + marks.</li>
+</ul>
+<h3><a id="meta-tree-text-runs-are-scope-less" class="heading_anchor" href="#meta-tree-text-runs-are-scope-less" aria-hidden="true">#</a>Meta tree: text runs are scope-less</h3>
+<ul>
+<li>Meta nodes exist for inline text (<code>DocumentNodesMetaTextRun</code>,
+document-nodes-meta/index.mjs:261-310) but explicitly build NO
+scope (1066-1085: “a text run builds no scope of its own; the
+dispatcher answers consumers with the parent element’s scope”).</li>
+<li>Element scopes: <code>DocumentNodeProperties</code> wraps
+<code>HierarchicalScopeNodeProperties.createFromParentMap</code> (index.mjs:664),
+registered as <code>nodeProperties@&lt;rootPath&gt;</code> (935-1055).</li>
+<li><code>UIDocumentTextRun</code> maps no nodeProperties@ at all
+(viewer.typeroof.jsx:556-575) — only <code>text</code> and <code>composition@</code>.</li>
+</ul>
+<h3><a id="measurer-text-compositionmeasurerts" class="heading_anchor" href="#measurer-text-compositionmeasurerts" aria-hidden="true">#</a>Measurer (text-composition/measurer.ts)</h3>
+<ul>
+<li><code>measureEm(font, axesEntries, axesKey, featuresEntries, featuresKey, language, direction, text)</code> (146-155): all style dimensions per-call.</li>
+<li>Caches: hbFonts <code>fullName -&gt; axesKey -&gt; hb.Font</code> (cap 32 locations
+per font); widths keyed <code>[fullName, axesKey, featuresKey, language, direction, text]</code> (cap 50k, LRU). Sparse normalized axes keys
+(explicit default == unset).</li>
+<li>Key derivation from a properties map: <code>axesEntriesOf</code> /
+<code>axesKeyOf</code> (keys <code>axesLocations/&lt;tag&gt;</code>), <code>featuresEntriesOf</code> /
+<code>featuresKeyOf</code> (keys <code>opentype-features/&lt;tag&gt;</code>) — NOTE the
+openTypeFeatures vs opentype-features key prefix question for the
+plan (controller reads nodeProperties; styleLink maps may differ).</li>
+<li>Mixed fonts/axes in one paragraph: works by construction; a miss
+costs one HarfBuzz shape; hb.Font churn bounded per font.</li>
+</ul>
+<h3><a id="contract-vs-pipeline-composition-typests" class="heading_anchor" href="#contract-vs-pipeline-composition-typests" aria-hidden="true">#</a>Contract vs pipeline (composition-types.ts)</h3>
+<ul>
+<li><code>TextStyle {fontKey, fontSizePt}</code>, <code>StyleSpan {start, attributes}</code>,
+<code>Paragraph {text, styles}</code> (55-76) anticipate style spans;
+“segmentation at style boundaries” (80); mixed fonts/sizes in the
+Units note (18-24). BUT Paragraph/StyleSpan are not imported
+anywhere — the pipeline uses HostSegment.sourceIndex + per-leaf
+offsets. <code>TextStyle.fontKey</code> is opaque; the structured measurement
+tuple lives Host-side.</li>
+</ul>
+<h3><a id="applicator-viewertyperoofjsx" class="heading_anchor" href="#applicator-viewertyperoofjsx" aria-hidden="true">#</a>Applicator (viewer.typeroof.jsx)</h3>
+<ul>
+<li>Run finds its payload leaf by path: <code>leaves.findIndex(l =&gt; l.path === myPath)</code> (659-661). Per line, keeps only own segments
+(<code>segments[i].sourceIndex === leafIndex</code>, 670-674); a line spanning
+runs renders as one slice per run; a run spanning lines yields
+multiple spans in its carrier. Text slice:
+<code>this._text.slice(segment.start, segment.end)</code> (702-708).</li>
+<li>Carrier: innermost mark wrapper when marks exist (633-635), else a
+carrier span (605-613); application is wholesale
+<code>carrier.replaceChildren(...)</code> (640) — throwaway spans.</li>
+</ul>
+<h3><a id="ingredients--invalidation-composition-controllerts457-493" class="heading_anchor" href="#ingredients--invalidation-composition-controllerts457-493" aria-hidden="true">#</a>Ingredients / invalidation (composition-controller.ts:457-493)</h3>
+<p>Today: <code>[font, algorithmKey, algorithmConfig, axesKey, featuresKey, language, direction, fontSizePt, lineWidthPt, hyphenationEnabled, minWordLength, minBefore, minAfter, hyphenationPattern, leafTexts.join(&quot;&quot;)]</code> — all textblock-level. Per-run style tuples
+must enter here (“what we CONSUME is what invalidates”), else mark
+style changes recompose nothing.</p>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/components/layouts/type-stage/text-composition/composition-controller.ts:265-297</code> — <code>_buildInlineItems</code> (marks not read)</li>
+<li><code>…/composition-controller.ts:367-384</code> — per-textblock measurement inputs (“v1 uniform” comment)</li>
+<li><code>…/composition-controller.ts:457-493</code> — ingredients filter</li>
+<li><code>…/text-composition/measurer.ts:146-188</code> — measureEm + caches</li>
+<li><code>…/text-composition/segmenter.ts:66-70</code> — InlineItem taxonomy (no style field)</li>
+<li><code>…/document-nodes-meta/derivations.mjs:390-412</code> — getStyleLinkPropertiesId</li>
+<li><code>…/document-nodes-meta/derivations.mjs:418-504</code> — getWrapMarks (pure mark→descriptor pipeline)</li>
+<li><code>…/live-properties.typeroof.jsx:351-421</code> — StyleLinkLiveProperties (createPatched merge, getPropertyValuesMap)</li>
+<li><code>…/live-properties.typeroof.jsx:227-348</code> — StylePatchSourceLiveProperties (patch → resolved map incl. font-dependent axes)</li>
+<li><code>…/document-nodes-meta/index.mjs:1066-1085</code> — text runs are scope-less</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:1008-1094</code> — UIDocumentStyleStyler (data → CSS)</li>
+<li><code>lib/js/components/actors/properties-util.mjs:33-113</code> — setTypographicPropertiesToSample, getAxesLocations</li>
+<li><code>lib/js/components/type-spec/models.mjs:309-404</code> — style patch + link models</li>
+</ul>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ol>
+<li><strong>Multi-mark merge order/semantics at data level</strong>: the DOM merges
+base + marks via CSS cascade in wrapper-nesting order. The
+data-level equivalent (layering PatchedScopeProperties per mark
+over the base scope) needs a defined order — getWrapMarks’ wrapper
+order is the candidate; is it always the CSS-effective order?</li>
+<li><strong>Key-prefix alignment</strong>: the measurer helpers read
+<code>axesLocations/&lt;tag&gt;</code> and <code>opentype-features/&lt;tag&gt;</code> from the
+nodeProperties map; confirm the styleLink propertyValuesMap uses
+the same keys (UIDocumentStyleStyler reads <code>axesLocations/&lt;tag&gt;</code>;
+features via the same generator?) — small but load-bearing.</li>
+<li><strong>Where the controller resolves per-run links</strong>: getWrapMarks
+needs <code>markSpec</code>, <code>context.pathOfTypes</code>, <code>typeSpecPropertiesPath</code>
+— available in the meta element context (viewer has
+<code>this._context</code>); what does the meta expose to composeTextblock?</li>
+<li><strong>fontSize per run</strong>: patches can carry relativeFontSize — the pt
+conversion (× fontSizePt) becomes per-segment; diagnostics/line
+height implications for the applicator?</li>
+<li><strong>inlineContainer + marks</strong>: children of inline containers are
+separate leaves — do containers carry their own style (link as
+inline block with a style)? v0 may treat container text as
+unstyled; document the limitation or cover it.</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

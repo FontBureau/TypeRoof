@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="justification-potentials--greedy-fit-milestone-4" class="heading_anchor" href="#justification-potentials--greedy-fit-milestone-4" aria-hidden="true">#</a>Justification potentials + greedy-fit (milestone 4)</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Port varla-varfo’s justification to TypeRoof’s text-composition:
+(1) the justification POTENTIALS (renamed from “justification
+specs”) as hardcoded stubs for Roboto Flex + Amstelvar flavors with
+best-fit discovery; (2) the Treatment Planner (Host role) turning
+the contract’s normalized per-line adjustmentStep into concrete
+axis/tracking/wordspace treatments, measured predictively; (3) the
+greedy-fit algorithm exercising it (the validation milestone), with
+color-coded lines and a switch in the algorithm struct.
+Research: <code>docs/planning/agentic-artefacts/thoughts/research/2026-10-04-1644-justification-potentials.md</code>
+(all key questions resolved; corrections folded in).</p>
+<h2><a id="outcome-concluded-2026-10-05" class="heading_anchor" href="#outcome-concluded-2026-10-05" aria-hidden="true">#</a>Outcome (concluded 2026-10-05)</h2>
+<p>All four phases are complete. Key implementation commits:</p>
+<ul>
+<li><code>8e50f2da</code> — hardcoded potentials, interpolation/validation,
+best-fit discovery.</li>
+<li><code>75dc6b3f</code> — Treatment Planner + predictive measurement and DOM
+application.</li>
+<li><code>6183abd7</code> — greedy-fit, model-first engagement, treatment config,
+color-coded lines; avar2 location anchoring.</li>
+<li><code>a21865d2</code> — corrected optional hyphen measurement: source-only
+segments; one conditional glyph at the taken candidate break.</li>
+<li><code>3da72196</code>, <code>521db920</code> — complete pinned upstream pattern catalog;
+direct session-only requirements from effective TypeSpec +
+style-patch languages, no serialized bookkeeping.</li>
+<li><code>3a3fd8b5</code> — ride-along state-load lifecycle fix (viewer attaches
+only after the meta tree updates/prunes).</li>
+</ul>
+<p>Manual verification used minimal saved TypeStage states under the
+operator’s <code>downloads/</code> directory. The reported 280pt Roboto Flex
+case now shows narrowed lines flush to the measure (0.00–0.81px;
+taken-hyphen line 1.58px); only max-widened lines may remain short,
+which correctly signals exhausted potential. Amstelvar avar1/avar2
+and Roboto Flex/Delta treatments engage; the color-coding switch
+works; English/Greek/Russian hyphenate with direct asset loading.</p>
+<p>Phase-4 performance: the harness was corrected to select Greedy Fit
+and to stage + verify the real wikipedia fixture (1087 text nodes)
+instead of silently accepting a docs-server HTML fallback. Stable
+30-cycle ratios: typing 1.011/1.026; recompose 1.262/1.234. New
+validated baseline: typing 1.017, recompose 1.266; immediate rerun
+passed all absolute + ratio gates.</p>
+<p>Known follow-up (recorded in ROADMAP): tracking predictive width
+currently counts source code units; verify parity with CSS
+letter-spacing for Unicode/ligature runs before KP++ quality work.</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li>Contract ready: <code>lineWidthAtStep(from,to,step)</code> injected per
+candidate (composition-types.ts:122-168); placeholder
+<code>(from,to) =&gt; widthOf(from,to)</code> at composition-controller.ts:793.</li>
+<li>Per-leaf styles (per-run style spans) give the planner per-run
+font/axesEntries/fontSizePt (composition-controller.ts:612-655).</li>
+<li>Applicator sets per-line CSS custom properties already
+(<code>--line-color-code</code>, viewer.typeroof.jsx:698-704) and the
+color-coding helper EXISTS with full step-&gt;color mapping
+(viewer.typeroof.jsx:647-658) — dormant (steps are always 0).</li>
+<li>Measurer re-shapes at any axes location; caches keyed by
+(fullName, axesKey, …) (measurer.ts).</li>
+<li>Additive per-segment width math precedent: hyphen baking
+(composition-controller.ts:727-775).</li>
+<li>Algorithm selection: dynamic struct textCompositionAlgorithm
+(Dummy + GreedyRagged types exist; config fields render generic
+UI for free — the segmentsPerLine precedent).</li>
+</ul>
+<h3><a id="key-decisions-research--operator" class="heading_anchor" href="#key-decisions-research--operator" aria-hidden="true">#</a>Key Decisions (research + operator)</h3>
+<ul>
+<li><strong>Stubs in code, no metamodel yet</strong> (potentials storage is the
+deliberately-deferred open question; font entries can’t carry
+data — deferred-font serialization drops fields).</li>
+<li><strong>Potentials map design-space location -&gt; treatments</strong>; levels
+navigate by AXIS VALUES ONLY (third level = the run’s OPSZ VALUE,
+not font size — explicit opsz is the author’s optical intent).</li>
+<li>Tables declare their ORDERED dimension tags ([wght, wdth, opsz]
+for the stubs; authors may use other axes/depths later); entries
+within a level must be numerically MONOTONIC (validated;
+ascending or descending both legal; alpha key ordering would
+corrupt — insertion order kept).</li>
+<li><strong>Best-fit discovery, most-specific-wins</strong> (Flex/Delta
+sufficiently compatible; no exclusion lists).</li>
+<li>Step scale: contract-native [-1,1], per-side linear maps; the
+demo’s stop-budget heuristic is an internal sampling detail.</li>
+<li>All treatments in parallel per step (demo semantics; impact-
+weighted ordering later).</li>
+<li>Tracking = absolute pt per glyph (keyed by opsz-declared size);
+wordspace = factor of the natural space advance; axes treatments
+= re-shaping at shifted coords; space advance measured AT the
+candidate coords (cross-treatment coupling).</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>Potentials storage metamodel + editing UI (open question,
+deferred; stubs live in code).</li>
+<li>Inter-line harmonization factor (headlines); the wdth headline
+stub folding into the unified structure.</li>
+<li>Per-treatment impact weights (the demo’s own TODO).</li>
+<li>Knuth-Plass++ (milestone 5).</li>
+<li>Amstelvar avar1/avar2 table variants (best-fit handles; data
+lands when a real case shows up).</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Four phases, each a reviewable unit with its own commit; stop after
+each with a proposed message and wait for OKOK.</p>
+<hr>
+<h2><a id="phase-1-the-potentials-module-pure-no-model-" class="heading_anchor" href="#phase-1-the-potentials-module-pure-no-model-" aria-hidden="true">#</a>Phase 1: The potentials module (pure, no model) ✅</h2>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>…/text-composition/justification-potentials.ts</code> (new)
+<strong>Changes</strong>:</p>
+<ul>
+<li><code>JUSTIFICATION_POTENTIALS_ROBOTO_FLEX</code> /
+<code>JUSTIFICATION_POTENTIALS_AMSTELVAR</code>: the tables ported verbatim
+from varla-varfo/lib/js/typeSpec.mjs (comments/FIXMEs included —
+they carry provenance), renamed, frozen.</li>
+<li><code>calculatePotentials(table, location, dimensions)</code>: the hardened
+<code>_calculateFontSpec</code> port — declared dimension order, monotonic
+entries relied upon (validation on table load: levels are
+monotonic, leaf shapes match), name-agnostic leaf detection
+(a level is a leaf iff its values are [min,dflt,max] triples,
+i.e. depth exhausted by shape, not by the ‘XTRA’ name), explicit
+clamp policy at out-of-range edges, invariant check: interpolated
+dflt equals the natural value at the location (dev warning when
+violated).</li>
+<li><code>discoverPotentials(font)</code>: best-fit matcher — candidate
+descriptions (family-name prefix + required navigation axes all
+present in font.axisRanges), most specific match wins (scoring:
+exact family match &gt; prefix match; more navigation axes &gt; fewer);
+Roboto Delta resolves to the Flex table. Returns null for fonts
+without potentials (plain Roboto).</li>
+</ul>
+<p><strong>File</strong>: <code>…/text-composition/justification-potentials.test.mjs</code> (new)
+<strong>Changes</strong>: behavior tests — interpolation between stops (known
+values from the Roboto Flex table), exact hits, edge clamping,
+early bottom-out, malformed-grid/monotonicity validation,
+discovery specificity (mock fonts: Flex, Delta, AmstelvarA2, plain
+Roboto → null).</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-x-new-tests-pass-full-suite-green" class="heading_anchor" href="#automated-x-new-tests-pass-full-suite-green" aria-hidden="true">#</a>Automated: [x] new tests pass; full suite green.</h4>
+<hr>
+<h2><a id="phase-2-treatment-planner-wiring-host-" class="heading_anchor" href="#phase-2-treatment-planner-wiring-host-" aria-hidden="true">#</a>Phase 2: Treatment Planner wiring (Host) ✅</h2>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>…/text-composition/treatment-planner.ts</code> (new, pure)
+<strong>Changes</strong>: per-LeafStyle planner — <code>createTreatmentStepper( leafStyle, potentials, config)</code> returning <code>{narrowPt(from,to,step), widenPt(...)}</code>-style step-&gt;width-delta functions per segment set:
+axes treatments = Measurer re-shape at shifted coords (measureEm
+with adjusted axesEntries/axesKey); tracking = trackingPt(step) *
+nGlyphs per segment; wordspace = factor(step) * spaceAdvance(at
+candidate coords) * nSpaces. Per-side linear maps (narrowRange at
+step -1, widenRange at +1).</p>
+<p><strong>File</strong>: <code>…/text-composition/composition-controller.ts</code>
+<strong>Changes</strong>:</p>
+<ul>
+<li>Resolve potentials per leaf (discoverPotentials per leafStyle
+font; cache per font identity) when the algorithm uses steps
+(greedy-fit; greedy-ragged keeps probing step 0 only — the
+planner is inactive by construction).</li>
+<li><code>lineWidthAtStep(from,to,step)</code>: step 0 = widthOf (unchanged);
+step != 0 = widthOf + Σ per-segment planner deltas (mixed-font
+candidates compose linearly in pt).</li>
+<li>Per-segment glyph/space counts precomputed in the measurement
+loop (needed by tracking/wordspace deltas).</li>
+<li>Ingredients: the potentials table identity per leaf.</li>
+<li>Payload: per-line <code>treatments</code> record (concrete values at the
+line’s adjustmentStep: letterSpacingPt, wordSpacingPt,
+axesEntries-delta) — computed ONCE by the controller so every
+line fragment applies identical values.</li>
+</ul>
+<p><strong>File</strong>: <code>…/type-stage/viewer.typeroof.jsx</code> + <code>line-spans.css</code>
+<strong>Changes</strong>: the applicator applies per-line treatments from the
+payload: <code>--line-letter-spacing</code>/<code>--line-word-spacing</code> custom
+properties on line-fragment spans (consumed in line-spans.css) and
+merged font-variation-settings for the axes delta (the run styler
+owns the base property; the applicator composes its spans’ values).</p>
+<p><strong>Tests</strong> (<code>lib/js/tests/text-composition/</code>): lineWidthAtStep
+narrows/widens measurably at ±1 (payload-level probe via a test
+algorithm? — better: unit tests for treatment-planner.ts with the
+real font + measurer pattern from measurer.test.mjs); tracking/
+wordspace deltas exact; mixed-font candidate composition; axes
+re-measurement at shifted coords.</p>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-x-new-tests-pass-full-suite-green-1" class="heading_anchor" href="#automated-x-new-tests-pass-full-suite-green-1" aria-hidden="true">#</a>Automated: [x] new tests pass; full suite green.</h4>
+<h4><a id="manual-x-no-visible-behavior-expected-until-phase-3" class="heading_anchor" href="#manual-x-no-visible-behavior-expected-until-phase-3" aria-hidden="true">#</a>Manual: [x] no visible behavior expected until Phase 3.</h4>
+<hr>
+<h2><a id="phase-3-greedy-fit-algorithm--engagement--color-coded-lines-" class="heading_anchor" href="#phase-3-greedy-fit-algorithm--engagement--color-coded-lines-" aria-hidden="true">#</a>Phase 3: Greedy-fit algorithm + engagement + color-coded lines ✅</h2>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>…/text-composition/greedy-fit.ts</code> (new, pure Algorithm)
+<strong>Changes</strong>: the varla-varfo strategy, predictively: greedy break
+at natural width; NARROW until one more segment fits (minimal
+narrowing step; potential exhausted at -1 -&gt; clamp, |step| &gt; 1
+signals unsatisfiable per contract); if narrowing pulls nothing
+up, WIDEN to fill or leave at max potential; last line never
+widened (contract rule). Uses lineWidthAtStep over the full step
+range — exercises every injected function (validation milestone).</p>
+<p><strong>Files</strong>: <code>lib/js/components/type-spec/text-composition-models.mjs</code>
+(+ registered-properties/defaults as required)
+<strong>Changes</strong>: <code>TextCompositionAlgorithmGreedyFitModel</code> in the
+dynamic struct with config: enabled treatments (wdth/tracking/
+wordspace — OrEmpty booleans, default all on), direction
+(both/narrowing/widening, OrEmpty enum default both), and
+<strong>colorCoding (OrEmpty boolean, default ON)</strong> — the switch for the
+color-coded lines.</p>
+<p><strong>File</strong>: <code>…/text-composition/composition-controller.ts</code>
+<strong>Changes</strong>: algorithm selection gains the greedy-fit type; the
+resolved config flows to the planner (treatments/direction) and
+into the payload (<code>colorCoding</code>).</p>
+<p><strong>File</strong>: <code>…/type-stage/viewer.typeroof.jsx</code>
+<strong>Changes</strong>: the color-coding switch: the applicator applies
+<code>--line-color-code</code> (the existing _lineColorCode mapping, now live
+with real steps) only when the payload’s colorCoding is on;
+otherwise transparent.</p>
+<p><strong>Tests</strong>: greedy-fit unit tests (injected width fn: narrowing
+pulls a segment up, widening fills, last line never widened,
+unsatisfiable |step|&gt;1); harness e2e with Roboto Flex (potentials
+discovered, lines carry adjustmentStep != 0, treatments applied in
+the DOM, color coding on/off per the switch, OFF MODE unaffected).</p>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-x-new-tests-pass-full-suite-green-2" class="heading_anchor" href="#automated-x-new-tests-pass-full-suite-green-2" aria-hidden="true">#</a>Automated: [x] new tests pass; full suite green.</h4>
+<h4><a id="manual-x-the-viewer-justifies-with-greedy-fit-lines-color-code" class="heading_anchor" href="#manual-x-the-viewer-justifies-with-greedy-fit-lines-color-code" aria-hidden="true">#</a>Manual: [x] the viewer justifies with greedy-fit; lines color-code</h4>
+<p>by adjustment; the switch toggles it; quality is judgeable.</p>
+<hr>
+<h2><a id="phase-4-perf--roadmap-" class="heading_anchor" href="#phase-4-perf--roadmap-" aria-hidden="true">#</a>Phase 4: Perf + ROADMAP ✅</h2>
+<ul>
+<li><code>npm run perf:composition</code> (greedy-fit engages the planner:
+re-shaping at shifted coords is the new cost — the Measurer
+caches absorb repeated locations), review together.</li>
+<li>ROADMAP: milestone 4 status; the storage open question recorded
+as the next design item.</li>
+</ul>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-x-suite-green-validated-greedy-fit-ratios-within" class="heading_anchor" href="#automated-x-suite-green-validated-greedy-fit-ratios-within" aria-hidden="true">#</a>Automated: [x] suite green; validated greedy-fit ratios within</h4>
+<p>the 1.5x gate (typing 1.017; recompose 1.266 baseline).</p>
+<hr>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<p>Behavior from inputs: interpolation outputs, width deltas, line
+structures, DOM custom properties, switch effects. Unit tests for
+the pure modules (potentials, planner, algorithm); harness e2e for
+the wiring. Real Roboto Flex + HarfBuzz (measurer.test.mjs
+pattern).</p>
+<h2><a id="sub-rpi-handoff-rule" class="heading_anchor" href="#sub-rpi-handoff-rule" aria-hidden="true">#</a>Sub-RPI handoff rule</h2>
+<p>As before. Suspects: the applicator’s font-variation-settings merge
+(the run styler owns the base property — coordination needed); the
+best-fit specificity scoring if real fonts expose ambiguities.</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

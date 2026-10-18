@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-justification-potentials--treatment-planner-milestone-4-prep" class="heading_anchor" href="#research-justification-potentials--treatment-planner-milestone-4-prep" aria-hidden="true">#</a>Research: Justification potentials / Treatment Planner (milestone 4 prep)</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Port varla-varfo’s justification to TypeRoof’s text-composition:
+stub the data first (hardcoded, Roboto Flex + Amstelvar flavors
+only), review <code>_calculateFontSpec</code>, evaluate the “step on the line +
+potentials on the container” mechanism, design the metamodel
+(ordered levels that needn’t bottom out), and find where to STORE
+potentials (ad-hoc, document-usable; multi-font simultaneously;
+future: font-author-defined, maybe distributed with the font).
+Terminology: “justification spec” -&gt; “justification potentials”,
+short “potentials”.</p>
+<p>Operator directions (all accounted for below): stub-first;
+non-axes treatments were never measured/applied anywhere;
+<code>calculateFontSpec</code> seemed elegant but wants review; levels ordered
+by us ([wght, wdth, opsz]), each level may be a leaf; storage is
+the great unsolved question, possibly out of scope for the roadmap.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p>The demo’s intellectual core is small and clean; the rest is
+render-loop scaffolding that HarfBuzz makes obsolete:</p>
+<ul>
+<li><strong>PORT (hardened)</strong>: <code>_calculateFontSpec</code> — recursive separable
+multilinear interpolation over the nested wght -&gt; wdth -&gt; opsz
+grid with edge clamping; bottoms out at any level (<code>'XTRA' in spec</code>). ~30 lines, already supports the “levels needn’t bottom
+out” requirement.</li>
+<li><strong>PORT the data model</strong>: leaf <code>{XTRA: [min,dflt,max], tracking: [min,0,max], wordspace: [min,0,max]}</code> — XTRA an axis treatment,
+tracking = ABSOLUTE pt letter-spacing (per OPSZ-DECLARED optical
+size — the mapping is design-space location -&gt; potentials; see
+Corrections), wordspace = FACTOR of the natural space advance
+(<code>n/144 - 1</code> style; 0 = natural).</li>
+<li><strong>ADAPT the step mechanism</strong>: single shared normalized step drives
+all enabled treatments in parallel, each <code>clamp(min, dflt + step*stepSize, max)</code> with staggered saturation; direction gating
+(both/narrowing/widening). In the port: the Treatment Planner
+computes concrete values (no CSS calc as compute engine),
+per-SIDE step scales instead of one max-step-size, per-treatment
+impact weights later (the demo’s own TODO).</li>
+<li><strong>PORT the strategy</strong>: narrow-first, widen-fallback; terminal
+line never widened; inter-line harmonization optional (headlines).</li>
+<li><strong>DROP wholesale</strong>: line finding by Range probing, bisection
+against rendered layout, span packing, browser-quirk workarounds,
+generators-as-control-flow, <code>--font-spec-key</code> caching that ignores
+font-size/column-width.</li>
+</ul>
+<p>TypeRoof readiness: the plumbing slot exists and is marked
+(<code>lineWidthAtStep</code> placeholder, composition-controller.ts ~793);
+per-leaf styles (per-run style spans) give the planner per-run
+font/axes; the applicator sets per-line custom properties already
+(<code>--line-color-code</code> precedent); additive non-axes width math has
+the hyphen-baking precedent.</p>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed findings</h2>
+<h3><a id="the-potentials-data-varla-varfolibjstypespecmjs" class="heading_anchor" href="#the-potentials-data-varla-varfolibjstypespecmjs" aria-hidden="true">#</a>The potentials data (varla-varfo/lib/js/typeSpec.mjs)</h3>
+<ul>
+<li><code>JUSTIFICATION_SPEC_{AMSTEL_VAR,ROBOTO_FLEX}</code> (255-353): nested
+numeric-keyed maps wght -&gt; wdth -&gt; opsz -&gt; leaf. Levels always
+bottom out in current data, but the resolver tolerates early
+leaves — matching the requirement that authors refine freely.</li>
+<li><code>WDTH_JUSTIFICATION_SPECS</code> (360-371): flat per-family [min,max]
+wdth stub for HEADLINE narrowing only (h1), default read live
+(step-0-identity hazard). ADAPT: fold wdth into the unified
+nested potentials with a real dflt slot.</li>
+<li>Ships in TypeRoof assets: Roboto Flex (13 axes incl. XTRA/wdth/
+opsz), AmstelvarA2 (avar2!), Roboto Delta, plain Roboto
+(wdth,wght only). Roboto Flex and Roboto Delta are SUFFICIENTLY
+COMPATIBLE for potentials purposes (operator, see Corrections) —
+discovery is BEST-FIT, not exact match.</li>
+</ul>
+<h3><a id="_calculatefontspec-review-justificationmjs995-1063" class="heading_anchor" href="#_calculatefontspec-review-justificationmjs995-1063" aria-hidden="true">#</a><code>_calculateFontSpec</code> review (justification.mjs:995-1063)</h3>
+<p>Semantics: per level, parse-float keys, sort, find surrounding
+stops; exact hit or out-of-range -&gt; descend single stop (CLAMP, no
+extrapolation); between stops -&gt; recurse both, then elementwise
+interpolate the child results (trilinear over the grid). Leaf
+detection: <code>'XTRA' in spec</code>.</p>
+<p>Elegant: one tiny recursive function, arbitrary depth/treatments,
+separable interpolation is the right model, exact-hit fast path,
+clamping a safe default for curated data.</p>
+<p>Fix in the port (hardening):</p>
+<ol>
+<li>Asymmetric shape assumption: iterates upper stop’s keys only and
+truncates to min length — malformed grids throw or silently drop.
+Add shape validation.</li>
+<li>Out-of-range clamps SILENTLY (indistinguishable from config
+error) — make the policy explicit (clamp + dev note?).</li>
+<li>dflt-slot interpolation: step 0 == identity only because all
+dflts are equal per treatment in current data. Enforce
+“interpolated dflt == natural value at the location” as an
+invariant (the demo hits this hazard in the wdth stub).</li>
+<li>Leaf detection hardcodes ‘XTRA’ — make it name-agnostic
+(keys-exhausted or marker).</li>
+</ol>
+<h3><a id="step---treatment-application-justificationmjs1773-1958-css" class="heading_anchor" href="#step---treatment-application-justificationmjs1773-1958-css" aria-hidden="true">#</a>Step -&gt; treatment application (justification.mjs:1773-1958, css)</h3>
+<ul>
+<li>Step budget heuristic: <code>stops = nTreatments * (fontSizePt/12) * (columnEn/65) * 10</code>; per-treatment step size = max(narrowRange,
+widenRange)/stops; CSS <code>clamp(min, dflt + step*stepSize, max)</code>
+per treatment; shared scalar step per line; staggered saturation
+on short-range sides; unused treatments disabled via guaranteed-
+invalid CSS values; direction gating zeros one side’s stops.</li>
+<li>Units verified: tracking = absolute PT letter-spacing per glyph
+(<code>letter-spacing: calc(1pt * var(...))</code>); wordspace = factor of
+measured natural space width (<code>word-spacing: calc(spaceSize * factor)</code>); XTRA in 1/1000 em of advance (first-order), but it
+also changes outlines/kerning -&gt; candidate estimate only, verify
+by re-shaping.</li>
+<li>Predictive replacement: per candidate step, set variation coords
+on the hb font, re-shape, sum advances, add tracking/wordspace
+deltas arithmetically (<code>trackingPt * nGlyphs</code>, <code>factor * spaceAdvance * nSpaces</code>); pick the step minimizing |slack| — no
+bisection/control loops needed. Cross-treatment coupling: XTRA/
+wdth change the SPACE advance too — measure the space at the
+candidate coords.</li>
+</ul>
+<h3><a id="typeroof-plumbing-all-verified-with-fileline-refs" class="heading_anchor" href="#typeroof-plumbing-all-verified-with-fileline-refs" aria-hidden="true">#</a>TypeRoof plumbing (all verified with file:line refs)</h3>
+<ul>
+<li>Injection point: <code>lineWidthAtStep</code> closure in composeTextblock
+(currently <code>(from,to) =&gt; widthOf(from,to)</code>). Planner precomputes
+per LeafStyle a step-&gt;deltaPt function (from the leaf’s font
+table at the leaf’s axesEntries location); the closure sums
+per-segment deltas via <code>styleOf(segment.sourceIndex)</code> — mixed-
+font lines compose linearly in pt. Contract already specifies
+normalized per-candidate steps, asymmetric directions, clamping
+beyond ±1 (composition-types.ts:122-168).</li>
+<li>Ingredients: the potentials (identity) must join the filter.</li>
+<li>Axes treatments = re-measurement: measureEm with shifted
+axesEntries; caches handle new locations. Tracking/wordspace =
+arithmetic deltas per segment (need per-segment glyph/space
+counts — precompute in the measurement loop or count on demand;
+hyphen baking is the additive-width precedent).</li>
+<li>Applicator (viewer.typeroof.jsx <code>_buildLineSpans</code> ~660-722):
+per-line custom properties on the line-fragment spans (the
+<code>--line-color-code</code> precedent): <code>--line-letter-spacing</code>,
+<code>--line-word-spacing</code> consumed in line-spans.css. AXIS treatments
+must MERGE into the fragment’s font-variation-settings (the run
+styler owns that property — the applicator adjusts its own spans
+after/alongside). Caveat: fragments are per-leaf; per-line values
+must be computed identically per fragment (deterministic from
+line.adjustmentStep + leaf style, or carried in the payload).</li>
+</ul>
+<h3><a id="font-identity--potentials-discovery-best-fit" class="heading_anchor" href="#font-identity--potentials-discovery-best-fit" aria-hidden="true">#</a>Font identity / potentials discovery (BEST-FIT)</h3>
+<ul>
+<li>Font object = VideoProofFont (model/font.mjs:223-419): <code>name</code>
+(family prefix), <code>fullName</code> (origin-type + name + massaged
+version — BRITTLE as a key), <code>axisRanges</code> (frozen map by tag,
+from fvar). installedFonts/availableFonts keyed by fullName
+(session-scoped InternalizedDependency, NOT document data).</li>
+<li>Discovery (operator decision): BEST-FIT — a font may be claimed
+by multiple potentials tables; the MOST SPECIFIC matching
+description wins. Roboto Flex and Roboto Delta are sufficiently
+compatible, so a Delta font legitimately resolves to the Flex
+table when nothing more specific exists. A table’s “description”
+is its declared constraints (family-name match + structural axes
+it navigates); specificity = how precisely it matches (more
+constrained/more specific key beats generic). Candidate
+description: family name prefix + the ordered set of navigation
+axes the table needs (all must exist in the font’s axisRanges).</li>
+</ul>
+<h3><a id="storage-the-open-question--recommendation" class="heading_anchor" href="#storage-the-open-question--recommendation" aria-hidden="true">#</a>Storage (the open question — recommendation)</h3>
+<ul>
+<li>Font entries CANNOT carry potentials: deferred-font document
+serialization keeps only [name, version] + origin; extra fields
+silently drop (shell.mjs:360-395).</li>
+<li>v0 (stubs): NO model — a frozen plain-JS literal module
+(e.g. text-composition/treatment-tables.ts) + matcher. Config,
+not user data.</li>
+<li>Later (document-editable, multi-font): a root ordered-map field
+next to stylePatchesSource in createTypeStageModelVariantWithDefaults
+(index.typeroof.jsx:308) — serializes with the document for free.
+Keyed by font key — the best key is still open (name-prefix +
+structural-axes set is the leading candidate; fullName is
+brittle: origin prefix + massaged version).</li>
+<li>Metamodel shape (when built): insertion-ordered levels (list or
+insertion-ordered map — NOT alpha-key-ordered: “144” &lt; “24” &lt; “8”
+alphabetically would corrupt it), numeric entries VALIDATED
+MONOTONIC (coherence function; ascending or descending both
+legal, see Corrections), leaf = struct of three 3-number lists;
+early-bottom-out via a generic-value or type-switch level; the
+table declares its ordered dimension tags. Buildable from
+existing primitives (ordered-map/list models; generic-model
+custom serializeFN as escape hatch).</li>
+</ul>
+<h2><a id="corrections--operator-decisions-2026-10-04-post-review" class="heading_anchor" href="#corrections--operator-decisions-2026-10-04-post-review" aria-hidden="true">#</a>Corrections / operator decisions (2026-10-04, post-review)</h2>
+<ol>
+<li><strong>The navigation levels are DESIGN-SPACE LOCATIONS — the third
+level is the run’s OPSZ VALUE, not its actual font size.</strong>
+Rationale (operator): when an author sets an explicit opsz
+deviating from the real size, they say “treat this run as e.g.
+a headline size” — and the justification potentials must follow
+that declared optical intent. The whole mapping is
+design-space location -&gt; potentials; tracking etc. inherit
+whatever the opsz-declared size implies.</li>
+<li><strong>No special fontSize dimension; level dimensions are ordered
+axis tags, and ENTRIES WITHIN A LEVEL MUST BE NUMERICALLY
+ORDERED (monotonic)</strong> — the author can’t write [8, 144, 14];
+“144, 24, 8” (descending) is fine, what matters is sortedness,
+because interpolation relies on it. Consequences:
+<ul>
+<li>a potentials table declares its ordered dimension list (axis
+tags only, e.g. [wght, wdth, opsz]) + the nested tree; each
+level may bottom out as a leaf; authors may navigate by other
+axes or deeper/shallower nesting (flexible);</li>
+<li>the metamodel keeps declaration order (insertion-ordered map
+or list — NOT alpha-key-ordered: “144” &lt; “24” &lt; “8”
+alphabetically would corrupt it) AND validates monotonicity
+(a coherence function is the natural place);</li>
+<li>the resolver may rely on monotonic entries (direction-agnostic
+handling or a defensive sort — decided in the plan).</li>
+</ul>
+</li>
+<li><strong>Font discovery is BEST-FIT, most-specific-wins.</strong> Roboto Flex
+and Roboto Delta are sufficiently compatible; no exclusion
+lists. (Supersedes the initial “never match Delta” caution in
+the first draft of this document.)</li>
+</ol>
+<h2><a id="post-implementation-findings--resolutions-2026-10-05" class="heading_anchor" href="#post-implementation-findings--resolutions-2026-10-05" aria-hidden="true">#</a>Post-implementation findings / resolutions (2026-10-05)</h2>
+<ul>
+<li><strong>Step scale</strong>: contract-native normalized [-1,1], separate linear
+maps on each side. |step| &gt; 1 signals exhausted/unsatisfiable;
+concrete treatment values clamp to extrema.</li>
+<li><strong>Coupling</strong>: all enabled treatments move in parallel (validation
+milestone). Impact-weighted ordering remains deferred.</li>
+<li><strong>Best-fit</strong>: family-name prefixes + required navigation/treatment
+axes; longer prefix, then more axes = more specific. Roboto Delta
+legitimately uses the Flex table.</li>
+<li><strong>avar1/avar2 table anchors</strong>: absolute authored defaults are not
+portable (Amstelvar table XTRA dflt 562 vs A2 location 400; Flex
+468 vs Delta 463). The typographic knowledge is the DELTA around
+the authored natural state. Resolved axis triples are re-anchored
+to each run’s actual location (range-clamped), restoring step-0
+identity. See <code>docs/planning/text-composition/avar2-potentials-anchoring.md</code>.</li>
+<li><strong>Conditional hyphen width</strong>: optional internal hyphens have no
+glyph/width. The Host adds one glyph only when the candidate ends
+at a taken <code>kind: hyphen</code> break. Baking all opportunities into
+segment widths over-narrowed lines in whole-hyphen increments.</li>
+<li><strong>Predictive/render parity</strong>: after the hyphen correction, the
+operator’s 280pt test has narrowed lines within 0.00–0.81px and a
+taken-hyphen line within 1.58px; only max-widened lines remain
+short (legitimate exhausted potential).</li>
+<li><strong>Performance</strong>: corrected harness (Greedy Fit + verified 1087-
+text-node fixture) yields stable typing 1.01–1.03 and full
+recompose 1.23–1.27 ratios; baseline 1.017/1.266.</li>
+<li><strong>Storage/metamodel</strong> remains deliberately deferred; hardcoded
+stubs are sufficient for the validation milestone. Constraints
+below/ROADMAP remain authoritative.</li>
+<li><strong>Tracking fidelity caveat</strong>: implementation currently counts
+source code units for analytical letter-spacing width. CSS spacing
+parity across Unicode/ligature runs needs a focused probe before
+KP++ quality scoring.</li>
+</ul>
+<h2><a id="deferred-after-the-validation-milestone" class="heading_anchor" href="#deferred-after-the-validation-milestone" aria-hidden="true">#</a>Deferred after the validation milestone</h2>
+<ol>
+<li>Per-treatment impact weights / ordering (all-in-parallel shipped).</li>
+<li>Inter-line harmonization factor (headlines).</li>
+<li>Fold the separate wdth headline treatment into the unified
+potentials structure.</li>
+<li>Editable/document-scoped potentials storage + flexible metamodel
+(constraints captured above and in ROADMAP); eventual font-table
+distribution.</li>
+<li>Dedicated Amstelvar-family tables if re-anchored shared deltas
+prove insufficient for a real font/version.</li>
+<li>Tracking analytical-width parity with CSS across Unicode,
+combining sequences and ligatures.</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-wght-axis-drag-performance-regression-branch-vs-fontbureaumain" class="heading_anchor" href="#research-wght-axis-drag-performance-regression-branch-vs-fontbureaumain" aria-hidden="true">#</a>Research: wght axis-drag performance regression (branch vs fontbureau/main)</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Operator repro: load the app, default “type-stage” layout with default
+state; turn OFF “Compose Text in Editor”; in the origin typeSpec open
+“Typeface and Size” → “Variable Font Axes”, enable “wght” and drag the
+slider. Noticeable lag; on fontbureau/main it is buttery smooth. With the
+editor composition disabled there should be no degradation; with an
+algorithm of “None (Browser)” there should be no impact either; ideally
+active composition should also get cheaper.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p><strong>CORRECTED 2026-10-08 (operator challenge, verified — see
+“Verification addendum” at the end): in the operator’s exact repro the
+composition pipeline is COLD, not hot.</strong> The default state has no
+<code>documentRendererMode</code>, which defaults to <code>&quot;editor&quot;</code>
+(<code>document-renderer-mode/model.mjs:11-13</code>, wired at
+<code>index.typeroof.jsx:334-337</code>); the viewer widget tree is never
+constructed (activationTest <code>showViewerActivationTest</code>,
+<code>index.typeroof.jsx:373-379</code>, destroy/create semantics at
+<code>component.mjs:1287-1330</code>), so nothing subscribes, <code>_hasDemand</code> is
+false for every textblock, and <code>_composeCurrent</code> bails before any
+segmentation, shaping or algorithm work
+(<code>composition-controller.ts:385-387, :416-419</code>). This is enforced by a
+behavior test (<code>lib/js/tests/text-composition/index.test.mjs:215-248</code>:
+switching to “editor” mode drops publications to 0 and an edit keeps
+them at 0). With “Compose Text in Editor” OFF, the editor plugin is
+absent too — <strong>zero composition demand anywhere in the repro.</strong></p>
+<p>The lag in the repro therefore comes from the <strong>unconditional per-tick
+overheads</strong> the branch adds to every state-change cycle, not from the
+composition pipeline. Ranked for the repro scenario (default document):</p>
+<ol>
+<li><strong>Hyphenation language walk once per tick</strong> — operator-verified as
+a big improvement when returning early unconditionally.
+<code>requireHyphenationPatternsCoherenceFn</code> runs the full recursive
+TypeSpec-tree + style-patch walk whenever <code>typeSpec</code> is a draft
+(every axis edit is; <code>index.typeroof.jsx:235-275</code>). CORRECTED
+(2026-10-08, second operator challenge): steady-state changes go
+<strong>sync-first</strong> (<code>_updateState</code> → <code>_syncMetamorphoseState</code>,
+<code>shell.mjs:1628-1647</code>) and the async double-pass only happens on
+initial load (<code>_initState</code>, <code>shell.mjs:942-952</code>), on font
+install/review (<code>_requireReviewResourcesFlag</code>, <code>shell.mjs:615, :1057, :1170</code>), or when the sync pass raises a deliberate
+ResourceResolve error (<code>shell.mjs:1642-1666</code>). A wght tick hits none
+of these → the walk runs <strong>once</strong> per tick, and there is no ×2
+coherence multiplier in steady state. Languages don’t change on an
+axis move — the walk’s result is identical every tick.</li>
+<li><strong><code>_driveComposition</code> ×2 per textblock per UI update cycle, even
+with zero demand</strong> — fires on element update AND scope settle
+(<code>document-nodes-meta/index.mjs:809-880</code>), each building a
+<code>_compositionSource()</code> (~3 root-depth <code>getEntry</code> walks + string join
+<ul>
+<li>allocations) that is discarded at the gate. The whole-document
+scope cascade (all 11 TypeSpec scopes + 10 document-node scopes +
+~44 patched style-link scopes rebuild per origin-typeSpec tick —
+mechanism pre-existing on main) makes this fire per textblock per
+tick.</li>
+</ul>
+</li>
+<li><strong>+2 property generators per TypeSpec scope build</strong>
+(<code>properties-generators.mjs:48-120, :664-665</code>; ~77 model gets/tick),
+<strong>+2 struct fields on TypeSpecModel</strong> (<code>type-spec/models.mjs:497-501</code>,
+one a dynamic struct), <strong>+2 registered generic properties</strong>
+(<code>registered-properties.mjs:419-433</code>) — axis-independent constants.</li>
+<li>On main, an axis tick costs the (pre-existing, unchanged) scope
+cascade + PM styler + viewer render — items 1–3 are the branch’s
+net-new delta.</li>
+</ol>
+<p><strong>What only applies to <code>viewer</code>/<code>compare</code> modes</strong> (not the repro):
+composition is engaged by default there (unset algorithm ⇒ controller
+fallback <code>?? &quot;TextCompositionAlgorithmGreedyRaggedModel&quot;</code>,
+<code>composition-controller.ts:812-813</code>; the registered default is the
+EMPTY/inherit struct, <code>registered-properties.mjs:426-433</code>), and every
+wght tick is a full recompose of every textblock: the new axis location
+changes the <code>axesKey</code> ingredient (<code>composition-controller.ts:803, :890, :915, :1096-1169</code>), so the input-equality filter cannot skip;
+measurement caches keyed by location all miss and the 32-entry hbFont
+LRU (<code>measurer.ts:93, :157</code>) thrashes continuously during a drag; then
+publish + viewer span-DOM re-application. Tasks cancel-and-reschedule
+per <code>sourceChanged</code> (<code>composition-controller.ts:389-476</code>), but
+cancellation only acts at yield points.</p>
+<p>Verified mode verdicts (details below):</p>
+<ul>
+<li><strong>“Compose Text in Editor” OFF: the editor does zero composition
+work</strong> (plugin absent — no subscriptions, decorations, StateField,
+plugin view, or per-transaction hooks). With the viewer also off
+(mode “editor”), no composition work runs anywhere.</li>
+<li><strong>“None (Browser)” selected (with demand, i.e. viewer/compare mode or
+compose-in-editor ON): no segmentation, measurement, or algorithm
+runs</strong> — the None gate bails right after
+<code>nodePropertiesPayload.getProperties()</code>
+(<code>composition-controller.ts:731-746</code>) and steady-state produces no
+publications. But it is <strong>not</strong> zero recurring work: per
+<code>sourceChanged</code> an async controller task still resolves the full
+nodeProperties scope per textblock before bailing; and with
+compose-in-editor ON, the editor plugin still pays an O(document)
+textblock walk in <code>_syncSubscriptions</code> plus StateField map-through on
+every transaction (<code>composition-plugin.ts:272-298, :107-132, :366-384, :413-441</code>).</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-per-tick-causal-chain-wght-drag-editor-flag-off-default-doc" class="heading_anchor" href="#1-per-tick-causal-chain-wght-drag-editor-flag-off-default-doc" aria-hidden="true">#</a>1. Per-tick causal chain (wght drag, editor flag OFF, default doc)</h3>
+<ol>
+<li>Axis UI writes <code>axesLocations</code> → one shell state transaction per
+change (pre-existing mechanism, unchanged by the branch).</li>
+<li>Root metamorphose: <strong>sync-first</strong> (<code>_updateState</code> tries
+<code>_syncMetamorphoseState</code> and only falls back to the async pass on a
+deliberate ResourceResolve error or the review-resources flag,
+<code>shell.mjs:1628-1666</code>) — one metamorphose per steady-state tick.
+<code>typeSpec</code> is a draft → <code>requireHyphenationPatternsCoherenceFn</code> does
+NOT early-return (the 55bf4954 fix only skips document-only edits)
+→ full recursive TypeSpec-tree + style-patch language walk, <strong>once
+per tick</strong> (<code>index.typeroof.jsx:235-275</code>). Language tags are
+unchanged by an axis move — the walk’s result is identical every
+tick. (The async double-pass is real but only on the initial-load
+path — <code>_initState</code> always goes through <code>_asyncMetamorphoseState</code>,
+<code>shell.mjs:942-952</code> — and on font install/review or a genuinely
+missing dependency.)</li>
+<li>Scope cascade (mechanism 100% pre-existing, verified via
+<code>git diff fontbureau/main...HEAD</code>): root <code>TypeSpecLiveProperties</code>
+rebuild → <code>@parentProperties</code> identity cascade → <strong>all 11 TypeSpec
+scopes rebuild</strong> (default doc: 11 TypeSpec nodes, 10 block-level
+document nodes, ~12 style-mark instances), each running now <strong>14</strong>
+property generators (12 on main; <code>textCompositionGen</code> +
+<code>hyphenationGen</code>, <code>properties-generators.mjs:48-120</code>, registered
+:664-665, add ~7 model gets/scope, axis-independent constant), plus
+~44 patched-scope builds for inherited style links.</li>
+<li><code>DocumentNodeProperties</code> scope rebuilds →
+<code>_scopeSettled</code>/<code>update</code> → <code>_driveComposition()</code> per textblock,
+<strong>twice per cycle</strong> (acknowledged “acceptable”,
+<code>document-nodes-meta/index.mjs:809-880</code>), each building a
+<code>_compositionSource()</code> (~3 root-depth <code>getEntry</code> walks + string
+join) that is used only for a null-check when undemanded — the
+parked suspect #2 from
+<code>2026-10-06-2252-type-stage-perf-regression-viewer-inactive.md</code>.
+With viewer demand, <code>sourceChanged</code> → <code>_composeCurrent</code> → cancel +
+reschedule per textblock.</li>
+<li>The compose task (demand exists via the viewer): <code>getProperties()</code> →
+None gate → ingredients compare → <code>axesKey</code> differs → full pipeline:
+<code>_buildInlineItems</code> (:772), logical paragraphs (:780), leaf style
+resolution (:898-930), hyphenation (:1193-1204), <strong>HarfBuzz shaping
+per segment at the new axis location</strong> (:1233-1253) — measurement
+caches keyed by <code>axesKey</code>, so a drag = miss storm + hbFont LRU
+eviction churn — algorithm (default GreedyRagged), publish
+(:1637-1658), viewer DOM re-application.</li>
+<li>Editor (flag OFF): normal pre-existing cost only — ~10 block +
+~12 mark stylers rewrite styles (incl. rebuilt
+<code>font-variation-settings</code> strings) per tick
+(<code>type-spec.typeroof.jsx:305-586</code>, unchanged by branch), PM
+mutation-observation/readDOMChange parse of styler-mutated blocks.
+The branch’s editor-integration deltas here are net <em>churn
+reductions</em> (<code>isStylerOwnedAttr</code> <code>html-attrs.ts:10-20</code>, childList
+<code>ignoreMutation</code> <code>integration.typeroof.jsx:452-472</code>, <code>selectionSet</code>
+guard :1429-1436) — no spurious transactions on style-only changes.</li>
+</ol>
+<h3><a id="2-net-new-per-tick-costs-vs-main-ranked-default-document" class="heading_anchor" href="#2-net-new-per-tick-costs-vs-main-ranked-default-document" aria-hidden="true">#</a>2. Net-new per-tick costs vs main, ranked (default document)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Cost</th>
+<th>Where</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Hyphenation language walk once per tick</strong> (typeSpec is a draft on axis edits, so the 55bf4954 early-return does not fire)</td>
+<td><code>index.typeroof.jsx:235-275</code></td>
+<td>Result identical every tick (languages don’t change); full TypeSpec-tree + style-patch walk with per-node allocations. <strong>Operator-verified: early-returning unconditionally is a big improvement</strong>. Steady state is sync-first — NO ×2 (see correction in Summary #1)</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Async double-pass (boot/fonts only)</strong></td>
+<td><code>shell.mjs:942-952,1487-1490,1556-1563,1628-1666</code></td>
+<td><code>_initState</code> + font install/review run metamorphose twice (async resolve window + sync pass) with all root coherences firing in both — affects initial load and font changes, NOT the wght tick</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong><code>_driveComposition</code> discarded-source overhead</strong> (×2 per textblock per cycle: scope settle + update; fires even with ZERO demand)</td>
+<td><code>document-nodes-meta/index.mjs:809-880</code></td>
+<td>~3 root-depth <code>getEntry</code> walks + string join per firing; parked 2026-10-07, accepted then as sub-ms — fires on the axis-drag path too</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>[viewer/compare modes only] Full viewer composition re-run per textblock per tick</strong> (segment → hyphenate → HarfBuzz re-measure at new location → algorithm → publish → viewer span DOM)</td>
+<td><code>composition-controller.ts:722-1253</code>, demand via <code>viewer.typeroof.jsx:340</code></td>
+<td>NOT active in the repro (editor mode, zero demand — see addendum). Axis change invalidates the <code>axesKey</code> ingredient for every textblock; measurement caches all miss; hbFont LRU (32 locations/font) thrashes during drags</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>+2 property generators per TypeSpec scope build</strong></td>
+<td><code>properties-generators.mjs:48-120,:664-665</code></td>
+<td>~77 model gets/tick (11 scopes); constant, axis-independent; also hits ramp layout</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>+2 struct fields on TypeSpecModel</strong> (dynamic struct + hyphenation struct)</td>
+<td><code>type-spec/models.mjs:497-501</code></td>
+<td>Small per-tick constant (unchanged fields carry by identity); bigger one-off costs. Correction to prior research: added to TypeSpecModel only, NOT StylePatchTypeModel</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Editor integration deltas</td>
+<td><code>integration.typeroof.jsx</code>, <code>html-attrs.ts</code></td>
+<td>Net <strong>negative</strong> (churn fixes)</td>
+</tr>
+</tbody>
+</table>
+<h3><a id="3-mode-verdicts-per-change-work-editor-side-unless-noted" class="heading_anchor" href="#3-mode-verdicts-per-change-work-editor-side-unless-noted" aria-hidden="true">#</a>3. Mode verdicts (per-change work, editor-side unless noted)</h3>
+<table>
+<thead>
+<tr>
+<th>Work item</th>
+<th>Flag OFF</th>
+<th>ON + None</th>
+<th>ON + algorithm</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Composition plugin in PM plugins</td>
+<td>no (<code>integration:1110-1123</code>)</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Editor demand (observe/subscribe)</td>
+<td>no</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Editor StateField map-through / plugin view update / O(doc) <code>_syncSubscriptions</code> walk</td>
+<td>n/a</td>
+<td>yes, per transaction</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Controller task per <code>sourceChanged</code></td>
+<td>yes (viewer demand)</td>
+<td>yes: <code>getProperties()</code> → None gate bail</td>
+<td>yes, full pipeline</td>
+</tr>
+<tr>
+<td>Segmentation / measurement / algorithm</td>
+<td>yes (viewer)</td>
+<td><strong>no</strong></td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Publications</td>
+<td>yes (viewer)</td>
+<td>only on engage→None transition (null)</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Editor DOM decoration work</td>
+<td>no</td>
+<td>transition only</td>
+<td>per publication</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Flag OFF: editor truly composition-free.</strong> The regression comes
+from the layout still composing for the viewer.</li>
+<li><strong>ON + None: NOT zero recurring work</strong> (editor plugin walks the
+document per transaction; controller resolves the full properties
+scope per textblock per change before the None gate).</li>
+<li><strong>Viewer + None (regardless of flag): no deep composition</strong>, but the
+per-textblock scope-resolution task still runs per change.</li>
+</ul>
+<h3><a id="4-facts-about-the-default-document" class="heading_anchor" href="#4-facts-about-the-default-document" aria-hidden="true">#</a>4. Facts about the default document</h3>
+<ul>
+<li>11 TypeSpec nodes (root, section, h1-h3, paragraphs t1/t2/t2greek/
+t2russian), 3 style patches, 10 block-level document nodes
+(1 section + 3 headings + 6 paragraphs), ~12 generic-style marks.</li>
+<li>No <code>textCompositionAlgorithm</code> anywhere in
+<code>lib/assets/type-stage-initial-state.json</code> → resolves to the
+controller fallback <code>TextCompositionAlgorithmGreedyRaggedModel</code>
+(engaged), NOT to None.</li>
+<li>Default <code>composeInEditor</code> is TRUE since HEAD 67f3ce9f (type-stage,
+optional; ramp: always on, no UI; grid: no feature).</li>
+</ul>
+<h3><a id="5-prior-related-findings-carried-forward" class="heading_anchor" href="#5-prior-related-findings-carried-forward" aria-hidden="true">#</a>5. Prior related findings (carried forward)</h3>
+<ul>
+<li><code>2026-10-06-2252-type-stage-perf-regression-viewer-inactive.md</code>:
+suspects #1 (hyphenation coherence — fixed for document-only edits in
+55bf4954, still runs on typeSpec drafts) and #2 (<code>_driveComposition</code>
+discarded-source overhead — parked, now on the hot path again).</li>
+<li>Milestone-5 findings (ROADMAP): hbFont LRU thrash
+(<code>HBFONT_LOCATIONS_CAP = 32</code> vs hundreds of distinct locations) —
+on an axis drag every tick is a new location, so steady-state
+dragging reproduces the thrash continuously.</li>
+<li>Plan <code>2026-10-07-1223-prosemirror-composition-decorations</code>
+(concluded): issue C (readDOMChange replace-churn from styler-owned
+<code>lang</code>) fixed; editor integration deltas are churn reductions, not
+costs.</li>
+</ul>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx:326-344</code> — unconditional per-textblock viewer demand (subscribe)</li>
+<li><code>lib/js/components/layouts/type-stage/text-composition/composition-controller.ts:734-746</code> — None gate (after <code>getProperties()</code>)</li>
+<li><code>composition-controller.ts:812-813</code> — default algorithm fallback = GreedyRagged when unset</li>
+<li><code>composition-controller.ts:803,890,915,1096-1169</code> — <code>axesKey</code> ingredient (axis change = full invalidation)</li>
+<li><code>composition-controller.ts:1233-1253</code> — HarfBuzz shaping per segment; <code>measurer.ts:93,157</code> — 32-entry hbFont LRU</li>
+<li><code>composition-controller.ts:389-476</code> — cancel/reschedule scheduling per <code>sourceChanged</code></li>
+<li><code>lib/js/components/layouts/type-stage/index.typeroof.jsx:331,:795-801</code> — <code>composeInEditor</code> model field + checkbox</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:1012-1023,:1110-1123</code> — flag gates ONLY the editor plugin</li>
+<li><code>lib/js/components/prosemirror/composition-plugin.ts:272-298,:107-132,:366-384,:413-441</code> — ON+None residual editor costs</li>
+<li><code>lib/js/components/layouts/type-stage/index.typeroof.jsx:235-275</code> — hyphenation language walk (runs on typeSpec drafts)</li>
+<li><code>lib/js/shell.mjs:1628-1666</code> — steady-state change path: sync-first, async double-pass only on missing-dependency/review flag</li>
+<li><code>lib/js/shell.mjs:942-952,:1487-1490,:1556-1563</code> — async double-pass (initial load / font review); primed patterns draft</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs:809-880</code> — <code>_driveComposition</code> per update + scope settle</li>
+<li><code>lib/js/components/layouts/type-stage/properties-generators.mjs:48-120,:664-665</code> — new per-scope generators</li>
+<li><code>lib/js/components/registered-properties.mjs:426-433</code> — registered default = EMPTY (inherit) struct</li>
+<li><code>lib/js/components/ui-manual-axis-locations.mjs:373,416</code> — axis UI change events (pre-existing)</li>
+</ul>
+<h2><a id="verification-addendum-2026-10-08-operator-challenge-if-viewer-is-off-that-must-not-be" class="heading_anchor" href="#verification-addendum-2026-10-08-operator-challenge-if-viewer-is-off-that-must-not-be" aria-hidden="true">#</a>Verification addendum (2026-10-08, operator challenge: “if viewer is off that must not be”)</h2>
+<p><strong>Verified: with the viewer off, the pipeline does NOT run.</strong> Evidence:</p>
+<ol>
+<li><strong>Default mode is “editor”.</strong> The default state JSON has no
+<code>documentRendererMode</code>; the model field uses
+<code>DocumentRendererModeDfltEditorModel</code> (<code>defaultValue = &quot;editor&quot;</code>,
+<code>lib/js/components/document-renderer-mode/model.mjs:11-13</code>), wired
+into <code>TypeStageModel</code> at <code>index.typeroof.jsx:334-337</code>. (A
+<code>DocumentRendererModeDfltCompareModel</code> variant exists at :15-16 but
+is not the type-stage default.)</li>
+<li><strong>An inactive viewer is destroyed, not just hidden.</strong> The viewer
+widget’s <code>activationTest: showViewerActivationTest</code>
+(<code>index.typeroof.jsx:373-379</code>, wiring :735-745) is evaluated in
+<code>_provisionWidgets</code> (<code>basics/component.mjs:1298-1330</code>):
+<code>!shouldBeActive &amp;&amp; isActive</code> → <code>_destroyWidget</code>
+(<code>component.mjs:1170</code>, :1325). Destruction cascades to the
+attachments; each attachment’s <code>destroy()</code> calls
+<code>_compositionUnsubscribe()</code> + <code>_compositionUnobserve()</code>
+(<code>viewer.typeroof.jsx:507-510</code>), releasing demand.</li>
+<li><strong>Demand gate.</strong> With no subscribers, <code>_hasDemand</code> is false and
+<code>_composeCurrent</code> returns before any work
+(<code>composition-controller.ts:385-387, :416-419</code>); <code>sourceChanged</code>
+(<code>:472-476</code>) hits the same gate.</li>
+<li><strong>Behavior tests enforce it.</strong>
+<code>lib/js/tests/text-composition/index.test.mjs:215-248</code> (“editor-only
+drops every composition result and viewer demand restores it”):
+mode → “editor” ⇒ <code>composition@</code> registrations drop to 0; a document
+edit in editor mode keeps 0; mode → “viewer” restores them. Also
+:1552 (“editor mode: zero composition demand”) in the lazy-reveal
+test.</li>
+</ol>
+<p><strong>Consequence for the repro:</strong> in the reported scenario (default state
+⇒ mode “editor”, plus “Compose Text in Editor” turned OFF) there is
+zero composition demand anywhere; no segmentation, shaping, measuring
+or algorithm work runs. The felt lag must be attributed to the
+unconditional per-tick overheads (ranked table #1–#3, #5–#7), of which
+the hyphenation language walk is operator-confirmed as a major term.
+The earlier headline of this document (“viewer demand keeps the
+pipeline hot”) applies only to <code>viewer</code>/<code>compare</code> modes and has been
+corrected above.</p>
+<h3><a id="second-correction-2026-10-08-steady-state-is-sync-first-not-asyncsync" class="heading_anchor" href="#second-correction-2026-10-08-steady-state-is-sync-first-not-asyncsync" aria-hidden="true">#</a>Second correction (2026-10-08): steady state is sync-first, not async+sync</h3>
+<p>The operator’s model is correct: <code>_updateState</code>
+(<code>shell.mjs:1628-1666</code>) tries <code>_syncMetamorphoseState(draft)</code> FIRST
+and only falls back to <code>_asyncMetamorphoseState</code> when (a)
+<code>_requireReviewResourcesFlag</code> is set (initially true, font
+install/activation, <code>requireReviewResources</code> API — <code>shell.mjs:615, :1057, :1170</code>) or (b) the sync pass raises a deliberate
+ResourceResolve error. A wght axis tick does none of these → <strong>one
+metamorphose, coherences (incl. the hyphenation walk) run ONCE per
+tick</strong>. The double-pass (async resolve window + final sync pass, with
+coherences firing in both since the <code>_initState</code> draft-passing change,
+<code>shell.mjs:942-952</code>) is real but confined to the initial-load path and
+font/review cycles. The earlier “twice per cycle”/“×2 multiplier”
+claims in this document (inherited from
+<code>2026-10-06-2252-type-stage-perf-regression-viewer-inactive.md</code>, which
+conflated the <code>_initState</code> boot path with the steady-state change
+path) have been corrected; that older document carries the same error.
+Note: <code>_driveComposition</code> firing ×2 per textblock per cycle (scope
+settle + update) is a different, still-valid doubling inside the UI
+update cascade, not the metamorphose.</p>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ul>
+<li><strong>Weights are unmeasured</strong> (perf suite off-limits). #1 is the
+structural suspect, but a puppeteer probe (debug-with-puppeteer
+harness, allowed) timing state transactions / counting HarfBuzz shape
+calls during a scripted axis drag would confirm the split between
+pipeline re-run, hyphenation walk, and cascade overhead.</li>
+<li><strong>Event cadence</strong>: <code>ui-manual-axis-locations.mjs</code> listens to
+<code>'change'</code> — for range inputs that is release-only in Chrome but
+continuous in some browsers; the number input may fire continuously.
+The repro’s lag profile (per stop vs continuous) is worth pinning in
+the probe.</li>
+<li><strong>Engagement semantics</strong>: empty algorithm struct currently means
+“default algorithm” (GreedyRagged) at the controller fallback, i.e.
+the default document composes without any opt-in. Whether unset
+should ship as None is a design decision, but it directly controls
+whether this regression exists out of the box.</li>
+<li><strong>None-gate placement</strong>: the gate needs the resolved
+<code>textCompositionAlgorithm/algorithm</code> value, which today requires the
+full <code>getProperties()</code> scope resolution per textblock per change.
+Whether the algorithm key can be known cheaper (e.g. as part of the
+source/ingredients identity) is a design question for the planning
+phase.</li>
+<li><strong>Viewer demand granularity</strong>: the viewer subscribes per constructed
+attachment whether or not its pane is visible/primary in the current
+type-stage mode; whether demand should follow visibility is open.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

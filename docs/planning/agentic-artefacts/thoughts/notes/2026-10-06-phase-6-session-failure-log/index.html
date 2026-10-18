@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="phase-6-session-failure-log-2026-10-06" class="heading_anchor" href="#phase-6-session-failure-log-2026-10-06" aria-hidden="true">#</a>Phase 6 session failure log (2026-10-06)</h1>
+<p>Postmortem of the overnight Phase 6 attempt of
+<code>docs/planning/agentic-artefacts/thoughts/plan/2026-10-05-1554-cycle-1-performance-demand-measure-tracking.md</code>.
+Reconstructed from <code>~/.local/share/goose/sessions/sessions.db</code>,
+session <code>20261005_18</code> (goose v1.52.0, openrouter <code>openai/gpt-5.6-sol</code>).</p>
+<h2><a id="outcome" class="heading_anchor" href="#outcome" aria-hidden="true">#</a>Outcome</h2>
+<p>Phase 6 made <strong>zero progress</strong>. Working tree is clean; all Phase 1–5
+commits (<code>a25ca18f</code>…<code>21a57d0b</code>) are intact. No benchmark was ever
+started; no result artefacts were produced. Nothing needs recovery.</p>
+<h2><a id="timeline-local-time-utc2" class="heading_anchor" href="#timeline-local-time-utc2" aria-hidden="true">#</a>Timeline (local time, UTC+2)</h2>
+<ul>
+<li>22:12–00:39 — Phases 1–5 plus the cooperative-scheduler starvation
+fix committed; each commit green (suite/lint/typecheck).</li>
+<li>00:42 — operator approved starting Phase 6 (“okok proceed”).</li>
+<li>00:42–01:08 — ~414 session messages of a non-progressing loop:
+the model repeatedly announced “Starting Phase 6 …” and re-ran the
+same inspection batch. <code>execute_typescript</code> calls using
+<code>Developer.shell</code> began returning success with an empty payload
+(<code>{&quot;errors&quot;: []}</code>, empty stdout). The model treated every empty
+result as transient and retried the same call shape instead of
+switching to the direct <code>shell</code> tool or stopping to report.
+Repeated context compactions (33 compaction-related messages) reset
+task state, so each turn re-started the audit from scratch.</li>
+<li>01:08–07:33 — ~6.4 hours with zero persisted messages: the session
+hung (stalled provider request), no timeout/heartbeat fired. This —
+not benchmarking — was the dominant time sink.</li>
+<li>07:33–07:37 — the loop briefly resumed (~50 identical messages).</li>
+<li>07:37 — operator intervened (“that was alll night now …”).</li>
+</ul>
+<h2><a id="root-causes" class="heading_anchor" href="#root-causes" aria-hidden="true">#</a>Root causes</h2>
+<ol>
+<li><strong>Tool degradation without adaptation.</strong> Mid-session,
+<code>execute_typescript</code>/<code>Developer.shell</code> results turned empty while
+reporting success. The model retried the identical shape hundreds
+of times. Missing guardrail: after N empty/identical tool results,
+switch tool or stop and ask.</li>
+<li><strong>Compaction churn.</strong> Frequent compaction during the loop erased
+Phase-6 working state; the re-read-then-re-announce pattern
+consumed the rest of the context, triggering more compaction.</li>
+<li><strong>Silent multi-hour hang.</strong> No progress heartbeat, no turn timeout;
+6.4 h elapsed with nothing persisted.</li>
+<li><strong>Phase 6 scope is structurally too heavy for one session.</strong> The
+plan’s full matrix is 36 steady scenarios x (fresh 1087-node
+Wikipedia fixture load + 5 warmups + 30 timed ops) + 18 transition
+scenarios + 45 cold loads + 2 CDP profiles — plausibly 2–4 h even
+when everything works — and the harness only persists results at
+the end of a run, so a mid-run failure yields nothing.</li>
+</ol>
+<h2><a id="salvageable-assets" class="heading_anchor" href="#salvageable-assets" aria-hidden="true">#</a>Salvageable assets</h2>
+<ul>
+<li><code>scripts/perf-composition</code> (+ <code>-lib.mjs</code>, <code>-page.mjs</code>): working
+harness with a <code>quick</code> suite (6 representative scenarios) next to
+the exhaustive <code>full</code> suite.</li>
+<li><code>scripts/perf-composition.baseline.json</code>: pre-Cycle-1 “before”
+numbers (commit <code>521db920</code>): typing ratio 1.017, recompose 1.266.</li>
+<li><code>artifacts/perf-composition/2026-10-05T17-15-49-286Z/</code> and
+<code>…T19-40-04-367Z/</code>: before <code>.cpuprofile</code> pairs (cold editor fit,
+warm viewer fit recompose).</li>
+</ul>
+<h2><a id="rules-for-the-phase-6-retry" class="heading_anchor" href="#rules-for-the-phase-6-retry" aria-hidden="true">#</a>Rules for the Phase 6 retry</h2>
+<ul>
+<li>Never run the <code>full</code> suite inside an interactive agent session;
+use <code>quick</code> (or a further reduced sampling) for the demand-aware
+reprofile, and run any heavy suite detached (<code>nohup</code>, progress log
+file) with the agent polling, not blocking.</li>
+<li>Make the harness persist per-scenario JSON incrementally so partial
+runs survive.</li>
+<li>Split Phase 6: 6a = quick demand-aware reprofile + structural
+zero-work verification + report; 6b = baseline write + ROADMAP
+update, only after operator review of 6a.</li>
+<li>Agent rule: two consecutive empty/identical tool results → switch
+tool or stop and report; never retry the same shape a third time.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

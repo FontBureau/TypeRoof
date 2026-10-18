@@ -3,7 +3,6 @@
         "languageTag": {
             "language": "en"
         },
-        "lineLength": "53.0",
         "baseFontSize": "14",
         "textColor": {
             "instance": {
@@ -26,21 +25,35 @@
             [
                 "headings",
                 {
+                    "leading": {
+                        "instance": {
+                            "leading": "1.05"
+                        },
+                        "leadingAlgorithmTypeKey": "ManualLeading"
+                    },
+                    "textCompositionAlgorithm": {
+                        "instance": {
+                            "potentials": "robotoFlexHeadline",
+                            "potentialsAnchoring": "off",
+                            "lastLineHandling": "fill",
+                            "underfullTreatment": "run"
+                        },
+                        "textCompositionAlgorithmTypeKey": "TextCompositionAlgorithmGreedyFitModel"
+                    },
                     "children": [
                         [
                             "h1",
                             {
                                 "blockMargins": {
-                                    "start": {
-                                        "unit": "baseEm",
-                                        "value": "2.00000"
-                                    },
                                     "end": {
-                                        "unit": "lineHeightAfter",
-                                        "value": "1.00000"
+                                        "value": "1.00000",
+                                        "unit": "lineHeightAfter"
                                     }
                                 },
-                                "relativeFontSize": "4.571428571",
+                                "relativeFontSize": {
+                                    "value": "4.571428571",
+                                    "unit": "baseEm"
+                                },
                                 "autoOPSZ": "1",
                                 "axesLocations": [["wght", "700"]],
                                 "label": "Heading 1"
@@ -49,12 +62,10 @@
                         [
                             "h2",
                             {
-                                "blockMargins": {
-                                    "start": {
-                                        "value": "0.00000"
-                                    }
+                                "relativeFontSize": {
+                                    "value": "1.785714286",
+                                    "unit": "baseEm"
                                 },
-                                "relativeFontSize": "1.785714286",
                                 "autoOPSZ": "1",
                                 "axesLocations": [["wght", "600"]],
                                 "label": "Heading 2"
@@ -63,7 +74,10 @@
                         [
                             "h3",
                             {
-                                "relativeFontSize": "1.285714286",
+                                "relativeFontSize": {
+                                    "value": "1.285714286",
+                                    "unit": "baseEm"
+                                },
                                 "autoOPSZ": "1",
                                 "axesLocations": [["wght", "550"]],
                                 "label": "Heading 3"
@@ -76,25 +90,102 @@
             [
                 "paragraphs",
                 {
+                    "openTypeFeatures": [["onum", "1"]],
+                    "textCompositionAlgorithm": {
+                        "textCompositionAlgorithmTypeKey": "TextCompositionAlgorithmGreedyFitModel"
+                    },
                     "children": [
                         [
                             "t1",
                             {
-                                "relativeFontSize": "1.285714286",
+                                "relativeFontSize": {
+                                    "value": "1.285714286",
+                                    "unit": "baseEm"
+                                },
                                 "autoOPSZ": "1",
+                                "children": [
+                                    [
+                                        "ul-list",
+                                        {
+                                            "horizontalLayout": {
+                                                "instance": {
+                                                    "inlineMargins": {
+                                                        "start": {
+                                                            "value": "2",
+                                                            "unit": "en"
+                                                        }
+                                                    }
+                                                },
+                                                "horizontalLayoutAlgorithmTypeKey": "ManualHorizontalLayoutModel"
+                                            },
+                                            "excludeFromFallback": "1",
+                                            "label": "Unordered List"
+                                        }
+                                    ],
+                                    [
+                                        "ol-list",
+                                        {
+                                            "horizontalLayout": {
+                                                "instance": {
+                                                    "inlineMargins": {
+                                                        "start": {
+                                                            "value": "3.2",
+                                                            "unit": "en"
+                                                        }
+                                                    }
+                                                },
+                                                "horizontalLayoutAlgorithmTypeKey": "ManualHorizontalLayoutModel"
+                                            },
+                                            "excludeFromFallback": "1",
+                                            "label": "Ordered List"
+                                        }
+                                    ],
+                                    [
+                                        "li",
+                                        {
+                                            "blockMargins": {
+                                                "end": {
+                                                    "value": "0.00000",
+                                                    "unit": "lineHeight"
+                                                }
+                                            },
+                                            "openTypeFeatures": [["pnum", "1"]],
+                                            "label": "List Item"
+                                        }
+                                    ]
+                                ],
                                 "label": "Text 1"
                             }
                         ],
                         [
                             "t2",
                             {
-                                "relativeFontSize": "1",
+                                "blockMargins": {
+                                    "end": {
+                                        "value": "0.00000",
+                                        "unit": "em"
+                                    }
+                                },
+                                "relativeFontSize": {
+                                    "value": "1",
+                                    "unit": "baseEm"
+                                },
                                 "autoOPSZ": "1",
                                 "label": "Text 2"
                             }
                         ]
                     ],
-                    "label": "Paragraphs"
+                    "label": "Paragraphs",
+                    "intentStyleLinks": [
+                        [
+                            "italic",
+                            {
+                                "stylePatch": "serif italic",
+                                "mode": "link"
+                            }
+                        ]
+                    ],
+                    "activeFontKey": "from-url AmstelvarA1 Roman Version_0-001"
                 }
             ],
             [
@@ -103,13 +194,172 @@
                     "backgroundColor": {
                         "instance": {
                             "L": "100.00000",
-                            "C": "60.00000",
-                            "H": "0.4100000",
+                            "C": "0.4000000",
+                            "H": "0.41000",
                             "alpha": "57.00000"
                         },
                         "colorTypeKey": "OKLCH"
                     },
                     "label": "Generic"
+                }
+            ],
+            [
+                "section",
+                {
+                    "blockMargins": {
+                        "start": {
+                            "value": "2.00000",
+                            "unit": "baseEm"
+                        }
+                    },
+                    "horizontalLayout": {
+                        "instance": {
+                            "minLineLength": "33",
+                            "minPadding": "5",
+                            "columnGutter": {
+                                "instance": {
+                                    "a": {
+                                        "columnWidth": "65",
+                                        "gutter": "3"
+                                    },
+                                    "b": {
+                                        "columnWidth": "40",
+                                        "gutter": "2"
+                                    },
+                                    "minGutter": "1.5",
+                                    "maxGutter": "3.5"
+                                },
+                                "columnGutterAlgorithmTypeKey": "linear"
+                            },
+                            "paddingRatioStart": "60.00000",
+                            "growColumns": {
+                                "mode": "false"
+                            },
+                            "columns": ["65", "65", "50", "40"]
+                        },
+                        "horizontalLayoutAlgorithmTypeKey": "HorizontalLayoutRunionModel"
+                    },
+                    "label": "Section"
+                }
+            ],
+            [
+                "sub-section",
+                {
+                    "noStyler": "1",
+                    "label": "Sub-Section"
+                }
+            ],
+            [
+                "references",
+                {
+                    "horizontalLayout": {
+                        "instance": {
+                            "minLineLength": "33",
+                            "minPadding": "5",
+                            "columnGutter": {
+                                "instance": {
+                                    "a": {
+                                        "columnWidth": "54",
+                                        "gutter": "2"
+                                    },
+                                    "b": {
+                                        "columnWidth": "33",
+                                        "gutter": "1.5"
+                                    }
+                                },
+                                "columnGutterAlgorithmTypeKey": "linear"
+                            },
+                            "paddingRatioStart": "60.00000",
+                            "growColumns": {
+                                "mode": "false"
+                            },
+                            "columns": ["65", "65", "54"]
+                        },
+                        "horizontalLayoutAlgorithmTypeKey": "HorizontalLayoutRunionModel"
+                    },
+                    "label": "References"
+                }
+            ],
+            [
+                "external-links",
+                {
+                    "horizontalLayout": {
+                        "instance": {
+                            "minLineLength": "33",
+                            "minPadding": "5",
+                            "paddingRatioStart": "60.00000",
+                            "growColumns": {
+                                "mode": "false"
+                            },
+                            "columns": ["166"]
+                        },
+                        "horizontalLayoutAlgorithmTypeKey": "HorizontalLayoutRunionModel"
+                    },
+                    "label": "External Links"
+                }
+            ],
+            [
+                "figcontent",
+                {
+                    "blockMargins": {
+                        "end": {
+                            "value": "0.00000",
+                            "unit": "em"
+                        }
+                    },
+                    "textAlign": "center",
+                    "backgroundColor": {
+                        "instance": {
+                            "L": "93.00000",
+                            "C": "0.0000000",
+                            "alpha": "100.00000"
+                        },
+                        "colorTypeKey": "OKLCH"
+                    },
+                    "label": "Figcontent"
+                }
+            ],
+            [
+                "blockquote",
+                {
+                    "blockMargins": {
+                        "end": {
+                            "value": "0.00000",
+                            "unit": "lineHeight"
+                        }
+                    },
+                    "horizontalLayout": {
+                        "instance": {
+                            "inlineMargins": {
+                                "start": {
+                                    "value": "5",
+                                    "unit": "en"
+                                },
+                                "end": {
+                                    "value": "3",
+                                    "unit": "en"
+                                }
+                            }
+                        },
+                        "horizontalLayoutAlgorithmTypeKey": "ManualHorizontalLayoutModel"
+                    },
+                    "label": "Blockquote"
+                }
+            ],
+            [
+                "intro-section",
+                {
+                    "textAlign": "left",
+                    "horizontalLayout": {
+                        "instance": {
+                            "minLineLength": "33",
+                            "minPadding": "5",
+                            "paddingRatioStart": "60.00000",
+                            "columns": ["65"]
+                        },
+                        "horizontalLayoutAlgorithmTypeKey": "HorizontalLayoutRunionModel"
+                    },
+                    "label": "intro"
                 }
             ]
         ],
@@ -138,13 +388,144 @@
                     "mode": "link",
                     "tag": "strong"
                 }
+            ],
+            [
+                "link",
+                {
+                    "stylePatch": "link",
+                    "mode": "link",
+                    "tag": "a"
+                }
+            ],
+            [
+                "italic link",
+                {
+                    "stylePatch": "italic link",
+                    "mode": "link",
+                    "tag": ""
+                }
+            ],
+            [
+                "bold italic link",
+                {
+                    "stylePatch": "bold italic link",
+                    "mode": "link",
+                    "tag": ""
+                }
+            ],
+            [
+                "link span",
+                {
+                    "stylePatch": "link",
+                    "mode": "link"
+                }
+            ],
+            [
+                "span",
+                {
+                    "stylePatch": "",
+                    "mode": "link"
+                }
+            ],
+            [
+                "italic link span",
+                {
+                    "stylePatch": "italic link",
+                    "mode": "link"
+                }
+            ],
+            [
+                "serif",
+                {
+                    "stylePatch": "serif",
+                    "mode": "link"
+                }
+            ],
+            [
+                "italic link serif",
+                {
+                    "stylePatch": "serif italic link",
+                    "mode": "link"
+                }
+            ],
+            [
+                "italic-lang-el-latn span",
+                {
+                    "stylePatch": "italic lang el-Latn",
+                    "mode": "link"
+                }
+            ],
+            [
+                "italic-lang-la span",
+                {
+                    "stylePatch": "italic lang-la",
+                    "mode": "link"
+                }
+            ],
+            [
+                "link span sup",
+                {
+                    "stylePatch": "sup link",
+                    "mode": "link"
+                }
+            ],
+            [
+                "italic link span sup",
+                {
+                    "stylePatch": "italic sup link",
+                    "mode": "link"
+                }
+            ],
+            [
+                "sup",
+                {
+                    "stylePatch": "sup",
+                    "mode": "link"
+                }
+            ],
+            [
+                "span sup",
+                {
+                    "stylePatch": "sup",
+                    "mode": "link"
+                }
             ]
         ],
         "markStyleLinks": [
             [
-                "strong",
+                "tag-em",
                 {
-                    "stylePatch": "bold",
+                    "stylePatch": "",
+                    "mode": "link"
+                }
+            ],
+            [
+                "tag-strong",
+                {
+                    "stylePatch": "",
+                    "mode": "link"
+                }
+            ],
+            [
+                "tag-a",
+                {
+                    "stylePatch": "",
+                    "mode": "link"
+                }
+            ],
+            [
+                "tag-sup",
+                {
+                    "stylePatch": "",
+                    "mode": "link"
+                }
+            ]
+        ],
+        "inlineNodesStyleLinks": [
+            [
+                "quote",
+                {
+                    "stylePatch": "serif italic",
                     "mode": "link"
                 }
             ]
@@ -199,9 +580,9 @@
                 "instance": {
                     "textColor": {
                         "instance": {
-                            "L": "60.00000",
-                            "C": "46.00000",
-                            "H": "0.6200000",
+                            "L": "33.00000",
+                            "C": "0.0900000",
+                            "H": "237.00000",
                             "alpha": "100.00000"
                         },
                         "colorTypeKey": "OKLCH"
@@ -209,13 +590,208 @@
                 },
                 "stylePatchTypeKey": "SimpleStylePatch"
             }
+        ],
+        [
+            "italic link",
+            {
+                "instance": {
+                    "styles": ["italic", "link"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "bold italic link",
+            {
+                "instance": {
+                    "styles": ["bold", "italic", "link"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "serif",
+            {
+                "instance": {
+                    "activeFontKey": "from-url AmstelvarA1 Roman Version_0-001"
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "serif italic",
+            {
+                "instance": {
+                    "activeFontKey": "from-url AmstelvarA1 Italic Version_0-001"
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "lang-la",
+            {
+                "instance": {
+                    "languageTag": {
+                        "language": "la",
+                        "script": "Latn"
+                    }
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "italic lang-la",
+            {
+                "instance": {
+                    "styles": ["serif italic", "lang-la"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "lang-el-Latn",
+            {
+                "instance": {
+                    "languageTag": {
+                        "language": "el",
+                        "script": "Latn"
+                    }
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "italic lang el-Latn",
+            {
+                "instance": {
+                    "styles": ["serif italic", "lang-el-Latn"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "serif italic link",
+            {
+                "instance": {
+                    "styles": ["link", "serif italic"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "sup",
+            {
+                "instance": {
+                    "relativeFontSize": {
+                        "value": "0.7",
+                        "unit": "baseEm"
+                    },
+                    "axesLocations": [
+                        [
+                            "GRAD",
+                            {
+                                "logicalValue": "number",
+                                "numericValue": "200"
+                            }
+                        ],
+                        [
+                            "wdth",
+                            {
+                                "logicalValue": "number",
+                                "numericValue": "120"
+                            }
+                        ]
+                    ]
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "italic sup link",
+            {
+                "instance": {
+                    "styles": ["italic", "sup link"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "sup link",
+            {
+                "instance": {
+                    "styles": ["link", "sup"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
         ]
     ],
-    "editingStylePatch": "./link",
     "proseMirrorSchema": {
         "nodes": [
             [
                 "section",
+                {
+                    "content": "block*",
+                    "group": "block",
+                    "tag": "section",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "references-section",
+                {
+                    "content": "block*",
+                    "group": "block",
+                    "tag": "section",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "external-links-section",
+                {
+                    "content": "block*",
+                    "group": "block",
+                    "tag": "section",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "sub-section",
                 {
                     "content": "block*",
                     "group": "block",
@@ -466,7 +1042,28 @@
                 }
             ],
             [
-                "list",
+                "ul-list",
+                {
+                    "content": "li+",
+                    "group": "block",
+                    "tag": "ul",
+                    "attrs": [
+                        [
+                            "htmlTag",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "ol-list",
                 {
                     "content": "li+",
                     "group": "block",
@@ -785,17 +1382,31 @@
                         ]
                     ]
                 }
+            ],
+            [
+                "introsection",
+                {
+                    "content": "block*",
+                    "group": "block",
+                    "tag": "section"
+                }
             ]
         ],
         "marks": [
             [
-                "strong",
+                "tag-strong",
                 {
                     "tag": "strong"
                 }
             ],
             [
-                "link",
+                "tag-em",
+                {
+                    "tag": "em"
+                }
+            ],
+            [
+                "tag-a",
                 {
                     "attrs": [
                         [
@@ -818,6 +1429,12 @@
                         ]
                     ],
                     "tag": "a"
+                }
+            ],
+            [
+                "tag-sup",
+                {
+                    "tag": "sup"
                 }
             ]
         ]
@@ -868,14 +1485,14 @@
         [
             "li-inline",
             {
-                "link": "/paragraphs/t1",
+                "link": "/paragraphs/t1/li",
                 "label": ""
             }
         ],
         [
             "li-block",
             {
-                "link": "/paragraphs/t1",
+                "link": "/paragraphs/t1/li",
                 "label": ""
             }
         ],
@@ -885,17 +1502,219 @@
                 "link": "/generic",
                 "label": ""
             }
+        ],
+        [
+            "section",
+            {
+                "link": "/section",
+                "label": ""
+            }
+        ],
+        [
+            "sub-section",
+            {
+                "link": "/sub-section",
+                "label": ""
+            }
+        ],
+        [
+            "references-section",
+            {
+                "link": "/references",
+                "label": ""
+            }
+        ],
+        [
+            "external-links-section",
+            {
+                "link": "/external-links",
+                "label": ""
+            }
+        ],
+        [
+            "link span sup",
+            {
+                "link": "",
+                "label": ""
+            }
+        ],
+        [
+            "italic link span sup",
+            {
+                "link": "",
+                "label": ""
+            }
+        ],
+        [
+            "span sup",
+            {
+                "link": "",
+                "label": ""
+            }
+        ],
+        [
+            "ul-list",
+            {
+                "link": "/paragraphs/t1/ul-list",
+                "label": ""
+            }
+        ],
+        [
+            "ol-list",
+            {
+                "link": "/paragraphs/t1/ol-list",
+                "label": ""
+            }
+        ],
+        [
+            "figcontent",
+            {
+                "link": "/figcontent",
+                "label": ""
+            }
+        ],
+        [
+            "blockquote",
+            {
+                "link": "/blockquote",
+                "label": ""
+            }
+        ],
+        [
+            "introsection",
+            {
+                "link": "/intro-section",
+                "label": ""
+            }
         ]
     ],
     "document": {
         "typeKey": "doc",
         "content": [
             {
-                "typeKey": "heading-1",
+                "typeKey": "introsection",
                 "content": [
                     {
-                        "typeKey": "text",
-                        "text": "Typography"
+                        "typeKey": "heading-1",
+                        "attrs": [
+                            [
+                                "htmlAttrs",
+                                {
+                                    "type": "string",
+                                    "string": ""
+                                }
+                            ]
+                        ],
+                        "content": [
+                            {
+                                "typeKey": "text",
+                                "text": "Wikipedia Demo—TypêRoof"
+                            }
+                        ]
+                    },
+                    {
+                        "typeKey": "paragraph",
+                        "attrs": [
+                            [
+                                "htmlAttrs",
+                                {
+                                    "type": "string",
+                                    "string": ""
+                                }
+                            ]
+                        ],
+                        "content": [
+                            {
+                                "typeKey": "text",
+                                "text": "This demo showcases our ambition to typeset complex documents using real-world content. To see it in action, click here: "
+                            },
+                            {
+                                "typeKey": "text",
+                                "marks": [
+                                    {
+                                        "typeKey": "generic-style",
+                                        "attrs": [
+                                            [
+                                                "data-style-name",
+                                                {
+                                                    "type": "string",
+                                                    "string": "link"
+                                                }
+                                            ],
+                                            [
+                                                "htmlTag",
+                                                {
+                                                    "type": "string",
+                                                    "string": "a"
+                                                }
+                                            ],
+                                            [
+                                                "htmlAttrs",
+                                                {
+                                                    "type": "string",
+                                                    "string": "[[\"rel\",\"mw:WikiLink\"],[\"href\",\"./Typography\"],[\"title\",\"Typography\"]]"
+                                                }
+                                            ]
+                                        ]
+                                    }
+                                ],
+                                "text": "Typography"
+                            }
+                        ]
+                    },
+                    {
+                        "typeKey": "paragraph-2",
+                        "attrs": [
+                            [
+                                "htmlAttrs",
+                                {
+                                    "type": "string",
+                                    "string": ""
+                                }
+                            ]
+                        ],
+                        "content": [
+                            {
+                                "typeKey": "text",
+                                "text": "Please bear in mind that this is a work in progress; you will encounter unhandled or partially styled content where edge cases are not yet supported. Enjoy where things work out, and help us fix where they don't at "
+                            },
+                            {
+                                "typeKey": "text",
+                                "marks": [
+                                    {
+                                        "typeKey": "generic-style",
+                                        "attrs": [
+                                            [
+                                                "data-style-name",
+                                                {
+                                                    "type": "string",
+                                                    "string": "link"
+                                                }
+                                            ],
+                                            [
+                                                "htmlTag",
+                                                {
+                                                    "type": "string",
+                                                    "string": "a"
+                                                }
+                                            ],
+                                            [
+                                                "htmlAttrs",
+                                                {
+                                                    "type": "string",
+                                                    "string": "[[\"href\",\"https://forum.typeroof.org\"]]"
+                                                }
+                                            ]
+                                        ]
+                                    }
+                                ],
+                                "text": "forum.typeroof.org"
+                            },
+                            {
+                                "typeKey": "text",
+                                "text": "."
+                            }
+                        ]
                     }
                 ]
             }

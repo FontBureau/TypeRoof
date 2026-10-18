@@ -1,0 +1,904 @@
+{
+    "typeSpec": {
+        "languageTag": {
+            "language": "en"
+        },
+        "lineLength": "53.0",
+        "baseFontSize": "14",
+        "textColor": {
+            "instance": {
+                "L": "0.00000",
+                "C": "0.0000000",
+                "alpha": "100.00000"
+            },
+            "colorTypeKey": "OKLCH"
+        },
+        "backgroundColor": {
+            "instance": {
+                "L": "100.00000",
+                "C": "0.0000000",
+                "alpha": "100.00000"
+            },
+            "colorTypeKey": "OKLCH"
+        },
+        "autoOPSZ": "1",
+        "children": [
+            [
+                "headings",
+                {
+                    "children": [
+                        [
+                            "h1",
+                            {
+                                "blockMargins": {
+                                    "start": {
+                                        "unit": "baseEm",
+                                        "value": "2.00000"
+                                    },
+                                    "end": {
+                                        "unit": "lineHeightAfter",
+                                        "value": "1.00000"
+                                    }
+                                },
+                                "relativeFontSize": "4.571428571",
+                                "autoOPSZ": "1",
+                                "axesLocations": [["wght", "700"]],
+                                "label": "Heading 1"
+                            }
+                        ],
+                        [
+                            "h2",
+                            {
+                                "blockMargins": {
+                                    "start": {
+                                        "value": "0.00000"
+                                    }
+                                },
+                                "relativeFontSize": "1.785714286",
+                                "autoOPSZ": "1",
+                                "axesLocations": [["wght", "600"]],
+                                "label": "Heading 2"
+                            }
+                        ],
+                        [
+                            "h3",
+                            {
+                                "relativeFontSize": "1.285714286",
+                                "autoOPSZ": "1",
+                                "axesLocations": [["wght", "550"]],
+                                "label": "Heading 3"
+                            }
+                        ]
+                    ],
+                    "label": "Headings"
+                }
+            ],
+            [
+                "paragraphs",
+                {
+                    "children": [
+                        [
+                            "t1",
+                            {
+                                "relativeFontSize": "1.285714286",
+                                "autoOPSZ": "1",
+                                "label": "Text 1"
+                            }
+                        ],
+                        [
+                            "t2",
+                            {
+                                "relativeFontSize": "1",
+                                "autoOPSZ": "1",
+                                "label": "Text 2"
+                            }
+                        ]
+                    ],
+                    "label": "Paragraphs"
+                }
+            ],
+            [
+                "generic",
+                {
+                    "backgroundColor": {
+                        "instance": {
+                            "L": "100.00000",
+                            "C": "60.00000",
+                            "H": "0.4100000",
+                            "alpha": "57.00000"
+                        },
+                        "colorTypeKey": "OKLCH"
+                    },
+                    "label": "Generic"
+                }
+            ]
+        ],
+        "label": "",
+        "intentStyleLinks": [
+            [
+                "italic",
+                {
+                    "stylePatch": "italic",
+                    "mode": "link",
+                    "tag": "em"
+                }
+            ],
+            [
+                "bold",
+                {
+                    "stylePatch": "bold",
+                    "mode": "link",
+                    "tag": "strong"
+                }
+            ],
+            [
+                "bold italic",
+                {
+                    "stylePatch": "bold italic",
+                    "mode": "link",
+                    "tag": "strong"
+                }
+            ]
+        ],
+        "markStyleLinks": [
+            [
+                "strong",
+                {
+                    "stylePatch": "bold",
+                    "mode": "link"
+                }
+            ]
+        ]
+    },
+    "stylePatchesSource": [
+        [
+            "italic",
+            {
+                "instance": {
+                    "axesLocations": [
+                        [
+                            "slnt",
+                            {
+                                "logicalValue": "min"
+                            }
+                        ]
+                    ]
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "bold",
+            {
+                "instance": {
+                    "axesLocations": [
+                        [
+                            "wght",
+                            {
+                                "logicalValue": "number",
+                                "numericValue": "700"
+                            }
+                        ]
+                    ]
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ],
+        [
+            "bold italic",
+            {
+                "instance": {
+                    "styles": ["bold", "italic"]
+                },
+                "stylePatchTypeKey": "CompositeStylePatch"
+            }
+        ],
+        [
+            "link",
+            {
+                "instance": {
+                    "textColor": {
+                        "instance": {
+                            "L": "60.00000",
+                            "C": "46.00000",
+                            "H": "0.6200000",
+                            "alpha": "100.00000"
+                        },
+                        "colorTypeKey": "OKLCH"
+                    }
+                },
+                "stylePatchTypeKey": "SimpleStylePatch"
+            }
+        ]
+    ],
+    "editingStylePatch": "./link",
+    "proseMirrorSchema": {
+        "nodes": [
+            [
+                "section",
+                {
+                    "content": "block*",
+                    "group": "block",
+                    "tag": "section",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "blockquote",
+                {
+                    "content": "block*",
+                    "group": "block",
+                    "tag": "blockquote",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "generic-block",
+                {
+                    "content": "block*",
+                    "group": "block",
+                    "tag": "div",
+                    "attrs": [
+                        [
+                            "htmlTag",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ],
+            [
+                "paragraph-2",
+                {
+                    "content": "inline*",
+                    "group": "block",
+                    "tag": "p",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ],
+            [
+                "heading-1",
+                {
+                    "content": "inline*",
+                    "group": "block",
+                    "tag": "h1",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "heading-2",
+                {
+                    "content": "inline*",
+                    "group": "block",
+                    "tag": "h2",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "heading-3",
+                {
+                    "content": "inline*",
+                    "group": "block",
+                    "tag": "h3",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "paragraph",
+                {
+                    "content": "inline*",
+                    "group": "block",
+                    "tag": "p",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ],
+            [
+                "cite-link",
+                {
+                    "group": "inline",
+                    "tag": "sup",
+                    "selector": "sup[typeof=\"mw:Extension/ref\"]",
+                    "inline": "1",
+                    "atom": "1",
+                    "attrs": [
+                        [
+                            "html",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ],
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ],
+            [
+                "quote",
+                {
+                    "content": "inline*",
+                    "group": "inline",
+                    "tag": "q",
+                    "selector": "q",
+                    "inline": "1",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ],
+            [
+                "hatnote",
+                {
+                    "content": "inline*",
+                    "group": "block",
+                    "tag": "div",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ],
+            [
+                "shortdescription",
+                {
+                    "content": "inline*",
+                    "group": "block",
+                    "tag": "div",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ],
+            [
+                "list",
+                {
+                    "content": "li+",
+                    "group": "block",
+                    "tag": "ul",
+                    "attrs": [
+                        [
+                            "htmlTag",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "li-inline",
+                {
+                    "content": "inline*",
+                    "group": "li",
+                    "tag": "li",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "li-block",
+                {
+                    "content": "block+",
+                    "group": "li",
+                    "tag": "li",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "figure",
+                {
+                    "content": "figcaption figcontent | figcontent figcaption?",
+                    "group": "block",
+                    "tag": "figure",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "definingAsContext": "1",
+                    "definingForContent": "1"
+                }
+            ],
+            [
+                "figcontent",
+                {
+                    "group": "block",
+                    "tag": "div",
+                    "selector": "figure > :not(figcaption)",
+                    "atom": "1",
+                    "attrs": [
+                        [
+                            "html",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ],
+                        [
+                            "htmlTag",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ],
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ],
+            [
+                "figcaption",
+                {
+                    "content": "inline*",
+                    "group": "block",
+                    "tag": "figcaption",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ],
+            [
+                "sidebox",
+                {
+                    "content": "block*",
+                    "group": "block",
+                    "tag": "div",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ],
+            [
+                "sideboxtext",
+                {
+                    "content": "inline*",
+                    "group": "block",
+                    "tag": "div",
+                    "attrs": [
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ],
+            [
+                "navbox",
+                {
+                    "content": "block*",
+                    "group": "block",
+                    "tag": "div",
+                    "atom": "1",
+                    "attrs": [
+                        [
+                            "html",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ],
+                        [
+                            "htmlTag",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ],
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ],
+            [
+                "reproduce-as-inline",
+                {
+                    "group": "inline",
+                    "tag": "span",
+                    "inline": "1",
+                    "atom": "1",
+                    "attrs": [
+                        [
+                            "html",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ],
+                        [
+                            "htmlTag",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ],
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ],
+            [
+                "reproduce-as-block",
+                {
+                    "group": "block",
+                    "tag": "div",
+                    "atom": "1",
+                    "attrs": [
+                        [
+                            "html",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ],
+                        [
+                            "htmlTag",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ],
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ],
+            [
+                "generic-inline",
+                {
+                    "content": "inline*",
+                    "group": "inline",
+                    "tag": "span",
+                    "inline": "1",
+                    "attrs": [
+                        [
+                            "htmlTag",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ],
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ]
+        ],
+        "marks": [
+            [
+                "strong",
+                {
+                    "tag": "strong"
+                }
+            ],
+            [
+                "link",
+                {
+                    "attrs": [
+                        [
+                            "href",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ],
+                        [
+                            "htmlAttrs",
+                            {
+                                "default": "",
+                                "validate": {
+                                    "type": "string"
+                                }
+                            }
+                        ]
+                    ],
+                    "tag": "a"
+                }
+            ]
+        ]
+    },
+    "nodeSpecToTypeSpec": [
+        [
+            "heading-1",
+            {
+                "link": "/headings/h1",
+                "label": "H1"
+            }
+        ],
+        [
+            "heading-2",
+            {
+                "link": "/headings/h2",
+                "label": "H2"
+            }
+        ],
+        [
+            "heading-3",
+            {
+                "link": "/headings/h3",
+                "label": "H3"
+            }
+        ],
+        [
+            "paragraph",
+            {
+                "link": "/paragraphs/t1",
+                "label": "T1"
+            }
+        ],
+        [
+            "paragraph-2",
+            {
+                "link": "/paragraphs/t2",
+                "label": "T2"
+            }
+        ],
+        [
+            "figcaption",
+            {
+                "link": "/paragraphs/t2",
+                "label": ""
+            }
+        ],
+        [
+            "li-inline",
+            {
+                "link": "/paragraphs/t1",
+                "label": ""
+            }
+        ],
+        [
+            "li-block",
+            {
+                "link": "/paragraphs/t1",
+                "label": ""
+            }
+        ],
+        [
+            "generic-block",
+            {
+                "link": "/generic",
+                "label": ""
+            }
+        ]
+    ],
+    "document": {
+        "typeKey": "doc",
+        "content": [
+            {
+                "typeKey": "heading-1",
+                "content": [
+                    {
+                        "typeKey": "text",
+                        "text": "Typography"
+                    }
+                ]
+            }
+        ]
+    }
+}

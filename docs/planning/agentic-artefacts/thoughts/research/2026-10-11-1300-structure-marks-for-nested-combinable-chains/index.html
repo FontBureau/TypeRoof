@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-mark-machinery-as-is--structure-marks-for-nested-combinable-chains" class="heading_anchor" href="#research-mark-machinery-as-is--structure-marks-for-nested-combinable-chains" aria-hidden="true">#</a>Research: Mark machinery as-is — structure marks for nested combinable chains</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Formal RPI cycle (operator 2026-10-11, /research_codebase). Context: Wikipedia ingest
+collapses nested combinable mark elements (b/strong, i/em, a) — bc48fdb9 (composite
+intents + generic-inline demotion), 57e1e3dc (selector-matched demotionRules), b3d53d5b
+(textless-mark demotion). Problem: generic-inline has no nodeSpecToTypeSpec link, so
+demoted chains attenuate typeSpec resolution toward the nearest registered ancestor;
+the same chain under different parents (h1 vs paragraph vs figcaption) would need
+per-context typeSpec attachments — combinatorial. Operator decision: <strong>Variant A</strong> —
+the chain demotion becomes a MARK push: new NON-INTENT “structure marks” (markSpecs
+carrying tag + attrs, reproducing real-world HTML semantics) on the text-run marks
+stack; the ONE composite generic-style intent stays the sole style-resolving mark per
+run; textless demotion (demotionRules) stays; free mark combinations stay forbidden —
+the exclusivity contract forces typographic shape through StylePatches. Variant B
+(more than one style link per run, merged live properties) is rejected. This document
+maps the machinery AS IT IS; it does not design the change.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<ul>
+<li>The structure-mark pipeline exists end-to-end, unused: a markSpec with tag + attrs
+and no markStyleLinks edge renders plain tag + attrs, no styler (findings 3, 7).</li>
+<li>The typeSpec problem is confirmed: generic-inline is absent from nodeSpecToTypeSpec;
+demoted wrappers attenuate resolution to the nearest registered ancestor, and
+measurement (textblock scope) vs viewer (leaf context) converge only because the
+attenuation lands at the textblock’s own resolution today (finding 4).</li>
+<li>Exclusivity lives in two places: generic-style excludes “_” (ALL marks), enforced
+only at the ProseMirror layer (Mark.addToSet); ingest writes marks directly and
+bypasses it. State markSpecs strong/link declare neither excludes nor group (finding 7).</li>
+<li>Composite intents are the single style resolver per run: pushed last (innermost
+wrapper), dedupe/sort/join at TEXT_NODE; “italic link”/“bold italic link” have no
+style patch yet (findings 1, 6).</li>
+<li>Change coupling: state JSON + ingest.ts + ingest.test.mjs + regenerated
+replacement-state fixture travel in ONE commit (finding 8).</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-ingest-engine--libjswikipediaingestts-" class="heading_anchor" href="#1-ingest-engine--libjswikipediaingestts-" aria-hidden="true">#</a>1. Ingest engine (<code>lib/js/wikipedia/ingest.ts</code>)</h3>
+<ul>
+<li><code>EmissionRule</code> :110-122 — mark rules carry <code>name</code>, generic rules carry <code>styleName</code>,
+both optional <code>combineAs</code> (:112-113). <code>IngestionOptions.demotionRules</code> :291;
+<code>Ctx.demotionRules</code> :526, wired :1087.</li>
+<li><code>ingestNode</code> mark/generic case :946-1031, three branches:
+<ol>
+<li>combineAs chain :953-976 — condition <code>combineAs !== undefined &amp;&amp; (composite.length &gt; 0 || hasCombinableDescendant(ctx, el))</code> -&gt; <code>emitDemotedInline(el, marks, out, ctx, [...composite, combineAs])</code>. Lookahead <code>hasCombinableDescendant</code> :621-651, bounded at hard boundaries (block/atom/raw/void/split-item/skip).</li>
+<li>textless demotion :977-987 — <code>!hasMarkableTextDescendant(ctx, el)</code> (:655-682) -&gt; <code>count(report.demotedMarks, ...)</code> + <code>emitDemotedInline(..., composite)</code>.</li>
+<li>mark push :989-1030 — <code>MarkDesc</code> :512-520 (<code>{kind:&quot;style&quot;, styleName, htmlAttrs}</code> / <code>{kind:&quot;mark&quot;, name, attrs, htmlAttrs}</code>); declared attrs harvested via <code>ctx.schemaMarkAttrs[rule.name]</code> (:997-999; <code>schemaMarkAttrsFromSchema</code> :347-356); an unresolved mark name falls back to intent + <code>count(report.unresolvedMarkRules, ...)</code> (:1001-1008). Descends with <code>[...marks, markDesc]</code> (:1023-1030) — outer marks first.</li>
+</ol>
+</li>
+<li><code>emitDemotedInline</code> :702-719 + <code>findDemotionRule</code> :685-699: first matching inline-node rule of the demotion table; neutral default = tag-derived typeKey (-&gt; reserved unknown_inline via sync). <code>setHtmlAttrsBag</code> + <code>setHtmlTag</code> preserve source tag/attrs (incl. href).</li>
+<li>TEXT_NODE :812-851: <code>emittedMarks = [...marks]</code>; if <code>composite.length &gt; 0</code> push ONE <code>{kind:&quot;style&quot;, styleName: [...new Set(composite)].sort().join(&quot; &quot;)}</code> (:825-837); <code>count(report.markSets, markSetKey(emittedMarks))</code> (:838); <code>count(report.compositeMarks, styleName)</code> only when the joined name contains a space (:829-833). Styles serialize via <code>newMarkDraft(marksList, &quot;generic-style&quot;, {&quot;data-style-name&quot;: styleName}, htmlAttrs)</code> (:844-851).</li>
+<li>Tables: <code>WIKIPEDIA_MARK_RULES</code> :1357-1381 (b,strong -&gt; mark strong, combineAs “bold”; i,em -&gt; generic italic, combineAs “italic”; a -&gt; mark link, combineAs “link”); <code>WIKIPEDIA_DEMOTE_RULES</code> :1343-1345 (* -&gt; generic-inline); <code>WIKIPEDIA_BLOCK_RULES</code> :1239-1335 incl. three generic-inline inline-node rules (cite, bdi, .mw-reference-text); <code>HTML_PHRASING_RULES</code> :1384-1416. <code>ingestWikipediaDocument</code> :1444-1484 wires the emissionRules order (transparent, skip, raw, atoms, blocks, marks, phrasing), demotionRules, liftedRunWrapper “paragraph”.</li>
+</ul>
+<h3><a id="2-mark-schema-pipeline--modelstyperoofjsx--default-schemats--integrationtyperoofjsx-" class="heading_anchor" href="#2-mark-schema-pipeline--modelstyperoofjsx--default-schemats--integrationtyperoofjsx-" aria-hidden="true">#</a>2. Mark schema pipeline (<code>models.typeroof.jsx</code>, <code>default-schema.ts</code>, <code>integration.typeroof.jsx</code>)</h3>
+<ul>
+<li><code>MarkSpecModel</code> (models.typeroof.jsx :256-305): attrs, inclusive (default true), <code>excludes</code> (:282, “_” = excludes all marks), <code>group</code> (:286), the non-PM <code>tag</code> (:292), spanning, code. Instances are entries of <code>ProseMirrorSchemaModel.marks</code> (<code>MarkSpecMapModel</code> :311-315).</li>
+<li>Reserved <code>generic-style</code> (default-schema.ts :198-243): <code>excludes: &quot;_&quot;</code> (:200), attrs data-style-name + htmlAttrs, parseDOM <code>{priority: 60, tag: &quot;*[data-style-name]&quot;}</code> (:207-230), toDOM replays the bag (:231-241). The ONLY reserved mark today (reserved names skip state overrides with a console.warn, integration :877-883).</li>
+<li><code>createProseMirrorSchemaFromMetaModel</code> mark loop (integration :875-914): 1:1 copy of every non-attrs/non-tag key when non-empty (:884-892 — this is where excludes/group pass through); <code>parseDOM=[{tag}]</code> + getAttrs/toDOM closures selected by htmlAttrs presence (:895-910; <code>_createEditableGetAttrs</code> :720-739 collects foreign attrs into the bag minus declared names and styler-owned attrs; <code>_createEditableToDOM</code> :742-756 replays the bag). Reserved marks merged LAST (:914-916) — cannot be overridden.</li>
+<li>Bag guards (<code>lib/js/components/prosemirror/html-attrs.ts</code>): <code>HTML_ATTRS_GUARD</code> :7-8 (data-node-type|data-mark-type|data-style-name|on|^style$), <code>isStylerOwnedAttr</code> :21 (“lang”), <code>collectHtmlAttrsToBag</code> :24-36, <code>htmlAttrsBagToSpec</code> :38-64 (javascript: URL hardening). Ingest policy mirror ingest.ts :1427-1436.</li>
+</ul>
+<h3><a id="3-wrap-descriptors-and-rendering--derivationsmjs--viewertyperoofjsx-" class="heading_anchor" href="#3-wrap-descriptors-and-rendering--derivationsmjs--viewertyperoofjsx-" aria-hidden="true">#</a>3. Wrap descriptors and rendering (<code>derivations.mjs</code>, <code>viewer.typeroof.jsx</code>)</h3>
+<ul>
+<li><code>getWrapMarks</code> (derivations.mjs :418-515) iterates <code>marksList.value.toReversed()</code> (:439) — inside-out, innermost wrapper first. Three branches: <code>generic-style</code> -&gt; kind “intent”, <code>styleLinkName = attrs[&quot;data-style-name&quot;]</code>, tag from the effective intentStyleLinks edge else “span” (:450-470); reserved (<code>defaultSchemaSpec.marks</code>) -&gt; kind “native” (:471-477); markSpec -&gt; kind “mark”, tag from <code>mmMarkSpec.get(&quot;tag&quot;)</code> (:478-486). For native/mark: <code>styleLinkType = &quot;markStyleLinks&quot;</code>, <code>styleLinkName = markType</code>, <code>styleName = edge.stylePatch</code> ONLY IF an edge exists (:487-497). Gated by <code>applyStyleLinks = context.hasTypeSpecStyling !== false</code> (:432-438).</li>
+<li>Viewer: <code>_provisionWidgets</code> (viewer :976-1024) resolves the typeSpec path from the leaf context; <code>_createWrapperDOM</code> (:931-947) creates each wrapper, replays the bag, sets <code>data-style-name</code>/<code>data-mark-type</code> when non-null, nests via <code>markElement.append(current)</code>, mounts <code>wrapResults.at(-1)</code>. <code>_createStylerWidgets</code> (:949-974): early-out on <code>hasTypeSpecStyling === false</code>; <code>if (!styleLinkName) continue;</code> (:962); a non-null styleLinkName with no registered styleLinkProperties@ id -&gt; <code>getStyleLinkPropertiesId</code> returns null -&gt; empty dependency mapping (:868-873).</li>
+<li>KEY confirmation: a markSpec mark with NO markStyleLinks edge renders its declared tag + bag, <code>data-mark-type</code> AND <code>data-style-name</code> (= markType), NO styler, descriptor <code>styleName === null</code>. The unstyled path exists end-to-end; a permanently-edge-less mark has never been instantiated (both state marks have edges).</li>
+</ul>
+<h3><a id="4-type-spec-resolution-and-the-generic-inline-attenuation-the-problem" class="heading_anchor" href="#4-type-spec-resolution-and-the-generic-inline-attenuation-the-problem" aria-hidden="true">#</a>4. Type-spec resolution and the generic-inline attenuation (the problem)</h3>
+<ul>
+<li><code>pathOfTypes</code> = root-&gt;node typeKeys (derivations.mjs :274, threaded via <code>childrenContext</code> :277-289); the text-run context excludes the own “text” (document-nodes-meta/index.mjs :1210-1212).</li>
+<li><code>getTypeSpecPropertiesIdMethod</code> (integration :190-286): last typeKey -&gt; <code>nodeSpecToTypeSpec.get(typeKey).link</code>; absolute “/” = origin-anchored, “./” / bare = parent-anchored (recursive on the parent chain; explicit hits skip <code>excludeFromFallback</code>); empty/absent link -&gt; <code>_getBestTypeSpecPropertiesId</code> (:113-170) walks <code>testPath.slice(0, -2)</code> toward root until a registered typeSpecProperties@ id is found.</li>
+<li>Case 1 — text with marks directly in paragraph/h1: the parent typeKey IS linked (heading-1 -&gt; /headings/h1) -&gt; marks resolve at the heading typeSpec.</li>
+<li>Case 2 — text inside demoted generic-inline wrappers: generic-inline ABSENT from nodeSpecToTypeSpec (state JSON :893-985, verified) -&gt; <code>typeSpecLink = &quot;&quot;</code> -&gt; the fallback walk skips every generic-inline level to the nearest registered ancestor. The wrappers attenuate; per-context typeSpec attachments (a child typeSpec per parent) would be needed to give them specs — the combinatorial problem.</li>
+<li>Divergence surface: composition measures with the TEXTBLOCK scope (<code>_styleResolutionContext</code>, index.mjs :901-911, on the parent element) while the viewer renders with the LEAF context (incl. the wrappers, viewer :981-990) — both converge today only because the attenuation lands at the textblock’s own resolution.</li>
+</ul>
+<h3><a id="5-composition-controller-and-the-exclusivity-contract--text-compositioncomposition-controllerts-" class="heading_anchor" href="#5-composition-controller-and-the-exclusivity-contract--text-compositioncomposition-controllerts-" aria-hidden="true">#</a>5. Composition controller and the exclusivity contract (<code>text-composition/composition-controller.ts</code>)</h3>
+<ul>
+<li><code>_buildInlineItems</code> :568-620 walks the textblock inline content: text -&gt; leaf with <code>styleLinkPropertiesId = _resolveLeafStyleLink(...)</code>; generic-inline children recurse as <code>inlineContainer</code>; contentless children are <code>inlineAtom</code> with a null leaf.</li>
+<li><code>_resolveLeafStyleLink</code> :635-684: skips descriptors with <code>styleLinkName == null || styleName == null</code> (:657-661), collects <code>getStyleLinkPropertiesId(...)</code> ids for the rest; <code>ids.length &gt; 1</code> -&gt; <code>console.error(&quot;CONTRACT VIOLATION ... style links are EXCLUSIVE (styleLinkProperties@ is the full story) ... using the innermost.&quot;)</code> (:674-681). This guard is why bc48fdb9 collapses chains into ONE composite intent instead of stacking strong + link marks.</li>
+<li>Resolved ids feed per-run measurement (font, axes, features, language, direction, fontSize) from the registered styleLinkProperties@ entry, textblock style as fallback (:887-930, :1150-1172).</li>
+</ul>
+<h3><a id="6-the-demo-state--libjswikipediatype-stage-wikipedia-initial-statejson-" class="heading_anchor" href="#6-the-demo-state--libjswikipediatype-stage-wikipedia-initial-statejson-" aria-hidden="true">#</a>6. The demo state (<code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code>)</h3>
+<ul>
+<li><code>proseMirrorSchema.marks</code> :858-895: <code>strong {tag:&quot;strong&quot;}</code> (no attrs/excludes/group), <code>link {attrs:[href, htmlAttrs], tag:&quot;a&quot;}</code>.</li>
+<li><code>intentStyleLinks</code> :156-181: italic, bold, composite “bold italic” (tags em/strong/strong). <code>markStyleLinks</code> :183-197: strong -&gt; bold, link -&gt; link.</li>
+<li><code>stylePatchesSource</code>: italic (Simple, slnt), bold (Simple, wght 700), “bold italic” (<code>stylePatchTypeKey: &quot;CompositeStylePatch&quot;</code>, <code>styles: [&quot;bold&quot;,&quot;italic&quot;]</code>, :235-243), link (Simple, OKLCH textColor). <code>editingStylePatch: &quot;./link&quot;</code>. GAP: no “italic link” / “bold italic link” patches, though ingest already emits those intents (unstyled until declared).</li>
+<li><code>nodeSpecToTypeSpec</code> :893-985: heading-1/2/3, paragraph, paragraph-2, figcaption, li-inline, li-block, generic-block, section, sub-section — NO generic-inline. typeSpec children: headings (relativeFontSize 4.57/1.79/1.29, wght 700/600/550), paragraphs t1/t2, generic, section, sub-section.</li>
+</ul>
+<h3><a id="7-prosemirror-mark-set-semantics--where-exclusivity-is-enforced" class="heading_anchor" href="#7-prosemirror-mark-set-semantics--where-exclusivity-is-enforced" aria-hidden="true">#</a>7. ProseMirror mark-set semantics — where exclusivity is enforced</h3>
+<ul>
+<li><code>Mark.addToSet</code> (prosemirror-model/src/mark.ts :24-47): same-type mark replaced (<code>this.eq(other)</code>); a mark whose type the EXISTING set excludes is NOT added. <code>MarkType.compile</code> (prosemirror-model/src/schema.ts :621-624): <code>excludes &quot;_&quot;</code> -&gt; excluded = ALL mark types.</li>
+<li>Consequence: generic-style cannot coexist with ANY mark at the PM layer — in PM editor-mode mutations, adding generic-style evicts every other mark, and adding another mark onto a run carrying generic-style is rejected. The INGEST path bypasses this: ingest writes the document marks list directly; only PM-schema edits normalize through addToSet.</li>
+<li>State markSpecs strong/link declare neither excludes nor group today — default: each excludes only itself, so they coexist freely with each other (and with new structure marks) at the PM layer.</li>
+</ul>
+<h3><a id="8-patterns-to-mirror" class="heading_anchor" href="#8-patterns-to-mirror" aria-hidden="true">#</a>8. Patterns to mirror</h3>
+<ul>
+<li>State markSpec shape (finding 6): a new tag+attrs mark is <code>[&quot;name&quot;, {attrs: [[href...], [&quot;htmlAttrs&quot;, ...]], tag: &quot;a&quot;}]</code> — integration builds the round-trip closures from this alone.</li>
+<li>Test harness (<code>lib/js/wikipedia/ingest.test.mjs</code>): <code>ingestTest</code> :186-197 (empty engine + composed standard table), <code>loadStateSchema</code> :198-205 (real state schema), <code>kids</code> :27, <code>typeKey</code> :28, <code>marksOf</code> :30-34, <code>allMarksOf</code> :35-43, local <code>attrOf</code> :1404-1408. The “nested-mark collapse (combineAs)” describe :1402-1547 asserts node demotion today (<code>typeKey(emNode) === &quot;generic-inline&quot;</code>, <code>attrOf(emNode, &quot;htmlTag&quot;) === &quot;em&quot;</code>, <code>marksOf(text) === [[&quot;generic-style&quot;,&quot;italic link&quot;]]</code>, <code>report.compositeMarks</code>) — the describe a mark push rewrites into marks-stack assertions. “demotionRules option” :1652-1714 (textless case — stays).</li>
+<li>Fixture <code>lib/js/tests/fixtures/type-stage-wikipedia-replacement-state.json</code>: frozen full state, sole importer the state-replace stale-width regression (<code>lib/js/tests/type-stage-document-replace/stale-width-on-state-replace.test.mjs</code> :34). Emitted-structure changes regenerate it WHOLESALE (57e1e3dc precedent: 1898 fixture lines).</li>
+<li>Naming/surfacing: kebab-case typeKeys; reserved mark names cannot be overridden (integration :877-883); every state markSpec surfaces automatically in the mark_spec-manager enumeration (type-stage/index.typeroof.jsx :805-824, childrenOrderedMap) — names read raw there.</li>
+<li>Round-trip: viewer writes <code>data-style-name</code> on EVERY mark wrapper with a non-null styleLinkName — for markSpec marks that is the markType (derivations :490) — plus <code>data-mark-type</code>; generic-style’s parseDOM catch-all <code>*[data-style-name]</code> at priority 60 (default-schema :207-230) outranks any schema-mark rule (default 50) — a structure-mark wrapper carrying data-style-name would re-parse as generic-style intent in PM DOM-parsing contexts (paste/initial parse).</li>
+<li>Git bundling: bdba82a1 (state only) / 2ec5f248 (state + ingest rule) / bc48fdb9 (ingest + tests) / 57e1e3dc (ingest + tests + fixture). A mark push expects state JSON + ingest.ts + ingest.test.mjs + regenerated fixture in ONE commit.</li>
+</ul>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<p>Primary map (details inline above):</p>
+<ul>
+<li><code>lib/js/wikipedia/ingest.ts</code> — engine: rules :110-137, MarkDesc :512-520, lookaheads :621-682, demotion :685-719, mark case :946-1031, composite push :812-851, tables :1239-1416, wiring :1444-1484.</li>
+<li><code>lib/js/components/prosemirror/models.typeroof.jsx</code> — MarkSpecModel :256-315.</li>
+<li><code>lib/js/components/prosemirror/default-schema.ts</code> — reserved marks :198-243, unknown_inline :161-189.</li>
+<li><code>lib/js/components/prosemirror/html-attrs.ts</code> — guards :7-70.</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx</code> — schema conversion :793-918, typeSpec resolution :113-286, MarkView :480-586.</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/derivations.mjs</code> — rendering plan :177-300, style links :390-413, getWrapMarks :418-515.</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs</code> — styleResolution context :892-911.</li>
+<li><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx</code> — wrapper DOM :931-947, stylers :949-974, provisioning :976-1024.</li>
+<li><code>lib/js/components/layouts/type-stage/text-composition/composition-controller.ts</code> — items :568-620, exclusivity guard :635-684, measurement :887-930.</li>
+<li><code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code> — marks :858-895, links :156-197, patches :200-262, nodeSpecToTypeSpec :893-985.</li>
+<li><code>lib/js/wikipedia/ingest.test.mjs</code> — harness :8-205, combineAs describe :1402-1547, demotionRules describe :1652-1714.</li>
+<li><code>node_modules/prosemirror-model/src/mark.ts</code> :24-47, <code>node_modules/prosemirror-model/src/schema.ts</code> :621-624 — PM mark-set semantics.</li>
+</ul>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<p>(To resolve in /create_plan; operator calls marked.)</p>
+<ol>
+<li>Structure-mark naming — strong/link are taken as style marks; kebab-case; names surface
+raw in mark_spec-manager. Candidates: tag-strong/tag-em/tag-a, html-<em>, struct-</em>.
+OPERATOR.</li>
+<li>Excludes policy encoding — generic-style excludes “_” (reserved, default-schema.ts
+:200) evicts ALL marks at the PM layer; structure marks must coexist with the
+composite generic-style per run. Narrowing to group “style” / excludes “style” touches
+the RESERVED schema (code); state markSpecs carry excludes/group through the 1:1 copy
+(integration :884-892). Where is “structure marks never style-resolve” encoded —
+schema-level excludes/group, ingest-only construction, or both?</li>
+<li>data-style-name on structure wrappers — styleLinkName defaults to markType for
+markSpec marks (derivations :490), so structure wrappers would carry data-style-name:
+cosmetic noise AND a parse-back hazard vs the priority-60 generic-style catch-all
+(default-schema :207-230). Decide: emit data-style-name only on style-resolving
+(intent) wrappers, or structure markSpecs opt out.</li>
+<li>Missing composite patches — “italic link” / “bold italic link” intents are emitted
+but have no stylePatchesSource entry. Add CompositeStylePatches in the state now or
+declare the gap?</li>
+<li>markSets report semantics — markSetKey (ingest :498-504) will include structure-mark
+names in run keys; existing assertions shift. Also: own report counter for structure
+marks (per-tag inlineNodes is the model) or none?</li>
+<li>Same-type structure marks — PM allows one mark per type per run (same-type replaced,
+mark.ts :24-47); nested same-tag chains (<em><em>) dedupe to one structure mark —
+ingest-side dedupe policy.</em></em></li>
+<li>Fixture + test blast radius — regenerate the replacement-state fixture + rewrite the
+combineAs describe; confirm no other test asserts generic-inline demotion.</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

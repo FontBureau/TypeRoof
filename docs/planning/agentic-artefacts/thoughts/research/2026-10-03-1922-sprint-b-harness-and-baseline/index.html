@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-sprint-b--harness--baseline" class="heading_anchor" href="#research-sprint-b--harness--baseline" aria-hidden="true">#</a>Research: Sprint B — harness + baseline</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>How do we build (a) a testing harness asserting composed line
+structure from document inputs, and (b) a performance baseline (dummy
+vs. OFF)? They build on each other (performance needs a rather
+complete harness). Context: ROADMAP Sprint B; Sprint A concluded at
+425babab.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<ul>
+<li><strong>Harness</strong>: the existing integration-test harness
+(lib/js/tests/type-stage-toggles/harness.mjs <code>buildWorld</code>) boots the
+REAL TypeStageController in jsdom with a document ingested from an
+HTML fixture and synchronous StateComparison updates. The
+composition controller already runs in it — but composes nothing
+because the harness widgetBus lacks <code>harfbuzz</code> (capability fallback
+works as designed). measurer.test.mjs already proves node-side
+harfbuzz + real font loading works. So the composition harness =
+buildWorld + harfbuzz on the bus + a real installed font + DOM
+assertions on the article. Composition is jsdom-safe: NO runtime
+DOM measurements anywhere in the pipeline (by design — line width
+from node-properties).</li>
+<li><strong>Baseline</strong>: NO benchmark infrastructure exists (only a UI FPS
+readout). Puppeteer is a devDependency (scripts/create-clip-frames
+is the driving pattern: dev server on :3000, hash flags,
+<code>window.shell</code> handle, deterministic changeState stepping).
+Blocker found: <strong>no TypeStage state files exist</strong> in
+docs/states-library (all 9 are MotionStage) — fixture TypeStage
+states must be created (via the app, saved into the repo).</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-integration-harness-reusable" class="heading_anchor" href="#1-integration-harness-reusable" aria-hidden="true">#</a>1. Integration harness (reusable)</h3>
+<ul>
+<li><code>buildWorld()</code> (type-stage-toggles/harness.mjs:108-183): real
+TypeStageModel variant seeded from wikipedia initial-state JSON;
+fake InstalledFontModel with stub metrics (:109-124); document
+ingested from <code>lib/js/tests/fixtures/typography-small.html</code> via
+ingestWikipediaDocument (:131-149); DOMTool + zones (:154-155);
+environment@ handler pre-registered (:159-171); hand-rolled
+widgetBus (:172-180) — <code>changeState</code> THROWS (:176-178); ToggleRoot
+with ClassesAndStylesManager + TypeStageController (:57-88);
+<code>root.initialUpdate(state)</code> (:182-183).</li>
+<li>Driving updates: synchronous <code>root.update(new StateComparison(old, new))</code> after <code>world.setState(new)</code> (toggles/index.test.mjs:24-34).</li>
+<li>Assertions: plain DOM queries on <code>zones.get(&quot;layout&quot;)</code> →
+<code>article.typeroof-document</code> (viewer-behavior helpers :20-31); tests
+deliberately avoid viewer-internal classes (comment :5-8).</li>
+<li>Constraints: jsdom per-file docblock; no global testTimeout
+(individual 300_000 precedent — full-article provisioning ~1 min,
+harness.mjs:126-130); fixture paths relative to repo root;
+describe.skipIf(!HAVE_FIXTURE) guard pattern.</li>
+<li><strong>Missing for composition</strong>: <code>harfbuzz</code> on the harness widgetBus
+(the controller degrades to OFF, composition-controller.ts:217-223)
+and a font with real hbFace (the stub font has fake metrics).
+measurer.test.mjs proves both work in node (RobotoFlex via
+decompressFontBuffer + createFontObject + harfbuzz.Face).</li>
+</ul>
+<h3><a id="2-performance-infrastructure" class="heading_anchor" href="#2-performance-infrastructure" aria-hidden="true">#</a>2. Performance infrastructure</h3>
+<ul>
+<li>Nothing existing: no benchmark harness, no performance.mark/measure
+in lib/js or scripts; only UIFramesPerSecond (motion-stage.mjs:2666).</li>
+<li>Puppeteer ^25.8.0 devDependency; scripts/create-clip-frames pattern:
+launch chromium (executablePath /usr/bin/chromium-browser), URL with
+<code>#[no-chrome,autopause]from-url:&lt;state&gt;</code>, poll <code>window.shell</code>, read
+state via <code>shell.getEntry('activeState')</code>, deterministic
+<code>shell.changeState(() =&gt; { ... })</code> stepping (:26-84).</li>
+<li>Dev server: <code>npm run dev</code> → vite on :3000 (vite.config.js:108-110);
+app entry /app/player/index.html; shell.html for the full app.
+No programmatic server start anywhere (scripts assume a running
+server).</li>
+<li>Hash flags: shell.mjs:841-889 (from-url/from-hash, uiFlags).</li>
+<li><strong>Fixture gap</strong>: no TypeStage states in docs/states-library (9x
+MotionStage). TypeStage IS registered in main-player
+(main-player.mjs:60-65) and is the wikipedia app’s layout. Fixture
+TypeStage states must be created and committed (source of truth for
+the baseline).</li>
+</ul>
+<h3><a id="3-observable-surface-for-assertions" class="heading_anchor" href="#3-observable-surface-for-assertions" aria-hidden="true">#</a>3. Observable surface (for assertions)</h3>
+<ul>
+<li>DOM: <code>.typeroof-composed</code> on textblocks; line spans
+<code>.typeroof-composition-line</code> (+ <code>-line-first</code>,
+<code>-paragraph-first-line</code>, <code>-hyphen</code>), <code>--line-color-code</code> per line;
+carrier <code>.typeroof-composition-run</code> for mark-less runs; line spans
+live in the innermost mark wrapper or the carrier
+(viewer.typeroof.jsx:585-720).</li>
+<li>Payload: <code>{textblockPath, leaves: [{path}], paragraphs: [{segments, result}], sources}</code> (composition-controller.ts:438-447).</li>
+<li>Registry read: reachable via the layout controller’s
+getProtocolHandlerImplementation(“composition@”)
+(index.typeroof.jsx:334-343) — a harness CAN read published payloads
+(stronger than DOM scraping for structure assertions; DOM assertions
+still cover the applicator).</li>
+<li>jsdom: no DOM measurements in the pipeline (grep offsetWidth/
+getBoundingClientRect in text-composition/ + viewer: no matches) —
+composition results in jsdom equal those in a real browser (given
+the same font), modulo CSS-only visuals.</li>
+</ul>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/tests/type-stage-toggles/harness.mjs:108-183</code> — buildWorld</li>
+<li><code>lib/js/tests/fixtures/typography-small.html</code> — HTML document fixture</li>
+<li><code>lib/js/components/layouts/type-stage/text-composition/measurer.test.mjs</code> — node-side harfbuzz + real font precedent</li>
+<li><code>scripts/create-clip-frames:18-84</code> — puppeteer driving pattern</li>
+<li><code>vite.config.js:108-110</code> — dev server :3000</li>
+<li><code>lib/js/shell.mjs:841-889</code> — hash flags / state loading</li>
+<li><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx:585-720</code> — applicator DOM surface</li>
+<li><code>lib/js/components/layouts/type-stage/text-composition/composition-controller.ts:438-482</code> — payload + publication</li>
+</ul>
+<h2><a id="follow-up-decisions-2026-10-03-review-session" class="heading_anchor" href="#follow-up-decisions-2026-10-03-review-session" aria-hidden="true">#</a>Follow-up Decisions (2026-10-03, review session)</h2>
+<ol>
+<li>
+<p><strong>Log spam fixed</strong>: the no-harfbuzz capability-fallback warning
+now fires ONCE per controller instance (it spammed test output,
+where the fallback is the norm).</p>
+</li>
+<li>
+<p><strong>Regression detection (agreed approach)</strong>: own
+<code>npm run perf:composition</code> script (puppeteer vs. dev server,
+create-clip-frames pattern); measure N update cycles with
+textComposition ON vs OFF; key metric is the overhead RATIO
+(t_on/t_off — machine-stable, unlike absolute ms). Checked-in
+baseline SNAPSHOT (JSON next to the fixture: gitCommit, date,
+metrics), updated deliberately so the commit documents legitimate
+cost changes and PR diffs show performance movement; deviations
+beyond a factor (~1.5x) flag a regression (exit code). NOT git
+commits as compare points (slow/flaky checkout+rebuild per
+comparison). Console table + optional gitignored local history;
+CI gating later, start informational.</p>
+</li>
+<li>
+<p><strong>Fixtures</strong>: the type-stage default state (wikipedia
+initial-state JSON, already used by the harness) becomes the
+SMALL fixture (copied into lib/js/tests/fixtures/); a current
+wikipedia-app export becomes the LARGE fixture — explicitly a
+snapshot-in-time (wikipedia output is in flux; it can export
+right away).</p>
+</li>
+<li>
+<p><strong>Q3 RESOLVED — extend buildWorld with an options object</strong>
+({harfbuzz, font}, defaults = today’s stub + no harfbuzz, so
+existing tests keep exact behavior). One harness to maintain; the
+boot wiring is the valuable shared part.</p>
+</li>
+</ol>
+<p>All questions resolved; research phase complete.</p>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ol>
+<li>Fixture TypeStage state(s): create via the running app and commit
+— how many/sizes (one small for the harness, one larger for the
+baseline)? Where do they live (lib/js/tests/fixtures/ +
+docs/states-library/)?</li>
+<li>Baseline timing target: measure the composition path only
+(changeState cycles with/without textComposition) or full frame
+cost? And where do baseline NUMBERS live (a checked-in results
+file? CI gate vs. informational)?</li>
+<li>Harness real font: install the RobotoFlex-based font into the
+harness’s installedFonts (real hbFace via createFontObject) — the
+fake-stub pattern is per-test-file; extend buildWorld or a
+composition-specific variant?</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

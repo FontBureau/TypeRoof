@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-sprint-a--measurement-truth" class="heading_anchor" href="#research-sprint-a--measurement-truth" aria-hidden="true">#</a>Research: Sprint A — measurement truth</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>How do per-run fonts and current axes locations resolve through
+type-stage, so the Measurer can shape with the true font at the true
+axes location? Plus: the inventory for property-aware recomposition
+filtering (ride-along). Context: text-composition ROADMAP Sprint A
+(docs/planning/text-composition/ROADMAP.md), milestone 1 concluded
+at 8873b80e; v0 simplifications: root font object (/font), default
+axes location.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p>Both resolutions are already carried by the properties stream — no new
+infrastructure:</p>
+<ul>
+<li><strong>Font</strong>: the font OBJECT (VideoProofFont with .hbFace, .axisRanges,
+.fontObject.unitsPerEm, .fullName) travels the properties stream as
+<code>specific/font</code> (fontGen, properties-generators.mjs:32-39); the
+fallback when a typeSpec has no own font is the root font
+(typeSpecGetFontMethod, type-spec.typeroof.jsx:75-84). Inheritance of
+an unset font happens in the typeSpecnion cascade.</li>
+<li><strong>Axes</strong>: resolved per-node values are in the getProperties() maps as
+<code>axesLocations/&lt;tag&gt;</code> numbers (axisLocationsGen,
+properties-generators.mjs:169-186), incl. autoOPSZ → opsz =
+resolved generic/fontSize. videoproof-array already shapes at such
+resolved locations (setVariations pattern,
+videoproof-array.mjs:1206-1217).</li>
+<li><strong>Where to read them</strong>: the composition drive already receives the
+textblock’s nodeProperties payload; the typeSpec-level values come
+from the typeSpecnion properties (the same map the stylers merge via
+CascadingMap — node over typeSpec).</li>
+<li><strong>Property-aware filtering</strong>: NO key-wise property diff exists
+anywhere today; scope rebuilds are identity-coarse (any typeSpec
+field change rebuilds). A diff hook is new code (scope level or
+drive level).</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-font-resolution-chain" class="heading_anchor" href="#1-font-resolution-chain" aria-hidden="true">#</a>1. Font resolution chain</h3>
+<ul>
+<li>typographyFontMixin (type-spec/models.mjs:188-222): installedFonts
+(InternalizedDependency), activeFontKey (ForeignKey, ALLOW_NULL,
+CUSTOM constraint — unset → ForeignKey.NULL), font (ValueLink of
+activeFontKey → InstalledFontModel entry).</li>
+<li>fontGen (properties-generators.mjs:32-39) yields
+<code>specific/font</code> → <strong>the font OBJECT</strong> (ValueLink’s dereferenced
+VideoProofFont), only when the typeSpec has an own font; inheritance
+via the typeSpecnion cascade (models.mjs:219-221 note).</li>
+<li>Consumer precedent: typeSpecGetFontMethod
+(type-spec.typeroof.jsx:75-84) — <code>specific/font</code> from the
+propertyValuesMap, else <code>this.getEntry(&quot;rootFont&quot;).value</code> (the
+<code>/font</code> app root font, main-model.mjs:158,171).</li>
+<li>VideoProofFont shape (model/font.mjs:223-419): <code>.hbFace</code> (lazy
+hb.Blob→hb.Face, cached, :399-407), <code>.axisRanges</code> (lazy, frozen,
+{min,max,default,name} per tag, :361-368), <code>.fullName</code>,
+<code>.fontObject.unitsPerEm/.ascender/.descender</code> (font-info.mjs:278-310).</li>
+<li>Measurer implication: per-run font = <code>specific/font</code> from the
+resolved properties (fallback root font); cache key must include the
+font identity (fullName or the object itself — the existing
+Measurer keys by fullName + text; with per-run fonts the key gains
+the axes location too, see below).</li>
+</ul>
+<h3><a id="2-axes-location-flow" class="heading_anchor" href="#2-axes-location-flow" aria-hidden="true">#</a>2. Axes location flow</h3>
+<ul>
+<li>Model: AxesMathAxisLocationsModel (axes-math-models.mjs:180-203),
+autoOPSZ coherence deletes stored opsz when auto
+(models.mjs:320-324).</li>
+<li>Stream: axisLocationsGen (properties-generators.mjs:169-186) yields
+<code>axesLocations/&lt;tag&gt;</code> numbers; autoOPSZ aliases
+<code>axesLocations/opsz</code> = resolved generic/fontSize (SyntheticValue,
+:175-180); fontSizeGen BEFORE axisLocationsGen (:588-589).
+AxesMath logical values (default|min|max) resolve against
+font.axisRanges via SyntheticValue (properties-generators.mjs:
+283-322). <code>axesLocations/&lt;tag&gt;/logicalValue</code> sub-keys exist but are
+SyntheticValue inputs only (skipped by the DOM setter,
+properties-util.mjs:59-61).</li>
+<li>Resolved per-node values: in the getProperties() maps
+(scope-resolution.mjs:69-71) — same maps the viewer stylers merge
+(type-spec.typeroof.jsx:367-374) and feed to
+setTypographicPropertiesToSample (properties-util.mjs:33-86).</li>
+<li>Shaping at a location: <code>new harfbuzz.Variation(tag, value)</code> +
+<code>hbFont.setVariations(...)</code> (videoproof-array.mjs:1206-1217,
+_toHBVariations helper; videoproof-contextual/layout.mjs:49-54).</li>
+<li>Measurer implication: cache key gains the axes tuple
+(text, font, axesKey); hbFont instances per (font, axesKey) —
+setVariations per cached hbFont.</li>
+</ul>
+<h3><a id="3-where-the-drive-reads-them" class="heading_anchor" href="#3-where-the-drive-reads-them" aria-hidden="true">#</a>3. Where the drive reads them</h3>
+<ul>
+<li>The composition drive (DocumentNodesMetaElement._driveComposition,
+document-nodes-meta/index.mjs) passes the scope component; its
+getProperties() is the node cascade (CascadingMap local/typeSpec/
+parent, node-properties.mjs:157,192). Whether <code>specific/font</code> and
+<code>axesLocations/*</code> are visible through the NODE scope (vs. the
+typeSpecnion payload directly) must be verified at implementation
+— the stylers merge both channels explicitly (CascadingMap of
+nodeProperties over typeSpecnion.getProperties(),
+type-spec.typeroof.jsx:367-374); the drive can do the same (it has
+the scope component, and typeSpecProperties@ ids resolve via
+getTypeSpecPropertiesIdMethod if needed).</li>
+</ul>
+<h3><a id="4-property-aware-filtering-inventory" class="heading_anchor" href="#4-property-aware-filtering-inventory" aria-hidden="true">#</a>4. Property-aware filtering inventory</h3>
+<ul>
+<li>Relevant to line breaking: generic/fontSize (+baseFontSize,
+relativeFontSize), specific/font, axesLocations/* (+generic/autoOPSZ),
+opentype-features/<em>, language/</em>, layout/availableWidth(+Height),
+layout/width, layout/columnWidth, layout/columnGap,
+layout/paddingInline*, leading/<em>/line-height-em,
+layout/leading/line-height-em, generic/textAlign, generic/direction,
+horizontalLayout/</em> (+generic/columnCount, lineLength, inlineMargins,
+columnGutter, blockMargins).</li>
+<li>Irrelevant (styler-only): colors/<em>, intentStyleLinks/</em>,
+markStyleLinks/*.</li>
+<li>NO key-wise diff exists anywhere; rebuilds are identity-coarse
+(document-nodes-meta/index.mjs:619-644,
+live-properties.typeroof.jsx:113-124). Scopes are immutable after
+construction, so any rebuild propagates as “changed” to all
+identity-comparing consumers.</li>
+<li>Hook options (for the plan): (a) the drive compares the relevant
+keys of old vs new scope maps before composing; (b) a
+composition-relevance predicate in the scope layer. (a) is local
+to text-composition; (b) is shared machinery.</li>
+</ul>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/components/type-spec/models.mjs:188-222</code> — typographyFontMixin</li>
+<li><code>lib/js/components/layouts/type-stage/properties-generators.mjs:32-39</code> — fontGen (specific/font = font object)</li>
+<li><code>lib/js/components/layouts/type-stage/properties-generators.mjs:169-186</code> — axisLocationsGen (autoOPSZ→opsz alias)</li>
+<li><code>lib/js/components/layouts/type-stage/properties-generators.mjs:283-322</code> — axesMath logical value resolution</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:75-84</code> — typeSpecGetFontMethod (specific/font, root fallback)</li>
+<li><code>lib/js/model/font.mjs:223-419</code> — VideoProofFont (.hbFace, .axisRanges, .fontObject)</li>
+<li><code>lib/js/components/actors/videoproof-array.mjs:1206-1217</code> — setVariations shaping at resolved location</li>
+<li><code>lib/js/components/actors/videoproof-contextual/layout.mjs:44-69</code> — measureWordWidths pattern</li>
+<li><code>lib/js/components/layouts/type-stage/scope-resolution.mjs:69-92</code> — getProperties / memoized identity projections</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs:619-644</code> — identity-coarse rebuild guard</li>
+</ul>
+<h2><a id="follow-up-notes-2026-10-03-review" class="heading_anchor" href="#follow-up-notes-2026-10-03-review" aria-hidden="true">#</a>Follow-up Notes (2026-10-03, review)</h2>
+<ul>
+<li><strong>Property-aware filtering reframed</strong>: the composition-relevant
+property set IS the set the measurement consumes (font, axes,
+features, language, fontSize, width) — “if we consume it to
+calculate the composition, it’s relevant”. The filter is therefore
+not a hand-maintained list but the input equality check: assemble
+the paragraph’s measurement ingredients, compare old vs new, skip
+recomposition when unchanged. Hook: drive-level comparison of
+consumed values (option a), emerging from input assembly. The
+relevant/irrelevant inventory above stays as documentation, but
+the implementation doesn’t enumerate it.</li>
+</ul>
+<h2><a id="follow-up-decisions-2026-10-03-review-session" class="heading_anchor" href="#follow-up-decisions-2026-10-03-review-session" aria-hidden="true">#</a>Follow-up Decisions (2026-10-03, review session)</h2>
+<ol>
+<li>
+<p><strong>Q1 RESOLVED — no channel merging.</strong> The node scope’s effective
+propertyValuesMap includes the typeSpec layer between local and
+parent (CascadingMap local/typeSpec/parent,
+node-properties.mjs:185-196): <code>specific/font</code>, <code>axesLocations/*</code>,
+<code>generic/fontSize</code> are all readable from the payload the drive
+already receives (the next-sibling margin computation reads
+generic/fontSize the same way).</p>
+</li>
+<li>
+<p><strong>Q2 RESOLVED — cache keys.</strong> All axes matter (any axis can
+affect advances). hbFont cache: plain Map (NOT WeakMap — font
+object lifecycle is not guaranteed) keyed by font.fullName, then
+axesKey. axesKey = SPARSE normalized form: “tag=value” pairs in
+tag order, OMITTING axes whose resolved value equals
+font.axisRanges[tag].default — semantically identical to the full
+form (unset == default), compact for many-axis parametric fonts
+(Amstelvar AVAR2 already has a lot; per David Berlow axes are
+basically free and will become more), still correct for fully-set
+keys. If key parsing/comparison ever gets hot at scale, a TRIE
+structure over the tags is the noted scale-out option. Width
+cache: (fullName, axesKey, text) -&gt; em, flat Map, font units
+(size-independent).</p>
+</li>
+<li>
+<p><strong>Q3 RESOLVED by reframe (see Follow-up Notes)</strong>: drive-level
+input equality over consumed values; no separate filter hook.</p>
+</li>
+</ol>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ol>
+<li>Are <code>specific/font</code> and <code>axesLocations/*</code> visible through the node
+scope’s getProperties() directly, or must the drive merge the
+typeSpecnion channel like the stylers do (CascadingMap node over
+typeSpec)? (Verify at implementation start.)</li>
+<li>Axes-cache key shape: full axes tuple per (font, paragraph) vs.
+per-document cache of locations (axes usually constant per
+typeSpec — a location→hbFont memo per font may suffice).</li>
+<li>Filtering hook placement: drive-level key compare (local) vs.
+scope-level relevance predicate (shared) — plan decision.</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

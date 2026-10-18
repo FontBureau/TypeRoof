@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="type-spec-edit-performance-memoized-hyphenation-walk--composition-drive-dedupegate" class="heading_anchor" href="#type-spec-edit-performance-memoized-hyphenation-walk--composition-drive-dedupegate" aria-hidden="true">#</a>Type-spec edit performance: memoized hyphenation walk + composition-drive dedupe/gate</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Neutralize the per-tick cost that typeSpec edits (repro: enable + drag
+<code>wght</code> on the origin typeSpec, editor mode, “Compose Text in Editor”
+OFF) pay on this branch vs <code>fontbureau/main</code>. Verified in the research
+doc: the composition pipeline is COLD in the repro (zero demand), so
+the lag comes from unconditional per-tick overheads. This plan removes
+the two biggest ones with small, independent diffs:</p>
+<ol>
+<li>the full recursive hyphenation language walk running on every
+typeSpec draft (<code>requireHyphenationPatternsCoherenceFn</code>), and</li>
+<li>the DocumentNodesMeta <code>_driveComposition</code> double-fire +
+discarded-source-build overhead.</li>
+</ol>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li><code>requireHyphenationPatternsCoherenceFn</code>
+(<code>lib/js/components/layouts/type-stage/index.typeroof.jsx:243-284</code>,
+shared with ramp via import at
+<code>lib/js/components/layouts/ramp/index.typeroof.jsx:57,111</code>) runs on
+every root metamorphose where <code>typeSpec</code> or <code>stylePatchesSource</code> is
+a draft (the 55bf4954 early-return only skips document-only edits).
+Every wght tick is a typeSpec draft → full recursive walk
+(<code>walkEffectiveTypeSpecLanguageParts</code> :196-206,
+<code>walkStylePatchLanguages</code> :215-241) with per-node allocations,
+<code>Set</code>/<code>Set</code> builds, and <code>languageToHyphenationPatternKey</code> mapping —
+result identical every tick because languages don’t change.
+Operator-verified: early-returning unconditionally is a big
+improvement.</li>
+<li><code>_driveComposition</code>
+(<code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs:830-845</code>)
+fires twice per textblock per style-change cycle (scope-settled
+callback :809-815 + element <code>update</code> :862-871 — “composes twice,
+acceptable” :796-797), and each firing builds a
+<code>_compositionSource()</code> (:817-828: <code>getEntry(&quot;.&quot;)</code> root-depth walk +
+<code>_styleResolutionContext()</code> path building) that is <strong>discarded</strong> when
+the controller has no demand (the repro case: zero demand).</li>
+<li>Steady state is sync-first (<code>shell.mjs:1628-1666</code>); the async
+double-pass is boot/font-review only (corrected in research doc).</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<ul>
+<li>wght enable + drag feels like main (operator feel-check).</li>
+<li>Hyphenation requirements are still derived correctly: full language
+set every pass (async-window priming semantics preserved, see Key
+Discoveries), runtime language switch still loads patterns
+(3731d2de behavior), all existing hyphenation/composition tests
+pass unmodified.</li>
+<li>Composition drive fires at most once per textblock per cycle, and
+costs ~nothing when the controller has no demand.</li>
+</ul>
+<h3><a id="key-discoveries" class="heading_anchor" href="#key-discoveries" aria-hidden="true">#</a>Key Discoveries</h3>
+<ul>
+<li>The async resolution window primes <code>installedHyphenationPatterns</code>
+EMPTY (<code>shell.mjs:1487-1490</code>) so the coherence re-yields the
+<strong>complete</strong> requirement set every async pass; the resolver copies
+into that target container (<code>shell.mjs:1394-1419</code>). Any cheap-walk
+design must return the <strong>full set</strong>, never a delta. (The operator’s
+discarded working-tree experiment also had a parameter-position bug:
+<code>isNew</code> was passed into the walk’s <code>inherited</code> parameter.)</li>
+<li>The walk’s effective parts depend on the <strong>inherited context</strong> (local
+subtags override inherited independently, :193-195): a per-node
+cache must be keyed by (node identity, inherited-context triple,
+children-map identity, local languageTag triple) or an ancestor
+language change would serve stale results.</li>
+<li>Cache-key safety: the metamodel preserves identity of unchanged
+subtrees (deep change ⇒ drafts only along the changed path), so
+unchanged children are WeakMap hits; drafts (transient per
+transaction) simply miss.</li>
+<li><code>update</code>-drive is the ONLY composition channel for content edits
+(text edits don’t rebuild scopes — <code>DocumentNodeProperties.update</code>
+identity early-return, <code>index.mjs:644-652</code>); <code>_scopeSettled</code> is the
+channel for style changes. Both must stay; only the same-cycle
+double-fire is waste.</li>
+<li>Ordering guarantee for dedupe: the scope component is <code>_widgets[0]</code>,
+so <code>_scopeSettled</code> fires inside <code>super.update()</code>, before the
+element’s own drive at the end of <code>update</code>
+(<code>index.mjs:792-797</code>, :856-871).</li>
+<li>Late subscriber semantics: <code>registerSource</code> must stay unconditional
+(“source and demand may arrive in either order”,
+<code>composition-controller.ts:447-470</code>); skipping <code>sourceChanged</code> when
+undemanded is behavior-identical because the controller gates on
+<code>_hasDemand</code> anyway (:385-387, :472-476) and a later <code>subscribe()</code>
+re-drives from the live source driver (:478-501).</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>Moving hyphenation loading UI-side / demand-driven (“Option B” from
+planning) — deferred; Option A (memoized walk) chosen.</li>
+<li>The async-window double metamorphose (boot/font-review only).</li>
+<li>Viewer/compare-mode composition pipeline costs (axesKey invalidation,
+hbFont LRU thrash) — separate cycle when it shows up in feel.</li>
+<li>The engagement-default question (unset algorithm ⇒ GreedyRagged
+fallback, <code>composition-controller.ts:812-813</code>).</li>
+<li>The None-gate’s per-change <code>getProperties()</code> and the editor plugin’s
+O(doc) <code>_syncSubscriptions</code> walk (ON+None residual costs).</li>
+<li>Committing the operator’s working-tree experiment — DISCARD first:
+<code>git checkout -- lib/js/components/layouts/type-stage/index.typeroof.jsx</code>.</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Small independent phases, each its own commit, each pausing for review
+with a proposed commit message (per <a href="http://COLLABORATION.md">COLLABORATION.md</a>). Phase order by
+expected impact; phases 2–4 are independent of phase 1.</p>
+<h2><a id="phase-0-clean-tree--done-by-operator-2026-10-08" class="heading_anchor" href="#phase-0-clean-tree--done-by-operator-2026-10-08" aria-hidden="true">#</a>Phase 0: Clean tree ✅ (done by operator, 2026-10-08)</h2>
+<p>Discard the operator’s experiment:</p>
+<pre class="language-bash"><code class="language-bash"><span class="token function">git</span> checkout -- lib/js/components/layouts/type-stage/index.typeroof.jsx</code></pre>
+<h2><a id="phase-1-memoized-hyphenation-language-walk--implemented-2026-10-08-strengthened-per-operator-complete-derivation-shortcut" class="heading_anchor" href="#phase-1-memoized-hyphenation-language-walk--implemented-2026-10-08-strengthened-per-operator-complete-derivation-shortcut" aria-hidden="true">#</a>Phase 1: Memoized hyphenation language walk ✅ (implemented 2026-10-08; strengthened per operator: complete derivation shortcut)</h2>
+<h3><a id="overview-as-implemented-final" class="heading_anchor" href="#overview-as-implemented-final" aria-hidden="true">#</a>Overview (as implemented, final)</h3>
+<p>Two-level memoization in the new module
+<code>lib/js/components/layouts/type-stage/hyphenation-pattern-languages.mjs</code>
+(the operator’s directive: “shortcutting the function completely is
+much better” than a merely cheaper walk):</p>
+<ol>
+<li><strong><code>createTypeSpecLanguageWalker</code></strong> — a subtree’s effective language
+parts are a pure function of (languageTag content, children
+content, inherited context). A node is <strong>cacheable iff its
+languageTag struct AND its children map are both immutable</strong>
+(<code>isDraft === false</code> guarantees unchanged — operator’s metamodel
+semantics; unchanged fields keep identity across metamorphoses; a
+changed draft’s identity lives on as the new immutable; drafts
+never enter the memo). Crucially, the coherence runs
+mid-metamorphose on a DRAFT root whose child reads return
+<strong>potential write proxies</strong> (per-draft objects — the reason the
+first iteration never hit in production, caught by the operator’s
+HIT/NO-hit instrumentation): every access goes through
+<code>unwrapPotentialWriteProxy</code>, yielding the carried immutables. Net
+effect: a non-language edit at the root (axis drag) is a <strong>single
+O(1) hit for the whole tree</strong>; deep language/structure edits miss
+exactly along the changed path (the owning tag/map is a draft
+there) — sound invalidation, no stale reads. Verified by the
+operator: “feels a lot better, even with compose in editor on”.</li>
+<li><strong><code>createHyphenationPatternDeriver</code></strong> — the complete derivation
+(tag creation, style-patch walk, Set algebra, pattern-key mapping)
+memoized on (parts identity, stylePatchesSource identity): when
+nothing language-relevant changed, the coherence’s work collapses
+to the walk hit plus two identity compares. Always returns the
+FULL required-key set (async-window priming semantics); the
+installation state is not part of the memo key — the coherence
+still diffs against <code>installedHyphenationPatterns</code> every pass.</li>
+</ol>
+<p><code>index.typeroof.jsx</code> keeps the coherence (unchanged signature; ramp
+unaffected) and delegates to <code>deriveRequiredPatternKeys</code>.</p>
+<p><strong>Metamodel facts established by scratch tests (since removed):</strong> a
+draft’s untouched fields read as the carried immutables
+(<code>unwrap(draft.get(&quot;children&quot;)) === prevState.get(&quot;children&quot;)</code>, same
+for <code>languageTag</code>); <code>s1.children === s0.children</code> after a
+non-children edit; proxies are cached per-draft, never across
+transactions.</p>
+<h3><a id="changes-as-implemented" class="heading_anchor" href="#changes-as-implemented" aria-hidden="true">#</a>Changes (as implemented)</h3>
+<ul>
+<li>NEW <code>hyphenation-pattern-languages.mjs</code>: <code>languageTagParts</code>,
+<code>partsToLanguageTag</code>, <code>walkStylePatchLanguages</code> (moved unchanged),
+<code>createTypeSpecLanguageWalker</code>, <code>createHyphenationPatternDeriver</code>.</li>
+<li>MODIFIED <code>index.typeroof.jsx</code>: helpers extracted (−76/+14); the
+<code>languageToHyphenationPatternKey</code> import moved into the new module.</li>
+<li>NEW <code>hyphenation-pattern-languages.test.mjs</code>: equivalence battery
+vs the pre-change recursive walk as oracle (axis-like edits, deep/
+mid-tree language changes, partial subtags, child add/remove,
+language clearing); metamodel identity-preservation property test;
+patch-walk semantics tests; deriver shortcut contract test
+(identity-stable Set across axis-like edits, fresh + cold-equal on
+language edits); <strong>production-conditions test</strong> (deriver called with
+DRAFT roots + proxies across ticks — the case that never hit
+before proxy-unwrapping). 8/8 pass.</li>
+</ul>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification" class="heading_anchor" href="#automated-verification" aria-hidden="true">#</a>Automated Verification</h4>
+<ul>
+<li>[x] New tests pass (8/8, incl. identity-preservation property, deriver shortcut contract, production-like draft/proxy conditions)</li>
+<li>[x] <code>npx vitest run lib/js/tests/type-stage-toggles lib/js/components/type-spec</code> + new module — 51/51 pass</li>
+<li>[x] <code>lib/js/tests/text-composition</code> — RESOLVED (2026-10-08), 17/17 green. Bisect (operator’s challenge — the suite ran green a lot): green through <code>137945fe</code>, broken at <strong><code>67f3ce9f</code></strong> (composeInEditor default-on). The flip activated the editor plugin in the test worlds: demand-lifecycle + payload/DOM assertions (written for flag-off) failed 16/17, and plugin DOM churn woke PM’s <code>checkCSS</code> (bare <code>getComputedStyle</code>, never shimmed in this NODE-env suite) → worker exit 7. Fix: pin <code>composeInEditor: &quot;0&quot;</code> (serialized false — <code>BooleanModel.deserializeFN</code> maps JS <code>false</code> to true; the falseSet is strings) in both <code>beforeAll</code> state preparations + add <code>getComputedStyle</code> to both JSDOM shim lists.</li>
+<li>[x] <code>npm run typecheck</code> clean; eslint/prettier clean on touched files</li>
+</ul>
+<p><strong>Environment note (2026-10-08):</strong> /tmp (16GB tmpfs) was 100% full from <strong>729 leaked vitest temp dirs (~15GB)</strong> — caused ENOENT suite failures; ~14GB freed by agent; 29 dirs (~1GB) have commander-owned files. Vitest leaks its transform-cache temp dirs when workers die — candidate <a href="http://TOOLING.md">TOOLING.md</a> entry.</p>
+<h4><a id="manual-verification" class="heading_anchor" href="#manual-verification" aria-hidden="true">#</a>Manual Verification</h4>
+<ul>
+<li>[x] wght enable + drag: noticeably better (operator: “feels a lot better, even with compose in editor on”, 2026-10-08)</li>
+</ul>
+<p><strong>Pause for review + proposed commit message after this phase.</strong></p>
+<h2><a id="phase-2-_drivecomposition-same-cycle-dedupe--implemented-2026-10-08" class="heading_anchor" href="#phase-2-_drivecomposition-same-cycle-dedupe--implemented-2026-10-08" aria-hidden="true">#</a>Phase 2: <code>_driveComposition</code> same-cycle dedupe ✅ (implemented 2026-10-08)</h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p>Eliminate the double drive on style-change cycles (scope settle +
+element update). Content-edit channel (<code>update</code>) untouched.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs</code></p>
+<ul>
+<li>Add instance flag <code>_scopeDroveComposition = false</code> (constructor).</li>
+<li><code>_scopeSettled()</code> (:809-815): after <code>this._driveComposition()</code>, set
+<code>this._scopeDroveComposition = true</code>.</li>
+<li><code>update(compareResult)</code> (:862-871): <code>super.update()</code> runs children
+first (scope component is <code>_widgets[0]</code>, so a settle this cycle sets
+the flag); then drive only when the flag is false; finally reset the
+flag:</li>
+</ul>
+<pre class="language-js"><code class="language-js"><span class="token function">update</span><span class="token punctuation">(</span><span class="token parameter">compareResult</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>_lastNewState <span class="token operator">=</span> compareResult<span class="token punctuation">.</span>newState<span class="token punctuation">;</span>
+    <span class="token keyword">const</span> result <span class="token operator">=</span> <span class="token keyword">super</span><span class="token punctuation">.</span><span class="token function">update</span><span class="token punctuation">(</span>compareResult<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span>_scopeDroveComposition<span class="token punctuation">)</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_driveComposition</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>_scopeDroveComposition <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> result<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<ul>
+<li><code>initialUpdate(rootState)</code> (:874-880): same guard+reset — boot is
+preserved: when the settle callback drives during initial provision
+the explicit post-provision drive is skipped; “already-settled
+sources” (no settle this cycle) still get the drive, per the comment
+at :876-878.</li>
+</ul>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification-1" class="heading_anchor" href="#automated-verification-1" aria-hidden="true">#</a>Automated Verification</h4>
+<ul>
+<li>[x] <code>npx vitest run lib/js/tests/type-stage-toggles lib/js/components/type-spec</code> + hyphenation module — 51/51 pass</li>
+<li>[ ] ⚠️ <code>lib/js/tests/text-composition</code> — still blocked (pre-existing, see Phase 1)</li>
+<li>[x] <code>npm run typecheck</code>, <code>npm run lint</code></li>
+</ul>
+<h4><a id="manual-verification-1" class="heading_anchor" href="#manual-verification-1" aria-hidden="true">#</a>Manual Verification</h4>
+<ul>
+<li>[ ] Typing recomposes (content channel intact); style changes
+recompose (viewer mode)</li>
+</ul>
+<p><strong>Pause for review + proposed commit message.</strong></p>
+<h2><a id="phase-3-zero-demand-cheap-gate-in-_drivecomposition--implemented-2026-10-08" class="heading_anchor" href="#phase-3-zero-demand-cheap-gate-in-_drivecomposition--implemented-2026-10-08" aria-hidden="true">#</a>Phase 3: Zero-demand cheap gate in <code>_driveComposition</code> ✅ (implemented 2026-10-08)</h2>
+<h3><a id="overview-2" class="heading_anchor" href="#overview-2" aria-hidden="true">#</a>Overview</h3>
+<p>With zero demand (editor mode, compose-in-editor OFF — the repro), each
+drive currently builds a discarded <code>_compositionSource()</code>. Skip the
+build when it can’t matter.</p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs</code></p>
+<p>Reorder <code>_driveComposition</code> (:830-845):</p>
+<pre class="language-js"><code class="language-js"><span class="token function">_driveComposition</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span>_isTextblock<span class="token punctuation">)</span> <span class="token keyword">return</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>_lastNewState <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token keyword">return</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> scope <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>nodePropertiesComponent<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>scope <span class="token operator">===</span> <span class="token keyword">null</span> <span class="token operator">||</span> <span class="token operator">!</span>scope<span class="token punctuation">.</span>hasScope<span class="token punctuation">)</span> <span class="token keyword">return</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> service <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>widgetBus<span class="token punctuation">.</span><span class="token function">getWidgetById</span><span class="token punctuation">(</span>
+        <span class="token string">"compositionController"</span><span class="token punctuation">,</span>
+        <span class="token keyword">null</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>service <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token keyword">return</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>_compositionSourceUnregister <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">// registration is unconditional: source and demand may</span>
+        <span class="token comment">// arrive in either order</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>_compositionSourceUnregister <span class="token operator">=</span> service<span class="token punctuation">.</span><span class="token function">registerSource</span><span class="token punctuation">(</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>widgetBus<span class="token punctuation">.</span>rootPath<span class="token punctuation">,</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>_compositionSourceDriver<span class="token punctuation">,</span>
+        <span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment">// registered: a source change only matters when demanded; the</span>
+    <span class="token comment">// controller re-drives from the live source driver on subscribe</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>service<span class="token punctuation">.</span><span class="token function">hasDemand</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>widgetBus<span class="token punctuation">.</span>rootPath<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token keyword">return</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_compositionSource</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">===</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token keyword">return</span><span class="token punctuation">;</span> <span class="token comment">// defensive</span>
+    service<span class="token punctuation">.</span><span class="token function">sourceChanged</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>widgetBus<span class="token punctuation">.</span>rootPath<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/text-composition/composition-controller.ts</code></p>
+<p>Add a thin public query next to <code>_hasDemand</code> (:385-387):</p>
+<pre class="language-ts"><code class="language-ts"><span class="token function">hasDemand</span><span class="token punctuation">(</span>path<span class="token operator">:</span> Path <span class="token operator">|</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">boolean</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_hasDemand</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_pathString</span><span class="token punctuation">(</span>path<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>(Verify <code>_pathString</code> handles both input kinds the way
+<code>registerSource</code> does; mirror its conversion.)</p>
+<p>Verified: <code>_compositionSourceDriver</code> is fully lazy
+(<code>() =&gt; this._compositionSource()</code>, <code>index.mjs:779</code>) — the controller
+re-fetches the current source when it drives (on <code>subscribe</code> after
+demand arrives), so skipping undemanded <code>sourceChanged</code> notifications
+loses nothing.</p>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification-2" class="heading_anchor" href="#automated-verification-2" aria-hidden="true">#</a>Automated Verification</h4>
+<ul>
+<li>[x] <code>npx vitest run lib/js/tests/type-stage-toggles lib/js/components/type-spec</code> + hyphenation module — 51/51 pass</li>
+<li>[ ] ⚠️ Composition suite (<code>text-composition</code>, incl. “editor-only drops every composition result and viewer demand restores it”) — still blocked (pre-existing, see Phase 1); manual verification covers the demand lifecycle instead</li>
+<li>[x] <code>npm run typecheck</code>, <code>npm run lint</code></li>
+</ul>
+<p>As implemented, one improvement beyond the plan sketch: the demanded
+path drops the discarded null-check build too — the controller invokes
+the lazy driver itself when composing (the source was previously built
+twice per demanded drive).</p>
+<h4><a id="manual-verification-2" class="heading_anchor" href="#manual-verification-2" aria-hidden="true">#</a>Manual Verification</h4>
+<ul>
+<li>[ ] Viewer/compare composition still engages on mode switch; typing
+recomposes</li>
+</ul>
+<p><strong>Pause for review + proposed commit message.</strong></p>
+<h2><a id="phase-4-verification-probe-puppeteer-harness--2026-10-08" class="heading_anchor" href="#phase-4-verification-probe-puppeteer-harness--2026-10-08" aria-hidden="true">#</a>Phase 4: Verification probe (puppeteer harness) ✅ (2026-10-08)</h2>
+<h3><a id="overview-3" class="heading_anchor" href="#overview-3" aria-hidden="true">#</a>Overview</h3>
+<p>Make the improvement visible with the allowed debugging harness
+(NOT the perf suite).</p>
+<h3><a id="as-implemented" class="heading_anchor" href="#as-implemented" aria-hidden="true">#</a>As implemented</h3>
+<p>New probe <code>scripts/puppeteer-probes/perf-axis-drag.mjs</code> (runner:
+<code>scripts/debug-with-puppeteer.mjs</code>): boots the default type-stage,
+pins the repro configuration (editor mode; <code>composeInEditor</code> false,
+guarded for pre-flag revisions), then performs 24 <code>wght</code> ticks via
+<code>shell.changeState</code> (<code>axesLocations.setSimpleValue</code>), each measured
+as wall time from the change call through two rAFs (changeState’s
+promise resolves before <code>_updateState</code>; the root update is
+rAF-driven). Prints a machine-readable <code>RESULT</code> line.</p>
+<h3><a id="results-2026-10-08-same-machine-chrome-headless" class="heading_anchor" href="#results-2026-10-08-same-machine-chrome-headless" aria-hidden="true">#</a>Results (2026-10-08, same machine, chrome headless)</h3>
+<table>
+<thead>
+<tr>
+<th>Revision</th>
+<th>enable wght</th>
+<th>median/tick</th>
+<th>p95</th>
+<th>max</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fontbureau/main</code> (target)</td>
+<td>265.1ms</td>
+<td>70.1ms</td>
+<td>156.3ms</td>
+<td>227.8ms</td>
+</tr>
+<tr>
+<td><code>67f3ce9f</code> (branch, pre-fix)</td>
+<td>767.5ms</td>
+<td>935.9ms</td>
+<td>1156.5ms</td>
+<td>1213.9ms</td>
+</tr>
+<tr>
+<td>HEAD (Phases 1–3)</td>
+<td>81.2ms</td>
+<td>42.0ms</td>
+<td>58.3ms</td>
+<td>67.0ms</td>
+</tr>
+</tbody>
+</table>
+<p><strong>~22× faster than pre-fix; ~1.7× better than main on the median
+(~2.7× on p95).</strong> Regression neutralized with margin.</p>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification-3" class="heading_anchor" href="#automated-verification-3" aria-hidden="true">#</a>Automated Verification</h4>
+<ul>
+<li>[x] Probe exits 0 and prints a latency table (RESULT line)</li>
+</ul>
+<h4><a id="manual-verification-3" class="heading_anchor" href="#manual-verification-3" aria-hidden="true">#</a>Manual Verification</h4>
+<ul>
+<li>[x] Operator feel-check: wght enable + drag ≈ main (“feels a lot
+better, even with compose in editor on”, after Phase 1; Phases 2–3
+verified working)</li>
+<li>[x] Numbers recorded into this plan (before/after, above)</li>
+</ul>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<ul>
+<li><strong>Behavior-level</strong> where behavior exists: hyphenation requirement
+derivation (existing suites), runtime language switch (3731d2de),
+composition publications/demand lifecycle (Cycle-1 tests).</li>
+<li><strong>Structural counters</strong> only where the win is behavior-invisible
+(drive-call counts) — Cycle-1 zero-work test precedent.</li>
+<li>Equivalence battery for the memoized walker (phase 1) asserts
+output equality with the reference walk, never cache internals.</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

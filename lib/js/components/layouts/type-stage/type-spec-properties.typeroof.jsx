@@ -61,6 +61,7 @@ import { UIColorChooserTwoColorsWithSwap } from "../../ui-color-chooser.mjs";
 import {
     UIStylePatchesLinksContainer,
     UIMarkStyleLinksContainer,
+    UIInlineNodesStyleLinksContainer,
 } from "../../type-spec/fundamentals.mjs";
 
 class UIFontLabel extends DynamicTag {
@@ -212,11 +213,16 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
      * options.showMarkStyleLinks: set to false to omit the
      * "Hard Style Links" UI (UIMarkStyleLinksContainer) in Ramp.
      */
-    constructor(widgetBus, zones, { showMarkStyleLinks = true } = {}) {
+    constructor(
+        widgetBus,
+        zones,
+        { showMarkStyleLinks = true, showNodeStyleLinks = true } = {},
+    ) {
         // provision widgets dynamically!
         super(widgetBus, zones);
         this._collapsibleStates = new Map();
         this._showMarkStyleLinks = showMarkStyleLinks;
+        this._showNodeStyleLinks = showNodeStyleLinks;
     }
     get dependencies() {
         const dependencies = super.dependencies;
@@ -306,6 +312,7 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                     //    "inlineMargins",
                     "textAlign",
                 ],
+                composition: ["textCompositionAlgorithm", "hyphenation"],
                 vertical: ["leading", "blockMargins"],
                 // we don't use sections.color activeley, instead we
                 // use UIColorChooserTwoColorsWithSwap to control these
@@ -315,7 +322,15 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 // Style links are rendered as a compound UI (both link
                 // maps in one collapsible, below); listing them here
                 // keeps them out of sections.rest (color precedent).
-                styleLinks: ["intentStyleLinks", "markStyleLinks"],
+                // styleLinks: kept out of sections.rest — rendered as
+                // a compound UI below; inlineNodesStyleLinks (approach
+                // (a) phase 4) gets its own container in phase 5, for
+                // now it is only kept OUT of the type-driven fallback.
+                styleLinks: [
+                    "intentStyleLinks",
+                    "markStyleLinks",
+                    "inlineNodesStyleLinks",
+                ],
             },
             h = this._domTool.h;
         {
@@ -426,6 +441,21 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                 false, // scroll
             ],
             [
+                { zone: "main", id: "typespec_text_composition_collapsible" },
+                [],
+                CollapsibleContainer,
+                this._zones,
+                "Text Composition",
+                "minimal",
+                "typespec_text_composition", //classNameParticle
+                [filteredTypeDriven(sections.composition)] /* widgets */,
+                this._getCollapsibleState(
+                    "typespec_text_composition_collapsible",
+                    false,
+                ), // open
+                false, // scroll
+            ],
+            [
                 { zone: "main", id: "typespec_vertical_layout_collapsible" },
                 [],
                 CollapsibleContainer,
@@ -499,6 +529,26 @@ export class TypeSpecPropertiesManager extends _CommonContainerComponent {
                                       ],
                                   ],
                                   UIMarkStyleLinksContainer,
+                                  require("raw:zones"),
+                              ],
+                          ]
+                        : []),
+                    ...(this._showNodeStyleLinks
+                        ? [
+                              [
+                                  { rootPath: typeSpecPath, zone: "main" },
+                                  [
+                                      [".", "typeSpecPath"],
+                                      [
+                                          "./inlineNodesStyleLinks",
+                                          "localStyleLinks",
+                                      ],
+                                      [
+                                          "./stylePatchesSource",
+                                          "stylesSourceMap",
+                                      ],
+                                  ],
+                                  UIInlineNodesStyleLinksContainer,
                                   require("raw:zones"),
                               ],
                           ]

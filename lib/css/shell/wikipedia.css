@@ -17,7 +17,15 @@ wrapper
     z-index: 2;
 }
 
-.typeroof-layout {
+/* ui-comments.css makes .typeroof-layout a containing block
+ * (position: relative) for comment balloons — it out-specifies a
+ * plain .typeroof-layout rule (and loads later, via the JS module
+ * import) and drops the layout element back into normal flow,
+ * exposing the (hidden) sidebar's reserved grid column. Here the
+ * layout must cover the full viewport (the sidebar floats above
+ * it); absolute is a containing block too, so the comments overlay
+ * keeps working. (Same fix as player.css.) */
+body > .wrapper > .typeroof-main > .typeroof-layout {
     position: absolute;
     z-index: 1;
     top: 0;
@@ -67,11 +75,26 @@ etc
 :is(.ProseMirror, .typeroof-document) {
     a[data-node-type="figcontent"] {
         padding: var(--space-before) 0 var(--space-after) 0;
+        display: block;
+    }
 
-        &,
-        img {
-            display: block;
-        }
+    /* FIXME: should become configuration */
+    sup {
+        vertical-align: text-top;
+        line-height: 1em;
+    }
+
+    a {
+        /* FIXME: should become configuration
+         * This is ideally a very light underline st
+         */
+        text-decoration: none;
+
+        /*
+        text-decoration-line: underline;
+        text-decoration-thickness: from-font;
+        text-decoration-style: dotted;
+        */
     }
 
     [data-node-type="reproduce-as-inline"],
@@ -79,6 +102,19 @@ etc
         /* FIXME: can be set via UI/TypeSpec */
         padding: 0; /* var(--space-before) 0 var(--space-after) 0; */
         display: inline;
+    }
+
+    /* FIXME should become configuration
+     * CAUTION: thi now defaults to "outset" which means the list
+     * typespec should be set up to provide the required space
+     * (using 4en for double-digit space currently.);
+     */
+    *[data-node-type="ol-list"] {
+        list-style: decimal;
+    }
+
+    *[data-node-type="ul-list"] {
+        list-style: disc;
     }
 }
 

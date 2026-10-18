@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="milestone-2-greedy-ragged--per-typespec-algorithm-selection" class="heading_anchor" href="#milestone-2-greedy-ragged--per-typespec-algorithm-selection" aria-hidden="true">#</a>Milestone 2: Greedy Ragged + per-typeSpec algorithm selection</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>The first real composition algorithm (greedy ragged) plus the
+model-first infrastructure it forces: inheritable textComposition
+engagement (fixing the root-only bug) and the dynamic-struct
+algorithm selection with per-typeSpec configuration. Research:
+<code>thoughts/research/2026-10-03-2018-milestone-2-greedy-ragged.md</code>
+(all questions resolved incl. corrections).</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li>Dummy algorithm + Host pipeline working (milestone 1); measurement
+truth (Sprint A); harness + perf baseline (Sprint B).</li>
+<li><code>textComposition</code> boolean: BooleanDefaultTrueModel, read from the
+ROOT typeSpec only — NOT inheritable, per-node off does nothing
+(bug confirmed in review).</li>
+<li>Algorithm selection: none (controller calls the dummy statically).</li>
+<li>Precedents: horizontalLayout/HorizontalLayoutAlgorithmModel
+(type-spec/horizontal-layout-models.mjs:177, createDynamicModel;
+generator yields horizontalLayout/algorithm + instance,
+properties-generators.mjs:544ff); BooleanDefaultTrueOrEmptyModel
+exists (autoOPSZ precedent); CombinatorOrCharsSelectorModel for
+OrEmpty-around-dynamic.</li>
+</ul>
+<h3><a id="key-decisions-research-doc" class="heading_anchor" href="#key-decisions-research-doc" aria-hidden="true">#</a>Key Decisions (research doc)</h3>
+<ul>
+<li>Ragged semantics: break-walk at step 0 only, adjustmentStep 0
+everywhere; slack badness (lineWidth−natural)/lineWidth, overfull
+≥ 1; trailing space KEPT in the line (copy/paste/search) but
+excluded from the fit test; explicit breaks end lines early;
+overfull single segments get their own flagged line.</li>
+<li>Dynamic struct NOW (config is certain: dummy’s
+DUMMY_SEGMENTS_PER_LINE), per typeSpec, inheriting; types:
+Dummy {segmentsPerLine default 4}, GreedyRagged {} (no config
+yet); inherit = empty instance.</li>
+<li>Config MODELS in the type-spec submodule; IMPLEMENTATION in
+greedy-ragged.ts. Boolean stays (explicit off = we do nothing);
+coherence clears the algorithm struct when composition is off.</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>Hyphenation (milestone 3, data question answered in research).</li>
+<li>UAX#14 segmentation refinement.</li>
+<li>Algorithm-specific UI (model + stream only; UI controls later).</li>
+<li>KP anything.</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Four phases, each a reviewable unit with its own commit; stop after
+each with a proposed message and wait for OKOK.</p>
+<hr>
+<h2><a id="phase-1-inheritable-engagement-bug-fix-first" class="heading_anchor" href="#phase-1-inheritable-engagement-bug-fix-first" aria-hidden="true">#</a>Phase 1: Inheritable engagement (bug fix, FIRST)</h2>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/components/type-spec/models.mjs</code>
+<strong>Changes</strong>: <code>textComposition</code> field → BooleanDefaultTrueOrEmptyModel
+(empty = inherit; default at the root via the registered property’s
+default true). Migration check: existing serialized “0”/“1” values
+must round-trip; omitted stays omitted.</p>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/properties-generators.mjs</code>
+<strong>Changes</strong>: new <code>textCompositionGen</code> yielding
+<code>generic/textComposition</code> when the field is non-empty (the fontGen
+pattern: yield only when set; inheritance does the rest); add to
+TYPE_SPEC_PROPERTIES_GENERATORS.</p>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/text-composition/composition-controller.ts</code>
+<strong>Changes</strong>: the drive reads the RESOLVED <code>generic/textComposition</code>
+from the textblock’s nodeProperties scope (replacing the root
+typeSpec model read); false → unpublish+notify (existing path).
+Ingredients snapshot gains the resolved flag.</p>
+<p><strong>File</strong>: <code>lib/js/tests/text-composition/index.test.mjs</code>
+<strong>Changes</strong>: extend the off-mode test — set textComposition false on
+a NON-root typeSpec (e.g. paragraphs) and assert only the affected
+textblocks decompose (inheritance through the cascade).</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated" class="heading_anchor" href="#automated" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[ ] Model round-trip tests (extend model.test.mjs: OrEmpty empty
+default, explicit false, legacy docs).</li>
+<li>[ ] New per-typeSpec engagement test passes; full suite green.</li>
+</ul>
+<h4><a id="manual" class="heading_anchor" href="#manual" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] Turning textComposition off on <code>paragraphs</code> turns it off on
+<code>paragraphs/t1</code> and <code>paragraphs/t2</code> in the viewer.</li>
+</ul>
+<hr>
+<h2><a id="phase-2-dynamic-struct-algorithm-selection--config" class="heading_anchor" href="#phase-2-dynamic-struct-algorithm-selection--config" aria-hidden="true">#</a>Phase 2: Dynamic struct (algorithm selection + config)</h2>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>lib/js/components/type-spec/text-composition-models.mjs</code> (new)
+<strong>Changes</strong>: TextCompositionAlgorithmDummyModel
+{segmentsPerLine: NumberModel default 4},
+TextCompositionAlgorithmGreedyRaggedModel {} (no config yet);
+<code>createDynamicModel(&quot;TextCompositionAlgorithm&quot;, [...])</code> following
+horizontal-layout-models.mjs EXACTLY (incl. deserialize helper if
+the pattern requires it).</p>
+<p><strong>File</strong>: <code>lib/js/components/type-spec/models.mjs</code>
+<strong>Changes</strong>: field <code>['textCompositionAlgorithm', TextCompositionAlgorithmModel]</code> on TypeSpecModel + coherence: when
+textComposition is explicitly false, clear the instance to empty
+(inherit). Import/export wiring.</p>
+<p><strong>File</strong>: <code>…/properties-generators.mjs</code>
+<strong>Changes</strong>: extend textCompositionGen: yield
+<code>textCompositionAlgorithm/algorithm</code> (typeKey) + the instance’s
+config values under <code>textCompositionAlgorithm/&lt;field&gt;</code> keys
+(horizontalLayoutGen pattern) — empty instance yields nothing
+(inherit).</p>
+<p><strong>Files</strong>: defaults/pps-maps plumbing as required by the precedent
+(getTypeSpecDefaultsMap special-cases horizontalLayout similarly;
+pps-maps excludes non-generic fields).</p>
+<p><strong>File</strong>: model tests: dynamic type round-trip, coherence clearing,
+inheritance (empty inherits parent).</p>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-1" class="heading_anchor" href="#automated-1" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[ ] Model + generator tests pass; full suite green.</li>
+</ul>
+<h4><a id="manual-1" class="heading_anchor" href="#manual-1" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] none (no behavioral consumer until phase 3; verified via
+tests).</li>
+</ul>
+<hr>
+<h2><a id="phase-3-greedy-ragged-algorithm--wiring" class="heading_anchor" href="#phase-3-greedy-ragged-algorithm--wiring" aria-hidden="true">#</a>Phase 3: greedy-ragged algorithm + wiring</h2>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required</h3>
+<p><strong>File</strong>: <code>…/text-composition/greedy-ragged.ts</code> (new)
+<strong>Changes</strong>: the greedy ragged CompositionAlgorithm per the decided
+semantics (slack badness; trailing space kept-not-fitted; explicit
+breaks; overfull single-segment lines flagged). Pure, contract-only
+imports.</p>
+<p><strong>File</strong>: <code>…/text-composition/greedy-ragged.test.mjs</code> (new)
+<strong>Changes</strong>: behavior tests (dummy-composition.test.mjs patterns):
+fit-driven breaking, trailing-space exclusion from the fit test
+(space still in the line), explicit breaks, overfull flagging,
+slack badness values, empty input.</p>
+<p><strong>File</strong>: <code>…/text-composition/composition-controller.ts</code>
+<strong>Changes</strong>: per-textblock algorithm resolution from the properties
+stream (typeKey → implementation map; dummy config segmentsPerLine
+passed to the dummy); the dummy gets a segmentsPerLine parameter
+(default 4, config overrides). Ingredients snapshot gains the
+algorithm key + config identity.</p>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-2" class="heading_anchor" href="#automated-2" aria-hidden="true">#</a>Automated:</h4>
+<ul>
+<li>[ ] New tests pass; full suite green; typecheck, lint.</li>
+</ul>
+<h4><a id="manual-2" class="heading_anchor" href="#manual-2" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] Viewer breaks greedily at real widths (dramatically better
+than the dummy); overfull tinting plausible; selecting the
+dummy per typeSpec shows the dummy behavior again.</li>
+</ul>
+<hr>
+<h2><a id="phase-4-perf-re-run--snapshot" class="heading_anchor" href="#phase-4-perf-re-run--snapshot" aria-hidden="true">#</a>Phase 4: Perf re-run + snapshot</h2>
+<h3><a id="changes-required-3" class="heading_anchor" href="#changes-required-3" aria-hidden="true">#</a>Changes Required</h3>
+<ul>
+<li>Run <code>npm run perf:composition</code> (dummy still selectable; make the
+default state use greedy-ragged); review numbers together;
+<code>--write-baseline</code> with the legitimate-change commit.</li>
+</ul>
+<h3><a id="success-criteria-3" class="heading_anchor" href="#success-criteria-3" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="manual-3" class="heading_anchor" href="#manual-3" aria-hidden="true">#</a>Manual:</h4>
+<ul>
+<li>[ ] Greedy-ragged overhead reviewed and accepted (or flagged).</li>
+</ul>
+<hr>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<ul>
+<li>Model/generator tests (behavior: round-trip, inheritance,
+coherence).</li>
+<li>Algorithm behavior tests (contract inputs → line structure).</li>
+<li>Harness integration test extension (per-typeSpec off).</li>
+<li>Perf: informational + snapshot.</li>
+</ul>
+<h2><a id="sub-rpi-handoff-rule" class="heading_anchor" href="#sub-rpi-handoff-rule" aria-hidden="true">#</a>Sub-RPI handoff rule</h2>
+<p>As before. Suspects: the defaults/pps plumbing for the dynamic
+struct (the horizontalLayout precedent has several touch points).</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

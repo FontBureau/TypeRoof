@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-composition-controller-integration-into-type-stage" class="heading_anchor" href="#research-composition-controller-integration-into-type-stage" aria-hidden="true">#</a>Research: Composition Controller integration into type-stage</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>How does the Composition Controller hook into the type-stage layout —
+DocumentNodesMeta observation, style distribution protocols, publishing a
+new <code>composition@</code> protocol, and viewer attachment lifecycle? (Milestone 1
+of <code>docs/planning/text-composition/ROADMAP.md</code>: full Host executing the
+dummy algorithm end to end, Controller first.)</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p>The planned architecture is confirmed feasible with existing mechanisms:</p>
+<ul>
+<li><strong>Instantiation</strong>: <code>TypeStageController</code> assembles widgets in array
+order; <code>DocumentNodesMeta</code> (DOM-less, id <code>&quot;documentNodesMeta&quot;</code>) updates
+BEFORE both renderers to avoid a one-cycle lag. A composition controller
+widget would slot in the same <code>widgets</code> array, after the meta.</li>
+<li><strong>Style observation</strong>: every document node has a <code>nodeProperties@&lt;path&gt;</code>
+registration answering a scope-like <code>.getProperties()</code> payload; rebuilds
+are marked via <code>setUpdated</code>, and identity-guarded (no rebuild on
+unchanged inputs). Text runs are consume-only (parent element’s scope).</li>
+<li><strong>Publishing</strong>: per-path protocol registration is a solved pattern —
+a <code>&quot;composition@&quot;: &lt;id&gt;</code> key in wrapper settings auto-registers on
+<code>ComponentWrapper.create()</code> and unregisters on destroy.</li>
+<li><strong>Applying</strong>: <code>UIDocumentTextRun</code> maintains a strict invariant — ONE
+text node reachable by drilling down the single-child mark-wrapper
+chain. Line-span wrapping must respect exactly two touch points
+(<code>_updateNode</code>/<code>getTextNode</code> drill-down contract and the mark-rebuild
+branch).</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-widget-tree-and-instantiation-layout-controller" class="heading_anchor" href="#1-widget-tree-and-instantiation-layout-controller" aria-hidden="true">#</a>1. Widget tree and instantiation (layout controller)</h3>
+<ul>
+<li><code>TypeStageController</code> at <code>index.typeroof.jsx:243</code>; zones merged at
+<code>:282-291</code>; protocol handlers installed at <code>:303-326</code>
+(<code>typeSpecProperties@</code>, <code>nodeProperties@</code> with
+<code>notFoundFallbackValue: null</code>, <code>stylePatchProperties@</code>,
+<code>styleLinkProperties@</code>).</li>
+<li><code>DocumentNodesMeta</code> instantiated at <code>index.typeroof.jsx:540-566</code>: id
+<code>&quot;documentNodesMeta&quot;</code> (<code>:297-301</code>), <code>relativeRootPath: ./document</code>, no
+zone (DOM-less, <code>:547-551</code>), ordering constraint before both renderers
+(<code>:545-550</code>). Deps: <code>nodeSpec</code>, <code>markSpec</code>, <code>nodeSpecToTypeSpec</code>.</li>
+<li><code>UIDocumentViewer</code> at <code>index.typeroof.jsx:583-604</code>, mode-gated by
+<code>showViewerActivationTest</code> (<code>:236-242</code>: viewer|compare). Looks up meta
+via <code>getWidgetById</code> and <code>attachRenderer</code> (<code>viewer.typeroof.jsx:780-781</code>);
+destroy detaches (<code>:838-846</code>).</li>
+<li>Editor: <code>TypeStageProseMirrorContext</code> (<code>index.typeroof.jsx:568-581</code>)
+binds to the same <code>document</code>/<code>proseMirrorSchema</code>/<code>nodeSpecToTypeSpec</code>
+model entries directly (NOT via DocumentNodesMeta),
+<code>integration.typeroof.jsx:903</code>.</li>
+<li>Widget update order = array order; layout root resets protocol updated
+logs each cycle (<code>index.typeroof.jsx:734-743</code>).</li>
+</ul>
+<h3><a id="2-documentnodesmeta-internals" class="heading_anchor" href="#2-documentnodesmeta-internals" aria-hidden="true">#</a>2. DocumentNodesMeta internals</h3>
+<ul>
+<li>Dispatcher per document node (<code>DocumentNodesMetaNode</code>, index.mjs:185)
+owns the <code>nodeProperties@</code> registration payload (<code>:343-345</code>); children
+container <code>DocumentNodesMetaNodes</code> (<code>:410</code>) registers per-key
+<code>&quot;nodeProperties@&quot;: rootPath.toString()</code> in wrapper settings
+(<code>:439-447</code>) — on the dispatcher, not the typeKey child, because
+typeKey rebuilds create new before destroying old (<code>:440-444</code>).</li>
+<li>Update order in <code>DocumentNodesMetaElement._provisionWidgets</code>
+(<code>:895-968</code>): rendering plan → scope component FIRST (parent-first,
+“G8 contract”, <code>:902-906</code>) → child container → super → attach
+cascades. Attachments get initial update from cached
+<code>widgetBus.rootState</code> (<code>:66-68, 108</code>).</li>
+<li>Scopes: <code>DocumentNodeProperties</code> (<code>:526-690</code>) builds
+<code>HierarchicalScopeNodeProperties</code> = CascadingMap([local, parent])
+(node-properties.mjs:14-34); rebuild guarded by identity checks
+(<code>index.mjs:628-633</code>); after build, marks its <code>nodeProperties@</code>
+registration updated (<code>:678-688</code>).</li>
+<li>Text runs (<code>DocumentNodesMetaTextRun</code>, <code>:974-1009</code>): consume-only, no
+own scope; payload = parent element’s scope (<code>:247-250</code>); map <code>text</code>
+and <code>marks</code> (<code>:263-278</code>).</li>
+<li>Observing style change: (a) typeSpec relink → resolved
+<code>typeSpecProperties@</code> id change (via injected <code>nodeSpecToTypeSpec</code>
+mapping, <code>:85-101</code>); (b) parent scope rebuild → <code>setUpdated</code> mark →
+child’s <code>&quot;@parentNodeProperties&quot;</code> trigger mapping (noStyler-dependency
+precedent, <code>:830-871</code>). Rebuilds skip when inputs identity-unchanged.</li>
+</ul>
+<h3><a id="3-protocol-mechanics-precedent-for-composition-" class="heading_anchor" href="#3-protocol-mechanics-precedent-for-composition-" aria-hidden="true">#</a>3. Protocol mechanics (precedent for <code>composition@</code>)</h3>
+<ul>
+<li><code>SimpleProtocolHandler</code> (<code>component.mjs:171-247</code>): Map registry,
+<code>register</code> returns unregister closure, <code>setUpdated</code>/<code>getUpdated</code> log,
+optional <code>notFoundFallbackValue</code>. Protocol names end with <code>@</code>.</li>
+<li>Auto-registration: any wrapper settings key matching a known protocol
+registers on <code>create()</code> and unregisters on <code>destroy()</code>
+(<code>component.mjs:293-300, 768-789</code>).</li>
+<li>Consumers: dependency mappings with <code>@</code>-names routed per protocol
+(<code>component.mjs:427-503</code>); delivered in changedMap via
+<code>getChangedMapFromCompareResult</code> (<code>:620-663</code>); synchronous read via
+<code>widgetBus.getEntry(&quot;protocol@id&quot;)</code> (<code>:327-340</code>).</li>
+<li>Update request on out-of-cycle change: EnvironmentProvider precedent —
+<code>setUpdated(key)</code> + <code>widgetBus.changeState(() =&gt; {})</code>
+(<code>environment-provider.mjs:93-103, 147-152</code>).</li>
+<li><code>typeSpecProperties@</code> payload: <code>TypeSpecLiveProperties</code> instance with
+<code>.typeSpecnion</code>, <code>.nodeProperties</code>, <code>.getPropertyValuesMap()</code>
+(<code>live-properties.typeroof.jsx:46-86</code>); id resolution for consumers via
+<code>getTypeSpecPropertiesIdMethod</code> (<code>integration.typeroof.jsx:188-260</code>).</li>
+</ul>
+<h3><a id="4-viewer-attachments-applicator-target" class="heading_anchor" href="#4-viewer-attachments-applicator-target" aria-hidden="true">#</a>4. Viewer attachments (Applicator target)</h3>
+<ul>
+<li><code>UIDocumentTextRun</code> (viewer.typeroof.jsx:503-723): ONE text node
+created in constructor (<code>:517</code>), never recreated, only moved.
+<code>_updateNode</code> sets <code>node.data</code> or drills down the single-child chain
+(<code>:531-546</code>); <code>getTextNode</code> drill-down contract (<code>:548-561</code>);
+<code>_swapNode</code> replaces outermost node + registry (<code>:564-572</code>); mark
+rebuild only on descriptor inequality (<code>:692</code>), builds nested
+single-child wrappers inside-out, text node appended innermost
+(<code>:697-708</code>).</li>
+<li>Wrapping invariants: <code>this.node</code> = outermost (registry-tracked);
+exactly one text node; chain is single-child nesting. Span wrapping
+must hook at the two touch points: the <code>_updateNode</code>/<code>getTextNode</code>
+drill-down contract, or the mark-rebuild branch.</li>
+<li>Styler layering: <code>UIDocumentTypeSpecStyler</code> (type-spec.typeroof.jsx:
+248-588) applies inline styles on update, snapshots/restores pre-styler
+attrs on destroy (<code>:259-267, 286-303</code>) — precedent for undoable
+application. font-size set on OUTER element in pt (<code>:578-586</code>).</li>
+<li><code>AttachmentRegistry</code> (viewer.typeroof.jsx:154-223): path → renderer
+node map, insert/reinsert/replace/delete; siblings resolved without
+meta-tree DOM access.</li>
+</ul>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/components/layouts/type-stage/index.typeroof.jsx:540-566</code> — DocumentNodesMeta instantiation (id, deps, ordering)</li>
+<li><code>lib/js/components/layouts/type-stage/index.typeroof.jsx:583-604</code> — UIDocumentViewer instantiation (mode gating)</li>
+<li><code>lib/js/components/layouts/type-stage/index.typeroof.jsx:303-326</code> — protocol handler installation</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs:1017-1129</code> — meta root, attachRenderer contract</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs:439-447</code> — per-node nodeProperties@ registration in settings</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs:526-690</code> — DocumentNodeProperties scope component</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs:974-1009</code> — text run meta node (consume-only)</li>
+<li><code>lib/js/components/basics/component.mjs:171-247</code> — SimpleProtocolHandler</li>
+<li><code>lib/js/components/basics/component.mjs:293-300, 768-789</code> — settings-key auto-registration lifecycle</li>
+<li><code>lib/js/components/environment-provider.mjs:93-103</code> — setUpdated + changeState no-op precedent</li>
+<li><code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx:503-723</code> — UIDocumentTextRun invariants and touch points</li>
+<li><code>lib/js/components/prosemirror/type-spec.typeroof.jsx:248-588</code> — UIDocumentTypeSpecStyler (apply/restore precedent)</li>
+<li><code>lib/js/components/prosemirror/integration.typeroof.jsx:188-260</code> — getTypeSpecPropertiesIdMethod</li>
+</ul>
+<h2><a id="follow-up-decisions-2026-10-02-review-session" class="heading_anchor" href="#follow-up-decisions-2026-10-02-review-session" aria-hidden="true">#</a>Follow-up Decisions (2026-10-02, review session)</h2>
+<ol>
+<li>
+<p><strong>Textblock identification (Q1): RESOLVED.</strong> PM-parallel rule
+(<code>NodeType.isTextblock</code> analogue): not inline AND children in inline
+context, derived via the existing <code>getMMChildIsBlock</code> +
+<code>specChildrenInInlineContext</code>. Not an explicit type-name list —
+covers headings and user-defined specs. Composition target = the
+OUTERMOST block container of an inline run (nested inline islands
+belong to their containing block). The meta tree surfaces the flag
+(it already computes <code>childrenInInlineContext</code>) — DRY: the
+Controller does not re-derive.</p>
+</li>
+<li>
+<p><strong>Content + change notification (Q2): RESOLVED.</strong> Option C:
+DOM-less Controller widget after DocumentNodesMeta; coarse model
+deps (document, typeSpec, stylePatches, nodeSpecToTypeSpec) fire
+its update; dirty detection reads fine paths from the EXISTING
+compareResult (StateComparison) — no re-walk/identity-diff
+duplication. Style payloads read synchronously via
+getEntry(“nodeProperties@<path>”) (scopes settle first, widget
+ordering). Publication via manual registration into a
+composition@ SimpleProtocolHandler (EnvironmentProvider
+precedent: register → unregister closure, setUpdated, no-op
+changeState) — no per-paragraph widgets. Immutable identity only
+for apply-time staleness (async). Sub-decisions: style-input
+changes mark ALL paragraphs dirty in v1 (refinement = compare
+resolved typeSpecProperties ids, noted in ROADMAP as
+optimization); textblock index lives in the Controller
+(queryable later if required; move to meta only if then
+required).</path></p>
+</li>
+<li>
+<p><strong>Font access for HarfBuzz (Q3): RESOLVED.</strong> No new
+infrastructure: harfbuzzjs module via widgetBus.harfbuzz
+(shell.mjs:49-81); font facade objects (.hbFace, .axisRanges)
+arrive via ordinary model dependencies; the measurement pattern
+exists in videoproof-contextual/layout.mjs:43-66 (shape at axis
+location, sum xAdvance, em units). OPEN DETAIL for the plan:
+trace the exact typeSpec font-reference → installedFonts
+resolution (per-run font objects).</p>
+</li>
+<li>
+<p><strong>composition@ installation point (Q4): RESOLVED.</strong> In
+TypeStageController’s constructor next to the existing handlers
+(index.typeroof.jsx:303-326). Options:
+treatAdressAsRootPath: true (default; ids are document-node
+paths) and notFoundFallbackValue: null (REQUIRED: OFF MODE is
+the absence of entries, so consumers must get null instead of
+KEY ERROR — the fallback is the off-mode mechanism at the
+consumption site).</p>
+</li>
+<li>
+<p><strong>Meta API needed? (Q5): RESOLVED — no, not for milestone 1.</strong>
+The Controller is self-sufficient: model deps + compareResult +
+synchronous getEntry for protocols + the shared PURE derivation
+functions from document-nodes-meta/derivations.mjs
+(getMMChildIsBlock, specChildrenInInlineContext — the same ones
+the meta uses; DRY = one derivation module, two consumers). A
+meta API remains a later move if the Controller’s needs grow.</p>
+</li>
+</ol>
+<p>All open questions resolved; research phase complete (follow-up
+review session 2026-10-02).</p>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<p>None remaining — all resolved in the follow-up review session, see
+“Follow-up Decisions” above. Remaining plan-level detail (not a
+research blocker): trace the exact typeSpec font-reference →
+installedFonts resolution for per-run font objects (Q3 note).</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

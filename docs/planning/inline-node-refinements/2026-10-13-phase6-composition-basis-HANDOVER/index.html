@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Handover: Phase 6 — composition basis threading for nested leaves (sub-RPI seed) - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/large-file-investigation-260723/">Large File Investigation</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li>
+<li><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-initial-analysis/">PPS: Initial Analysis</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-2026-07/">Metamodel: 2026-07</a></li>
+<li><a href="/TypeRoof/docs/planning/columns/REPORT/">Columns: Runion Report</a></li>
+<li><a href="/TypeRoof/docs/planning/overview/architectural-overview/">Architectural Overview</a></li>
+<li><a href="/TypeRoof/docs/planning/performance-investigation-viewer-update-propagation-260820/">Perf: Viewer Update Propagation</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Fable-5/">TypeSpec Resolution: NULL-TypeSpec Analysis</a></li>
+<li><a href="/TypeRoof/docs/planning/DEMARCATION_FALLBACK/">DEMARCATION_FALLBACK</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Kimi-K3/">TypeSpec Resolution: NULL-TypeSpec Analysis (Kimi-K3)</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-implementation-plan_Fable-5/">TypeSpec Resolution: Implementation Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-second-analysis_Fable-5.1/">PPS: Second Analysis (Fable-5.1)</a></li>
+<li><a href="/TypeRoof/docs/planning/inline-node-refinements/ROADMAP/">Inline Node Refinements: ROADMAP</a></li>
+<li><a href="/TypeRoof/docs/planning/text-composition/ROADMAP/">Text Composition: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/text-composition/avar2-potentials-anchoring/">Text Composition: avar2 Potentials Anchoring</a></li>
+<li><a href="/TypeRoof/docs/planning/inline-node-refinements/2026-10-13-phase4-viewer-channel-HANDOVER/">Phase 4 Handover: viewer channel</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/inline-node-refinements/2026-10-13-phase6-composition-basis-HANDOVER/">Phase 6 Handover: composition basis</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="handover--phase-6-of-the-inline-node-refinements-plan-composition-basis-threading" class="heading_anchor" href="#handover--phase-6-of-the-inline-node-refinements-plan-composition-basis-threading" aria-hidden="true">#</a>Handover — Phase 6 of the inline-node refinements plan: composition basis threading</h1>
+<blockquote>
+<p><strong>Status:</strong> Sub-RPI handover. Written 2026-10-13 for seeding a fresh
+<code>/research_codebase</code> → <code>/create_plan</code> sub-cycle on the remaining
+phase-6 scope. Everything below is verified state as of HEAD <code>31107d2a</code>
+(branch <code>feature/composition-and-justification</code>), working tree clean.</p>
+</blockquote>
+<h2><a id="the-task-in-one-paragraph" class="heading_anchor" href="#the-task-in-one-paragraph" aria-hidden="true">#</a>The task in one paragraph</h2>
+<p>Phase 6 of approach (a) (<code>thoughts/plans/2026-10-12-2127-inline-node-refinements-approach-a.md</code>,
+phases 1–5 complete and committed): <strong>nested leaves inside inline nodes
+must measure against the same basis they render with</strong> — the merged
+<code>inlineNodesStyleLinks</code> payload the inline node itself styles through —
+and the whole inline-node architecture gets its live QA (references list
+overflow) plus optional state re-tuning. The original symptom
+(ROADMAP problem 1): a textblock’s measured line geometry diverges from
+the rendered DOM for nested runs → composed lines too wide → overflow;
+plus the “bite” of the same defect, font-size basis: nested marks compose
+against the ROOT fallback (14pt) instead of the containing textblock’s
+effective context (18pt).</p>
+<h2><a id="state-as-of-this-handover" class="heading_anchor" href="#state-as-of-this-handover" aria-hidden="true">#</a>State as of this handover</h2>
+<h3><a id="committed-green-do-not-redo" class="heading_anchor" href="#committed-green-do-not-redo" aria-hidden="true">#</a>Committed (green; do not redo)</h3>
+<table>
+<thead>
+<tr>
+<th>Commit</th>
+<th>Phase</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>abcf36f0</code></td>
+<td>1</td>
+<td><code>relativeFontSize</code> pair <code>{value, unit}</code> (<code>baseEm</code> migration default)</td>
+</tr>
+<tr>
+<td><code>0524e3d6</code></td>
+<td>2</td>
+<td>merge-channel <code>em</code> (<code>CONTAINING_FONT_SIZE</code> alias, origin outbound basis)</td>
+</tr>
+<tr>
+<td><code>c2b42282</code></td>
+<td>2b</td>
+<td>no <code>baseFontSize</code> on style patches (leafs)</td>
+</tr>
+<tr>
+<td><code>0d012dd4</code></td>
+<td>3</td>
+<td>one-element inline-node DOM (editor; PM <code>contentDOM === dom</code>)</td>
+</tr>
+<tr>
+<td><code>6394787b</code></td>
+<td>4</td>
+<td><code>inlineNodesStyleLinks</code> family + routing to <code>UIDocumentStyleStyler</code> (both renderers)</td>
+</tr>
+<tr>
+<td><code>4532ae22</code></td>
+<td>4-fix</td>
+<td>inline styler/trigger wrappers gain <code>_widgets</code> membership — fresh attach after mode switch styles (sub-cycle: <code>docs/planning/agentic-artefacts/thoughts/{research,plan}/2026-10-13-*</code>)</td>
+</tr>
+<tr>
+<td><code>31107d2a</code></td>
+<td>5</td>
+<td>“Node Style Links” UI (<code>UIInlineNodesStyleLinks*</code>, third container mount, probe <code>qa-node-style-links-ui.mjs</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Battery as of HEAD: <code>npm run typecheck</code> + <code>npm run lint</code> clean, vitest
+<strong>55 files / 541 tests</strong> green. Probes green:
+<code>qa-structure-marks</code> (152/153 composed), <code>qa-editor-mark-styling</code>,
+<code>qa-inline-node-dom</code>, <code>qa-inline-node-style-links</code> (6/6),
+<code>qa-node-style-links-ui</code> (real UI create flow).</p>
+<h3><a id="the-live-surface-today-operator-verified-2026-10-13" class="heading_anchor" href="#the-live-surface-today-operator-verified-2026-10-13" aria-hidden="true">#</a>The live surface TODAY (operator-verified 2026-10-13)</h3>
+<ul>
+<li>The <code>inlineNodesStyleLinks</code> channel works end-to-end in both renderers:
+a UI-created <code>generic-inline</code> → “bold” edge styles all 153 inline
+elements at the patch’s size; live add/tombstone/re-link/mode-switch
+all styled; blocks byte-identical.</li>
+<li><strong>The known remaining defect (the phase-6 input):</strong> nested MARKS
+inside an inline node resolve their style links at the ROOT fallback.
+Operator readout (li context 18pt, italic patch <code>{1, em}</code>): the <code>em</code>
+renders <code>font-size: 14pt</code> + <code>opsz: 14</code> — the ROOT base — not the li’s
+18pt context. Payload applied fine (slnt: -10); the BASIS is wrong.</li>
+</ul>
+<h2><a id="mechanics-verified--read-before-researching-further" class="heading_anchor" href="#mechanics-verified--read-before-researching-further" aria-hidden="true">#</a>Mechanics (verified — read before researching further)</h2>
+<ol>
+<li><strong>Why nested marks fall back to root:</strong> a text RUN’s mark styler
+resolves <code>typeSpecPropertiesPath</code> from the run’s <code>context.pathOfTypes</code>
+(<code>viewer.typeroof.jsx:1179-1183</code>, <code>_createStylerWidgets</code>), which for a
+run inside <code>generic-inline</code> <strong>ends at <code>generic-inline</code></strong>. The run’s own
+typeSpec resolution then walks <code>getTypeSpecPropertiesIdMethod</code>
+(<code>prosemirror/integration.typeroof.jsx:190+</code>): an empty
+<code>nodeSpecToTypeSpec</code> link “resolves to nothing → <strong>fallback to root</strong>
+(root-of-self)” — the root typeSpec (base 14pt), not the li-inline
+typeSpec (18pt). The inline NODE’s own channel does NOT fall back
+(<code>_provisionInlineStyleStyler</code> resolves the CONTAINING typeSpec via
+<code>pathOfTypes.slice(0, -1)</code>, <code>viewer.typeroof.jsx:581-585</code>) — only the
+nested MARKS/leaves do.</li>
+<li><strong>The upstream plan’s phase-6 scope</strong> (Changes Required §1-2): extend
+<code>_resolveLeafStyleLink</code> (<code>composition-controller.ts:636-678</code>, mark
+descriptors only — <code>getWrapMarks</code> is mark-list-only,
+<code>derivations.mjs:412+536</code>) so a leaf inside an inline node resolves the
+innermost applicable <code>inlineNodesStyleLinks</code> edge (walk ancestors) —
+measurement basis = that edge’s merged payload (<code>createPatched</code> vs the
+containing typeSpec, same as rendered). Decision point (in-phase):
+<strong>compose (inline edge ∘ mark edge) vs innermost-wins</strong> (today’s mark
+contract: at-most-one per leaf). The <code>:913-933</code> measurement reads
+<code>leafFontSize</code> from the resolved payload.
+<strong>CAVEAT from the operator readout:</strong> the RENDERED side needs the same
+treatment — the viewer’s mark styler resolves at the run’s path, which
+falls back to root; the editor’s <code>_inlineStyleLinkPropertiesIdFor</code> (the
+three-way lookup incl. node type keys) too. The plan’s phase 6 §1-2
+covers the measured side; the rendered side is the new scope the
+readout discovered — both must land together or measured ≠ rendered.</li>
+<li><strong>The merge-channel basis machinery is shared and proven:</strong>
+<code>PatchedScopeProperties</code> publishes the origin outbound effective size
+(<code>CONTAINING_FONT_SIZE</code>, <code>scope-resolution.mjs:370-483</code>), so an edge
+payload merged against the CORRECT containing typeSpec (the li’s
+context) composes <code>em</code> correctly (18pt × 1). The fix is a resolution-
+path fix (which typeSpec a nested leaf/mark merges against), not new
+basis machinery.</li>
+<li><strong>Wake mechanics (from the phase-4 sub-cycle research, verified):</strong>
+viewer attachments wake via cascades only as <code>this._widgets</code> members;
+<code>_scopeSettled</code> fires only on scope REBUILD (<code>document-nodes-meta/index.mjs:656-662</code>); manual wake paths hand-roll create+update
+(<code>viewer.typeroof.jsx:411-419</code>, <code>:679-681</code>) — a follow-up refactor is
+noted in the ROADMAP (out of scope).</li>
+<li><strong>Composition threading (approach (b), <code>6dbbf38e</code>) is DONE:</strong> nested
+runs observe the real textblock’s <code>composition@</code> payload
+(<code>textblockRootPath</code> context); 152/153 nested inline nodes compose.
+Phase 6’s basis threading rides on this — the payload paths exist.</li>
+</ol>
+<h2><a id="suggested-sub-cycle-seed" class="heading_anchor" href="#suggested-sub-cycle-seed" aria-hidden="true">#</a>Suggested sub-cycle seed</h2>
+<p><code>/research_codebase</code> scoped to: <strong>nested-leaf/mark style resolution —
+measured vs rendered</strong> — (i) map every resolution site that walks
+<code>getTypeSpecPropertiesIdMethod</code> for a node/mark/leaf INSIDE an inline
+node (viewer <code>_createStylerWidgets</code>, editor outfitter
+<code>_checkInlineStyleLink</code>/<code>_inlineStyleLinkPropertiesIdFor</code>,
+<code>_resolveLeafStyleLink</code> in <code>composition-controller.ts</code>) and what basis
+each resolves against today (root fallback vs containing textblock vs
+inline-node edge payload); (ii) the ancestor-walk design for the
+inlineNodesStyleLinks edge resolution (which “containing typeSpec” — the
+li-inline’s context per the node channel precedent? the run’s OWN
+textblock context? both?), incl. the typeSpec-channel resolution of the
+li-inline itself (its 18pt comes from <code>nodeProperties@</code> scope inheritance
+today, NOT a <code>nodeSpecToTypeSpec</code> entry — <code>isInlineNode</code> nodes have none);
+(iii) the compose-vs-innermost decision’s blast radius (mark contract
+“at-most-one per leaf”, <code>:636-678</code>; measurement <code>:913-933</code>);
+(iv) re-tuning inventory (states/fixtures, the en wikipedia cite demo
+edge — plan §6.4, operator’s call).</p>
+<p><strong>The canary probes:</strong> <code>qa-structure-marks.mjs</code> (nested composition +
+parent-context observation), <code>qa-inline-node-style-links.mjs</code> (channel,
+6/6), <code>qa-node-style-links-ui.mjs</code> (UI). The text-composition suite is
+the vitest canary. <strong>NEVER <code>npm run perf:composition</code></strong> (operator rule
+2026-10-06).</p>
+<h2><a id="open-questions-seeded-unresolved" class="heading_anchor" href="#open-questions-seeded-unresolved" aria-hidden="true">#</a>Open questions (seeded, unresolved)</h2>
+<ol>
+<li>Which basis should a nested MARK’s <code>em</code> compose against — the
+containing textblock’s effective (li 18pt), or the inline NODE’s own
+edge-resolved effective (its merged <code>inlineNodesStyleLinks</code> payload,
+i.e. 18pt × inline-edge factor)? The node channel precedent suggests
+the latter (marks style “through” their inline node), but that couples
+mark resolution to the node edge — a design decision, not a bug fix.</li>
+<li>Rendered-side resolution: does the run-level mark styler need the
+ancestor-walk too, or is there a context field (<code>textblockRootPath</code>)
+to reuse? (The run’s <code>context.pathOfTypes</code> ends at generic-inline —
+the walk must skip inline-node levels, not just drop the last type.)</li>
+<li>Editor side: same questions for the outfitter’s inline branch.</li>
+<li>State re-tuning scope: plan §6.4 (optional demo edge in the en
+wikipedia initial state) — the UI now makes live tuning possible;
+fixture churn should stay minimal per testing strategy.</li>
+</ol>
+<h2><a id="related" class="heading_anchor" href="#related" aria-hidden="true">#</a>Related</h2>
+<ul>
+<li>Plan: <code>thoughts/plans/2026-10-12-2127-inline-node-refinements-approach-a.md</code>
+(phase 6 = the open section; phases 1-5 criteria checked)</li>
+<li>ROADMAP: <code>docs/planning/inline-node-refinements/ROADMAP.md</code> (+ the
+Follow-ups section: manual-wake refactor)</li>
+<li>Sub-cycle docs (archived): <code>docs/planning/agentic-artefacts/thoughts/ research/2026-10-13-1503-viewer-fresh-attach-inline-styler.md</code>,
+<code>…/plan/2026-10-13-1616-inline-styler-fresh-attach-membership.md</code></li>
+<li>Research round: <code>thoughts/research/2026-10-12-1723-font-size-resolution-and-rebasing.md</code></li>
+<li>Precedent probes: <code>qa-structure-marks.mjs</code>, <code>qa-editor-mark-styling.mjs</code></li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

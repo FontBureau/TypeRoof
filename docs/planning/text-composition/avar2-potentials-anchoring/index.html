@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Text Composition - avar2 Potentials Anchoring - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a><ul><li><a href="/TypeRoof/docs/planning/compositor/roadmap/">Compositor: Roadmap</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-pre-typing/">Metamodel: Pre-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-post-typing/">Metamodel: Post-Typing</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/path-to-standalone/">Metamodel: Standalone Lib</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-self-describing-widget-setup/">Widgets RFC 1: Self-Describing</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-widget-setup-evaluation/">Widgets RFC 2: Evaluation</a></li>
+<li><a href="/TypeRoof/docs/planning/design-analysis-composable-widget-system/">Widgets RFC 3: Composable</a></li>
+<li><a href="/TypeRoof/docs/planning/architecture-analysis-agent-friendliness/">Agent-Friendliness</a></li>
+<li><a href="/TypeRoof/docs/planning/large-file-investigation-260723/">Large File Investigation</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/rewrite-plan/">VP-Contextual: Rewrite Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/ui-usability-plan-2026-03-16/">VP-Contextual: UI Usability</a></li>
+<li><a href="/TypeRoof/docs/planning/videoproof-contextual/post-mortem-agent-vs-human-2026-07/">VP-Contextual: Post-Mortem</a></li>
+<li><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-initial-analysis/">PPS: Initial Analysis</a></li>
+<li><a href="/TypeRoof/docs/planning/metamodel/assessment-2026-07/">Metamodel: 2026-07</a></li>
+<li><a href="/TypeRoof/docs/planning/columns/REPORT/">Columns: Runion Report</a></li>
+<li><a href="/TypeRoof/docs/planning/overview/architectural-overview/">Architectural Overview</a></li>
+<li><a href="/TypeRoof/docs/planning/performance-investigation-viewer-update-propagation-260820/">Perf: Viewer Update Propagation</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Fable-5/">TypeSpec Resolution: NULL-TypeSpec Analysis</a></li>
+<li><a href="/TypeRoof/docs/planning/DEMARCATION_FALLBACK/">DEMARCATION_FALLBACK</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-null-typespec-analysis_Kimi-K3/">TypeSpec Resolution: NULL-TypeSpec Analysis (Kimi-K3)</a></li>
+<li><a href="/TypeRoof/docs/planning/type-spec-resolution/2026-08-24-implementation-plan_Fable-5/">TypeSpec Resolution: Implementation Plan</a></li>
+<li><a href="/TypeRoof/docs/planning/pps-system/2026-09-19-second-analysis_Fable-5.1/">PPS: Second Analysis (Fable-5.1)</a></li>
+<li><a href="/TypeRoof/docs/planning/inline-node-refinements/ROADMAP/">Inline Node Refinements: ROADMAP</a></li>
+<li><a href="/TypeRoof/docs/planning/text-composition/ROADMAP/">Text Composition: Roadmap</a></li>
+<li class="active"><a href="/TypeRoof/docs/planning/text-composition/avar2-potentials-anchoring/">Text Composition: avar2 Potentials Anchoring</a></li>
+<li><a href="/TypeRoof/docs/planning/inline-node-refinements/2026-10-13-phase4-viewer-channel-HANDOVER/">Phase 4 Handover: viewer channel</a></li>
+<li><a href="/TypeRoof/docs/planning/inline-node-refinements/2026-10-13-phase6-composition-basis-HANDOVER/">Phase 6 Handover: composition basis</a></li></ul></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><p class="agent-created-note">** This file was created with an agent. **</p><h1><a id="text-composition---avar2-potentials-anchoring" class="heading_anchor" href="#text-composition---avar2-potentials-anchoring" aria-hidden="true">#</a>Text Composition - avar2 Potentials Anchoring</h1>
+<blockquote>
+<p>Why justification potentials must be re-anchored to the run’s
+actual location — the avar1/avar2 dflt mismatch that made
+AmstelvarA2 receive no fitting treatment at all (observed
+2026-10-04, fixed in <code>anchorPotentialsToLocation</code>,
+<code>lib/js/components/layouts/type-stage/text-composition/justification-potentials.ts</code>).</p>
+</blockquote>
+<h2><a id="the-data-and-the-invariant" class="heading_anchor" href="#the-data-and-the-invariant" aria-hidden="true">#</a>The data and the invariant</h2>
+<p>A resolved potentials leaf holds one <code>[min, dflt, max]</code> triple per
+treatment, e.g. the Amstelvar reading-text leaf:</p>
+<pre><code>XTRA: [515, 562, 575]
+</code></pre>
+<p>Read: <em>“at this spot in the design space (wght 400, wdth 100,
+opsz 14), the line may narrow XTRA down to 515 and widen it up to
+575 — and 562 is the natural state, step 0.”</em> The whole step
+arithmetic is anchored on that dflt:</p>
+<pre><code>value(step) = dflt + step * (dflt - min)   // narrowing, step &lt; 0
+value(step) = dflt + step * (max - dflt)   // widening, step &gt;= 0
+</code></pre>
+<p><strong>Step 0 must be exactly the natural, unadjusted state</strong> — the
+“step-0-identity invariant”: composing at step 0 must be a no-op.</p>
+<h2><a id="where-it-breaks" class="heading_anchor" href="#where-it-breaks" aria-hidden="true">#</a>Where it breaks</h2>
+<p>The tables were authored against avar1 Amstelvar (and Roboto Flex),
+where the natural XTRA <em>is</em> 562 (resp. 468). But the avar2 fonts
+re-based the axis: <strong>AmstelvarA2’s natural XTRA is 400</strong> (Roboto
+Delta’s is 463 — close enough to 468 that the mismatch stayed
+invisible there).</p>
+<p>When a run sits at 400 and the table claims the natural state is
+562, two worlds collide:</p>
+<ul>
+<li><strong>Step 0</strong> is measured honestly — the natural width uses the
+run’s true location, XTRA 400.</li>
+<li><strong>Any step ≠ 0</strong> computes values around the table’s dflt:
+step −1 → 515, step +1 → 575.</li>
+</ul>
+<p>The width function has a <strong>cliff at 0</strong>: step −0.001 already
+measures at ≈562 — some 20% wider than the natural 400 (measured
+with the real font: XTRA 400 = 5.53em vs 562 = 6.66em for a probe
+word). Consequences:</p>
+<ul>
+<li><strong>Narrowing reads as exhausted</strong>: “narrowing” probes (toward 515)
+return <em>wider</em> widths than the natural 400 — the algorithm
+concludes there is no narrowing potential.</li>
+<li><strong>Widening converges to nothing</strong>: any probe beyond 0 jumps the
++20% discontinuity, overshoots any realistic slack, and the step
+search slides back to ≈0, where the epsilon gate drops the
+micro-step.</li>
+</ul>
+<p>Every line stays at step 0: a complete absence of fitting
+treatment — no narrowing, no widening, no color-coded lines.
+(Roboto Flex is unaffected — its default <em>is</em> 468; Roboto Delta’s
+463 is only 5 units off, an invisible discontinuity.)</p>
+<h2><a id="the-fix" class="heading_anchor" href="#the-fix" aria-hidden="true">#</a>The fix</h2>
+<p>Right after a leaf is resolved (the interpolation over the
+declared dimension order), each <strong>axis</strong> treatment triple is
+re-anchored to the run’s actual location:</p>
+<pre><code>delta        = locationValue − tableDflt          // 400 − 562 = −162
+anchoredMin  = clamp(tableMin  + delta, axisMin)  // 515 − 162 = 353
+anchoredDflt = locationValue                      // 400
+anchoredMax  = clamp(tableMax  + delta, axisMax)  // 575 − 162 = 413
+</code></pre>
+<p><code>[515, 562, 575]</code> becomes <strong><code>[353, 400, 413]</code></strong>: step 0 computes
+400 (the true natural — identity restored), step −1 computes 353,
+step +1 computes 413.</p>
+<h2><a id="why-this-is-the-right-semantics" class="heading_anchor" href="#why-this-is-the-right-semantics" aria-hidden="true">#</a>Why this is the right semantics</h2>
+<p>The typographic knowledge in the tables is the <strong>deltas</strong>: “from
+wherever you naturally sit, you may narrow this axis by up to 47
+units and widen by up to 13.” The absolute 562 is an artifact of
+the avar1 default the author happened to sit at — avar2 fonts
+re-based the axis (same design knowledge, different zero point).
+Re-anchoring preserves the authored deltas and discards the stale
+absolute anchor. Clamping to the fvar range keeps shifts honest
+when they would leave the design space (the range then becomes
+truthfully asymmetric).</p>
+<p>Only <strong>axis</strong> treatments are re-anchored; tracking (absolute pt)
+and wordspace (factor of the natural space advance) carry no axis
+values and pass through untouched. Side effect: a <em>style</em> that
+moves a run’s axis location (a mark setting an explicit XTRA) also
+gets correctly anchored potentials — the anchoring is relative to
+wherever the run actually sits, not to the font’s default.</p>
+<h2><a id="where-it-lives" class="heading_anchor" href="#where-it-lives" aria-hidden="true">#</a>Where it lives</h2>
+<p>One pure function, <code>anchorPotentialsToLocation(leaf, location, axisRanges)</code>, applied in the composition controller’s per-leaf
+planner setup immediately after <code>calculatePotentials</code> — so the
+stepper, the <code>lineWidthAtStep</code> measurement, <em>and</em> the published
+payload the applicator renders from all share the same anchored
+leaf. Measured == rendered, and the step-0-identity invariant
+holds by construction. Regression tests (with the real AmstelvarA2
+font) pin both sides: un-anchored “narrowing” widens (the bug);
+anchored narrows/widens and step 0 is the identity (the fix).</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

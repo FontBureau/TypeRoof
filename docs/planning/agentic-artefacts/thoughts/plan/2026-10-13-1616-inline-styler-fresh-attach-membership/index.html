@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="inline-styler-fresh-attach-fix--_widgets-membership-implementation-plan" class="heading_anchor" href="#inline-styler-fresh-attach-fix--_widgets-membership-implementation-plan" aria-hidden="true">#</a>Inline styler fresh-attach fix — <code>_widgets</code> membership: Implementation Plan</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Phase-4 sub-cycle fix for the single remaining phase-4 failure: a fresh
+viewer attach after an editor→viewer mode switch leaves all inline
+elements unstyled. The inline styler + trigger wrappers gain
+<code>this._widgets</code> membership (the block-channel precedent,
+<code>viewer.typeroof.jsx:733</code>) so the framework’s base <code>_provisionWidgets</code>
+loop creates them and <code>_update</code> delivers their full initial changedMap
+on fresh attach. All manual wake paths stay untouched.</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<p>Phase 4 is committed as <code>6394787b</code> (clean working tree). Probe
+<code>qa-inline-node-style-links.mjs</code>: 5 of 6 steps pass; the failing step is
+“back to viewer (stable edge)” — after the mode switch all 153
+<code>[data-node-type=&quot;generic-inline&quot;]</code> elements render <code>styleAttr: null</code>.</p>
+<p>Root cause (research round, 2026-10-13): the inline wrappers are
+constructed via bare <code>_initWrapper</code> inside <code>_provisionInlineStyleStyler</code>
+(<code>viewer.typeroof.jsx:618-625</code>, <code>:666</code>) and are never inserted into
+<code>this._widgets</code>:</p>
+<ul>
+<li>Every framework wake channel iterates only <code>_widgets</code> members with
+<code>widget !== null</code> (<code>component.mjs:1108-1115</code>, <code>_update</code>
+<code>component.mjs:1238-1285</code>; the <code>requiresFullInitialUpdate</code> set is
+consulted only for wrappers already dispatched, <code>:1265-1267</code>).</li>
+<li>Live edge edits work solely through the two MANUAL wake sites
+(<code>_syncMetaInfo</code>’s dispatcher <code>viewer.typeroof.jsx:411-419</code>/<code>:424-428</code>;
+<code>_inlineStyleTriggerUpdate</code> <code>:679-681</code>), which hand-roll
+<code>_createWidget</code> + changedMap + <code>widget.update</code>.</li>
+<li>A fresh attach after a mode switch produces NO wake event: the
+always-active meta tree’s scopes settled long before the attachment
+existed (<code>_scopeSettled</code> fires only on scope REBUILD,
+<code>document-nodes-meta/index.mjs:656-662</code>, <code>:731</code>; <code>attach</code> never
+replays settled state, <code>index.mjs:85-124</code>), and <code>pathChanged</code>/
+<code>scopeSettled</code> are both false on the constructor path
+(<code>viewer.typeroof.jsx:272</code>, <code>:297</code>).</li>
+<li>SLM registration is NOT the problem — the <code>styleLinkProperties@</code> ids
+resolve non-null at provision time; the payload exists; nothing
+consumes it. <code>TRIGGERS made=776 fired=0</code> is the membership gap
+measured (“fired” = cascade dispatch, which structurally cannot reach
+non-members).</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<ul>
+<li>Probe <code>qa-inline-node-style-links.mjs</code>: <strong>6 of 6</strong> steps pass,
+including “back to viewer (stable edge)” — fresh attachments style
+via the framework initial-update delivery.</li>
+<li>Live paths (edge add / tombstone / re-link, editor mode) unchanged —
+they keep their manual wake.</li>
+<li>The trigger wrapper becomes cascade-dispatchable (the made/fired
+asymmetry retires): on a same-pass <code>typeSpecProperties@&lt;containing&gt;</code>
+mark it fires via the normal relevance filter
+(<code>component.mjs:972-978</code>), in addition to the scope-settled refresh.</li>
+<li>Block styling byte-identical; composition suite (the canary) green;
+<code>npm run typecheck</code>, <code>npm run lint</code>, vitest 55 files / 541 tests green.</li>
+</ul>
+<h3><a id="key-discoveries" class="heading_anchor" href="#key-discoveries" aria-hidden="true">#</a>Key Discoveries</h3>
+<ul>
+<li>Block-channel precedent: <code>_provisionTypeSpecStyler</code> splices its
+wrapper into <code>_widgets</code> (<code>viewer.typeroof.jsx:733</code>) — membership is
+what makes the framework deliver the full initial changedMap
+(<code>component.mjs:1195-1206</code>, <code>:1222</code>; protocol deps delivered
+unconditionally on initial update, <code>:643-647</code>).</li>
+<li>The <code>composition@</code> triggers are <code>_initWidgets</code>-created list members
+(<code>viewer.typeroof.jsx:336-341</code>, <code>:833-841</code>) — the working
+GenericUpdater precedent.</li>
+<li>The existing splice-out cleanups in <code>_provisionInlineStyleStyler</code>
+(<code>:612-617</code> trigger rebuild, <code>:634-635</code> styler rebuild) and in
+<code>_syncMetaInfo</code>’s destroy block (<code>:391-404</code>) are currently dead code
+for a membership that never exists — they become live and correct
+as-is once membership is established (they remove by
+<code>indexOf</code> before re-adding).</li>
+<li>The id-equality early return (<code>:627-636</code>) stays correct with
+membership: an unchanged id returns no new wrappers; the base loop
+sees existing members (<code>widget !== null</code>) and does not re-create.</li>
+<li>Double-wakes are harmless and expected: with the trigger a member,
+a live edge edit can reach it via cascade AND via the scope-settled
+refresh; the handler is idempotent (guarded by the id-equality
+rebuild comparison). NO de-duplication machinery.</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li><strong>No refactor of the manual wake paths</strong> (the hand-rolled
+create+changedMap+update blocks in <code>_syncMetaInfo</code> <code>:411-419</code> and
+<code>_inlineStyleTriggerUpdate</code> <code>:679-681</code> stay). Follow-up note
+recorded in this plan and in the ROADMAP — see “Follow-up Note”.</li>
+<li>No meta-side settled-state replay on <code>attach</code> (rejected by operator:
+blast radius — attach machinery serves all attachments).</li>
+<li>No phase-5 (“Node Style Links” UI) or phase-6 (composition basis
+threading) upstream work.</li>
+<li>No de-dup machinery for double-wakes (idempotent by design).</li>
+<li>No VWPROV re-instrumentation (research open question 2 — the probe
+is the gate; the anomaly does not change the root cause).</li>
+<li>NO perf-composition runs (operator rule 2026-10-06).</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Single phase: insert the two inline wrappers into <code>this._widgets</code> at
+their creation sites inside <code>_provisionInlineStyleStyler</code>, mirroring the
+block channel’s <code>splice(0, 0, wrapper)</code> (<code>:733</code>). The base
+<code>_provisionWidgets</code> loop (<code>component.mjs:1319-1323</code>) then instantiates
+them on fresh attach, and <code>_update</code> delivers the full initial changedMap
+to the <code>requiresFullInitialUpdate</code> entries (<code>component.mjs:1265-1283</code>)
+— the exact mechanism that already styles blocks correctly on fresh
+attach. Ordering within <code>_widgets</code> is not load-bearing (updates are
+idempotent; creation is per-member; the relevance filter gates
+per-wrapper) — both wrappers are front-spliced at their creation sites,
+whichever is built later sitting closer to the head.</p>
+<h2><a id="phase-1--_widgets-membership-for-the-inline-styler-wrappers" class="heading_anchor" href="#phase-1--_widgets-membership-for-the-inline-styler-wrappers" aria-hidden="true">#</a>Phase 1 — <code>_widgets</code> membership for the inline styler wrappers</h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p><code>_provisionInlineStyleStyler</code>’s two wrapper products (GenericUpdater
+trigger + <code>UIDocumentStyleStyler</code>) become <code>this._widgets</code> members so the
+framework provisions them on fresh attach. Nothing else changes.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required</h3>
+<h4><a id="1-trigger-wrapper-membership" class="heading_anchor" href="#1-trigger-wrapper-membership" aria-hidden="true">#</a>1. Trigger wrapper membership</h4>
+<p><strong>File</strong>: <code>lib/js/components/layouts/type-stage/viewer.typeroof.jsx</code>
+<strong>Changes</strong>: in <code>_provisionInlineStyleStyler</code>, at the trigger creation
+site (<code>:618-625</code>), after <code>this._initWrapper(...)</code> assigns
+<code>this._inlineStyleTriggerWrapper</code>:</p>
+<pre class="language-js"><code class="language-js"><span class="token keyword">this</span><span class="token punctuation">.</span>_widgets<span class="token punctuation">.</span><span class="token function">splice</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_inlineStyleTriggerWrapper<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>The pre-existing rebuild cleanup above it (<code>:612-617</code>, indexOf +
+splice-out + <code>_destroyWidget</code>) already removes an old member before
+this runs — no change needed there; it goes from dead to live code.</p>
+<h4><a id="2-styler-wrapper-membership" class="heading_anchor" href="#2-styler-wrapper-membership" aria-hidden="true">#</a>2. Styler wrapper membership</h4>
+<p><strong>File</strong>: same
+<strong>Changes</strong>: at the styler creation site (<code>:663-667</code>), after the
+<code>_initWrapper</code> call assigns <code>wrapper</code> (before/with
+<code>this._inlineStyleStylerWrapper = wrapper</code>):</p>
+<pre class="language-js"><code class="language-js"><span class="token keyword">this</span><span class="token punctuation">.</span>_widgets<span class="token punctuation">.</span><span class="token function">splice</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> wrapper<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>Again the rebuild cleanup (<code>:634-635</code>) already removes the old member
+first. <code>newWrappers</code> keeps flowing unchanged to all three consumers:
+the <code>_syncMetaInfo</code> dispatcher’s manual wake (<code>:411-419</code>), the trigger
+handler (<code>:679-681</code>), and <code>_provisionWidgets</code>’s
+<code>requiresFullInitialUpdate</code> set (<code>:550-552</code>) — which NOW actually
+takes effect for these wrappers because they are members.</p>
+<h4><a id="3-comment-update" class="heading_anchor" href="#3-comment-update" aria-hidden="true">#</a>3. Comment update</h4>
+<p><strong>File</strong>: same
+<strong>Changes</strong>: extend the <code>_provisionInlineStyleStyler</code> doc comment
+(the block explaining the trigger) with one sentence recording the
+membership requirement: fresh attachments have no scope-settle/
+path-change event (scopes settle before attach; <code>attach</code> does not
+replay settled state), so the wrappers must be <code>_widgets</code> members for
+the framework’s initial-update delivery to reach them — the block
+channel’s <code>splice(0, 0, …)</code> convention.</p>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h3>
+<h4><a id="automated-verification" class="heading_anchor" href="#automated-verification" aria-hidden="true">#</a>Automated Verification</h4>
+<ul>
+<li>[x] <code>npm run typecheck</code> + <code>npm run lint</code> pass</li>
+<li>[x] vitest 55 files / 541 tests green — especially the
+text-composition suite (the canary; it caught the earlier
+<code>viewer.typeroof.jsx</code> damage) and the third-family
+type-specnion tests</li>
+<li>[x] Probe: <code>./scripts/debug-with-puppeteer.mjs     ./scripts/puppeteer-probes/qa-inline-node-style-links.mjs</code> —
+<strong>6 of 6</strong> steps pass, exit 0; specifically “back to viewer
+(stable edge)”: all 153 generic-inline elements styled at the
+patch’s values, no PAGEERROR</li>
+<li>[x] Regression probes stay green: <code>qa-structure-marks.mjs</code>,
+<code>qa-editor-mark-styling.mjs</code>, <code>qa-inline-node-dom.mjs</code> (block
+styling byte-identical, DOM parity untouched)</li>
+</ul>
+<h4><a id="manual-verification" class="heading_anchor" href="#manual-verification" aria-hidden="true">#</a>Manual Verification</h4>
+<ul>
+<li>[x] <strong>LIVE CHECKPOINT (operator)</strong> — resolved via live DOM readout
+2026-10-13 (the designed UI checkpoint is impossible before the
+phase-5 “Node Style Links” UI; the probe exercises the channel
+via the state API instead): en/Typography references list renders
+composed and styled through the mode-switch cycle. Observation
+recorded for <strong>phase 6</strong> (upstream plan): marks nested inside
+inline nodes resolve their style links at the ROOT fallback
+(<code>generic-inline</code>’s empty nodeSpecToTypeSpec link → root, per
+<code>getTypeSpecPropertiesIdMethod</code>), so an italic patch set to
+<code>1em</code> composes against the root’s 14pt origin instead of the
+li’s 18pt context (the <code>em</code>/<code>cite</code> readout: <code>font-size: 14pt</code>,
+<code>opsz: 14</code>, <code>slnt: -10</code> — payload applied, basis wrong). The
+inline node itself resolves at the li’s context
+(<code>pathOfTypes.slice(0, -1)</code>); only the nested MARKS fall back.
+Pre-existing, exactly the phase-6 nested-leaf basis scope.</li>
+</ul>
+<p><strong>Implementation Note</strong>: after the automated battery passes, pause and
+propose the commit message (with model/provider/agent metadata) per
+the RPI protocol; wait for operator confirmation.</p>
+<h2><a id="follow-up-note-explicitly-out-of-scope" class="heading_anchor" href="#follow-up-note-explicitly-out-of-scope" aria-hidden="true">#</a>Follow-up Note (explicitly out of scope)</h2>
+<p>The manual wake sites hand-roll <code>_createWidget</code> + changedMap +
+<code>widget.update</code> in three places (<code>_syncMetaInfo</code> <code>:411-419</code> — which
+serves the block channel too — and <code>_inlineStyleTriggerUpdate</code>
+<code>:679-681</code>). Once membership is in, a follow-up cycle could evaluate:</p>
+<ol>
+<li><strong>Full framework reliance</strong>: drop the manual blocks and rely on
+cascades creating/dispatching the re-provisioned members. Load-
+bearing open question (research doc, open questions §1): whether a
+framework cascade is GUARANTEED to follow a <code>_syncMetaInfo</code>
+re-provision (the scope-settled refresh runs inside the META
+element’s cascade, not the element’s own container update — the
+<code>nodeProperties@</code> settle mark should make the element relevant in a
+following pass, but the ordering is unverified).</li>
+<li><strong>Fallback</strong>: a shared <code>createWidgetAndUpdate(wrapper)</code> helper
+(DRY) if the ordering does not hold.</li>
+</ol>
+<p>Recorded in ROADMAP “Follow-ups”; not part of this plan.</p>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<p>The change is viewer wiring — the behavior gates are the probes. No
+new vitest suites are required; the existing battery must stay green:</p>
+<ul>
+<li><strong>Behavior asserted</strong>: fresh attach styles inline elements (probe
+step 6), live paths unchanged (probe steps 2–5), blocks byte-
+identical (<code>qa-structure-marks</code> baseline compare), editor mode
+unchanged (<code>qa-editor-mark-styling</code>), DOM parity (<code>qa-inline-node-dom</code>).</li>
+<li><strong>Canary</strong>: text-composition suite — any wiring damage in
+<code>viewer.typeroof.jsx</code> historically shows here first (handover
+caveat 4).</li>
+<li>Unit-level mechanics (membership, initial-update delivery) are
+framework behavior already covered by the block channel; duplicating
+them as vitest would assert implementation, not behavior.</li>
+</ul>
+<h2><a id="verification-protocol" class="heading_anchor" href="#verification-protocol" aria-hidden="true">#</a>Verification Protocol</h2>
+<ol>
+<li><code>npm run typecheck</code> 2. <code>npm run lint</code> 3. <code>npm run format:write</code> (if
+touched files drift) 4. vitest 5. probes (gate + regression trio)</li>
+<li>STOP — propose commit message with model/provider/agent metadata;
+wait for operator confirmation (MANNERS / COLLABORATION).</li>
+</ol>
+<h2><a id="references" class="heading_anchor" href="#references" aria-hidden="true">#</a>References</h2>
+<ul>
+<li>Research round (root cause + mechanics):
+<code>thoughts/research/2026-10-13-1503-viewer-fresh-attach-inline-styler.md</code></li>
+<li>Handover: <code>docs/planning/inline-node-refinements/2026-10-13-phase4-viewer-channel-HANDOVER.md</code></li>
+<li>Upstream plan (phase 4 context): <code>thoughts/plans/2026-10-12-2127-inline-node-refinements-approach-a.md</code></li>
+<li>ROADMAP (decisions): <code>docs/planning/inline-node-refinements/ROADMAP.md</code></li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

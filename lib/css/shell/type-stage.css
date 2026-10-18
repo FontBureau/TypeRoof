@@ -81,19 +81,21 @@ prosemirror
     /** margin-left: 2em; */
 
     *[data-node-type] {
-        line-height: var(--line-height);
-        padding: var(--space-before) 0 var(--space-after) 0;
+        &[data-has-styler] {
+            line-height: var(--line-height);
+            padding: var(--space-before) 0 var(--space-after) 0;
 
-        /* FIXME: not functioning in Firefox, requires workaround! */
+            /* FIXME: not functioning in Firefox, requires workaround! */
 
-        /*
-         * has a bug in Chrome and is not supported in Firefox yet.
-         * https://issues.chromium.org/issues/559001358
-        text-box: trim-start text;
-         */
+            /*
+             * has a bug in Chrome and is not supported in Firefox yet.
+             * https://issues.chromium.org/issues/559001358
+            text-box: trim-start text;
+             */
 
-        --space-before: var(--margin-block-start, 0);
-        --space-after: var(--margin-block-end, 0);
+            --space-before: var(--margin-block-start, 0);
+            --space-after: var(--margin-block-end, 0);
+        }
 
         .has-node-labels &::before {
             content: "";
@@ -153,6 +155,13 @@ prosemirror
 
 .editor-advanced *[data-node-type] {
     width: fit-content;
+
+    /* One-element inline DOM (approach (a) phase 3): without a
+     * [data-node-content] child the node element itself receives
+     * the padding and width. */
+    &:not(:has(> [data-node-content])) {
+        box-sizing: border-box;
+    }
 
     & > [data-node-content] {
         /* this element receives the padding and width */
@@ -229,8 +238,13 @@ prosemirror
      * with prosemirror, one with this, it wouldn't matter much. prosemirror
      * uses display grid on the inner elements, and they contain
      * instrumentation that we can't change easily.
-     */
+
     display: table;
+
+    In FireFox, however, this prevents the paragraphs inside a column layout
+    to break and distribute to many columns, i.e. the paragraph is only always
+    within on column, that is worse than the chrome issue.
+     */
 }
 
 .ui_prosemirror_host-anchor_targets_container {
@@ -244,7 +258,7 @@ prosemirror
 
 .ui_type_spec_label {
     position: absolute;
-    inset-block: anchor(start) anchor(end);
+    inset-block-start: anchor(start);
     inset-inline: anchor(start) anchor(end);
     z-index: 1234;
     padding: 0.15rem;

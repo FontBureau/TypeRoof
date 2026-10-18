@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-milestone-3--hyphenation--uax14" class="heading_anchor" href="#research-milestone-3--hyphenation--uax14" aria-hidden="true">#</a>Research: Milestone 3 — hyphenation + UAX#14</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>Implementation sources and plug-in points for hyphenation (Knuth-
+Liang data) and UAX#14 line-break refinement, paired per the roadmap.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<ul>
+<li><strong>CRITICAL FINDING — Intl.Segmenter is OUT</strong>: the <code>line</code>
+granularity was never shipped by V8 (confirmed on node 24.18.1:
+<code>RangeError: Value line out of range</code> — only grapheme/word exist;
+browsers ship the same V8). The earlier “obvious choice” note was
+wrong. The pure-JS <strong><code>linebreak</code> package (1.1.0)</strong> is the
+established UAX#14 implementation (pdfkit’s; ~219KB unpacked,
+includes the Unicode data tables + dictionary hooks for Thai etc.).</li>
+<li><strong>Hyphenation engine: <code>hypher</code> (0.2.5)</strong> — pure JS Knuth-Liang;
+pattern data via ~20 individual <code>hyphenation.&lt;lang&gt;</code> packages
+(small each → selective bundling keyed by language/lang). The
+alternative <code>hyphenopoly</code> (6.1.0) is WASM with all patterns
+embedded (~3.2MB unpacked) — heavier and less selective; hypher
+fits our purity + per-language + node-testing needs.</li>
+<li><strong>Plug-in points all clear</strong> (verified in code): the Hyphenator
+runs between segmentation and measurement in composeTextblock;
+hyphen rendering is ALREADY wired via CSS ::after (the applicator
+only adds the class); mid-word segment offsets work with the
+existing applicator slicing — no algorithm or applicator changes
+needed.</li>
+</ul>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="uax14-segmentation" class="heading_anchor" href="#uax14-segmentation" aria-hidden="true">#</a>UAX#14 segmentation</h3>
+<ul>
+<li>v0 tokenizer: <code>/([^ ]+)|( )/g</code> (segmenter.ts:66) — words and
+single spaces; UAX#14 refines <code>segmentTextRun</code> within
+<code>assembleLogicalParagraphs</code> (the header comments mark the spot,
+segmenter.ts:20-22; controller header: “splits at style boundaries
+and UAX#14 break points”).</li>
+<li><code>linebreak</code> package API: <code>new LineBreak(text)</code> → iterate break
+opportunities with positions + required/optional flag (UAX#14
+classes; handles punctuation rules, CJK, combining marks — the
+“far too many for sliders” cases’ siblings).</li>
+<li>Language relevance: UAX#14 is mostly locale-independent except
+dictionary scripts (Thai/Lao/Khmer/Myanmar — <code>linebreak</code> has the
+hooks); our language/lang is available per textblock
+(controller:371).</li>
+</ul>
+<h3><a id="hyphenator-pass" class="heading_anchor" href="#hyphenator-pass" aria-hidden="true">#</a>Hyphenator pass</h3>
+<ul>
+<li>Runs between segmentation and measurement (controller compose
+pipeline: segmentation → [HYPHENATOR] → measurement → algorithm);
+it splits word segments at hyphenation points: each split produces
+segments where the FIRST part includes the hyphen glyph in its
+measured width (contract, composition-types.ts:147-150) and a
+<code>kind:'hyphen'</code> break opportunity with a penalty.</li>
+<li>hypher API: <code>new Hypher(patterns).hyphenate(word)</code> → array of
+word parts; the hyphenation POINTS are the part boundaries.
+Constraints (min left/right chars) are pattern-built-in; our own
+min-word-length gate is policy.</li>
+<li>Language mapping: BCP47 <code>language/lang</code> → pattern package name
+(en-us, en-gb, de, fr, …; ~20 available). Fallback chain
+(de-AT → de) is our code. Patterns loaded lazily/statically —
+bundling decision in the plan.</li>
+<li>Off-switch: model-first config (hyphenation on/off + min lengths),
+inheritable like everything else — where it lives (own struct vs.
+algorithm config) is a plan question.</li>
+</ul>
+<h3><a id="rendering-already-wired--verified" class="heading_anchor" href="#rendering-already-wired--verified" aria-hidden="true">#</a>Rendering (already wired — verified)</h3>
+<ul>
+<li>Applicator: <code>-line-hyphen</code> class on the line’s last run
+(viewer.typeroof.jsx:689-690); CSS <code>::after { content: &quot;-&quot; }</code>
+(line-spans.css:35-38). The hyphen glyph is NOT in the DOM text —
+selection/copy stay clean; the WIDTH is baked into the segment
+measurement Host-side.</li>
+<li>Mid-word offsets: hyphen splits a word into segments within the
+same source run; the next line’s span starts at the mid-word
+offset into the same text — works with the existing slicing
+(viewer.typeroof.jsx:705-712), and <code>-line-first::before</code> forces
+the break. No applicator change needed.</li>
+</ul>
+<h3><a id="contract-readiness-no-changes-needed" class="heading_anchor" href="#contract-readiness-no-changes-needed" aria-hidden="true">#</a>Contract readiness (no changes needed)</h3>
+<ul>
+<li>BreakOpportunity kind ‘hyphen’ + penalty (composition-types.ts:
+98-115); “the Algorithm can’t tell a word boundary from a hyphen
+point”; hyphen width baked into measurement (:147-150).</li>
+<li>The greedy algorithm treats hyphen breaks like any break — the
+penalty field is currently ignored by greedy (KP will use it);
+greedy MAY prefer a slightly-looser space break over a hyphen
+break only via order — acceptable for the milestone (documented).</li>
+</ul>
+<h2><a id="finding-font-coverage-beyond-this-milestone" class="heading_anchor" href="#finding-font-coverage-beyond-this-milestone" aria-hidden="true">#</a>Finding: font coverage (beyond this milestone)</h2>
+<p>Probe (2026-10-03): CJK in Roboto Flex shapes to glyph 0 (.notdef,
+0.44em each) — measured ~56pt vs browser-rendered ~126pt
+(per-character fallback). Overfull never flags for uncovered text.
+Out of scope for milestone 3 (UAX#14 breaks CJK correctly without
+accurate widths); recorded as IMPORTANT in the ROADMAP (missing-
+glyph diagnostic first, then fallback-font measurement via the
+dynamic asset machinery).</p>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>segmenter.ts:66,71-92</code> — tokenizer + segmentTextRun</li>
+<li><code>composition-controller.ts:349-460</code> — the compose pipeline</li>
+<li><code>composition-types.ts:79-150</code> — hyphen contract</li>
+<li><code>viewer.typeroof.jsx:689-690,705-712</code> — rendering + slicing</li>
+<li><code>line-spans.css:25-38</code> — break forcing + hyphen ::after</li>
+</ul>
+<h2><a id="follow-up-decisions-2026-10-03-review" class="heading_anchor" href="#follow-up-decisions-2026-10-03-review" aria-hidden="true">#</a>Follow-up Decisions (2026-10-03, review)</h2>
+<ol>
+<li>
+<p><strong>Q1 RESOLVED — own inheritable struct.</strong> Hyphenation config is
+a Host control, not algorithm config: its own struct on
+TypeSpecModel ({enabled, minWordLength, minBefore, minAfter},
+OrEmpty/inherit semantics).</p>
+</li>
+<li>
+<p><strong>Q2 RESOLVED — generalize the ResourceRequirement machinery.</strong>
+No static bundling, no persistence: patterns are DYNAMIC ASSETS
+via the existing font machinery (models yield ResourceRequirement
+during metamorphoseGen; ShellController._asyncResolve resolves —
+shell.mjs:1358, the else-throw branches are the plug-in points for
+new resource kinds). An InstalledHyphenationPatternsModel state
+dependency (the InstalledFontsModel analogue) + a ForeignKey with
+CUSTOM constraint yielding the requirement (the activeFontKey
+pattern); a new _asyncResolve branch dynamic-imports the pattern
+and installs it — composition stays SYNC (assets resolve
+pre-metamorphose). Session-only, no localFontStorage. This is
+the generalization’s second instance; future kinds: plugins,
+actor-library sub-states.
+LICENSING (checked): hypher BSD-3-Clause, hyphenation.en-us/.de
+MIT, hyphenopoly MIT, linebreak MIT — all Apache-2.0-compatible.
+Due diligence: pattern DATA derives from hyph-utf8 (per-pattern
+headers vary; npm packagers distribute as MIT) — keep
+provenance/license headers, NOTICE entry if kept.</p>
+<p>REFINEMENT: patterns are VENDORED ASSETS in-tree (e.g.
+lib/assets/hyphenation/<lang>.json, license headers kept) —
+chosen for extensibility (pattern fixes/extensions land without
+an upstream roundtrip); loaded ASYNC ON DEMAND via the
+machinery; fetch-by-URL vs await-import is an implementation
+detail (fetch fits the font precedent). The hypher ALGORITHM
+(BSD) is an npm dependency (code, not data).</lang></p>
+</li>
+<li>
+<p><strong>Q3 RESOLVED — A: full linebreak-driven segmentation.</strong> State
+of the art, not botch: the v0 space tokenizer is REPLACED by
+UAX#14 (the linebreak package). The test document’s CJK
+paragraphs (unbreakable today — no spaces) are a built-in
+behavior test.</p>
+</li>
+<li>
+<p><strong>Q4 RESOLVED — ASCII hyphen-minus</strong> measured at the run’s
+font/axes via the Measurer (consistent with the CSS ::after
+rendering); U+2010 is a later refinement.</p>
+</li>
+</ol>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ol>
+<li>Hyphenation config placement (model-first): own inheritable
+struct on TypeSpecModel (e.g. <code>hyphenation: {enabled, minBefore, minAfter}</code> — OrEmpty semantics) vs. a field on the algorithm
+structs? (The contract calls it a HOST control — argues for its
+own struct.)</li>
+<li>hypher pattern loading: static imports of the needed languages
+(bundled) vs. dynamic import by language (vite code-splitting) —
+which languages to bundle initially?</li>
+<li>UAX#14 scope for this milestone: full <code>linebreak</code>-driven
+segmentation (replacing the v0 tokenizer) or only punctuation
+refinement on top of v0 (CJK etc. later)?</li>
+<li>The hyphen GLYPH for width measurement: measure “-” at the
+run’s font/axes via the Measurer (consistent) — confirm; some
+fonts have U+2010 — use ASCII hyphen-minus (CSS renders “-” too).</li>
+</ol>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

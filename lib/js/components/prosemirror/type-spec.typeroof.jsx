@@ -19,6 +19,7 @@ import {
     getStyleLinks,
     INTENT_STYLE_LINKS,
     MARK_STYLE_LINKS,
+    INLINE_NODES_STYLE_LINKS,
 } from "../registered-properties-definitions.mjs";
 
 import {
@@ -54,8 +55,10 @@ import {
     getTypeSpecsMethod,
 } from "./integration.typeroof.jsx";
 
-import { getStyleLinkPropertiesId } from "../layouts/type-stage/document-nodes-meta/derivations.mjs";
-
+import {
+    getStyleLinkPropertiesId,
+    getResolvablePathOfTypes,
+} from "../layouts/type-stage/document-nodes-meta/derivations.mjs";
 import {
     getStylePatchLinkForIntent,
     getStylePatchLinkForMark,
@@ -296,6 +299,7 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
                 "--node-anchor-name",
                 this._nodeAnchorName,
             );
+        this.outerElement.removeAttribute("data-has-styler");
     }
 
     destroy() {
@@ -319,6 +323,7 @@ export class UIDocumentTypeSpecStyler extends _BaseComponent {
             this._cleanUp();
             return;
         }
+        this.outerElement.setAttribute("data-has-styler", "");
         // geometry from the nodeProperties@ channel (unregistered, may
         // be null until the root registers), style from properties@.
         const nodePropertiesEntry = changedMap.has("nodeProperties@")
@@ -684,6 +689,11 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         this._nextProperties = null;
         this._nextNodeProperties = null; // cached next-sibling nodeProperties@ id
         this._nodeProperties = null; // cached nodeProperties@ id (rebuild probe)
+        // approach (a) phase 4: inline nodes route their styling to
+        // the mark channel — the cached styleLinkProperties@ id of
+        // the inlineNodesStyleLinks edge (rebuild probe, like
+        // _nodeProperties above)
+        this._inlineStyleLinkPropertiesId = null;
         this._lastSilent = null;
         {
             const initialWidgets = this._staticWidgets;
@@ -795,6 +805,99 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         ];
     }
 
+    // approach (a) phase 4 — the channel split: INLINE nodes
+    // (pmNode.isInline — metamodel inline specs, reproducing atoms
+    // and default-schema inline types alike) style like MARKS via
+    // the styleLinkProperties@ merge channel; blocks keep the
+    // per-node typeSpec styler (UIDocumentTypeSpecStyler below).
+    _isInlineNode() {
+        return this._pmNode !== null && this._pmNode.isInline === true;
+    }
+
+    // The inline node's styleLinkProperties@ id: the
+    // inlineNodesStyleLinks edge of the CONTAINING typeSpec (the
+    // same resolution mark subscriptions use — pathOfTypes without
+    // the own typeKey), keyed by the node type name. Absence or a
+    // declaration edge (empty stylePatch) resolves null: NO styler —
+    // the element renders inherit-only (the containing context's
+    // cascade). Recomputed per call; cached + compared by
+    // _checkInlineStyleLink to detect changes (edge edits).
+    _inlineStyleLinkPropertiesIdFor() {
+        const view = this.widgetBus.getWidgetById("proseMirror").view,
+            resolved = view.state.doc.resolve(this._getPos()),
+            ownPathOfTypes = getPathOfTypes(
+                resolved.path,
+                this._pmNode.type.name,
+            ),
+            // approach (a) phase 6: the containing chain runs through
+            // getResolvablePathOfTypes — nested inline chains (cite
+            // inside generic-inline) would otherwise still end at an
+            // entry-less key and fall to the ROOT spec.
+            containingPathOfTypes = getResolvablePathOfTypes(
+                this.getEntry("nodeSpecToTypeSpec"),
+                ownPathOfTypes.slice(0, -1),
+            ),
+            containingTypeSpecPath = this._getTypeSpecPropertiesId(
+                containingPathOfTypes,
+                true /* asPath */,
+            ),
+            containingTypeSpecProperties = this._getTypeSpecPropertiesId(
+                containingPathOfTypes,
+            ),
+            links = getEffectiveStyleLinks(
+                this.widgetBus,
+                containingTypeSpecProperties,
+                INLINE_NODES_STYLE_LINKS,
+            ),
+            edge = links.get(this._pmNode.type.name);
+        if (edge === undefined || edge.get("stylePatch").value === "")
+            return null;
+        return getStyleLinkPropertiesId(
+            this.widgetBus,
+            containingTypeSpecPath,
+            "inlineNodesStyleLinks",
+            this._pmNode.type.name,
+        );
+    }
+
+    // Mirrors _checkNodeProperties: recompute the
+    // styleLinkProperties@ id and report whether it changed since
+    // the last provision (the id is the inline styler wrapper's
+    // identity — an edge edit rebuilds it).
+    _checkInlineStyleLink(/*compareResult*/) {
+        if (!this._isInlineNode()) return false;
+        const inlineStyleLinkPropertiesId =
+                this._inlineStyleLinkPropertiesIdFor(),
+            hasChanged =
+                this._inlineStyleLinkPropertiesId !==
+                inlineStyleLinkPropertiesId;
+        if (hasChanged)
+            this._inlineStyleLinkPropertiesId = inlineStyleLinkPropertiesId;
+        return hasChanged;
+    }
+
+    _createInlineStyleStylerWidgetDefinition() {
+        const styleLinkPropertiesId = this._inlineStyleLinkPropertiesId,
+            // initial provision before any _checkInlineStyleLink:
+            // derive now (the definition may be built first on the
+            // initial pass)
+            idToUse =
+                styleLinkPropertiesId ?? this._inlineStyleLinkPropertiesIdFor();
+        if (idToUse === null)
+            // no edge / a declaration: NO styler (inherit-only)
+            return null;
+        return [
+            {},
+            [
+                [idToUse, "properties@"],
+                ["/font", "rootFont"],
+                ["verboseFontVariationSettings"],
+            ],
+            UIDocumentStyleStyler,
+            this._structuralElements.inner,
+        ];
+    }
+
     _createLableWidgetDefinition() {
         return [
             {
@@ -849,6 +952,15 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
     }
 
     _createWidgetDefinitions() {
+        // inline nodes (approach (a) phase 4): the style-link styler
+        // ONLY — no labels/parameters (the operator: inline nodes
+        // need neither; the single-element DOM keeps the outer-zone
+        // widgets inactive anyway, and nothing may be appended to
+        // the element).
+        if (this._isInlineNode()) {
+            const definition = this._createInlineStyleStylerWidgetDefinition();
+            return definition === null ? [] : [definition];
+        }
         return [
             this._createStylerWidgetDefinition(),
             this._createLableWidgetDefinition(),
@@ -960,6 +1072,9 @@ export class UIDocumentNodeOutfitter extends _BaseContainerComponent {
         const requireUpdateDynamicWidget =
             this._checkNextProperties(compareResult) ||
             this._checkNodeProperties(compareResult) ||
+            // inline nodes: the styleLinkProperties@ id is the styler
+            // wrapper's identity — an edge edit rebuilds it
+            this._checkInlineStyleLink(compareResult) ||
             silentChanged ||
             removedDynamicWidgets.length === 0; // is initial
         // do we need to replace/renew the dynamic widget
@@ -1179,23 +1294,23 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
     // Intents resolve from intentStyleLinks (by data-style-name), schema
     // marks from markStyleLinks (by mark type name); the field name is
     // required to build the styleLinkProperties@ id path.
+    // An edge with an EMPTY stylePatch is a declaration, not a style
+    // (symmetric with getWrapMarks): null — the unknown-style fallback
+    // applies, no styler writes properties onto the mark wrapper
+    // (the UA default styling of semantic tags survives).
     _getStylePatchLinkForMark(typeSpecProperties, mark) {
-        const styleName = mark.attrs["data-style-name"];
-        if (styleName !== undefined) {
-            const key = getStylePatchLinkForIntent(
-                this._getEffectiveStyleLinks(
-                    typeSpecProperties,
-                    INTENT_STYLE_LINKS,
-                ),
-                styleName,
-            );
-            return key === null ? null : ["intentStyleLinks", key];
-        }
-        const key = getStylePatchLinkForMark(
-            this._getEffectiveStyleLinks(typeSpecProperties, MARK_STYLE_LINKS),
-            mark,
-        );
-        return key === null ? null : ["markStyleLinks", key];
+        const styleName = mark.attrs["data-style-name"],
+            isIntent = styleName !== undefined,
+            links = this._getEffectiveStyleLinks(
+                typeSpecProperties,
+                isIntent ? INTENT_STYLE_LINKS : MARK_STYLE_LINKS,
+            ),
+            key = isIntent
+                ? getStylePatchLinkForIntent(links, styleName)
+                : getStylePatchLinkForMark(links, mark);
+        if (key === null) return null;
+        if (links.get(key).get("stylePatch").value === "") return null;
+        return [isIntent ? "intentStyleLinks" : "markStyleLinks", key];
     }
 
     // The tag an intent mark is bound to via the applicable
@@ -1282,16 +1397,64 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         parentSubscription.styles.delete(domElement);
     }
 
-    _finalizeMarkSubscription(domElement, mark) {
-        const parentSubscription = this._subscribers.get(
-                domElement.parentElement,
+    // The nearest subscribed ancestor's subscription, or null. Marks
+    // render as NESTED elements (chain elements stack marks since the
+    // structure-marks design): an inner mark's parent element is
+    // another MARK element, not a subscribed node element — walk up
+    // to the nearest node subscription for the styling context.
+    _getParentSubscription(domElement) {
+        let parent = domElement.parentElement;
+        while (parent !== null) {
+            const subscription = this._subscribers.get(parent);
+            if (subscription !== undefined) return subscription;
+            parent = parent.parentElement;
+        }
+        return null;
+    }
+
+    // true when the mark's style link is a DECLARATION: an edge with
+    // an EMPTY stylePatch (management-surface entry, see the state's
+    // markStyleLinks on the tag-* marks). Declarations are not
+    // styles: no styler at all — the viewer skips them too (the
+    // unknown-style marker is reserved for marks with NO edge).
+    _hasStyleLinkDeclaration(typeSpecProperties, mark) {
+        const styleName = mark.attrs["data-style-name"],
+            isIntent = styleName !== undefined,
+            links = this._getEffectiveStyleLinks(
+                typeSpecProperties,
+                isIntent ? INTENT_STYLE_LINKS : MARK_STYLE_LINKS,
             ),
-            styleLinkPropertiesId = this._getStyleLinkPropertiesId(
-                parentSubscription.typeSpecProperties,
-                this._getStylePatchLinkForMark(
-                    parentSubscription.typeSpecProperties,
-                    mark,
-                ),
+            key = isIntent ? styleName : mark.type.name;
+        return links.has(key) && links.get(key).get("stylePatch").value === "";
+    }
+
+    // true when the subscription was finalized; false: the element is
+    // not attached to a subscribed ancestor yet — keep it pending,
+    // the sweeps finalize on attach.
+    _finalizeMarkSubscription(domElement, mark) {
+        const parentSubscription = this._getParentSubscription(domElement);
+        if (parentSubscription === null) return false;
+        // viewer parity: UIDocumentTextRun anchors marks at the
+        // containing spec (getResolvablePathOfTypes), hence the
+        // subscription's containingTypeSpecProperties — NOT the
+        // node's own typeSpecProperties.
+        const typeSpecProperties =
+                parentSubscription.containingTypeSpecProperties,
+            styleLinkEntry = this._getStylePatchLinkForMark(
+                typeSpecProperties,
+                mark,
+            );
+        if (
+            styleLinkEntry === null &&
+            this._hasStyleLinkDeclaration(typeSpecProperties, mark)
+        )
+            // a declaration is finalized with nothing to do: no
+            // styler, no unknown-style class (symmetric with the
+            // viewer's styleLinkName-null skip)
+            return true;
+        const styleLinkPropertiesId = this._getStyleLinkPropertiesId(
+                typeSpecProperties,
+                styleLinkEntry,
             ),
             styleSubscription = this._createStyleSubscription(
                 domElement,
@@ -1307,6 +1470,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         this._updateDOM(() =>
             this._activateWidget(styleSubscription.widgetWrapper),
         );
+        return true;
     }
 
     // ProseMirror creates mark views context-free: the tag binding
@@ -1384,7 +1548,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 if (!domElement.isConnected) continue;
                 const tag =
                     this._resolveIntentTag(
-                        parentSubscription.typeSpecProperties,
+                        parentSubscription.containingTypeSpecProperties,
                         mark,
                     ) || "span";
                 if (tag === domElement.tagName.toLowerCase()) continue;
@@ -1453,19 +1617,14 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             for (const node of mutationRecord.addedNodes) {
                 if (this._newlySubscribedMarks.has(node)) {
                     const mark = this._newlySubscribedMarks.get(node);
-                    this._newlySubscribedMarks.delete(node);
-                    this._finalizeMarkSubscription(node, mark);
+                    if (this._finalizeMarkSubscription(node, mark))
+                        this._newlySubscribedMarks.delete(node);
                 }
             }
         }
-        for (const [node, mark] of this._newlySubscribedMarks) {
-            if (
-                node.parentElement &&
-                this._subscribers.has(node.parentElement)
-            ) {
+        for (const [node, mark] of Array.from(this._newlySubscribedMarks)) {
+            if (this._finalizeMarkSubscription(node, mark))
                 this._newlySubscribedMarks.delete(node);
-                this._finalizeMarkSubscription(node, mark);
-            }
         }
         if (this._newlySubscribedMarks.size === 0)
             this._marksDomObserver.disconnect();
@@ -1535,11 +1694,34 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         const view = this.widgetBus.getWidgetById("proseMirror").view,
             { getPos, node } = subscription,
             resolved = view.state.doc.resolve(getPos()),
+            // The node's OWN channel resolves on the FULL path of
+            // types (viewer parity: UIDocumentElement.
+            // _provisionTypeSpecStyler). An entry-less trailing key
+            // (figure, blockquote, …) falls back through the
+            // registry walk to the ROOT spec — the styler is
+            // provisioned and the node styled like in the viewer.
+            // Pre-dropping the own key here would hand such nodes
+            // to the nearest resolvable ANCESTOR's spec, which for
+            // figure-in-sub-section was /sub-section (noStyler): no
+            // styler at all, while the viewer styled the same node.
             pathOfTypes = getPathOfTypes(resolved.path, node.type.name),
             typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes),
             typeSpecPath = this._getTypeSpecPropertiesId(
                 pathOfTypes,
                 true /*asPath*/,
+            ),
+            // approach (a) phase 6 — the MARK channel anchors at the
+            // CONTAINING typeSpec: entry-less trailing keys (the
+            // subscription's path ends at the node: an inline node
+            // for nested marks) are dropped to the nearest resolvable
+            // ancestor, instead of falling to the root spec (viewer
+            // parity: UIDocumentTextRun provisions its marks from
+            // getResolvablePathOfTypes(context.pathOfTypes)).
+            containingTypeSpecProperties = this._getTypeSpecPropertiesId(
+                getResolvablePathOfTypes(
+                    this.getEntry("nodeSpecToTypeSpec"),
+                    pathOfTypes,
+                ),
             ),
             indexPath = [];
         for (let d = 0; d <= resolved.depth; d++)
@@ -1554,6 +1736,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             pathOfTypes,
             typeSpecProperties,
             typeSpecPath,
+            containingTypeSpecProperties,
             parentContentsPath,
         };
     }
@@ -1811,9 +1994,9 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 const oldStyleSubscription =
                         this._styleSubscribers.get(styleDOMElement),
                     styleLinkPropertiesId = this._getStyleLinkPropertiesId(
-                        subscription.typeSpecProperties,
+                        subscription.containingTypeSpecProperties,
                         this._getStylePatchLinkForMark(
-                            subscription.typeSpecProperties,
+                            subscription.containingTypeSpecProperties,
                             oldStyleSubscription.mark,
                         ),
                     );
@@ -1830,9 +2013,9 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             if (requiresUpdate.has(styleDOMElement)) continue;
             const { parentSubscription, mark } = styleSubscription,
                 styleLinkPropertiesId = this._getStyleLinkPropertiesId(
-                    parentSubscription.typeSpecProperties,
+                    parentSubscription.containingTypeSpecProperties,
                     this._getStylePatchLinkForMark(
-                        parentSubscription.typeSpecProperties,
+                        parentSubscription.containingTypeSpecProperties,
                         mark,
                     ),
                 );

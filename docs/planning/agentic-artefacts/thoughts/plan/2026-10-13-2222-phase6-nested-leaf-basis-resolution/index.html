@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="phase-6--nested-leafmark-basis-resolution-implementation-plan" class="heading_anchor" href="#phase-6--nested-leafmark-basis-resolution-implementation-plan" aria-hidden="true">#</a>Phase 6 — Nested leaf/mark basis resolution: Implementation Plan</h1>
+<h2><a id="overview" class="heading_anchor" href="#overview" aria-hidden="true">#</a>Overview</h2>
+<p>Close the measured-vs-rendered basis divergence for content nested inside
+inline nodes: run-level MARK channels anchor at the <strong>containing typeSpec</strong>
+(nearest resolvable ancestor — decision Q1/A) via a <strong>shared pure helper</strong>
+(Q3/option 2) used by all four rendered-channel sites; the composition
+controller resolves each leaf through an <strong>innermost-wins chain with a
+node-edge fallback layer</strong> (Q2) fed by a <strong>meta-side resolver function</strong>
+(Q4/A); the wikipedia state ships a <strong>demo edge on the root typeSpec</strong>
+(Q5/A). Rendered payload elements are self-contained (explicit writes;
+“explicit-everything” contract) — measured == rendered by construction.</p>
+<h2><a id="current-state-analysis" class="heading_anchor" href="#current-state-analysis" aria-hidden="true">#</a>Current State Analysis</h2>
+<ul>
+<li>Five style-link resolution sites anchor three different ways for nested
+content (research §2): V1 viewer run marks + E2 editor marks anchor at
+the ROOT (empty <code>nodeSpecToTypeSpec</code> link at the deepest typeKey →
+<code>_getBestTypeSpecPropertiesId</code> starts at the typeSpec root,
+<code>integration.typeroof.jsx:117/:189-191</code>); V2/E1 (inline node channels)
+slice-then-resolve → containing spec; V3 (composition measurement)
+anchors at the textblock’s spec. <code>li-inline → /paragraphs/t1</code> (18pt =
+14 × 1.285714286); <code>generic-inline</code>/<code>cite</code>/<code>bdi</code> have NO entries.</li>
+<li>The visible defect (operator readout 2026-10-13): italic patch <code>{1, em}</code>
+inside the cite renders 14pt + <code>opsz 14</code> (root) instead of the li’s 18pt.</li>
+<li>The measured side never sees inline-node edges: <code>_resolveLeafStyleLink</code>
+(<code>composition-controller.ts:624-682</code>) is mark-list-only (<code>getWrapMarks</code>
+reads only <code>node.marks</code>, <code>derivations.mjs:434/:446</code>); nested leaves fall
+back to the textblock style (<code>styleOf</code>, :936-937). The viewer RENDERS the
+node element from its edge payload → measured ≠ rendered whenever the
+edge sets font-size.</li>
+<li>V2/E1’s naive <code>slice(0, -1)</code> (<code>viewer.typeroof.jsx:589</code>,
+<code>type-spec.typeroof.jsx:830</code>) itself falls to root for NESTED inline
+chains (cite inside generic-inline: the slice still ends at an
+entry-less key) — the helper fixes this too.</li>
+<li>The single-id shape (<code>CompositionLeaf</code> :251-255, <code>leafStyles</code> :905,
+<code>styleOf</code> :936-937) physically embodies the at-most-one contract on the
+measured side — preserved (Q2: innermost-wins, no merge machinery).</li>
+<li>No state ships an <code>inlineNodesStyleLinks</code> edge (verified grep);
+defaults empty; states are NOT fixtures (operator: “the default state is
+however not a reliable fixture and should not be treated as one”).</li>
+</ul>
+<h2><a id="desired-end-state" class="heading_anchor" href="#desired-end-state" aria-hidden="true">#</a>Desired End State</h2>
+<ul>
+<li>A nested mark’s payload (edge lookup + <code>em</code>/<code>baseEm</code> basis) anchors at
+the <strong>nearest resolvable ancestor’s typeSpec</strong> — in the live case the
+li’s <code>/paragraphs/t1</code> (18pt). <code>{1, em}</code> italic inside the cite renders
+<strong>18pt</strong>; <code>opsz</code> tracks it; the root-fallback 14pt write disappears.</li>
+<li>All four rendered channels (V1, V2, E1, E2) share ONE anchor concept
+(“containing typeSpec” = nearest resolvable ancestor) via one shared
+helper; nested inline chains resolve uniformly.</li>
+<li>Measured == rendered per the <strong>explicit-everything contract</strong>: each
+payload-styled element writes its full resolved set; a leaf measures as
+its <strong>innermost applicable payload</strong> (mark payload → innermost
+inline-edge payload → textblock style). A slnt-only mark under a
+size-setting node edge measures at the mark payload’s anchor-context
+size — exactly what its element writes.</li>
+<li>Nested marks track the <strong>anchor spec context</strong>, not the enclosing node
+edge’s rendered size (intended; the vocabulary for context scaling is
+<code>em</code>/<code>pt</code> against the spec — patch-onto-patch chaining is out of scope).</li>
+<li>The wikipedia initial state ships a demo <code>inlineNodesStyleLinks</code> edge
+on the <strong>root typeSpec</strong> (generic-inline → patch); the live checkpoint:
+references list renders composed, cites styled, no overflow.</li>
+<li>Full battery green; new basis unit tests pin the anchor math.</li>
+</ul>
+<h3><a id="key-discoveries" class="heading_anchor" href="#key-discoveries" aria-hidden="true">#</a>Key Discoveries</h3>
+<ul>
+<li>The resolver walk (<code>getTypeSpecPropertiesIdMethod</code>,
+<code>integration.typeroof.jsx:190-235</code>): parent-anchored links recurse
+(<code>slice(0,-1)</code> :236-253); ONLY the empty-link case jumps to root
+(:117, :189-191) — the helper reuses the walk’s own parent-anchoring
+semantics, it never enters <code>_getBestTypeSpecPropertiesId</code>.</li>
+<li>E2’s editor path: mark finalization walks DOM subscriptions
+(<code>_getParentSubscription</code> :1394-1406); inline nodes subscribe
+themselves (<code>integration.typeroof.jsx:424</code>), so the mark’s parent
+subscription holds the inline node’s <code>pathOfTypes</code> (:1682-1710) —
+the helper applies at the subscription’s derived resolution.</li>
+<li>Meta-side inline-edge resolution for the controller (Q4): the meta
+element already computes per-node <code>pathOfTypes</code> and V2 already resolves
+edges via <code>getEffectiveStyleLinks</code> +
+<code>getStyleLinkPropertiesId</code> (<code>derivations.mjs:405-424</code>) — the resolver
+function is a closure over that, keyed by document-node path.</li>
+<li><code>CONTAINING_FONT_SIZE</code> (<code>registered-properties-definitions.mjs:76-84</code>)
+publishes the anchor spec’s outbound effective size into the merged
+payload — anchoring at t1 fixes the <code>em</code> basis with NO new machinery.</li>
+<li>Probe baselines: <code>qa-inline-node-style-links</code> step 1 and
+<code>qa-structure-marks</code> assert a CLEAN baseline — with the shipped demo
+edge the initial state is not clean; the probes create their own
+baseline (tombstone first) or the demo edge is excluded there (plan
+phase 3; states ≠ fixtures).</li>
+</ul>
+<h2><a id="what-were-not-doing" class="heading_anchor" href="#what-were-not-doing" aria-hidden="true">#</a>What We’re NOT Doing</h2>
+<ul>
+<li>NO patch-onto-patch (CSS-like chaining) composition: nested marks
+compose against the anchor SPEC context, never the enclosing node
+edge’s rendered result (Q2 decision; option-2 machinery rejected as
+scope explosion).</li>
+<li>NO change to <code>getTypeSpecPropertiesIdMethod</code>’s own semantics (Q3
+option 1 rejected: ambient shift for nodeProperties scopes and every
+consumer); the shared walk stays untouched — the helper wraps it.</li>
+<li>NO change to the at-most-one MARK chain contract
+(<code>derivations.mjs:536-546</code>, <code>composition-controller.ts:670-680</code>):
+the inline-edge fallback is a separate resolution layer beneath the
+mark payload, not a second mark link.</li>
+<li>NO nodeProperties scope changes (<code>document-nodes-meta/index.mjs</code>
+scope resolution untouched).</li>
+<li>NO baseEm/absolute-unit semantic changes; NO <code>UIDocumentTypeSpecStyler</code>
+work; NO perf-composition runs (operator rule 2026-10-06).</li>
+<li>Phase-5 UI work is complete; the demo edge is a STATE change, not UI.</li>
+</ul>
+<h2><a id="implementation-approach" class="heading_anchor" href="#implementation-approach" aria-hidden="true">#</a>Implementation Approach</h2>
+<p>Three phases, rendered channels first (visible, probe-gated), then the
+measured side (math pinned by unit tests), then state + live QA. Each
+phase ends with the full battery + proposed commit; pause for operator
+confirmation (RPI protocol).</p>
+<h2><a id="phase-61--getresolvablepathoftypes-helper--the-four-rendered-channels" class="heading_anchor" href="#phase-61--getresolvablepathoftypes-helper--the-four-rendered-channels" aria-hidden="true">#</a>Phase 6.1 — <code>getResolvablePathOfTypes</code> helper + the four rendered channels</h2>
+<h3><a id="overview-1" class="heading_anchor" href="#overview-1" aria-hidden="true">#</a>Overview</h3>
+<p>One shared pure helper computes the containing-spec path: drop trailing
+typeKeys whose <code>nodeSpecToTypeSpec</code> link is empty/absent, until the last
+key has a non-empty link (a single-element path stays → root, today’s
+behavior). All four rendered sites route their resolution through it.</p>
+<h3><a id="changes-required" class="heading_anchor" href="#changes-required" aria-hidden="true">#</a>Changes Required</h3>
+<ol>
+<li><strong>Helper</strong> — <code>document-nodes-meta/derivations.mjs</code> (pure, beside
+<code>getStyleLinkPropertiesId</code> :405):
+<code>getResolvablePathOfTypes(nodeSpecToTypeSpec, pathOfTypes)</code> → array.
+Semantics: while the LAST typeKey has no non-empty <code>link</code>, pop; stop
+at the first resolvable key; never resolve (no walk, no registry —
+pure path arithmetic; the caller then runs
+<code>getTypeSpecPropertiesIdMethod</code> on the result). The popped-keys case
+must keep <code>excludeFromFallback</code> interplay EXCLUDED — the helper never
+enters the walk; document that in the doc comment.</li>
+<li><strong>V2 viewer node channel</strong> — <code>viewer.typeroof.jsx:589</code>:
+<code>containingPathOfTypes = getResolvablePathOfTypes(nodeSpecToTypeSpec, this._pathOfTypes)</code> (replaces the naive <code>slice(0, -1)</code>; fixes the
+nested-chain root fall). <code>nodeSpecToTypeSpec</code> entry via the same
+<code>this.getEntry(&quot;nodeSpecToTypeSpec&quot;)</code> pattern the <code>_getTypeSpecPropertiesId</code>
+methods use.</li>
+<li><strong>E1 editor node channel</strong> — <code>type-spec.typeroof.jsx:826-837</code>:
+same replacement on <code>ownPathOfTypes</code>.</li>
+<li><strong>V1 viewer run marks</strong> — <code>viewer.typeroof.jsx:1180-1183</code>: resolve
+<code>pathOfTypes</code> through the helper BEFORE <code>_getTypeSpecPropertiesId</code>
+(the run’s context path ends at the inline node; the helper drops
+entry-less trailing keys to the nearest resolvable ancestor).</li>
+<li><strong>E2 editor marks</strong> — <code>type-spec.typeroof.jsx:1682</code>
+(<code>_subscriptionGetDerrived</code>): the subscription’s <code>pathOfTypes</code> passes
+through the helper before <code>typeSpecProperties</code> resolution — verify the
+OTHER derived uses in the subscription record (<code>typeSpecPath</code>,
+<code>parentSubscription</code> chains :1394-1406) take the same helper so a
+mark’s parent lookup and the subscription’s spec agree.</li>
+<li><strong>Tests</strong> — <code>document-nodes-meta/style-link-id-equivalence.test.mjs</code>/
+derivations tests: helper unit tests (clean chain unchanged; trailing
+entry-less keys popped incl. the cite-inside-generic-inline case;
+single-element path → root fallback preserved).</li>
+</ol>
+<h3><a id="success-criteria" class="heading_anchor" href="#success-criteria" aria-hidden="true">#</a>Success Criteria</h3>
+<ul>
+<li>[x] <code>npm run typecheck</code> + <code>npm run lint</code> + vitest green (incl. new
+helper tests) — 2026-10-13: 55 files / 547 tests</li>
+<li>[x] Extended probe <code>qa-inline-node-style-links.mjs</code>: NEW nested-mark
+basis step — with a root edge generic-inline → patch AND the italic
+patch at <code>{1, em}</code> (state-API in-probe, as today): the cite’s <code>em</code>
+renders at the LI context (18pt → 24px computed), not 14pt; editor
+mode parity (E2) — same size in the editor DOM — PASS (62/62 marks
+in both renderers; the viewer renders the mark as <code>i</code>, the editor
+as <code>em</code> — the probe selects by <code>data-style-name</code>, tag-independent)</li>
+<li>[x] <code>qa-structure-marks.mjs</code>, <code>qa-editor-mark-styling.mjs</code>,
+<code>qa-inline-node-dom.mjs</code>, <code>qa-node-style-links-ui.mjs</code> unchanged-green</li>
+<li>[x] <strong>LIVE CHECKPOINT (operator)</strong>: the nested italic renders 18pt —
+confirmed 2026-10-13</li>
+</ul>
+<h2><a id="phase-62--measured-side-innermost-wins--node-edge-fallback" class="heading_anchor" href="#phase-62--measured-side-innermost-wins--node-edge-fallback" aria-hidden="true">#</a>Phase 6.2 — Measured side: innermost-wins + node-edge fallback</h2>
+<h3><a id="overview-2" class="heading_anchor" href="#overview-2" aria-hidden="true">#</a>Overview</h3>
+<p>The controller resolves each leaf through mark payload → innermost
+inline-edge payload → textblock style, fed by a meta-side resolver
+function (Q4). Measured == rendered per the explicit-everything contract.</p>
+<h3><a id="changes-required-1" class="heading_anchor" href="#changes-required-1" aria-hidden="true">#</a>Changes Required</h3>
+<ol>
+<li><strong><code>CompositionSource</code> field</strong> — <code>composition-controller.ts:267-273</code>
+(+ <code>document-nodes-meta/index.mjs:846-860</code> <code>_compositionSource</code>): a
+lazy resolver <code>(documentNodePath: Path) =&gt; string | null</code> returning
+the resolved <code>styleLinkProperties@</code> id of the innermost applicable
+inline-edge payload at that path (or null). Built by the meta element
+as a closure reusing the Q3 helper + <code>getEffectiveStyleLinks</code> +
+<code>getStyleLinkPropertiesId</code> — the SAME resolution the rendered V2
+channel performs (one implementation, no controller-side state
+knowledge). Name suggestion: <code>resolveInlineStyleLink</code>.</li>
+<li><strong><code>_buildInlineItems</code> threading</strong> — <code>composition-controller.ts:598-610</code>:
+at each <code>inlineContainer</code> recursion, consult the resolver for
+<code>childPath</code>; thread the innermost applicable id DOWN the recursion
+(nested chains: innermost wins — a deeper level’s own edge replaces
+the outer one; a level with no edge inherits the outer id).</li>
+<li><strong><code>_resolveLeafStyleLink</code> fallback layer</strong> — <code>composition-controller.ts:624-682</code>:
+new optional arg (the threaded inline-edge id). Resolution order:
+mark-resolved id (unchanged, incl. the exclusivity guard) → if null:
+the threaded inline-edge id → else null (textblock fallback stays at
+<code>styleOf</code>, :936-937 — unchanged). NO change to <code>CompositionLeaf</code>’s
+single-id shape or the mark contract.</li>
+<li><strong>Invalidation</strong> — <code>:1150-1167</code>: the ingredients tuple already hashes
+the consumed id; with the fallback the consumed id can now be the
+inline-edge id — verify the invalidation covers edge edits (an edge
+edit re-derives the meta resolver → the composition source refresh →
+re-compose; add a probe-observable case to phase-6.3’s QA).</li>
+<li><strong>Tests</strong> — text-composition suite: NEW measured-basis tests. A
+nested leaf (run inside an inline node with a size-setting edge)
+without marks measures at the edge payload’s <code>generic/fontSize</code>
+(previously textblock fallback); a leaf with a slnt-only mark under
+the same edge measures at the MARK payload’s anchor-context size
+(explicit-everything: the mark element writes it); a leaf with a
+size-setting mark keeps today’s behavior. Assert via the suite’s
+vehicles (compose → measured line geometry), not implementation
+details.</li>
+</ol>
+<h3><a id="success-criteria-1" class="heading_anchor" href="#success-criteria-1" aria-hidden="true">#</a>Success Criteria</h3>
+<ul>
+<li>[x] <code>npm run typecheck</code> + <code>npm run lint</code> + vitest green (incl. the new
+measured-basis tests; the doubling/clear-restore vehicles unchanged)
+— 2026-10-13: 55 files / 548 tests</li>
+<li>[x] Probe: the overflow regression gate — extended
+<code>qa-inline-node-style-links.mjs</code> (INSTEAD of qa-structure-marks, the
+in-phase adaptation: the nested-basis checks + the edge-add step live
+there): NEW “nested runs stay composed at the li-context basis” —
+125/125 generic-inline with runs carry composition-line spans at the
+18pt-context anchor (the overflow signal), on top of the nested-basis
+(18pt/24px, both renderers) and edge-add (30pt) steps</li>
+<li>[x] NEW measured-basis unit test (text-composition suite, own
+htmlOverride world — a nested-chain fixture): the edge payload is the
+fallback basis (nested unmarked run scales 30/18 with the root
+generic-inline → italic-patch edge; the direct run unaffected), and
+the MARK link wins over the edge fallback (explicit-everything:
+unchanged id + unchanged measured width); tombstone clears. NOTE the
+fixture discovery: <code>&lt;span&gt;</code>/<code>&lt;i&gt;</code>/<code>&lt;b&gt;</code> ingest as SCHEMA MARKS
+(tag-span/tag-em/tag-strong) — <code>&lt;cite&gt;</code>/<code>&lt;bdi&gt;</code> are the phrasing
+content that becomes generic-inline NODES</li>
+<li>[x] All other probes unchanged-green (qa-structure-marks,
+qa-editor-mark-styling, qa-inline-node-dom, qa-node-style-links-ui)</li>
+<li>[ ] <strong>LIVE CHECKPOINT (operator)</strong>: references list renders composed
+with styled cites; no overflow</li>
+</ul>
+<h2><a id="phase-63--demo-edge-in-the-wikipedia-state--final-qa" class="heading_anchor" href="#phase-63--demo-edge-in-the-wikipedia-state--final-qa" aria-hidden="true">#</a>Phase 6.3 — Demo edge in the wikipedia state + final QA</h2>
+<h3><a id="overview-3" class="heading_anchor" href="#overview-3" aria-hidden="true">#</a>Overview</h3>
+<p>The visible goal on every load: the root typeSpec of the wikipedia
+initial state carries a <code>generic-inline</code> demo edge. States are NOT
+fixtures — the probes own their baselines.</p>
+<h3><a id="changes-required-2" class="heading_anchor" href="#changes-required-2" aria-hidden="true">#</a>Changes Required</h3>
+<ol>
+<li><strong>State</strong> — <code>lib/js/wikipedia/type-stage-wikipedia-initial-state.json</code>:
+root typeSpec gains <code>inlineNodesStyleLinks</code> with a <code>generic-inline</code>
+edge (mode <code>link</code>, target: a sensible patch — operator’s call in-phase
+between the existing “bold” patch or a dedicated neutral demo patch;
+start with “bold” for visibility). The root is the anchor the
+generic-inline nodes actually resolve at today (their walk falls to
+root) — consistent with the phase-4 probe’s knob.</li>
+<li><strong>Probe baseline adjustment</strong> — <code>qa-inline-node-style-links.mjs</code>:
+the baseline step (currently asserts NO styling at boot) must first
+tombstone the shipped edge (its own state-API transaction) to
+establish the clean baseline, then proceed as today; <code>qa-structure-marks.mjs</code>
+baseline unaffected (asserts composition-line spans + parent-context
+font-sizes, not edge styling — verify once).</li>
+<li><strong>QA sweep</strong> — all probes (structure-marks, editor-mark-styling,
+inline-node-dom, inline-node-style-links, node-style-links-ui) green
+on the shipped state; full battery.</li>
+</ol>
+<h3><a id="success-criteria-2" class="heading_anchor" href="#success-criteria-2" aria-hidden="true">#</a>Success Criteria</h3>
+<ul>
+<li>[x] Full battery green on the shipped state — 2026-10-13: typecheck,
+lint, vitest 55 files / 548 tests</li>
+<li>[x] All five probes green (qa-structure-marks, qa-editor-mark-styling,
+qa-inline-node-dom, qa-inline-node-style-links — incl. the nested
+basis + overflow gate steps on the shipped state —,
+qa-node-style-links-ui — the shipped root edge UPDATES the
+inherited checks: the local UI-created edge stays out of the
+inherited list while the shipped quote edge shows; the child
+check now lists both inherited edges)</li>
+<li>[x] Channel engagement verified live (harness): the quotes render
+AmstelvarA2 Italic at 18pt + opsz 18 — the serif-italic patch at
+the LI CONTEXT basis (the phase-6 anchoring, visible by default)</li>
+<li>[ ] <strong>LIVE CHECKPOINT (operator)</strong> — the cycle’s visible goal: en
+Typography load shows styled quotes (serif italic at the li
+context), references list composed without overflow, nested
+italic <code>{1, em}</code> at 18pt, editor/viewer parity</li>
+</ul>
+<h2><a id="testing-strategy" class="heading_anchor" href="#testing-strategy" aria-hidden="true">#</a>Testing Strategy</h2>
+<ul>
+<li><strong>Unit (vitest)</strong>: helper path arithmetic (6.1); measured-basis
+behavior via the composition vehicles — inputs → observable geometry
+(6.2). No implementation-detail assertions.</li>
+<li><strong>Probes</strong>: nested-mark basis step (6.1), measured==rendered geometry
+gate (6.2), shipped-state sweep + baseline tombstone (6.3).</li>
+<li><strong>Manual (operator)</strong>: per-phase live checkpoints (6.1 italic 18pt;
+6.2 references list; 6.3 the full visible goal).</li>
+<li><strong>Canaries</strong>: text-composition suite (any leafStyles wiring damage);
+<code>qa-structure-marks</code> (composition + parent context); DOM parity
+(<code>qa-inline-node-dom</code>).</li>
+</ul>
+<h2><a id="verification-protocol-every-phase" class="heading_anchor" href="#verification-protocol-every-phase" aria-hidden="true">#</a>Verification Protocol (every phase)</h2>
+<ol>
+<li><code>npm run typecheck</code> 2. <code>npm run lint</code> 3. <code>npm run format:write</code> (if
+drift) 4. vitest 5. probes 6. STOP — propose commit message with
+model/provider/agent metadata; wait for operator confirmation
+(MANNERS / COLLABORATION).</li>
+</ol>
+<h2><a id="references" class="heading_anchor" href="#references" aria-hidden="true">#</a>References</h2>
+<ul>
+<li>Research (this cycle): <code>thoughts/research/2026-10-13-2135-nested-leaf-mark-style-resolution.md</code></li>
+<li>Handover: <code>docs/planning/inline-node-refinements/2026-10-13-phase6-composition-basis-HANDOVER.md</code></li>
+<li>Upstream plan: <code>thoughts/plans/2026-10-12-2127-inline-node-refinements-approach-a.md</code></li>
+<li>Decisions Q1–Q5 (session 2026-10-13): A / innermost-wins+fallback /
+helper / meta-resolver-fn / root-demo-edge</li>
+</ul>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

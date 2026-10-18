@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <h1>TypeRoof Documentation</h1>
+                <nav>
+                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
+<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
+<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
+<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
+<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="typeroof-main">
+                <div class="typeroof-docs_content"><h1><a id="research-type-stage-main-loop-performance-regression-viewer-inactive" class="heading_anchor" href="#research-type-stage-main-loop-performance-regression-viewer-inactive" aria-hidden="true">#</a>Research: Type-stage main-loop performance regression (viewer inactive)</h1>
+<h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
+<p>The branch (base fontbureau/main) introduced a noticeable slowdown of the
+type-stage main loop “change → metamorphose the model → update UI”, even on
+simple stat changes and even when the viewer with the new text-composition
+feature is inactive (editor only). Prior work had some effect but did not
+tackle the root cause. Find the root cause by analysis (the perf suite in
+scripts/perf-composition is out of scope). The meta tree was suspected.</p>
+<h2><a id="summary" class="heading_anchor" href="#summary" aria-hidden="true">#</a>Summary</h2>
+<p>The composition <em>algorithms</em> (measure, segment, break) are properly
+demand-gated and do not run without a viewer subscriber. The regression
+comes from <strong>unconditional per-change work</strong> added on this branch in three
+layers, all active regardless of viewer state:</p>
+<ol>
+<li>
+<p><strong><code>requireHyphenationPatternsCoherenceFn</code></strong> — a new generator coherence
+on the TypeStage <em>root</em> model. The metamodel runs <strong>all</strong> coherence
+functions of a struct on <strong>every</strong> metamorphose where anything changed
+(no per-coherence dependency gating). So every change that bubbles to
+the root — including a single numeric/stat change — triggers a full
+recursive walk of the TypeSpec tree plus a full iteration over all
+style patches, with per-node object allocations and language-tag
+construction. This runs <strong>twice per change cycle</strong> (async requirement
+window + final sync re-metamorphose). This is the prime suspect for the
+“metamorphose the model” phase.</p>
+</li>
+<li>
+<p><strong>DocumentNodesMeta composition drive</strong> — the (pre-existing,
+always-active) meta tree gained +149 lines: every
+<code>DocumentNodesMetaElement.update</code>/<code>initialUpdate</code> <strong>and</strong> every scope
+(re)build (<code>scopeSettledCallback</code>) calls <code>_driveComposition()</code>, which
+per textblock allocates a fresh <code>_compositionSource()</code> object
+(<code>getEntry(&quot;.&quot;)</code> model lookup + <code>typeSpecProperties@</code> path resolution)
+and calls <code>registerSource</code>/<code>sourceChanged</code> on the always-active
+<code>CompositionController</code>. Scope rebuilds happen on style/stat changes,
+so this fires per textblock per stat change — the “update UI” phase.
+Matches the “meta tree” suspicion.</p>
+</li>
+<li>
+<p><strong>Structural model enlargement</strong> — <code>TypeSpecModel</code> and
+<code>StylePatchTypeModel</code> each gained a <code>textCompositionAlgorithm</code> dynamic
+struct and a <code>hyphenation</code> struct field. Every TypeSpec node and every
+style patch now instantiates/compares/locks two extra sub-models on
+every metamorphose that reaches it; dynamic structs are among the most
+expensive model kinds. Additionally <code>textCompositionGen</code> and
+<code>hyphenationGen</code> run on every typeSpecnion scope (re)build of every
+TypeSpec node.</p>
+</li>
+</ol>
+<p>Secondary: the shell primes an <code>installedHyphenationPatterns</code> dependency
+draft in every async metamorphose, and <code>_initState</code> now passes
+<code>likeADraft.getDraft()</code> so root coherences also execute inside the async
+window (in addition to the sync pass).</p>
+<h2><a id="detailed-findings" class="heading_anchor" href="#detailed-findings" aria-hidden="true">#</a>Detailed Findings</h2>
+<h3><a id="1-metamodel-coherences-are-unconditional-pre-existing-mechanism-newly-expensive" class="heading_anchor" href="#1-metamodel-coherences-are-unconditional-pre-existing-mechanism-newly-expensive" aria-hidden="true">#</a>1. Metamodel: coherences are unconditional (pre-existing mechanism, newly expensive)</h3>
+<ul>
+<li><code>lib/js/metamodel/struct-model.ts:724</code> <code>#_metamorphoseGen</code> — the only
+shortcut is all-or-nothing: return <code>OLD_STATE</code> iff no external
+dependency changed AND no local value changed (<code>struct-model.ts:782-790</code>).
+Any deep change creates a draft child → full init-order pass.</li>
+<li><code>struct-model.ts:799-806</code> — the init-order loop hits the coherence branch
+(<code>:875-957</code>) for <strong>every</strong> registered coherence function every time;
+<code>changedDependencyNames</code> is used only for locking, never to skip a
+coherence. The file itself warns: “All the following runs, to change deep
+down a single axis location value” (<code>:744-748</code>).</li>
+</ul>
+<h3><a id="2-root-suspect-requirehyphenationpatternscoherencefn" class="heading_anchor" href="#2-root-suspect-requirehyphenationpatternscoherencefn" aria-hidden="true">#</a>2. Root suspect: <code>requireHyphenationPatternsCoherenceFn</code></h3>
+<ul>
+<li><code>lib/js/components/layouts/type-stage/index.typeroof.jsx:235-275</code>,
+registered on the TypeStage model in
+<code>createTypeStageModelVariantWithDefaults</code> (<code>index.typeroof.jsx:341</code>).
+Dependencies: <code>initTypeSpec</code>, <code>typeSpec</code>, <code>stylePatchesSource</code>,
+<code>installedHyphenationPatterns</code>.</li>
+<li>Per run (i.e. per root metamorphose):
+<ul>
+<li><code>walkEffectiveTypeSpecLanguageParts</code> (<code>index.typeroof.jsx:194-204</code>):
+recursive walk of the <strong>entire TypeSpec tree</strong>; per node
+<code>get(&quot;languageTag&quot;)</code>, <code>get(&quot;children&quot;)</code>, an <code>Object.fromEntries</code>
+allocation, array materialization via spread.</li>
+<li><code>walkStylePatchLanguages</code> (<code>:211-232</code>): iterates <strong>all style patches</strong>;
+per Simple patch <code>get(&quot;stylePatchTypeKey&quot;)</code>, <code>get(&quot;instance&quot;)</code>,
+<code>instance.wrapped.get(&quot;languageTag&quot;)</code>; partial tags are combined with
+every TypeSpec tag; <code>createLanguageTag</code>/<code>partsToLanguageTag</code>
+(<code>createLanguageTag</code> imported from <code>language-tags.typeroof.jsx</code>).</li>
+<li><code>Set</code>/<code>Set</code> allocations, <code>languageToHyphenationPatternKey</code> per language
+(<code>text-composition/hyphenator.ts</code>).</li>
+<li>Yields <code>HyphenationPatternRequirement</code> (<code>main-model.mjs:29-35</code>) only
+for missing patterns — steady state yields nothing, but the walk runs
+regardless.</li>
+</ul>
+</li>
+<li><strong>Runs twice per change cycle</strong>: <code>shell.mjs:1556-1563</code>
+(<code>_asyncMetamorphoseState</code> primes an <code>installedHyphenationPatterns</code> draft
+every cycle) and <code>shell.mjs:942-952</code> (<code>_initState</code> now passes
+<code>likeADraft.getDraft()</code> explicitly so coherences fire inside the async
+window) + the final <code>_syncMetamorphoseState</code> pass (<code>shell.mjs:1582</code>).</li>
+<li>Note: on a <em>draft</em>, <code>get(...)</code> returns potential write proxies — extra
+allocation churn in the walk (cf. the proxy-cache change in
+<code>struct-model.ts:1447-1463</code>).</li>
+<li>Completely independent of viewer state and of whether text composition is
+engaged anywhere; on main this coherence did not exist.</li>
+</ul>
+<h3><a id="3-meta-tree-per-update-composition-drive-viewer-independent" class="heading_anchor" href="#3-meta-tree-per-update-composition-drive-viewer-independent" aria-hidden="true">#</a>3. Meta tree: per-update composition drive (viewer-independent)</h3>
+<p><code>DocumentNodesMeta</code> itself is pre-existing and always-active (registered
+with no zone/activationTest, must update before renderers,
+<code>index.typeroof.jsx:698-709</code>). Branch additions
+(<code>document-nodes-meta/index.mjs</code>, +149):</p>
+<ul>
+<li><code>DocumentNodesMetaElement.update</code> (:858-871) and <code>initialUpdate</code>
+(:874-880): call <code>_driveComposition()</code> on every cascade.</li>
+<li><code>_scopeSettled()</code> (:809-815): invoked via the new <code>scopeSettledCallback</code>
+after every <code>DocumentNodeProperties</code> scope (re)build (:633-714, callback
+fired at :707-713) — i.e. on style/stat changes that rebuild scopes —
+calls <code>_driveComposition()</code> again (“composes twice — acceptable”,
+:788-797).</li>
+<li><code>_driveComposition</code> (:830-844) → <code>_compositionSource()</code> (:817-828):
+allocates a fresh object per call: <code>this.getEntry(&quot;.&quot;)</code> (model entry
+lookup), scope payload, <code>_styleResolutionContext()</code> (:848-861) which runs
+<code>_getTypeSpecPropertiesId(plan.pathOfTypes, true)</code> path building. Then
+<code>getWidgetById(&quot;compositionController&quot;)</code> +
+<code>service.registerSource(...)</code> once / <code>service.sourceChanged(rootPath)</code>
+per update. Called twice per drive (guard + register driver re-invokes).</li>
+<li><code>CompositionController</code> (<code>text-composition/composition-controller.ts</code>,
+always-active, <code>UPDATE_STRATEGY_NO_UPDATE</code>, wired
+<code>index.typeroof.jsx:681-696</code>): actual composition is demand-gated —
+<code>_composeCurrent</code> (:412) returns on <code>!_hasDemand(path)</code>; subscribers only
+exist with a viewer (<code>viewer.typeroof.jsx:322-337, 652-662</code>). But
+<code>registerSource</code> (:442-468) keeps per-source bookkeeping and invokes the
+driver once; <code>sourceChanged</code> (:472-474) is map traffic. No
+measure/segment/break runs without demand — confirmed.</li>
+<li>Structural update path: <code>_renderingPlan</code> re-derivation
+(<code>resolveElementRenderingPlan</code>) per element structural update existed on
+main; the branch adds <code>_context</code> recompute + attachment refresh loop
+(no-op without attachments).</li>
+</ul>
+<h3><a id="4-structural-model-enlargement-per-metamorphose-constant-factor" class="heading_anchor" href="#4-structural-model-enlargement-per-metamorphose-constant-factor" aria-hidden="true">#</a>4. Structural model enlargement (per-metamorphose constant factor)</h3>
+<ul>
+<li><code>type-spec/models.mjs:497-501</code>: <code>TypeSpecModel</code> gains
+<code>[&quot;textCompositionAlgorithm&quot;, TextCompositionAlgorithmModel]</code> (dynamic
+struct) and <code>[&quot;hyphenation&quot;, HyphenationModel]</code>. <code>StylePatchTypeModel</code>
+gains the same two fields (same diff area, :481-501 context around
+<code>excludeFromFallback</code>/<code>noStyler</code>… the style-patch struct fields at
+:488-500). Every node/patch metamorphose now touches two extra
+sub-models; the empty dynamic struct is why the <code>hasWrapped</code> guards in
+<code>dynamic-struct-model.ts:241-255, 329-336</code> were needed.</li>
+<li><code>type-spec/text-composition-models.mjs</code> (new, 249 lines): the KP variant
+alone has ~11 OrEmpty fields.</li>
+<li><code>registered-properties.mjs:416-431</code>: two new registered generic
+properties (<code>hyphenation</code>, <code>textCompositionAlgorithm</code>) extend the PPS
+processing map.</li>
+<li><code>properties-generators.mjs:48-120</code>: <code>textCompositionGen</code> +
+<code>hyphenationGen</code> added to <code>TYPE_SPEC_PROPERTIES_GENERATORS</code> (:661-662) —
+run on every typeSpecnion scope (re)build of every TypeSpec node.</li>
+<li><code>defaults.mjs:213-239</code>: two new deserialize branches in
+<code>getTypeSpecDefaultsMap</code> — one-time per controller construction
+(<code>index.typeroof.jsx:470</code>), not per update.</li>
+</ul>
+<h3><a id="5-prior-mitigation-work-had-some-effect-not-root" class="heading_anchor" href="#5-prior-mitigation-work-had-some-effect-not-root" aria-hidden="true">#</a>5. Prior mitigation work (had some effect, not root)</h3>
+<ul>
+<li><code>struct-model.ts:1447-1463</code>: proxy-cache validity fix (“Preserve live
+proxies, but not a cached read of the old child”) — correctness fix for
+partial metamorphosis around ResourceRequirement suspension.</li>
+<li><code>dynamic-struct-model.ts</code> <code>hasWrapped</code> guards — crash fix for empty
+(inherit) dynamic structs.</li>
+<li><code>21a57d0b</code>/<code>d9e9fdb2</code> cooperative composition tasks + atomic viewer
+snapshots — target <em>active</em> composition scheduling, not the
+viewer-inactive path.</li>
+</ul>
+<h2><a id="what-should-behave-like-main-implies" class="heading_anchor" href="#what-should-behave-like-main-implies" aria-hidden="true">#</a>What “should behave like main” implies</h2>
+<p>With the viewer inactive and text composition not engaged anywhere, the
+branch still pays: (2) full language walk ×2 per root change, (3)
+per-textblock source-building on every element update/scope settle, (4)
+enlarged per-node/patch metamorphose constant factor. None of these is
+gated on composition engagement or viewer presence.</p>
+<h2><a id="code-references" class="heading_anchor" href="#code-references" aria-hidden="true">#</a>Code References</h2>
+<ul>
+<li><code>lib/js/components/layouts/type-stage/index.typeroof.jsx:235-275</code> — requireHyphenationPatternsCoherenceFn (root coherence, suspect #1)</li>
+<li><code>lib/js/components/layouts/type-stage/index.typeroof.jsx:194-232</code> — language walks</li>
+<li><code>lib/js/components/layouts/type-stage/index.typeroof.jsx:341</code> — coherence registration</li>
+<li><code>lib/js/components/layouts/type-stage/document-nodes-meta/index.mjs:809-874</code> — composition drive (suspect #2)</li>
+<li><code>lib/js/components/layouts/type-stage/text-composition/composition-controller.ts:412-474</code> — demand gate (verified OK)</li>
+<li><code>lib/js/metamodel/struct-model.ts:782-806,875-957</code> — unconditional coherence execution</li>
+<li><code>lib/js/components/type-spec/models.mjs:481-501</code> — new TypeSpec/StylePatch fields</li>
+<li><code>lib/js/shell.mjs:942-952,1556-1563,1387-1431</code> — async-window coherence run + pattern resolver</li>
+<li><code>lib/js/components/layouts/type-stage/properties-generators.mjs:48-120,661-662</code> — new per-scope generators</li>
+</ul>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<ul>
+<li>Relative weight of suspects #1 vs #2 vs #3 is not measured (no profiling
+done, per instruction). A cheap discriminator: gate/comment out
+<code>requireHyphenationPatternsCoherenceFn</code> vs early-return
+<code>_driveComposition</code> when <code>service === null || no subscribers</code>, and
+compare. Which document/stat change the user used for “noticeable”
+matters: document edits stress #2+#3, root stat changes (width/axes)
+stress #1.</li>
+<li>Should the hyphenation requirement walk be memoized (languages change
+only when typeSpec/stylePatch languageTag fields change) or moved out of
+the root coherence? Design question for the planning phase.</li>
+<li>Should <code>_driveComposition</code> short-circuit when the controller has zero
+subscribers (pull the demand gate up into the meta)? Design question.</li>
+</ul>
+<hr>
+<h1><a id="follow-up-same-session-operator-triage-1-operator-inspects-2-deep-dived-3-deprioritized" class="heading_anchor" href="#follow-up-same-session-operator-triage-1-operator-inspects-2-deep-dived-3-deprioritized" aria-hidden="true">#</a>Follow-up (same session, operator triage: #1 operator inspects, #2 deep-dived, #3 deprioritized)</h1>
+<h2><a id="1--proxy-unpacking-detail-for-the-operators-inspection" class="heading_anchor" href="#1--proxy-unpacking-detail-for-the-operators-inspection" aria-hidden="true">#</a>#1 — proxy-unpacking detail for the operator’s inspection</h2>
+<p><code>requireHyphenationPatternsCoherenceFn</code> (<code>index.typeroof.jsx:235-275</code>)
+reads its dependencies (<code>typeSpec</code>, <code>stylePatchesSource</code>,
+<code>installedHyphenationPatterns</code>) <strong>directly through the potential write
+proxies</strong> — it never calls <code>unwrapPotentialWriteProxy</code>. This is exactly
+the pattern the videoproof layout documents as slow
+(<code>lib/js/components/layouts/videoproof.typeroof.jsx:825-838</code>: “in the
+CoherenceFunctions operating with the proxies is slow. Reading, is slow
+and consequently also writing… this Model is metamorphosed each frame
+and subsequently all CoherenceFunctions are executed”).
+Videoproof’s coherences unwrap first (<code>:864</code>, <code>:1006</code>, …) and use
+<code>getDraftEntry</code>/<code>getDraftFor</code> accessors.</p>
+<p>Cost mechanics of not unwrapping in the walk: every
+<code>proxy.get(key)</code> dispatches through the <code>_PotentialWriteProxy</code> get trap
+(<code>lib/js/metamodel/potential-write-proxy.ts:98+</code>); immutable child
+results are re-proxified per access (<code>_PotentialWriteProxy.create</code>) —
+the <code>_LOCAL_PROXIES</code> cache lives on drafts, so a read-only walk of
+proxified immutables allocates fresh proxy objects for every visited
+node/child, every run. <code>walkEffectiveTypeSpecLanguageParts</code> +
+<code>walkStylePatchLanguages</code> therefore allocate O(TypeSpec nodes + style
+patches) proxy objects per coherence execution, and the coherence
+executes on <strong>every</strong> root metamorphose (no gating,
+<code>struct-model.ts:782-806</code>), twice per change cycle (async window +
+sync pass, <code>shell.mjs:942-952,1556-1563</code>). Iteration
+(<code>for (const [, child] of typeSpec.get(&quot;children&quot;))</code>) also goes through
+traps.</p>
+<h2><a id="2--hot-path-cost-analysis-document-nodes-meta-composition-drive" class="heading_anchor" href="#2--hot-path-cost-analysis-document-nodes-meta-composition-drive" aria-hidden="true">#</a>#2 — hot-path cost analysis (document-nodes-meta composition drive)</h2>
+<p>Source: dedicated sub-agent cost analysis, verified line refs.</p>
+<p><strong>Call frequency (typeSpec stat change):</strong> NOT all textblocks — only the
+affected subtree. <code>DocumentNodeProperties.update</code> (<code>index.mjs:650-656</code>)
+rebuilds only when its resolved <code>typeSpecProperties@</code> id was marked
+updated or the parent scope identity changed; a parent rebuild cascades
+down the document subtree via the <code>@parentNodeProperties</code> re-trigger
+dependency (<code>:1001-1008</code>). Caveat: a stat on the root/commonly-resolved
+typeSpec makes “the subtree” effectively the whole document. A textblock
+whose scope rebuilt runs <code>_driveComposition()</code> <strong>twice</strong> per cycle
+(<code>_scopeSettled</code> + its own <code>update</code>, acknowledged “acceptable” at
+<code>:786-798</code>).</p>
+<p><strong>Cost per call, zero subscribers:</strong></p>
+<ul>
+<li><code>this.getEntry(&quot;.&quot;)</code> in <code>_compositionSource()</code> = a walk from the model
+ROOT: <code>_BaseComponent.getEntry</code> (<code>component.mjs:45-52</code>) → root bus
+(<code>shell.mjs:1125-1144</code>) → metamodel <code>_getEntry</code> (<code>accessors.ts:21-44</code>):
+<code>Path.fromString</code> + one container <code>.get()</code> per path part = O(node
+depth) model lookups + string parsing — although the immutable node
+was already in hand during <code>update(compareResult)</code>.</li>
+<li><code>_styleResolutionContext()</code> → <code>getTypeSpecPropertiesIdMethod</code>
+(<code>prosemirror/integration.typeroof.jsx:188</code>, memo :176): TWO more
+root-depth <code>getEntry(&quot;nodeSpecToTypeSpec&quot;)</code> walks + <code>pathOfTypes.join(&quot;\n&quot;)</code>
+string build per call (memo-hit path; misses recurse + slice-copy).</li>
+<li>Controller side with no demand: <code>sourceChanged</code> = 1 Map get
+(<code>_hasDemand</code> gate, <code>composition-controller.ts:385-387,472-475</code>);
+<code>registerSource</code> = has/set + gate (<code>:447-470</code>). Driver invoked <strong>0
+times</strong> behind the gate — the ONLY <code>_compositionSource()</code> evaluation
+is the discarded null-check at <code>index.mjs:832</code>.</li>
+<li>Plus <code>_isTextblock</code> ×2 (O(1)) and <code>getWidgetById</code> ancestor-chain probe.</li>
+</ul>
+<p><strong>Net per textblock per update (viewer inactive):</strong> ~3 root-depth model
+walks + 1 string join + ~6 map lookups + object allocation, all to build
+a source object that is immediately thrown away; ×2 on scope-rebuild
+cycles.</p>
+<p><strong>Baseline (fontbureau/main):</strong> <code>DocumentNodesMetaElement</code> had <strong>no</strong>
+<code>update</code>/<code>initialUpdate</code> override and no scope-settled callback — the
+entire §2 cost is net-new per-update overhead on this branch. The
+hierarchical-scope machinery itself (incl. the <code>@parentNodeProperties</code>
+cascade) is pre-existing.</p>
+<p><strong>Boot:</strong> per textblock store-only (map set + closure); no compose, no
+scheduling behind the demand gate.</p>
+<p><strong>Cheap discriminator (for later planning):</strong> early-return
+<code>_driveComposition</code> when the controller has no subscribers (pull the
+demand gate up into the meta), or skip the gate-evaluating
+<code>_compositionSource()</code> construction — restores main-like per-update
+cost while keeping the feature intact for active viewers.</p>
+<hr>
+<h1><a id="resolution" class="heading_anchor" href="#resolution" aria-hidden="true">#</a>Resolution</h1>
+<p><strong>Fixed in commit <code>55bf4954</code></strong> (“[type-stage] fix performance issue
+introduced with the coherence function requireHyphenationPatterns”):
+suspect #1 resolved by (a) unwrapping the potential write proxies at the
+two walk entry points (the known-problematic pattern, cf. videoproof) and
+(b) an early return <code>if (!isNew &amp;&amp; !typeSpecRaw.isDraft &amp;&amp; !stylePatchesSourceRaw.isDraft) return;</code> — the metamodel’s own
+draft-tracking as the change signal, with <code>isNew</code> covering the boot path
+(deserialized documents carry immutable fields). Operator reports the main
+loop is “immediately WAY better”.</p>
+<p><strong>Remaining (deferred):</strong> suspect #2 — the DocumentNodesMeta per-update
+composition drive (net-new ~3 root-depth <code>getEntry</code> walks + discarded
+source object per textblock per update, double-fired on scope-rebuild
+cycles). Candidate: hoist the demand gate into <code>_driveComposition</code>. To be
+revisited if it shows up in feel on textblock-heavy documents or when
+optimizing the active-viewer path.</p>
+<p><strong>Parked (operator decision, 2026-10-07 00:03):</strong> #2 accepted as-is. The
+subtree cascade is the update mechanism (main’s architecture), not a
+target. The only bounded waste is the eager <code>_compositionSource()</code> build
+at <code>index.mjs:832</code> (discarded at the null-check; built twice per drive
+when demanded). Candidate micro-fix if it ever shows up: a <code>_canCompose()</code>
+check using only the cheap null-deciding conditions (<code>_isTextblock</code>,
+<code>_lastNewState !== null</code>, <code>scope?.hasScope</code>) so the source object is built
+exclusively behind the controller’s demand gate; registration-order
+semantics (“source and demand may arrive in either order”) stay intact.
+Expected impact: sub-millisecond on typical documents; relevant only for
+deeply-nested + many-textblock documents during continuous drags, and for
+the future active-viewer optimization pass (double-build/double-fire then
+compounds with real composition work). Verify with <code>console.count</code> at
+<code>index.mjs:831</code> and after <code>composition-controller.ts:417</code> before acting.</p>
+</div>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>
