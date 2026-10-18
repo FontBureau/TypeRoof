@@ -97,6 +97,7 @@ etc
     *[data-node-type="ol-list"] {
         list-style: decimal;
     }
+
     *[data-node-type="ul-list"] {
         list-style: disc;
     }

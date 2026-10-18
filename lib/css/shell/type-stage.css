@@ -96,6 +96,7 @@ prosemirror
             --space-before: var(--margin-block-start, 0);
             --space-after: var(--margin-block-end, 0);
         }
+
         .has-node-labels &::before {
             content: "";
             anchor-name: var(--node-anchor-name);
