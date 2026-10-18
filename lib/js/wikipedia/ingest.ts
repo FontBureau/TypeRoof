@@ -16,9 +16,10 @@
 
 // @ts-expect-error untyped .jsx module
 import * as models from "../components/prosemirror/models.typeroof.jsx";
-const { NodeModel, toMetaModelJSON } = models as {
+const { NodeModel, toMetaModelJSON, readMetaModelJSONfromMap } = models as {
     NodeModel: any;
     toMetaModelJSON: (v: unknown, d: object) => unknown;
+    readMetaModelJSONfromMap: (m: any, empty: unknown) => unknown;
 };
 
 export interface IngestionReport {
@@ -345,6 +346,30 @@ function newMarkDraft(
     if (htmlAttrs !== "")
         attrsDraft.set("htmlAttrs", toMetaModelJSON(htmlAttrs, {}));
     return markDraft;
+}
+
+// Whether two metamorphosed TEXT nodes carry the same marks —
+// PM's Mark.eq (type + attrs) elementwise, in list order. This is
+// the text-run half of node.sameMarkup, which PM's
+// Fragment.fromArray uses to join adjacent text nodes.
+function sameTextRunMarks(a: any, b: any): boolean {
+    const aMarks: any[] = Array.from(a.get("marks").value ?? []),
+        bMarks: any[] = Array.from(b.get("marks").value ?? []);
+    if (aMarks.length !== bMarks.length) return false;
+    for (let i = 0; i < aMarks.length; i++) {
+        if (aMarks[i].get("typeKey").value !== bMarks[i].get("typeKey").value)
+            return false;
+        if (
+            JSON.stringify(
+                readMetaModelJSONfromMap(aMarks[i].get("attrs"), null),
+            ) !==
+            JSON.stringify(
+                readMetaModelJSONfromMap(bMarks[i].get("attrs"), null),
+            )
+        )
+            return false;
+    }
+    return true;
 }
 
 // Derive mark name -> declared attr names from the metamodel schema
@@ -878,7 +903,33 @@ function ingestNode(
             );
         // In block context, fillBlockContent gathers text into
         // inline runs before this branch runs — no wrapping here.
-        out.push(textDraft.metamorphose());
+        //
+        // PM's Fragment.fromArray normalizes before a document is
+        // committed ("Ensures that adjacent text nodes with the
+        // same marks are joined together"), so the editor document
+        // never keeps split runs — while this ingest can emit them:
+        // entity-transparent elements, skipped elements, ... split
+        // one logical run across DOM text nodes. A split metamodel
+        // beside a joined editor document makes leaf paths and text
+        // offsets diverge between the trees, garbling the editor's
+        // composition spans. Mirror the PM normalization here
+        // (operator decision 2026-10-18: normalize in the ingest,
+        // not in a CoherenceFunction) — join into the previous
+        // text child of the same container when its marks are
+        // identical. Text nodes never carry attrs of their own, so
+        // the marks comparison is the whole of sameMarkup.
+        const node = textDraft.metamorphose(),
+            prev = out.length > 0 ? out[out.length - 1] : null;
+        if (
+            prev !== null &&
+            prev.get("typeKey").value === "text" &&
+            sameTextRunMarks(prev, node)
+        ) {
+            const joined = prev.getDraft(),
+                prevText = prev.get("text").value;
+            joined.get("text").value = prevText + text;
+            out[out.length - 1] = joined.metamorphose();
+        } else out.push(node);
         return;
     }
 
