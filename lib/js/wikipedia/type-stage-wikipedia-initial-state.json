@@ -185,7 +185,7 @@
                             }
                         ]
                     ],
-                    "activeFontKey": "from-url AmstelvarA2 Roman wght400 Version_0-001"
+                    "activeFontKey": "from-url AmstelvarA1 Roman Version_0-001"
                 }
             ],
             [
@@ -317,6 +317,33 @@
                         "colorTypeKey": "OKLCH"
                     },
                     "label": "Figcontent"
+                }
+            ],
+            [
+                "blockquote",
+                {
+                    "blockMargins": {
+                        "end": {
+                            "value": "0.00000",
+                            "unit": "lineHeight"
+                        }
+                    },
+                    "horizontalLayout": {
+                        "instance": {
+                            "inlineMargins": {
+                                "start": {
+                                    "value": "5",
+                                    "unit": "en"
+                                },
+                                "end": {
+                                    "value": "3",
+                                    "unit": "en"
+                                }
+                            }
+                        },
+                        "horizontalLayoutAlgorithmTypeKey": "ManualHorizontalLayoutModel"
+                    },
+                    "label": "Blockquote"
                 }
             ]
         ],
@@ -537,9 +564,9 @@
                 "instance": {
                     "textColor": {
                         "instance": {
-                            "L": "60.00000",
-                            "C": "0.4000000",
-                            "H": "183.00000",
+                            "L": "33.00000",
+                            "C": "0.0900000",
+                            "H": "237.00000",
                             "alpha": "100.00000"
                         },
                         "colorTypeKey": "OKLCH"
@@ -570,7 +597,7 @@
             "serif",
             {
                 "instance": {
-                    "activeFontKey": "from-url AmstelvarA2 Roman wght400 Version_0-001"
+                    "activeFontKey": "from-url AmstelvarA1 Roman Version_0-001"
                 },
                 "stylePatchTypeKey": "SimpleStylePatch"
             }
@@ -579,7 +606,7 @@
             "serif italic",
             {
                 "instance": {
-                    "activeFontKey": "from-url AmstelvarA2 Italic wght400 Version_0-001"
+                    "activeFontKey": "from-url AmstelvarA1 Italic Version_0-001"
                 },
                 "stylePatchTypeKey": "SimpleStylePatch"
             }
@@ -642,7 +669,23 @@
                     "relativeFontSize": {
                         "value": "0.7",
                         "unit": "baseEm"
-                    }
+                    },
+                    "axesLocations": [
+                        [
+                            "GRAD",
+                            {
+                                "logicalValue": "number",
+                                "numericValue": "200"
+                            }
+                        ],
+                        [
+                            "wdth",
+                            {
+                                "logicalValue": "number",
+                                "numericValue": "120"
+                            }
+                        ]
+                    ]
                 },
                 "stylePatchTypeKey": "SimpleStylePatch"
             }
@@ -1503,6 +1546,13 @@
             "figcontent",
             {
                 "link": "/figcontent",
+                "label": ""
+            }
+        ],
+        [
+            "blockquote",
+            {
+                "link": "/blockquote",
                 "label": ""
             }
         ]

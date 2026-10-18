@@ -75,11 +75,26 @@ etc
 :is(.ProseMirror, .typeroof-document) {
     a[data-node-type="figcontent"] {
         padding: var(--space-before) 0 var(--space-after) 0;
+        display: block;
+    }
 
-        &,
-        img {
-            display: block;
-        }
+    /* FIXME: should become configuration */
+    sup {
+        vertical-align: text-top;
+        line-height: 1em;
+    }
+
+    a {
+        /* FIXME: should become configuration
+         * This is ideally a very light underline st
+         */
+        text-decoration: none;
+
+        /*
+        text-decoration-line: underline;
+        text-decoration-thickness: from-font;
+        text-decoration-style: dotted;
+        */
     }
 
     [data-node-type="reproduce-as-inline"],
