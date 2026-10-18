@@ -1242,6 +1242,15 @@ export const WIKIPEDIA_SKIP_RULES: readonly EmissionRuleEntry[] = [
         selector: ".side-box",
         rule: { kind: "skip" },
     },
+    // FIXME: this is to remove an "empty line" element `<p><br /></p>`
+    // wikipedia adds into  the Typography article, technically it matches
+    // also elements that contain textNodes around the `<br />` so I'm
+    // not super happy. This is a demo-level intervention, not production
+    // grade.
+    {
+        selector: "p:has(> br:only-child)",
+        rule: { kind: "skip" },
+    },
 ];
 
 export const WIKIPEDIA_TRANSPARENT_RULES: readonly EmissionRuleEntry[] = [
