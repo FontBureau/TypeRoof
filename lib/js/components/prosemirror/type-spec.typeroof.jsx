@@ -1434,7 +1434,12 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
     _finalizeMarkSubscription(domElement, mark) {
         const parentSubscription = this._getParentSubscription(domElement);
         if (parentSubscription === null) return false;
-        const typeSpecProperties = parentSubscription.typeSpecProperties,
+        // viewer parity: UIDocumentTextRun anchors marks at the
+        // containing spec (getResolvablePathOfTypes), hence the
+        // subscription's containingTypeSpecProperties — NOT the
+        // node's own typeSpecProperties.
+        const typeSpecProperties =
+                parentSubscription.containingTypeSpecProperties,
             styleLinkEntry = this._getStylePatchLinkForMark(
                 typeSpecProperties,
                 mark,
@@ -1543,7 +1548,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 if (!domElement.isConnected) continue;
                 const tag =
                     this._resolveIntentTag(
-                        parentSubscription.typeSpecProperties,
+                        parentSubscription.containingTypeSpecProperties,
                         mark,
                     ) || "span";
                 if (tag === domElement.tagName.toLowerCase()) continue;
@@ -1689,20 +1694,34 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
         const view = this.widgetBus.getWidgetById("proseMirror").view,
             { getPos, node } = subscription,
             resolved = view.state.doc.resolve(getPos()),
-            // approach (a) phase 6: marks anchor at the CONTAINING
-            // typeSpec — entry-less trailing inline keys (the
-            // subscription's own path ends at the node: an inline
-            // node for nested marks) are dropped to the nearest
-            // resolvable ancestor, instead of falling to the root
-            // spec. Block nodes carry their own entry → unchanged.
-            pathOfTypes = getResolvablePathOfTypes(
-                this.getEntry("nodeSpecToTypeSpec"),
-                getPathOfTypes(resolved.path, node.type.name),
-            ),
+            // The node's OWN channel resolves on the FULL path of
+            // types (viewer parity: UIDocumentElement.
+            // _provisionTypeSpecStyler). An entry-less trailing key
+            // (figure, blockquote, …) falls back through the
+            // registry walk to the ROOT spec — the styler is
+            // provisioned and the node styled like in the viewer.
+            // Pre-dropping the own key here would hand such nodes
+            // to the nearest resolvable ANCESTOR's spec, which for
+            // figure-in-sub-section was /sub-section (noStyler): no
+            // styler at all, while the viewer styled the same node.
+            pathOfTypes = getPathOfTypes(resolved.path, node.type.name),
             typeSpecProperties = this._getTypeSpecPropertiesId(pathOfTypes),
             typeSpecPath = this._getTypeSpecPropertiesId(
                 pathOfTypes,
                 true /*asPath*/,
+            ),
+            // approach (a) phase 6 — the MARK channel anchors at the
+            // CONTAINING typeSpec: entry-less trailing keys (the
+            // subscription's path ends at the node: an inline node
+            // for nested marks) are dropped to the nearest resolvable
+            // ancestor, instead of falling to the root spec (viewer
+            // parity: UIDocumentTextRun provisions its marks from
+            // getResolvablePathOfTypes(context.pathOfTypes)).
+            containingTypeSpecProperties = this._getTypeSpecPropertiesId(
+                getResolvablePathOfTypes(
+                    this.getEntry("nodeSpecToTypeSpec"),
+                    pathOfTypes,
+                ),
             ),
             indexPath = [];
         for (let d = 0; d <= resolved.depth; d++)
@@ -1717,6 +1736,7 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             pathOfTypes,
             typeSpecProperties,
             typeSpecPath,
+            containingTypeSpecProperties,
             parentContentsPath,
         };
     }
@@ -1974,9 +1994,9 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
                 const oldStyleSubscription =
                         this._styleSubscribers.get(styleDOMElement),
                     styleLinkPropertiesId = this._getStyleLinkPropertiesId(
-                        subscription.typeSpecProperties,
+                        subscription.containingTypeSpecProperties,
                         this._getStylePatchLinkForMark(
-                            subscription.typeSpecProperties,
+                            subscription.containingTypeSpecProperties,
                             oldStyleSubscription.mark,
                         ),
                     );
@@ -1993,9 +2013,9 @@ export class TypeSpecSubscriptions extends _CommonContainerComponent {
             if (requiresUpdate.has(styleDOMElement)) continue;
             const { parentSubscription, mark } = styleSubscription,
                 styleLinkPropertiesId = this._getStyleLinkPropertiesId(
-                    parentSubscription.typeSpecProperties,
+                    parentSubscription.containingTypeSpecProperties,
                     this._getStylePatchLinkForMark(
-                        parentSubscription.typeSpecProperties,
+                        parentSubscription.containingTypeSpecProperties,
                         mark,
                     ),
                 );
