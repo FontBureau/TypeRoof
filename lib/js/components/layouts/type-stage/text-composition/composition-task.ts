@@ -112,3 +112,77 @@ export function resumeTaskAsync<Result>(
     };
     scheduler(resume);
 }
+
+/**
+ * A draining round-robin `TaskScheduler`: one task composes to
+ * completion per macrotask tick, so the host can paint between block
+ * nodes (progressive per-paragraph reveal).
+ *
+ * Scheduled resumes queue in arrival order. Every tick pops the oldest
+ * queued resume and drains its task synchronously to completion:
+ * `resumeTaskAsync` re-enters `scheduler(resume)` after every
+ * checkpoint, and those re-entrant calls — recognized by resume
+ * identity — are absorbed into the running drain instead of
+ * re-queued. Draining to completion keeps publication atomic per
+ * task (the owner's final generator step) and makes the reveal
+ * granularity independent of how many checkpoints an algorithm
+ * yields: greedy algorithms yield none, Knuth-Plass one per
+ * relaxation round.
+ *
+ * The next queued resume is deferred to a fresh macrotask. Resumes of
+ * other tasks — e.g. a replacement composed during a drain — are
+ * never absorbed; they keep their own queue slot. A cancelled task
+ * costs one no-op tick (its resume returns right after
+ * `task.return`).
+ */
+export function createDrainingRoundRobinTaskScheduler(): TaskScheduler {
+    const queue: Array<() => void> = [];
+    let scheduled = false;
+    let drained: (() => void) | null = null;
+    let continued: (() => void) | null = null;
+
+    const schedule = (): void => {
+        if (scheduled || queue.length === 0) return;
+        scheduled = true;
+        globalThis.setTimeout(tick, 0);
+    };
+
+    const drain = (initial: () => void): void => {
+        drained = initial;
+        let resume: (() => void) | null = initial;
+        try {
+            while (resume !== null) {
+                continued = null;
+                resume();
+                resume = continued;
+            }
+        } finally {
+            drained = null;
+            continued = null;
+        }
+    };
+
+    const tick = (): void => {
+        scheduled = false;
+        const resume = queue.shift();
+        if (resume === undefined) return;
+        try {
+            drain(resume);
+        } finally {
+            // a drain that escapes with an error (an onError that
+            // throws) must not strand the tasks queued behind it
+            schedule();
+        }
+    };
+
+    return (resume: () => void): void => {
+        if (resume === drained) {
+            // re-entrant continuation of the drained task (drained is
+            // null outside drains): absorb it into the running drain
+            continued = resume;
+            return;
+        }
+        queue.push(resume);
+        schedule();
+    };
+}
