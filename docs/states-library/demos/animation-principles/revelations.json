@@ -1,0 +1,2415 @@
+{
+  "activeState": {
+    "t": "0",
+    "duration": "3.6",
+    "keyMoments": [
+      {
+        "label": "Key Moment 1",
+        "duration": "1",
+        "easing": "linear",
+        "isActive": "1",
+        "stageBackgroundColor": {
+          "instance": {
+            "R": "0",
+            "G": "0",
+            "B": "0"
+          },
+          "colorTypeKey": "RGB"
+        }
+      }
+    ],
+    "activeActors": [
+      {
+        "instance": {
+          "label": "ground",
+          "keyMoments": [
+            {
+              "label": "Key Moment 1",
+              "duration": "1",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "x",
+                  "0"
+                ],
+                [
+                  "y",
+                  "400"
+                ],
+                [
+                  "width",
+                  "720"
+                ],
+                [
+                  "height",
+                  "320"
+                ]
+              ],
+              "fillColor": {
+                "instance": {
+                  "R": "0",
+                  "G": "50",
+                  "B": "73"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "RectangleActorModel"
+      },
+      {
+        "instance": {
+          "label": "R move-y",
+          "keyMoments": [
+            {
+              "label": "Start",
+              "duration": "0",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Delay",
+              "duration": "0",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Landed",
+              "duration": "120",
+              "easing": "easeInOutBack",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            },
+            {
+              "label": "Hold",
+              "duration": "240",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "R",
+                "keyMoments": [
+                  {
+                    "label": "Start",
+                    "duration": "0",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "textRun": "R",
+                    "textAlign": "center",
+                    "positioningVertical": "top",
+                    "textColor": {
+                      "instance": {
+                        "R": "13",
+                        "G": "242",
+                        "B": "51"
+                      },
+                      "colorTypeKey": "RGB"
+                    },
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "35"
+                      ],
+                      [
+                        "width",
+                        "100"
+                      ],
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Delay",
+                    "duration": "0",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 30%",
+                    "duration": "90",
+                    "easing": "easeInOutSine",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "25"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 80%",
+                    "duration": "150",
+                    "easing": "easeOutQuad",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Hold",
+                    "duration": "120",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "e move-y",
+          "keyMoments": [
+            {
+              "label": "Start",
+              "duration": "0",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Delay",
+              "duration": "3",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Landed",
+              "duration": "120",
+              "easing": "easeInOutBack",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            },
+            {
+              "label": "Hold",
+              "duration": "237",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "e",
+                "keyMoments": [
+                  {
+                    "label": "Start",
+                    "duration": "0",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "textRun": "e",
+                    "textAlign": "center",
+                    "positioningVertical": "top",
+                    "textColor": {
+                      "instance": {
+                        "R": "13",
+                        "G": "242",
+                        "B": "51"
+                      },
+                      "colorTypeKey": "RGB"
+                    },
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "100"
+                      ],
+                      [
+                        "width",
+                        "100"
+                      ],
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Delay",
+                    "duration": "6",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 30%",
+                    "duration": "90",
+                    "easing": "easeInOutSine",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "25"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 80%",
+                    "duration": "150",
+                    "easing": "easeOutQuad",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Hold",
+                    "duration": "114",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "v move-y",
+          "keyMoments": [
+            {
+              "label": "Start",
+              "duration": "0",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Delay",
+              "duration": "6",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Landed",
+              "duration": "120",
+              "easing": "easeInOutBack",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            },
+            {
+              "label": "Hold",
+              "duration": "234",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "v",
+                "keyMoments": [
+                  {
+                    "label": "Start",
+                    "duration": "0",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "textRun": "v",
+                    "textAlign": "center",
+                    "positioningVertical": "top",
+                    "textColor": {
+                      "instance": {
+                        "R": "13",
+                        "G": "242",
+                        "B": "51"
+                      },
+                      "colorTypeKey": "RGB"
+                    },
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "161"
+                      ],
+                      [
+                        "width",
+                        "100"
+                      ],
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Delay",
+                    "duration": "12",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 30%",
+                    "duration": "90",
+                    "easing": "easeInOutSine",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "25"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 80%",
+                    "duration": "150",
+                    "easing": "easeOutQuad",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Hold",
+                    "duration": "108",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "e move-y",
+          "keyMoments": [
+            {
+              "label": "Start",
+              "duration": "0",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Delay",
+              "duration": "9",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Landed",
+              "duration": "120",
+              "easing": "easeInOutBack",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            },
+            {
+              "label": "Hold",
+              "duration": "231",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "e",
+                "keyMoments": [
+                  {
+                    "label": "Start",
+                    "duration": "0",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "textRun": "e",
+                    "textAlign": "center",
+                    "positioningVertical": "top",
+                    "textColor": {
+                      "instance": {
+                        "R": "13",
+                        "G": "242",
+                        "B": "51"
+                      },
+                      "colorTypeKey": "RGB"
+                    },
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "221"
+                      ],
+                      [
+                        "width",
+                        "100"
+                      ],
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Delay",
+                    "duration": "18",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 30%",
+                    "duration": "90",
+                    "easing": "easeInOutSine",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "25"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 80%",
+                    "duration": "150",
+                    "easing": "easeOutQuad",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Hold",
+                    "duration": "102",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "l move-y",
+          "keyMoments": [
+            {
+              "label": "Start",
+              "duration": "0",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Delay",
+              "duration": "12",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Landed",
+              "duration": "120",
+              "easing": "easeInOutBack",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            },
+            {
+              "label": "Hold",
+              "duration": "228",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "l",
+                "keyMoments": [
+                  {
+                    "label": "Start",
+                    "duration": "0",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "textRun": "l",
+                    "textAlign": "center",
+                    "positioningVertical": "top",
+                    "textColor": {
+                      "instance": {
+                        "R": "13",
+                        "G": "242",
+                        "B": "51"
+                      },
+                      "colorTypeKey": "RGB"
+                    },
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "267"
+                      ],
+                      [
+                        "width",
+                        "100"
+                      ],
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Delay",
+                    "duration": "24",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 30%",
+                    "duration": "90",
+                    "easing": "easeInOutSine",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "25"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 80%",
+                    "duration": "150",
+                    "easing": "easeOutQuad",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Hold",
+                    "duration": "96",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "a move-y",
+          "keyMoments": [
+            {
+              "label": "Start",
+              "duration": "0",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Delay",
+              "duration": "15",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Landed",
+              "duration": "120",
+              "easing": "easeInOutBack",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            },
+            {
+              "label": "Hold",
+              "duration": "225",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "a",
+                "keyMoments": [
+                  {
+                    "label": "Start",
+                    "duration": "0",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "textRun": "a",
+                    "textAlign": "center",
+                    "positioningVertical": "top",
+                    "textColor": {
+                      "instance": {
+                        "R": "13",
+                        "G": "242",
+                        "B": "51"
+                      },
+                      "colorTypeKey": "RGB"
+                    },
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "314"
+                      ],
+                      [
+                        "width",
+                        "100"
+                      ],
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Delay",
+                    "duration": "30",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 30%",
+                    "duration": "90",
+                    "easing": "easeInOutSine",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "25"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 80%",
+                    "duration": "150",
+                    "easing": "easeOutQuad",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Hold",
+                    "duration": "90",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "t move-y",
+          "keyMoments": [
+            {
+              "label": "Start",
+              "duration": "0",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Delay",
+              "duration": "18",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Landed",
+              "duration": "120",
+              "easing": "easeInOutBack",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            },
+            {
+              "label": "Hold",
+              "duration": "222",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "t",
+                "keyMoments": [
+                  {
+                    "label": "Start",
+                    "duration": "0",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "textRun": "t",
+                    "textAlign": "center",
+                    "positioningVertical": "top",
+                    "textColor": {
+                      "instance": {
+                        "R": "13",
+                        "G": "242",
+                        "B": "51"
+                      },
+                      "colorTypeKey": "RGB"
+                    },
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "368"
+                      ],
+                      [
+                        "width",
+                        "100"
+                      ],
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Delay",
+                    "duration": "36",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 30%",
+                    "duration": "90",
+                    "easing": "easeInOutSine",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "25"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 80%",
+                    "duration": "150",
+                    "easing": "easeOutQuad",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Hold",
+                    "duration": "84",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "i move-y",
+          "keyMoments": [
+            {
+              "label": "Start",
+              "duration": "0",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Delay",
+              "duration": "21",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Landed",
+              "duration": "120",
+              "easing": "easeInOutBack",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            },
+            {
+              "label": "Hold",
+              "duration": "219",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "i",
+                "keyMoments": [
+                  {
+                    "label": "Start",
+                    "duration": "0",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "textRun": "i",
+                    "textAlign": "center",
+                    "positioningVertical": "top",
+                    "textColor": {
+                      "instance": {
+                        "R": "13",
+                        "G": "242",
+                        "B": "51"
+                      },
+                      "colorTypeKey": "RGB"
+                    },
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "404"
+                      ],
+                      [
+                        "width",
+                        "100"
+                      ],
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Delay",
+                    "duration": "42",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 30%",
+                    "duration": "90",
+                    "easing": "easeInOutSine",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "25"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 80%",
+                    "duration": "150",
+                    "easing": "easeOutQuad",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Hold",
+                    "duration": "78",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "o move-y",
+          "keyMoments": [
+            {
+              "label": "Start",
+              "duration": "0",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Delay",
+              "duration": "24",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Landed",
+              "duration": "120",
+              "easing": "easeInOutBack",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            },
+            {
+              "label": "Hold",
+              "duration": "216",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "o",
+                "keyMoments": [
+                  {
+                    "label": "Start",
+                    "duration": "0",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "textRun": "o",
+                    "textAlign": "center",
+                    "positioningVertical": "top",
+                    "textColor": {
+                      "instance": {
+                        "R": "13",
+                        "G": "242",
+                        "B": "51"
+                      },
+                      "colorTypeKey": "RGB"
+                    },
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "452"
+                      ],
+                      [
+                        "width",
+                        "100"
+                      ],
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Delay",
+                    "duration": "48",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 30%",
+                    "duration": "90",
+                    "easing": "easeInOutSine",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "25"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 80%",
+                    "duration": "150",
+                    "easing": "easeOutQuad",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Hold",
+                    "duration": "72",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "n move-y",
+          "keyMoments": [
+            {
+              "label": "Start",
+              "duration": "0",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Delay",
+              "duration": "27",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Landed",
+              "duration": "120",
+              "easing": "easeInOutBack",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            },
+            {
+              "label": "Hold",
+              "duration": "213",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "n",
+                "keyMoments": [
+                  {
+                    "label": "Start",
+                    "duration": "0",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "textRun": "n",
+                    "textAlign": "center",
+                    "positioningVertical": "top",
+                    "textColor": {
+                      "instance": {
+                        "R": "13",
+                        "G": "242",
+                        "B": "51"
+                      },
+                      "colorTypeKey": "RGB"
+                    },
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "518"
+                      ],
+                      [
+                        "width",
+                        "100"
+                      ],
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Delay",
+                    "duration": "54",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 30%",
+                    "duration": "90",
+                    "easing": "easeInOutSine",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "25"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 80%",
+                    "duration": "150",
+                    "easing": "easeOutQuad",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Hold",
+                    "duration": "66",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      },
+      {
+        "instance": {
+          "label": "s move-y",
+          "keyMoments": [
+            {
+              "label": "Start",
+              "duration": "0",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Delay",
+              "duration": "30",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "720"
+                ]
+              ]
+            },
+            {
+              "label": "Landed",
+              "duration": "120",
+              "easing": "easeInOutBack",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            },
+            {
+              "label": "Hold",
+              "duration": "210",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "281"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "s",
+                "keyMoments": [
+                  {
+                    "label": "Start",
+                    "duration": "0",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "textRun": "s",
+                    "textAlign": "center",
+                    "positioningVertical": "top",
+                    "textColor": {
+                      "instance": {
+                        "R": "13",
+                        "G": "242",
+                        "B": "51"
+                      },
+                      "colorTypeKey": "RGB"
+                    },
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "x",
+                        "581"
+                      ],
+                      [
+                        "width",
+                        "100"
+                      ],
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Delay",
+                    "duration": "60",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "8"
+                      ],
+                      [
+                        "wdth",
+                        "155"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "0",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "110"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 30%",
+                    "duration": "90",
+                    "easing": "easeInOutSine",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "25"
+                      ],
+                      [
+                        "wght",
+                        "100"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Reveal 80%",
+                    "duration": "150",
+                    "easing": "easeOutQuad",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Hold",
+                    "duration": "60",
+                    "easing": "linear",
+                    "axesLocations": [
+                      [
+                        "opsz",
+                        "120"
+                      ],
+                      [
+                        "wdth",
+                        "100"
+                      ],
+                      [
+                        "wght",
+                        "700"
+                      ]
+                    ],
+                    "fontSize": "90",
+                    "numericProperties": [
+                      [
+                        "y",
+                        "0"
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "actorTypeKey": "LineOfTextActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      }
+    ],
+    "width": "720",
+    "height": "720",
+    "zoomLevel": {
+      "type": "app-default",
+      "scaling": "100.00000"
+    }
+  },
+  "activeLayoutKey": "MotionStage",
+  "activeFontKey": "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"
+}

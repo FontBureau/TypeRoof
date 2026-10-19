@@ -1,0 +1,901 @@
+{
+  "activeState": {
+    "t": "0",
+    "duration": "10.5",
+    "perpetual": "1",
+    "keyMoments": [
+      {
+        "label": "Key Moment 1",
+        "duration": "1",
+        "easing": "linear",
+        "isActive": "1",
+        "stageBackgroundColor": {
+          "instance": {
+            "R": "255",
+            "G": "255",
+            "B": "255"
+          },
+          "colorTypeKey": "RGB"
+        }
+      }
+    ],
+    "activeActors": [
+      {
+        "instance": {
+          "label": "position: jump, fall",
+          "keyMoments": [
+            {
+              "label": "Start",
+              "duration": "0",
+              "easing": "linear",
+              "isActive": "1",
+              "numericProperties": [
+                [
+                  "y",
+                  "108"
+                ]
+              ]
+            },
+            {
+              "label": "Jump start",
+              "duration": "650",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "108"
+                ]
+              ]
+            },
+            {
+              "label": "Airborne",
+              "duration": "60",
+              "easing": "easeInBack",
+              "numericProperties": [
+                [
+                  "y",
+                  "72"
+                ]
+              ]
+            },
+            {
+              "label": "Fall start",
+              "duration": "240",
+              "easing": "linear",
+              "numericProperties": [
+                [
+                  "y",
+                  "72"
+                ]
+              ]
+            },
+            {
+              "label": "Landed",
+              "duration": "100",
+              "easing": "easeInOutBack",
+              "numericProperties": [
+                [
+                  "y",
+                  "108"
+                ]
+              ]
+            }
+          ],
+          "activeActors": [
+            {
+              "instance": {
+                "label": "rotate: exaggeration",
+                "keyMoments": [
+                  {
+                    "label": "Start",
+                    "duration": "0",
+                    "easing": "linear",
+                    "isActive": "1",
+                    "numericProperties": [
+                      [
+                        "rotation",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Exaggeration start",
+                    "duration": "700",
+                    "easing": "linear",
+                    "numericProperties": [
+                      [
+                        "rotation",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Shout",
+                    "duration": "25",
+                    "easing": "easeInOutExpo",
+                    "numericProperties": [
+                      [
+                        "rotation",
+                        "-3"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Base",
+                    "duration": "25",
+                    "easing": "easeInOutExpo",
+                    "numericProperties": [
+                      [
+                        "rotation",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Squeeze",
+                    "duration": "25",
+                    "easing": "easeInOutExpo",
+                    "numericProperties": [
+                      [
+                        "rotation",
+                        "3"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Base",
+                    "duration": "25",
+                    "easing": "easeInOutExpo",
+                    "numericProperties": [
+                      [
+                        "rotation",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Shout",
+                    "duration": "25",
+                    "easing": "easeInOutExpo",
+                    "numericProperties": [
+                      [
+                        "rotation",
+                        "-3"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Base",
+                    "duration": "25",
+                    "easing": "easeInOutExpo",
+                    "numericProperties": [
+                      [
+                        "rotation",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Squeeze",
+                    "duration": "25",
+                    "easing": "easeInOutExpo",
+                    "numericProperties": [
+                      [
+                        "rotation",
+                        "3"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Base",
+                    "duration": "25",
+                    "easing": "easeInOutExpo",
+                    "numericProperties": [
+                      [
+                        "rotation",
+                        "0"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "End",
+                    "duration": "150",
+                    "easing": "linear",
+                    "numericProperties": [
+                      [
+                        "rotation",
+                        "0"
+                      ]
+                    ]
+                  }
+                ],
+                "activeActors": [
+                  {
+                    "instance": {
+                      "label": "color: pulse, exaggeration, fall",
+                      "keyMoments": [
+                        {
+                          "label": "Start",
+                          "duration": "0",
+                          "easing": "linear",
+                          "isActive": "1",
+                          "textColor": {
+                            "instance": {
+                              "R": "128",
+                              "G": "128",
+                              "B": "128"
+                            },
+                            "colorTypeKey": "RGB"
+                          }
+                        },
+                        {
+                          "label": "Pulse 1 start",
+                          "duration": "50",
+                          "easing": "linear",
+                          "textColor": {
+                            "instance": {
+                              "R": "128",
+                              "G": "128",
+                              "B": "128"
+                            },
+                            "colorTypeKey": "RGB"
+                          }
+                        },
+                        {
+                          "label": "Pulse 1 peak",
+                          "duration": "80",
+                          "easing": "easeOutQuad",
+                          "textColor": {
+                            "instance": {
+                              "R": "204",
+                              "G": "204",
+                              "B": "204"
+                            },
+                            "colorTypeKey": "RGB"
+                          }
+                        },
+                        {
+                          "label": "Pulse 1 end",
+                          "duration": "120",
+                          "easing": "easeOutQuad",
+                          "textColor": {
+                            "instance": {
+                              "R": "128",
+                              "G": "128",
+                              "B": "128"
+                            },
+                            "colorTypeKey": "RGB"
+                          }
+                        },
+                        {
+                          "label": "Pulse 2 peak",
+                          "duration": "80",
+                          "easing": "easeOutQuad",
+                          "textColor": {
+                            "instance": {
+                              "R": "204",
+                              "G": "204",
+                              "B": "204"
+                            },
+                            "colorTypeKey": "RGB"
+                          }
+                        },
+                        {
+                          "label": "Pulse 2 end",
+                          "duration": "120",
+                          "easing": "easeOutQuad",
+                          "textColor": {
+                            "instance": {
+                              "R": "128",
+                              "G": "128",
+                              "B": "128"
+                            },
+                            "colorTypeKey": "RGB"
+                          }
+                        },
+                        {
+                          "label": "Pulse 3 peak",
+                          "duration": "80",
+                          "easing": "easeOutQuad",
+                          "textColor": {
+                            "instance": {
+                              "R": "204",
+                              "G": "204",
+                              "B": "204"
+                            },
+                            "colorTypeKey": "RGB"
+                          }
+                        },
+                        {
+                          "label": "Pulse 3 end",
+                          "duration": "120",
+                          "easing": "easeOutQuad",
+                          "textColor": {
+                            "instance": {
+                              "R": "128",
+                              "G": "128",
+                              "B": "128"
+                            },
+                            "colorTypeKey": "RGB"
+                          }
+                        },
+                        {
+                          "label": "Quiet",
+                          "duration": "50",
+                          "easing": "linear",
+                          "textColor": {
+                            "instance": {
+                              "R": "128",
+                              "G": "128",
+                              "B": "128"
+                            },
+                            "colorTypeKey": "RGB"
+                          }
+                        },
+                        {
+                          "label": "Loud",
+                          "duration": "0",
+                          "easing": "linear",
+                          "textColor": {
+                            "instance": {
+                              "R": "230",
+                              "G": "26",
+                              "B": "26"
+                            },
+                            "colorTypeKey": "RGB"
+                          }
+                        },
+                        {
+                          "label": "Fall start",
+                          "duration": "250",
+                          "easing": "linear",
+                          "textColor": {
+                            "instance": {
+                              "R": "230",
+                              "G": "26",
+                              "B": "26"
+                            },
+                            "colorTypeKey": "RGB"
+                          }
+                        },
+                        {
+                          "label": "Landed",
+                          "duration": "100",
+                          "easing": "easeInOutBack",
+                          "textColor": {
+                            "instance": {
+                              "R": "128",
+                              "G": "128",
+                              "B": "128"
+                            },
+                            "colorTypeKey": "RGB"
+                          }
+                        }
+                      ],
+                      "activeActors": [
+                        {
+                          "instance": {
+                            "label": "line1",
+                            "keyMoments": [
+                              {
+                                "label": "Start",
+                                "duration": "0",
+                                "easing": "linear",
+                                "isActive": "1",
+                                "textRun": "Talk",
+                                "textAlign": "center",
+                                "fontSize": "157.5",
+                                "numericProperties": [
+                                  [
+                                    "x",
+                                    "0"
+                                  ],
+                                  [
+                                    "width",
+                                    "720"
+                                  ],
+                                  [
+                                    "scale",
+                                    "0.3"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "24"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "100"
+                                  ],
+                                  [
+                                    "wght",
+                                    "400"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Pulse 1 start",
+                                "duration": "50",
+                                "easing": "linear",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "0.3"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "24"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "100"
+                                  ],
+                                  [
+                                    "wght",
+                                    "400"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Pulse 1 peak",
+                                "duration": "80",
+                                "easing": "easeOutQuad",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "0.29"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Pulse 1 end",
+                                "duration": "120",
+                                "easing": "easeOutQuad",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "0.3"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "24"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "100"
+                                  ],
+                                  [
+                                    "wght",
+                                    "400"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Pulse 2 peak",
+                                "duration": "80",
+                                "easing": "easeOutQuad",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "0.29"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Pulse 2 end",
+                                "duration": "120",
+                                "easing": "easeOutQuad",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "0.3"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "24"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "100"
+                                  ],
+                                  [
+                                    "wght",
+                                    "400"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Pulse 3 peak",
+                                "duration": "80",
+                                "easing": "easeOutQuad",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "0.29"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Pulse 3 end",
+                                "duration": "120",
+                                "easing": "easeOutQuad",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "0.3"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "24"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "100"
+                                  ],
+                                  [
+                                    "wght",
+                                    "400"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Quiet",
+                                "duration": "50",
+                                "easing": "linear",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "0.3"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "24"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "100"
+                                  ],
+                                  [
+                                    "wght",
+                                    "400"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Loud",
+                                "duration": "0",
+                                "easing": "linear",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "0.3"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "24"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "100"
+                                  ],
+                                  [
+                                    "wght",
+                                    "400"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Shout",
+                                "duration": "25",
+                                "easing": "easeInOutExpo",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "1.6"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "16"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "25"
+                                  ],
+                                  [
+                                    "wght",
+                                    "1000"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Base",
+                                "duration": "25",
+                                "easing": "easeInOutExpo",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "0.3"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "24"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "100"
+                                  ],
+                                  [
+                                    "wght",
+                                    "400"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Squeeze",
+                                "duration": "25",
+                                "easing": "easeInOutExpo",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "1.2"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "72"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "120"
+                                  ],
+                                  [
+                                    "wght",
+                                    "700"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Base",
+                                "duration": "25",
+                                "easing": "easeInOutExpo",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "0.3"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "24"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "100"
+                                  ],
+                                  [
+                                    "wght",
+                                    "400"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Shout",
+                                "duration": "25",
+                                "easing": "easeInOutExpo",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "1.6"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "16"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "25"
+                                  ],
+                                  [
+                                    "wght",
+                                    "1000"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Base",
+                                "duration": "25",
+                                "easing": "easeInOutExpo",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "0.3"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "24"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "100"
+                                  ],
+                                  [
+                                    "wght",
+                                    "400"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Squeeze",
+                                "duration": "25",
+                                "easing": "easeInOutExpo",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "1.2"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "72"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "120"
+                                  ],
+                                  [
+                                    "wght",
+                                    "700"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Base",
+                                "duration": "25",
+                                "easing": "easeInOutExpo",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "0.3"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "24"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "100"
+                                  ],
+                                  [
+                                    "wght",
+                                    "400"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Loud",
+                                "duration": "100",
+                                "easing": "linear",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "0.3"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "24"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "100"
+                                  ],
+                                  [
+                                    "wght",
+                                    "400"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "Quiet",
+                                "duration": "0",
+                                "easing": "linear",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "0.3"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "24"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "100"
+                                  ],
+                                  [
+                                    "wght",
+                                    "400"
+                                  ]
+                                ]
+                              },
+                              {
+                                "label": "End",
+                                "duration": "50",
+                                "easing": "linear",
+                                "numericProperties": [
+                                  [
+                                    "scale",
+                                    "0.3"
+                                  ]
+                                ],
+                                "axesLocations": [
+                                  [
+                                    "opsz",
+                                    "24"
+                                  ],
+                                  [
+                                    "wdth",
+                                    "100"
+                                  ],
+                                  [
+                                    "wght",
+                                    "400"
+                                  ]
+                                ]
+                              }
+                            ]
+                          },
+                          "actorTypeKey": "LineOfTextActorModel"
+                        }
+                      ]
+                    },
+                    "actorTypeKey": "LayerActorModel"
+                  }
+                ]
+              },
+              "actorTypeKey": "LayerActorModel"
+            }
+          ]
+        },
+        "actorTypeKey": "LayerActorModel"
+      }
+    ],
+    "width": "720",
+    "height": "360",
+    "zoomLevel": {
+      "type": "app-default",
+      "scaling": "100.00000"
+    }
+  },
+  "activeLayoutKey": "MotionStage",
+  "activeFontKey": "from-url AmstelvarA2 Roman wght400 Version_0-001"
+}
