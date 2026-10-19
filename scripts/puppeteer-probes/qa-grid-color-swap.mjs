@@ -133,6 +133,15 @@ export async function run({ page, consoleLines, setTimeout, log }) {
         `patches=${beforeInfo.patchCount}`,
     );
     check("swap button present", beforeInfo.swapButtonCount >= 1);
+    // The grid borrows the opaque white stageBackgroundColor registered
+    // default for an unset background (see _getGridRegisteredDefault in
+    // type-tools-grid.mjs): the BG patch must render filled white, not
+    // the transparent colors/backgroundColor registry default.
+    check(
+        "BG patch default renders opaque white",
+        beforePatchColors[1] === "oklch(1 0 none)",
+        `bg patch --color=${JSON.stringify(beforePatchColors[1])}`,
+    );
 
     // swap once: both (previously inherited) colors materialize in the
     // state, exchanged.
