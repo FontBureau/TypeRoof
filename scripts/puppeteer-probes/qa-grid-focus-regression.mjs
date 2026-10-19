@@ -156,6 +156,107 @@ export async function run({ page, consoleLines, setTimeout, log }) {
     if (states.some((s) => s.presets !== states[0].presets))
         log(`presets flipped during typing: ${states.map((s) => s.presets).join(" -> ")}`);
 
+    // 6. preset-active scenario: applying a preset flags `document` AND
+    //    `properties` as GENERATED_DATA — the flag suppresses
+    //    serialization (SERIALIZE_OPTIONS.skipDataMarkers), preset
+    //    generated data re-applies on load. The first keystroke must
+    //    flip presets to "custom" and STRIP both flags (serialization
+    //    depends on it!). With the scaffold structure cache, the
+    //    equal properties copy must not rebuild the grid: focus has
+    //    to survive the first keystroke.
+    await page.evaluate(() => {
+        shell.changeState(() => {
+            shell.getEntry("/activeState/presets").value = "Grid wght-wdth HOX";
+        });
+    });
+    await settle(4000);
+    const flagsBefore = await page.evaluate(() => {
+        const marker = Symbol.for("GENERATED_DATA");
+        return {
+            presets: shell.getEntry("/activeState/presets").value
+          , documentFlagged: Object.hasOwn(
+                shell.getEntry("/activeState/document"),
+                marker,
+            )
+          , propertiesFlagged: Object.hasOwn(
+                shell.getEntry("/activeState/properties"),
+                marker,
+            )
+        };
+    });
+    log(`preset applied: ${JSON.stringify(flagsBefore)}`);
+    check(
+        "preset: presets active",
+        flagsBefore.presets === "Grid wght-wdth HOX",
+    );
+    check("preset: properties flagged GENERATED_DATA", flagsBefore.propertiesFlagged === true);
+    check("preset: document flagged GENERATED_DATA", flagsBefore.documentFlagged === true);
+
+    // focus the first grid cell PM and place the caret
+    await page.evaluate(() => {
+        const pm = document.querySelector(".ui_type_tools_grid .ProseMirror");
+        pm.focus();
+        const range = document.createRange();
+        range.setStart(pm, 0);
+        range.collapse(true);
+        getSelection().removeAllRanges();
+        getSelection().addRange(range);
+        // baseline for the propsReplaced tracking below: the preset
+        // application instance (still carrying GENERATED_DATA).
+        window.__presetPrevProps = shell.getEntry("/activeState/properties");
+    });
+    await settle(300);
+
+    const presetStates = [];
+    for (const char of ["A", "B", "C"]) {
+        await page.keyboard.type(char, { delay: 80 });
+        await settle(1200);
+        presetStates.push(
+            await page.evaluate(() => {
+                const marker = Symbol.for("GENERATED_DATA")
+                  , currentProps = shell.getEntry("/activeState/properties")
+                  , state = {
+                        activeIsPM:
+                            document.activeElement !== null &&
+                            document.activeElement.classList.contains("ProseMirror")
+                      , presets: shell.getEntry("/activeState/presets").value
+                      , propsReplacedSincePrevKeystroke:
+                            window.__presetPrevProps !== undefined &&
+                            window.__presetPrevProps !== currentProps
+                      , propertiesFlagged: Object.hasOwn(currentProps, marker)
+                      , text: (
+                            document.querySelector(
+                                ".ui_type_tools_grid .ProseMirror",
+                            )?.textContent || ""
+                        ).slice(0, 40)
+                    };
+                window.__presetPrevProps = currentProps;
+                return state;
+            }),
+        );
+        log(`preset-scenario after "${char}": ${JSON.stringify(presetStates.at(-1))}`);
+    }
+
+    check("preset: focus retained after 1st char", presetStates[0].activeIsPM === true);
+    check("preset: focus retained after 3rd char", presetStates[2].activeIsPM === true);
+    check("preset: all three chars arrived", (presetStates[2].text || "").includes("ABC"));
+    check("preset: presets flipped to custom", presetStates[0].presets === "custom");
+    // the strip itself is REQUIRED (serialization!): the properties
+    // model must be replaced exactly once, on the first keystroke.
+    check(
+        "preset: properties strip-copied on 1st keystroke",
+        presetStates[0].propsReplacedSincePrevKeystroke === true,
+    );
+    check(
+        "preset: properties stable after strip",
+        presetStates[1].propsReplacedSincePrevKeystroke === false &&
+            presetStates[2].propsReplacedSincePrevKeystroke === false,
+    );
+    check(
+        "preset: GENERATED_DATA stripped from properties",
+        presetStates[2].propertiesFlagged === false,
+    );
+
     const pageErrors = consoleLines.filter((line) =>
         line.startsWith("[PAGEERROR]"),
     );
