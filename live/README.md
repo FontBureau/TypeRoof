@@ -15,7 +15,7 @@ The idea is for font editors to pick this up and to provide the feature
 built in for their users.
 
 For font editor implementers or if you are interested in technical details,
-see the technical documentation at: [Developer Kit -- Live font changes](https://fontbureau.github.io/TypeRoof/docs/development/live)
+see the technical documentation at: [Developer Kit -- Live font changes](https://app.typeroof.org/docs/development/live)
 
 If your font editor does not yet implement font updates in TypeRoof directly
 or if you just want to try it out in another scenario you can use these
@@ -98,9 +98,9 @@ require special cross-site allowance in the browser (the server is required
 to check), the online adapter is able to connect to the server started
 in [WebSocket Part 1: Server](#websocket-part-1-server).
 
-- Open [https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof-iframe/](https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof-iframe/)
+- Open [https://app.typeroof.org/live/adapter-websocket-to-typeroof-iframe/](https://app.typeroof.org/live/adapter-websocket-to-typeroof-iframe/)
   in your browser (iframe version).
-- or open [https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/](https://fontbureau.github.io/TypeRoof/live/adapter-websocket-to-typeroof/)
+- or open [https://app.typeroof.org/live/adapter-websocket-to-typeroof/](https://app.typeroof.org/live/adapter-websocket-to-typeroof/)
   in your browser (pop-up/new tab version).
 
 #### B: Using a Local Web-Server

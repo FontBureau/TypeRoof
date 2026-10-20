@@ -15,11 +15,11 @@ a community of users and developers who are interested in shaping its future.
 
 ## Directions
 
-- [Documentation -- Landing Page](https://fontbureau.github.io/TypeRoof/docs)
-- [User Kit -- Getting Started and Usage](https://fontbureau.github.io/TypeRoof/docs/usage)
-- [Developer Kit -- Contributing and Customization](https://fontbureau.github.io/TypeRoof/docs/development)
+- [Documentation -- Landing Page](https://app.typeroof.org/docs)
+- [User Kit -- Getting Started and Usage](https://app.typeroof.org/docs/usage)
+- [Developer Kit -- Contributing and Customization](https://app.typeroof.org/docs/development)
 
-### [TypeRoof Shell](https://fontbureau.github.io/TypeRoof/shell)
+### [TypeRoof Shell](https://app.typeroof.org/shell)
 
 The shell provides infrastructure to enable all types of type centered
 tooling for proofing, specimen creation, type setting and it features
@@ -92,7 +92,7 @@ $ ~/TypeRoof> npx http-server
 
 ## Build the complete static site locally
 
-The [static website](https://fontbureau.github.io/TypeRoof/) (served via GitHub Pages) is built using both [Vite](https://vitejs.dev/) for the shell application and [Eleventy](https://www.11ty.dev/) for documentation.
+The [static website](https://app.typeroof.org/) (served via GitHub Pages) is built using both [Vite](https://vitejs.dev/) for the shell application and [Eleventy](https://www.11ty.dev/) for documentation.
 
 ### Build Commands
 
