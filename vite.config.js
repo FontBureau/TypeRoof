@@ -4,9 +4,12 @@ import browserslist from "browserslist";
 import { dirname, extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { getBasePath } from "./base-path.mjs";
+
 const __dirname = dirname(fileURLToPath(import.meta.url)),
-    // Set base path to match Eleventy's pathPrefix
-    basePath = "/TypeRoof/";
+    // Deployment base path, shared with Eleventy's pathPrefix
+    // (see base-path.mjs)
+    basePath = getBasePath();
 
 // esbuild-style engine names understood by Vite's cssTarget converter,
 // mapped from browserslist names.

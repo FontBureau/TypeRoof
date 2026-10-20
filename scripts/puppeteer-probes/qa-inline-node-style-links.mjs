@@ -24,7 +24,7 @@
 /* global shell */
 
 export const url =
-    "http://localhost:3100/TypeRoof/app/wikipedia/index.html";
+    "http://localhost:3100/app/wikipedia/index.html";
 
 export async function run({ page, consoleLines, setTimeout, log }) {
     const failures = [],

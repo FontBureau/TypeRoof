@@ -7,8 +7,8 @@
 /* global shell */
 
 export const STATE_PATH =
-    "/TypeRoof/downloads/typeroof-20261016-163733.TypeStage.json";
-export const url = `http://localhost:3100/TypeRoof/shell.html#from-url:${STATE_PATH}`;
+    "/downloads/typeroof-20261016-163733.TypeStage.json";
+export const url = `http://localhost:3100/shell.html#from-url:${STATE_PATH}`;
 
 export async function run({ page, setTimeout, log }) {
     const settle = () => setTimeout(1600);

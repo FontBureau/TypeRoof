@@ -42,7 +42,7 @@ export async function run({ page, consoleLines, setTimeout, log }) {
     const { busSchedulerMatches, simulation } = await page.evaluate(
         async () => {
             const { createDrainingRoundRobinTaskScheduler } = await import(
-                "/TypeRoof/lib/js/components/layouts/type-stage/text-composition/composition-task.ts"
+                "/lib/js/components/layouts/type-stage/text-composition/composition-task.ts"
             );
             const busScheduler = window.shell.compositionTaskScheduler;
             const scheduler = createDrainingRoundRobinTaskScheduler();

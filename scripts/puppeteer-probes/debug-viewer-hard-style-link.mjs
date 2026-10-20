@@ -14,7 +14,7 @@
 import { quiet } from "./lib/editor-dom.mjs";
 
 export const url =
-    "http://localhost:3100/TypeRoof/app/wikipedia/index.html#from-url:/TypeRoof/downloads/typeroof-20261009-210314.TypeStageWikipedia.json";
+    "http://localhost:3100/app/wikipedia/index.html#from-url:/downloads/typeroof-20261009-210314.TypeStageWikipedia.json";
 
 const interesting = (line) => line.includes("[PAGEERROR]");
 
