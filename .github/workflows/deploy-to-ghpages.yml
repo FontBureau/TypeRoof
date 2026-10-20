@@ -47,8 +47,7 @@ jobs:
               with:
                   github_token: ${{ secrets.GITHUB_TOKEN }}
                   publish_dir: ./_site
-                  # Uncomment once the DNS record for the subdomain exists
-                  # (e.g. tools.typeroof.org CNAME -> fontbureau.github.io):
-                  # deploying the CNAME file before DNS points at GitHub
-                  # Pages takes the current site down.
-                  # cname: tools.typeroof.org
+                  # Attaches the custom domain: writes the CNAME file into
+                  # the deploy branch (the DNS record
+                  # app.typeroof.org -> fontbureau.github.io is set).
+                  cname: app.typeroof.org
