@@ -34,7 +34,7 @@ const directory = path.dirname(fileURLToPath(import.meta.url)),
     projectRoot = path.join(directory, ".."),
     PORT = Number(process.env.PUPETEER_PORT ?? 3100),
     BROWSER = process.env.PUPPETEER_BROWSER ?? "chrome",
-    DEFAULT_APP_URL = `http://localhost:${PORT}/TypeRoof/shell.html`,
+    DEFAULT_APP_URL = `http://localhost:${PORT}/shell.html`,
     VIEWPORT = { width: 1920, height: 1080 };
 
 function log(...args) {

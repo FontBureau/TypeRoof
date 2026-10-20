@@ -20,7 +20,7 @@
 
 /* global shell */
 
-export const url = "http://localhost:3100/TypeRoof/app/wikipedia/index.html";
+export const url = "http://localhost:3100/app/wikipedia/index.html";
 
 const COMPOSED_QUIET_ROUNDS = 3,
     COMPOSED_TIMEOUT_MS = 90_000;

@@ -159,8 +159,11 @@ export class AppMenu extends _BaseContainerComponent {
                     </li>
                     <hr />
                     <li>
+                        {/* import.meta.env.BASE_URL is Vite's `base`
+                            (vite.config.js), statically replaced — the
+                            docs live under it */}
                         <a
-                            href="/TypeRoof/docs"
+                            href={`${import.meta.env.BASE_URL}docs`}
                             target="_blank"
                             rel="noreferrer"
                         >

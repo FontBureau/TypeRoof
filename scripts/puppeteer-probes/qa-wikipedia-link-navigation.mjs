@@ -12,10 +12,10 @@
 // floating above the layout) — open it via the real settings button
 // and close it again before clicking layout links.
 
-export const url = "http://localhost:3100/TypeRoof/app/wikipedia/index.html";
+export const url = "http://localhost:3100/app/wikipedia/index.html";
 
 export async function run({ page, consoleLines, setTimeout, log }) {
-    const appPathname = "/TypeRoof/app/wikipedia/index.html";
+    const appPathname = "/app/wikipedia/index.html";
 
     const assertLocation = async (label) => {
         const { pathname } = await page.evaluate(() => window.location);

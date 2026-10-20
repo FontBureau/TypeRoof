@@ -6,6 +6,7 @@ import eleventyNavigationPlugin from "@11ty/eleventy-navigation";
 import { EleventyHtmlBasePlugin } from "@11ty/eleventy";
 import embedEverything from "eleventy-plugin-embed-everything";
 import markdownItGitHubHeadings from "markdown-it-github-headings";
+import { getBasePath } from './base-path.mjs';
 
 function* walkDirSync(relDirPath, basePath) {
     const fullPath = path.join(basePath, relDirPath)
@@ -21,7 +22,8 @@ function* walkDirSync(relDirPath, basePath) {
     }
 }
 
-const pathPrefix = '/TypeRoof/';
+const pathPrefix = getBasePath()
+    , pathPrefixWithoutTrailingSlash = pathPrefix.slice(0, -1);
 export default function (eleventyConfig) {
     // Output directory: _site
 
@@ -133,8 +135,8 @@ and learn how to load states into [TypeRoof Shell](/shell).
 {% endif %}
 {%- for item in statesList %}
   * [\`{{ item[0] }}\`]({{ item[1] | url}})
-        <a href="/app/player#[autoplay]from-url:${pathPrefix}{{page.url}}{{item[1]}}" target="_blank" title="open in player">view</a>
-        <a href="/shell#from-url:${pathPrefix}{{page.url}}{{item[1]}}" target="_blank" title="open in shell-editor">edit</a>
+        <a href="/app/player#[autoplay]from-url:${pathPrefixWithoutTrailingSlash}{{page.url}}{{item[1]}}" target="_blank" title="open in player">view</a>
+        <a href="/shell#from-url:${pathPrefixWithoutTrailingSlash}{{page.url}}{{item[1]}}" target="_blank" title="open in shell-editor">edit</a>
 {% endfor -%}
 `
       , directoryTemplateFileName = 'index.md'
