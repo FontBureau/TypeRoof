@@ -6,30 +6,33 @@
         <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
         <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
         <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
-        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+        <link
+            href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert" />
     </head>
     <body class="typeroof-docs">
         <div class="wrapper">
             <div class="typeroof-ui_sidebar">
                 <h1>TypeRoof Documentation</h1>
                 <nav>
-                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
-<li><a href="/TypeRoof/docs/usage/">User Kit</a></li>
-<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
-<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
-<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
-<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
-<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
-<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
-<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
-<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
-<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
-<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <ul><li><a href="/docs/">Home Page</a></li>
+<li><a href="/docs/usage/">User Kit</a></li>
+<li><a href="/docs/development/">Developer Kit</a><ul><li><a href="/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/docs/development/planning/">Planning</a></li>
+<li><a href="/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/docs/states-library/">States Library</a><ul><li><a href="/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/docs/states-library/demos/">/demos</a></li>
+<li><a href="/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/README/">TypeRoof README</a></li></ul>
                     <h3>Applications</h3>
                     <ul class="typeroof-ui_sidebar-app_links">
-                        <li><a href="../../../../../../shell">TypeRoof Shell</a></li>
-                        <li><a href="../../../../../../legacy">TypeRoof Legacy</a></li>
+                        <li><a href="../../../../../..//shell">TypeRoof Shell</a></li>
+                        <li><a href="../../../../../..//legacy">TypeRoof Legacy</a></li>
                     </ul>
                     <h3>Support</h3>
                     <ul>
@@ -39,7 +42,7 @@
                 </nav>
             </div>
             <div class="typeroof-main">
-                <div class="typeroof-docs_content"><h1><a id="prosemirror-consumes-text-composition-editor-applicator-via-decorations" class="heading_anchor" href="#prosemirror-consumes-text-composition-editor-applicator-via-decorations" aria-hidden="true">#</a>ProseMirror Consumes Text-Composition (Editor Applicator via Decorations)</h1>
+                <div class='typeroof-docs_content'><h1><a id="prosemirror-consumes-text-composition-editor-applicator-via-decorations" class="heading_anchor" href="#prosemirror-consumes-text-composition-editor-applicator-via-decorations" aria-hidden="true">#</a>ProseMirror Consumes Text-Composition (Editor Applicator via Decorations)</h1>
 <p><strong>Date</strong>: 2026-10-07
 <strong>Branch</strong>: feature/composition-and-justification
 <strong>Research basis</strong>: <code>thoughts/research/2026-10-07-1057-prosemirror-state-replacement-feasibility.md</code> (Addendum 4/5 discussion), composition architecture docs in <code>composition-controller.ts:1-160</code></p>
@@ -292,7 +295,7 @@ TypeStageProseMirrorContext → <code>class ProseMirror</code>.</p>
     documentExternalName<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span> <span class="token comment">// widgetBus.getExternalName("document")</span>
 <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token operator">:</span> Plugin</code></pre>
 <ul>
-<li><strong>StateField<DecorationSet></DecorationSet></strong>: <code>init</code> → <code>DecorationSet.empty</code>; <code>apply(tr, set)</code>:
+<li><strong>StateField<DecorationSet></strong>: <code>init</code> → <code>DecorationSet.empty</code>; <code>apply(tr, set)</code>:
 <code>tr.getMeta(editorCompositionPluginKey)</code> → replacement set; else <code>tr.docChanged</code>
 → <code>set.map(tr.mapping, tr.doc)</code> (map-through, per operator decision #3); else <code>set</code>.</li>
 <li><strong><code>props.decorations(state)</code></strong> → the field (same instance returned = free, PM

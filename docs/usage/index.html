@@ -6,30 +6,33 @@
         <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
         <link rel="stylesheet" href="../../lib/css/shell/main.css">
         <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
-        <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert">
+        <link
+            href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,drag_pan,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,refresh,remove,swap_vert" />
     </head>
     <body class="typeroof-docs">
         <div class="wrapper">
             <div class="typeroof-ui_sidebar">
                 <h1>TypeRoof Documentation</h1>
                 <nav>
-                    <ul><li><a href="/TypeRoof/docs/">Home Page</a></li>
-<li class="active"><a href="/TypeRoof/docs/usage/">User Kit</a></li>
-<li><a href="/TypeRoof/docs/development/">Developer Kit</a><ul><li><a href="/TypeRoof/docs/development/live/">Live Font Updates</a></li>
-<li><a href="/TypeRoof/live/README/">Serve Live Font Changes to TypeRoof</a></li>
-<li><a href="/TypeRoof/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
-<li><a href="/TypeRoof/docs/development/planning/">Planning</a></li>
-<li><a href="/TypeRoof/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
-<li><a href="/TypeRoof/docs/states-library/">States Library</a><ul><li><a href="/TypeRoof/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
-<li><a href="/TypeRoof/docs/states-library/demos/">/demos</a></li>
-<li><a href="/TypeRoof/docs/states-library/fixtures/">/fixtures</a></li>
-<li><a href="/TypeRoof/docs/states-library/lessons/">/lessons</a></li></ul></li>
-<li><a href="/TypeRoof/README/">TypeRoof README</a></li></ul>
+                    <ul><li><a href="/docs/">Home Page</a></li>
+<li class="active"><a href="/docs/usage/">User Kit</a></li>
+<li><a href="/docs/development/">Developer Kit</a><ul><li><a href="/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/docs/development/planning/">Planning</a></li>
+<li><a href="/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/docs/states-library/">States Library</a><ul><li><a href="/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/docs/states-library/demos/">/demos</a></li>
+<li><a href="/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/README/">TypeRoof README</a></li></ul>
                     <h3>Applications</h3>
                     <ul class="typeroof-ui_sidebar-app_links">
-                        <li><a href="../../shell">TypeRoof Shell</a></li>
-                        <li><a href="../../legacy">TypeRoof Legacy</a></li>
+                        <li><a href="../..//shell">TypeRoof Shell</a></li>
+                        <li><a href="../..//legacy">TypeRoof Legacy</a></li>
                     </ul>
                     <h3>Support</h3>
                     <ul>
@@ -39,7 +42,7 @@
                 </nav>
             </div>
             <div class="typeroof-main">
-                <div class="typeroof-docs_content"><h1><a id="typeroof-user-kit" class="heading_anchor" href="#typeroof-user-kit" aria-hidden="true">#</a>TypeRoof User Kit</h1>
+                <div class='typeroof-docs_content'><h1><a id="typeroof-user-kit" class="heading_anchor" href="#typeroof-user-kit" aria-hidden="true">#</a>TypeRoof User Kit</h1>
 <p>TypeRoof is in an early stage of development; the Graphical
 User interface so far is made to provide comprehensive control over the
 program state to develop and demonstrate its capabilities. The design
@@ -49,22 +52,22 @@ current UI. We’re looking for users interested in joining the
 project to make it a good animation, proofing, and typesetting tool.</p>
 <h2><a id="getting-started" class="heading_anchor" href="#getting-started" aria-hidden="true">#</a>Getting Started</h2>
 <p>A couple of prepared “states” (JSON formatted text files) that can load
-into TypeRoof Shell are under <a href="/TypeRoof/docs/states-library">States Library</a>.
+into TypeRoof Shell are under <a href="/docs/states-library">States Library</a>.
 This tutorial uses these states, along with lesson videos, to demonstrate
 how to use TypeRoof-Shell in its current form.</p>
 <h3><a id="lesson-01-load-and-save-state" class="heading_anchor" href="#lesson-01-load-and-save-state" aria-hidden="true">#</a>Lesson 01: Load and Save State</h3>
 <p>Let’s start with the basic example of how to load (deserialize) a pre-composed
 state into the application; this is required to open a state from the
-<a href="/TypeRoof/docs/states-library">States Library</a> to, e.g., watch it as a video or to
+<a href="/docs/states-library">States Library</a> to, e.g., watch it as a video or to
 evaluate a font proof. As a preview, the lesson will go a bit deeper and
 change some details of the loaded state — an animation made in the “Stage
 and Actors” Layout. Eventually, we will export (serialize) the changed
 state, a requirement to, e.g., share it or save it in a file.</p>
 <h4><a id="required-links" class="heading_anchor" href="#required-links" aria-hidden="true">#</a>Required Links:</h4>
 <ul>
-<li><a href="/TypeRoof/shell">TypeRoof Shell</a></li>
-<li>State: <a href="/TypeRoof/docs/states-library/demos/hello_good-bye.json">hello_good-bye.json</a></li>
-<li>More States: <a href="/TypeRoof/docs/states-library">States Library</a></li>
+<li><a href="/shell">TypeRoof Shell</a></li>
+<li>State: <a href="/docs/states-library/demos/hello_good-bye.json">hello_good-bye.json</a></li>
+<li>More States: <a href="/docs/states-library">States Library</a></li>
 </ul>
 <p><em>Duration <strong>4:40</strong> m:s</em></p>
 <div id="XVMaUiL-YGU" class="eleventy-plugin-youtube-embed" style="position:relative;width:100%;padding-top: 56.25%;"><iframe style="position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;" width="100%" height="100%" frameborder="0" title="Embedded YouTube video" src="https://www.youtube-nocookie.com/embed/XVMaUiL-YGU" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
@@ -79,8 +82,8 @@ achievements, and as they start to show utility, we will focus the
 following lessons on these.</p>
 <h4><a id="required-links-1" class="heading_anchor" href="#required-links-1" aria-hidden="true">#</a>Required Links:</h4>
 <ul>
-<li><a href="/TypeRoof/legacy">TypeRoof Legacy</a></li>
-<li><a href="/TypeRoof/shell">TypeRoof Shell</a></li>
+<li><a href="/legacy">TypeRoof Legacy</a></li>
+<li><a href="/shell">TypeRoof Shell</a></li>
 </ul>
 <p><em>Duration  <strong>15:08</strong> m:s</em></p>
 <div id="p3STphW0xG4" class="eleventy-plugin-youtube-embed" style="position:relative;width:100%;padding-top: 56.25%;"><iframe style="position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;" width="100%" height="100%" frameborder="0" title="Embedded YouTube video" src="https://www.youtube-nocookie.com/embed/p3STphW0xG4" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
@@ -93,10 +96,10 @@ machine for repeated use. The lesson also shows how to remove a custom font
 from the app again.</p>
 <h4><a id="required-links-2" class="heading_anchor" href="#required-links-2" aria-hidden="true">#</a>Required Links:</h4>
 <ul>
-<li><a href="/TypeRoof/shell">TypeRoof Shell</a></li>
+<li><a href="/shell">TypeRoof Shell</a></li>
 <li>The font file <a href="https://github.com/googlefonts/decovar/raw/refs/heads/master/fonts/DecovarAlpha-VF.ttf">DecovarAlpha-VF.ttf</a>
 (link to the <a href="https://github.com/googlefonts/decovar">GitHub Repository of Decovar</a>)</li>
-<li>State: <a href="/TypeRoof/docs/states-library/demos/decovar-specimen.json">decovar-specimen.json</a></li>
+<li>State: <a href="/docs/states-library/demos/decovar-specimen.json">decovar-specimen.json</a></li>
 </ul>
 <p><em>Duration <strong>4:34</strong> m:s</em></p>
 <div id="5AY1KnkSOcI" class="eleventy-plugin-youtube-embed" style="position:relative;width:100%;padding-top: 56.25%;"><iframe style="position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;" width="100%" height="100%" frameborder="0" title="Embedded YouTube video" src="https://www.youtube-nocookie.com/embed/5AY1KnkSOcI" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
@@ -117,8 +120,8 @@ from the ground up, step by step, and learn the basics of working with
 Key Moments.</p>
 <h4><a id="required-links-3" class="heading_anchor" href="#required-links-3" aria-hidden="true">#</a>Required Links:</h4>
 <ul>
-<li><a href="/TypeRoof/shell">TypeRoof Shell</a></li>
-<li>State: <a href="/TypeRoof/docs/states-library/lessons/Create_a_Simple_Animation-hello_goodbye.json">Create_a_Simple_Animation-hello_goodbye.json</a></li>
+<li><a href="/shell">TypeRoof Shell</a></li>
+<li>State: <a href="/docs/states-library/lessons/Create_a_Simple_Animation-hello_goodbye.json">Create_a_Simple_Animation-hello_goodbye.json</a></li>
 </ul>
 <p><em>Duration <strong>25:14</strong> m:s</em></p>
 <div id="T3-Vn3eBfEE" class="eleventy-plugin-youtube-embed" style="position:relative;width:100%;padding-top: 56.25%;"><iframe style="position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;" width="100%" height="100%" frameborder="0" title="Embedded YouTube video" src="https://www.youtube-nocookie.com/embed/T3-Vn3eBfEE" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
@@ -129,11 +132,11 @@ of color animation in a Horror/Halloween-styled specimen of Decovar,
 traversing from its “Regular” style to its “Mayhem” style.</p>
 <h4><a id="required-links-4" class="heading_anchor" href="#required-links-4" aria-hidden="true">#</a>Required Links:</h4>
 <ul>
-<li><a href="/TypeRoof/shell">TypeRoof Shell</a></li>
+<li><a href="/shell">TypeRoof Shell</a></li>
 <li>The font file <a href="https://github.com/googlefonts/decovar/raw/refs/heads/master/fonts/DecovarAlpha-VF.ttf">DecovarAlpha-VF.ttf</a>
 (link to the <a href="https://github.com/googlefonts/decovar">GitHub Repository of Decovar</a>)</li>
-<li>Initial State: <a href="/TypeRoof/docs/states-library/lessons/Animate_Color-decovar-necrovar.json">Animate_Color-decovar-necrovar.json</a></li>
-<li>Final State: <a href="/TypeRoof/docs/states-library/demos/decovar-necrovar.json">decovar-necrovar.json</a></li>
+<li>Initial State: <a href="/docs/states-library/lessons/Animate_Color-decovar-necrovar.json">Animate_Color-decovar-necrovar.json</a></li>
+<li>Final State: <a href="/docs/states-library/demos/decovar-necrovar.json">decovar-necrovar.json</a></li>
 </ul>
 <p><em>Duration <strong>21:43</strong> m:s</em></p>
 <div id="zzYhSBy9vNw" class="eleventy-plugin-youtube-embed" style="position:relative;width:100%;padding-top: 56.25%;"><iframe style="position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;" width="100%" height="100%" frameborder="0" title="Embedded YouTube video" src="https://www.youtube-nocookie.com/embed/zzYhSBy9vNw" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
@@ -155,10 +158,10 @@ Variable fonts define default axis-locations, while the app’s source code
 defines other property defaults.</p>
 <h4><a id="required-links-5" class="heading_anchor" href="#required-links-5" aria-hidden="true">#</a>Required Links:</h4>
 <ul>
-<li><a href="/TypeRoof/shell">TypeRoof Shell</a></li>
+<li><a href="/shell">TypeRoof Shell</a></li>
 <li>The font file <a href="https://github.com/googlefonts/decovar/raw/refs/heads/master/fonts/DecovarAlpha-VF.ttf">DecovarAlpha-VF.ttf</a>
 (link to the <a href="https://github.com/googlefonts/decovar">GitHub Repository of Decovar</a>)</li>
-<li>State: <a href="/TypeRoof/docs/states-library/demos/decovar-specimen.json">decovar-specimen.json</a></li>
+<li>State: <a href="/docs/states-library/demos/decovar-specimen.json">decovar-specimen.json</a></li>
 </ul>
 <p><em>Duration <strong>20:29</strong> m:s</em></p>
 <div id="XFk47ceAPZU" class="eleventy-plugin-youtube-embed" style="position:relative;width:100%;padding-top: 56.25%;"><iframe style="position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;" width="100%" height="100%" frameborder="0" title="Embedded YouTube video" src="https://www.youtube-nocookie.com/embed/XFk47ceAPZU" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
