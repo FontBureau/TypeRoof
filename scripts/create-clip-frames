@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Usage:
- *   # use https://fontbureau.github.io/TypeRoof/app/player
+ *   # use https://app.typeroof.org/app/player
  *   $ ./scripts/create-clip-frames /docs/states-library/demos/four-panels.json ./clip_frames
  *
  *   # With explicit url
@@ -98,7 +98,7 @@ const parser = new ArgumentParser({ description: 'Generate the frames for a clip
 
 parser.add_argument('--player-url', {
     dest: 'playerUrl'
-  , default: 'https://fontbureau.github.io/TypeRoof/app/player'
+  , default: 'https://app.typeroof.org/app/player'
   , help: 'The base source url for the clips, include the port number if necessary (e.g. "http://localhost:8081").'
 });
 

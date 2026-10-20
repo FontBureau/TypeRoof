@@ -20,7 +20,7 @@ function initIframeTypeRoof(state) {
     const {sendUpdatesTo, lastMessages, typeRoofOriginURL} = state
       , iframe = document.createElement('iframe')
       ;
-    iframe.src = `${typeRoofOriginURL}/TypeRoof/shell`;
+    iframe.src = `${typeRoofOriginURL}/shell`;
     document.body.append(iframe);
     const myHandle = iframe.contentWindow;
 
@@ -90,8 +90,8 @@ async function pollAll(state) {
 function main() {
     const sendUpdatesTo = new Set()
       , lastMessages = new Map()
-      , typeRoofOriginURL = 'https://fontbureau.github.io'
-        // e.g. open /TypeRoof/shell from localhost:
+      , typeRoofOriginURL = 'https://app.typeroof.org'
+        // e.g. open /shell from localhost:
         //, typeRoofOriginURL = 'http://localhost:8081'
       , baseURL = 'http://0.0.0.0:8000/fonts/'
       , fonts = ['live-font.ttf']

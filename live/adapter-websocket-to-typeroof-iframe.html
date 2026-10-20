@@ -20,7 +20,7 @@ function initIframeTypeRoof(state) {
     const {sendUpdatesTo, lastMessages, typeRoofOriginURL} = state
       , iframe = document.createElement('iframe')
       ;
-    iframe.src = `${typeRoofOriginURL}/TypeRoof/shell`;
+    iframe.src = `${typeRoofOriginURL}/shell`;
     document.body.append(iframe);
     const myHandle = iframe.contentWindow;
 
@@ -55,9 +55,9 @@ async function receiveFontChange(state, metaData, fontBuffer) {
 function main() {
     const sendUpdatesTo = new Set()
       , lastMessages = new Map()
-        //, typeRoofOriginURL = 'https://fontbureau.github.io'
-        // e.g. open /TypeRoof/shell from localhost:
-      , typeRoofOriginURL = 'https://fontbureau.github.io'
+        //, typeRoofOriginURL = 'https://app.typeroof.org'
+        // e.g. open /shell from localhost:
+      , typeRoofOriginURL = 'https://app.typeroof.org'
       , state = {sendUpdatesTo, lastMessages, typeRoofOriginURL}
       , socket = new WebSocket('ws://localhost:8765/')
       ;
