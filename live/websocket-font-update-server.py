@@ -213,12 +213,12 @@ async def main(observe_path):
     state = State()
     loop = asyncio.get_event_loop()
     queue = asyncio.Queue()
-    # In this implementation we allow https://fontbureau.github.io to
+    # In this implementation we allow https://app.typeroof.org to
     # enable users to load the adapter directly from the project website.
-    # Origin=https://fontbureau.github.io'
+    # Origin=https://app.typeroof.org'
     # To allow different versions of http://localhost with and without port
     # arbitrary port numbers `process_response` is used
-    origins=['https://fontbureau.github.io',
+    origins=['https://app.typeroof.org',
         'http://localhost:*',
         'http://0.0.0.0:*',
         'http://127.0.0.1:*',

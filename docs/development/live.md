@@ -123,7 +123,7 @@ all known fonts and subsequently, at any time, the same message type for
 each new and updated font.
 
 ```js
-const expectedOriginURL = 'https://fontbureau.github.io'
+const expectedOriginURL = 'https://app.typeroof.org'
   , sendUpdatesTo = new Set()
     // keys are the value of `metadata.fullName` in the message.
   , lastMessages = new Map()
@@ -180,7 +180,7 @@ The means on how the `Adapter` collects the data for the message are not
 part of this protocol.
 
 ```js
-const expectedOriginURL = 'https://fontbureau.github.io';
+const expectedOriginURL = 'https://app.typeroof.org';
   , message = {
         type: 'font-update'
       , metData: {
@@ -244,7 +244,7 @@ progress font project. The data would have been leaked.
 Our [WebSocket server example](live/README/#websocket-part-1-server) **is
 safe** against this kind of attack: accepted local origins with any port
 combination are `http://localhost`, `http://127.0.0.1` and `http://0.0.0.0`;
-we also accept the origin of the project website `https://fontbureau.github.io/`
+we also accept the origin of the project website `https://app.typeroof.org/`
 as we know it's not leaking data as it Is **controlled by us and open
 source software**.
 
