@@ -172,6 +172,15 @@ export class AppMenu extends _BaseContainerComponent {
                     </li>
                     <li>
                         <a
+                            href="https://forum.typeroof.org"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            Community Forum
+                        </a>
+                    </li>
+                    <li>
+                        <a
                             href="https://github.com/FontBureau/TypeRoof/issues"
                             target="_blank"
                             rel="noreferrer"
@@ -186,6 +195,15 @@ export class AppMenu extends _BaseContainerComponent {
                             rel="noreferrer"
                         >
                             GitHub
+                        </a>
+                    </li>
+                    <li>
+                        <a
+                            href="https://typeroof.org"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            TypeRoof Project
                         </a>
                     </li>
                 </menu>,
