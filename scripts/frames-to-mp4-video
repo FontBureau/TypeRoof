@@ -1,0 +1,15 @@
+#! /usr/bin/env bash
+
+# Usage:
+# $ ./scripts/frames-to-mp4-video clip_frames/test/
+
+MY_DIR=$(dirname $0)
+SOURCE="$1"
+TARGET_DIR=$(dirname "$1")
+TARGET_BASE=$(basename "$1")
+TARGET_FILE=${TARGET_DIR}/${TARGET_BASE}.mp4
+
+echo $SOURCE creating $TARGET_FILE
+
+ffmpeg -y -framerate 50 -i ${SOURCE}frame_\%10d.png -c:v \
+    libx264 -crf 18 -r 50 -pix_fmt yuv420p -movflags +faststart ${TARGET_FILE}
