@@ -163,4 +163,15 @@ content
 
         margin-inline-start: calc(var(--use-move-out) * -1);
     }
+
+    .state_button {
+        display: inline-block;
+        border: 1px solid var(--button-border-color);
+        border-radius: 0.3em;
+        padding: 0.3em 0.4em 0.3em 0.3em;
+        .material-symbols-outlined {
+            font-size: 2em !important;
+            vertical-align: middle;
+        }
+    }
 }

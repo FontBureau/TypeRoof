@@ -134,9 +134,28 @@ and learn how to load states into [TypeRoof Shell](/shell).
   * [\`../\`]({{ '../' | url}})
 {% endif %}
 {%- for item in statesList %}
-  * [\`{{ item[0] }}\`]({{ item[1] | url}})
-        <a href="/app/player#[autoplay]from-url:${pathPrefixWithoutTrailingSlash}{{page.url}}{{item[1]}}" target="_blank" title="open in player">view</a>
-        <a href="/shell#from-url:${pathPrefixWithoutTrailingSlash}{{page.url}}{{item[1]}}" target="_blank" title="open in shell-editor">edit</a>
+    {% assign name = item[0] %}
+    {% assign URL = item[1] | url %}
+    {% assign isDir = item[2] %}
+
+
+  * {% if isDir %}[{{ name }}/]({{ URL }}){% else %}{{ name }}
+        <a href="/app/player#[autoplay]from-url:${pathPrefixWithoutTrailingSlash}{{page.url}}{{item[1]}}"
+            target="_blank"
+            title="open in player"
+            class="state_button state_button-view"
+            ><span class="material-symbols-outlined">play_circle</span>view</a>
+        <a href="/shell#from-url:${pathPrefixWithoutTrailingSlash}{{page.url}}{{item[1]}}"
+            target="_blank"
+            title="open in shell-editor"
+            class="state_button state_button-edit"
+            ><span class="material-symbols-outlined">edit_square</span>edit</a>
+        <a href="{{URL}}"
+            target="_blank"
+            title="download JSON"
+            class="state_button state_button-download"
+            ><span class="material-symbols-outlined">download</span>download</a>
+        {% endif %}
 {% endfor -%}
 `
       , directoryTemplateFileName = 'index.md'

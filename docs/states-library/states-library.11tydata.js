@@ -9,9 +9,11 @@ export default function (/*configData*/) {
                 const files = fs.readdirSync(dirname)
                     .filter(file=>!file.endsWith('.11tydata.js'))
                     .map(file=>{
-                        let name;
+                        let name,
+                           isDir = false;
                         if(fs.statSync(path.join(dirname, file)).isDirectory()){
-                            name = `/${file}`
+                            name = `/${file}`;
+                            isDir = true;
                         }
                         else if(file.endsWith('.json.njk')) {
                             // CAUTION:
@@ -24,7 +26,7 @@ export default function (/*configData*/) {
                             name = file;
 
                         const url = path.join('./', file); // local to the page
-                        return [name, url];
+                        return [name, url, isDir];
                     })
                     .filter(item=>item!==null)
                     ;
