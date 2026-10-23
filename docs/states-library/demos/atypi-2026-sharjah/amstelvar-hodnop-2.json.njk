@@ -1,0 +1,332 @@
+---json
+{
+  "permalink": "{{ page.filePathStem }}",
+  "layout": null
+}
+---
+{#-
+  Three rows of "HODnop01" at opsz 144, 14 and 8. The opsz 144 and 8
+  rows are built from the parametric axes and step through them one at
+  a time, see opsz144 and opsz8 below.
+-#}
+{%- set sample = "HODnop01" %}
+{%- set stageWidth = 1336 %}
+{%- set textWidth = 445 %}
+{%- set fontSize = 32 %}
+{%- set opsz144FontSize = 42 %}
+{%- set opsz8FontSize = 24 %}
+{%- set white = [255, 255, 255] %}
+{#-
+  Rows that step through the parametric axes, one settings block each.
+  label, y      actor label and vertical position
+  fontSize      optional, defaults to fontSize
+  startDuration duration of the moment at startAxes
+  changes       applied one after the other; every change is kept, so each
+                location builds on the previous one
+    label, duration, axes   the moment that animates to the changed axes
+    pause                   duration of the "pause" moment that holds them
+    isActive                marks that pause as the active key moment
+  Every row shares startAxes, waitDuration, and fadeIn, see below.
+-#}
+{#- the axes location every row starts from; its key order is the order
+    the axes are written in -#}
+{%- set startAxes = {
+  "opsz": "14",
+  "XOUC": "90", "XOUA": "84", "XOLC": "85", "XOLA": "78", "XOFI": "88", "XOET": "94", "XDOT": "144",
+  "YOUC": "66", "YOUA": "56", "YOLC": "58", "YOLA": "53", "YOFI": "56", "YOET": "56",
+  "XTUC": "400", "XTUR": "561", "XTUD": "410", "XTUA": "258", "XTLC": "243", "XTLR": "337", "XTLD": "248", "XTLA": "235", "XTFI": "329", "XTET": "642", "XUCD": "69", "XLCD": "54", "XETS": "40", "XTTW": "5",
+  "YTUC": "750", "YTJD": "-104", "YTLC": "511", "YTAS": "767", "YTDE": "-240", "YTFI": "771", "YTTL": "60",
+  "XSHU": "104", "XSHL": "74", "XSHF": "129", "YSHU": "50", "YSHL": "40", "YSHF": "47", "XSVU": "55", "XSVL": "54", "XSVF": "61", "YSVU": "165", "YSVL": "70", "YSVF": "117", "XVAU": "18",
+  "TN00": "0", "TN01": "0", "TN02": "0", "TN03": "0", "TN04": "0", "TN05": "0", "TN06": "0", "TN07": "0", "TN08": "0", "TN09": "0", "TN10": "0", "TN11": "0", "TN12": "0", "TN13": "0", "TN14": "0", "TN15": "0", "TN16": "0", "TN17": "0", "TN18": "0", "TN19": "0", "TN20": "0", "TN21": "0", "TN22": "0", "TN23": "0", "TN24": "0", "TN25": "0"
+} %}
+{#- settings shared by every row:
+    waitDuration  time before the row starts changing
+    fadeIn        duration of the fade in, at startAxes -#}
+{%- set waitDuration = 1 %}
+{%- set fadeIn = 3 %}
+{%- set wdth50 = {
+  "label": "wdth50",
+  "x": 410,
+  "y": 550,
+  "startDuration": 5,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "85", "XOUA": "78", "XOLC": "78", "XOLA": "69", "XOFI": "80", "XOET": "90", "XDOT": "122"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "64", "YOUA": "49", "YOLC": "57", "YOLA": "42", "YOFI": "58", "YOET": "56"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "220", "XTUR": "305", "XTUD": "248", "XTUA": "240", "XTLC": "124", "XTLR": "168", "XTLD": "147", "XTLA": "202", "XTFI": "213", "XTET": "434", "XTTW": "5"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-104", "YTLC": "508", "YTAS": "767", "YTDE": "-240", "YTFI": "771", "YTOS": "10", "YTTL": "50"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "79", "XSHL": "50", "XSHF": "104", "YSHU": "48", "YSHL": "40", "YSHF": "44", "XSVU": "55", "XSVL": "56", "XSVF": "58", "YSVU": "155", "YSVL": "66", "YSVF": "102", "XVAU": "18"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "152", "XUCS": "97", "XUCR": "32", "XUCD": "64", "XLCS": "73", "XLCR": "25", "XLCD": "39", "XFIR": "31", "XETS": "28"}, "pause": 1},
+    {"label": "TN19", "duration": 2, "axes": {"TN19": "100"}, "pause": 164, "isActive": true}
+  ]
+} %}
+{%- set wdth125 = {
+  "label": "wdth125",
+  "x": 410,
+  "y": 150,
+  "startDuration": 28,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "92", "XOUA": "74", "XOLC": "88", "XOLA": "74", "XOFI": "87", "XOET": "92", "XDOT": "144"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "66", "YOUA": "46", "YOLC": "58", "YOLA": "46", "YOFI": "62", "YOET": "56"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "591", "XTUR": "793", "XTUD": "601", "XTUA": "324", "XTLC": "433", "XTLR": "531", "XTLD": "412", "XTLA": "324", "XTFI": "518", "XTET": "855", "XTTW": "5"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-128", "YTLC": "510", "YTAS": "767", "YTDE": "-240", "YTFI": "771", "YTOS": "16", "YTTL": "89"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "124", "XSHL": "99", "XSHF": "189", "YSHU": "50", "YSHL": "42", "YSHF": "47", "XSVU": "65", "XSVL": "60", "XSVF": "61", "YSVU": "165", "YSVL": "70", "YSVF": "112", "XVAU": "18"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "320", "XUCS": "189", "XUCR": "48", "XUCD": "115", "XLCS": "159", "XLCR": "45", "XLCD": "88", "XFIR": "46", "XETS": "52"}, "pause": 1},
+    {"label": "TN18", "duration": 2, "axes": {"TN18": "100"}, "pause": 141, "isActive": true}
+  ]
+} %}
+{%- set wght100 = {
+  "label": "wght100",
+  "x": 0,
+  "y": 350,
+  "startDuration": 51,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "40", "XOUA": "42", "XOLC": "42", "XOLA": "42", "XOFI": "38", "XOET": "38", "XDOT": "91"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "31", "YOUA": "22", "YOLC": "30", "YOLA": "22", "YOFI": "28", "YOET": "30"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "470", "XTUR": "668", "XTUD": "477", "XTUA": "235", "XTLC": "306", "XTLR": "431", "XTLD": "312", "XTLA": "235", "XTFI": "430", "XTET": "682", "XTTW": "2"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-95", "YTLC": "510", "YTAS": "757", "YTDE": "-240", "YTFI": "774", "YTOS": "11", "YTTL": "68"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "114", "XSHL": "84", "XSHF": "128", "YSHU": "24", "YSHL": "20", "YSHF": "24", "XSVU": "27", "XSVL": "28", "XSVF": "24", "YSVU": "163", "YSVL": "88", "YSVF": "138", "XVAU": "26"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "256", "XUCS": "158", "XUCR": "42", "XUCD": "90", "XLCS": "127", "XLCR": "34", "XLCD": "67", "XFIR": "39", "XETS": "31"}, "pause": 1},
+    {"label": "TN20", "duration": 2, "axes": {"TN20": "100"}, "pause": 118, "isActive": true}
+  ]
+} %}
+{%- set wght1000 = {
+  "label": "wght1000",
+  "x": 860,
+  "y": 350,
+  "startDuration": 74,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "250", "XOUA": "102", "XOLC": "242", "XOLA": "102", "XOFI": "245", "XOET": "214", "XDOT": "246"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "81", "YOUA": "59", "YOLC": "79", "YOLA": "59", "YOFI": "68", "YOET": "82"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "250", "XTUR": "342", "XTUD": "304", "XTUA": "282", "XTLC": "170", "XTLR": "204", "XTLD": "208", "XTLA": "282", "XTFI": "268", "XTET": "629", "XTTW": "5"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-120", "YTLC": "536", "YTAS": "767", "YTDE": "-240", "YTFI": "776", "YTOS": "13", "YTTL": "63"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "89", "XSHL": "74", "XSHF": "124", "YSHU": "65", "YSHL": "60", "YSHF": "62", "XSVU": "73", "XSVL": "78", "XSVF": "60", "YSVU": "143", "YSVL": "60", "YSVF": "97", "XVAU": "20"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "250", "XUCS": "110", "XUCR": "32", "XUCD": "75", "XLCS": "90", "XLCR": "27", "XLCD": "68", "XFIR": "30", "XETS": "40"}, "pause": 1},
+    {"label": "TN21", "duration": 2, "axes": {"TN21": "100"}, "pause": 95, "isActive": true}
+  ]
+} %}
+{%- set wght100_wdth125 = {
+  "label": "wght100_wdth125",
+  "x": 0,
+  "y": 150,
+  "startDuration": 97,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "42", "XOUA": "49", "XOLC": "44", "XOLA": "49", "XOFI": "36", "XOET": "41", "XDOT": "91"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "31", "YOUA": "17", "YOLC": "34", "YOLA": "17", "YOFI": "33", "YOET": "35"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "661", "XTUR": "900", "XTUD": "678", "XTUA": "301", "XTLC": "498", "XTLR": "625", "XTLD": "498", "XTLA": "324", "XTFI": "600", "XTET": "899", "XTTW": "2"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-120", "YTLC": "510", "YTAS": "757", "YTDE": "-240", "YTFI": "774", "YTOS": "14", "YTTL": "49"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "134", "XSHL": "110", "XSHF": "208", "YSHU": "24", "YSHL": "22", "YSHF": "24", "XSVU": "32", "XSVL": "29", "XSVF": "24", "YSVU": "163", "YSVL": "88", "YSVF": "132", "XVAU": "22"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "256", "XUCS": "202", "XUCR": "50", "XUCD": "136", "XLCS": "179", "XLCR": "47", "XLCD": "110", "XFIR": "50", "XETS": "43"}, "pause": 1},
+    {"label": "TN24", "duration": 2, "axes": {"TN24": "100"}, "pause": 72, "isActive": true}
+  ]
+} %}
+{%- set wght1000_wdth125 = {
+  "label": "wght1000_wdth125",
+  "x": 860,
+  "y": 150,
+  "startDuration": 120,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "252", "XOUA": "103", "XOLC": "244", "XOLA": "98", "XOFI": "244", "XOET": "212", "XDOT": "246"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "81", "YOUA": "52", "YOLC": "78", "YOLA": "52", "YOFI": "74", "YOET": "82"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "441", "XTUR": "574", "XTUD": "494", "XTUA": "352", "XTLC": "360", "XTLR": "398", "XTLD": "388", "XTLA": "371", "XTFI": "364", "XTET": "842", "XTTW": "5"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-144", "YTLC": "536", "YTAS": "767", "YTDE": "-240", "YTFI": "776", "YTOS": "18", "YTTL": "110"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "109", "XSHL": "99", "XSHF": "184", "YSHU": "65", "YSHL": "62", "YSHF": "62", "XSVU": "83", "XSVL": "85", "XSVF": "60", "YSVU": "143", "YSVL": "60", "YSVF": "92", "XVAU": "20"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "250", "XUCS": "154", "XUCR": "40", "XUCD": "121", "XLCS": "138", "XLCR": "39", "XLCD": "101", "XFIR": "40", "XETS": "52"}, "pause": 1},
+    {"label": "TN22", "duration": 2, "axes": {"TN22": "100"}, "pause": 49, "isActive": true}
+  ]
+} %}
+{%- set wght100_wdth50 = {
+  "label": "wght100_wdth50",
+  "x": 0,
+  "y": 550,
+  "startDuration": 143,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "35", "XOUA": "38", "XOLC": "36", "XOLA": "36", "XOFI": "35", "XOET": "34", "XDOT": "70"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "29", "YOUA": "13", "YOLC": "29", "YOLA": "12", "YOFI": "30", "YOET": "30"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "290", "XTUR": "412", "XTUD": "342", "XTUA": "217", "XTLC": "188", "XTLR": "260", "XTLD": "218", "XTLA": "202", "XTFI": "286", "XTET": "474", "XTTW": "1"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-95", "YTLC": "508", "YTAS": "757", "YTDE": "-240", "YTFI": "774", "YTOS": "10", "YTTL": "31"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "89", "XSHL": "60", "XSHF": "102", "YSHU": "22", "YSHL": "20", "YSHF": "22", "XSVU": "27", "XSVL": "29", "XSVF": "21", "YSVU": "156", "YSVL": "88", "YSVF": "124", "XVAU": "22"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "105", "XUCS": "110", "XUCR": "34", "XUCD": "94", "XLCS": "80", "XLCR": "27", "XLCD": "48", "XFIR": "33", "XETS": "19"}, "pause": 1},
+    {"label": "TN25", "duration": 2, "axes": {"TN25": "100"}, "pause": 26, "isActive": true}
+  ]
+} %}
+{%- set wght1000_wdth50 = {
+  "label": "wght1000_wdth50",
+  "x": 860,
+  "y": 550,
+  "startDuration": 166,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOUC": "246", "XOUA": "96", "XOLC": "236", "XOLA": "92", "XOFI": "237", "XOET": "195", "XDOT": "224"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOUC": "79", "YOUA": "54", "YOLC": "78", "YOLA": "53", "YOFI": "70", "YOET": "76"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTUC": "75", "XTUR": "86", "XTUD": "118", "XTUA": "264", "XTLC": "80", "XTLR": "68", "XTLD": "112", "XTLA": "249", "XTFI": "70", "XTET": "446", "XTTW": "5"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTUC": "750", "YTJD": "-120", "YTLC": "534", "YTAS": "777", "YTDE": "-240", "YTFI": "776", "YTOS": "12", "YTTL": "57"}, "pause": 1},
+    {"label": "Serifs", "duration": 2, "axes": {"XSHU": "32", "XSHL": "25", "XSHF": "99", "YSHU": "63", "YSHL": "60", "YSHF": "60", "XSVU": "78", "XSVL": "100", "XSVF": "82", "YSVU": "143", "YSVL": "70", "YSVF": "70", "XVAU": "20"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"WDSP": "150", "XUCS": "39", "XUCR": "24", "XUCD": "24", "XLCS": "36", "XLCR": "18", "XLCD": "38", "XFIR": "23", "XETS": "28"}, "pause": 1},
+    {"label": "TN23", "duration": 2, "axes": {"TN23": "100"}, "pause": 3, "isActive": true}
+  ]
+} %}
+{%- macro color(rgb, alpha) -%}
+{
+                "instance": {
+                  "R": "{{ rgb[0] }}",
+                  "G": "{{ rgb[1] }}",
+                  "B": "{{ rgb[2] }}"{% if alpha %},
+                  "alpha": "{{ alpha }}"{% endif %}
+                },
+                "colorTypeKey": "RGB"
+              }
+{%- endmacro %}
+{%- macro pairs(items) -%}
+{%- if items | length == 1 -%}
+[["{{ items[0][0] }}", "{{ items[0][1] }}"]]
+{%- else -%}
+[
+{%- for item in items %}
+                ["{{ item[0] }}", "{{ item[1] }}"]{{ "," if not loop.last }}
+{%- endfor %}
+              ]
+{%- endif -%}
+{%- endmacro %}
+{%- macro axesOf(location) -%}
+{%- set items = [] %}
+{%- for axis, value in location %}{% set _ = items.push([axis, value]) %}{% endfor %}
+{{- pairs(items) -}}
+{%- endmacro %}
+{%- macro axesRow(row) %}
+{#- locations[i] is the location after changes[i - 1]; a list, because
+    a {% set %} inside a for loop does not outlive its iteration -#}
+{%- set locations = [startAxes] %}
+{%- for change in row.changes %}
+  {%- set _ = locations.push(locations | last | merge(change.axes)) %}
+{%- endfor %}
+      {
+        "instance": {
+          "label": "{{ row.label }}",
+          "keyMoments": [
+            {
+              "label": "wait",
+              "duration": "{{ waitDuration }}",
+              "easing": "linear",
+              "numericProperties": {{ pairs([["x", row.x], ["y", row.y], ["width", textWidth]]) }},
+              "axesLocations": {{ axesOf(startAxes) }},
+              "fontSize": "{{ row.fontSize or fontSize }}",
+              "textColor": {{ color(white, "0.00000") }},
+              "textRun": "{{ sample }}",
+              "textAlign": "center"
+            },
+            {
+              "label": "start",
+              "duration": "{{ row.startDuration }}",
+              "easing": "linear",
+              "numericProperties": {{ pairs([["y", row.y], ["width", textWidth]]) }},
+              "axesLocations": {{ axesOf(startAxes) }},
+              "textColor": {{ color(white, "0.00000") }}
+            },
+            {
+              "label": "fade in",
+              "duration": "{{ fadeIn }}",
+              "easing": "linear",
+              "axesLocations": {{ axesOf(startAxes) }},
+              "textColor": {{ color(white, "100.00000") }}
+            },
+{%- for change in row.changes %}
+            {
+              "label": "{{ change.label }}",
+              "duration": "{{ change.duration }}",
+              "easing": "linear",
+              "axesLocations": {{ axesOf(locations[loop.index]) }}
+            },
+            {
+              "label": "pause",
+              "duration": "{{ change.pause }}",
+              "easing": "linear",
+              {%- if change.isActive %}
+              "isActive": "1",{% endif %}
+              "axesLocations": {{ axesOf(locations[loop.index]) }},
+              "textColor": {{ color(white, "100.00000") }}
+            }{{ "," if (not loop.last) }} 
+{%- endfor %}
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      }
+{%- endmacro -%}
+{
+  "activeState": {
+    "t": "1",
+    "duration": "25",
+    "keyMoments": [
+      {
+        "label": "Key Moment 1",
+        "duration": "1",
+        "easing": "linear",
+        "isActive": "1",
+        "textColor": {
+          "instance": {
+            "R": "255",
+            "G": "255",
+            "B": "255"
+          },
+          "colorTypeKey": "RGB"
+        },
+        "stageBackgroundColor": {
+          "instance": {
+            "R": "0",
+            "G": "0",
+            "B": "0"
+          },
+          "colorTypeKey": "RGB"
+        }
+      }
+    ],
+    "activeActors": [
+      {
+        "instance": {
+          "label": "text 14",
+          "keyMoments": [
+            {
+              "label": "start",
+              "duration": "1",
+              "easing": "linear",
+              "numericProperties": {{ pairs([["x", 410], ["y", 350], ["width", textWidth]]) }},
+              "axesLocations": [["opsz", "14"]],
+              "fontSize": "32",
+              "textColor": {{ color(white, "0.00000") }},
+              "textRun": "{{ sample }}",
+              "textAlign": "center"
+            },
+            {
+              "label": "fade in",
+              "duration": "3",
+              "easing": "linear",
+              "textColor": {{ color(white, "100.00000") }}
+            },
+            {
+              "label": "stay",
+              "duration": "169",
+              "easing": "linear",
+              "isActive": "1"
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      },
+      {{- axesRow(wdth50) }},
+      {{- axesRow(wdth125) }},
+      {{- axesRow(wght100) }},
+      {{- axesRow(wght1000) }},
+      {{- axesRow(wght100_wdth125) }},
+      {{- axesRow(wght1000_wdth125) }},
+      {{- axesRow(wght100_wdth50) }},
+      {{- axesRow(wght1000_wdth50) }}
+    ],
+    "width": "{{ stageWidth }}",
+    "height": "800",
+    "zoomLevel": {
+      "type": "app-default",
+      "scaling": "100.00000"
+    },
+    "editingActor": "./4"
+  },
+  "activeLayoutKey": "MotionStage",
+  "activeFontKey": "from-url AmstelvarA2 Roman wght400 Version_0-001"
+}

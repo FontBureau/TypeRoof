@@ -1,0 +1,505 @@
+---json
+{
+  "permalink": "{{ page.filePathStem }}",
+  "layout": null
+}
+---
+{#-
+  One "H" that steps through the blend sources of Amstelvar, one
+  parametric axis at a time, and returns to the default between each
+  source. The source values come from blends.json.
+-#}
+{%- set sample = "HO" %}
+{%- set stageWidth = 1336 %}
+{%- set textWidth = 1000 %}
+{%- set position = [["x", (stageWidth - textWidth) / 2], ["y", 100], ["width", textWidth]] %}
+{%- set white = [255, 255, 255] %}
+{%- set black = [0, 0, 0] %}
+{%- set yellow = [255, 255, 127] %}
+{%- set defaultAxes = {"opsz": "14", "XOUC": "90", "XSHU": "104", "XTUC": "400", "XTUR": "561", "XUCS": "145", "XUCR": "40", "YOUC": "66", "YSHU": "50", "YTUC": "750", "YTOS": "11", "TN00": "0", "TN01": "0", "TN02": "0", "TN03": "0", "TN04": "0", "TN05": "0", "TN06": "0", "TN07": "0", "TN08": "0", "TN09": "0", "TN10": "0", "TN11": "0", "TN12": "0", "TN13": "0", "TN14": "0", "TN15": "0", "TN16": "0", "TN17": "0", "TN18": "0", "TN19": "0", "TN20": "0", "TN21": "0", "TN22": "0", "TN23": "0", "TN24": "0", "TN25": "0"} %}
+{%- set defaultInstance = {
+  "label": "default",
+  "changes": [
+    {"label": "all", "axes": defaultAxes }
+  ]
+} %}
+{#-
+  The blend sources, in the order they are shown. defaultInstance is
+  shown before the first, between each and after the last. Each change
+  is a moment that animates to its axes, followed by a "pause" that
+  holds them; the changes build on the previous location.
+-#}
+{%- set instances = [
+  {
+    "label": "opsz8",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "112"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "400", "XTUR": "561"} },
+      {"label": "YOUC", "axes": {"YOUC": "91"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "11"} },
+      {"label": "XSHU", "axes": {"XSHU": "104"} },
+      {"label": "YSHU", "axes": {"YSHU": "75"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "145", "XUCR": "40"} },
+      {"label": "TN09", "axes": {"TN09": "100"} }
+    ]
+  },
+  {
+    "label": "opsz144",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "84"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "348", "XTUR": "470"} },
+      {"label": "YOUC", "axes": {"YOUC": "16"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "11"} },
+      {"label": "XSHU", "axes": {"XSHU": "82"} },
+      {"label": "YSHU", "axes": {"YSHU": "12"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "113", "XUCR": "32"} },
+      {"label": "TN00", "axes": {"TN00": "100"} }
+    ]
+  },
+  {
+    "label": "wdth50",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "85"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "220", "XTUR": "305"} },
+      {"label": "YOUC", "axes": {"YOUC": "64"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "10"} },
+      {"label": "XSHU", "axes": {"XSHU": "79"} },
+      {"label": "YSHU", "axes": {"YSHU": "48"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "97", "XUCR": "32"} },
+      {"label": "TN19", "axes": {"TN19": "100"} }
+    ]
+  },
+  {
+    "label": "wdth125",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "92"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "591", "XTUR": "793"} },
+      {"label": "YOUC", "axes": {"YOUC": "66"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "16"} },
+      {"label": "XSHU", "axes": {"XSHU": "124"} },
+      {"label": "YSHU", "axes": {"YSHU": "50"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "189", "XUCR": "48"} },
+      {"label": "TN18", "axes": {"TN18": "100"} }
+    ]
+  },
+  {
+    "label": "wght100",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "40"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "470", "XTUR": "668"} },
+      {"label": "YOUC", "axes": {"YOUC": "31"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "11"} },
+      {"label": "XSHU", "axes": {"XSHU": "114"} },
+      {"label": "YSHU", "axes": {"YSHU": "24"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "158", "XUCR": "42"} },
+      {"label": "TN20", "axes": {"TN20": "100"} }
+    ]
+  },
+  {
+    "label": "wght1000",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "250"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "250", "XTUR": "342"} },
+      {"label": "YOUC", "axes": {"YOUC": "81"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "13"} },
+      {"label": "XSHU", "axes": {"XSHU": "89"} },
+      {"label": "YSHU", "axes": {"YSHU": "65"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "110", "XUCR": "32"} },
+      {"label": "TN21", "axes": {"TN21": "100"} }
+    ]
+  },
+  {
+    "label": "wght100_wdth125",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "42"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "661", "XTUR": "900"} },
+      {"label": "YOUC", "axes": {"YOUC": "31"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "14"} },
+      {"label": "XSHU", "axes": {"XSHU": "134"} },
+      {"label": "YSHU", "axes": {"YSHU": "24"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "202", "XUCR": "50"} },
+      {"label": "TN24", "axes": {"TN24": "100"} }
+    ]
+  },
+  {
+    "label": "wght1000_wdth125",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "252"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "441", "XTUR": "574"} },
+      {"label": "YOUC", "axes": {"YOUC": "81"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "18"} },
+      {"label": "XSHU", "axes": {"XSHU": "109"} },
+      {"label": "YSHU", "axes": {"YSHU": "65"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "154", "XUCR": "40"} },
+      {"label": "TN22", "axes": {"TN22": "100"} }
+    ]
+  },
+  {
+    "label": "wght100_wdth50",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "35"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "290", "XTUR": "412"} },
+      {"label": "YOUC", "axes": {"YOUC": "29"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "10"} },
+      {"label": "XSHU", "axes": {"XSHU": "89"} },
+      {"label": "YSHU", "axes": {"YSHU": "22"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "110", "XUCR": "34"} },
+      {"label": "TN25", "axes": {"TN25": "100"} }
+    ]
+  },
+  {
+    "label": "wght1000_wdth50",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "246"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "75", "XTUR": "86"} },
+      {"label": "YOUC", "axes": {"YOUC": "79"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "12"} },
+      {"label": "XSHU", "axes": {"XSHU": "32"} },
+      {"label": "YSHU", "axes": {"YSHU": "63"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "39", "XUCR": "24"} },
+      {"label": "TN23", "axes": {"TN23": "100"} }
+    ]
+  },
+  {
+    "label": "opsz8_wdth50",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "107"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "220", "XTUR": "305"} },
+      {"label": "YOUC", "axes": {"YOUC": "89"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "10"} },
+      {"label": "XSHU", "axes": {"XSHU": "74"} },
+      {"label": "YSHU", "axes": {"YSHU": "73"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "97", "XUCR": "36"} },
+      {"label": "TN11", "axes": {"TN11": "100"} }
+    ]
+  },
+  {
+    "label": "opsz144_wdth50",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "78"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "168", "XTUR": "214"} },
+      {"label": "YOUC", "axes": {"YOUC": "19"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "10"} },
+      {"label": "XSHU", "axes": {"XSHU": "58"} },
+      {"label": "YSHU", "axes": {"YSHU": "10"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "65", "XUCR": "24"} },
+      {"label": "TN02", "axes": {"TN02": "100"} }
+    ]
+  },
+  {
+    "label": "opsz8_wdth125",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "114"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "591", "XTUR": "793"} },
+      {"label": "YOUC", "axes": {"YOUC": "91"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "16"} },
+      {"label": "XSHU", "axes": {"XSHU": "124"} },
+      {"label": "YSHU", "axes": {"YSHU": "75"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "189", "XUCR": "48"} },
+      {"label": "TN10", "axes": {"TN10": "100"} }
+    ]
+  },
+  {
+    "label": "opsz144_wdth125",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "86"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "539", "XTUR": "702"} },
+      {"label": "YOUC", "axes": {"YOUC": "16"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "16"} },
+      {"label": "XSHU", "axes": {"XSHU": "102"} },
+      {"label": "YSHU", "axes": {"YSHU": "12"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "157", "XUCR": "41"} },
+      {"label": "TN01", "axes": {"TN01": "100"} }
+    ]
+  },
+  {
+    "label": "opsz8_wght100",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "62"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "470", "XTUR": "668"} },
+      {"label": "YOUC", "axes": {"YOUC": "56"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "11"} },
+      {"label": "XSHU", "axes": {"XSHU": "114"} },
+      {"label": "YSHU", "axes": {"YSHU": "49"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "158", "XUCR": "42"} },
+      {"label": "TN12", "axes": {"TN12": "100"} }
+    ]
+  },
+  {
+    "label": "opsz144_wght100",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "34"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "418", "XTUR": "571"} },
+      {"label": "YOUC", "axes": {"YOUC": "13"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "11"} },
+      {"label": "XSHU", "axes": {"XSHU": "92"} },
+      {"label": "YSHU", "axes": {"YSHU": "9"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "126", "XUCR": "35"} },
+      {"label": "TN03", "axes": {"TN03": "100"} }
+    ]
+  },
+  {
+    "label": "opsz8_wght1000",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "272"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "250", "XTUR": "342"} },
+      {"label": "YOUC", "axes": {"YOUC": "106"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "13"} },
+      {"label": "XSHU", "axes": {"XSHU": "89"} },
+      {"label": "YSHU", "axes": {"YSHU": "90"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "110", "XUCR": "32"} },
+      {"label": "TN13", "axes": {"TN13": "100"} }
+    ]
+  },
+  {
+    "label": "opsz144_wght1000",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "244"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "198", "XTUR": "251"} },
+      {"label": "YOUC", "axes": {"YOUC": "34"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "13"} },
+      {"label": "XSHU", "axes": {"XSHU": "68"} },
+      {"label": "YSHU", "axes": {"YSHU": "28"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "78", "XUCR": "25"} },
+      {"label": "TN04", "axes": {"TN04": "100"} }
+    ]
+  },
+  {
+    "label": "opsz8_wght100_wdth125",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "64"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "661", "XTUR": "900"} },
+      {"label": "YOUC", "axes": {"YOUC": "54"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "16"} },
+      {"label": "XSHU", "axes": {"XSHU": "134"} },
+      {"label": "YSHU", "axes": {"YSHU": "49"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "202", "XUCR": "50"} },
+      {"label": "TN16", "axes": {"TN16": "100"} }
+    ]
+  },
+  {
+    "label": "opsz144_wght100_wdth125",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "32"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "614", "XTUR": "810"} },
+      {"label": "YOUC", "axes": {"YOUC": "16"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "16"} },
+      {"label": "XSHU", "axes": {"XSHU": "114"} },
+      {"label": "YSHU", "axes": {"YSHU": "9"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "172", "XUCR": "43"} },
+      {"label": "TN07", "axes": {"TN07": "100"} }
+    ]
+  },
+  {
+    "label": "opsz8_wght1000_wdth125",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "274"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "441", "XTUR": "574"} },
+      {"label": "YOUC", "axes": {"YOUC": "106"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "18"} },
+      {"label": "XSHU", "axes": {"XSHU": "109"} },
+      {"label": "YSHU", "axes": {"YSHU": "90"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "154", "XUCR": "40"} },
+      {"label": "TN14", "axes": {"TN14": "100"} }
+    ]
+  },
+  {
+    "label": "opsz144_wght1000_wdth125",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "246"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "389", "XTUR": "483"} },
+      {"label": "YOUC", "axes": {"YOUC": "35"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "18"} },
+      {"label": "XSHU", "axes": {"XSHU": "88"} },
+      {"label": "YSHU", "axes": {"YSHU": "28"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "122", "XUCR": "33"} },
+      {"label": "TN05", "axes": {"TN05": "100"} }
+    ]
+  },
+  {
+    "label": "opsz8_wght100_wdth50",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "57"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "290", "XTUR": "408"} },
+      {"label": "YOUC", "axes": {"YOUC": "54"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "10"} },
+      {"label": "XSHU", "axes": {"XSHU": "89"} },
+      {"label": "YSHU", "axes": {"YSHU": "47"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "110", "XUCR": "34"} },
+      {"label": "TN17", "axes": {"TN17": "100"} }
+    ]
+  },
+  {
+    "label": "opsz144_wght100_wdth50",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "28"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "238", "XTUR": "310"} },
+      {"label": "YOUC", "axes": {"YOUC": "14"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "10"} },
+      {"label": "XSHU", "axes": {"XSHU": "68"} },
+      {"label": "YSHU", "axes": {"YSHU": "7"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "78", "XUCR": "27"} },
+      {"label": "TN08", "axes": {"TN08": "100"} }
+    ]
+  },
+  {
+    "label": "opsz8_wght1000_wdth50",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "268"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "74", "XTUR": "86"} },
+      {"label": "YOUC", "axes": {"YOUC": "104"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "12"} },
+      {"label": "XSHU", "axes": {"XSHU": "56"} },
+      {"label": "YSHU", "axes": {"YSHU": "88"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "64", "XUCR": "24"} },
+      {"label": "TN15", "axes": {"TN15": "100"} }
+    ]
+  },
+  {
+    "label": "opsz144_wght1000_wdth50",
+    "changes": [
+      {"label": "XOUC", "axes": {"XOUC": "239"} },
+      {"label": "XTUC + XTUR", "axes": {"XTUC": "72", "XTUR": "66"} },
+      {"label": "YOUC", "axes": {"YOUC": "30"} },
+      {"label": "YTUC + YTOS", "axes": {"YTUC": "750", "YTOS": "12"} },
+      {"label": "XSHU", "axes": {"XSHU": "32"} },
+      {"label": "YSHU", "axes": {"YSHU": "26"} },
+      {"label": "XUCS + XUCR", "axes": {"XUCS": "35", "XUCR": "17"} },
+      {"label": "TN06", "axes": {"TN06": "100"} }
+    ]
+  }
+] %}
+{%- macro color(rgb, alpha) -%}
+{
+                "instance": {
+                  "R": "{{ rgb[0] }}",
+                  "G": "{{ rgb[1] }}",
+                  "B": "{{ rgb[2] }}"{% if alpha is defined %},
+                  "alpha": "{{ alpha }}"{% endif %}
+                },
+                "colorTypeKey": "RGB"
+              }
+{%- endmacro %}
+{%- macro pairs(items) -%}
+              [
+{%- for item in items %}
+                ["{{ item[0] }}", "{{ item[1] }}"]{{ "," if not loop.last }}
+{%- endfor %}
+              ]
+{%- endmacro %}
+{%- macro axesOf(location) -%}
+{%- set items = [] %}
+{%- for axis, value in location %}{% set _ = items.push([axis, value]) %}{% endfor %}
+{{- pairs(items) -}}
+{%- endmacro %}
+{%- macro instanceKeyMoments(instance, pauseInstance = 5) %}
+{%- set locations = [] %}
+{%- for change in instance.changes %}
+  {%- set _ = locations.push(defaultAxes | merge(locations | last | merge(change.axes))) %}
+{%- endfor %}
+{%- for change in instance.changes %}
+{%- set rgb = yellow if change.label.startsWith("TN") else white %}
+            {
+              "label": "{{ instance.label }} {{ change.label }}",
+              "duration": "1",
+              "easing": "easeOutQuad",
+              "axesLocations": {{ axesOf(locations[loop.index0]) }},
+              "textColor": {{ color(rgb, "100.00000") }}
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "easeOutQuad",
+              "axesLocations": {{ axesOf(locations[loop.index0]) }},
+              "textColor": {{ color(rgb, "100.00000") }}
+            },
+{%- endfor %}
+{%- set rgb = yellow if (instance.changes | last).label.startsWith("TN") else white %}
+            {
+              "label": "pause instance",
+              "duration": "{{ pauseInstance }}",
+              "easing": "easeOutQuad",
+              "axesLocations": {{ axesOf(locations | last) }},
+              "textColor": {{ color(rgb, "100.00000") }}
+            },
+{%- endmacro %}
+{
+  "activeState": {
+    "t": "0",
+    "duration": "100",
+    "keyMoments": [
+      {
+        "label": "Key Moment 1",
+        "duration": "1",
+        "easing": "easeOutQuad",
+        "isActive": "1",
+        "textColor": {{ color(white) }},
+        "stageBackgroundColor": {{ color(black) }}
+      }
+    ],
+    "activeActors": [
+      {
+        "instance": {
+          "label": "character",
+          "keyMoments": [
+            {
+              "label": "start",
+              "duration": "1",
+              "easing": "easeOutQuad",
+              "numericProperties": {{ pairs(position) }},
+              "axesLocations": {{ axesOf(defaultAxes) }},
+              "autoOPSZ": "0",
+              "fontSize": "300",
+              "textColor": {{ color(white, "0.00000") }},
+              "textRun": "{{ sample }}",
+              "textAlign": "center"
+            },
+            {
+              "label": "wait",
+              "duration": "3",
+              "easing": "easeOutQuad",
+              "numericProperties": {{ pairs(position) }},
+              "axesLocations": {{ axesOf(defaultAxes) }},
+              "textColor": {{ color(white, "0.00000") }}
+            },
+            {
+              "label": "fade in",
+              "duration": "3",
+              "easing": "easeOutQuad",
+              "numericProperties": {{ pairs(position) }},
+              "axesLocations": {{ axesOf(defaultAxes) }},
+              "textColor": {{ color(white, "100.00000") }}
+            },
+{%- for instance in instances %}
+            {{ instanceKeyMoments(defaultInstance, 1) }}
+            {{ instanceKeyMoments(instance) }}
+{%- endfor %}
+            {{ instanceKeyMoments(defaultInstance, 1) }}
+            {
+              "label": "fade out",
+              "duration": "3",
+              "easing": "easeOutQuad",
+              "textColor": {{ color(white, "100.00000") }}
+            },
+            {
+              "label": "end",
+              "duration": "3",
+              "easing": "easeOutQuad",
+              "textColor": {{ color(white, "0.00000") }}
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      }
+    ],
+    "width": "{{ stageWidth }}",
+    "height": "800",
+    "zoomLevel": {
+      "type": "app-default",
+      "scaling": "100.00000"
+    },
+    "editingActor": "./0"
+  },
+  "activeLayoutKey": "MotionStage",
+  "activeFontKey": "from-url AmstelvarA2 Roman wght400 Version_0-001"
+}

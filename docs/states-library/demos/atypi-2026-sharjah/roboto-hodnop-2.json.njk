@@ -1,0 +1,332 @@
+---json
+{
+  "permalink": "{{ page.filePathStem }}",
+  "layout": null
+}
+---
+{#-
+  Three rows of "HODnop01" at opsz 144, 14 and 8. The opsz 144 and 8
+  rows are built from the parametric axes and step through them one at
+  a time, see opsz144 and opsz8 below.
+-#}
+{%- set sample = "HODnop01" %}
+{%- set stageWidth = 1336 %}
+{%- set textWidth = 445 %}
+{%- set fontSize = 32 %}
+{%- set opsz144FontSize = 42 %}
+{%- set opsz8FontSize = 24 %}
+{%- set white = [255, 255, 255] %}
+{#-
+  Rows that step through the parametric axes, one settings block each.
+  label, y      actor label and vertical position
+  fontSize      optional, defaults to fontSize
+  startDuration duration of the moment at startAxes
+  changes       applied one after the other; every change is kept, so each
+                location builds on the previous one
+    label, duration, axes   the moment that animates to the changed axes
+    pause                   duration of the "pause" moment that holds them
+    isActive                marks that pause as the active key moment
+  Every row shares startAxes, waitDuration, and fadeIn, see below.
+-#}
+{#- the axes location every row starts from; its key order is the order
+    the axes are written in -#}
+{%- set startAxes = {
+  "opsz": "14",
+  "XOPQ": "96",
+  "XTRA": "463",
+  "YOPQ": "79",
+  "YTLC": "526",
+  "YTUC": "728",
+  "YTAS": "728",
+  "YTDE": "-208",
+  "YTFI": "743",
+  "YTOS": "30",
+  "XTSP": "0",
+  "STUI": "92",
+  "STUO": "92",
+  "STLI": "32",
+  "STLO": "32"
+} %}
+{#- settings shared by every row:
+    waitDuration  time before the row starts changing
+    fadeIn        duration of the fade in, at startAxes -#}
+{%- set waitDuration = 1 %}
+{%- set fadeIn = 3 %}
+{%- set opsz14_wdth25_wght400 = {
+  "label": "opsz14-wdth25-wght400",
+  "x": 410,
+  "y": 550,
+  "startDuration": 5,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOPQ": "92"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOPQ": "78"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTRA": "420"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTLC": "526", "YTUC": "728", "YTAS": "728", "YTDE": "-208", "YTFI": "743", "YTOS": "30"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"XTSP": "0"}, "pause": 1},
+    {"label": "Details", "duration": 2, "axes": {"STUI": "92", "STUO": "92", "STLI": "32", "STLO": "32"}, "pause": 143, "isActive": true}
+  ]
+} %}
+{%- set opsz14_wdth151_wght400 = {
+  "label": "opsz14-wdth151-wght400",
+  "x": 410,
+  "y": 150,
+  "startDuration": 25,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOPQ": "100"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOPQ": "80"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTRA": "560"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTLC": "526", "YTUC": "728", "YTAS": "728", "YTDE": "-208", "YTFI": "743", "YTOS": "30"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"XTSP": "10"}, "pause": 1},
+    {"label": "Details", "duration": 2, "axes": {"STUI": "92", "STUO": "92", "STLI": "32", "STLO": "32"}, "pause": 123, "isActive": true}
+  ]
+} %}
+{%- set opsz14_wdth100_wght100 = {
+  "label": "opsz14-wdth100-wght100",
+  "x": 0,
+  "y": 350,
+  "startDuration": 45,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOPQ": "47"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOPQ": "44"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTRA": "516"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTLC": "526", "YTUC": "728", "YTAS": "756", "YTDE": "-208", "YTFI": "743", "YTOS": "30"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"XTSP": "10"}, "pause": 1},
+    {"label": "Details", "duration": 2, "axes": {"STUI": "92", "STUO": "92", "STLI": "32", "STLO": "32"}, "pause": 103, "isActive": true}
+  ]
+} %}
+{%- set opsz14_wdth100_wght1000 = {
+  "label": "opsz14-wdth100-wght1000",
+  "x": 860,
+  "y": 350,
+  "startDuration": 65,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOPQ": "210"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOPQ": "156"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTRA": "380"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTLC": "526", "YTUC": "728", "YTAS": "728", "YTDE": "-208", "YTFI": "743", "YTOS": "30"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"XTSP": "-30"}, "pause": 1},
+    {"label": "Details", "duration": 2, "axes": {"STUI": "92", "STUO": "92", "STLI": "32", "STLO": "32"}, "pause": 83, "isActive": true}
+  ]
+} %}
+{%- set opsz14_wdth151_wght100 = {
+  "label": "opsz14-wdth151-wght100",
+  "x": 0,
+  "y": 150,
+  "startDuration": 85,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOPQ": "53"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOPQ": "46"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTRA": "620"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTLC": "526", "YTUC": "728", "YTAS": "756", "YTDE": "-208", "YTFI": "743", "YTOS": "30"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"XTSP": "10"}, "pause": 1},
+    {"label": "Details", "duration": 2, "axes": {"STUI": "92", "STUO": "92", "STLI": "32", "STLO": "32"}, "pause": 63, "isActive": true}
+  ]
+} %}
+{%- set opsz14_wdth151_wght1000 = {
+  "label": "opsz14-wdth151-wght1000",
+  "x": 860,
+  "y": 150,
+  "startDuration": 105,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOPQ": "214"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOPQ": "158"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTRA": "415"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTLC": "526", "YTUC": "728", "YTAS": "728", "YTDE": "-208", "YTFI": "743", "YTOS": "30"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"XTSP": "10"}, "pause": 1},
+    {"label": "Details", "duration": 2, "axes": {"STUI": "92", "STUO": "92", "STLI": "32", "STLO": "32"}, "pause": 43, "isActive": true}
+  ]
+} %}
+{%- set opsz14_wdth25_wght100 = {
+  "label": "opsz14-wdth25-wght100",
+  "x": 0,
+  "y": 550,
+  "startDuration": 125,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOPQ": "44"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOPQ": "42"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTRA": "463"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTLC": "526", "YTUC": "728", "YTAS": "756", "YTDE": "-208", "YTFI": "743", "YTOS": "30"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"XTSP": "0"}, "pause": 1},
+    {"label": "Details", "duration": 2, "axes": {"STUI": "92", "STUO": "92", "STLI": "32", "STLO": "32"}, "pause": 23, "isActive": true}
+  ]
+} %}
+{%- set opsz14_wdth25_wght1000 = {
+  "label": "opsz14-wdth25-wght1000",
+  "x": 860,
+  "y": 550,
+  "startDuration": 145,
+  "changes": [
+    {"label": "XOPQ", "duration": 2, "axes": {"XOPQ": "206"}, "pause": 1},
+    {"label": "YOPQ", "duration": 2, "axes": {"YOPQ": "154"}, "pause": 1},
+    {"label": "XTRA", "duration": 2, "axes": {"XTRA": "327"}, "pause": 1},
+    {"label": "YTRA", "duration": 2, "axes": {"YTLC": "526", "YTUC": "728", "YTAS": "728", "YTDE": "-208", "YTFI": "743", "YTOS": "30"}, "pause": 1},
+    {"label": "XTSP", "duration": 2, "axes": {"XTSP": "-30"}, "pause": 1},
+    {"label": "Details", "duration": 2, "axes": {"STUI": "92", "STUO": "92", "STLI": "32", "STLO": "32"}, "pause": 3, "isActive": true}
+  ]
+} %}
+{%- macro color(rgb, alpha) -%}
+{
+                "instance": {
+                  "R": "{{ rgb[0] }}",
+                  "G": "{{ rgb[1] }}",
+                  "B": "{{ rgb[2] }}"{% if alpha %},
+                  "alpha": "{{ alpha }}"{% endif %}
+                },
+                "colorTypeKey": "RGB"
+              }
+{%- endmacro %}
+{%- macro pairs(items) -%}
+{%- if items | length == 1 -%}
+[["{{ items[0][0] }}", "{{ items[0][1] }}"]]
+{%- else -%}
+[
+{%- for item in items %}
+                ["{{ item[0] }}", "{{ item[1] }}"]{{ "," if not loop.last }}
+{%- endfor %}
+              ]
+{%- endif -%}
+{%- endmacro %}
+{%- macro axesOf(location) -%}
+{%- set items = [] %}
+{%- for axis, value in location %}{% set _ = items.push([axis, value]) %}{% endfor %}
+{{- pairs(items) -}}
+{%- endmacro %}
+{%- macro axesRow(row) %}
+{#- locations[i] is the location after changes[i - 1]; a list, because
+    a {% set %} inside a for loop does not outlive its iteration -#}
+{%- set locations = [startAxes] %}
+{%- for change in row.changes %}
+  {%- set _ = locations.push(locations | last | merge(change.axes)) %}
+{%- endfor %}
+      {
+        "instance": {
+          "label": "{{ row.label }}",
+          "keyMoments": [
+            {
+              "label": "wait",
+              "duration": "{{ waitDuration }}",
+              "easing": "linear",
+              "numericProperties": {{ pairs([["x", row.x], ["y", row.y], ["width", textWidth]]) }},
+              "axesLocations": {{ axesOf(startAxes) }},
+              "fontSize": "{{ row.fontSize or fontSize }}",
+              "textColor": {{ color(white, "0.00000") }},
+              "textRun": "{{ sample }}",
+              "textAlign": "center"
+            },
+            {
+              "label": "start",
+              "duration": "{{ row.startDuration }}",
+              "easing": "linear",
+              "numericProperties": {{ pairs([["y", row.y], ["width", textWidth]]) }},
+              "axesLocations": {{ axesOf(startAxes) }},
+              "textColor": {{ color(white, "0.00000") }}
+            },
+            {
+              "label": "fade in",
+              "duration": "{{ fadeIn }}",
+              "easing": "linear",
+              "axesLocations": {{ axesOf(startAxes) }},
+              "textColor": {{ color(white, "100.00000") }}
+            },
+{%- for change in row.changes %}
+            {
+              "label": "{{ change.label }}",
+              "duration": "{{ change.duration }}",
+              "easing": "linear",
+              "axesLocations": {{ axesOf(locations[loop.index]) }}
+            },
+            {
+              "label": "pause",
+              "duration": "{{ change.pause }}",
+              "easing": "linear",
+              {%- if change.isActive %}
+              "isActive": "1",{% endif %}
+              "axesLocations": {{ axesOf(locations[loop.index]) }},
+              "textColor": {{ color(white, "100.00000") }}
+            }{{ "," if (not loop.last) }} 
+{%- endfor %}
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      }
+{%- endmacro -%}
+{
+  "activeState": {
+    "t": "1",
+    "duration": "25",
+    "keyMoments": [
+      {
+        "label": "Key Moment 1",
+        "duration": "1",
+        "easing": "linear",
+        "isActive": "1",
+        "textColor": {
+          "instance": {
+            "R": "255",
+            "G": "255",
+            "B": "255"
+          },
+          "colorTypeKey": "RGB"
+        },
+        "stageBackgroundColor": {
+          "instance": {
+            "R": "0",
+            "G": "0",
+            "B": "0"
+          },
+          "colorTypeKey": "RGB"
+        }
+      }
+    ],
+    "activeActors": [
+      {
+        "instance": {
+          "label": "text 14",
+          "keyMoments": [
+            {
+              "label": "start",
+              "duration": "1",
+              "easing": "linear",
+              "numericProperties": {{ pairs([["x", 410], ["y", 350], ["width", textWidth]]) }},
+              "axesLocations": [["opsz", "14"]],
+              "fontSize": "32",
+              "textColor": {{ color(white, "0.00000") }},
+              "textRun": "{{ sample }}",
+              "textAlign": "center"
+            },
+            {
+              "label": "fade in",
+              "duration": "3",
+              "easing": "linear",
+              "textColor": {{ color(white, "100.00000") }}
+            },
+            {
+              "label": "stay",
+              "duration": "145",
+              "easing": "linear",
+              "isActive": "1"
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      },
+      {{- axesRow(opsz14_wdth25_wght400) }},
+      {{- axesRow(opsz14_wdth151_wght400) }},
+      {{- axesRow(opsz14_wdth100_wght100) }},
+      {{- axesRow(opsz14_wdth100_wght1000) }},
+      {{- axesRow(opsz14_wdth151_wght100) }},
+      {{- axesRow(opsz14_wdth151_wght1000) }},
+      {{- axesRow(opsz14_wdth25_wght100) }},
+      {{- axesRow(opsz14_wdth25_wght1000) }}
+    ],
+    "width": "{{ stageWidth }}",
+    "height": "800",
+    "zoomLevel": {
+      "type": "app-default",
+      "scaling": "100.00000"
+    },
+    "editingActor": "./4"
+  },
+  "activeLayoutKey": "MotionStage",
+  "activeFontKey": "from-url Roboto Delta Roman Version_3-000"
+}

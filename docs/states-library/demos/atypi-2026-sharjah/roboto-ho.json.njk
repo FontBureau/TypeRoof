@@ -1,0 +1,450 @@
+---json
+{
+  "permalink": "{{ page.filePathStem }}",
+  "layout": null
+}
+---
+{#-
+  One "H" that steps through the blend sources of Roboto Delta, one
+  parametric axis at a time, and returns to the default between each
+  source. The source values come from blends.json.
+-#}
+{%- set sample = "HO" %}
+{%- set stageWidth = 1336 %}
+{%- set textWidth = 1000 %}
+{%- set position = [["x", (stageWidth - textWidth) / 2], ["y", 100], ["width", textWidth]] %}
+{%- set white = [255, 255, 255] %}
+{%- set black = [0, 0, 0] %}
+{%- set defaultAxes = {"opsz": "14", "XOPQ": "96", "XTRA": "463", "YOPQ": "79", "YTUC": "728", "YTOS": "30", "XTSP": "0", "STUI": "92", "STUO": "92"} %}
+{%- set defaultInstance = {
+  "label": "default",
+  "changes": [
+    {"label": "all", "axes": defaultAxes }
+  ]
+} %}
+{#-
+  The blend sources, in the order they are shown. defaultInstance is
+  shown before the first, between each and after the last. Each change
+  is a moment that animates to its axes, followed by a "pause" that
+  holds them; the changes build on the previous location.
+-#}
+{%- set instances = [
+  {
+    "label": "opsz8-wdth100-wght400",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "103"} },
+      {"label": "XTRA", "axes": {"XTRA": "480"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "86"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "0"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz144-wdth100-wght400",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "55"} },
+      {"label": "XTRA", "axes": {"XTRA": "449"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "49"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "15"} },
+      {"label": "XTSP", "axes": {"XTSP": "-24.9"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz14-wdth25-wght400",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "92"} },
+      {"label": "XTRA", "axes": {"XTRA": "420"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "78"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "0"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz14-wdth151-wght400",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "100"} },
+      {"label": "XTRA", "axes": {"XTRA": "560"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "80"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "10"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz14-wdth100-wght100",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "47"} },
+      {"label": "XTRA", "axes": {"XTRA": "516"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "44"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "10"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz14-wdth100-wght1000",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "210"} },
+      {"label": "XTRA", "axes": {"XTRA": "380"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "156"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "-30"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz14-wdth151-wght100",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "53"} },
+      {"label": "XTRA", "axes": {"XTRA": "620"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "46"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "10"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz14-wdth151-wght1000",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "214"} },
+      {"label": "XTRA", "axes": {"XTRA": "415"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "158"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "10"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz14-wdth25-wght100",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "44"} },
+      {"label": "XTRA", "axes": {"XTRA": "463"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "42"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "0"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz14-wdth25-wght1000",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "206"} },
+      {"label": "XTRA", "axes": {"XTRA": "327"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "154"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "-30"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz8-wdth25-wght400",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "100"} },
+      {"label": "XTRA", "axes": {"XTRA": "430"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "85"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "0"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz144-wdth25-wght400",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "48"} },
+      {"label": "XTRA", "axes": {"XTRA": "267"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "48"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "5"} },
+      {"label": "XTSP", "axes": {"XTSP": "-70"} },
+      {"label": "Details", "axes": {"STUI": "566", "STUO": "722"} }
+    ]
+  },
+  {
+    "label": "opsz8-wdth151-wght400",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "108"} },
+      {"label": "XTRA", "axes": {"XTRA": "530"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "88"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "30"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz144-wdth151-wght400",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "53"} },
+      {"label": "XTRA", "axes": {"XTRA": "600"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "50"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "15"} },
+      {"label": "XTSP", "axes": {"XTSP": "20"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz8-wdth100-wght100",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "54"} },
+      {"label": "XTRA", "axes": {"XTRA": "532"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "50"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "20"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz144-wdth100-wght100",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "4"} },
+      {"label": "XTRA", "axes": {"XTRA": "506"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "4"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "10"} },
+      {"label": "XTSP", "axes": {"XTSP": "-10"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz8-wdth100-wght1000",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "200"} },
+      {"label": "XTRA", "axes": {"XTRA": "400"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "155"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "0"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz144-wdth100-wght1000",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "300"} },
+      {"label": "XTRA", "axes": {"XTRA": "270"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "200"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "15"} },
+      {"label": "XTSP", "axes": {"XTSP": "-80"} },
+      {"label": "Details", "axes": {"STUI": "444", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz8-wdth151-wght100",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "60"} },
+      {"label": "XTRA", "axes": {"XTRA": "590"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "54"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "30"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz144-wdth151-wght100",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "4"} },
+      {"label": "XTRA", "axes": {"XTRA": "658"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "4"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "15"} },
+      {"label": "XTSP", "axes": {"XTSP": "30"} },
+      {"label": "Details", "axes": {"STUI": "60", "STUO": "60"} }
+    ]
+  },
+  {
+    "label": "opsz8-wdth151-wght1000",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "210"} },
+      {"label": "XTRA", "axes": {"XTRA": "414"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "158"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "10"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz144-wdth151-wght1000",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "300"} },
+      {"label": "XTRA", "axes": {"XTRA": "390"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "205"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "20"} },
+      {"label": "XTSP", "axes": {"XTSP": "-50"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz8-wdth25-wght100",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "50"} },
+      {"label": "XTRA", "axes": {"XTRA": "451"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "48"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "0"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz144-wdth25-wght100",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "2"} },
+      {"label": "XTRA", "axes": {"XTRA": "278"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "2"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "2"} },
+      {"label": "XTSP", "axes": {"XTSP": "-75"} },
+      {"label": "Details", "axes": {"STUI": "736", "STUO": "722"} }
+    ]
+  },
+  {
+    "label": "opsz8-wdth25-wght1000",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "150"} },
+      {"label": "XTRA", "axes": {"XTRA": "400"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "105"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "30"} },
+      {"label": "XTSP", "axes": {"XTSP": "0"} },
+      {"label": "Details", "axes": {"STUI": "92", "STUO": "92"} }
+    ]
+  },
+  {
+    "label": "opsz144-wdth25-wght1000",
+    "changes": [
+      {"label": "XOPQ", "axes": {"XOPQ": "248"} },
+      {"label": "XTRA", "axes": {"XTRA": "244"} },
+      {"label": "YOPQ", "axes": {"YOPQ": "200"} },
+      {"label": "YTRA", "axes": {"YTUC": "728", "YTOS": "15"} },
+      {"label": "XTSP", "axes": {"XTSP": "-100"} },
+      {"label": "Details", "axes": {"STUI": "180", "STUO": "256"} }
+    ]
+  }
+] %}
+{%- macro color(rgb, alpha) -%}
+{
+                "instance": {
+                  "R": "{{ rgb[0] }}",
+                  "G": "{{ rgb[1] }}",
+                  "B": "{{ rgb[2] }}"{% if alpha is defined %},
+                  "alpha": "{{ alpha }}"{% endif %}
+                },
+                "colorTypeKey": "RGB"
+              }
+{%- endmacro %}
+{%- macro pairs(items) -%}
+              [
+{%- for item in items %}
+                ["{{ item[0] }}", "{{ item[1] }}"]{{ "," if not loop.last }}
+{%- endfor %}
+              ]
+{%- endmacro %}
+{%- macro axesOf(location) -%}
+{%- set items = [] %}
+{%- for axis, value in location %}{% set _ = items.push([axis, value]) %}{% endfor %}
+{{- pairs(items) -}}
+{%- endmacro %}
+{%- macro instanceKeyMoments(instance, pauseInstance = 5) %}
+{%- set locations = [] %}
+{%- for change in instance.changes %}
+  {%- set _ = locations.push(defaultAxes | merge(locations | last | merge(change.axes))) %}
+{%- endfor %}
+{%- for change in instance.changes %}
+            {
+              "label": "{{ instance.label }} {{ change.label }}",
+              "duration": "1",
+              "easing": "easeOutQuad",
+              "axesLocations": {{ axesOf(locations[loop.index0]) }},
+              "textColor": {{ color(white, "100.00000") }}
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "easeOutQuad",
+              "axesLocations": {{ axesOf(locations[loop.index0]) }},
+              "textColor": {{ color(white, "100.00000") }}
+            },
+{%- endfor %}
+            {
+              "label": "pause instance",
+              "duration": "{{ pauseInstance }}",
+              "easing": "easeOutQuad",
+              "axesLocations": {{ axesOf(locations | last) }},
+              "textColor": {{ color(white, "100.00000") }}
+            },
+{%- endmacro %}
+{
+  "activeState": {
+    "t": "0",
+    "duration": "100",
+    "keyMoments": [
+      {
+        "label": "Key Moment 1",
+        "duration": "1",
+        "easing": "easeOutQuad",
+        "isActive": "1",
+        "textColor": {{ color(white) }},
+        "stageBackgroundColor": {{ color(black) }}
+      }
+    ],
+    "activeActors": [
+      {
+        "instance": {
+          "label": "character",
+          "keyMoments": [
+            {
+              "label": "start",
+              "duration": "1",
+              "easing": "easeOutQuad",
+              "numericProperties": {{ pairs(position) }},
+              "axesLocations": {{ axesOf(defaultAxes) }},
+              "autoOPSZ": "0",
+              "fontSize": "300",
+              "textColor": {{ color(white, "0.00000") }},
+              "textRun": "{{ sample }}",
+              "textAlign": "center"
+            },
+            {
+              "label": "wait",
+              "duration": "3",
+              "easing": "easeOutQuad",
+              "numericProperties": {{ pairs(position) }},
+              "axesLocations": {{ axesOf(defaultAxes) }},
+              "textColor": {{ color(white, "0.00000") }}
+            },
+            {
+              "label": "fade in",
+              "duration": "3",
+              "easing": "easeOutQuad",
+              "numericProperties": {{ pairs(position) }},
+              "axesLocations": {{ axesOf(defaultAxes) }},
+              "textColor": {{ color(white, "100.00000") }}
+            },
+{%- for instance in instances %}
+            {{ instanceKeyMoments(defaultInstance, 1) }}
+            {{ instanceKeyMoments(instance) }}
+{%- endfor %}
+            {{ instanceKeyMoments(defaultInstance, 1) }}
+            {
+              "label": "fade out",
+              "duration": "3",
+              "easing": "easeOutQuad",
+              "textColor": {{ color(white, "100.00000") }}
+            },
+            {
+              "label": "end",
+              "duration": "3",
+              "easing": "easeOutQuad",
+              "textColor": {{ color(white, "0.00000") }}
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      }
+    ],
+    "width": "{{ stageWidth }}",
+    "height": "800",
+    "zoomLevel": {
+      "type": "app-default",
+      "scaling": "100.00000"
+    },
+    "editingActor": "./0"
+  },
+  "activeLayoutKey": "MotionStage",
+  "activeFontKey": "from-url Roboto Delta Roman Version_3-000"
+}

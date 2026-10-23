@@ -10,6 +10,7 @@ node_modules
 venv
 __pycache__
 .DS_Store
+clip_frames
 
 # Vite build outputs
 dist
