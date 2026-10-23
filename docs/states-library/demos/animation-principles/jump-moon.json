@@ -144,20 +144,20 @@
             {
               "label": "Impact",
               "duration": "10",
-              "easing": "easeOutQuad",
+              "easing": "easeOutQuart",
               "isActive": "1",
               "numericProperties": [
                 [
                   "width",
-                  "300"
+                  "600"
                 ],
                 [
                   "x",
-                  "210"
+                  "60"
                 ],
                 [
                   "y",
-                  "100"
+                  "84"
                 ]
               ],
               "axesLocations": [
@@ -171,14 +171,18 @@
                 ],
                 [
                   "wdth",
-                  "155"
+                  "151"
+                ],
+                [
+                  "XTRA",
+                  "603"
                 ],
                 [
                   "YTDE",
                   "-98"
                 ]
               ],
-              "fontSize": "43.2",
+              "fontSize": "86.4",
               "textColor": {
                 "instance": {
                   "R": "26",
@@ -208,18 +212,22 @@
                 ],
                 [
                   "wght",
-                  "650"
+                  "600"
                 ],
                 [
                   "wdth",
                   "25"
                 ],
                 [
+                  "XTRA",
+                  "418"
+                ],
+                [
                   "YTDE",
                   "-203"
                 ]
               ],
-              "fontSize": "62.1"
+              "fontSize": "124.2"
             },
             {
               "label": "Apex",
@@ -228,7 +236,7 @@
               "numericProperties": [
                 [
                   "y",
-                  "420"
+                  "500"
                 ]
               ],
               "axesLocations": [
@@ -245,11 +253,15 @@
                   "72"
                 ],
                 [
+                  "XTRA",
+                  "468"
+                ],
+                [
                   "YTDE",
                   "-203"
                 ]
               ],
-              "fontSize": "54"
+              "fontSize": "108"
             },
             {
               "label": "Falling",
@@ -269,18 +281,22 @@
                 ],
                 [
                   "wght",
-                  "650"
+                  "600"
                 ],
                 [
                   "wdth",
                   "25"
                 ],
                 [
+                  "XTRA",
+                  "418"
+                ],
+                [
                   "YTDE",
                   "-203"
                 ]
               ],
-              "fontSize": "62.1"
+              "fontSize": "124.2"
             }
           ]
         },
