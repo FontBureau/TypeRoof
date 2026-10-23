@@ -2,18 +2,17 @@
   "activeState": {
     "t": "0",
     "duration": "10",
-    "isLoop": "0",
     "perpetual": "1",
     "playing": "1",
     "activeActors": [
       {
         "instance": {
-          "isLoop": "0",
           "label": "timing",
           "keyMoments": [
             {
               "label": "Key Moment 1",
               "duration": "1",
+              "easing": "linear",
               "isActive": "1",
               "numericProperties": [
                 [
@@ -21,7 +20,6 @@
                   "0"
                 ]
               ],
-              "autoOPSZ": "0",
               "backgroundColor": {
                 "instance": {
                   "L": "0.00000",
@@ -34,6 +32,7 @@
             {
               "label": "Key Moment 2",
               "duration": "1",
+              "easing": "linear",
               "isActive": "1",
               "numericProperties": [
                 [
@@ -41,7 +40,6 @@
                   "1"
                 ]
               ],
-              "autoOPSZ": "0",
               "backgroundColor": {
                 "instance": {
                   "L": "0.00000",
@@ -54,6 +52,7 @@
             {
               "label": "Key Moment 3",
               "duration": "0",
+              "easing": "linear",
               "isActive": "1",
               "numericProperties": [
                 [
@@ -61,7 +60,6 @@
                   "1"
                 ]
               ],
-              "autoOPSZ": "0",
               "backgroundColor": {
                 "instance": {
                   "L": "0.00000",
@@ -74,8 +72,8 @@
             {
               "label": "Key Moment 4",
               "duration": "1",
-              "isActive": "1",
-              "autoOPSZ": "0"
+              "easing": "linear",
+              "isActive": "1"
             }
           ],
           "activeActors": [
@@ -87,197 +85,171 @@
                   {
                     "label": "Key Moment 1",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "A"
                   },
                   {
                     "label": "Key Moment 2",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "B"
                   },
                   {
                     "label": "Key Moment 3",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "C"
                   },
                   {
                     "label": "Key Moment 4",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "D"
                   },
                   {
                     "label": "Key Moment 5",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "E"
                   },
                   {
                     "label": "Key Moment 6",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "F"
                   },
                   {
                     "label": "Key Moment 7",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "G"
                   },
                   {
                     "label": "Key Moment 8",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "H"
                   },
                   {
                     "label": "Key Moment 9",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "I"
                   },
                   {
                     "label": "Key Moment 10",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "J"
                   },
                   {
                     "label": "Key Moment 11",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "K"
                   },
                   {
                     "label": "Key Moment 12",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "L",
                     "heightTreatment": "default"
                   },
                   {
                     "label": "Key Moment 13",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "M",
                     "heightTreatment": "default"
                   },
                   {
                     "label": "Key Moment 14",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "N"
                   },
                   {
                     "label": "Key Moment 15",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "O"
                   },
                   {
                     "label": "Key Moment 16",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "P"
                   },
                   {
                     "label": "Key Moment 17",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "Q"
                   },
                   {
                     "label": "Key Moment 18",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "R"
                   },
                   {
                     "label": "Key Moment 19",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "S"
                   },
                   {
                     "label": "Key Moment 20",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "T"
                   },
                   {
                     "label": "Key Moment 21",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "U"
                   },
                   {
                     "label": "Key Moment 22",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "V"
                   },
                   {
                     "label": "Key Moment 23",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "W"
                   },
                   {
                     "label": "Key Moment 24",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "X"
                   },
                   {
                     "label": "Key Moment 25",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "Y"
                   },
                   {
                     "label": "Key Moment 26",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
+                    "easing": "linear",
                     "textRun": "Z"
                   }
                 ],
                 "activeActors": [
                   {
                     "instance": {
-                      "isLoop": "0",
                       "label": "zoom in",
                       "keyMoments": [
                         {
                           "label": "Key Moment 1",
                           "duration": "1",
+                          "easing": "linear",
                           "isActive": "1",
                           "numericProperties": [
                             [
@@ -301,7 +273,6 @@
                               "4000"
                             ]
                           ],
-                          "autoOPSZ": "0",
                           "axesLocations": [
                             [
                               "wght",
@@ -326,6 +297,7 @@
                         {
                           "label": "Key Moment 2",
                           "duration": "1",
+                          "easing": "linear",
                           "isActive": "1",
                           "numericProperties": [
                             [
@@ -333,7 +305,6 @@
                               "5"
                             ]
                           ],
-                          "autoOPSZ": "0",
                           "axesLocations": [
                             [
                               "opsz",
@@ -355,44 +326,42 @@
       },
       {
         "instance": {
-          "isLoop": "0",
           "label": "timing",
           "keyMoments": [
             {
               "label": "Key Moment 1",
               "duration": "1",
-              "isActive": "0",
+              "easing": "linear",
               "numericProperties": [
                 [
                   "t",
                   "0"
                 ]
-              ],
-              "autoOPSZ": "0"
+              ]
             },
             {
               "label": "Key Moment 2",
               "duration": "0.7",
+              "easing": "linear",
               "isActive": "1",
               "numericProperties": [
                 [
                   "t",
                   "0"
                 ]
-              ],
-              "autoOPSZ": "0"
+              ]
             },
             {
               "label": "Key Moment 3",
               "duration": "1",
+              "easing": "linear",
               "isActive": "1",
               "numericProperties": [
                 [
                   "t",
                   "1"
                 ]
-              ],
-              "autoOPSZ": "0"
+              ]
             }
           ],
           "activeActors": [
@@ -404,48 +373,48 @@
                   {
                     "label": "Key Moment 1",
                     "duration": "10",
+                    "easing": "linear",
                     "isActive": "1",
-                    "autoOPSZ": "0",
                     "textRun": "The roof"
                   },
                   {
                     "label": "Key Moment 2",
                     "duration": "2",
+                    "easing": "linear",
                     "isActive": "1",
-                    "autoOPSZ": "0",
                     "textRun": "for"
                   },
                   {
                     "label": "Key Moment 3",
                     "duration": "1",
+                    "easing": "linear",
                     "isActive": "1",
-                    "autoOPSZ": "0",
-                    "textRun": "all"
+                    "textRun": "your"
                   },
                   {
                     "label": "Key Moment 4",
                     "duration": "1",
+                    "easing": "linear",
                     "isActive": "1",
-                    "autoOPSZ": "0",
                     "textRun": "type"
                   },
                   {
                     "label": "Key Moment 5",
                     "duration": "1",
-                    "isActive": "0",
-                    "autoOPSZ": "0",
-                    "textRun": "TypeRoof!"
+                    "easing": "linear",
+                    "isActive": "1",
+                    "textRun": "TypêRoof"
                   }
                 ],
                 "activeActors": [
                   {
                     "instance": {
-                      "isLoop": "0",
                       "label": "zoom in",
                       "keyMoments": [
                         {
                           "label": "Key Moment 1",
                           "duration": "1",
+                          "easing": "linear",
                           "isActive": "1",
                           "numericProperties": [
                             [
@@ -469,11 +438,14 @@
                               "1"
                             ]
                           ],
-                          "autoOPSZ": "0",
                           "axesLocations": [
                             [
                               "opsz",
                               "8"
+                            ],
+                            [
+                              "wght",
+                              "200"
                             ]
                           ],
                           "fontSize": "600",
@@ -489,40 +461,53 @@
                         {
                           "label": "Key Moment 2",
                           "duration": "1",
+                          "easing": "linear",
                           "isActive": "1",
                           "numericProperties": [
                             [
                               "scale",
                               "0.4"
+                            ],
+                            [
+                              "x",
+                              "-3641"
+                            ],
+                            [
+                              "y",
+                              "0"
                             ]
                           ],
-                          "autoOPSZ": "0",
+                          "autoOPSZ": "1",
                           "axesLocations": [
                             [
                               "wght",
-                              "465"
+                              "800"
                             ],
                             [
                               "wdth",
-                              "100"
-                            ],
-                            [
-                              "opsz",
-                              "60"
+                              "70"
                             ]
                           ]
                         },
                         {
                           "label": "Key Moment 3",
                           "duration": "0.5",
+                          "easing": "easeOutExpo",
                           "isActive": "1",
                           "numericProperties": [
                             [
                               "scale",
                               "10"
+                            ],
+                            [
+                              "x",
+                              "-2041"
+                            ],
+                            [
+                              "y",
+                              "1900"
                             ]
                           ],
-                          "autoOPSZ": "0",
                           "axesLocations": [
                             [
                               "wght",
@@ -548,7 +533,11 @@
       }
     ],
     "width": "720",
-    "height": "720"
+    "height": "720",
+    "zoomLevel": {
+      "type": "app-default",
+      "scaling": "100.00000"
+    }
   },
   "activeLayoutKey": "MotionStage",
   "activeFontKey": "from-url Roboto Flex Regular Version_3-200 gftools_0-9-32_"
