@@ -1,0 +1,4148 @@
+{
+  "activeState": {
+    "t": "1",
+    "duration": "25",
+    "keyMoments": [
+      {
+        "label": "Key Moment 1",
+        "duration": "1",
+        "easing": "linear",
+        "isActive": "1",
+        "textColor": {
+          "instance": {
+            "R": "255",
+            "G": "255",
+            "B": "255"
+          },
+          "colorTypeKey": "RGB"
+        },
+        "stageBackgroundColor": {
+          "instance": {
+            "R": "0",
+            "G": "0",
+            "B": "0"
+          },
+          "colorTypeKey": "RGB"
+        }
+      }
+    ],
+    "activeActors": [
+      {
+        "instance": {
+          "label": "text 14",
+          "keyMoments": [
+            {
+              "label": "start",
+              "duration": "1",
+              "easing": "linear",
+              "numericProperties": [
+                ["x", "410"],
+                ["y", "350"],
+                ["width", "445"]
+              ],
+              "axesLocations": [["opsz", "14"]],
+              "fontSize": "32",
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              },
+              "textRun": "HODnop01",
+              "textAlign": "center"
+            },
+            {
+              "label": "fade in",
+              "duration": "3",
+              "easing": "linear",
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "stay",
+              "duration": "145",
+              "easing": "linear",
+              "isActive": "1"
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      },
+      {
+        "instance": {
+          "label": "opsz14-wdth25-wght400",
+          "keyMoments": [
+            {
+              "label": "wait",
+              "duration": "1",
+              "easing": "linear",
+              "numericProperties": [
+                ["x", "410"],
+                ["y", "550"],
+                ["width", "445"]
+              ],
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "fontSize": "32",
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              },
+              "textRun": "HODnop01",
+              "textAlign": "center"
+            },
+            {
+              "label": "start",
+              "duration": "5",
+              "easing": "linear",
+              "numericProperties": [
+                ["y", "550"],
+                ["width", "445"]
+              ],
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "fade in",
+              "duration": "3",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XOPQ",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "92"],
+                ["XOLC", "92"],
+                ["XOFI", "92"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "92"],
+                ["XOLC", "92"],
+                ["XOFI", "92"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "YOPQ",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "92"],
+                ["XOLC", "92"],
+                ["XOFI", "92"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "78"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "92"],
+                ["XOLC", "92"],
+                ["XOFI", "92"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "78"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XTRA",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "92"],
+                ["XOLC", "92"],
+                ["XOFI", "92"],
+                ["XTUC", "420"],
+                ["XTLC", "420"],
+                ["XTFI", "420"],
+                ["XTUR", "463"],
+                ["YOPQ", "78"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "92"],
+                ["XOLC", "92"],
+                ["XOFI", "92"],
+                ["XTUC", "420"],
+                ["XTLC", "420"],
+                ["XTFI", "420"],
+                ["XTUR", "463"],
+                ["YOPQ", "78"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "YTRA",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "92"],
+                ["XOLC", "92"],
+                ["XOFI", "92"],
+                ["XTUC", "420"],
+                ["XTLC", "420"],
+                ["XTFI", "420"],
+                ["XTUR", "463"],
+                ["YOPQ", "78"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "92"],
+                ["XOLC", "92"],
+                ["XOFI", "92"],
+                ["XTUC", "420"],
+                ["XTLC", "420"],
+                ["XTFI", "420"],
+                ["XTUR", "463"],
+                ["YOPQ", "78"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XTSP",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "92"],
+                ["XOLC", "92"],
+                ["XOFI", "92"],
+                ["XTUC", "420"],
+                ["XTLC", "420"],
+                ["XTFI", "420"],
+                ["XTUR", "463"],
+                ["YOPQ", "78"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "92"],
+                ["XOLC", "92"],
+                ["XOFI", "92"],
+                ["XTUC", "420"],
+                ["XTLC", "420"],
+                ["XTFI", "420"],
+                ["XTUR", "463"],
+                ["YOPQ", "78"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "Details",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "92"],
+                ["XOLC", "92"],
+                ["XOFI", "92"],
+                ["XTUC", "420"],
+                ["XTLC", "420"],
+                ["XTFI", "420"],
+                ["XTUR", "463"],
+                ["YOPQ", "78"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "143",
+              "easing": "linear",
+              "isActive": "1",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "92"],
+                ["XOLC", "92"],
+                ["XOFI", "92"],
+                ["XTUC", "420"],
+                ["XTLC", "420"],
+                ["XTFI", "420"],
+                ["XTUR", "463"],
+                ["YOPQ", "78"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      },
+      {
+        "instance": {
+          "label": "opsz14-wdth151-wght400",
+          "keyMoments": [
+            {
+              "label": "wait",
+              "duration": "1",
+              "easing": "linear",
+              "numericProperties": [
+                ["x", "410"],
+                ["y", "150"],
+                ["width", "445"]
+              ],
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "fontSize": "32",
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              },
+              "textRun": "HODnop01",
+              "textAlign": "center"
+            },
+            {
+              "label": "start",
+              "duration": "25",
+              "easing": "linear",
+              "numericProperties": [
+                ["y", "150"],
+                ["width", "445"]
+              ],
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "fade in",
+              "duration": "3",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XOPQ",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "100"],
+                ["XOLC", "100"],
+                ["XOFI", "100"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "100"],
+                ["XOLC", "100"],
+                ["XOFI", "100"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "YOPQ",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "100"],
+                ["XOLC", "100"],
+                ["XOFI", "100"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "80"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "100"],
+                ["XOLC", "100"],
+                ["XOFI", "100"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "80"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XTRA",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "100"],
+                ["XOLC", "100"],
+                ["XOFI", "100"],
+                ["XTUC", "558"],
+                ["XTLC", "575"],
+                ["XTFI", "560"],
+                ["XTUR", "463"],
+                ["YOPQ", "80"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "100"],
+                ["XOLC", "100"],
+                ["XOFI", "100"],
+                ["XTUC", "558"],
+                ["XTLC", "575"],
+                ["XTFI", "560"],
+                ["XTUR", "463"],
+                ["YOPQ", "80"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "YTRA",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "100"],
+                ["XOLC", "100"],
+                ["XOFI", "100"],
+                ["XTUC", "558"],
+                ["XTLC", "575"],
+                ["XTFI", "560"],
+                ["XTUR", "463"],
+                ["YOPQ", "80"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "100"],
+                ["XOLC", "100"],
+                ["XOFI", "100"],
+                ["XTUC", "558"],
+                ["XTLC", "575"],
+                ["XTFI", "560"],
+                ["XTUR", "463"],
+                ["YOPQ", "80"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XTSP",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "100"],
+                ["XOLC", "100"],
+                ["XOFI", "100"],
+                ["XTUC", "558"],
+                ["XTLC", "575"],
+                ["XTFI", "560"],
+                ["XTUR", "463"],
+                ["YOPQ", "80"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "10"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "100"],
+                ["XOLC", "100"],
+                ["XOFI", "100"],
+                ["XTUC", "558"],
+                ["XTLC", "575"],
+                ["XTFI", "560"],
+                ["XTUR", "463"],
+                ["YOPQ", "80"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "10"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "Details",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "100"],
+                ["XOLC", "100"],
+                ["XOFI", "100"],
+                ["XTUC", "558"],
+                ["XTLC", "575"],
+                ["XTFI", "560"],
+                ["XTUR", "463"],
+                ["YOPQ", "80"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "10"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "123",
+              "easing": "linear",
+              "isActive": "1",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "100"],
+                ["XOLC", "100"],
+                ["XOFI", "100"],
+                ["XTUC", "558"],
+                ["XTLC", "575"],
+                ["XTFI", "560"],
+                ["XTUR", "463"],
+                ["YOPQ", "80"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "10"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      },
+      {
+        "instance": {
+          "label": "opsz14-wdth100-wght100",
+          "keyMoments": [
+            {
+              "label": "wait",
+              "duration": "1",
+              "easing": "linear",
+              "numericProperties": [
+                ["x", "0"],
+                ["y", "350"],
+                ["width", "445"]
+              ],
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "fontSize": "32",
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              },
+              "textRun": "HODnop01",
+              "textAlign": "center"
+            },
+            {
+              "label": "start",
+              "duration": "45",
+              "easing": "linear",
+              "numericProperties": [
+                ["y", "350"],
+                ["width", "445"]
+              ],
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "fade in",
+              "duration": "3",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XOPQ",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "47"],
+                ["XOLC", "47"],
+                ["XOFI", "47"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "47"],
+                ["XOLC", "47"],
+                ["XOFI", "47"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "YOPQ",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "47"],
+                ["XOLC", "47"],
+                ["XOFI", "47"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "44"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "47"],
+                ["XOLC", "47"],
+                ["XOFI", "47"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "44"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XTRA",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "47"],
+                ["XOLC", "47"],
+                ["XOFI", "47"],
+                ["XTUC", "516"],
+                ["XTLC", "516"],
+                ["XTFI", "516"],
+                ["XTUR", "463"],
+                ["YOPQ", "44"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "47"],
+                ["XOLC", "47"],
+                ["XOFI", "47"],
+                ["XTUC", "516"],
+                ["XTLC", "516"],
+                ["XTFI", "516"],
+                ["XTUR", "463"],
+                ["YOPQ", "44"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "YTRA",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "47"],
+                ["XOLC", "47"],
+                ["XOFI", "47"],
+                ["XTUC", "516"],
+                ["XTLC", "516"],
+                ["XTFI", "516"],
+                ["XTUR", "463"],
+                ["YOPQ", "44"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "47"],
+                ["XOLC", "47"],
+                ["XOFI", "47"],
+                ["XTUC", "516"],
+                ["XTLC", "516"],
+                ["XTFI", "516"],
+                ["XTUR", "463"],
+                ["YOPQ", "44"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XTSP",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "47"],
+                ["XOLC", "47"],
+                ["XOFI", "47"],
+                ["XTUC", "516"],
+                ["XTLC", "516"],
+                ["XTFI", "516"],
+                ["XTUR", "463"],
+                ["YOPQ", "44"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "10"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "47"],
+                ["XOLC", "47"],
+                ["XOFI", "47"],
+                ["XTUC", "516"],
+                ["XTLC", "516"],
+                ["XTFI", "516"],
+                ["XTUR", "463"],
+                ["YOPQ", "44"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "10"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "Details",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "47"],
+                ["XOLC", "47"],
+                ["XOFI", "47"],
+                ["XTUC", "516"],
+                ["XTLC", "516"],
+                ["XTFI", "516"],
+                ["XTUR", "463"],
+                ["YOPQ", "44"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "10"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "103",
+              "easing": "linear",
+              "isActive": "1",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "47"],
+                ["XOLC", "47"],
+                ["XOFI", "47"],
+                ["XTUC", "516"],
+                ["XTLC", "516"],
+                ["XTFI", "516"],
+                ["XTUR", "463"],
+                ["YOPQ", "44"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "10"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      },
+      {
+        "instance": {
+          "label": "opsz14-wdth100-wght1000",
+          "keyMoments": [
+            {
+              "label": "wait",
+              "duration": "1",
+              "easing": "linear",
+              "numericProperties": [
+                ["x", "860"],
+                ["y", "350"],
+                ["width", "445"]
+              ],
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "fontSize": "32",
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              },
+              "textRun": "HODnop01",
+              "textAlign": "center"
+            },
+            {
+              "label": "start",
+              "duration": "65",
+              "easing": "linear",
+              "numericProperties": [
+                ["y", "350"],
+                ["width", "445"]
+              ],
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "fade in",
+              "duration": "3",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XOPQ",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "210"],
+                ["XOLC", "210"],
+                ["XOFI", "210"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "210"],
+                ["XOLC", "210"],
+                ["XOFI", "210"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "YOPQ",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "210"],
+                ["XOLC", "210"],
+                ["XOFI", "210"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "156"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "210"],
+                ["XOLC", "210"],
+                ["XOFI", "210"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "156"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XTRA",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "210"],
+                ["XOLC", "210"],
+                ["XOFI", "210"],
+                ["XTUC", "380"],
+                ["XTLC", "380"],
+                ["XTFI", "380"],
+                ["XTUR", "463"],
+                ["YOPQ", "156"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "210"],
+                ["XOLC", "210"],
+                ["XOFI", "210"],
+                ["XTUC", "380"],
+                ["XTLC", "380"],
+                ["XTFI", "380"],
+                ["XTUR", "463"],
+                ["YOPQ", "156"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "YTRA",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "210"],
+                ["XOLC", "210"],
+                ["XOFI", "210"],
+                ["XTUC", "380"],
+                ["XTLC", "380"],
+                ["XTFI", "380"],
+                ["XTUR", "463"],
+                ["YOPQ", "156"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "210"],
+                ["XOLC", "210"],
+                ["XOFI", "210"],
+                ["XTUC", "380"],
+                ["XTLC", "380"],
+                ["XTFI", "380"],
+                ["XTUR", "463"],
+                ["YOPQ", "156"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XTSP",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "210"],
+                ["XOLC", "210"],
+                ["XOFI", "210"],
+                ["XTUC", "380"],
+                ["XTLC", "380"],
+                ["XTFI", "380"],
+                ["XTUR", "463"],
+                ["YOPQ", "156"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "-30"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "210"],
+                ["XOLC", "210"],
+                ["XOFI", "210"],
+                ["XTUC", "380"],
+                ["XTLC", "380"],
+                ["XTFI", "380"],
+                ["XTUR", "463"],
+                ["YOPQ", "156"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "-30"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "Details",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "210"],
+                ["XOLC", "210"],
+                ["XOFI", "210"],
+                ["XTUC", "380"],
+                ["XTLC", "380"],
+                ["XTFI", "380"],
+                ["XTUR", "463"],
+                ["YOPQ", "156"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "-30"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "83",
+              "easing": "linear",
+              "isActive": "1",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "210"],
+                ["XOLC", "210"],
+                ["XOFI", "210"],
+                ["XTUC", "380"],
+                ["XTLC", "380"],
+                ["XTFI", "380"],
+                ["XTUR", "463"],
+                ["YOPQ", "156"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "-30"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      },
+      {
+        "instance": {
+          "label": "opsz14-wdth151-wght100",
+          "keyMoments": [
+            {
+              "label": "wait",
+              "duration": "1",
+              "easing": "linear",
+              "numericProperties": [
+                ["x", "0"],
+                ["y", "150"],
+                ["width", "445"]
+              ],
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "fontSize": "32",
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              },
+              "textRun": "HODnop01",
+              "textAlign": "center"
+            },
+            {
+              "label": "start",
+              "duration": "85",
+              "easing": "linear",
+              "numericProperties": [
+                ["y", "150"],
+                ["width", "445"]
+              ],
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "fade in",
+              "duration": "3",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XOPQ",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "53"],
+                ["XOLC", "53"],
+                ["XOFI", "53"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "53"],
+                ["XOLC", "53"],
+                ["XOFI", "53"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "YOPQ",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "53"],
+                ["XOLC", "53"],
+                ["XOFI", "53"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "46"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "53"],
+                ["XOLC", "53"],
+                ["XOFI", "53"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "46"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XTRA",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "53"],
+                ["XOLC", "53"],
+                ["XOFI", "53"],
+                ["XTUC", "620"],
+                ["XTLC", "620"],
+                ["XTFI", "620"],
+                ["XTUR", "463"],
+                ["YOPQ", "46"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "53"],
+                ["XOLC", "53"],
+                ["XOFI", "53"],
+                ["XTUC", "620"],
+                ["XTLC", "620"],
+                ["XTFI", "620"],
+                ["XTUR", "463"],
+                ["YOPQ", "46"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "YTRA",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "53"],
+                ["XOLC", "53"],
+                ["XOFI", "53"],
+                ["XTUC", "620"],
+                ["XTLC", "620"],
+                ["XTFI", "620"],
+                ["XTUR", "463"],
+                ["YOPQ", "46"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "53"],
+                ["XOLC", "53"],
+                ["XOFI", "53"],
+                ["XTUC", "620"],
+                ["XTLC", "620"],
+                ["XTFI", "620"],
+                ["XTUR", "463"],
+                ["YOPQ", "46"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XTSP",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "53"],
+                ["XOLC", "53"],
+                ["XOFI", "53"],
+                ["XTUC", "620"],
+                ["XTLC", "620"],
+                ["XTFI", "620"],
+                ["XTUR", "463"],
+                ["YOPQ", "46"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "10"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "53"],
+                ["XOLC", "53"],
+                ["XOFI", "53"],
+                ["XTUC", "620"],
+                ["XTLC", "620"],
+                ["XTFI", "620"],
+                ["XTUR", "463"],
+                ["YOPQ", "46"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "10"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "Details",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "53"],
+                ["XOLC", "53"],
+                ["XOFI", "53"],
+                ["XTUC", "620"],
+                ["XTLC", "620"],
+                ["XTFI", "620"],
+                ["XTUR", "463"],
+                ["YOPQ", "46"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "10"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "63",
+              "easing": "linear",
+              "isActive": "1",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "53"],
+                ["XOLC", "53"],
+                ["XOFI", "53"],
+                ["XTUC", "620"],
+                ["XTLC", "620"],
+                ["XTFI", "620"],
+                ["XTUR", "463"],
+                ["YOPQ", "46"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "10"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      },
+      {
+        "instance": {
+          "label": "opsz14-wdth151-wght1000",
+          "keyMoments": [
+            {
+              "label": "wait",
+              "duration": "1",
+              "easing": "linear",
+              "numericProperties": [
+                ["x", "860"],
+                ["y", "150"],
+                ["width", "445"]
+              ],
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "fontSize": "32",
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              },
+              "textRun": "HODnop01",
+              "textAlign": "center"
+            },
+            {
+              "label": "start",
+              "duration": "105",
+              "easing": "linear",
+              "numericProperties": [
+                ["y", "150"],
+                ["width", "445"]
+              ],
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "fade in",
+              "duration": "3",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XOPQ",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "214"],
+                ["XOLC", "214"],
+                ["XOFI", "214"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "214"],
+                ["XOLC", "214"],
+                ["XOFI", "214"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "YOPQ",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "214"],
+                ["XOLC", "214"],
+                ["XOFI", "214"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "158"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "214"],
+                ["XOLC", "214"],
+                ["XOFI", "214"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "158"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XTRA",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "214"],
+                ["XOLC", "214"],
+                ["XOFI", "214"],
+                ["XTUC", "415"],
+                ["XTLC", "415"],
+                ["XTFI", "415"],
+                ["XTUR", "463"],
+                ["YOPQ", "158"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "214"],
+                ["XOLC", "214"],
+                ["XOFI", "214"],
+                ["XTUC", "415"],
+                ["XTLC", "415"],
+                ["XTFI", "415"],
+                ["XTUR", "463"],
+                ["YOPQ", "158"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "YTRA",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "214"],
+                ["XOLC", "214"],
+                ["XOFI", "214"],
+                ["XTUC", "415"],
+                ["XTLC", "415"],
+                ["XTFI", "415"],
+                ["XTUR", "463"],
+                ["YOPQ", "158"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "214"],
+                ["XOLC", "214"],
+                ["XOFI", "214"],
+                ["XTUC", "415"],
+                ["XTLC", "415"],
+                ["XTFI", "415"],
+                ["XTUR", "463"],
+                ["YOPQ", "158"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XTSP",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "214"],
+                ["XOLC", "214"],
+                ["XOFI", "214"],
+                ["XTUC", "415"],
+                ["XTLC", "415"],
+                ["XTFI", "415"],
+                ["XTUR", "463"],
+                ["YOPQ", "158"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "10"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "214"],
+                ["XOLC", "214"],
+                ["XOFI", "214"],
+                ["XTUC", "415"],
+                ["XTLC", "415"],
+                ["XTFI", "415"],
+                ["XTUR", "463"],
+                ["YOPQ", "158"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "10"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "Details",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "214"],
+                ["XOLC", "214"],
+                ["XOFI", "214"],
+                ["XTUC", "415"],
+                ["XTLC", "415"],
+                ["XTFI", "415"],
+                ["XTUR", "463"],
+                ["YOPQ", "158"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "10"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "43",
+              "easing": "linear",
+              "isActive": "1",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "214"],
+                ["XOLC", "214"],
+                ["XOFI", "214"],
+                ["XTUC", "415"],
+                ["XTLC", "415"],
+                ["XTFI", "415"],
+                ["XTUR", "463"],
+                ["YOPQ", "158"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "10"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      },
+      {
+        "instance": {
+          "label": "opsz14-wdth25-wght100",
+          "keyMoments": [
+            {
+              "label": "wait",
+              "duration": "1",
+              "easing": "linear",
+              "numericProperties": [
+                ["x", "0"],
+                ["y", "550"],
+                ["width", "445"]
+              ],
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "fontSize": "32",
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              },
+              "textRun": "HODnop01",
+              "textAlign": "center"
+            },
+            {
+              "label": "start",
+              "duration": "125",
+              "easing": "linear",
+              "numericProperties": [
+                ["y", "550"],
+                ["width", "445"]
+              ],
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "fade in",
+              "duration": "3",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XOPQ",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "44"],
+                ["XOLC", "44"],
+                ["XOFI", "44"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "44"],
+                ["XOLC", "44"],
+                ["XOFI", "44"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "YOPQ",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "44"],
+                ["XOLC", "44"],
+                ["XOFI", "44"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "42"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "44"],
+                ["XOLC", "44"],
+                ["XOFI", "44"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "42"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XTRA",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "44"],
+                ["XOLC", "44"],
+                ["XOFI", "44"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "42"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "44"],
+                ["XOLC", "44"],
+                ["XOFI", "44"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "42"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "YTRA",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "44"],
+                ["XOLC", "44"],
+                ["XOFI", "44"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "42"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "44"],
+                ["XOLC", "44"],
+                ["XOFI", "44"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "42"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XTSP",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "44"],
+                ["XOLC", "44"],
+                ["XOFI", "44"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "42"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "44"],
+                ["XOLC", "44"],
+                ["XOFI", "44"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "42"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "Details",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "44"],
+                ["XOLC", "44"],
+                ["XOFI", "44"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "42"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "23",
+              "easing": "linear",
+              "isActive": "1",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "44"],
+                ["XOLC", "44"],
+                ["XOFI", "44"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "42"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "756"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      },
+      {
+        "instance": {
+          "label": "opsz14-wdth25-wght1000",
+          "keyMoments": [
+            {
+              "label": "wait",
+              "duration": "1",
+              "easing": "linear",
+              "numericProperties": [
+                ["x", "860"],
+                ["y", "550"],
+                ["width", "445"]
+              ],
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "fontSize": "32",
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              },
+              "textRun": "HODnop01",
+              "textAlign": "center"
+            },
+            {
+              "label": "start",
+              "duration": "145",
+              "easing": "linear",
+              "numericProperties": [
+                ["y", "550"],
+                ["width", "445"]
+              ],
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "0.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "fade in",
+              "duration": "3",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "96"],
+                ["XOLC", "96"],
+                ["XOFI", "96"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XOPQ",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "206"],
+                ["XOLC", "206"],
+                ["XOFI", "206"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "206"],
+                ["XOLC", "206"],
+                ["XOFI", "206"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "79"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "YOPQ",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "206"],
+                ["XOLC", "206"],
+                ["XOFI", "206"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "154"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "206"],
+                ["XOLC", "206"],
+                ["XOFI", "206"],
+                ["XTUC", "463"],
+                ["XTLC", "463"],
+                ["XTFI", "463"],
+                ["XTUR", "463"],
+                ["YOPQ", "154"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XTRA",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "206"],
+                ["XOLC", "206"],
+                ["XOFI", "206"],
+                ["XTUC", "327"],
+                ["XTLC", "327"],
+                ["XTFI", "327"],
+                ["XTUR", "463"],
+                ["YOPQ", "154"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "206"],
+                ["XOLC", "206"],
+                ["XOFI", "206"],
+                ["XTUC", "327"],
+                ["XTLC", "327"],
+                ["XTFI", "327"],
+                ["XTUR", "463"],
+                ["YOPQ", "154"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "YTRA",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "206"],
+                ["XOLC", "206"],
+                ["XOFI", "206"],
+                ["XTUC", "327"],
+                ["XTLC", "327"],
+                ["XTFI", "327"],
+                ["XTUR", "463"],
+                ["YOPQ", "154"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "206"],
+                ["XOLC", "206"],
+                ["XOFI", "206"],
+                ["XTUC", "327"],
+                ["XTLC", "327"],
+                ["XTFI", "327"],
+                ["XTUR", "463"],
+                ["YOPQ", "154"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "0"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "XTSP",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "206"],
+                ["XOLC", "206"],
+                ["XOFI", "206"],
+                ["XTUC", "327"],
+                ["XTLC", "327"],
+                ["XTFI", "327"],
+                ["XTUR", "463"],
+                ["YOPQ", "154"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "-30"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "1",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "206"],
+                ["XOLC", "206"],
+                ["XOFI", "206"],
+                ["XTUC", "327"],
+                ["XTLC", "327"],
+                ["XTFI", "327"],
+                ["XTUR", "463"],
+                ["YOPQ", "154"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "-30"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            },
+            {
+              "label": "Details",
+              "duration": "2",
+              "easing": "linear",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "206"],
+                ["XOLC", "206"],
+                ["XOFI", "206"],
+                ["XTUC", "327"],
+                ["XTLC", "327"],
+                ["XTFI", "327"],
+                ["XTUR", "463"],
+                ["YOPQ", "154"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "-30"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ]
+            },
+            {
+              "label": "pause",
+              "duration": "3",
+              "easing": "linear",
+              "isActive": "1",
+              "axesLocations": [
+                ["opsz", "14"],
+                ["XOUC", "206"],
+                ["XOLC", "206"],
+                ["XOFI", "206"],
+                ["XTUC", "327"],
+                ["XTLC", "327"],
+                ["XTFI", "327"],
+                ["XTUR", "463"],
+                ["YOPQ", "154"],
+                ["YTLC", "526"],
+                ["YTUC", "728"],
+                ["YTAS", "728"],
+                ["YTDE", "-208"],
+                ["YTFI", "743"],
+                ["YTOS", "30"],
+                ["XTSP", "-30"],
+                ["STUI", "92"],
+                ["STUO", "92"],
+                ["STLI", "32"],
+                ["STLO", "32"]
+              ],
+              "textColor": {
+                "instance": {
+                  "R": "255",
+                  "G": "255",
+                  "B": "255",
+                  "alpha": "100.00000"
+                },
+                "colorTypeKey": "RGB"
+              }
+            }
+          ]
+        },
+        "actorTypeKey": "LineOfTextActorModel"
+      }
+    ],
+    "width": "1336",
+    "height": "800",
+    "zoomLevel": {
+      "type": "app-default",
+      "scaling": "100.00000"
+    },
+    "editingActor": "./4"
+  },
+  "activeLayoutKey": "MotionStage",
+  "activeFontKey": "from-url Roboto Delta Roman Version_3-000"
+}
