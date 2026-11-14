@@ -45,7 +45,7 @@ h6,
    * however, the default is 16px/12pt so I'm going to base of that
    * Also given that the reading intent corresponds to these sizes.
    */
-    --font-size-pt-assumption: 12;
+    --font-size-pt-assumption: var(--doc-font-size-pt, 12);
 
     font-variation-settings: "opsz"
         calc(var(--font-size-pt-assumption) * var(--font-size-change));

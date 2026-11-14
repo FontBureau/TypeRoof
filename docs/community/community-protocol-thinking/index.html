@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>From Code Abundance to Human Agency - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <script>
+          (function() {
+            function updateRemToPt() {
+              const html = document.documentElement;
+              // Get the root font size in pixels
+              const pxSize = parseFloat(getComputedStyle(html).fontSize);
+              // Convert CSS pixels to CSS points (1px = 0.75pt)
+              const ptSize = pxSize * 0.75;
+              html.style.setProperty('--doc-font-size-pt', `${ptSize}`);
+            }
+            // Run immediately on parse
+            updateRemToPt();
+            // Re-evaluate when the user zooms (browser zoom triggers window resize)
+            window.addEventListener('resize', updateRemToPt);
+          })();
+            function toggleMenu(evt) {
+                evt && evt.preventDefault();
+                for(const elem of document.querySelectorAll('.typeroof-ui_sidebar')){
+                    // on load it is the first item
+                    const [classA, classB] =  ['menu-hidden', 'menu-visible'],
+                        actions = ['add', 'remove'];
+                    if(elem.classList.contains(classA))
+                        actions.reverse();
+                    const [actionA, actionB] = actions;
+                    elem.classList[actionA](classA);
+                    elem.classList[actionB](classB);
+                }
+            }
+            addEventListener("DOMContentLoaded", (event) => {
+                for(const elem of document.querySelectorAll('.typeroof-ui_sidebar .toggle-menu'))
+                    elem.addEventListener('click', toggleMenu);
+                toggleMenu();
+            });
+        </script>
+        <link rel="stylesheet" href="../../../lib/css/shell/docs.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link
+            href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,download,drag_pan,edit_square,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,play_circle,refresh,remove,swap_vert" />
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <header><h1><span class="typeroof">TypêRoof</span> Documentation</h1></header>
+                <button class="toggle-menu">Menu</button>
+                <nav>
+                    <ul><li><a href="/docs/">Documentation Home</a></li>
+<li><a href="/docs/community/community-protocol/">Community Protocol (WIP)</a><ul><li class="active"><a href="/docs/community/community-protocol-thinking/">Community Protocol: The Thinking</a></li></ul></li>
+<li><a href="/docs/usage/">User Kit</a></li>
+<li><a href="/docs/development/">Developer Kit</a><ul><li><a href="/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/docs/development/planning/">Planning</a></li>
+<li><a href="/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/docs/states-library/">States Library</a><ul><li><a href="/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/docs/states-library/demos/atypi-2026-sharjah/">/demos/atypi-2026-sharjah</a></li>
+<li><a href="/docs/states-library/demos/">/demos</a></li>
+<li><a href="/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../..//shell">TypeRoof Shell</a></li>
+                        <li><a href="../../..//legacy">TypeRoof Legacy</a></li>
+                        <li><a href="../../..//app/wikipedia">Wikipedia Demo</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://typeroof.org/">TypeRoof Landing Page</a></li>
+                        <li><a href="https://forum.typeroof.org/">Community Forum</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+                <button class="toggle-menu toggle-menu-bottom">Menu</button>
+            </div>
+            <div class="typeroof-main">
+                <article class='typeroof-docs_content'><h1><a id="from-code-abundance-to-human-agency" class="heading_anchor" href="#from-code-abundance-to-human-agency" aria-hidden="true">#</a>From Code Abundance to Human Agency</h1>
+<p><em>The ideas and principles behind the TypeRoof <a href="../community-protocol">Community Protocol</a></em></p>
+<blockquote>
+<p>If you want to discuss this text, join the <a href="https://forum.typeroof.org/t/from-code-abundance-to-human-agency/12">discussion thread</a>.</p>
+</blockquote>
+<h2><a id="a-technological-shift" class="heading_anchor" href="#a-technological-shift" aria-hidden="true">#</a>A technological shift</h2>
+<p>Whether we like it or not, code is becoming abundant.</p>
+<p>For me and many programmers in my bubble, “AI” arrived in our workflows
+with a bang in early 2026. Just a few months earlier, in the fourth quarter
+of 2025, we were still joking about the vibe-coded mess the word-probability
+wiggling was producing. Then around Christmas and New Year, or by the
+first quarter of 2026 at the latest, it suddenly became obviously useful
+in programming.</p>
+<p>I’m not necessarily a proponent or opponent of the technology. I would also
+have preferred it if we had never entered the atomic age or begun burning
+fossil fuels. (I like the wheel, though!) But here we are. Technologies
+of this scale seep into every corner of life, get weaponized, and their
+consequences affect everyone. My personal assessment is: they are here to
+stay. Pandora’s box has been opened once again. So I’m choosing not to
+fight it, despite there being good reasons to do so. Instead, this is an
+honest attempt to make the best of it, for my fellow humans and colleagues,
+for typography, and for the Libre Software Movement.</p>
+<h2><a id="a-human-challenge" class="heading_anchor" href="#a-human-challenge" aria-hidden="true">#</a>A human challenge</h2>
+<p>Capability doesn’t automatically create <strong>Autonomy</strong>.</p>
+<p>Now, anyone can prompt code into existence. People write less and less
+code directly. People who can’t read or write code at all now create tools
+and features just on the fly. For them, this technology is an empowerment,
+and for me it is too: I like the idea of finally getting to all the code
+I always wanted to write. I can read and write code, and I enjoy it, but
+I can no longer afford the luxury of taking my time and writing it all
+myself. There is no single reason; my personal life is more complex than
+it used to be, and the world is simply spinning faster now.</p>
+<p>When it comes to code an agent has written, even in a tight interactive
+loop, I feel code alienation. I’m sure I’m not alone in this. Before,
+I was confident that I had thought through and integrated every line of
+code in my own projects, with all the relevant information in my mind as
+I wrote it. I could look at my code and trust my past self to have made
+the best possible decision at that time. This is gone now. In some ways,
+I’m glad I never worked much on projects with large engineering teams. I
+was fortunate in that respect, and I can see how this alienation existed
+in big tech long before I experienced it myself. But here we are: when I
+generate code by prompting, I lose touch; it feels less like my code and
+more like any code.</p>
+<p>Ownership is at the heart of this—not so much in terms of legal details,
+but rather in terms of responsibility and value. This is my code; I want
+it to be high-value, well-engineered, and trustworthy. I stand behind this
+code with my name, because I own it. Or, perhaps more precisely, because
+I understand it well enough to take responsibility for it. Collective
+ownership works similarly, but it requires more trust in the processes
+through which the software is made and in the collective itself, since
+there is no longer a single source of trust.</p>
+<h2><a id="a-human-objective" class="heading_anchor" href="#a-human-objective" aria-hidden="true">#</a>A human objective</h2>
+<p>While I’m no psychologist, I’ll use <a href="https://en.wikipedia.org/wiki/Self-determination_theory">Self-Determination Theory</a>
+(SDT) as a guiding principle; it describes <strong>Autonomy</strong>, <strong>Competence</strong>, and
+<strong>Relatedness</strong> as basic psychological needs that, when satisfied, help
+foster intrinsic motivation and well-being. I think these ideas can help
+us navigate what our community could become for its members. Alongside this,
+I find self-efficacy—a person’s belief in their own abilities—to be a great
+concept to keep in mind. The three phases of the <a href="./community-protocol">Community Protocol</a>
+are where these needs are meant to be met; the three pillars—Contributor
+Experience, Trust, and FLOSS—are the foundation that makes this possible.</p>
+<p>The cost of producing code is collapsing, while the cost of understanding
+it is not. Writing code by hand is losing economic value, and the craft
+is shifting from writing code to understanding it. All this is happening
+while expectations for project completeness and the pace of shipping features
+are rising. This creates a direct path to technical debt and overwhelming
+complexity when the capacity to understand and maintain the software
+doesn’t keep pace with production speed. And when understanding falls behind,
+so does the psychological meaning of the work and that vital feeling of
+accomplishment—this is where code alienation sets in.</p>
+<p>When anyone can clone a project or prompt a feature in isolation, we have
+to rethink why we collaborate.</p>
+<h2><a id="an-organizational-response" class="heading_anchor" href="#an-organizational-response" aria-hidden="true">#</a>An organizational response</h2>
+<p>When code is infinite and instantly generated, human attention, direction,
+and trust become the rarest, most valuable resources.</p>
+<p><strong>Here is the bet:</strong> <a href="#incubation">Incubation</a> invests two of these,
+attention and direction, to produce the third: trust. We don’t try to
+keep up with the possible flood of code from <a href="#inception">Inception</a>;
+instead, we choose, deliberately and sparingly, what deserves our attention,
+and we give it fully. Incubation is pull-based for exactly this reason: each
+distribution selects only as much as it can genuinely understand and
+stand behind, and nobody can push unrequested work onto Maintainers.</p>
+<p>This three-phase structure is designed to give us back our agency, to
+develop with intent, and to ensure we maintain only what we trust is worth
+our ownership. While old sources of individual purpose erode, we create an
+environment that nurtures basic human needs and gives grounding.</p>
+<h3><a id="inception" class="heading_anchor" href="#inception" aria-hidden="true">#</a>Inception</h3>
+<p>Driven by <strong>Autonomy</strong> and <strong>Relatedness</strong>, this phase allows anyone to
+experiment, play, share, and discuss ideas without the heavy burden of
+maintenance. We call these contributors Catalysts. Domain experts—type
+designers, typographers, script and language experts—can spark projects
+through their sheer <strong>Competence</strong>. You choose exactly how you want to
+participate.</p>
+<h3><a id="incubation" class="heading_anchor" href="#incubation" aria-hidden="true">#</a>Incubation</h3>
+<p>This phase focuses on developing and expressing <strong>Competence</strong> and
+self-efficacy. Through mentorship and collaboration, Builders take the
+time to refine raw concepts into <em>trustworthy</em>, production-ready features.
+The <strong>Relatedness</strong> of working alongside a Maintainer—guided by the standards
+of a target distribution—aims to ensure that both parties truly understand
+the code they shape, restoring the pride and ownership that automated
+generation tends to strip away. Ultimately, this shared effort is what
+builds the trust we bet on.</p>
+<h3><a id="distribution" class="heading_anchor" href="#distribution" aria-hidden="true">#</a>Distribution</h3>
+<p>Here, the focus shifts to collective <strong>Autonomy</strong> and shared stewardship.
+Because different distributions can operate entirely on their own terms,
+Maintainers have the freedom to curate standards that fit their specific
+users. It is their choice how they handle the modern influx of code: a
+distribution might decide to act as a deliberate shield against tech debt,
+prioritizing deep understanding and stability, while another might optimize
+for rapid, cutting-edge integration. This model anchors the ecosystem in
+deep <strong>Relatedness</strong>—relying on human trust, architectural care, and mutual
+growth to sustain software that we can all stand behind.</p>
+<h2><a id="the-critical-mechanism" class="heading_anchor" href="#the-critical-mechanism" aria-hidden="true">#</a>The critical mechanism</h2>
+<p>In a world where new features can be generated or patched together in an
+instant, raw capability is no longer the bottleneck. What is rare is
+understanding. A Proposal might begin as a prompted script, a handcrafted
+human prototype, the integration of an existing app, or simply a raw idea.
+Regardless of its origin, the Incubation phase is our critical mechanism
+for converting this capability into genuine responsibility. When a Builder
+and a Maintainer work together to refine these rough concepts, they are
+doing more than just merging code: they are bridging the gap between mere
+creation and deliberate architectural intent, and building real <strong>Competence</strong>.</p>
+<p>This phase will be the most challenging to pull off. It is a novel
+approach, and we will have to find our way around as we put it into practice.
+Yet, this shared friction is meant to make every feature that passes
+through it deeply understood, explicitly owned, and fully trusted.</p>
+<h2><a id="the-lasting-foundation" class="heading_anchor" href="#the-lasting-foundation" aria-hidden="true">#</a>The lasting foundation</h2>
+<p>TypeRoof’s core is licensed under Apache 2.0 on purpose: its permissive
+nature removes friction from the ecosystem, so features and improvements
+can move freely between the core and its distributions. Distributions
+remain free to choose their own compatible license—ideally, improvements
+can and will flow back to the core.</p>
+<p>TypeRoof’s users shall  be safe from vendor lock-in and corporate
+capture. The structure is designed to ensure this: because anyone can
+launch an autonomous distribution, users always have a choice. If one
+distribution stops serving their needs, they can move to another that
+shares the same underlying ecosystem. The four freedoms, and a DCO that
+keeps contributors’ copyright with them, ensure that no steward, including
+the company behind the core, can ever take that away. What protects and
+sustains TypeRoof is a strong community: trust, curation, and human
+relationships.</p>
+<h2><a id="the-larger-aspiration" class="heading_anchor" href="#the-larger-aspiration" aria-hidden="true">#</a>The larger aspiration</h2>
+<p>TypeRoof is ultimately about building foundational type tooling
+infrastructure. Many of its concepts are already turning the wheel of
+digital typography; the larger revolution is to apply them to any script
+in any language, and to end typographic disadvantage. That goal is far
+bigger than one company or one group of programmers can reach alone. It
+needs the people who know those scripts and languages, and it needs an
+ecosystem in which their contributions can be trusted, remain freely
+accessible, and last.</p>
+<p>So this is the hope: that even in the face of a massive, disruptive
+technological shift, we can choose how we organize ourselves; that we do
+not have to accept code alienation or a race to the bottom; and that
+technology stays an instrument of human agency rather than a replacement
+for it. We are building software, and we are building a space for mutual
+growth—because the first will not get far without the second.</p>
+</article>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>

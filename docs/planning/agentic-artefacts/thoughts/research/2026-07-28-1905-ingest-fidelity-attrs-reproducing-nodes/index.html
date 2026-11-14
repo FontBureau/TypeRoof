@@ -4,7 +4,41 @@
         <meta charset="utf-8">
         <title> - Documentation - TypeRoof</title>
         <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
-        <link rel="stylesheet" href="../../../../../../lib/css/shell/main.css">
+        <script>
+          (function() {
+            function updateRemToPt() {
+              const html = document.documentElement;
+              // Get the root font size in pixels
+              const pxSize = parseFloat(getComputedStyle(html).fontSize);
+              // Convert CSS pixels to CSS points (1px = 0.75pt)
+              const ptSize = pxSize * 0.75;
+              html.style.setProperty('--doc-font-size-pt', `${ptSize}`);
+            }
+            // Run immediately on parse
+            updateRemToPt();
+            // Re-evaluate when the user zooms (browser zoom triggers window resize)
+            window.addEventListener('resize', updateRemToPt);
+          })();
+            function toggleMenu(evt) {
+                evt && evt.preventDefault();
+                for(const elem of document.querySelectorAll('.typeroof-ui_sidebar')){
+                    // on load it is the first item
+                    const [classA, classB] =  ['menu-hidden', 'menu-visible'],
+                        actions = ['add', 'remove'];
+                    if(elem.classList.contains(classA))
+                        actions.reverse();
+                    const [actionA, actionB] = actions;
+                    elem.classList[actionA](classA);
+                    elem.classList[actionB](classB);
+                }
+            }
+            addEventListener("DOMContentLoaded", (event) => {
+                for(const elem of document.querySelectorAll('.typeroof-ui_sidebar .toggle-menu'))
+                    elem.addEventListener('click', toggleMenu);
+                toggleMenu();
+            });
+        </script>
+        <link rel="stylesheet" href="../../../../../../lib/css/shell/docs.css">
         <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
         <link
             href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css"
@@ -15,9 +49,11 @@
     <body class="typeroof-docs">
         <div class="wrapper">
             <div class="typeroof-ui_sidebar">
-                <h1>TypeRoof Documentation</h1>
+                <header><h1><span class="typeroof">TypêRoof</span> Documentation</h1></header>
+                <button class="toggle-menu">Menu</button>
                 <nav>
-                    <ul><li><a href="/docs/">Home Page</a></li>
+                    <ul><li><a href="/docs/">Documentation Home</a></li>
+<li><a href="/docs/community/community-protocol/">Community Protocol (WIP)</a><ul><li><a href="/docs/community/community-protocol-thinking/">Community Protocol: The Thinking</a></li></ul></li>
 <li><a href="/docs/usage/">User Kit</a></li>
 <li><a href="/docs/development/">Developer Kit</a><ul><li><a href="/docs/development/live/">Live Font Updates</a></li>
 <li><a href="/live/README/">Serve Live Font Changes to TypeRoof</a></li>
@@ -34,16 +70,20 @@
                     <ul class="typeroof-ui_sidebar-app_links">
                         <li><a href="../../../../../..//shell">TypeRoof Shell</a></li>
                         <li><a href="../../../../../..//legacy">TypeRoof Legacy</a></li>
+                        <li><a href="../../../../../..//app/wikipedia">Wikipedia Demo</a></li>
                     </ul>
                     <h3>Support</h3>
                     <ul>
+                        <li><a href="https://typeroof.org/">TypeRoof Landing Page</a></li>
+                        <li><a href="https://forum.typeroof.org/">Community Forum</a></li>
                         <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
                         <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
                     </ul>
                 </nav>
+                <button class="toggle-menu toggle-menu-bottom">Menu</button>
             </div>
             <div class="typeroof-main">
-                <div class='typeroof-docs_content'><h1><a id="research-ingest-fidelity--attr-replay--reproducing-atom-nodes" class="heading_anchor" href="#research-ingest-fidelity--attr-replay--reproducing-atom-nodes" aria-hidden="true">#</a>Research: Ingest Fidelity — Attr Replay + Reproducing Atom Nodes</h1>
+                <article class='typeroof-docs_content'><h1><a id="research-ingest-fidelity--attr-replay--reproducing-atom-nodes" class="heading_anchor" href="#research-ingest-fidelity--attr-replay--reproducing-atom-nodes" aria-hidden="true">#</a>Research: Ingest Fidelity — Attr Replay + Reproducing Atom Nodes</h1>
 <h2><a id="research-question" class="heading_anchor" href="#research-question" aria-hidden="true">#</a>Research Question</h2>
 <p>Two related questions from the operator (2026-07-28):</p>
 <ol>
@@ -369,7 +409,7 @@ not cached); PM-attrs-based replay (declared) avoids this entirely.</li>
 <code>inline: true</code> and <code>group: &quot;inline&quot;</code>; which combination new reproducing
 node types need for paragraph compatibility.</li>
 </ol>
-</div>
+</article>
             </div>
         </div> <!-- wrapper -->
     </body>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Community Protocol (Work in Progress) - Documentation - TypeRoof</title>
+        <meta name="viewport" content="initial-scale=1,shrink-to-fit=no">
+        <script>
+          (function() {
+            function updateRemToPt() {
+              const html = document.documentElement;
+              // Get the root font size in pixels
+              const pxSize = parseFloat(getComputedStyle(html).fontSize);
+              // Convert CSS pixels to CSS points (1px = 0.75pt)
+              const ptSize = pxSize * 0.75;
+              html.style.setProperty('--doc-font-size-pt', `${ptSize}`);
+            }
+            // Run immediately on parse
+            updateRemToPt();
+            // Re-evaluate when the user zooms (browser zoom triggers window resize)
+            window.addEventListener('resize', updateRemToPt);
+          })();
+            function toggleMenu(evt) {
+                evt && evt.preventDefault();
+                for(const elem of document.querySelectorAll('.typeroof-ui_sidebar')){
+                    // on load it is the first item
+                    const [classA, classB] =  ['menu-hidden', 'menu-visible'],
+                        actions = ['add', 'remove'];
+                    if(elem.classList.contains(classA))
+                        actions.reverse();
+                    const [actionA, actionB] = actions;
+                    elem.classList[actionA](classA);
+                    elem.classList[actionB](classB);
+                }
+            }
+            addEventListener("DOMContentLoaded", (event) => {
+                for(const elem of document.querySelectorAll('.typeroof-ui_sidebar .toggle-menu'))
+                    elem.addEventListener('click', toggleMenu);
+                toggleMenu();
+            });
+        </script>
+        <link rel="stylesheet" href="../../../lib/css/shell/docs.css">
+        <!-- for syntax highlighting https://www.11ty.dev/docs/plugins/syntaxhighlight/-->
+        <link
+            href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.min.css"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,arrow_forward,chevron_right,delete,download,drag_pan,edit_square,format_align_center,format_align_left,format_align_right,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,pause,place_item,play_arrow,play_circle,refresh,remove,swap_vert" />
+    </head>
+    <body class="typeroof-docs">
+        <div class="wrapper">
+            <div class="typeroof-ui_sidebar">
+                <header><h1><span class="typeroof">TypêRoof</span> Documentation</h1></header>
+                <button class="toggle-menu">Menu</button>
+                <nav>
+                    <ul><li><a href="/docs/">Documentation Home</a></li>
+<li class="active"><a href="/docs/community/community-protocol/">Community Protocol (WIP)</a><ul><li><a href="/docs/community/community-protocol-thinking/">Community Protocol: The Thinking</a></li></ul></li>
+<li><a href="/docs/usage/">User Kit</a></li>
+<li><a href="/docs/development/">Developer Kit</a><ul><li><a href="/docs/development/live/">Live Font Updates</a></li>
+<li><a href="/live/README/">Serve Live Font Changes to TypeRoof</a></li>
+<li><a href="/docs/development/glyph-groups/">How To: Extend Glyph-Groups</a></li>
+<li><a href="/docs/development/planning/">Planning</a></li>
+<li><a href="/docs/development/module-granularity/">Module Granularity</a></li></ul></li>
+<li><a href="/docs/states-library/">States Library</a><ul><li><a href="/docs/states-library/demos/animation-principles/">/demos/animation-principles</a></li>
+<li><a href="/docs/states-library/demos/atypi-2026-sharjah/">/demos/atypi-2026-sharjah</a></li>
+<li><a href="/docs/states-library/demos/">/demos</a></li>
+<li><a href="/docs/states-library/fixtures/">/fixtures</a></li>
+<li><a href="/docs/states-library/lessons/">/lessons</a></li></ul></li>
+<li><a href="/README/">TypeRoof README</a></li></ul>
+                    <h3>Applications</h3>
+                    <ul class="typeroof-ui_sidebar-app_links">
+                        <li><a href="../../..//shell">TypeRoof Shell</a></li>
+                        <li><a href="../../..//legacy">TypeRoof Legacy</a></li>
+                        <li><a href="../../..//app/wikipedia">Wikipedia Demo</a></li>
+                    </ul>
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="https://typeroof.org/">TypeRoof Landing Page</a></li>
+                        <li><a href="https://forum.typeroof.org/">Community Forum</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof">GitHub</a></li>
+                        <li><a href="https://github.com/FontBureau/TypeRoof/issues">Issues</a></li>
+                    </ul>
+                </nav>
+                <button class="toggle-menu toggle-menu-bottom">Menu</button>
+            </div>
+            <div class="typeroof-main">
+                <article class='typeroof-docs_content'><h1><a id="community-protocol-work-in-progress" class="heading_anchor" href="#community-protocol-work-in-progress" aria-hidden="true">#</a>Community Protocol (Work in Progress)</h1>
+<blockquote>
+<p><strong>Work in progress.</strong> This protocol is itself a <a href="#inception">Proposal</a>:
+a starting point for a community, not a finished rulebook. Several
+parts are deliberately left open (see <a href="#open-questions">Open questions</a>),
+and the rest is open for discussion. Join the <a href="https://forum.typeroof.org/t/community-protocol/11">protocol thread</a>.</p>
+</blockquote>
+<p>TypeRoof aspires to be foundational <strong>type tooling infrastructure</strong>, and
+our strongest asset is our community. This section outlines the principles
+that guide how we collaborate and gather.</p>
+<h2><a id="three-pillars" class="heading_anchor" href="#three-pillars" aria-hidden="true">#</a>Three Pillars</h2>
+<p>This protocol rests on three pillars to create a warm, welcoming, and
+inclusive space and software we can all stand behind. You can also read
+<a href="../community-protocol-thinking">the thinking behind this protocol</a>.</p>
+<h3><a id="1-contributor-experience" class="heading_anchor" href="#1-contributor-experience" aria-hidden="true">#</a>1. Contributor Experience</h3>
+<p>We want you to learn, explore different roles, and feel proud of what you
+bring to the table. Whether you are sharing a domain idea or experiment in
+the <a href="#inception">Inception phase</a>, writing mentored code in the
+<a href="#incubation">Incubation phase</a>, or launching and maintaining a custom
+<a href="#distribution">distribution</a>, you are free to contribute at your own pace
+and shift roles whenever it suits you. We are also glad to have you if you
+are just along for the ride in our <a href="https://forum.typeroof.org">community forum</a>.</p>
+<h3><a id="2-trust" class="heading_anchor" href="#2-trust" aria-hidden="true">#</a>2. Trust</h3>
+<p>We elevate the value of contributions and the ecosystem by backing
+raw ideas and AI-assisted prototypes with honest human curation and
+architectural mentoring. Trust in our software is earned by putting in
+the work, communicating transparently, and adhering to the public quality
+standards of each distribution. Trust between people is earned the same
+way: in <a href="#inception">Inception</a>, by giving every Proposal an honest hearing
+and keeping its trail visible when it grows into a feature; in
+<a href="#incubation">Incubation</a>, where Builders and Maintainers come to understand
+the code they ship, and each other; and in <a href="#distribution">Distribution</a>,
+where Maintainers earn the trust of their users through steady curation
+and care—while users always remain free to choose another distribution.</p>
+<h3><a id="3-floss" class="heading_anchor" href="#3-floss" aria-hidden="true">#</a>3. FLOSS</h3>
+<p>We ensure permanent architectural freedom with no black boxes and no vendor
+lock-in. Everyone has the four freedoms to run, study, modify, and
+redistribute TypeRoof on their own terms. The core is licensed under the
+permissive <strong>Apache 2.0</strong> license: in an era where AI makes code abundant
+and easy to replicate, code itself may no longer be the scarce asset worth
+guarding, so we choose to keep it frictionless to adopt and build on.
+Distributions may choose their own license—and ideally, improvements still
+flow back to the core. What we protect instead is what cannot be cloned:
+trust, human connection, and mutual growth.</p>
+<h2><a id="who-is-behind-this" class="heading_anchor" href="#who-is-behind-this" aria-hidden="true">#</a>Who is Behind This</h2>
+<p>TypeRoof is developed and stewarded by <a href="https://strong-type.systems"><strong>Strong Type Systems GmbH</strong></a>,
+founded by Lasse Fister in Germany. The company maintains the shared
+core—the tech stack that distributions build on and exchange features
+through—and has applied to register TypeRoof as a trademark (EUIPO,
+registration pending).</p>
+<p>We state this openly because the protocol asks you to trust people, and
+that starts with knowing who is accountable. The company’s role is to
+keep the core stable, interoperable, and freely available under Apache 2.0,
+and to run the reference distributions. It does not control other
+distributions, and it cannot take back what has been released: the four
+freedoms guarantee that TypeRoof outlives any single steward, including
+us. Contributions to the core are accepted under a Developer Certificate
+of Origin (DCO), not a contributor license agreement: contributors keep
+their copyright and everything released under Apache 2.0 stays available
+under Apache 2.0—no one, including us, can take that back.</p>
+<p>The trademark application exists to protect users, not to fence in the
+code. Once registered, it ensures that “TypeRoof” means what users expect
+it to mean. Any distribution may describe itself factually as “built on
+TypeRoof” or “for TypeRoof”. Beyond that, the naming policy is still being
+worked out; until it is published, please ask before using the TypeRoof
+name as part of a distribution’s own name.</p>
+<p>Strong Type Systems sustains this work through consulting, commissioned
+feature development, paid Incubation (where a client’s own developer builds
+a feature as a mentored Builder), and sponsorship. Commissioned features
+meet the same standards as any other contribution to the core or distribution.</p>
+<h2><a id="three-phase-contribution-flow" class="heading_anchor" href="#three-phase-contribution-flow" aria-hidden="true">#</a>Three-Phase Contribution Flow</h2>
+<p>We aim to be open to any kind of contribution and participation, and from
+there create a path to develop both reliable, trustworthy software and
+self-determined community actors.</p>
+<h3><a id="inception" class="heading_anchor" href="#inception" aria-hidden="true">#</a>Inception</h3>
+<p>An open sandbox where <a href="#catalysts-inception">Catalysts</a>—users, domain experts, developers,
+and vibe-coders—can share <strong>Proposals</strong> ranging from raw ideas, insights, and
+sketches to quick hacks and rough prototypes. Inception lowers the pressure of
+contributing and celebrates the human spark as our primary unit of value. This
+is an exciting and creative playground to hang out in!</p>
+<p>Each Proposal lives in a <a href="https://forum.typeroof.org/c/inception/6">dedicated forum thread</a>
+where the community can discuss, clarify, and flesh it out into a candidate
+for <a href="#incubation">Incubation</a>. Not every Proposal will be picked up or
+accepted by a distribution—and that is completely normal, never a personal
+rejection.</p>
+<p>Not everything needs to go through Inception: bug fixes and
+small improvements go directly to a <a href="#distribution">distribution</a>.</p>
+<h3><a id="incubation" class="heading_anchor" href="#incubation" aria-hidden="true">#</a>Incubation</h3>
+<p>Incubation is where a <strong>Proposal</strong> is mentored into production-ready features
+for a specific <a href="#distribution">distribution</a>. This phase is pull-based:
+each distribution chooses which Proposals it would like to incubate. Because
+each distribution defines its own standards, this phase begins either when
+a distribution’s <a href="#maintainers-distribution">Maintainers</a> select a promising Proposal from
+Inception or when they issue a <strong>“Call for Incubation”</strong> to attract a
+<a href="#builders-incubation">Builder</a> for a needed feature.</p>
+<p>The <strong>Maintainers</strong> and the <strong>Builder</strong> jointly define the success criteria
+and work through mentored reviews across one or more PR cycles. Afterward,
+other distributions are free to pick up the finished feature as-is or run
+their own incubation phase to adapt and refine it to their own criteria.</p>
+<h3><a id="distribution" class="heading_anchor" href="#distribution" aria-hidden="true">#</a>Distribution</h3>
+<p>Multiple autonomous distributions can operate side by side on their own terms,
+optimizing their collection of features, quality standards, and presentation
+for distinct target profiles. This gives <strong>Maintainers</strong> full freedom and
+system-level mastery while offering users specialized flavors of TypeRoof.
+Distributions that keep FLOSS licenses compatible with Apache 2.0 and the
+shared TypeRoof tech stack can seamlessly interoperate and exchange features.</p>
+<p>Each distribution is free to define its own internal structure, release
+criteria, and workflows—including traditional feature-branch and pull-request
+workflows for direct contributions. Within this protocol, anyone speaking and
+acting on behalf of a distribution is considered a <strong>Maintainer</strong>.</p>
+<h2><a id="roles" class="heading_anchor" href="#roles" aria-hidden="true">#</a>Roles</h2>
+<p>Contributors can move fluidly between roles depending on how they want to
+participate at any given moment:</p>
+<h3><a id="catalysts-inception" class="heading_anchor" href="#catalysts-inception" aria-hidden="true">#</a>Catalysts (Inception)</h3>
+<p><strong>Catalysts</strong> drive ideation, experimentation, and rapid prototyping in the
+<a href="#inception">Inception</a> phase. They may be domain experts—type designers,
+typographers, script and language experts—outlining domain logic, users
+articulating needs, or coders and vibe-coders sharing rough proofs-of-concept.
+This role values openness, curiosity, and creative momentum: it allows
+contributors to share boundary-pushing <strong>Proposals</strong> without taking on the
+commitment of long-term maintenance or strict architectural compliance.</p>
+<h3><a id="builders-incubation" class="heading_anchor" href="#builders-incubation" aria-hidden="true">#</a>Builders (Incubation)</h3>
+<p><strong>Builders</strong> bridge the gap between a raw <strong>Proposal</strong> and production-ready
+software during <a href="#incubation">Incubation</a>. Teaming up with a distribution or
+answering a “Call for Incubation”, they collaborate with <strong>Maintainers</strong> to
+engineer, refine, and document a feature until it meets the distribution’s
+standards. This role enacts craftsmanship and follow-through—delivering solid,
+dependable features without requiring the contributor to take on the ongoing
+governance of a distribution.</p>
+<h3><a id="maintainers-distribution" class="heading_anchor" href="#maintainers-distribution" aria-hidden="true">#</a>Maintainers (Distribution)</h3>
+<p><strong>Maintainers</strong> steward trust, architecture, and stability within a
+<a href="#distribution">Distribution</a>. They define their distribution’s standards,
+mentor <strong>Builders</strong> during Incubation, review contributions, and care for
+releases and production environments. This role calls for diligence,
+architectural care, and fair curation—serving as the anchor of reliability
+across the ecosystem.</p>
+<h2><a id="open-questions" class="heading_anchor" href="#open-questions" aria-hidden="true">#</a>Open Questions</h2>
+<p>These are the parts we have deliberately left open. Each is an invitation
+to contribute—bring a Proposal to the forum. For now, Strong Type Systems
+stewards this document and merges changes to it.</p>
+<ul>
+<li><strong>Conduct and moderation.</strong> How we treat each other, and what happens when
+that fails. Until defined, the forum’s house rules apply.</li>
+<li><strong>Incubation lifecycle.</strong> What happens when an incubation stalls, a Builder
+steps away, or Builder and Maintainers disagree on success criteria.</li>
+<li><strong>AI-assisted contributions.</strong> Disclosure, provenance, and sign-off.
+Distributions and individuals decide for themselves; the core will publish
+its own policy as a reference. The core should add a supplementary sign-off
+alongside the DCO, along these lines:  “If you used AI tools, you certify
+that you have reviewed and understand the contribution and that, to your
+knowledge, it does not incorporate code under an incompatible license.”</li>
+<li><strong>Upstream flow from copyleft distributions.</strong> How features developed under
+a copyleft license find their way back to the Apache 2.0 core.</li>
+</ul>
+</article>
+            </div>
+        </div> <!-- wrapper -->
+    </body>
+</html>
