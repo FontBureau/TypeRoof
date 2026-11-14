@@ -1,8 +1,8 @@
 ---
-title: Home Page
+title: Documentation Home
 eleventyNavigation:
   key: Documentation
-  title: Home Page
+  title: Documentation Home
 ---
 
 # TypeRoof Documentation
@@ -32,8 +32,7 @@ a community of users and developers who are interested in shaping its future.
 
 <iframe
     src="/app/player#[autoplay]from-url:/docs/states-library/demos/zooming.json"
-    width="60%"
-    style="aspect-ratio: 1/1"
+    style="width: calc(100% - 10px); max-width: 720px; aspect-ratio: 1/1"
     allowfullscreen="true"
     ></iframe>
 
@@ -60,8 +59,7 @@ The video at the top of this article is embedded using the iframe code below:
 ```
 <iframe
     src="/app/player#[autoplay]from-url:/docs/states-library/demos/zooming.json"
-    width="60%"
-    style="aspect-ratio: 1/1"
+    style="width: calc(100% - 10px); max-width: 720px; aspect-ratio: 1/1"
     allowfullscreen="true"
     ></iframe>
 ```
